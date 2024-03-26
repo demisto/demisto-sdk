@@ -1,0 +1,6 @@
+name,unit,datatype,dataclass,examples,description,system,enriched
+_insert_time,,Timestamp,Scalar,,The timestamp for the time when the event was ingested into the system. [System Field],True,
+_time,,Timestamp,Scalar,,The timestamp of the event. May be defined only in Parsing Rules [System Field],True,
+_vendor,,String,Scalar,,The vendor of the observing device/agent. May be defined only in Parsing Rules [System Field],True,
+_product,,String,Scalar,,The product name of the observing device/agent. May be defined only in Parsing Rules [System Field],True,
+xdm.session_context_id,,String,Scalar,,A unique ID to identify the user session; or the context of multiple events related to the same activity that can be used to correlate between the events.,,

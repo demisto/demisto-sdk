@@ -112,3 +112,10 @@ node_modules
 
 # Certificates
 *.crt
+
+# neo4j
+neo4j-data
+
+# log files
+demisto_sdk_debug.log
+demisto_sdk_debug.log.*

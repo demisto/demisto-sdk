@@ -1,0 +1,9 @@
+Raw Event Path,Type,Description,One Data Model,XDM Field - Old Data Model
+id,string,Resource Id,xdm.observer.unique_identifier,XDM.Endpoint.Observer.unique_identifier
+name,string,Resource name,xdm.observer.name,XDM.Endpoint.Observer.name
+properties.alertDisplayName,string,The display name of the alert.,xdm.alert.name,XDM.Endpoint.threat.name
+properties.alertType,string,Unique identifier for the detection logic (all alert instances from the same detection logic will have the same alertType).,xdm.alert.category,XDM.Endpoint.threat.category
+properties.compromisedEntity,string,The display name of the resource most related to this alert.,xdm.target.host.hostname,XDM.Endpoint.Target.host.hostname
+properties.description,string,Description of the suspicious activity that was detected.,xdm.alert.description,XDM.Endpoint.threat.description
+properties.entities,AlertEntity[],A list of entities related to the alert.,,"This is an array of related entities, this array can include the following values:"
+properties.entities.address,"coalesce(properties.entities.address,properties.extendedProperties.client IP Address)",,xdm.target.host.ipv4_addresses,XDM.Endpoint.Target.host.ipv4_addresses

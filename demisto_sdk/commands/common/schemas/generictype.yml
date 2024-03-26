@@ -54,10 +54,10 @@ mapping:
     type: bool
   reputationCalc:
     type: int
-    enum: [0, 1, 2]
+    enum: [0, 1, 2, 3]
   onChangeRepAlg:
     type: int
-    enum: [0, 1, 2]
+    enum: [0, 1, 2, 3]
   detached:
     type: bool
   fromVersion:
@@ -79,3 +79,13 @@ mapping:
   genericModuleId:
     type: str
     required: true
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str

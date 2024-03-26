@@ -1,5 +1,8 @@
 {
-  "fromVersion": "3.5.1",
-  "toVersion": "4.0.0",
-  "regex": "test"
+    "fromVersion": "3.5.1",
+    "toVersion": "4.0.0",
+    "regex": "test",
+    "id": "test",
+    "name": "test",
+    "details": "test"
 }

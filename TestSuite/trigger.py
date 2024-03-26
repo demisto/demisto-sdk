@@ -8,7 +8,7 @@ class Trigger(JSONBased):
         self.trigger_tmp_path = trigger_dir_path / f"{name}.json"
         self.name = name
 
-        super().__init__(trigger_dir_path, name, '')
+        super().__init__(trigger_dir_path, name, "")
 
         if json_content:
             self.write_json(json_content)
@@ -16,7 +16,23 @@ class Trigger(JSONBased):
             self.create_default_trigger()
 
     def create_default_trigger(self):
-        self.write_json({
-            'trigger_id': self.name,
-            'trigger_name': self.name,
-        })
+        self.write_json(
+            {
+                "trigger_id": self.id,
+                "playbook_id": "mock playbook",
+                "suggestion_reason": "mock reason",
+                "description": "desc",
+                "trigger_name": self.id,
+                "alerts_filter": {
+                    "filter": {
+                        "AND": [
+                            {
+                                "SEARCH_FIELD": "alert_name",
+                                "SEARCH_TYPE": "EQ",
+                                "SEARCH_VALUE": "multiple unauthorized action attempts detected by a user",
+                            }
+                        ]
+                    }
+                },
+            }
+        )

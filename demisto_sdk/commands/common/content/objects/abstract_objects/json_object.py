@@ -3,11 +3,12 @@ from typing import Optional, Union
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    write_dict,
+)
 
 from .dictionary_based_object import DictionaryBasedObject
-
-json = JSON_Handler()
 
 
 class JSONObject(DictionaryBasedObject):
@@ -37,7 +38,10 @@ class JSONObject(DictionaryBasedObject):
                 path = next(path.glob(["*.json"]))  # type: ignore
             except StopIteration:
                 raise exc.ContentInitializeError(JSONObject, path)
-        elif not (path.is_file() and path.suffix in [".json"]) and path.name != 'metadata.json':
+        elif (
+            not (path.is_file() and path.suffix in [".json"])
+            and path.name != "metadata.json"
+        ):
             raise exc.ContentInitializeError(JSONObject, path)
 
         return path
@@ -45,17 +49,14 @@ class JSONObject(DictionaryBasedObject):
     def _deserialize(self) -> None:
         """Load json to dictionary"""
         try:
-            self._as_dict = json.load(self._path.open())
+            self._as_dict = get_file(self._path, raise_on_error=True)
         except ValueError as e:
             raise exc.ContentSerializeError(self, self.path, str(e))
 
     def _serialize(self, dest_dir: Path):
-        """Dump dictionary to json file
-
-        """
+        """Dump dictionary to json file"""
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        with open(dest_file, 'w') as file:
-            json.dump(self.to_dict(), file)
+        write_dict(dest_file, data=self.to_dict())
         return [dest_file]
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):

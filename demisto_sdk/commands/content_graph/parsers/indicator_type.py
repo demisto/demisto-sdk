@@ -1,34 +1,49 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import (
+    JSONContentItemParser,
+)
 
 
 class IndicatorTypeParser(
     JSONContentItemParser, content_type=ContentType.INDICATOR_TYPE
 ):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.connect_to_dependencies()
         self.regex = self.json_data.get("regex")
-        self.reputation_script_name = self.json_data.get("reputationScriptName") or None
+        self.reputation_script_name = self.json_data.get("reputationScriptName") or ""
         self.enhancement_script_names = self.json_data.get("enhancementScriptNames")
 
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {"name": "details", "description": "details", "expiration": "expiration"}
+        )
+        return super().field_mapping
+
     @property
-    def name(self) -> Optional[str]:
-        return self.json_data.get("details")
+    def expiration(self):
+        return get_value(self.json_data, self.field_mapping.get("expiration", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
-
-    @property
-    def description(self) -> Optional[str]:
-        return self.json_data.get("details")
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects scripts and the reputation command used as optional dependencies,

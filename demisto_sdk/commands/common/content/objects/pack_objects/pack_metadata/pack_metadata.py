@@ -6,20 +6,26 @@ from typing import Dict, List, Union
 from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME, XSOAR_AUTHOR, XSOAR_SUPPORT,
-                                                   XSOAR_SUPPORT_URL, ContentItems)
+from demisto_sdk.commands.common.constants import (
+    PACKS_PACK_META_FILE_NAME,
+    PARTNER_SUPPORT,
+    XSOAR_AUTHOR,
+    XSOAR_SUPPORT,
+    XSOAR_SUPPORT_URL,
+    ContentItems,
+)
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
-from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import get_core_pack_list
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import (
+    get_core_pack_list,
+    write_dict,
+)
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
-json = JSON_Handler()
-
-
-DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-PARTNER_SUPPORT = 'partner'
-XSOAR_CERTIFIED = 'certified'
-XSOAR_EULA_URL = 'https://github.com/demisto/content/blob/master/LICENSE'
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+XSOAR_CERTIFIED = "certified"
+XSOAR_EULA_URL = "https://github.com/demisto/content/blob/master/LICENSE"
 
 CORE_PACKS_LIST = get_core_pack_list()
 
@@ -27,26 +33,26 @@ CORE_PACKS_LIST = get_core_pack_list()
 class PackMetaData(JSONObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path)
-        self._name: str = ''
-        self._id: str = ''
-        self._description: str = ''
+        self._name: str = ""
+        self._id: str = ""
+        self._description: str = ""
         self._created: datetime = datetime.utcnow()
         self._updated: datetime = datetime.utcnow()
         self._legacy: bool = True
-        self._support: str = ''
-        self._eulaLink: str = 'https://github.com/demisto/content/blob/master/LICENSE'
-        self._email: str = ''
-        self._url: str = ''
-        self._author: str = ''
-        self._certification: str = ''
+        self._support: str = ""
+        self._eulaLink: str = "https://github.com/demisto/content/blob/master/LICENSE"
+        self._email: str = ""
+        self._url: str = ""
+        self._author: str = ""
+        self._certification: str = ""
         self._price: int = 0
         self._premium: bool = False
-        self._vendorId: str = ''
-        self._vendorName: str = ''
+        self._vendorId: str = ""
+        self._vendorName: str = ""
         self._hidden: bool = False
         self._previewOnly: bool = False
-        self._serverMinVersion: Version = parse('0.0.0')  # type: ignore
-        self._currentVersion: Version = parse('0.0.0')  # type: ignore
+        self._serverMinVersion: Version = parse("0.0.0")  # type: ignore
+        self._currentVersion: Version = parse("0.0.0")  # type: ignore
         self._versionInfo: int = 0
         self._tags: List[str] = []
         self._categories: List[str] = []
@@ -114,7 +120,9 @@ class PackMetaData(JSONObject):
 
         if isinstance(new_pack_created_date, str):
             try:
-                self._created = datetime.strptime(new_pack_created_date, DATETIME_FORMAT)
+                self._created = datetime.strptime(
+                    new_pack_created_date, DATETIME_FORMAT
+                )
             except ValueError:
                 return
         else:
@@ -134,7 +142,9 @@ class PackMetaData(JSONObject):
         """Setter for the updated attribute"""
         if isinstance(new_pack_updated_date, str):
             try:
-                self._updated = datetime.strptime(new_pack_updated_date, DATETIME_FORMAT)
+                self._updated = datetime.strptime(
+                    new_pack_updated_date, DATETIME_FORMAT
+                )
             except ValueError:
                 return
         else:
@@ -178,12 +188,14 @@ class PackMetaData(JSONObject):
         support_details = {}
 
         if self.url:  # set support url from user input
-            support_details['url'] = self.url
-        elif self.support == XSOAR_SUPPORT:  # in case support type is xsoar, set default xsoar support url
-            support_details['url'] = XSOAR_SUPPORT_URL
+            support_details["url"] = self.url
+        elif (
+            self.support == XSOAR_SUPPORT
+        ):  # in case support type is xsoar, set default xsoar support url
+            support_details["url"] = XSOAR_SUPPORT_URL
         # add support email if defined
         if self.email:
-            support_details['email'] = self.email
+            support_details["email"] = self.email
 
         return support_details
 
@@ -240,7 +252,9 @@ class PackMetaData(JSONObject):
             if not self._author:
                 return XSOAR_AUTHOR
             elif self._author != XSOAR_AUTHOR:
-                logging.warning(f'{self._author} author doest not match {XSOAR_AUTHOR} default value')
+                logger.warning(
+                    f"{self._author} author doest not match {XSOAR_AUTHOR} default value"
+                )
                 return self._author
         return self._author
 
@@ -428,7 +442,10 @@ class PackMetaData(JSONObject):
         Returns:
             Dict[str, List]: pack content_items.
         """
-        return {content_entity.value: content_items for content_entity, content_items in self._contentItems.items()}
+        return {
+            content_entity.value: content_items
+            for content_entity, content_items in self._contentItems.items()
+        }
 
     @content_items.setter
     def content_items(self, new_pack_content_items: Dict[ContentItems, List]):
@@ -477,44 +494,45 @@ class PackMetaData(JSONObject):
         """Setter for the dependencies attribute"""
         self._dependencies = new_pack_dependencies
 
-    def dump_metadata_file(self, dest_dir: Union[Path, str] = '') -> List[Path]:
+    def dump_metadata_file(self, dest_dir: Union[Path, str] = "") -> List[Path]:
         file_content = {
-            'name': self.name,
-            'id': self.id,
-            'description': self.description,
-            'created': self.created.strftime(DATETIME_FORMAT),
-            'updated': self.updated.strftime(DATETIME_FORMAT),
-            'legacy': self.legacy,
-            'support': self.support,
-            'supportDetails': self.support_details,
-            'eulaLink': self.eula_link,
-            'author': self.author,
-            'certification': self.certification,
-            'price': self.price,
-            'serverMinVersion': str(self.server_min_version),
-            'currentVersion': str(self.current_version),
-            'tags': self.tags,
-            'categories': self.categories,
-            'contentItems': self.content_items,
-            'useCases': self.use_cases,
-            'keywords': self.keywords,
-            'dependencies': self.dependencies
+            "name": self.name,
+            "id": self.id,
+            "description": self.description,
+            "created": self.created.strftime(DATETIME_FORMAT),
+            "updated": self.updated.strftime(DATETIME_FORMAT),
+            "legacy": self.legacy,
+            "support": self.support,
+            "supportDetails": self.support_details,
+            "eulaLink": self.eula_link,
+            "author": self.author,
+            "certification": self.certification,
+            "price": self.price,
+            "serverMinVersion": str(self.server_min_version),
+            "currentVersion": str(self.current_version),
+            "tags": self.tags,
+            "categories": self.categories,
+            "contentItems": self.content_items,
+            "useCases": self.use_cases,
+            "keywords": self.keywords,
+            "dependencies": self.dependencies,
         }
 
         if self.price > 0:
-            file_content['premium'] = self.premium
-            file_content['vendorId'] = self.vendor_id
-            file_content['vendorName'] = self.vendor_name
+            file_content["premium"] = self.premium
+            file_content["vendorId"] = self.vendor_id
+            file_content["vendorName"] = self.vendor_name
             if self.preview_only:
-                file_content['previewOnly'] = True
+                file_content["previewOnly"] = True
 
-        new_metadata_path = os.path.join(dest_dir, 'metadata.json')
-        with open(new_metadata_path, 'w') as metadata_file:
-            json.dump(file_content, metadata_file, indent=4)
+        new_metadata_path = Path(str(dest_dir), "metadata.json")
+        write_dict(new_metadata_path, data=file_content, indent=4)
 
-        return [Path(new_metadata_path)]
+        return [new_metadata_path]
 
-    def load_user_metadata(self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger) -> None:
+    def load_user_metadata(
+        self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger
+    ) -> None:
         """Loads user defined metadata and stores part of it's data in defined properties fields.
 
         Args:
@@ -524,10 +542,14 @@ class PackMetaData(JSONObject):
             logger (logging.Logger): System logger already initialized.
 
         """
-        user_metadata_path = os.path.join(pack_path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
+        user_metadata_path = os.path.join(
+            pack_path, PACKS_PACK_META_FILE_NAME
+        )  # user metadata path before parsing
 
-        if not os.path.exists(user_metadata_path):
-            logger.error(f'{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file.')
+        if not Path(user_metadata_path).exists():
+            logger.error(
+                f"{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file."
+            )
             return None
 
         try:
@@ -538,38 +560,42 @@ class PackMetaData(JSONObject):
                     user_metadata = {}
 
             self.id = pack_id
-            self.name = user_metadata.get('name', '')
-            self.description = user_metadata.get('description', '')
-            self.created = user_metadata.get('created')
+            self.name = user_metadata.get("name", "")
+            self.description = user_metadata.get("description", "")
+            self.created = user_metadata.get("created")
             try:
-                self.price = int(user_metadata.get('price', 0))
+                self.price = int(user_metadata.get("price", 0))
             except Exception:
-                logger.error(f'{self.name} pack price is not valid. The price was set to 0.')
-            self.support = user_metadata.get('support', '')
-            self.url = user_metadata.get('url', '')
-            self.email = user_metadata.get('email', '')
-            self.certification = user_metadata.get('certification', '')
-            self.current_version = parse(user_metadata.get('currentVersion', '0.0.0'))  # type: ignore
-            self.author = user_metadata.get('author', '')
-            self.hidden = user_metadata.get('hidden', False)
-            self.tags = user_metadata.get('tags', [])
-            self.keywords = user_metadata.get('keywords', [])
-            self.categories = user_metadata.get('categories', [])
-            self.use_cases = user_metadata.get('useCases', [])
-            self.dependencies = user_metadata.get('dependencies', {})
+                logger.error(
+                    f"{self.name} pack price is not valid. The price was set to 0."
+                )
+            self.support = user_metadata.get("support", "")
+            self.url = user_metadata.get("url", "")
+            self.email = user_metadata.get("email", "")
+            self.certification = user_metadata.get("certification", "")
+            self.current_version = parse(user_metadata.get("currentVersion", "0.0.0"))  # type: ignore
+            self.author = user_metadata.get("author", "")
+            self.hidden = user_metadata.get("hidden", False)
+            self.tags = user_metadata.get("tags", [])
+            self.keywords = user_metadata.get("keywords", [])
+            self.categories = user_metadata.get("categories", [])
+            self.use_cases = user_metadata.get("useCases", [])
+            self.dependencies = user_metadata.get("dependencies", {})
 
             if self.price > 0:
                 self.premium = True
-                self.vendor_id = user_metadata.get('vendorId', '')
-                self.vendor_name = user_metadata.get('vendorName', '')
-                self.preview_only = user_metadata.get('previewOnly', False)
-            if self.use_cases and 'Use Case' not in self.tags:
-                self.tags.append('Use Case')
+                self.vendor_id = user_metadata.get("vendorId", "")
+                self.vendor_name = user_metadata.get("vendorName", "")
+                self.preview_only = user_metadata.get("previewOnly", False)
+            if self.use_cases and "Use Case" not in self.tags:
+                self.tags.append("Use Case")
 
         except Exception:
-            logger.error(f'Failed loading {pack_name} user metadata.')
+            logger.error(f"Failed loading {pack_name} user metadata.")
 
-    def handle_dependencies(self, pack_name: str, id_set_path: str, logger: logging.Logger) -> None:
+    def handle_dependencies(
+        self, pack_name: str, id_set_path: str, logger: logging.Logger
+    ) -> None:
         """Updates pack's dependencies using the find_dependencies command.
 
         Args:
@@ -577,21 +603,28 @@ class PackMetaData(JSONObject):
             id_set_path (str): the id_set file path.
             logger (logging.Logger): System logger already initialized.
         """
-        calculated_dependencies = PackDependencies.find_dependencies(pack_name,
-                                                                     id_set_path=id_set_path,
-                                                                     update_pack_metadata=False,
-                                                                     silent_mode=True,
-                                                                     complete_data=True)
+        calculated_dependencies = PackDependencies.find_dependencies(
+            pack_name,
+            id_set_path=id_set_path,
+            update_pack_metadata=False,
+            silent_mode=True,
+            complete_data=True,
+        )
 
         # If it is a core pack, check that no new mandatory packs (that are not core packs) were added
         # They can be overridden in the user metadata to be not mandatory so we need to check there as well
         if pack_name in CORE_PACKS_LIST:
-            mandatory_dependencies = [k for k, v in calculated_dependencies.items()
-                                      if v.get('mandatory', False) is True and
-                                      k not in CORE_PACKS_LIST and
-                                      k not in self.dependencies.keys()]
+            mandatory_dependencies = [
+                k
+                for k, v in calculated_dependencies.items()
+                if v.get("mandatory", False) is True
+                and k not in CORE_PACKS_LIST
+                and k not in self.dependencies.keys()
+            ]
             if mandatory_dependencies:
-                logger.error(f'New mandatory dependencies {mandatory_dependencies} were '
-                             f'found in the core pack {pack_name}')
+                logger.error(
+                    f"New mandatory dependencies {mandatory_dependencies} were "
+                    f"found in the core pack {pack_name}"
+                )
 
         self.dependencies.update(calculated_dependencies)

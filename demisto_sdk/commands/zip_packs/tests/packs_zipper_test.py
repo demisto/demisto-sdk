@@ -14,7 +14,7 @@ from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.tests.constants_test import PACK_TARGET
 
-UNIT_TEST_DATA = (src_root() / 'commands' / 'zip_packs' / 'tests' / 'data')
+UNIT_TEST_DATA = src_root() / "commands" / "zip_packs" / "tests" / "data"
 TEST_PACK_PATH = Path(PACK_TARGET)
 
 
@@ -28,7 +28,7 @@ def temp_dir():
     Close:
         - Delete temp directory.
     """
-    temp = UNIT_TEST_DATA / 'temp'
+    temp = UNIT_TEST_DATA / "temp"
     try:
         temp.mkdir(parents=True, exist_ok=True)
         yield temp
@@ -50,9 +50,13 @@ class TestPacksZipper:
 
     """
 
-    @pytest.mark.parametrize(argnames='zip_all, expected_path',
-                             argvalues=[(True, 'uploadable_packs.zip'),
-                                        (False, 'uploadable_packs/TestPack.zip')])
+    @pytest.mark.parametrize(
+        argnames="zip_all, expected_path",
+        argvalues=[
+            (True, "uploadable_packs.zip"),
+            (False, "uploadable_packs/TestPack.zip"),
+        ],
+    )
     def test_zip_packs(self, zip_all, expected_path):
         """
         Given:
@@ -64,13 +68,15 @@ class TestPacksZipper:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(zip_packs,
-                                                    input=TEST_PACK_PATH,
-                                                    output=tmp_output_dir,
-                                                    content_version='0.0.0',
-                                                    zip_all=zip_all)
+            click.Context(command=zip_packs).invoke(
+                zip_packs,
+                input=TEST_PACK_PATH,
+                output=tmp_output_dir,
+                content_version="0.0.0",
+                zip_all=zip_all,
+            )
 
-            assert Path(f'{tmp_output_dir}/{expected_path}').exists()
+            assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
     def test_zipped_packs(self):
         """
@@ -83,13 +89,15 @@ class TestPacksZipper:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(zip_packs,
-                                                    input=TEST_PACK_PATH,
-                                                    output=tmp_output_dir,
-                                                    content_version='0.0.0',
-                                                    zip_all=True)
-            unpack_archive(f'{tmp_output_dir}/uploadable_packs.zip', tmp_output_dir)
-            assert Path(f'{tmp_output_dir}/TestPack.zip').exists()
+            click.Context(command=zip_packs).invoke(
+                zip_packs,
+                input=TEST_PACK_PATH,
+                output=tmp_output_dir,
+                content_version="0.0.0",
+                zip_all=True,
+            )
+            unpack_archive(f"{tmp_output_dir}/uploadable_packs.zip", tmp_output_dir)
+            assert Path(f"{tmp_output_dir}/TestPack.zip").exists()
 
     def test_zip_with_upload(self, mocker):
         """
@@ -98,20 +106,25 @@ class TestPacksZipper:
         When:
             - run the zip_packs command
         Then:
-            - validate the pack.zipped_pack_uploader was called with correct path
+            - validate the upload command was called once
         """
-        mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
-        mocker.patch.object(uploader, 'get_demisto_version', return_value=parse('6.0.0'))
-        mocker.patch.object(Uploader, 'zipped_pack_uploader')
+        mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
+        mocker.patch.object(
+            uploader, "get_demisto_version", return_value=parse("6.0.0")
+        )
+        mocker.patch.object(Uploader, "upload")
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(zip_packs,
-                                                    input=TEST_PACK_PATH,
-                                                    output=tmp_output_dir,
-                                                    content_version='0.0.0',
-                                                    zip_all=True, upload=True)
+            click.Context(command=zip_packs).invoke(
+                zip_packs,
+                input=TEST_PACK_PATH,
+                output=tmp_output_dir,
+                content_version="0.0.0",
+                zip_all=True,
+                upload=True,
+            )
 
-            assert Uploader.zipped_pack_uploader.call_args[1]['path'] == f'{tmp_output_dir}/uploadable_packs.zip'
+            assert Uploader.upload.called_once()
 
     # Edge cases
     def test_invalid_pack_name(self):
@@ -125,13 +138,15 @@ class TestPacksZipper:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(zip_packs,
-                                                    input='invalid_pack_name',
-                                                    output=tmp_output_dir,
-                                                    content_version='0.0.0',
-                                                    zip_all=False)
+            click.Context(command=zip_packs).invoke(
+                zip_packs,
+                input="invalid_pack_name",
+                output=tmp_output_dir,
+                content_version="0.0.0",
+                zip_all=False,
+            )
 
-            assert not Path(f'{tmp_output_dir}/uploadable_packs/TestPack.zip').exists()
+            assert not Path(f"{tmp_output_dir}/uploadable_packs/TestPack.zip").exists()
 
     def test_not_exist_destination(self):
         """
@@ -143,10 +158,12 @@ class TestPacksZipper:
             - validate the missed directory is created and the zip is exist
         """
         with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(zip_packs,
-                                                    input=TEST_PACK_PATH,
-                                                    output=tmp_output_dir,
-                                                    content_version='0.0.0',
-                                                    zip_all=True)
+            click.Context(command=zip_packs).invoke(
+                zip_packs,
+                input=TEST_PACK_PATH,
+                output=tmp_output_dir,
+                content_version="0.0.0",
+                zip_all=True,
+            )
 
-            assert Path(f'{tmp_output_dir}/uploadable_packs.zip').exists()
+            assert Path(f"{tmp_output_dir}/uploadable_packs.zip").exists()

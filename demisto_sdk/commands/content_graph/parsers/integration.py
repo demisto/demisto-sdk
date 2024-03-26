@@ -1,35 +1,75 @@
+from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
-from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.content_graph.parsers.integration_script import (
+    IntegrationScriptParser,
+)
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
+
+
+@dataclass
+class CommandParser:
+    name: str
+    deprecated: bool
+    description: str
+    args: List[dict]
+    outputs: List[dict]
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
-        self.docker_image = self.script_info.get("dockerimage", "")
         self.is_fetch = self.script_info.get("isfetch", False)
+        self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
+        self.is_fetch_events_and_assets = self.script_info.get(
+            "isfetcheventsandassets", False
+        )
+        self.is_mappable = self.script_info.get("ismappable", False)
         self.is_feed = self.script_info.get("feed", False)
-        self.type = self.script_info.get("subtype") or self.script_info.get("type")
-        if self.type == "python":
-            self.type += "2"
-
+        self.is_beta = self.script_info.get("beta", False)
+        self.long_running = self.script_info.get("longRunning", False)
+        self.is_long_running = self.script_info.get("longRunning", False)
+        self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
-        self.connect_to_api_modules()
         self.connect_to_tests()
+
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {
+                "display_name": "display",
+                "docker_image": "script.dockerimage",
+                "type": "script.type",
+                "subtype": "script.subtype",
+                "alt_docker_images": "script.alt_dockerimages",
+                "params": "configuration",
+            }
+        )
+        return super().field_mapping
 
     @property
     def display_name(self) -> Optional[str]:
-        return self.yml_data.get("display")
+        return get_value(self.yml_data, self.field_mapping.get("display_name", ""))
+
+    @property
+    def params(self) -> Optional[List]:
+        return get_value(self.yml_data, self.field_mapping.get("params", ""), [])
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.
@@ -37,13 +77,27 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         since there will be a single node for all commands with the same name.
         """
         for command_data in self.script_info.get("commands", []):
+            name = command_data.get("name")
+            deprecated = command_data.get("deprecated", False) or self.deprecated
+            description = command_data.get("description")
+            args = command_data.get("arguments") or []
+            outputs = command_data.get("outputs") or []
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
-                target=command_data.get("name"),
+                target=name,
                 target_type=ContentType.COMMAND,
-                name=command_data.get("name"),
-                deprecated=command_data.get("deprecated", False) or self.deprecated,
-                description=command_data.get("description"),
+                name=name,
+                deprecated=deprecated,
+                description=description,
+            )
+            self.commands.append(
+                CommandParser(
+                    name=name,
+                    description=description,
+                    deprecated=deprecated,
+                    args=args,
+                    outputs=outputs,
+                )
             )
 
     def connect_to_dependencies(self) -> None:
@@ -72,7 +126,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     default_incident_type, ContentType.INCIDENT_TYPE, is_mandatory=False
                 )
 
-    def get_code(self) -> Optional[str]:
+    @property
+    def code(self) -> Optional[str]:
         """Gets the integration code.
         If the integration is unified, then it is taken from the yml file.
         Otherwise, uses the Unifier object to get it.
@@ -80,17 +135,15 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         Returns:
             str: The integration code.
         """
-        if self.is_unified or self.script_info.get("script") not in ["-", ""]:
+        if self.is_unified or self.script_info.get("script") not in ("-", "", None):
             return self.script_info.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(self.path.parent)[1]
-
-    def connect_to_api_modules(self) -> None:
-        """Creates IMPORTS relationships with the API modules used in the integration."""
-        code = self.get_code()
-        if not code:
-            raise ValueError("Integration code is not available")
-        api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
-        for api_module in api_modules:
-            self.add_relationship(
-                RelationshipType.IMPORTS, api_module, ContentType.SCRIPT
-            )
+        if not self.git_sha:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data(
+                self.path.parent
+            )[1]
+        else:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
+                self.path, self.git_sha, self.yml_data
+            )[
+                1
+            ]

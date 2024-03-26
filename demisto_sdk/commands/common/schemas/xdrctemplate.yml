@@ -1,0 +1,34 @@
+type: map
+mapping:
+  os_type:
+    type: str
+    required: true
+  profile_type:
+    type: str
+    required: true
+  name:
+    type: str
+    required: true
+  content_global_id:
+    type: str
+    required: true
+  from_xdr_version:
+    type: str
+    required: true
+  yaml_template:
+    type: str
+    required: true
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str

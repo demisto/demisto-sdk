@@ -1,6 +1,7 @@
 Set a value in context under the key you entered.
 
 ## Script Data
+
 ---
 
 | **Name** | **Description** |
@@ -9,7 +10,22 @@ Set a value in context under the key you entered.
 | Tags | Utility |
 | Cortex XSOAR Version | 5.0.0 |
 
+## Dependencies
+
+---
+This script uses the following commands and scripts.
+
+* UsesScript
+
+## Used In
+
+---
+This script is used in the following playbooks and scripts.
+
+* SamplePlaybook
+
 ## Inputs
+
 ---
 
 | **Argument Name** | **Description** |
@@ -20,14 +36,18 @@ Set a value in context under the key you entered.
 | stringify | Whether the argument should be saved as a string. |
 
 ## Outputs
+
 ---
 There are no outputs for this script.
 
-
 ## Script Examples
+
 ### Example command
+
 ```!Set key=k1 value=v1```
+
 ### Context Example
+
 ```json
 {
     "key": "k1",
@@ -42,8 +62,11 @@ There are no outputs for this script.
 >k1 | v1
 
 ### Example command
+
 ```!Set key=k2 value=v2 append=true```
+
 ### Context Example
+
 ```json
 {
     "key": "k2",

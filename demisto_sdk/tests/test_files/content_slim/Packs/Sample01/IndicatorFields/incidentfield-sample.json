@@ -1,4 +1,8 @@
 {
-  "id": "indicator",
-  "fromVersion": "5.5.0"
+    "id": "indicator",
+    "fromVersion": "5.5.0",
+    "name": "test",
+    "cliName": "actor",
+    "type": "multiSelect",
+    "associatedToAll": true
 }

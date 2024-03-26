@@ -4,3 +4,12 @@
 
 # updated the pre-commit isort hook to a line-length of 120 instead of 79 and updated all the import lines in the repo
 11bcb1692a4344c08dc417101355fa42de61969b
+
+# added pycln, updated pyupgrade, set pyupgrade to use --py38-plus
+86095f6216a34547f94a695e1c0b1decaa9b339e
+
+# upgraded pre-commit hooks, replace py2-syle imports with py3
+1be4eda8be326de293ce765c1f0c067c46c18257
+
+# apply the Black formatting to the whole repo
+c798d7368c7e10e79de16de80a1c02423c57e1a9

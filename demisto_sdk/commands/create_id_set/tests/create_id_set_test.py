@@ -1,20 +1,21 @@
 import os
 import shutil
 from collections import OrderedDict
+from pathlib import Path
 from tempfile import mkdtemp
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.update_id_set import ID_SET_ENTITIES, ID_SET_XPANSE_ENTITIES
+from demisto_sdk.commands.common.update_id_set import (
+    ID_SET_ENTITIES,
+    ID_SET_XPANSE_ENTITIES,
+)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
-json = JSON_Handler()
-
-
-TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
+TESTS_DIR = f"{git_path()}/demisto_sdk/tests"
 
 METADATA = {
     "name": "Pack0",
@@ -33,31 +34,33 @@ METADATA = {
         "xsoar",
         "marketplacev2",
         "xpanse",
-    ]
+    ],
 }
 
 
 class TestIDSetCreator:
-    def setup(self):
-        self.id_set_full_path = os.path.join(TESTS_DIR, 'test_files', 'content_repo_example', 'id_set.json')
+    def setup_method(self):
+        self.id_set_full_path = os.path.join(
+            TESTS_DIR, "test_files", "content_repo_example", "id_set.json"
+        )
         self._test_dir = mkdtemp()
-        self.file_path = os.path.join(self._test_dir, 'id_set.json')
+        self.file_path = os.path.join(self._test_dir, "id_set.json")
 
-    def teardown(self):
+    def teardown_method(self):
         # delete the id set file
         try:
-            if os.path.isfile(self.file_path) or os.path.islink(self.file_path):
+            if Path(self.file_path).is_file() or os.path.islink(self.file_path):
                 os.unlink(self.file_path)
             elif os.path.isdir(self.file_path):
                 shutil.rmtree(self.file_path)
         except Exception as err:
-            print(f'Failed to delete {self.file_path}. Reason: {err}')
+            print(f"Failed to delete {self.file_path}. Reason: {err}")  # noqa: T201
 
     def test_create_id_set_output(self):
         id_set_creator = IDSetCreator(self.file_path)
 
         id_set_creator.create_id_set()
-        assert os.path.exists(self.file_path)
+        assert Path(self.file_path).exists()
 
     def test_create_id_set_on_specific_pack_output(self):
         """
@@ -72,29 +75,59 @@ class TestIDSetCreator:
         - ensure that the created ID set is in the path of the output
 
         """
-        id_set_creator = IDSetCreator(self.file_path, input='Packs/AMP')
+        id_set_creator = IDSetCreator(self.file_path, input="Packs/AMP")
 
         id_set_creator.create_id_set()
-        assert os.path.exists(self.file_path)
+        assert Path(self.file_path).exists()
 
     def test_create_id_set_no_output(self, mocker):
         import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'cpu_count', return_value=1)
+
+        mocker.patch.object(uis, "cpu_count", return_value=1)
         id_set_creator = IDSetCreator(output=None)
 
         id_set, _, _ = id_set_creator.create_id_set()
-        assert not os.path.exists(self.file_path)
+        assert not Path(self.file_path).exists()
         assert id_set is not None
 
         keys = set(id_set.keys())
-        expected_keys = {'scripts', 'playbooks', 'integrations', 'TestPlaybooks', 'Classifiers', 'Dashboards',
-                         'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes', 'Layouts', 'Reports',
-                         'Widgets', 'Mappers', 'Packs', 'GenericTypes', 'GenericFields', 'GenericModules',
-                         'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
-                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards', 'XDRCTemplates'}
+        expected_keys = {
+            "scripts",
+            "playbooks",
+            "integrations",
+            "TestPlaybooks",
+            "Classifiers",
+            "Dashboards",
+            "IncidentFields",
+            "IncidentTypes",
+            "IndicatorFields",
+            "IndicatorTypes",
+            "Layouts",
+            "Reports",
+            "Widgets",
+            "Mappers",
+            "Packs",
+            "GenericTypes",
+            "GenericFields",
+            "GenericModules",
+            "GenericDefinitions",
+            "Lists",
+            "Jobs",
+            "ParsingRules",
+            "ModelingRules",
+            "CorrelationRules",
+            "XSIAMDashboards",
+            "XSIAMReports",
+            "Triggers",
+            "Wizards",
+            "XDRCTemplates",
+            "LayoutRules",
+        }
 
-        assert keys == expected_keys, f'missing keys: {expected_keys.difference(keys)}\n' \
-                                      f' unexpected keys: {keys.difference(expected_keys)}'
+        assert keys == expected_keys, (
+            f"missing keys: {expected_keys.difference(keys)}\n"
+            f" unexpected keys: {keys.difference(expected_keys)}"
+        )
 
     def test_create_id_set_on_specific_pack(self, repo):
         """
@@ -112,15 +145,27 @@ class TestIDSetCreator:
         """
         packs = repo.packs
 
-        pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
-        pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'category': '', 'name':
-                                                         'integration to create id set', 'script': {'type': 'python'}},
-                                                    name='integration1')
+        pack_to_create_id_set_on = repo.create_pack("pack_to_create_id_set_on")
+        pack_to_create_id_set_on.create_integration(
+            yml={
+                "commonfields": {"id": "id1"},
+                "category": "",
+                "name": "integration to create id set",
+                "script": {"type": "python"},
+            },
+            name="integration1",
+        )
         packs.append(pack_to_create_id_set_on)
 
-        pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')
-        pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'category': '', 'name':
-                                                             'integration to not create id set'}, name='integration2')
+        pack_to_not_create_id_set_on = repo.create_pack("pack_to_not_create_id_set_on")
+        pack_to_not_create_id_set_on.create_integration(
+            yml={
+                "commonfields": {"id2": "id"},
+                "category": "",
+                "name": "integration to not create id set",
+            },
+            name="integration2",
+        )
         packs.append(pack_to_not_create_id_set_on)
 
         id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)
@@ -130,10 +175,15 @@ class TestIDSetCreator:
         with open(self.file_path) as id_set_file:
             private_id_set = json.load(id_set_file)
 
-        assert len(private_id_set['integrations']) == 1
-        assert private_id_set['integrations'][0].get('id1', {}).get('name', '') == 'integration to create id set'
-        assert private_id_set['integrations'][0].get('id2', {}).get('name', '') == ''
-        assert private_id_set['Packs']['pack_to_create_id_set_on']['ContentItems']['integrations'] == ['id1']
+        assert len(private_id_set["integrations"]) == 1
+        assert (
+            private_id_set["integrations"][0].get("id1", {}).get("name", "")
+            == "integration to create id set"
+        )
+        assert private_id_set["integrations"][0].get("id2", {}).get("name", "") == ""
+        assert private_id_set["Packs"]["pack_to_create_id_set_on"]["ContentItems"][
+            "integrations"
+        ] == ["id1"]
 
     def test_create_id_set_on_specific_empty_pack(self, repo, mocker):
         """
@@ -152,7 +202,8 @@ class TestIDSetCreator:
         pack.pack_metadata.write_json(METADATA)
 
         import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
+        mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
         id_set_creator = IDSetCreator(self.file_path, pack.path)
 
@@ -161,7 +212,7 @@ class TestIDSetCreator:
         with open(self.file_path) as id_set_file:
             private_id_set = json.load(id_set_file)
         for content_entity, content_entity_value_list in private_id_set.items():
-            if content_entity != 'Packs':
+            if content_entity != "Packs":
                 assert len(content_entity_value_list) == 0
             else:
                 assert len(content_entity_value_list) == 1
@@ -169,7 +220,7 @@ class TestIDSetCreator:
 
 def test_create_id_set_flow(repo, mocker):
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
-    mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
+    mocker.patch.dict(os.environ, {"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL": "-1"})
     number_of_packs_to_create = 10
     repo.setup_content_repo(number_of_packs_to_create)
 
@@ -179,34 +230,42 @@ def test_create_id_set_flow(repo, mocker):
 
     id_set_content = repo.id_set.read_json_as_dict()
     assert not IsEqualFunctions.is_dicts_equal(id_set_content, {})
-    assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ['Packs'])
+    assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ["Packs"])
     for id_set_entity in ID_SET_ENTITIES:
-        if id_set_entity in ['ParsingRules', 'ModelingRules', 'CorrelationRules',
-                             'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates']:
+        if id_set_entity in [
+            "ParsingRules",
+            "ModelingRules",
+            "CorrelationRules",
+            "XSIAMDashboards",
+            "XSIAMReports",
+            "Triggers",
+            "XDRCTemplates",
+            "LayoutRules",
+        ]:
             continue
         entity_content_in_id_set = id_set_content.get(id_set_entity)
-        assert entity_content_in_id_set, f'ID set for {id_set_entity} is empty'
+        assert entity_content_in_id_set, f"ID set for {id_set_entity} is empty"
 
         factor = 1
-        if id_set_entity in {'Layouts', 'TestPlaybooks', 'Jobs'}:
-            '''
+        if id_set_entity in {"Layouts", "TestPlaybooks", "Jobs"}:
+            """
             Layouts: The folder contains both layouts and layoutcontainers
             TestPlaybooks: each integration and script has a test playbook
             Jobs: The default test suite pack has two jobs (is_feed=true, is_feed=false), and a playbook
-            '''
+            """
             factor = 2
 
-        elif id_set_entity == 'playbooks':
-            '''
+        elif id_set_entity == "playbooks":
+            """
             One playbook is generated for every pack,
             And one more is created for each of the 2 Job objects that are automatically created in every pack.
-            '''
+            """
             factor = 3
 
         assert len(entity_content_in_id_set) == factor * number_of_packs_to_create
 
 
-def test_create_id_set_flow_xpanse(repo, mocker):
+def test_create_id_set_flow_xpanse(repo, monkeypatch):
     """
     Given
         create-id-set sdk command, content repo that contains xpanse packs.
@@ -216,18 +275,22 @@ def test_create_id_set_flow_xpanse(repo, mocker):
         Make sure the id set is created as expected.
     """
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
-    mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
+    monkeypatch.setenv("DEMISTO_SDK_ID_SET_REFRESH_INTERVAL", value="-1")
     number_of_packs_to_create = 10
-    repo.setup_content_repo(number_of_packs=number_of_packs_to_create, marketplaces=[MarketplaceVersions.XPANSE.value])
+    repo.setup_content_repo(
+        number_of_packs=number_of_packs_to_create,
+        marketplaces=[MarketplaceVersions.XPANSE.value],
+    )
 
     with ChangeCWD(repo.path):
-        id_set_creator = IDSetCreator(output=repo.id_set.path, marketplace='xpanse',
-                                      print_logs=False)
+        id_set_creator = IDSetCreator(
+            output=repo.id_set.path, marketplace="xpanse", print_logs=False
+        )
         id_set_creator.create_id_set()
 
     id_set_content = repo.id_set.read_json_as_dict()
     assert not IsEqualFunctions.is_dicts_equal(id_set_content, {})
-    assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ['Packs'])
+    assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ["Packs"])
     for id_set_entity in ID_SET_ENTITIES:
         if id_set_entity not in ID_SET_XPANSE_ENTITIES:
             assert not id_set_content.get(id_set_entity)
@@ -238,16 +301,32 @@ def test_create_id_set_flow_xpanse(repo, mocker):
 
 def setup_id_set():
     integration1 = {
-        'Integration1': OrderedDict([('name', 'Integration1'), ('commands', ['test-command_1', 'test-command'])])}
+        "Integration1": OrderedDict(
+            [("name", "Integration1"), ("commands", ["test-command_1", "test-command"])]
+        )
+    }
     integration2 = {
-        'Integration2': OrderedDict([('name', 'Integration2'), ('commands', ['test-command', 'test-command_2'])])}
+        "Integration2": OrderedDict(
+            [("name", "Integration2"), ("commands", ["test-command", "test-command_2"])]
+        )
+    }
 
     playbook1 = {
-        'Playbook1': OrderedDict(
-            [('name', 'Playbook1'), ('command_to_integration', {'test-command': "", 'test-command_1': ""})])}
+        "Playbook1": OrderedDict(
+            [
+                ("name", "Playbook1"),
+                ("command_to_integration", {"test-command": "", "test-command_1": ""}),
+            ]
+        )
+    }
     playbook2 = {
-        'Playbook2': OrderedDict([('name', 'Playbook2'), ('command_to_integration', {'test-command': "",
-                                                                                     'test-command_2': ""})])}
+        "Playbook2": OrderedDict(
+            [
+                ("name", "Playbook2"),
+                ("command_to_integration", {"test-command": "", "test-command_2": ""}),
+            ]
+        )
+    }
 
     id_set_creator = IDSetCreator(print_logs=False)
     id_set_creator.id_set["integrations"] = [integration1, integration2]
@@ -269,12 +348,16 @@ def test_create_command_to_implemented_integration_map(repo):
       was returned.
 
     """
-    expected_output_map = {'test-command': ['Integration1', 'Integration2'],
-                           'test-command_1': ['Integration1'],
-                           'test-command_2': ['Integration2']}
+    expected_output_map = {
+        "test-command": ["Integration1", "Integration2"],
+        "test-command_1": ["Integration1"],
+        "test-command_2": ["Integration2"],
+    }
     id_set_creator = setup_id_set()
 
-    command_to_implemented_integration_map = id_set_creator.create_command_to_implemented_integration_map()
+    command_to_implemented_integration_map = (
+        id_set_creator.create_command_to_implemented_integration_map()
+    )
     assert command_to_implemented_integration_map == expected_output_map
 
 
@@ -298,12 +381,18 @@ class TestAddCommandToImplementingIntegrationsMapping:
         id_set_creator.add_command_to_implementing_integrations_mapping()
 
         playbook_set = id_set_creator.id_set["playbooks"]
-        assert playbook_set[0]["Playbook1"]['command_to_integration']['test-command'] == ['Integration1',
-                                                                                          'Integration2']
-        assert playbook_set[0]["Playbook1"]['command_to_integration']['test-command_1'] == ['Integration1']
-        assert playbook_set[1]["Playbook2"]['command_to_integration']['test-command'] == ['Integration1',
-                                                                                          'Integration2']
-        assert playbook_set[1]["Playbook2"]['command_to_integration']['test-command_2'] == ['Integration2']
+        assert playbook_set[0]["Playbook1"]["command_to_integration"][
+            "test-command"
+        ] == ["Integration1", "Integration2"]
+        assert playbook_set[0]["Playbook1"]["command_to_integration"][
+            "test-command_1"
+        ] == ["Integration1"]
+        assert playbook_set[1]["Playbook2"]["command_to_integration"][
+            "test-command"
+        ] == ["Integration1", "Integration2"]
+        assert playbook_set[1]["Playbook2"]["command_to_integration"][
+            "test-command_2"
+        ] == ["Integration2"]
 
     @staticmethod
     def test_do_not_modify_specific_brand(repo):
@@ -321,36 +410,50 @@ class TestAddCommandToImplementingIntegrationsMapping:
         """
         integrations = [
             {
-                'MainInteg': OrderedDict([
-                    ('name', 'MainInteg'),
-                    ('commands', ['generic-command']),
-                ])
+                "MainInteg": OrderedDict(
+                    [
+                        ("name", "MainInteg"),
+                        ("commands", ["generic-command"]),
+                    ]
+                )
             },
             {
-                'SecondaryInteg': OrderedDict([
-                    ('name', 'SecondaryInteg'),
-                    ('commands', ['generic-command', 'specific-command']),
-                ])
+                "SecondaryInteg": OrderedDict(
+                    [
+                        ("name", "SecondaryInteg"),
+                        ("commands", ["generic-command", "specific-command"]),
+                    ]
+                )
             },
         ]
         playbooks = [
             {
-                'Playbook1': OrderedDict([
-                    ('name', 'Playbook1'),
-                    ('command_to_integration', {
-                        'specific-command': "",
-                        'generic-command': "",
-                    }),
-                ]),
+                "Playbook1": OrderedDict(
+                    [
+                        ("name", "Playbook1"),
+                        (
+                            "command_to_integration",
+                            {
+                                "specific-command": "",
+                                "generic-command": "",
+                            },
+                        ),
+                    ]
+                ),
             },
             {
-                'Playbook2': OrderedDict([
-                    ('name', 'Playbook2'),
-                    ('command_to_integration', {
-                        'generic-command': 'MainInteg',
-                        'no-integration': '',
-                    }),
-                ]),
+                "Playbook2": OrderedDict(
+                    [
+                        ("name", "Playbook2"),
+                        (
+                            "command_to_integration",
+                            {
+                                "generic-command": "MainInteg",
+                                "no-integration": "",
+                            },
+                        ),
+                    ]
+                ),
             },
         ]
 
@@ -360,12 +463,17 @@ class TestAddCommandToImplementingIntegrationsMapping:
 
         id_set_creator.add_command_to_implementing_integrations_mapping()
 
-        playbook1 = id_set_creator.id_set['playbooks'][0]['Playbook1']
-        playbook2 = id_set_creator.id_set['playbooks'][1]['Playbook2']
-        assert playbook1['command_to_integration']['specific-command'] == ['SecondaryInteg']
-        assert playbook1['command_to_integration']['generic-command'] == ['MainInteg', 'SecondaryInteg']
-        assert playbook2['command_to_integration']['generic-command'] == 'MainInteg'
-        assert playbook2['command_to_integration']['no-integration'] == ''
+        playbook1 = id_set_creator.id_set["playbooks"][0]["Playbook1"]
+        playbook2 = id_set_creator.id_set["playbooks"][1]["Playbook2"]
+        assert playbook1["command_to_integration"]["specific-command"] == [
+            "SecondaryInteg"
+        ]
+        assert playbook1["command_to_integration"]["generic-command"] == [
+            "MainInteg",
+            "SecondaryInteg",
+        ]
+        assert playbook2["command_to_integration"]["generic-command"] == "MainInteg"
+        assert playbook2["command_to_integration"]["no-integration"] == ""
 
     @staticmethod
     def test_generic_command_that_does_not_use_a_specific_brand(repo):
@@ -382,26 +490,35 @@ class TestAddCommandToImplementingIntegrationsMapping:
         """
         integrations = [
             {
-                'Slack': OrderedDict([
-                    ('name', 'Slack'),
-                    ('commands', ['send-notification']),
-                ])
+                "Slack": OrderedDict(
+                    [
+                        ("name", "Slack"),
+                        ("commands", ["send-notification"]),
+                    ]
+                )
             },
             {
-                'Syslog': OrderedDict([
-                    ('name', 'Syslog'),
-                    ('commands', ['send-notification']),
-                ])
+                "Syslog": OrderedDict(
+                    [
+                        ("name", "Syslog"),
+                        ("commands", ["send-notification"]),
+                    ]
+                )
             },
         ]
         playbooks = [
             {
-                'Playbook': OrderedDict([
-                    ('name', 'Playbook'),
-                    ('command_to_integration', {
-                        'send-notification': '',
-                    }),
-                ]),
+                "Playbook": OrderedDict(
+                    [
+                        ("name", "Playbook"),
+                        (
+                            "command_to_integration",
+                            {
+                                "send-notification": "",
+                            },
+                        ),
+                    ]
+                ),
             }
         ]
 
@@ -411,8 +528,8 @@ class TestAddCommandToImplementingIntegrationsMapping:
 
         id_set_creator.add_command_to_implementing_integrations_mapping()
 
-        playbook = id_set_creator.id_set['playbooks'][0]['Playbook']
-        assert playbook['command_to_integration']['send-notification'] == ''
+        playbook = id_set_creator.id_set["playbooks"][0]["Playbook"]
+        assert playbook["command_to_integration"]["send-notification"] == ""
 
     @staticmethod
     def test_generic_command_that_uses_a_specific_brand(repo):
@@ -429,26 +546,35 @@ class TestAddCommandToImplementingIntegrationsMapping:
         """
         integrations = [
             {
-                'Slack': OrderedDict([
-                    ('name', 'Slack'),
-                    ('commands', ['send-notification']),
-                ])
+                "Slack": OrderedDict(
+                    [
+                        ("name", "Slack"),
+                        ("commands", ["send-notification"]),
+                    ]
+                )
             },
             {
-                'Syslog': OrderedDict([
-                    ('name', 'Syslog'),
-                    ('commands', ['send-notification']),
-                ])
+                "Syslog": OrderedDict(
+                    [
+                        ("name", "Syslog"),
+                        ("commands", ["send-notification"]),
+                    ]
+                )
             },
         ]
         playbooks = [
             {
-                'Playbook': OrderedDict([
-                    ('name', 'Playbook'),
-                    ('command_to_integration', {
-                        'send-notification': 'Slack',
-                    }),
-                ]),
+                "Playbook": OrderedDict(
+                    [
+                        ("name", "Playbook"),
+                        (
+                            "command_to_integration",
+                            {
+                                "send-notification": "Slack",
+                            },
+                        ),
+                    ]
+                ),
             }
         ]
 
@@ -458,5 +584,5 @@ class TestAddCommandToImplementingIntegrationsMapping:
 
         id_set_creator.add_command_to_implementing_integrations_mapping()
 
-        playbook = id_set_creator.id_set['playbooks'][0]['Playbook']
-        assert playbook['command_to_integration']['send-notification'] == 'Slack'
+        playbook = id_set_creator.id_set["playbooks"][0]["Playbook"]
+        assert playbook["command_to_integration"]["send-notification"] == "Slack"

@@ -1,3 +1,4 @@
 global_rule_id: correlation_rule_id
 rules: null
 name: correlation_rule_name
+alert_name: Alibaba ActionTrail - multiple unauthorized action attempts detected by a user

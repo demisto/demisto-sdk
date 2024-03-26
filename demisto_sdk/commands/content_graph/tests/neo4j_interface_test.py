@@ -11,12 +11,12 @@ class TestNeo4jQueries:
         [
             (
                 ContentType.INTEGRATION,
-                [ContentType.BASE_CONTENT, ContentType.INTEGRATION],
+                [ContentType.BASE_NODE, ContentType.INTEGRATION],
             ),
             (
                 ContentType.TEST_PLAYBOOK,
                 [
-                    ContentType.BASE_CONTENT,
+                    ContentType.BASE_NODE,
                     ContentType.PLAYBOOK,
                     ContentType.TEST_PLAYBOOK,
                 ],
@@ -24,7 +24,7 @@ class TestNeo4jQueries:
             (
                 ContentType.SCRIPT,
                 [
-                    ContentType.BASE_CONTENT,
+                    ContentType.BASE_NODE,
                     ContentType.SCRIPT,
                     ContentType.COMMAND_OR_SCRIPT,
                 ],
@@ -42,7 +42,9 @@ class TestNeo4jQueries:
         Then:
             - Make sure the output string has the expected content type labels.
         """
-        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import labels_of
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+            labels_of,
+        )
 
         integration_labels = labels_of(content_type)
         for content_type in expected_labels:
@@ -57,7 +59,9 @@ class TestNeo4jQueries:
         Then:
             - Make sure the output is a string representation of a map in neo4j format.
         """
-        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import node_map
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+            node_map,
+        )
 
         assert (
             node_map(
@@ -65,6 +69,6 @@ class TestNeo4jQueries:
                     "object_id": "rel_data.source_id",
                     "content_type": "rel_data.source_type",
                 }
-            ) ==
-            "{object_id: rel_data.source_id, content_type: rel_data.source_type}"
+            )
+            == "{object_id: rel_data.source_id, content_type: rel_data.source_type}"
         )

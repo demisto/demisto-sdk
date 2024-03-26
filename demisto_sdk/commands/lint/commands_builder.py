@@ -6,19 +6,33 @@ from typing import List, Optional
 from packaging.version import parse
 
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import cert_partner_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import community_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import partner_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import xsoar_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import (
+    cert_partner_msg,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import (
+    community_msg,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import (
+    partner_msg,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import (
+    xsoar_msg,
+)
 
 # Third party packages
 # Local imports
 
-excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", ".venv"]
+excluded_files = [
+    "CommonServerPython.py",
+    "demistomock.py",
+    "CommonServerUserPython.py",
+    "conftest.py",
+    ".venv",
+]
 
 
 def build_flake8_command(files: List[Path]) -> str:
-    """ Build command for executing flake8 lint check
+    """Build command for executing flake8 lint check
         https://flake8.pycqa.org/en/latest/user/invocation.html
     Args:
         files(List[Path]): files to execute lint
@@ -32,20 +46,22 @@ def build_flake8_command(files: List[Path]) -> str:
 
     # This is the same config used in `tox.ini` file in content
     # We will probably want to use that in the future for this and all linters
-    command += '--ignore=W605,F403,F405,W503 '
-    command += '--exclude=_script_template_docker.py,./CommonServerPython.py,./demistomock.py '
-    command += '--max-line-length 130 '
-    command += '--per-file-ignores=nudge_external_prs.py:E231,E251,E999 '
+    command += "--ignore=W605,F403,F405,W503 "
+    command += (
+        "--exclude=_script_template_docker.py,./CommonServerPython.py,./demistomock.py "
+    )
+    command += "--max-line-length 130 "
+    command += "--per-file-ignores=nudge_external_prs.py:E231,E251,E999 "
 
     # Generating file patterns - path1,path2,path3,..
     files_list = [file.name for file in files]
-    command += ' '.join(files_list)
+    command += " ".join(files_list)
 
     return command
 
 
 def build_bandit_command(files: List[Path]) -> str:
-    """ Build command for executing bandit lint check
+    """Build command for executing bandit lint check
         https://github.com/PyCQA/bandit
     Args:
         files(List(Path)):  files to execute lint
@@ -68,8 +84,10 @@ def build_bandit_command(files: List[Path]) -> str:
     # Only show output in the case of an error
     command += " -q"
     # Setting error format
-    command += " --format custom --msg-template '{abspath}:{line}: {test_id} " \
-               "[Severity: {severity} Confidence: {confidence}] {msg}'"
+    command += (
+        " --format custom --msg-template '{abspath}:{line}: {test_id} "
+        "[Severity: {severity} Confidence: {confidence}] {msg}'"
+    )
     # Generating path patterns - path1,path2,path3,..
     files_list = [str(item) for item in files]
     command += f" -r {','.join(files_list)}"
@@ -77,43 +95,52 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
-def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -> str:
-    """ Build command to execute with xsoar linter module
+def build_xsoar_linter_command(
+    files: List[Path], support_level: str = "base", formatting_script: bool = False
+) -> str:
+    """Build command to execute with xsoar linter module
     Args:
         py_num(str): The python version in use
         files(List[Path]): files to execute lint
         support_level: Support level for the file
+        formatting_script: if the file being checked is a formatting script
 
     Returns:
        str: xsoar linter command using pylint load plugins
     """
     if not support_level:
-        support_level = 'base'
+        support_level = "base"
 
     # linters by support level
     support_levels = {
-        'base': 'base_checker',
-        'community': 'base_checker,community_level_checker',
-        'partner': 'base_checker,community_level_checker,partner_level_checker',
-        'certified partner': 'base_checker,community_level_checker,partner_level_checker,'
-                             'certified_partner_level_checker',
-        'xsoar': 'base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,'
-                 'xsoar_level_checker'
+        "base": "base_checker",
+        "community": "base_checker,community_level_checker",
+        "partner": "base_checker,community_level_checker,partner_level_checker",
+        "certified partner": "base_checker,community_level_checker,partner_level_checker,"
+        "certified_partner_level_checker",
+        "xsoar": "base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,"
+        "xsoar_level_checker",
     }
 
     # messages from all level linters
-    Msg_XSOAR_linter = {'base_checker': base_msg, 'community_level_checker': community_msg,
-                        'partner_level_checker': partner_msg, 'certified_partner_level_checker': cert_partner_msg,
-                        'xsoar_level_checker': xsoar_msg}
+    Msg_XSOAR_linter = {
+        "base_checker": base_msg,
+        "community_level_checker": community_msg,
+        "partner_level_checker": partner_msg,
+        "certified_partner_level_checker": cert_partner_msg,
+        "xsoar_level_checker": xsoar_msg,
+    }
 
     checker_path = ""
     message_enable = ""
     if support_levels.get(support_level):
         checkers = support_levels.get(support_level)
-        support = checkers.split(',') if checkers else []
+        support = checkers.split(",") if checkers else []
         for checker in support:
             checker_path += f"{checker},"
             checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
+            if formatting_script and "W9008" in checker_msgs_list:
+                checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"
 
@@ -135,8 +162,10 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
     return command
 
 
-def build_mypy_command(files: List[Path], version: str, content_repo: Path = None) -> str:
-    """ Build command to execute with mypy module
+def build_mypy_command(
+    files: List[Path], version: str, content_repo: Path = None
+) -> str:
+    """Build command to execute with mypy module
         https://mypy.readthedocs.io/en/stable/command_line.html
     Args:
         files(List[Path]): files to execute lint
@@ -170,7 +199,9 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
     command += " --show-traceback"
 
     # Point cache to be .mypy_cache in the content repo
-    command += f" --cache-dir={content_repo/'.mypy_cache' if content_repo else '/dev/null'}"
+    command += (
+        f" --cache-dir={content_repo/'.mypy_cache' if content_repo else '/dev/null'}"
+    )
     # Generating path patterns - file1 file2 file3,..
     files_list = [str(item) for item in files]
     command += " " + " ".join(files_list)
@@ -179,7 +210,7 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
 
 
 def build_vulture_command(files: List[Path], pack_path: Path) -> str:
-    """ Build command to execute with pylint module
+    """Build command to execute with pylint module
         https://github.com/jendrikseipp/vulture
     Args:
         py_num(str): The python version in use
@@ -191,11 +222,13 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     """
     command = "vulture"
     # Excluded files
-    command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
+    command += (
+        f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
+    )
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
     # Whitelist vulture
-    whitelist = Path(pack_path) / '.vulture_whitelist.py'
+    whitelist = Path(pack_path) / ".vulture_whitelist.py"
     if whitelist.exists():
         command += f" {whitelist.name}"
     files_list = [file.name for file in files]
@@ -203,8 +236,10 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     return command
 
 
-def build_pylint_command(files: List[Path], docker_version: Optional[str] = None) -> str:
-    """ Build command to execute with pylint module
+def build_pylint_command(
+    files: List[Path], docker_version: Optional[str] = None
+) -> str:
+    """Build command to execute with pylint module
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
         files(List[Path]): files to execute lint
@@ -218,7 +253,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
     # Prints only errors
     command += " -E"
     # disable xsoar linter messages
-    disable = ['bad-option-value']
+    disable = ["bad-option-value"]
     # TODO: remove when pylint will update its version to support py3.9
 
     if docker_version:
@@ -227,7 +262,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
         minor = py_ver.minor  # type: ignore
 
         if major == 3 and minor >= 9:
-            disable.append('unsubscriptable-object')
+            disable.append("unsubscriptable-object")
     command += f" --disable={','.join(disable)}"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"
@@ -243,7 +278,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
 
 
 def build_pytest_command(test_xml: str = "", json: bool = False, cov: str = "") -> str:
-    """ Build command to execute with pytest module
+    """Build command to execute with pytest module
         https://docs.pytest.org/en/latest/usage.html
     Args:
         test_xml(str): path indicate if required or not
@@ -252,7 +287,7 @@ def build_pytest_command(test_xml: str = "", json: bool = False, cov: str = "") 
     Returns:
         str: pytest command
     """
-    command = "pytest -ra"
+    command = "pytest -ra --override-ini='asyncio_mode=auto'"
     # Generating junit-xml report - used in circle ci
     if test_xml:
         command += " --junitxml=/devwork/report_pytest.xml"
@@ -261,13 +296,13 @@ def build_pytest_command(test_xml: str = "", json: bool = False, cov: str = "") 
         command += " --json=/devwork/report_pytest.json"
 
     if cov:
-        command += f' --cov-report= --cov={cov}'
+        command += f" --cov-report= --cov={cov}"
 
     return command
 
 
 def build_pwsh_analyze_command(file: Path) -> str:
-    """ Build command for powershell analyze
+    """Build command for powershell analyze
 
     Args:
         file(Path): files to execute lint
@@ -279,6 +314,8 @@ def build_pwsh_analyze_command(file: Path) -> str:
     command = "Invoke-ScriptAnalyzer"
     # Return exit code when finished
     command += " -EnableExit"
+    # Don't fail on warnings and information
+    command += " -Severity Error"
     # Lint Files paths
     command += f" -Path {file.name}"
 
@@ -286,13 +323,15 @@ def build_pwsh_analyze_command(file: Path) -> str:
 
 
 def build_pwsh_test_command() -> str:
-    """ Build command for powershell test
+    """Build command for powershell test
 
     Returns:
        str: powershell test command
     """
     command = "Invoke-Pester"
     # Return exit code when finished
-    command += ' -Configuration \'@{Run=@{Exit=$true}; Output=@{Verbosity="Detailed"}}\''
+    command += (
+        " -Configuration '@{Run=@{Exit=$true}; Output=@{Verbosity=\"Detailed\"}}'"
+    )
 
     return f"pwsh -Command {command}"

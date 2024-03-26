@@ -1,4 +1,4 @@
-import os.path
+from pathlib import Path
 from typing import Optional
 from unittest.mock import patch
 
@@ -6,24 +6,32 @@ import pytest
 
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT, CORRECT_PLAYBOOK_REFERENCE_USE,
-                                              INCORRECT_PLAYBOOK_REFERENCE_USE, INVALID_PLAYBOOK_INPUTS_USE,
-                                              INVALID_PLAYBOOK_UNHANDLED_CONDITION,
-                                              INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, VALID_PLAYBOOK_INPUTS_USE)
+from demisto_sdk.tests.constants_test import (
+    CONTENT_REPO_EXAMPLE_ROOT,
+    CORRECT_PLAYBOOK_REFERENCE_USE,
+    INCORRECT_PLAYBOOK_REFERENCE_USE,
+    INVALID_PLAYBOOK_INPUTS_USE,
+    INVALID_PLAYBOOK_UNHANDLED_CONDITION,
+    INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION,
+    VALID_PLAYBOOK_INPUTS_USE,
+)
 from TestSuite.test_tools import ChangeCWD
 
 
-def mock_structure(file_path=None, current_file=None, old_file=None):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
-    with patch.object(StructureValidator, '__init__', lambda a, b: None):
+def mock_structure(
+    file_path: Optional[str] = None,
+    current_file: Optional[dict] = None,
+    old_file: Optional[dict] = None,
+) -> StructureValidator:
+    with patch.object(StructureValidator, "__init__", lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
-        structure.scheme_name = 'playbook'
+        structure.scheme_name = "playbook"
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
-        structure.prev_ver = 'master'
-        structure.branch_name = ''
+        structure.prev_ver = "master"
+        structure.branch_name = ""
         structure.specific_validations = None
         return structure
 
@@ -31,123 +39,210 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 class TestPlaybookValidator:
     ROLENAME_NOT_EXIST = {"id": "Intezer - scan host", "version": -1}
     ROLENAME_EXIST_EMPTY = {"id": "Intezer - scan host", "version": -1, "rolename": []}
-    ROLENAME_EXIST_NON_EMPTY = {"id": "Intezer - scan host", "version": -1, "rolename": ["Administrator"]}
+    ROLENAME_EXIST_NON_EMPTY = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "rolename": ["Administrator"],
+    }
     IS_NO_ROLENAME_INPUTS = [
         (ROLENAME_NOT_EXIST, True),
         (ROLENAME_EXIST_EMPTY, True),
-        (ROLENAME_EXIST_NON_EMPTY, False)
+        (ROLENAME_EXIST_NON_EMPTY, False),
     ]
     CONDITION_NOT_EXIST_1 = ROLENAME_NOT_EXIST
-    CONDITION_NOT_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "tasks": {'1': {'type': 'not_condition'}}}
-    CONDITION_EXIST_EMPTY_1 = {"id": "Intezer - scan host", "version": -1,
-                               "tasks": {
-                                   '1': {'type': 'not_condition'},
-                                   '2': {'type': 'condition'}}
-                               }
-    CONDITION_EXIST_EMPTY_2 = {"id": "Intezer - scan host", "version": -1,
-                               "tasks":
-                                   {'1': {'type': 'condition',
-                                          'nexttasks': {}}}
-                               }
-    CONDITION_EXIST_PARTIAL_1 = {"id": "Intezer - scan host", "version": -1,
-                                 "tasks":
-                                     {'1': {'type': 'condition',
-                                            'conditions': [],
-                                            'nexttasks': {}}}
-                                 }
-    CONDITION_EXIST_PARTIAL_2 = {"id": "Intezer - scan host", "version": -1,
-                                 "tasks":
-                                     {'1': {'type': 'condition',
-                                            'conditions': [{'label': 'yes'}],
-                                            'nexttasks': {'#default#': ['2']}}}
-                                 }
-    CONDITION_EXIST_PARTIAL_3 = {"id": "Intezer - scan host", "version": -1,
-                                 "tasks":
-                                     {'1': {'type': 'condition',
-                                            'conditions': [{'label': 'yes'}],
-                                            'nexttasks': {'#default#': []}}}
-                                 }
-    CONDITION_EXIST_FULL_NO_TASK_ID = {"id": "Intezer - scan host", "version": -1,
-                                       "tasks":
-                                           {'1': {'type': 'condition',
-                                                  'conditions': [{'label': 'yes'}],
-                                                  'nexttasks': {'#default#': []}}}
-                                       }
-    CONDITION_EXIST_FULL = {"id": "Intezer - scan host", "version": -1,
-                            "tasks":
-                                {'1': {'type': 'condition',
-                                       'conditions': [{'label': 'yes'}],
-                                       'nexttasks': {'yes': ['3']}}}}
-    CONDITION_EXIST_FULL_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
-                                     "tasks":
-                                         {'1': {'type': 'condition',
-                                                'conditions': [{'label': 'YES'}],
-                                                'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}}
-    CONDITIONAL_ASK_EXISTS_NO_REPLY_OPTS = {"id": "Intezer - scan host", "version": -1,
-                                            "tasks":
-                                                {'1': {'type': 'condition',
-                                                       'message': {},
-                                                       'nexttasks': {}}}}
-    CONDITIONAL_ASK_EXISTS_NO_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                          "tasks":
-                                              {'1': {'type': 'condition',
-                                                     'message': {'replyOptions': ['yes']},
-                                                     'nexttasks': {}}}
-                                          }
-    CONDITIONAL_ASK_EXISTS_WITH_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                                 "tasks":
-                                                     {'1': {'type': 'condition',
-                                                            'message': {'replyOptions': ['yes']},
-                                                            'nexttasks': {'#default#': []}}}}
-    CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                            "tasks":
-                                                {'1': {'type': 'condition',
-                                                       'message': {'replyOptions': ['yes']},
-                                                       'nexttasks': {'yes': ['1']}}}
-                                            }
-    CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
-                                                     "tasks":
-                                                         {'1': {'type': 'condition',
-                                                                'message': {'replyOptions': ['yes']},
-                                                                'nexttasks': {'YES': ['1']}}}}
-    CONDITIONAL_TASK_EXISTS_WITH_TRUE_AND_FALSE_POSITIVE = {"id": "Intezer - scan host", "version": -1,
-                                                            "tasks":
-                                                                {'1': {'type': 'condition',
-                                                                       'message': {'replyOptions': ['yes', 'NO']},
-                                                                       'nexttasks': {"False Positive": ["29"],
-                                                                                     "True Positive": ["45"]}}}}
-    CONDITIONAL_SCRPT_WITHOUT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                          "tasks":
-                                              {'1': {'type': 'condition',
-                                                     'scriptName': 'testScript'}}}
-    CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                            "tasks":
-                                                {'1': {'type': 'condition',
-                                                       'scriptName': 'testScript',
-                                                       'nexttasks': {'#default#': []}}}}
-    CONDITIONAL_SCRPT_WITH_MULTI_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                             "tasks":
-                                                 {'1': {'type': 'condition',
-                                                        'scriptName': 'testScript',
-                                                        'nexttasks': {'#default#': [], 'yes': []}}}}
-    DELETECONTEXT_ALL_EXIST = {"id": "Intezer - scan host", "version": -1,
-                               "tasks":
-                                   {'1': {'type': 'regular',
-                                          'task': {'scriptName': 'DeleteContext'},
-                                          'scriptarguments': {'all': {'simple': 'yes'}}}}}
-    DELETECONTEXT_WITHOUT_ALL = {"id": "Intezer - scan host", "version": -1,
-                                 "tasks":
-                                     {'1': {'type': 'regular',
-                                            'task': {'scriptName': 'DeleteContext'},
-                                            'scriptarguments': {'all': {'simple': 'no'}}}}}
-    DELETECONTEXT_DOESNT_EXIST = {"id": "Intezer - scan host", "version": -1,
-                                  "tasks":
-                                      {'1': {'type': 'regular',
-                                             'task': {'name': 'test'}}}}
+    CONDITION_NOT_EXIST_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "not_condition"}},
+    }
+    CONDITION_EXIST_EMPTY_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "not_condition"}, "2": {"type": "condition"}},
+    }
+    CONDITION_EXIST_EMPTY_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "condition", "nexttasks": {}}},
+    }
+    CONDITION_EXIST_PARTIAL_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "condition", "conditions": [], "nexttasks": {}}},
+    }
+    CONDITION_EXIST_PARTIAL_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "yes"}],
+                "nexttasks": {"#default#": ["2"]},
+            }
+        },
+    }
+    CONDITION_EXIST_PARTIAL_3 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "yes"}],
+                "nexttasks": {"#default#": []},
+            }
+        },
+    }
+    CONDITION_EXIST_FULL_NO_TASK_ID = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "yes"}],
+                "nexttasks": {"#default#": []},
+            }
+        },
+    }
+    CONDITION_EXIST_FULL = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "yes"}],
+                "nexttasks": {"yes": ["3"]},
+            }
+        },
+    }
+    CONDITION_EXIST_FULL_CASE_DIF = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "YES"}],
+                "nexttasks": {"#default#": ["2"], "yes": ["3"]},
+            }
+        },
+    }
+    CONDITIONAL_ASK_EXISTS_NO_REPLY_OPTS = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "condition", "message": {}, "nexttasks": {}}},
+    }
+    CONDITIONAL_ASK_EXISTS_NO_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {},
+            }
+        },
+    }
+    CONDITIONAL_ASK_EXISTS_WITH_DFLT_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"#default#": []},
+            }
+        },
+    }
+    CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"yes": ["1"]},
+            }
+        },
+    }
+    CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK_CASE_DIF = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"YES": ["1"]},
+            }
+        },
+    }
+    CONDITIONAL_TASK_EXISTS_WITH_TRUE_AND_FALSE_POSITIVE = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "message": {"replyOptions": ["yes", "NO"]},
+                "nexttasks": {"False Positive": ["29"], "True Positive": ["45"]},
+            }
+        },
+    }
+    CONDITIONAL_SCRPT_WITHOUT_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "condition", "scriptName": "testScript"}},
+    }
+    CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "scriptName": "testScript",
+                "nexttasks": {"#default#": []},
+            }
+        },
+    }
+    CONDITIONAL_SCRPT_WITH_MULTI_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "scriptName": "testScript",
+                "nexttasks": {"#default#": [], "yes": []},
+            }
+        },
+    }
+    DELETECONTEXT_ALL_EXIST = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "regular",
+                "task": {"scriptName": "DeleteContext"},
+                "scriptarguments": {"all": {"simple": "yes"}},
+            }
+        },
+    }
+    DELETECONTEXT_WITHOUT_ALL = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "regular",
+                "task": {"scriptName": "DeleteContext"},
+                "scriptarguments": {"all": {"simple": "no"}},
+            }
+        },
+    }
+    DELETECONTEXT_DOESNT_EXIST = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "regular", "task": {"name": "test"}}},
+    }
     IS_DELETECONTEXT = [
         (DELETECONTEXT_ALL_EXIST, False),
         (DELETECONTEXT_WITHOUT_ALL, True),
-        (DELETECONTEXT_DOESNT_EXIST, True)
+        (DELETECONTEXT_DOESNT_EXIST, True),
     ]
 
     IS_CONDITIONAL_INPUTS = [
@@ -172,51 +267,83 @@ class TestPlaybookValidator:
     ]
 
     TASKS_NOT_EXIST = ROLENAME_NOT_EXIST
-    NEXT_TASKS_NOT_EXIST_1 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                              "tasks": {'1': {'type': 'not_condition'}}}
-    NEXT_TASKS_NOT_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                              "tasks": {
-                                  '1': {'type': 'title'},
-                                  '2': {'type': 'condition'}}
-                              }
-    NEXT_TASKS_INVALID_EXIST_1 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                                  "tasks": {
-                                      '1': {'type': 'title', 'nexttasks': {'next': ['3']}},
-                                      '2': {'type': 'condition'}}
-                                  }
-    NEXT_TASKS_INVALID_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                                  "tasks": {
-                                      '1': {'type': 'title', 'nexttasks': {'next': ['3']}},
-                                      '2': {'type': 'condition'},
-                                      '3': {'type': 'condition'}}
-                                  }
-    NEXT_TASKS_VALID_EXIST_1 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                                "tasks": {
-                                    '1': {'type': 'title', 'nexttasks': {'next': ['2', '3']}},
-                                    '2': {'type': 'condition'},
-                                    '3': {'type': 'condition'}}
-                                }
-    NEXT_TASKS_VALID_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                                "tasks": {
-                                    '1': {'type': 'title', 'nexttasks': {'next': ['2']}},
-                                    '2': {'type': 'condition', 'nexttasks': {'next': ['3']}},
-                                    '3': {'type': 'condition'}}
-                                }
+    NEXT_TASKS_NOT_EXIST_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {"1": {"type": "not_condition"}},
+    }
+    NEXT_TASKS_NOT_EXIST_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {"1": {"type": "title"}, "2": {"type": "condition"}},
+    }
+    NEXT_TASKS_INVALID_EXIST_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {"type": "title", "nexttasks": {"next": ["3"]}},
+            "2": {"type": "condition"},
+        },
+    }
+    NEXT_TASKS_INVALID_EXIST_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {"type": "title", "nexttasks": {"next": ["3"]}},
+            "2": {"type": "condition"},
+            "3": {"type": "condition"},
+        },
+    }
+    NEXT_TASKS_VALID_EXIST_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {"type": "title", "nexttasks": {"next": ["2", "3"]}},
+            "2": {"type": "condition"},
+            "3": {"type": "condition"},
+        },
+    }
+    NEXT_TASKS_VALID_EXIST_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {"type": "title", "nexttasks": {"next": ["2"]}},
+            "2": {"type": "condition", "nexttasks": {"next": ["3"]}},
+            "3": {"type": "condition"},
+        },
+    }
 
-    IS_INSTANCE_EXISTS = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                          "tasks": {
-                              '1': {'type': 'title', 'nexttasks': {'next': ['2']},
-                                    'scriptarguments': {'using': {'simple': 'tst.instance'}}},
-                              '2': {'type': 'condition', 'nexttasks': {'next': ['3']}},
-                              '3': {'type': 'condition'}}
-                          }
+    IS_INSTANCE_EXISTS = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {
+                "type": "title",
+                "nexttasks": {"next": ["2"]},
+                "scriptarguments": {"using": {"simple": "tst.instance"}},
+            },
+            "2": {"type": "condition", "nexttasks": {"next": ["3"]}},
+            "3": {"type": "condition"},
+        },
+    }
 
-    IS_INSTANCE_DOESNT_EXISTS = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                                 "tasks": {
-                                     '1': {'type': 'title', 'nexttasks': {'next': ['2', '3']}},
-                                     '2': {'type': 'condition'},
-                                     '3': {'type': 'condition'}}
-                                 }
+    IS_INSTANCE_DOESNT_EXISTS = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {"type": "title", "nexttasks": {"next": ["2", "3"]}},
+            "2": {"type": "condition"},
+            "3": {"type": "condition"},
+        },
+    }
 
     IS_USING_INSTANCE = [
         (IS_INSTANCE_EXISTS, False),
@@ -234,26 +361,48 @@ class TestPlaybookValidator:
     ]
 
     PLAYBOOK_JSON_VALID_SCRIPT_ID = {
-        "tasks": {"0": {"task": {"script": "scriptId1"}},
-                  "1": {"task": {"script": "scriptId2"}}}}
-    ID_SET_VALID_SCRIPT_ID = {"scripts": [{"scriptId1": {"name": "name"}}, {"scriptId2": {"name": "name"}}]}
+        "tasks": {
+            "0": {"task": {"script": "scriptId1"}},
+            "1": {"task": {"script": "scriptId2"}},
+        }
+    }
+    ID_SET_VALID_SCRIPT_ID = {
+        "scripts": [{"scriptId1": {"name": "name"}}, {"scriptId2": {"name": "name"}}]
+    }
 
     PLAYBOOK_JSON_INVALID_SCRIPT_ID = {
-        "tasks": {"0": {"task": {"script": "scriptId1"}},
-                  "1": {"task": {"script": "scriptId2"}}}}
+        "tasks": {
+            "0": {"task": {"script": "scriptId1"}},
+            "1": {"task": {"script": "scriptId2"}},
+        }
+    }
     ID_SET_INVALID_SCRIPT_ID = {"scripts": [{"scriptId2": {"name": "name"}}]}
 
     PLAYBOOK_JSON_VALID_SCRIPT_NAME = {
-        "tasks": {"0": {"task": {"scriptName": "scriptName1"}},
-                  "1": {"task": {"scriptName": "scriptName2"}}}}
+        "tasks": {
+            "0": {"task": {"scriptName": "scriptName1"}},
+            "1": {"task": {"scriptName": "scriptName2"}},
+        }
+    }
     ID_SET_VALID_SCRIPT_NAME = {
-        "scripts": [{"scriptId1": {"name": "scriptName1"}}, {"scriptId2": {"name": "scriptName2"}}]}
+        "scripts": [
+            {"scriptId1": {"name": "scriptName1"}},
+            {"scriptId2": {"name": "scriptName2"}},
+        ]
+    }
 
     PLAYBOOK_JSON_INVALID_SCRIPT_NAME = {
-        "tasks": {"0": {"task": {"scriptName": "scriptName1"}},
-                  "1": {"task": {"scriptName": "scriptName2"}}}}
+        "tasks": {
+            "0": {"task": {"scriptName": "scriptName1"}},
+            "1": {"task": {"scriptName": "scriptName2"}},
+        }
+    }
     ID_SET_INVALID_SCRIPT_NAME = {
-        "scripts": [{"scriptId1": {"name": "scriptName3"}}, {"scriptId2": {"name": "scriptName1"}}]}
+        "scripts": [
+            {"scriptId1": {"name": "scriptName3"}},
+            {"scriptId2": {"name": "scriptName1"}},
+        ]
+    }
 
     IS_SCRIPT_ID_VALID = [
         (PLAYBOOK_JSON_VALID_SCRIPT_ID, ID_SET_VALID_SCRIPT_ID, True),
@@ -263,145 +412,186 @@ class TestPlaybookValidator:
     ]
 
     PlAYBOOK_JSON_VALID_TASKID = {
-        "0": {"task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
-              "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
-        "1": {"task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
-              "taskid": "106b8f2e-5106-4857-82ac-122450af4893"}
+        "0": {
+            "task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
+            "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8",
+        },
+        "1": {
+            "task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
+            "taskid": "106b8f2e-5106-4857-82ac-122450af4893",
+        },
     }
 
     PlAYBOOK_JSON_INVALID_TASKID = {
-        "0": {"task": {"id": "1"},
-              "taskid": "1"},
-        "1": {"task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
-              "taskid": "106b8f2e-5106-4857-82ac-122450af4893"}
+        "0": {"task": {"id": "1"}, "taskid": "1"},
+        "1": {
+            "task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
+            "taskid": "106b8f2e-5106-4857-82ac-122450af4893",
+        },
     }
 
     PLAYBOOK_JSON_ID_EQUALS_TASKID = {
-        "0": {"task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
-              "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
-        "1": {"task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
-              "taskid": "106b8f2e-5106-4857-82ac-122450af4893"}
+        "0": {
+            "task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
+            "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8",
+        },
+        "1": {
+            "task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
+            "taskid": "106b8f2e-5106-4857-82ac-122450af4893",
+        },
     }
 
     PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID = {
-        "0": {"task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
-              "taskid": "106b8f2e-5106-4857-82ac-122450af4893"},
-        "1": {"task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
-              "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"}
+        "0": {
+            "task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
+            "taskid": "106b8f2e-5106-4857-82ac-122450af4893",
+        },
+        "1": {
+            "task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
+            "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8",
+        },
     }
 
     PLAYBOOK_JSON_INDICATORS_INPUT_VALID = {
-        'inputs': [
-            {'playbookInputQuery': {'queryEntity': 'indicators'}}
-        ],
-        'quiet': True,
-        'tasks': {
-            "0": {'quietmode': 0}
-        }
+        "inputs": [{"playbookInputQuery": {"queryEntity": "indicators"}}],
+        "quiet": True,
+        "tasks": {"0": {"quietmode": 0}},
     }
 
     PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET = {
-        'inputs': [
-            {'playbookInputQuery': {'queryEntity': 'indicators'}}
-        ],
-        'quiet': False,
-        'tasks': {
-            "0": {'quietmode': 1}
-        }
+        "inputs": [{"playbookInputQuery": {"queryEntity": "indicators"}}],
+        "quiet": False,
+        "tasks": {"0": {"quietmode": 1}},
     }
 
     PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET_TASK = {
-        'inputs': [
-            {'playbookInputQuery': {'queryEntity': 'indicators'}}
-        ],
-        'quiet': True,
-        'tasks': {
-            "0": {'quietmode': 0},
-            "1": {'quietmode': 2}
-        }
+        "inputs": [{"playbookInputQuery": {"queryEntity": "indicators"}}],
+        "quiet": True,
+        "tasks": {"0": {"quietmode": 0}, "1": {"quietmode": 2}},
     }
 
     PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_ON_ERROR = {
-        'inputs': [
-            {'playbookInputQuery': {'queryEntity': 'indicators'}}
-        ],
-        'quiet': True,
-        'tasks': {
-            "0": {'quietmode': 0},
-            "1": {'quietmode': 1, 'continueonerror': True}
-        }
+        "inputs": [{"playbookInputQuery": {"queryEntity": "indicators"}}],
+        "quiet": True,
+        "tasks": {
+            "0": {"quietmode": 0},
+            "1": {"quietmode": 1, "continueonerror": True},
+        },
     }
     IS_VALID_INDICATORS_INPUT = [
         (PLAYBOOK_JSON_INDICATORS_INPUT_VALID, True),
         (PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET, False),
         (PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET_TASK, False),
         (PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_ON_ERROR, False),
-
     ]
 
     IS_ID_UUID = [
         (PlAYBOOK_JSON_VALID_TASKID, True),
-        (PlAYBOOK_JSON_INVALID_TASKID, False)
+        (PlAYBOOK_JSON_INVALID_TASKID, False),
     ]
 
     IS_TASK_ID_EQUALS_ID = [
         (PLAYBOOK_JSON_ID_EQUALS_TASKID, True),
-        (PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID, False)
+        (PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID, False),
     ]
 
     IS_CORRECT_VALUE_REFERENCE = [
         (INCORRECT_PLAYBOOK_REFERENCE_USE, False),
-        (CORRECT_PLAYBOOK_REFERENCE_USE, True)
+        (CORRECT_PLAYBOOK_REFERENCE_USE, True),
     ]
 
-    DEPRECATED_VALID = {"deprecated": True, "description": "Deprecated. Use the XXXX playbook instead."}
-    DEPRECATED_VALID2 = {"deprecated": True, "description": "Deprecated. Feodo Tracker no longer supports this feed "
-                                                            "No available replacement."}
-    DEPRECATED_VALID3 = {"deprecated": True, "description": "Deprecated. The playbook uses an unsupported scraping"
-                                                            " API. Use Proofpoint Protection Server v2 playbook"
-                                                            " instead."}
+    DEPRECATED_VALID = {
+        "deprecated": True,
+        "description": "Deprecated. Use the XXXX playbook instead.",
+    }
+    DEPRECATED_VALID2 = {
+        "deprecated": True,
+        "description": "Deprecated. Feodo Tracker no longer supports this feed "
+        "No available replacement.",
+    }
+    DEPRECATED_VALID3 = {
+        "deprecated": True,
+        "description": "Deprecated. The playbook uses an unsupported scraping"
+        " API. Use Proofpoint Protection Server v2 playbook"
+        " instead.",
+    }
 
     DEPRECATED_INVALID_DESC = {"deprecated": True, "description": "Deprecated."}
-    DEPRECATED_INVALID_DESC2 = {"deprecated": True, "description": "Use the ServiceNow playbook to manage..."}
-    DEPRECATED_INVALID_DESC3 = {"deprecated": True, "description": "Deprecated. The playbook uses an unsupported"
-                                                                   " scraping API."}
+    DEPRECATED_INVALID_DESC2 = {
+        "deprecated": True,
+        "description": "Use the ServiceNow playbook to manage...",
+    }
+    DEPRECATED_INVALID_DESC3 = {
+        "deprecated": True,
+        "description": "Deprecated. The playbook uses an unsupported" " scraping API.",
+    }
     DEPRECATED_INPUTS = [
         (DEPRECATED_VALID, True),
         (DEPRECATED_VALID2, True),
         (DEPRECATED_VALID3, True),
         (DEPRECATED_INVALID_DESC, False),
         (DEPRECATED_INVALID_DESC2, False),
-        (DEPRECATED_INVALID_DESC3, False)
+        (DEPRECATED_INVALID_DESC3, False),
     ]
 
-    CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                            "tasks":
-                                                {'1': {'type': 'condition',
-                                                       'scriptName': 'testScript',
-                                                       'nexttasks': {'#default#': []}}}}
+    CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "scriptName": "testScript",
+                "nexttasks": {"#default#": []},
+            }
+        },
+    }
 
-    CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                               "tasks":
-                                                   {'1': {'type': 'condition',
-                                                          'scriptName': 'testScript',
-                                                          'nexttasks': {'1': []}}}}
+    CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "scriptName": "testScript",
+                "nexttasks": {"1": []},
+            }
+        },
+    }
 
-    CONDITION_TASK_WITH_ELSE = {'1': {'type': 'condition',
-                                      'scriptName': 'testScript',
-                                      'nexttasks': {'#default#': []}}}
+    CONDITION_TASK_WITH_ELSE = {
+        "1": {
+            "type": "condition",
+            "scriptName": "testScript",
+            "nexttasks": {"#default#": []},
+        }
+    }
 
-    CONDITION_TASK_WITHOUT_ELSE = {'1': {'type': 'condition',
-                                         'scriptName': 'testScript',
-                                         'nexttasks': {'1': []}}}
-    IS_ELSE_IN_CONDITION_TASK = [(CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK.get('tasks').get('1'), False),
-                                 (CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK.get('tasks').get('1'), True)]
+    CONDITION_TASK_WITHOUT_ELSE = {
+        "1": {"type": "condition", "scriptName": "testScript", "nexttasks": {"1": []}}
+    }
+    IS_ELSE_IN_CONDITION_TASK = [
+        (CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK.get("tasks").get("1"), False),
+        (CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK.get("tasks").get("1"), True),
+    ]
 
-    INVALID_INPUTS = [(INVALID_PLAYBOOK_INPUTS_USE, True, False),
-                      (VALID_PLAYBOOK_INPUTS_USE, True, True),
-                      (INVALID_PLAYBOOK_INPUTS_USE, False, True)]
+    INVALID_INPUTS = [
+        (INVALID_PLAYBOOK_INPUTS_USE, True, False),
+        (VALID_PLAYBOOK_INPUTS_USE, True, True),
+        (INVALID_PLAYBOOK_INPUTS_USE, False, True),
+    ]
 
-    @pytest.mark.parametrize("playbook_path, is_modified, expected_result", INVALID_INPUTS)
-    def test_playbook_inputs(self, playbook_path: str, is_modified: bool, expected_result: bool):
+    def test_valid_schema(self, playbook):
+        structure = StructureValidator(
+            file_path=playbook.yml.path, predefined_scheme="playbook"
+        )
+        assert structure.is_valid_scheme()
+
+    @pytest.mark.parametrize(
+        "playbook_path, is_modified, expected_result", INVALID_INPUTS
+    )
+    def test_playbook_inputs(
+        self, playbook_path: str, is_modified: bool, expected_result: bool
+    ):
         """
 
         Given
@@ -417,8 +607,12 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         assert validator.inputs_in_use_check(is_modified) == expected_result
 
-    @pytest.mark.parametrize("playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID)
-    def test_playbook_script_id(self, mocker, playbook, repo, playbook_json, id_set_json, expected_result):
+    @pytest.mark.parametrize(
+        "playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID
+    )
+    def test_playbook_script_id(
+        self, mocker, playbook, repo, playbook_json, id_set_json, expected_result
+    ):
         """
 
         Given
@@ -446,7 +640,6 @@ class TestPlaybookValidator:
     @pytest.mark.parametrize("playbook_json, expected_result", IS_CONDITIONAL_INPUTS)
     def test_is_condition_branches_handled(self, playbook_json, expected_result):
         structure = mock_structure("", playbook_json)
-        print(f'*** {playbook_json=}')
         validator = PlaybookValidator(structure)
         assert validator.is_condition_branches_handled() is expected_result
 
@@ -456,24 +649,29 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         assert validator.is_root_connected_to_all_tasks() is expected_result
 
-    @pytest.mark.parametrize("playbook_path, expected_result", [(INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, True),
-                                                                (INVALID_PLAYBOOK_UNHANDLED_CONDITION, False)])
+    @pytest.mark.parametrize(
+        "playbook_path, expected_result",
+        [
+            (INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, True),
+            (INVALID_PLAYBOOK_UNHANDLED_CONDITION, False),
+        ],
+    )
     def test_skipping_test_playbooks(self, mocker, playbook_path, expected_result):
         """
-            Given
-            - A playbook
+        Given
+        - A playbook
 
-            When
-            - The playbook has unhandled condition in it
+        When
+        - The playbook has unhandled condition in it
 
-            Then
-            -  Ensure the unhandled condition is ignored if it's a test playbook
-            -  Ensure validation fails if it's a not test playbook
+        Then
+        -  Ensure the unhandled condition is ignored if it's a test playbook
+        -  Ensure validation fails if it's a not test playbook
         """
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
             structure = StructureValidator(file_path=playbook_path)
             validator = PlaybookValidator(structure)
-            mocker.patch.object(validator, 'is_script_id_valid', return_value=True)
+            mocker.patch.object(validator, "is_script_id_valid", return_value=True)
 
             assert validator.is_valid_playbook() is expected_result
 
@@ -547,7 +745,9 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         validator._is_taskid_equals_id() is expected_result
 
-    @pytest.mark.parametrize("playbook_path, expected_result", IS_CORRECT_VALUE_REFERENCE)
+    @pytest.mark.parametrize(
+        "playbook_path, expected_result", IS_CORRECT_VALUE_REFERENCE
+    )
     def test_is_correct_value_references(self, playbook_path, expected_result):
         """
         Given
@@ -593,7 +793,9 @@ class TestPlaybookValidator:
         validator.current_file = current
         assert validator.is_valid_as_deprecated() is answer
 
-    @pytest.mark.parametrize("playbook_task_json, expected_result", IS_ELSE_IN_CONDITION_TASK)
+    @pytest.mark.parametrize(
+        "playbook_task_json, expected_result", IS_ELSE_IN_CONDITION_TASK
+    )
     def test_verify_else_for_conditions_task(self, playbook_task_json, expected_result):
         """
         Given
@@ -608,7 +810,10 @@ class TestPlaybookValidator:
         """
         structure = mock_structure("", playbook_task_json)
         validator = PlaybookValidator(structure)
-        assert validator._is_else_path_in_condition_task(task=playbook_task_json) is expected_result
+        assert (
+            validator._is_else_path_in_condition_task(task=playbook_task_json)
+            is expected_result
+        )
 
     def test_name_contains_the_type(self, pack):
         """
@@ -644,7 +849,9 @@ class TestPlaybookValidator:
 
             assert validator.name_not_contain_the_type()
 
-    @pytest.mark.parametrize("playbook_json, expected_result", IS_VALID_INDICATORS_INPUT)
+    @pytest.mark.parametrize(
+        "playbook_json, expected_result", IS_VALID_INDICATORS_INPUT
+    )
     def test_is_valid_with_indicators_input(self, playbook_json, expected_result):
         """
         Given
@@ -666,32 +873,42 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         assert validator.is_valid_with_indicators_input() is expected_result
 
-    README_TEST_DATA = [(True, False, False),
-                        (False, False, True),
-                        (True, True, True),
-                        ]
+    README_TEST_DATA = [
+        (True, False, False),
+        (False, False, True),
+        (True, True, True),
+    ]
 
-    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
-    def test_validate_readme_exists(self, repo, remove_readme, validate_all, expected_result):
+    @pytest.mark.parametrize(
+        "remove_readme, validate_all, expected_result", README_TEST_DATA
+    )
+    def test_validate_readme_exists(
+        self, repo, remove_readme, validate_all, expected_result
+    ):
         """
-              Given:
-                  - An integration yml that was added or modified to validate
+        Given:
+            - An integration yml that was added or modified to validate
 
-              When:
-                  - The integration is missing a readme.md file in the same folder
-                  - The integration has a readme.md file in the same folder
-                  - The integration is missing a readme.md file in the same folder but has not been changed or added
-                      (This check is for backward compatibility)
+        When:
+            - The integration is missing a readme.md file in the same folder
+            - The integration has a readme.md file in the same folder
+            - The integration is missing a readme.md file in the same folder but has not been changed or added
+                (This check is for backward compatibility)
 
-              Then:
-                  - Ensure readme exists and validation fails
-                  - Ensure readme exists and validation passes
-                  - Ensure readme exists and validation passes
+        Then:
+            - Ensure readme exists and validation fails
+            - Ensure readme exists and validation passes
+            - Ensure readme exists and validation passes
         """
-        read_me_pack = repo.create_pack('README_test')
-        playbook = read_me_pack.create_playbook('playbook1')
+        read_me_pack = repo.create_pack("README_test")
+        playbook = read_me_pack.create_playbook("playbook1")
         structure_validator = StructureValidator(playbook.yml.path)
-        playbook_validator = PlaybookValidator(structure_validator, validate_all=validate_all)
+        playbook_validator = PlaybookValidator(
+            structure_validator, validate_all=validate_all
+        )
         if remove_readme:
-            os.remove(playbook.readme.path)
-        assert playbook_validator.validate_readme_exists(playbook_validator.validate_all) is expected_result
+            Path(playbook.readme.path).unlink()
+        assert (
+            playbook_validator.validate_readme_exists(playbook_validator.validate_all)
+            is expected_result
+        )

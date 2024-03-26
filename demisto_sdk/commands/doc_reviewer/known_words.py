@@ -24,7 +24,7 @@ KNOWN_WORDS = [
     "download",
     "incidentid",
     "incidenttype",
-    'Cortex',
-    'XSOAR',
-    'integrations'
+    "Cortex",
+    "XSOAR",
+    "integrations",
 ]

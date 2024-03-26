@@ -44,91 +44,80 @@ class Contribution:
         self.layouts_containers: List[JSONBased] = list()
 
         self.name = name
-        self.created_zip_filepath = ''
+        self.created_zip_filepath = ""
 
         # Create contribution structure
-        self._integrations_path = self.target_dir / 'integration'
+        self._integrations_path = self.target_dir / "integration"
         self._integrations_path.mkdir()
 
-        self._scripts_path = self.target_dir / 'automation'
+        self._scripts_path = self.target_dir / "automation"
         self._scripts_path.mkdir()
 
-        self._playbooks_path = self.target_dir / 'playbook'
+        self._playbooks_path = self.target_dir / "playbook"
         self._playbooks_path.mkdir()
 
-        self._classifiers_path = self.target_dir / 'classifier'
+        self._classifiers_path = self.target_dir / "classifier"
         self._classifiers_path.mkdir()
 
         self._mappers_path = self._classifiers_path
 
-        self._dashboards_path = self.target_dir / 'dashboard'
+        self._dashboards_path = self.target_dir / "dashboard"
         self._dashboards_path.mkdir()
 
-        self._incident_fields_path = self.target_dir / 'incidentfield'
+        self._incident_fields_path = self.target_dir / "incidentfield"
         self._incident_fields_path.mkdir()
 
-        self._incident_types_path = self.target_dir / 'incidenttype'
+        self._incident_types_path = self.target_dir / "incidenttype"
         self._incident_types_path.mkdir()
 
-        self._indicator_fields_path = self.target_dir / 'indicatorfield'
+        self._indicator_fields_path = self.target_dir / "indicatorfield"
         self._indicator_fields_path.mkdir()
 
-        self._reports_path = self.target_dir / 'report'
+        self._reports_path = self.target_dir / "report"
         self._reports_path.mkdir()
 
-        self._reputations_path = self.target_dir / 'reputation'
+        self._reputations_path = self.target_dir / "reputation"
         self._reputations_path.mkdir()
 
-        self._layouts_path = self.target_dir / 'layout'
+        self._layouts_path = self.target_dir / "layout"
         self._layouts_path.mkdir()
 
-        self._layoutscontainer_path = self.target_dir / 'layoutscontainer'
+        self._layoutscontainer_path = self.target_dir / "layoutscontainer"
         self._layoutscontainer_path.mkdir()
 
     def create_integration(
-            self,
-            name: Optional[str] = None,
-            unified: Optional[bool] = True
+        self, name: Optional[str] = None, unified: Optional[bool] = True
     ):
         if name is None:
-            name = f'integration{len(self.integrations)}'
+            name = f"integration{len(self.integrations)}"
         integration = Integration(self._integrations_path, name, self._repo, unified)
         integration.create_default_integration()
         self.integrations.append(integration)
         return integration
 
-    def create_script(
-            self,
-            name: Optional[str] = None,
-            unified: Optional[bool] = True):
+    def create_script(self, name: Optional[str] = None, unified: Optional[bool] = True):
         if name is None:
-            name = f'script{len(self.scripts)}'
+            name = f"script{len(self.scripts)}"
         script = Script(self._scripts_path, name, self._repo, unified)
         script.create_default_script()
         self.scripts.append(script)
         return script
 
-    def create_playbook(
-            self,
-            name: Optional[str] = None):
+    def create_playbook(self, name: Optional[str] = None):
         if name is None:
-            name = f'playbook{len(self.playbooks)}'
+            name = f"playbook{len(self.playbooks)}"
         playbook = Playbook(self._playbooks_path, name, self._repo)
         playbook.create_default_playbook()
         self.playbooks.append(playbook)
         return playbook
 
     def create_test_script(self):
-        script = self.create_script('sample_script')
+        script = self.create_script("sample_script")
         script.create_default_script()
         return script
 
     def _create_json_based(
-            self,
-            name,
-            prefix: str,
-            content: dict = None,
-            dir_path: Path = None
+        self, name, prefix: str, content: dict = None, dir_path: Path = None
     ):
         if content is None:
             content = {}
@@ -139,12 +128,7 @@ class Contribution:
         obj.write_json(content)
         return obj
 
-    def _create_text_based(
-            self,
-            name,
-            content: str = '',
-            dir_path: Path = None
-    ):
+    def _create_text_based(self, name, content: str = "", dir_path: Path = None):
         if dir_path:
             obj = TextBased(dir_path, name)
         else:
@@ -152,87 +136,74 @@ class Contribution:
         obj.write_text(content)
         return obj
 
-    def create_classifier(
-            self,
-            name,
-            content: dict = None
-    ):
-        prefix = 'classifier'
-        classifier = self._create_json_based(name, prefix, content, dir_path=self._classifiers_path)
+    def create_classifier(self, name, content: dict = None):
+        prefix = "classifier"
+        classifier = self._create_json_based(
+            name, prefix, content, dir_path=self._classifiers_path
+        )
         self.classifiers.append(classifier)
         return classifier
 
-    def create_mapper(
-            self,
-            name,
-            content: dict = None
-    ):
-        prefix = 'classifier-mapper'
-        mapper = self._create_json_based(name, prefix, content, dir_path=self._mappers_path)
+    def create_mapper(self, name, content: dict = None):
+        prefix = "classifier-mapper"
+        mapper = self._create_json_based(
+            name, prefix, content, dir_path=self._mappers_path
+        )
         self.mapper.append(mapper)
         return mapper
 
-    def create_dashboard(
-            self,
-            name,
-            content: dict = None
-    ):
-        prefix = 'dashboard'
-        dashboard = self._create_json_based(name, prefix, content, dir_path=self._dashboards_path)
+    def create_dashboard(self, name, content: dict = None):
+        prefix = "dashboard"
+        dashboard = self._create_json_based(
+            name, prefix, content, dir_path=self._dashboards_path
+        )
         self.dashboards.append(dashboard)
         return dashboard
 
-    def create_layout(
-            self,
-            name,
-            content: dict = None
-    ):
+    def create_layout(self, name, content: dict = None):
         prefix = LAYOUT
-        layout = self._create_json_based(name, prefix, content, dir_path=self._layouts_path)
+        layout = self._create_json_based(
+            name, prefix, content, dir_path=self._layouts_path
+        )
         self.layouts.append(layout)
         return layout
 
-    def create_layoutscontainer(
-            self,
-            name,
-            content: dict = None
-    ):
+    def create_layoutscontainer(self, name, content: dict = None):
         prefix = LAYOUTS_CONTAINER
-        layoutscontainer = self._create_json_based(name, prefix, content, dir_path=self._layoutscontainer_path)
+        layoutscontainer = self._create_json_based(
+            name, prefix, content, dir_path=self._layoutscontainer_path
+        )
         self.layouts_containers.append(layoutscontainer)
         return layoutscontainer
 
     def create_incident_field(
-            self,
-            name,
-            content: dict = None,
-            release_notes: bool = False
+        self, name, content: dict = None, release_notes: bool = False
     ):
-        prefix = 'incident-field'
-        incident_field = self._create_json_based(name, prefix, content, dir_path=self._incident_fields_path)
+        prefix = "incident-field"
+        incident_field = self._create_json_based(
+            name, prefix, content, dir_path=self._incident_fields_path
+        )
         if release_notes:
-            release_notes_file = self._create_text_based(f'{incident_field}_CHANGELOG.md',
-                                                         dir_path=self._incident_fields_path)
+            release_notes_file = self._create_text_based(
+                f"{incident_field}_CHANGELOG.md", dir_path=self._incident_fields_path
+            )
             self.incident_field.append(release_notes_file)
         self.incident_field.append(incident_field)
         return incident_field
 
-    def create_incident_type(
-            self,
-            name,
-            content: dict = None):
-        prefix = 'incident-type'
-        incident_type = self._create_json_based(name, prefix, content, dir_path=self._incident_types_path)
+    def create_incident_type(self, name, content: dict = None):
+        prefix = "incident-type"
+        incident_type = self._create_json_based(
+            name, prefix, content, dir_path=self._incident_types_path
+        )
         self.incident_types.append(incident_type)
         return incident_type
 
-    def create_indicator_field(
-            self,
-            name,
-            content: dict = None
-    ):
-        prefix = 'incident-field'
-        indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields_path)
+    def create_indicator_field(self, name, content: dict = None):
+        prefix = "incident-field"
+        indicator_field = self._create_json_based(
+            name, prefix, content, dir_path=self._indicator_fields_path
+        )
         self.indicator_field.append(indicator_field)
 
     def create_metadata_for_zip(self):
@@ -243,34 +214,31 @@ class Contribution:
             "support": "internalContribution",
             "author": "Who Cares",
             "authorImage": "",
-            "supportDetails": {
-                "url": "",
-                "email": "madeup@madeup.com"
-            }
+            "supportDetails": {"url": "", "email": "madeup@madeup.com"},
         }
-        self.metadata = JSONBased(self.target_dir, 'metadata', '')
+        self.metadata = JSONBased(self.target_dir, "metadata", "")
         self.metadata.write_json(fake_metadata)
 
     def create_zip(self, zip_dst: Optional[Path] = None, del_src_files: bool = True):
-        self.create_classifier(name='fakeclassifier')
-        self.create_dashboard(name='fakedashboard')
-        self.create_layoutscontainer(name='fakelayoutscontainer')
-        self.create_layout(name='fakelayout')
-        self.create_incident_field(name='fakeincidentfield')
-        self.create_incident_type(name='fakeincidenttype')
-        self.create_indicator_field(name='fakeindicatorfield')
-        self.create_mapper(name='fakemapper')
+        self.create_classifier(name="fakeclassifier")
+        self.create_dashboard(name="fakedashboard")
+        self.create_layoutscontainer(name="fakelayoutscontainer")
+        self.create_layout(name="fakelayout")
+        self.create_incident_field(name="fakeincidentfield")
+        self.create_incident_type(name="fakeincidenttype")
+        self.create_indicator_field(name="fakeindicatorfield")
+        self.create_mapper(name="fakemapper")
         self.create_integration()
         self.create_script()
-        self.create_playbook(name='playbook-SamplePlaybook')
+        self.create_playbook(name="playbook-SamplePlaybook")
         self.create_metadata_for_zip()
         if zip_dst:
             self.created_zip_filepath = shutil.make_archive(
-                str(zip_dst / self.name), 'zip', self.target_dir
+                str(zip_dst / self.name), "zip", self.target_dir
             )
         else:
             self.created_zip_filepath = shutil.make_archive(
-                str(self.target_dir.parent / self.name), 'zip', self.target_dir
+                str(self.target_dir.parent / self.name), "zip", self.target_dir
             )
         if del_src_files:
             shutil.rmtree(self.target_dir)

@@ -3,20 +3,55 @@ from typing import Union
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
-from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import GeneralObject
-from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool, AuthorImage, ChangeLog, Classifier,
-                                                                      ClassifierMapper, Connection, Contributors,
-                                                                      CorrelationRule, Dashboard, DocFile,
-                                                                      GenericDefinition, GenericField, GenericModule,
-                                                                      GenericType, IncidentField, IncidentType,
-                                                                      IndicatorField, IndicatorType, Integration, Job,
-                                                                      Layout, LayoutsContainer, Lists, ModelingRule,
-                                                                      OldClassifier, OldIndicatorType, PackIgnore,
-                                                                      PackMetaData, ParsingRule, Playbook,
-                                                                      PreProcessRule, Readme, ReleaseNote,
-                                                                      ReleaseNoteConfig, Report, Script, SecretIgnore,
-                                                                      Trigger, Widget, Wizard, XDRCTemplate,
-                                                                      XSIAMDashboard, XSIAMReport)
+from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import (
+    GeneralObject,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    AgentTool,
+    AuthorImage,
+    ChangeLog,
+    Classifier,
+    ClassifierMapper,
+    Connection,
+    Contributors,
+    CorrelationRule,
+    Dashboard,
+    DocFile,
+    GenericDefinition,
+    GenericField,
+    GenericModule,
+    GenericType,
+    IncidentField,
+    IncidentType,
+    IndicatorField,
+    IndicatorType,
+    Integration,
+    Job,
+    Layout,
+    LayoutRule,
+    LayoutsContainer,
+    Lists,
+    ModelingRule,
+    OldClassifier,
+    OldIndicatorType,
+    PackIgnore,
+    PackMetaData,
+    ParsingRule,
+    Playbook,
+    PreProcessRule,
+    Readme,
+    ReleaseNote,
+    ReleaseNoteConfig,
+    Report,
+    Script,
+    SecretIgnore,
+    Trigger,
+    Widget,
+    Wizard,
+    XDRCTemplate,
+    XSIAMDashboard,
+    XSIAMReport,
+)
 from demisto_sdk.commands.common.content.objects.root_objects import Documentation
 from demisto_sdk.commands.common.tools import find_type
 
@@ -50,9 +85,9 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.RELEASE_NOTES: ReleaseNote,
     FileType.RELEASE_NOTES_CONFIG: ReleaseNoteConfig,
     FileType.DOC_IMAGE: DocFile,
-    FileType.JAVASCRIPT_FILE: '',
-    FileType.POWERSHELL_FILE: '',
-    FileType.PYTHON_FILE: '',
+    FileType.JAVASCRIPT_FILE: "",
+    FileType.POWERSHELL_FILE: "",
+    FileType.PYTHON_FILE: "",
     FileType.CONTRIBUTORS: Contributors,
     FileType.GENERIC_TYPE: GenericType,
     FileType.GENERIC_FIELD: GenericField,
@@ -67,19 +102,20 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.TRIGGER: Trigger,
     FileType.WIZARD: Wizard,
     FileType.XDRC_TEMPLATE: XDRCTemplate,
+    FileType.LAYOUT_RULE: LayoutRule,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {
-    'pack_metadata.json': PackMetaData,
-    '.secrets-ignore': SecretIgnore,
-    '.pack-ignore': PackIgnore,
-    f'{OLD_INDICATOR_TYPE}.json': OldIndicatorType,
-    'Author_image.png': AuthorImage,
+    "pack_metadata.json": PackMetaData,
+    ".secrets-ignore": SecretIgnore,
+    ".pack-ignore": PackIgnore,
+    f"{OLD_INDICATOR_TYPE}.json": OldIndicatorType,
+    "Author_image.png": AuthorImage,
 }
 
 
 def path_to_pack_object(path: Union[Path, str]) -> GeneralObject:
-    """ Create content object by path, By the following steps:
+    """Create content object by path, By the following steps:
             1. Try determinist file name -> pack_metadata.json, .secrets-ignore, .pack-ignore, reputations.json
             2. If 'Tools' in path -> Object is AgentTool.
             3. If file start with 'doc-*' -> Object is Documentation.
@@ -98,10 +134,10 @@ def path_to_pack_object(path: Union[Path, str]) -> GeneralObject:
     # Determinist conversion by file name.
     object_type = TYPE_CONVERSION_BY_FILE_NAME.get(path.name)
     # Tools in path
-    if not object_type and 'Tools' in path.parts:
+    if not object_type and "Tools" in path.parts:
         object_type = AgentTool
     # File name start with doc-*
-    if not object_type and path.name.startswith('doc-'):
+    if not object_type and path.name.startswith("doc-"):
         object_type = Documentation
     # find_type handling
     if not object_type:

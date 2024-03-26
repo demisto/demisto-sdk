@@ -53,11 +53,12 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 """
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-json = JSON_Handler()
+
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 def util_load_json(path):
-    with open(path, encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         return json.loads(f.read())
 
 
@@ -71,13 +72,13 @@ def test_say_hello():
     """
     from HelloWorld import Client, say_hello_command
 
-    client = Client(base_url='https://test.com/api/v1', verify=False, auth=('test', 'test'))
-    args = {
-        'name': 'Dbot'
-    }
+    client = Client(
+        base_url="https://test.com/api/v1", verify=False, auth=("test", "test")
+    )
+    args = {"name": "Dbot"}
     response = say_hello_command(client, args)
 
-    assert response.outputs == 'Hello Dbot'
+    assert response.outputs == "Hello Dbot"
 
 
 def test_start_scan(requests_mock):
@@ -90,31 +91,29 @@ def test_start_scan(requests_mock):
     from HelloWorld import Client, scan_start_command
 
     mock_response = {
-        'scan_id': '7a161a3f-8d53-42de-80cd-92fb017c5a12',
-        'status': 'RUNNING'
+        "scan_id": "7a161a3f-8d53-42de-80cd-92fb017c5a12",
+        "status": "RUNNING",
     }
-    requests_mock.get('https://test.com/api/v1/start_scan?hostname=example.com', json=mock_response)
-
-    client = Client(
-        base_url='https://test.com/api/v1',
-        verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+    requests_mock.get(
+        "https://test.com/api/v1/start_scan?hostname=example.com", json=mock_response
     )
 
-    args = {
-        'hostname': 'example.com'
-    }
+    client = Client(
+        base_url="https://test.com/api/v1",
+        verify=False,
+        headers={"Authentication": "Bearer some_api_key"},
+    )
+
+    args = {"hostname": "example.com"}
 
     response = scan_start_command(client, args)
 
-    assert response.outputs_prefix == 'HelloWorld.Scan'
-    assert response.outputs_key_field == 'scan_id'
+    assert response.outputs_prefix == "HelloWorld.Scan"
+    assert response.outputs_key_field == "scan_id"
     assert response.outputs == {
-        'scan_id': '7a161a3f-8d53-42de-80cd-92fb017c5a12',
-        'status': 'RUNNING',
-        'hostname': 'example.com'
+        "scan_id": "7a161a3f-8d53-42de-80cd-92fb017c5a12",
+        "status": "RUNNING",
+        "hostname": "example.com",
     }
 
 
@@ -128,53 +127,37 @@ def test_status_scan(requests_mock):
     """
     from HelloWorld import Client, scan_status_command
 
-    mock_response = {
-        'scan_id': '100',
-        'status': 'COMPLETE'
-    }
-    requests_mock.get('https://test.com/api/v1/check_scan?scan_id=100', json=mock_response)
-
-    mock_response = {
-        'scan_id': '200',
-        'status': 'RUNNING'
-    }
-    requests_mock.get('https://test.com/api/v1/check_scan?scan_id=200', json=mock_response)
-
-    mock_response = {
-        'scan_id': '300',
-        'status': 'COMPLETE'
-    }
-    requests_mock.get('https://test.com/api/v1/check_scan?scan_id=300', json=mock_response)
-
-    client = Client(
-        base_url='https://test.com/api/v1',
-        verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+    mock_response = {"scan_id": "100", "status": "COMPLETE"}
+    requests_mock.get(
+        "https://test.com/api/v1/check_scan?scan_id=100", json=mock_response
     )
 
-    args = {
-        'scan_id': ['100', '200', '300']
-    }
+    mock_response = {"scan_id": "200", "status": "RUNNING"}
+    requests_mock.get(
+        "https://test.com/api/v1/check_scan?scan_id=200", json=mock_response
+    )
+
+    mock_response = {"scan_id": "300", "status": "COMPLETE"}
+    requests_mock.get(
+        "https://test.com/api/v1/check_scan?scan_id=300", json=mock_response
+    )
+
+    client = Client(
+        base_url="https://test.com/api/v1",
+        verify=False,
+        headers={"Authentication": "Bearer some_api_key"},
+    )
+
+    args = {"scan_id": ["100", "200", "300"]}
 
     response = scan_status_command(client, args)
 
-    assert response.outputs_prefix == 'HelloWorld.Scan'
-    assert response.outputs_key_field == 'scan_id'
+    assert response.outputs_prefix == "HelloWorld.Scan"
+    assert response.outputs_key_field == "scan_id"
     assert response.outputs == [
-        {
-            'scan_id': '100',
-            'status': 'COMPLETE'
-        },
-        {
-            'scan_id': '200',
-            'status': 'RUNNING'
-        },
-        {
-            'scan_id': '300',
-            'status': 'COMPLETE'
-        }
+        {"scan_id": "100", "status": "COMPLETE"},
+        {"scan_id": "200", "status": "RUNNING"},
+        {"scan_id": "300", "status": "COMPLETE"},
     ]
 
 
@@ -188,27 +171,24 @@ def test_scan_results(requests_mock):
     from CommonServerPython import Common
     from HelloWorld import Client, scan_results_command
 
-    mock_response = util_load_json('test_data/scan_results.json')
-    requests_mock.get('https://test.com/api/v1/get_scan_results?scan_id=100', json=mock_response)
-
-    client = Client(
-        base_url='https://test.com/api/v1',
-        verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+    mock_response = util_load_json("test_data/scan_results.json")
+    requests_mock.get(
+        "https://test.com/api/v1/get_scan_results?scan_id=100", json=mock_response
     )
 
-    args = {
-        'scan_id': '100',
-        'format': 'json'
-    }
+    client = Client(
+        base_url="https://test.com/api/v1",
+        verify=False,
+        headers={"Authentication": "Bearer some_api_key"},
+    )
+
+    args = {"scan_id": "100", "format": "json"}
 
     response = scan_results_command(client, args)
 
     assert response.outputs == mock_response
-    assert response.outputs_prefix == 'HelloWorld.Scan'
-    assert response.outputs_key_field == 'scan_id'
+    assert response.outputs_prefix == "HelloWorld.Scan"
+    assert response.outputs_key_field == "scan_id"
 
     # This command also returns Common.CVE data
     assert isinstance(response.indicators, list)
@@ -225,36 +205,35 @@ def test_search_alerts(requests_mock):
     """
     from HelloWorld import Client, search_alerts_command
 
-    mock_response = util_load_json('test_data/search_alerts.json')
+    mock_response = util_load_json("test_data/search_alerts.json")
     requests_mock.get(
-        'https://test.com/api/v1/get_alerts?alert_status=ACTIVE&severity=Critical&max_results=2&start_time=1581982463',
-        json=mock_response['alerts'])
+        "https://test.com/api/v1/get_alerts?alert_status=ACTIVE&severity=Critical&max_results=2&start_time=1581982463",
+        json=mock_response["alerts"],
+    )
 
     client = Client(
-        base_url='https://test.com/api/v1',
+        base_url="https://test.com/api/v1",
         verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        headers={"Authentication": "Bearer some_api_key"},
     )
 
     args = {
-        'severity': 'Critical',
-        'start_time': 1581982463,
-        'max_results': 2,
-        'status': 'ACTIVE'
+        "severity": "Critical",
+        "start_time": 1581982463,
+        "max_results": 2,
+        "status": "ACTIVE",
     }
 
     response = search_alerts_command(client, args)
 
     # We modify the timestamp from the raw mock_response of the API, because the
     # integration changes the format from timestamp to ISO8601.
-    mock_response['alerts'][0]['created'] = '2020-02-17T23:34:23.000Z'
-    mock_response['alerts'][1]['created'] = '2020-02-17T23:34:23.000Z'
+    mock_response["alerts"][0]["created"] = "2020-02-17T23:34:23.000Z"
+    mock_response["alerts"][1]["created"] = "2020-02-17T23:34:23.000Z"
 
-    assert response.outputs_prefix == 'HelloWorld.Alert'
-    assert response.outputs_key_field == 'alert_id'
-    assert response.outputs == mock_response['alerts']
+    assert response.outputs_prefix == "HelloWorld.Alert"
+    assert response.outputs_key_field == "alert_id"
+    assert response.outputs == mock_response["alerts"]
 
 
 def test_get_alert(requests_mock):
@@ -266,31 +245,31 @@ def test_get_alert(requests_mock):
     """
     from HelloWorld import Client, get_alert_command
 
-    mock_response = util_load_json('test_data/get_alert.json')
-    requests_mock.get('https://test.com/api/v1/get_alert_details?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0',
-                      json=mock_response)
+    mock_response = util_load_json("test_data/get_alert.json")
+    requests_mock.get(
+        "https://test.com/api/v1/get_alert_details?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0",
+        json=mock_response,
+    )
 
     client = Client(
-        base_url='https://test.com/api/v1',
+        base_url="https://test.com/api/v1",
         verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        headers={"Authentication": "Bearer some_api_key"},
     )
 
     args = {
-        'alert_id': '695b3238-05d6-4934-86f5-9fff3201aeb0',
+        "alert_id": "695b3238-05d6-4934-86f5-9fff3201aeb0",
     }
 
     response = get_alert_command(client, args)
 
     # We modify the timestamp from the raw mock_response of the API, because the
     # integration changes the format from timestamp to ISO8601.
-    mock_response['created'] = '2020-04-17T14:43:59.000Z'
+    mock_response["created"] = "2020-04-17T14:43:59.000Z"
 
     assert response.outputs == mock_response
-    assert response.outputs_prefix == 'HelloWorld.Alert'
-    assert response.outputs_key_field == 'alert_id'
+    assert response.outputs_prefix == "HelloWorld.Alert"
+    assert response.outputs_key_field == "alert_id"
 
 
 def test_update_alert_status(requests_mock):
@@ -302,33 +281,29 @@ def test_update_alert_status(requests_mock):
     """
     from HelloWorld import Client, update_alert_status_command
 
-    mock_response = util_load_json('test_data/update_alert_status.json')
+    mock_response = util_load_json("test_data/update_alert_status.json")
     requests_mock.get(
-        'https://test.com/api/v1/change_alert_status?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0&alert_status=CLOSED',
-        json=mock_response)
-
-    client = Client(
-        base_url='https://test.com/api/v1',
-        verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        "https://test.com/api/v1/change_alert_status?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0&alert_status=CLOSED",
+        json=mock_response,
     )
 
-    args = {
-        'alert_id': '695b3238-05d6-4934-86f5-9fff3201aeb0',
-        'status': 'CLOSED'
-    }
+    client = Client(
+        base_url="https://test.com/api/v1",
+        verify=False,
+        headers={"Authentication": "Bearer some_api_key"},
+    )
+
+    args = {"alert_id": "695b3238-05d6-4934-86f5-9fff3201aeb0", "status": "CLOSED"}
 
     response = update_alert_status_command(client, args)
 
     # We modify the timestamp from the raw mock_response of the API, because the
     # integration changes the format from timestamp to ISO8601.
-    mock_response['updated'] = '2020-04-17T14:45:12.000Z'
+    mock_response["updated"] = "2020-04-17T14:45:12.000Z"
 
     assert response.outputs == mock_response
-    assert response.outputs_prefix == 'HelloWorld.Alert'
-    assert response.outputs_key_field == 'alert_id'
+    assert response.outputs_prefix == "HelloWorld.Alert"
+    assert response.outputs_key_field == "alert_id"
 
 
 def test_ip(requests_mock):
@@ -341,29 +316,26 @@ def test_ip(requests_mock):
     from CommonServerPython import Common
     from HelloWorld import Client, ip_reputation_command
 
-    ip_to_check = '151.1.1.1'
-    mock_response = util_load_json('test_data/ip_reputation.json')
-    requests_mock.get(f'http://test.com/api/v1/ip?ip={ip_to_check}',
-                      json=mock_response)
+    ip_to_check = "151.1.1.1"
+    mock_response = util_load_json("test_data/ip_reputation.json")
+    requests_mock.get(f"http://test.com/api/v1/ip?ip={ip_to_check}", json=mock_response)
 
     client = Client(
-        base_url='http://test.com/api/v1',
+        base_url="http://test.com/api/v1",
         verify=False,
-        headers={
-            'Authorization': 'Bearer some_api_key'
-        }
+        headers={"Authorization": "Bearer some_api_key"},
     )
 
     args = {
-        'ip': ip_to_check,
-        'threshold': 65,
+        "ip": ip_to_check,
+        "threshold": 65,
     }
 
     response = ip_reputation_command(client, args, 65)
 
     assert response.outputs[0] == mock_response
-    assert response.outputs_prefix == 'HelloWorld.IP'
-    assert response.outputs_key_field == 'ip'
+    assert response.outputs_prefix == "HelloWorld.IP"
+    assert response.outputs_key_field == "ip"
 
     # This command also returns Common.IP data
     assert isinstance(response.indicators, list)
@@ -382,35 +354,34 @@ def test_domain(requests_mock):
     from CommonServerPython import Common
     from HelloWorld import Client, domain_reputation_command
 
-    domain_to_check = 'google.com'
-    mock_response = util_load_json('test_data/domain_reputation.json')
-    requests_mock.get(f'http://test.com/api/v1/domain?domain={domain_to_check}',
-                      json=mock_response)
+    domain_to_check = "google.com"
+    mock_response = util_load_json("test_data/domain_reputation.json")
+    requests_mock.get(
+        f"http://test.com/api/v1/domain?domain={domain_to_check}", json=mock_response
+    )
 
     client = Client(
-        base_url='http://test.com/api/v1',
+        base_url="http://test.com/api/v1",
         verify=False,
-        headers={
-            'Authorization': 'Bearer some_api_key'
-        }
+        headers={"Authorization": "Bearer some_api_key"},
     )
 
     args = {
-        'domain': domain_to_check,
-        'threshold': 65,
+        "domain": domain_to_check,
+        "threshold": 65,
     }
 
     response = domain_reputation_command(client, args, 65)
 
     # We modify the timestamps from the raw mock_response of the API, because the
     # integration changes the format from timestamp to ISO8601.
-    mock_response['expiration_date'] = '2028-09-14T04:00:00.000Z'
-    mock_response['creation_date'] = '1997-09-15T04:00:00.000Z'
-    mock_response['updated_date'] = '2019-09-09T15:39:04.000Z'
+    mock_response["expiration_date"] = "2028-09-14T04:00:00.000Z"
+    mock_response["creation_date"] = "1997-09-15T04:00:00.000Z"
+    mock_response["updated_date"] = "2019-09-09T15:39:04.000Z"
 
     assert response.outputs[0] == mock_response
-    assert response.outputs_prefix == 'HelloWorld.Domain'
-    assert response.outputs_key_field == 'domain'
+    assert response.outputs_prefix == "HelloWorld.Domain"
+    assert response.outputs_key_field == "domain"
 
     # This command also returns Common.Domain data
     assert isinstance(response.indicators, list)
@@ -428,45 +399,43 @@ def test_fetch_incidents(requests_mock):
     """
     from HelloWorld import Client, fetch_incidents
 
-    mock_response = util_load_json('test_data/search_alerts.json')
+    mock_response = util_load_json("test_data/search_alerts.json")
     requests_mock.get(
-        'https://test.com/api/v1/get_alerts?alert_status=ACTIVE'
-        '&severity=Low%2CMedium%2CHigh%2CCritical&max_results=2'
-        '&start_time=1581944401', json=mock_response['alerts'])
-
-    client = Client(
-        base_url='https://test.com/api/v1',
-        verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        "https://test.com/api/v1/get_alerts?alert_status=ACTIVE"
+        "&severity=Low%2CMedium%2CHigh%2CCritical&max_results=2"
+        "&start_time=1581944401",
+        json=mock_response["alerts"],
     )
 
-    last_run = {
-        'last_fetch': 1581944401  # Mon Feb 17 2020
-    }
+    client = Client(
+        base_url="https://test.com/api/v1",
+        verify=False,
+        headers={"Authentication": "Bearer some_api_key"},
+    )
+
+    last_run = {"last_fetch": 1581944401}  # Mon Feb 17 2020
 
     _, new_incidents = fetch_incidents(
         client=client,
         max_results=2,
         last_run=last_run,
-        alert_status='ACTIVE',
-        min_severity='Low',
+        alert_status="ACTIVE",
+        min_severity="Low",
         alert_type=None,
-        first_fetch_time='3 days',
+        first_fetch_time="3 days",
     )
 
     assert new_incidents == [
         {
-            'name': 'Hello World Alert 100',
-            'occurred': '2020-02-17T23:34:23.000Z',
-            'rawJSON': json.dumps(mock_response['alerts'][0]),
-            'severity': 4,  # critical, this is XSOAR severity (already converted)
+            "name": "Hello World Alert 100",
+            "occurred": "2020-02-17T23:34:23.000Z",
+            "rawJSON": json.dumps(mock_response["alerts"][0]),
+            "severity": 4,  # critical, this is XSOAR severity (already converted)
         },
         {
-            'name': 'Hello World Alert 200',
-            'occurred': '2020-02-17T23:34:23.000Z',
-            'rawJSON': json.dumps(mock_response['alerts'][1]),
-            'severity': 2,  # medium, this is XSOAR severity (already converted)
-        }
+            "name": "Hello World Alert 200",
+            "occurred": "2020-02-17T23:34:23.000Z",
+            "rawJSON": json.dumps(mock_response["alerts"][1]),
+            "severity": 2,  # medium, this is XSOAR severity (already converted)
+        },
     ]

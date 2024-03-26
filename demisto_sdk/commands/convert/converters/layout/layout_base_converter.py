@@ -9,8 +9,17 @@ from demisto_sdk.commands.convert.converters.base_converter import BaseConverter
 
 
 class LayoutBaseConverter(BaseConverter):
-    SCHEMA_PATH = os.path.normpath(os.path.join(__file__, '..', '..', '..', '..', 'common/schemas/',
-                                                f'{FileType.LAYOUTS_CONTAINER.value}.yml'))
+    SCHEMA_PATH = os.path.normpath(
+        os.path.join(
+            __file__,
+            "..",
+            "..",
+            "..",
+            "..",
+            "common/schemas/",
+            f"{FileType.LAYOUTS_CONTAINER.value}.yml",
+        )
+    )
 
     def __init__(self, pack: Pack):
         super().__init__()
@@ -27,14 +36,21 @@ class LayoutBaseConverter(BaseConverter):
             (Dict[str, Any]): Dict of all of the dynamic field names and their value in the layouts container schema.
         """
         schema_data: dict = get_yaml(self.SCHEMA_PATH)
-        schema_mapping = schema_data.get('mapping', dict())
-        return {schema_field: schema_value for schema_field, schema_value in schema_mapping.items()
-                if 'mapping' in schema_value}
+        schema_mapping = schema_data.get("mapping", dict())
+        return {
+            schema_field: schema_value
+            for schema_field, schema_value in schema_mapping.items()
+            if "mapping" in schema_value
+        }
 
     @staticmethod
-    def create_layout_dict(layout_id: Optional[str] = None, type_id: Optional[str] = None,
-                           from_version: Optional[str] = None, to_version: Optional[str] = None,
-                           kind: Optional[str] = None) -> Dict:
+    def create_layout_dict(
+        layout_id: Optional[str] = None,
+        type_id: Optional[str] = None,
+        from_version: Optional[str] = None,
+        to_version: Optional[str] = None,
+        kind: Optional[str] = None,
+    ) -> Dict:
         """
         Receives optional fields for creating a dict representing fields in layout dict.
         Args:
@@ -47,6 +63,13 @@ class LayoutBaseConverter(BaseConverter):
         Returns:
             (Dict) Dict object with the requested fields.
         """
-        dict_with_maybe_none_values = dict(fromVersion=from_version, toVersion=to_version, name=layout_id, id=layout_id,
-                                           version=-1, typeId=type_id, kind=kind)
+        dict_with_maybe_none_values = dict(
+            fromVersion=from_version,
+            toVersion=to_version,
+            name=layout_id,
+            id=layout_id,
+            version=-1,
+            typeId=type_id,
+            kind=kind,
+        )
         return {k: v for k, v in dict_with_maybe_none_values.items() if v is not None}

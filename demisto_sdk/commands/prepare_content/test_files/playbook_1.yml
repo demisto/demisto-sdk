@@ -1,0 +1,189 @@
+id: Phishing Investigation - Generic
+version: -1
+name: Phishing Investigation - Generic
+description: 'Use this playbook to investigate and remediate a potential phishing
+  incident. The playbook simultaneously engages with the user that triggered the incident,
+  while investigating the incident itself.'
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    taskid:
+    type: start
+    task:
+      id:
+      version: -1
+      name: ''
+      iscommand: false
+      brand: ''
+      description: ''
+    nexttasks:
+      '#none#':
+      - '39'
+    separatecontext: false
+    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": -130\n  }\n}"
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  '2':
+    id: '2'
+    taskid:
+    type: regular
+    task:
+      id:
+      version: -1
+      name: Assign to analyst
+      description: Assign the incident to an analyst based on the analyst's organizational
+        role.
+      scriptName: AssignAnalystToIncident
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '15'
+    scriptarguments:
+      assignBy: {}
+      email: {}
+      roles:
+        complex:
+          root: incident
+      username: {}
+      message:
+        simple: "*RRN*: ${incident.rrn}\n\n\n*Findings:*\n```\n${.=JSON.stringify(val.incident.prismacloudfindingsresults,null,2)}\n```\n\n*IAM Permissions*:\n``` \n${.=JSON.stringify(val.incident.prismacloudiamresults,null,2)}\n```\n"
+    reputationcalc: 1
+    separatecontext: false
+    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 1040\n  }\n}"
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  "3":
+    id: "3"
+    taskid: 1640dfa4-a4b1-4199-894e-560c6486f2ce
+    type: regular
+    task:
+      id: 1640dfa4-a4b1-4199-894e-560c6486f2ce
+      version: -1
+      name: name
+      description: Description
+      script: Builtin|||setIncident
+      scriptarguments:
+        coverage: { }
+        filter_data: { }
+        id:
+          complex:
+            root: incident
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+        - "7"
+    scriptarguments:
+      CampaignIncidentType:
+        simple: Phishing Campaign
+      IncidentIDs:
+        complex:
+          root: EmailCampaign.incidents
+      type:
+        simple: incident
+    separatecontext: false
+    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 1230\n  }\n}"
+    note: false
+    timertriggers: [ ]
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+
+  "6":
+    id: "6"
+    taskid: fdee1b8a-3337-49e1-8fef-d1409e5563fb
+    type: condition
+    task:
+      id: fdee1b8a-3337-49e1-8fef-d1409e5563fb
+      version: -1
+      name: Auto remediate?
+      description: Remediate automatically or manually update?
+      type: condition
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#default#':
+        - "8"
+      "Yes":
+        - "7"
+    separatecontext: false
+    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 650\n  }\n}"
+    note: false
+    timertriggers: [ ]
+    ignoreworker: false
+    message:
+      to:
+      subject:
+      body:
+        simple: ${incident.id}
+      methods: [ ]
+      format: ""
+      bcc:
+      cc:
+      timings:
+        retriescount: 2
+        retriesinterval: 360
+        completeafterreplies: 1
+      replyOptions:
+        - "Yes"
+        - "No"
+    skipunavailable: false
+    quietmode: 0
+  '7':
+    id: '7'
+    taskid: 89d7dd49-06a3-4397-8b72-f4428bf24805
+    type: regular
+    task:
+      id: 89d7dd49-06a3-4397-8b72-f4428bf24805
+      version: -1
+      name: Manually review the <-incident->
+      description: Review the <-incident-> to determine if the email that the user reported
+        is malicious.
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '33'
+    separatecontext: false
+    view: "{\n  \"position\": {\n    \"x\": 60,\n    \"y\": 1535\n  }\n}"
+    note: false
+    timertriggers: []
+    ignoreworker: false
+system: true
+inputs:
+- key: Role
+  value:
+    simple: Administrator
+  required: true
+  description: The default role to assign the incident to.
+- key: SearchAndDelete
+  value:
+    simple: 'False'
+  required: false
+  description: 'Enable the "Search and Delete" capability (can be either "True" or
+    "False").
+
+    In case of a malicious email, the "Search and Delete" sub-playbook will look for
+    other instances of the email and delete them pending analyst approval.'
+- key: BlockIndicators
+  value:
+    simple: 'False'
+  required: false
+  description: 'Enable the "Block Indicators" capability (can be either "True" or
+    "False").
+
+    In case of a malicious email, the "Block Indicators" sub-playbook will block all
+    malicious indicators in the relevant integrations.'
+outputs:
+- contextPath: incident.fieldname
+  description: Security group name.
+  type: string

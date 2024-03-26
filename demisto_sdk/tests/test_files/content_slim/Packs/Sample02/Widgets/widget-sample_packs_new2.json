@@ -1,4 +1,6 @@
 {
-  "fromVersion": "4.0.0",
-  "widgetType": "test"
+    "fromVersion": "4.0.0",
+    "widgetType": "test",
+    "id": "test",
+    "name": "test"
 }

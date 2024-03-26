@@ -11,11 +11,12 @@ you are implementing with your integration
 """
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-json = JSON_Handler()
+
+import json
 
 
 def util_load_json(path):
-    with open(path, encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         return json.loads(f.read())
 
 
@@ -30,12 +31,11 @@ def test_baseintegration_dummy():
     """
     from BaseIntegration import Client, baseintegration_dummy_command
 
-    client = Client(base_url='some_mock_url', verify=False)
-    args = {
-        'dummy': 'this is a dummy response',
-        'dummy2': 'a dummy value'
-    }
+    client = Client(base_url="some_mock_url", verify=False)
+    args = {"dummy": "this is a dummy response", "dummy2": "a dummy value"}
     response = baseintegration_dummy_command(client, args)
 
     assert response.outputs == args
+
+
 # TODO: ADD HERE unit tests for every command

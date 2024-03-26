@@ -15,4 +15,4 @@ class TestJob:
         Test that Jobs created from files whose name does not start with `job-` are normalized correctly.
         """
         obj = Job(datadir[sample_file_path])
-        assert obj.normalize_file_name() == f'job-{sample_job_name}.json'
+        assert obj.normalize_file_name() == f"job-{sample_job_name}.json"

@@ -1,0 +1,86 @@
+type: map
+mapping:
+  trigger_id:
+    type: str
+    required: true
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
+  trigger_name:
+    type: str
+    required: true
+  playbook_id:
+    type: str
+    required: true
+  description:
+    type: str
+    required: true
+  suggestion_reason:
+    type: str
+    required: true
+  alerts_filter:
+    type: map
+    mapping:
+      filter:
+        type: map
+        mapping:
+          OR:
+            type: seq
+            required: false
+            sequence:
+            - include: filter_schema
+            - include: or_schema
+            - include: and_schema
+          AND:
+            type: seq
+            required: false
+            sequence:
+            - include: filter_schema
+            - include: or_schema
+            - include: and_schema
+
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
+schema;filter_schema:
+  type: map
+  mapping:
+    SEARCH_FIELD:
+      type: str
+      required: true
+    SEARCH_TYPE:
+      type: str
+      required: true
+    SEARCH_VALUE:
+      type: str
+      required: true
+
+schema;and_schema:
+  type: map
+  mapping:
+    AND:
+      type: seq
+      required: false
+      sequence:
+      - include: filter_schema
+      - include: or_schema
+      - include: and_schema
+
+schema;or_schema:
+  type: map
+  mapping:
+    OR:
+      type: seq
+      required: false
+      sequence:
+      - include: filter_schema
+      - include: or_schema
+      - include: and_schema

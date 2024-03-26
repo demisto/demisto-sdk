@@ -11,6 +11,7 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests that all functions have type annotations .
     """
+
     CHECKER_CLASS = xsoar_level_checker.XsoarChecker
 
     def test_type_annotations_exists(self):
@@ -22,7 +23,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_num1(a: str, b:int) ->str: #@
                 '''
                 function docs
@@ -38,7 +40,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                     return False
                 else:
                     return None
-        """)
+        """
+        )
         assert node_b is not None and node_a is not None
         with self.assertNoMessages():
             self.checker.visit_functiondef(node_a)
@@ -53,7 +56,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint to the relevent function.
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_num1(a: str, b:int) ->str: #@
                 '''
                 function docs
@@ -69,18 +73,20 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                     return False
                 else:
                     return None
-        """)
+        """
+        )
         assert node_b is not None and node_a is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='missing-arg-type-annoation',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id="missing-arg-type-annoation",
+                node=node_b,
+            ),
         ):
             self.checker.visit_functiondef(node_a)
             self.checker.visit_functiondef(node_b)
 
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_num1(a, b) ->str: #@
                 '''
                 function docs
@@ -96,18 +102,19 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                     return False
                 else:
                     return None
-        """)
+        """
+        )
 
         assert node_b is not None and node_a is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='missing-arg-type-annoation',
-                    node=node_a,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='missing-arg-type-annoation',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id="missing-arg-type-annoation",
+                node=node_a,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="missing-arg-type-annoation",
+                node=node_b,
+            ),
         ):
             self.checker.visit_functiondef(node_a)
             self.checker.visit_functiondef(node_b)
@@ -122,7 +129,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint to the relevent function.
         """
-        node = astroid.extract_node("""
+        node = astroid.extract_node(
+            """
             def main() -> bool:
                 if True:
                     return True
@@ -130,12 +138,13 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                     raise ValueError("this is an error")
                 else:
                     raise DemistoError("this is an error")
-        """)
+        """
+        )
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='not-implemented-error-doesnt-exist',
-                    node=node,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id="not-implemented-error-doesnt-exist",
+                node=node,
+            ),
         ):
             self.checker.visit_functiondef(node)
 
@@ -148,7 +157,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the there was not message added to the checker.
         """
-        node = astroid.extract_node("""
+        node = astroid.extract_node(
+            """
             def main() -> bool:
                 try:
                     if True:
@@ -159,7 +169,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                         raise NotImplementedError("this command wasnt implemented")
                 except Exception:
                     pass
-        """)
+        """
+        )
         assert node is not None
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
@@ -173,7 +184,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the there was not message added to the checker.
         """
-        node = astroid.extract_node("""
+        node = astroid.extract_node(
+            """
             def main() -> bool:
                 try:
                     if command not in commands:
@@ -182,7 +194,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                         return True
                 except Exception:
                     pass
-        """)
+        """
+        )
         assert node is not None
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
@@ -196,13 +209,15 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the there was not message added to the checker.
         """
-        node = astroid.extract_node("""
+        node = astroid.extract_node(
+            """
             def main() -> bool:
                 try:
                     raise NotImplementedError("this command was not implemented")
                 except Exception:
                     pass
-        """)
+        """
+        )
         assert node is not None
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
@@ -216,7 +231,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the there was not message added to the checker.
         """
-        node = astroid.extract_node("""
+        node = astroid.extract_node(
+            """
             def main() -> bool:
                 try:
                     if True:
@@ -227,7 +243,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                         return True
                 except Exception:
                     pass
-        """)
+        """
+        )
         assert node is not None
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
@@ -242,7 +259,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
             - Ensure that the there was not message added to the checker.
         """
         self.checker.is_script = True
-        node = astroid.extract_node("""
+        node = astroid.extract_node(
+            """
             def main() -> bool:
                 try:
                     if True:
@@ -253,7 +271,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                         raise DemistoException("this command wasnt implemented")
                 except Exception:
                     pass
-        """)
+        """
+        )
         assert node is not None
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
@@ -263,6 +282,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests if a direct access to dict was found and suggests .get instead.
     """
+
     CHECKER_CLASS = xsoar_level_checker.XsoarChecker
 
     def test_direct_access_doesnt_exists(self):
@@ -275,28 +295,34 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there was no message errors of pylint
         """
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             args = {'test1':1,'test2':2}
             args.get('test1') #@
-        """)
+        """
+        )
 
         assert node_a is not None
         with self.assertNoMessages():
             self.checker.visit_subscript(node_a)
 
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             params = {'test1':1,'test2':2}
             params.get('test1') #@
-        """)
+        """
+        )
 
         assert node_a is not None
         with self.assertNoMessages():
             self.checker.visit_subscript(node_a)
 
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             params = {'test1':1,'test2':2}
             params['test1'] = a #@
-        """)
+        """
+        )
 
         assert node_a is not None
         with self.assertNoMessages():
@@ -311,55 +337,63 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint to the relevent function.
         """
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             args = {'test1':1,'test2':2}
             a = args['test1'] #@
-        """)
+        """
+        )
         node_b = node_a.value
         assert node_a is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='direct-access-args-params-dict-exist',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id="direct-access-args-params-dict-exist",
+                node=node_b,
+            ),
         ):
             self.checker.visit_subscript(node_b)
 
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             b = demisto.args()['test1'] #@
-        """)
+        """
+        )
         assert node_a is not None
         node_b = node_a.value
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='direct-access-args-params-dict-exist',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id="direct-access-args-params-dict-exist",
+                node=node_b,
+            ),
         ):
             self.checker.visit_subscript(node_b)
 
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             b = demisto.params()['test1'] #@
-        """)
+        """
+        )
         node_b = node_a.value
         assert node_a is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='direct-access-args-params-dict-exist',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id="direct-access-args-params-dict-exist",
+                node=node_b,
+            ),
         ):
             self.checker.visit_subscript(node_b)
 
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             a = params['test1'] #@
-        """)
+        """
+        )
         node_b = node_a.value
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='direct-access-args-params-dict-exist',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id="direct-access-args-params-dict-exist",
+                node=node_b,
+            ),
         ):
             self.checker.visit_subscript(node_b)

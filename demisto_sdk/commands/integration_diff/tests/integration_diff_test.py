@@ -1,207 +1,286 @@
 import copy
+import logging
+import os
 
-from demisto_sdk.commands.integration_diff.integration_diff_detector import IntegrationDiffDetector
+from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.integration_diff.integration_diff_detector import (
+    IntegrationDiffDetector,
+)
+from TestSuite.pack import Pack
+from TestSuite.test_tools import str_in_call_args_list
+
+DEMISTO_SDK_PATH = os.path.join(git_path(), "demisto_sdk")
+TEST_FILES = os.path.join(DEMISTO_SDK_PATH, "commands", "integration_diff", "tests")
 
 
 class TestIntegrationDiffDetector:
 
     NEW_INTEGRATION_YAML = {
-        'configuration': [
+        "configuration": [
             {
-                'display': 'Credentials',
-                'name': 'credentials',
-                'required': 'true',
-                'type': '9'
+                "display": "Credentials",
+                "name": "credentials",
+                "required": "true",
+                "type": "9",
             },
-            {
-                'display': 'API key',
-                'name': 'api_key',
-                'required': 'false',
-                'type': '0'
-            },
-            {
-                'display': 'URL',
-                'name': 'url',
-                'required': 'true',
-                'type': '0'
-            }
+            {"display": "API key", "name": "api_key", "required": "false", "type": "0"},
+            {"display": "URL", "name": "url", "required": "true", "type": "0"},
         ],
-        'script': {
-            'commands': [
+        "script": {
+            "commands": [
                 {
-                    'arguments': [
+                    "arguments": [
                         {
-                            'default': False,
-                            'description': '',
-                            'isArray': False,
-                            'name': 'argument',
-                            'required': False
+                            "default": False,
+                            "description": "",
+                            "isArray": False,
+                            "name": "argument",
+                            "required": False,
                         }
                     ],
-                    'deprecated': False,
-                    'description': '',
-                    'name': 'command_1',
-                    'outputs': [
-                        {'contextPath': 'contextPath_1', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_2', 'description': '', 'type': 'bool'},
-                        {'contextPath': 'contextPath_3', 'description': '', 'type': 'String'},
-                    ]
-                },
-                {
-                    'arguments': [
+                    "deprecated": False,
+                    "description": "",
+                    "name": "command_1",
+                    "outputs": [
                         {
-                            'default': False,
-                            'description': '',
-                            'isArray': False,
-                            'name': 'argument_1',
-                            'required': False
+                            "contextPath": "contextPath_1",
+                            "description": "",
+                            "type": "String",
                         },
                         {
-                            'default': False,
-                            'description': '',
-                            'isArray': False,
-                            'name': 'argument_2',
-                            'required': False
-                        }
+                            "contextPath": "contextPath_2",
+                            "description": "",
+                            "type": "bool",
+                        },
+                        {
+                            "contextPath": "contextPath_3",
+                            "description": "",
+                            "type": "String",
+                        },
                     ],
-                    'deprecated': False,
-                    'description': '',
-                    'name': 'command_2',
-                    'outputs': [
-                        {'contextPath': 'contextPath_1', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_2', 'description': '', 'type': 'bool'},
-                        {'contextPath': 'contextPath_3', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_4', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_5', 'description': '', 'type': 'bool'}
-                    ]
                 },
                 {
-                    'arguments': [],
-                    'deprecated': False,
-                    'description': '',
-                    'name': 'command_3',
-                    'outputs': [
-                        {'contextPath': 'contextPath_1', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_2', 'description': '', 'type': 'bool'},
-                        {'contextPath': 'contextPath_3', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_4', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_5', 'description': '', 'type': 'bool'},
-                        {'contextPath': 'contextPath_6', 'description': '', 'type': 'bool'}
-                    ]
-                }
+                    "arguments": [
+                        {
+                            "default": False,
+                            "description": "",
+                            "isArray": False,
+                            "name": "argument_1",
+                            "required": False,
+                        },
+                        {
+                            "default": False,
+                            "description": "",
+                            "isArray": False,
+                            "name": "argument_2",
+                            "required": False,
+                        },
+                    ],
+                    "deprecated": False,
+                    "description": "",
+                    "name": "command_2",
+                    "outputs": [
+                        {
+                            "contextPath": "contextPath_1",
+                            "description": "",
+                            "type": "String",
+                        },
+                        {
+                            "contextPath": "contextPath_2",
+                            "description": "",
+                            "type": "bool",
+                        },
+                        {
+                            "contextPath": "contextPath_3",
+                            "description": "",
+                            "type": "String",
+                        },
+                        {
+                            "contextPath": "contextPath_4",
+                            "description": "",
+                            "type": "String",
+                        },
+                        {
+                            "contextPath": "contextPath_5",
+                            "description": "",
+                            "type": "bool",
+                        },
+                    ],
+                },
+                {
+                    "arguments": [],
+                    "deprecated": False,
+                    "description": "",
+                    "name": "command_3",
+                    "outputs": [
+                        {
+                            "contextPath": "contextPath_1",
+                            "description": "",
+                            "type": "String",
+                        },
+                        {
+                            "contextPath": "contextPath_2",
+                            "description": "",
+                            "type": "bool",
+                        },
+                        {
+                            "contextPath": "contextPath_3",
+                            "description": "",
+                            "type": "String",
+                        },
+                        {
+                            "contextPath": "contextPath_4",
+                            "description": "",
+                            "type": "String",
+                        },
+                        {
+                            "contextPath": "contextPath_5",
+                            "description": "",
+                            "type": "bool",
+                        },
+                        {
+                            "contextPath": "contextPath_6",
+                            "description": "",
+                            "type": "bool",
+                        },
+                    ],
+                },
             ]
-        }
+        },
     }
 
     OLD_INTEGRATION_YAML = {
-        'configuration': [
+        "configuration": [
             {
-                'display': 'Credentials',
-                'name': 'credentials',
-                'required': 'true',
-                'type': '9'
+                "display": "Credentials",
+                "name": "credentials",
+                "required": "true",
+                "type": "9",
             },
-            {
-                'display': 'API key',
-                'name': 'api_key',
-                'required': 'false',
-                'type': '0'
-            }
+            {"display": "API key", "name": "api_key", "required": "false", "type": "0"},
         ],
-        'script': {
-            'commands': [
+        "script": {
+            "commands": [
                 {
-                    'arguments': [
+                    "arguments": [
                         {
-                            'default': False,
-                            'description': '',
-                            'isArray': False,
-                            'name': 'argument',
-                            'required': False
+                            "default": False,
+                            "description": "",
+                            "isArray": False,
+                            "name": "argument",
+                            "required": False,
                         }
                     ],
-                    'deprecated': False,
-                    'description': '',
-                    'name': 'command_1',
-                    'outputs': [
-                        {'contextPath': 'contextPath_1', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_2', 'description': '', 'type': 'bool'},
-                        {'contextPath': 'contextPath_3', 'description': '', 'type': 'String'},
-                    ]
-                },
-                {
-                    'arguments': [
+                    "deprecated": False,
+                    "description": "",
+                    "name": "command_1",
+                    "outputs": [
                         {
-                            'default': False,
-                            'description': '',
-                            'isArray': False,
-                            'name': 'argument_1',
-                            'required': False
+                            "contextPath": "contextPath_1",
+                            "description": "",
+                            "type": "String",
                         },
                         {
-                            'default': False,
-                            'description': '',
-                            'isArray': False,
-                            'name': 'argument_2',
-                            'required': False
-                        }
+                            "contextPath": "contextPath_2",
+                            "description": "",
+                            "type": "bool",
+                        },
+                        {
+                            "contextPath": "contextPath_3",
+                            "description": "",
+                            "type": "String",
+                        },
                     ],
-                    'deprecated': False,
-                    'description': '',
-                    'name': 'command_2',
-                    'outputs': [
-                        {'contextPath': 'contextPath_1', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_2', 'description': '', 'type': 'bool'},
-                        {'contextPath': 'contextPath_3', 'description': '', 'type': 'String'},
-                        {'contextPath': 'contextPath_4', 'description': '', 'type': 'String'},
-                    ]
-                }
+                },
+                {
+                    "arguments": [
+                        {
+                            "default": False,
+                            "description": "",
+                            "isArray": False,
+                            "name": "argument_1",
+                            "required": False,
+                        },
+                        {
+                            "default": False,
+                            "description": "",
+                            "isArray": False,
+                            "name": "argument_2",
+                            "required": False,
+                        },
+                    ],
+                    "deprecated": False,
+                    "description": "",
+                    "name": "command_2",
+                    "outputs": [
+                        {
+                            "contextPath": "contextPath_1",
+                            "description": "",
+                            "type": "String",
+                        },
+                        {
+                            "contextPath": "contextPath_2",
+                            "description": "",
+                            "type": "bool",
+                        },
+                        {
+                            "contextPath": "contextPath_3",
+                            "description": "",
+                            "type": "String",
+                        },
+                        {
+                            "contextPath": "contextPath_4",
+                            "description": "",
+                            "type": "String",
+                        },
+                    ],
+                },
             ]
-        }
+        },
     }
 
     DIFFERENCES_REPORT = {
-        'parameters': [
+        "parameters": [
             {
-                'type': 'parameters',
-                'name': 'Credentials',
-                'message': "Missing the parameter 'Credentials'."
+                "type": "parameters",
+                "name": "Credentials",
+                "message": "Missing the parameter 'Credentials'.",
             },
             {
-                'type': 'parameters',
-                'name': 'API key',
-                'message': "The parameter `API key` - Is now required.",
-                'changed_field': 'required',
-                'changed_value': 'true'
+                "type": "parameters",
+                "name": "API key",
+                "message": "The parameter `API key` - Is now required.",
+                "changed_field": "required",
+                "changed_value": "true",
+            },
+        ],
+        "commands": [
+            {
+                "description": "",
+                "type": "commands",
+                "name": "command_1",
+                "message": "Missing the command 'command_1'.",
+            },
+        ],
+        "arguments": [
+            {
+                "type": "arguments",
+                "name": "argument_2",
+                "command_name": "command_2",
+                "message": "The argument `argument_2` in the command `command_2` - Now supports comma separated values.",
+                "changed_field": "isArray",
+                "changed_value": "true",
             }
         ],
-        'commands': [
+        "outputs": [
             {
-                'description': '',
-                'type': 'commands',
-                'name': 'command_1',
-                'message': "Missing the command 'command_1'."
+                "type": "outputs",
+                "name": "contextPath_2",
+                "command_name": "command_2",
+                "message": "The output 'contextPath_2' in the command 'command_2' was changed in field 'type'.",
+                "changed_field": "type",
             }
         ],
-        'arguments': [
-            {
-                'type': 'arguments',
-                'name': 'argument_2',
-                'command_name': 'command_2',
-                'message': "The argument `argument_2` in the command `command_2` - Now supports comma separated values.",
-                'changed_field': 'isArray',
-                'changed_value': 'true'
-            }
-        ],
-        'outputs': [
-            {
-                'type': 'outputs',
-                'name': 'contextPath_2',
-                'command_name': 'command_2',
-                'message': "The output 'contextPath_2' in the command 'command_2' was changed in field 'type'.",
-                'changed_field': 'type'
-            }
-        ]
     }
 
     def test_valid_integration_diff(self, pack):
@@ -214,12 +293,18 @@ class TestIntegrationDiffDetector:
             - Ensure the integrations are backwards compatible.
         """
 
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
 
-        assert integration_detector.check_different()
+        assert not integration_detector.check_different()
 
     def test_invalid_integration_diff(self, pack):
         """
@@ -231,12 +316,18 @@ class TestIntegrationDiffDetector:
             - Ensure the integrations are not backwards compatible.
         """
 
-        old_integration = pack.create_integration('oldIntegration2', yml=self.NEW_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration2', yml=self.OLD_INTEGRATION_YAML)
+        old_integration = pack.create_integration(
+            "oldIntegration2", yml=self.NEW_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration2", yml=self.OLD_INTEGRATION_YAML
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
 
-        assert not integration_detector.check_different()
+        assert integration_detector.check_different()
 
     def test_get_differences(self, pack):
         """
@@ -250,16 +341,28 @@ class TestIntegrationDiffDetector:
         new_integration_yaml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
 
         # Make some changes in the new integration
-        new_integration_yaml['configuration'].remove(new_integration_yaml['configuration'][0])
-        new_integration_yaml['configuration'][0]['required'] = 'true'
-        new_integration_yaml['script']['commands'].remove(new_integration_yaml['script']['commands'][0])
-        new_integration_yaml['script']['commands'][0]['arguments'][1]['isArray'] = 'true'
-        new_integration_yaml['script']['commands'][0]['outputs'][1]['type'] = 'String'
+        new_integration_yaml["configuration"].remove(
+            new_integration_yaml["configuration"][0]
+        )
+        new_integration_yaml["configuration"][0]["required"] = "true"
+        new_integration_yaml["script"]["commands"].remove(
+            new_integration_yaml["script"]["commands"][0]
+        )
+        new_integration_yaml["script"]["commands"][0]["arguments"][1][
+            "isArray"
+        ] = "true"
+        new_integration_yaml["script"]["commands"][0]["outputs"][1]["type"] = "String"
 
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=new_integration_yaml)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=new_integration_yaml
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
         differences = integration_detector.get_differences()
 
         assert self.DIFFERENCES_REPORT == differences
@@ -275,24 +378,34 @@ class TestIntegrationDiffDetector:
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
-        new_integration_yml['script']['commands'].remove(new_integration_yml['script']['commands'][0])
+        new_integration_yml["script"]["commands"].remove(
+            new_integration_yml["script"]["commands"][0]
+        )
 
         missing_command = {
-            'description': '',
-            'type': 'commands',
-            'name': 'command_1',
-            'message': "Missing the command 'command_1'."
+            "description": "",
+            "type": "commands",
+            "name": "command_1",
+            "message": "Missing the command 'command_1'.",
         }
 
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
 
-        old_commands = self.OLD_INTEGRATION_YAML['script']['commands']
-        new_commands = new_integration_yml['script']['commands']
+        old_commands = self.OLD_INTEGRATION_YAML["script"]["commands"]
+        new_commands = new_integration_yml["script"]["commands"]
 
-        commands, _, _ = integration_detector.get_different_commands(old_commands, new_commands)
+        commands, _, _ = integration_detector.get_different_commands(
+            old_commands, new_commands
+        )
 
         assert missing_command in commands
 
@@ -307,35 +420,44 @@ class TestIntegrationDiffDetector:
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
-        new_integration_yml['script']['commands'][1]['arguments'].remove(new_integration_yml['script']['commands'][1]
-                                                                         ['arguments'][0])
-        new_integration_yml['script']['commands'][1]['arguments'][0]['isArray'] = True
+        new_integration_yml["script"]["commands"][1]["arguments"].remove(
+            new_integration_yml["script"]["commands"][1]["arguments"][0]
+        )
+        new_integration_yml["script"]["commands"][1]["arguments"][0]["isArray"] = True
 
         missing_argument = {
-            'type': 'arguments',
-            'name': 'argument_1',
-            'command_name': 'command_2',
-            'message': "Missing the argument 'argument_1' in the command 'command_2'."
+            "type": "arguments",
+            "name": "argument_1",
+            "command_name": "command_2",
+            "message": "Missing the argument 'argument_1' in the command 'command_2'.",
         }
 
         changed_argument = {
-            'type': 'arguments',
-            'name': 'argument_2',
-            'command_name': 'command_2',
-            'message': "The argument `argument_2` in the command `command_2` - Now supports comma separated values.",
-            'changed_field': 'isArray',
-            'changed_value': True
+            "type": "arguments",
+            "name": "argument_2",
+            "command_name": "command_2",
+            "message": "The argument `argument_2` in the command `command_2` - Now supports comma separated values.",
+            "changed_field": "isArray",
+            "changed_value": True,
         }
 
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
 
-        old_command = self.OLD_INTEGRATION_YAML['script']['commands'][1]
-        new_command = new_integration_yml['script']['commands'][1]
+        old_command = self.OLD_INTEGRATION_YAML["script"]["commands"][1]
+        new_command = new_integration_yml["script"]["commands"][1]
 
-        arguments = integration_detector.get_different_arguments(new_command, old_command)
+        arguments = integration_detector.get_different_arguments(
+            new_command, old_command
+        )
 
         assert missing_argument in arguments
         assert changed_argument in arguments
@@ -351,32 +473,39 @@ class TestIntegrationDiffDetector:
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
-        new_integration_yml['script']['commands'][1]['outputs'].remove(new_integration_yml['script']['commands'][1]
-                                                                       ['outputs'][0])
-        new_integration_yml['script']['commands'][1]['outputs'][0]['type'] = 'String'
+        new_integration_yml["script"]["commands"][1]["outputs"].remove(
+            new_integration_yml["script"]["commands"][1]["outputs"][0]
+        )
+        new_integration_yml["script"]["commands"][1]["outputs"][0]["type"] = "String"
 
         missing_output = {
-            'type': 'outputs',
-            'name': 'contextPath_1',
-            'command_name': 'command_2',
-            'message': "Missing the output 'contextPath_1' in the command 'command_2'."
+            "type": "outputs",
+            "name": "contextPath_1",
+            "command_name": "command_2",
+            "message": "Missing the output 'contextPath_1' in the command 'command_2'.",
         }
 
         changed_output = {
-            'type': 'outputs',
-            'name': 'contextPath_2',
-            'command_name': 'command_2',
-            'message': "The output 'contextPath_2' in the command 'command_2' was changed in field 'type'.",
-            'changed_field': 'type'
+            "type": "outputs",
+            "name": "contextPath_2",
+            "command_name": "command_2",
+            "message": "The output 'contextPath_2' in the command 'command_2' was changed in field 'type'.",
+            "changed_field": "type",
         }
 
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
 
-        old_command = self.OLD_INTEGRATION_YAML['script']['commands'][1]
-        new_commands = new_integration_yml['script']['commands'][1]
+        old_command = self.OLD_INTEGRATION_YAML["script"]["commands"][1]
+        new_commands = new_integration_yml["script"]["commands"][1]
         outputs = integration_detector.get_different_outputs(new_commands, old_command)
 
         assert missing_output in outputs
@@ -393,36 +522,44 @@ class TestIntegrationDiffDetector:
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
-        new_integration_yml['configuration'].remove(new_integration_yml['configuration'][0])
-        new_integration_yml['configuration'][0]['required'] = 'true'
+        new_integration_yml["configuration"].remove(
+            new_integration_yml["configuration"][0]
+        )
+        new_integration_yml["configuration"][0]["required"] = "true"
 
         missing_param = {
-            'type': 'parameters',
-            'name': 'Credentials',
-            'message': "Missing the parameter 'Credentials'."
+            "type": "parameters",
+            "name": "Credentials",
+            "message": "Missing the parameter 'Credentials'.",
         }
 
         changed_param = {
-            'type': 'parameters',
-            'name': 'API key',
-            'message': "The parameter `API key` - Is now required.",
-            'changed_field': 'required',
-            'changed_value': 'true'
+            "type": "parameters",
+            "name": "API key",
+            "message": "The parameter `API key` - Is now required.",
+            "changed_field": "required",
+            "changed_value": "true",
         }
 
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=new_integration_yml)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=new_integration_yml
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
 
-        old_params = self.OLD_INTEGRATION_YAML['configuration']
-        new_params = new_integration_yml['configuration']
+        old_params = self.OLD_INTEGRATION_YAML["configuration"]
+        new_params = new_integration_yml["configuration"]
         parameters = integration_detector.get_different_params(old_params, new_params)
 
         assert missing_param in parameters
         assert changed_param in parameters
 
-    def test_print_without_items(self, pack, capsys):
+    def test_print_without_items(self, pack, mocker, monkeypatch):
         """
         Given
             - Two integration versions when the new version are backward compatible .
@@ -431,16 +568,25 @@ class TestIntegrationDiffDetector:
         Then
             - Verify there are no items to print and that the printed output as excepted.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
 
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
 
         assert not integration_detector.print_items()
 
-        captured = capsys.readouterr()
-        assert 'The integrations are backwards compatible' in captured.out
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "The integrations are backwards compatible"
+        )
 
     def test_print_items(self, pack, capsys):
         """
@@ -452,16 +598,24 @@ class TestIntegrationDiffDetector:
             - Verify that.
         """
 
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
 
-        integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
+        integration_detector.missing_items_report = copy.deepcopy(
+            self.DIFFERENCES_REPORT
+        )
 
         assert integration_detector.print_items()
 
-    def test_print_missing_items(self, pack, capsys):
+    def test_print_missing_items(self, pack, mocker, monkeypatch):
         """
         Given
             - Missing items to print.
@@ -470,27 +624,52 @@ class TestIntegrationDiffDetector:
         Then
             - Verify that all the items are printed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
 
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
 
-        integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
+        integration_detector.missing_items_report = copy.deepcopy(
+            self.DIFFERENCES_REPORT
+        )
 
         integration_detector.print_missing_items()
 
-        excepted_output = "Missing parameters:\n\nMissing the parameter 'Credentials'.\n\nChanged parameters:\n\n" \
-                          "The parameter `API key` - Is now required.\n\nMissing commands:\n\nMissing the command " \
-                          "'command_1'.\n\nMissing arguments:\n\n\nChanged arguments:\n\nThe argument `argument_2` " \
-                          "in the command `command_2` - Now supports comma separated values.\n\nMissing outputs:" \
-                          "\n\n\nChanged outputs:\n\nThe output 'contextPath_2' in the command 'command_2' was " \
-                          "changed in field 'type'.\n\n"
+        excepted_output = [
+            "Missing parameters:",
+            "Missing the parameter 'Credentials'.",
+            "Changed parameters:",
+            "The parameter `API key` - Is now required.",
+            "Missing commands:",
+            "Missing the command ",
+            "'command_1'.",
+            "Missing arguments:",
+            "Changed arguments:",
+            "The argument `argument_2` ",
+            "in the command `command_2` - Now supports comma separated values.",
+            "Missing outputs:",
+            "Changed outputs:",
+            "The output 'contextPath_2' in the command 'command_2' was ",
+            "changed in field 'type'.",
+        ]
 
-        captured = capsys.readouterr()
-        assert excepted_output in captured.out
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in excepted_output
+            ]
+        )
 
-    def test_print_items_in_docs_format(self, pack, capsys, mocker):
+    def test_print_items_in_docs_format(self, pack, mocker, monkeypatch):
         """
         Given
             - Missing items to print in docs format.
@@ -499,24 +678,213 @@ class TestIntegrationDiffDetector:
         Then
             - Verify that all the items are printed in docs format.
         """
-        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
-        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
 
-        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path,
-                                                       docs_format=True)
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
 
-        integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path, docs_format=True
+        )
+
+        integration_detector.missing_items_report = copy.deepcopy(
+            self.DIFFERENCES_REPORT
+        )
 
         integration_detector.print_items_in_docs_format()
 
-        excepted_output = '\n## Breaking changes from the previous version of this integration - \n' \
-                          'The following sections list the changes in this version.\n\n### Commands\n' \
-                          '#### The following commands were removed in this version:\n* *command_1* - this command ' \
-                          'was replaced by XXX.\n\n### Arguments\n' \
-                          '#### The behavior of the following arguments was changed:\n\nIn the *command_2* command:\n' \
-                          '* *argument_2* - Now supports comma separated values.\n\n### Outputs\n' \
-                          '#### The following outputs were removed in this version:\n\n## Additional Considerations for' \
-                          ' this version\n* Insert any API changes, any behavioral changes, limitations, ' \
-                          'or restrictions that would be new to this version.\n\n'
-        captured = capsys.readouterr()
-        assert excepted_output in captured.out
+        excepted_output = [
+            "\n## Breaking changes from the previous version of this integration - \n",
+            "The following sections list the changes in this version.\n\n### Commands\n",
+            "#### The following commands were removed in this version:\n* *command_1* - this command ",
+            "was replaced by XXX.\n\n### Arguments\n",
+            "#### The behavior of the following arguments was changed:\n\nIn the *command_2* command:\n",
+            "* *argument_2* - Now supports comma separated values.",
+            "### Outputs\n",
+            "#### The following outputs were removed in this version:",
+            "## Additional Considerations for",
+            " this version\n* Insert any API changes, any behavioral changes, limitations, ",
+            "or restrictions that would be new to this version.",
+        ]
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in excepted_output
+            ]
+        )
+
+    def test_get_added_commands(self, pack: Pack):
+        """
+        Test whether the added commands is expected.
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 3 commands.
+        - A old integration with 2 commands.
+
+        Then:
+        - We're expecting `command_3` to be returned
+        """
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.get_added_commands()
+
+        assert len(actual) == 1
+        assert actual == ["command_3"]
+
+    def test_is_configuration_different(self, pack: Pack):
+        """
+        Test whether the configuration sections is different
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 3 configurations options.
+        - A old integration with 2 configurations options.
+
+        Then:
+        - The configuration is different.
+        """
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.is_configuration_different()
+
+        assert actual
+
+    def test_is_configuration_different_same(self, pack: Pack):
+        """
+        Test whether the configuration sections is different
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 2 configurations options.
+        - A old integration with 2 configurations options.
+
+        Then:
+        - The configuration is the same.
+        """
+        self.NEW_INTEGRATION_YAML.get("configuration", []).pop(2)
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.is_configuration_different()
+
+        assert not actual
+
+    def test_get_modified_commands_modified(self, pack: Pack):
+        """
+        Test whether the modified commands method works as expected when
+        supplied a list of modified commands.
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 3 commands where 2 of the commands were modified.
+        - A old integration with 2 commands.
+
+        Then:
+        - 2 commands should be returned.
+        """
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[0][
+            "defaultValue"
+        ] = "SOME_DEFAULT"
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[1][
+            "deprecated"
+        ] = True
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[2][
+            "description"
+        ] = "Irrelevant description"
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.get_modified_commands()
+        expected = ["command_1", "command_2"]
+        assert actual == expected
+
+    def test_get_modified_commands_identical(self, pack: Pack):
+        """
+        FIXME check why when using:
+
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        The test fails intermittently
+
+        Test whether the modified commands method works as expected
+        when given a set of identical commands.
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 3 commands where no commands were modified.
+        - A old integration with 2 commands.
+
+        Then:
+        - No commands should be returned.
+        """
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.get_modified_commands()
+
+        assert not actual

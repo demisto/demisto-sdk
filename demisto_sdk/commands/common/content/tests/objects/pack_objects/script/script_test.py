@@ -38,7 +38,9 @@ class TestUnifiedScript:
         obj = Script(datadir["script-FindSimilarIncidentsByText.yml"])
         assert obj.readme is None
         assert obj.code_path is None
-        assert obj.changelog.path == Path(datadir["script-FindSimilarIncidentsByText_CHANGELOG.md"])
+        assert obj.changelog.path == Path(
+            datadir["script-FindSimilarIncidentsByText_CHANGELOG.md"]
+        )
 
     def test_is_unify(self, datadir):
         obj = Script(datadir["script-FindSimilarIncidentsByText.yml"])

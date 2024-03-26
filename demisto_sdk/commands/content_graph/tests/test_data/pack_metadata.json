@@ -11,9 +11,11 @@
     "categories": [
         "Utilities"
     ],
-    "tags": [],
-    "useCases": [],
-    "keywords": [],
+    "tags": ["TIM"],
+    "useCases": ["Identity and Access Management"],
+    "keywords": [
+        "common"
+    ],
     "dependencies": {
         "CommonScripts": {
             "mandatory": true,

@@ -24,16 +24,21 @@ from pylint.interfaces import IAstroidChecker
 
 partner_msg = {
     "W9010": (
-        "try and except statements were not found in main function. Please add them", "try-except-main-doesnt-exists",
-        "Ensure to not try except in the main function.",),
+        "try and except statements were not found in main function. Please add them",
+        "try-except-main-doesnt-exists",
+        "Ensure to not try except in the main function.",
+    ),
     "W9011": (
         "return_error used too many times, should be used only once in the code, in main function. Please remove "
         "other usages.",
         "too-many-return-error",
-        "return.error should be used only once in the code",),
-    "W9012": ("return_error should be used in main function. Please add it.",
-              "return-error-does-not-exist-in-main",
-              "return_error should be used in main function",),
+        "return.error should be used only once in the code",
+    ),
+    "W9012": (
+        "return_error should be used in main function. Please add it.",
+        "return-error-does-not-exist-in-main",
+        "return_error should be used in main function",
+    ),
 }
 
 
@@ -48,13 +53,13 @@ class PartnerChecker(BaseChecker):
         self.return_error_count = 0
 
     # ------------------------------------- visit functions -------------------------------------------------
-    '''
+    """
     `visit_<node_name>` is a function which will be activated while visiting the node_name in the ast of the
     python code.
     When adding a new check:
     1. Add a new checker function to the validations section.
     2. Add the function's activation under the relevant visit function.
-    '''
+    """
 
     def visit_call(self, node):
         self._return_error_function_count(node)
@@ -64,7 +69,7 @@ class PartnerChecker(BaseChecker):
         self._return_error_in_main_checker(node)
 
     # ------------------------------------- leave functions -------------------------------------------------
-    '''
+    """
     `leave_<node_name>` is a function which will be activated while leaving the node_name in the ast of the
     python code.
     When adding a new check:
@@ -72,16 +77,16 @@ class PartnerChecker(BaseChecker):
     2. Add the function's activation under the relevant leave function.
 
     * leave_module will be activated at the end of the file.
-    '''
+    """
 
     def leave_module(self, node):
         self._return_error_count_checker(node)
 
-# ---------------------------------------------------- Checkers  ------------------------------------------------------
-    '''
+    # ---------------------------------------------------- Checkers  ------------------------------------------------------
+    """
     Checker functions are the functions that have the logic of our check and should be activated in one or more
      visit/leave functions.
-    '''
+    """
 
     # -------------------------------------------- Call Node ---------------------------------------------
 
@@ -94,11 +99,12 @@ class PartnerChecker(BaseChecker):
         Increases the counter of return_error.
         """
         try:
-            if node.func.name == 'return_error':
+            if node.func.name == "return_error":
                 self.return_error_count = self.return_error_count + 1
 
         except AttributeError:
             pass
+
     # -------------------------------------------- FuncDef Node ---------------------------------------------
 
     def _try_except_in_main(self, node):
@@ -109,12 +115,14 @@ class PartnerChecker(BaseChecker):
 
         Adds the relevant error message using `add_message` function.
         """
-        if node.name == 'main':
+        if node.name == "main":
             try_except_exists = False
 
             # Iterate over the children nodes of the main function node and search for Try/ TryFinally node.
             for child in node.get_children():
-                if isinstance(child, astroid.TryExcept) or isinstance(child, astroid.TryFinally):
+                if isinstance(child, astroid.TryExcept) or isinstance(
+                    child, astroid.TryFinally
+                ):
                     try_except_exists = True
 
             if not try_except_exists:
@@ -129,12 +137,12 @@ class PartnerChecker(BaseChecker):
         Adds the relevant error message using `add_message` function if return error does not exist in main func.
         """
         try:
-            if node.name == 'main':
+            if node.name == "main":
                 return_error_exists = False
                 for child in self._inner_search_return_error(node):
                     if isinstance(child, astroid.Call):
                         try:
-                            if child.func.name == 'return_error':
+                            if child.func.name == "return_error":
                                 return_error_exists = True
 
                         except AttributeError:
@@ -159,7 +167,7 @@ class PartnerChecker(BaseChecker):
         if self.return_error_count > 1:
             self.add_message("too-many-return-error", node=node)
 
-# ------------------------------------------------ Helper Function ----------------------------------------------------
+    # ------------------------------------------------ Helper Function ----------------------------------------------------
 
     def _inner_search_return_error(self, node):
         """

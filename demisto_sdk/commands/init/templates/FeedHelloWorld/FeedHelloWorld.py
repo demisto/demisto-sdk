@@ -179,31 +179,36 @@ class Client(BaseClient):
 
         result = []
 
-        res = self._http_request('GET',
-                                 url_suffix='',
-                                 full_url=self._base_url,
-                                 resp_type='text',
-                                 )
+        res = self._http_request(
+            "GET",
+            url_suffix="",
+            full_url=self._base_url,
+            resp_type="text",
+        )
 
         # In this case the feed output is in text format, so extracting the indicators from the response requires
         # iterating over it's lines solely. Other feeds could be in other kinds of formats (CSV, MISP, etc.), or might
         # require additional processing as well.
         try:
-            indicators = res.split('\n')
+            indicators = res.split("\n")
 
             for indicator in indicators:
                 # Infer the type of the indicator using 'auto_detect_indicator_type(indicator)' function
                 # (defined in CommonServerPython).
                 if auto_detect_indicator_type(indicator):
-                    result.append({
-                        'value': indicator,
-                        'type': auto_detect_indicator_type(indicator),
-                        'FeedURL': self._base_url
-                    })
+                    result.append(
+                        {
+                            "value": indicator,
+                            "type": auto_detect_indicator_type(indicator),
+                            "FeedURL": self._base_url,
+                        }
+                    )
 
         except ValueError as err:
             demisto.debug(str(err))
-            raise ValueError(f'Could not parse returned data as indicator. \n\nError massage: {err}')
+            raise ValueError(
+                f"Could not parse returned data as indicator. \n\nError massage: {err}"
+            )
         return result
 
 
@@ -225,11 +230,15 @@ def test_module(client: Client) -> str:
     # an error
 
     client.build_iterator()
-    return 'ok'
+    return "ok"
 
 
-def fetch_indicators(client: Client, tlp_color: Optional[str] = None, feed_tags: List = [], limit: int = -1) \
-        -> List[Dict]:
+def fetch_indicators(
+    client: Client,
+    tlp_color: Optional[str] = None,
+    feed_tags: List = [],
+    limit: int = -1,
+) -> List[Dict]:
     """Retrieves indicators from the feed
     Args:
         client (Client): Client object with request
@@ -246,11 +255,11 @@ def fetch_indicators(client: Client, tlp_color: Optional[str] = None, feed_tags:
 
     # extract values from iterator
     for item in iterator:
-        value_ = item.get('value')
-        type_ = item.get('type')
+        value_ = item.get("value")
+        type_ = item.get("type")
         raw_data = {
-            'value': value_,
-            'type': type_,
+            "value": value_,
+            "type": type_,
         }
 
         # Create indicator object for each value.
@@ -259,35 +268,34 @@ def fetch_indicators(client: Client, tlp_color: Optional[str] = None, feed_tags:
             raw_data.update({key: value})
         indicator_obj = {
             # The indicator value.
-            'value': value_,
+            "value": value_,
             # The indicator type as defined in Cortex XSOAR.
             # One can use the FeedIndicatorType class under CommonServerPython to populate this field.
-            'type': type_,
+            "type": type_,
             # The name of the service supplying this feed.
-            'service': 'HelloWorld',
+            "service": "HelloWorld",
             # A dictionary that maps values to existing indicator fields defined in Cortex XSOAR.
             # One can use this section in order to map custom indicator fields previously defined
             # in Cortex XSOAR to their values.
-            'fields': {},
+            "fields": {},
             # A dictionary of the raw data returned from the feed source about the indicator.
-            'rawJSON': raw_data
+            "rawJSON": raw_data,
         }
 
         if feed_tags:
-            indicator_obj['fields']['tags'] = feed_tags
+            indicator_obj["fields"]["tags"] = feed_tags
 
         if tlp_color:
-            indicator_obj['fields']['trafficlightprotocol'] = tlp_color
+            indicator_obj["fields"]["trafficlightprotocol"] = tlp_color
 
         indicators.append(indicator_obj)
 
     return indicators
 
 
-def get_indicators_command(client: Client,
-                           params: Dict[str, str],
-                           args: Dict[str, str]
-                           ) -> CommandResults:
+def get_indicators_command(
+    client: Client, params: Dict[str, str], args: Dict[str, str]
+) -> CommandResults:
     """Wrapper for retrieving indicators from the feed to the war-room.
     Args:
         client: Client object with request
@@ -296,16 +304,21 @@ def get_indicators_command(client: Client,
     Returns:
         Outputs.
     """
-    limit = int(args.get('limit', '10'))
-    tlp_color = params.get('tlp_color')
-    feed_tags = argToList(params.get('feedTags', ''))
+    limit = int(args.get("limit", "10"))
+    tlp_color = params.get("tlp_color")
+    feed_tags = argToList(params.get("feedTags", ""))
     indicators = fetch_indicators(client, tlp_color, feed_tags, limit)
-    human_readable = tableToMarkdown('Indicators from HelloWorld Feed:', indicators,
-                                     headers=['value', 'type'], headerTransform=string_to_table_header, removeNull=True)
+    human_readable = tableToMarkdown(
+        "Indicators from HelloWorld Feed:",
+        indicators,
+        headers=["value", "type"],
+        headerTransform=string_to_table_header,
+        removeNull=True,
+    )
     return CommandResults(
         readable_output=human_readable,
-        outputs_prefix='',
-        outputs_key_field='',
+        outputs_prefix="",
+        outputs_key_field="",
         raw_response=indicators,
         outputs={},
     )
@@ -319,8 +332,8 @@ def fetch_indicators_command(client: Client, params: Dict[str, str]) -> List[Dic
     Returns:
         Indicators.
     """
-    feed_tags = argToList(params.get('feedTags', ''))
-    tlp_color = params.get('tlp_color')
+    feed_tags = argToList(params.get("feedTags", ""))
+    tlp_color = params.get("tlp_color")
     indicators = fetch_indicators(client, tlp_color, feed_tags)
     return indicators
 
@@ -333,16 +346,16 @@ def main():
     params = demisto.params()
 
     # Get the service API url
-    base_url = params.get('url')
+    base_url = params.get("url")
 
     # If your Client class inherits from BaseClient, SSL verification is
     # handled out of the box by it, just pass ``verify_certificate`` to
     # the Client constructor
-    insecure = not params.get('insecure', False)
+    insecure = not params.get("insecure", False)
 
     # If your Client class inherits from BaseClient, system proxy is handled
     # out of the box by it, just pass ``proxy`` to the Client constructor
-    proxy = params.get('proxy', False)
+    proxy = params.get("proxy", False)
 
     command = demisto.command()
     args = demisto.args()
@@ -352,7 +365,7 @@ def main():
     # etc. to print information in the XSOAR server log. You can set the log
     # level on the server configuration
     # See: https://xsoar.pan.dev/docs/integrations/code-conventions#logging
-    demisto.debug(f'Command being called is {command}')
+    demisto.debug(f"Command being called is {command}")
 
     try:
         client = Client(
@@ -361,16 +374,16 @@ def main():
             proxy=proxy,
         )
 
-        if command == 'test-module':
+        if command == "test-module":
             # This is the call made when pressing the integration Test button.
             return_results(test_module(client))
 
-        elif command == 'helloworld-get-indicators':
+        elif command == "helloworld-get-indicators":
             # This is the command that fetches a limited number of indicators from the feed source
             # and displays them in the war room.
             return_results(get_indicators_command(client, params, args))
 
-        elif command == 'fetch-indicators':
+        elif command == "fetch-indicators":
             # This is the command that initiates a request to the feed endpoint and create new indicators objects from
             # the data fetched. If the integration instance is configured to fetch indicators, then this is the command
             # that will be executed at the specified feed fetch interval.
@@ -379,13 +392,13 @@ def main():
                 demisto.createIndicators(iter_)
 
         else:
-            raise NotImplementedError(f'Command {command} is not implemented.')
+            raise NotImplementedError(f"Command {command} is not implemented.")
 
     # Log exceptions and return errors
     except Exception as e:
         demisto.error(traceback.format_exc())  # Print the traceback
-        return_error(f'Failed to execute {command} command.\nError:\n{str(e)}')
+        return_error(f"Failed to execute {command} command.\nError:\n{str(e)}")
 
 
-if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover
+if __name__ in ("__main__", "__builtin__", "builtins"):  # pragma: no cover
     main()

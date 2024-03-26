@@ -1,0 +1,48 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  name:
+    type: str
+    required: true
+  fromversion:
+    type: str
+    required: true
+  toversion:
+    type: str
+    required: false
+  tags:
+    type: seq
+    required: true
+    allowempty: true
+    sequence:
+    - type: str
+  rules:
+    type: str
+  samples:
+    type: str
+  comment:
+    type: str
+  deprecated:
+    type: bool
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  deprecated:xsoar:
+    type: bool
+  deprecated:marketplacev2:
+    type: bool
+  deprecated:xpanse:
+    type: bool
+  deprecated:xsoar_saas:
+    type: bool
+  deprecated:xsoar_on_prem:
+    type: bool

@@ -1,0 +1,135 @@
+id: playbook_2
+version: -1
+name: playbook_2
+description: 'Use this playbook to investigate and remediate a potential phishing
+  incident. The playbook simultaneously engages with the user that triggered the incident,
+  while investigating the incident itself. Incidents <-incidents->'
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    taskid:
+    type: start
+    task:
+      id:
+      version: -1
+      name: ''
+      iscommand: false
+      brand: ''
+      description: ''
+    nexttasks:
+      '#none#':
+      - '39'
+    separatecontext: false
+    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": -130\n  }\n}"
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  "3":
+    id: "3"
+    taskid: 1640dfa4-a4b1-4199-894e-560c6486f2ce
+    type: regular
+    task:
+      id: 1640dfa4-a4b1-4199-894e-560c6486f2ce
+      version: -1
+      name: name
+      description: Description
+      script: Builtin|||setIncident
+      scriptarguments:
+        coverage: { }
+        filter_data: { }
+        id:
+          complex:
+            root: incident
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+        - "7"
+  "6":
+    id: "6"
+    taskid: 6f3b1215-c4b1-4d16-8581-ae0b3bdcb030
+    type: regular
+    task:
+      id: 6f3b1215-c4b1-4d16-8581-ae0b3bdcb030
+      version: -1
+      name: Sleep
+      description: Sleep for X seconds
+      scriptName: getIncident
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    scriptarguments:
+      seconds:
+        simple: "10"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 870
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  "7":
+    id: "7"
+    taskid: 6f3b1215-c4b1-4d16-8581-ae0b3bdcb030
+    type: regular
+    task:
+      id: 6f3b1215-c4b1-4d16-8581-ae0b3bdcb030
+      version: -1
+      name: Sleep
+      description: Sleep for X seconds
+      scriptName: setIncidentByID
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    scriptarguments:
+      seconds:
+        simple: "10"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 870
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+system: true
+inputs:
+- key: Role
+  value:
+    simple: Administrator
+  required: true
+  description: The default role to assign the incident to.
+- key: SearchAndDelete
+  value:
+    simple: 'False'
+  required: false
+  description: 'Enable the "Search and Delete" capability (can be either "True" or
+    "False").
+
+    In case of a malicious email, the "Search and Delete" sub-playbook will look for
+    other instances of the email and delete them pending analyst approval.'
+- key: BlockIndicators
+  value:
+    simple: 'False'
+  required: false
+  description: 'Enable the "Block Indicators" capability (can be either "True" or
+    "False").
+
+    In case of a malicious email, the "Block Indicators" sub-playbook will block all
+    malicious indicators in the relevant integrations.'
+outputs: []

@@ -16,3 +16,4 @@ This integration was integrated and tested with version 1.0.1 of PhishTank.
 ##### valid images absolute paths
 ![Identity with High Risk Score](https://github.com/demisto/test3.png)
 ![commit hash in url](https://raw.githubusercontent.com/demisto/content/123456/Packs/CommonPlaybooks/doc_files/some_image.png)
+[![Test Overview](https://raw.githubusercontent.com/demisto/content/master/Packs/132/some_image.png)](https://www.test.com)

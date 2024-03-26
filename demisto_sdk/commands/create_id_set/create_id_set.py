@@ -5,20 +5,30 @@ from typing import Optional
 
 from genericpath import exists
 
-from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import (DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH,
-                                                                XPANSE_ID_SET_PATH)
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.constants import (
+    GENERIC_COMMANDS_NAMES,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.common.content_constant_paths import (
+    DEFAULT_ID_SET_PATH,
+    MP_V2_ID_SET_PATH,
+    XPANSE_ID_SET_PATH,
+)
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import open_id_set_file
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
-json = JSON_Handler()
-
 
 class IDSetCreator:
-
-    def __init__(self, output: Optional[Path] = None, input: Optional[Path] = None, print_logs: bool = True,
-                 fail_duplicates: bool = False, marketplace: str = ''):
+    def __init__(
+        self,
+        output: Optional[Path] = None,
+        input: Optional[Path] = None,
+        print_logs: bool = True,
+        fail_duplicates: bool = False,
+        marketplace: str = "",
+        **kwargs,
+    ):
         """IDSetCreator
 
         Args:
@@ -41,7 +51,7 @@ class IDSetCreator:
             pack_to_create=self.input,
             print_logs=self.print_logs,
             fail_on_duplicates=self.fail_duplicates,
-            marketplace=self.marketplace
+            marketplace=self.marketplace,
         )
 
         self.add_command_to_implementing_integrations_mapping()
@@ -54,9 +64,11 @@ class IDSetCreator:
         Each playbook that has "command_to_integration" field will be modified :
         - command name value will be a list of all integrations that implements this command (instead of use "" ).
         """
-        command_name_to_implemented_integration_map = self.create_command_to_implemented_integration_map()
+        command_name_to_implemented_integration_map = (
+            self.create_command_to_implemented_integration_map()
+        )
 
-        playbooks_list = self.id_set['playbooks']
+        playbooks_list = self.id_set["playbooks"]
         for playbook_dict in playbooks_list:
             playbook_name = list(playbook_dict.keys())[0]
             playbook_data = playbook_dict[playbook_name]
@@ -65,23 +77,34 @@ class IDSetCreator:
                 if commands_to_integration[command]:
                     # only apply this logic when there is no specific brand
                     continue
-                is_command_implemented_in_integration = command in command_name_to_implemented_integration_map
-                if is_command_implemented_in_integration and command not in GENERIC_COMMANDS_NAMES:
-                    implemented_integration = command_name_to_implemented_integration_map[command]
+                is_command_implemented_in_integration = (
+                    command in command_name_to_implemented_integration_map
+                )
+                if (
+                    is_command_implemented_in_integration
+                    and command not in GENERIC_COMMANDS_NAMES
+                ):
+                    implemented_integration = (
+                        command_name_to_implemented_integration_map[command]
+                    )
                     commands_to_integration[command] = implemented_integration
 
     def create_command_to_implemented_integration_map(self):
         command_name_to_implemented_integration_map = {}  # type: ignore
-        integrations_list = self.id_set['integrations']
+        integrations_list = self.id_set["integrations"]
         for integration_data in integrations_list:
             integration_name = list(integration_data.keys())[0]
             integration_data = integration_data[integration_name]
             commands = integration_data.get("commands", {})
             for command in commands:
                 if command in command_name_to_implemented_integration_map:
-                    command_name_to_implemented_integration_map[command] += [integration_name]
+                    command_name_to_implemented_integration_map[command] += [
+                        integration_name
+                    ]
                 else:
-                    command_name_to_implemented_integration_map[command] = [integration_name]
+                    command_name_to_implemented_integration_map[command] = [
+                        integration_name
+                    ]
         return command_name_to_implemented_integration_map
 
     def save_id_set(self):
@@ -96,7 +119,7 @@ class IDSetCreator:
             if not exists(self.output):
                 intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
                 os.makedirs(intermediate_dirs, exist_ok=True)
-            with open(self.output, 'w+') as id_set_file:
+            with open(self.output, "w+") as id_set_file:
                 json.dump(self.id_set, id_set_file, indent=4)
 
 

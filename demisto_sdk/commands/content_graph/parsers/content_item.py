@@ -1,19 +1,30 @@
-import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Type, cast
+from typing import Any, Dict, List, Optional, Set, Type, cast
 
 from packaging.version import Version
+from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES, ContentType, Relationships,
-                                                       RelationshipType)
+from demisto_sdk.commands.common.constants import (
+    MARKETPLACE_MIN_VERSION,
+    PACK_DEFAULT_MARKETPLACES,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.common import (
+    UNIFIED_FILES_SUFFIXES,
+    ContentType,
+    Relationships,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class NotAContentItemException(Exception):
+    pass
+
+
+class InvalidContentItemException(Exception):
     pass
 
 
@@ -65,58 +76,75 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     """
 
     content_type_to_parser: Dict[ContentType, Type["ContentItemParser"]] = {}
+    pack: Any = Field(default=None, exclude=True)
 
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions] = PACK_DEFAULT_MARKETPLACES,
+        git_sha: Optional[str] = None,
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
         self.relationships: Relationships = Relationships()
+        self.git_sha: Optional[str] = git_sha
 
     @staticmethod
     def from_path(
-        path: Path, pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
-    ) -> Optional["ContentItemParser"]:
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        git_sha: Optional[str] = None,
+    ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
 
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
-        logger.info(f'Parsing content item {path}')
+        from demisto_sdk.commands.content_graph.common import ContentType
+
+        logger.debug(f"Parsing content item {path}")
         if not ContentItemParser.is_content_item(path):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent
-            else:
-                return None
-        content_type: ContentType = ContentType.by_folder(path.parts[-2])
+        try:
+            content_type: ContentType = ContentType.by_path(path)
+        except ValueError:
+            try:
+                optional_content_type = ContentType.by_schema(path)
+            except ValueError as e:
+                logger.error(f"Could not determine content type for {path}: {e}")
+                raise InvalidContentItemException from e
+            content_type = optional_content_type
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
-                    parser_cls,
-                    path,
-                    pack_marketplaces,
+                    parser_cls, path, pack_marketplaces, git_sha
                 )
             except IncorrectParserException as e:
                 return ContentItemParser.parse(
-                    e.correct_parser, path, pack_marketplaces, **e.kwargs
+                    e.correct_parser, path, pack_marketplaces, git_sha, **e.kwargs
                 )
-        return None
+            except NotAContentItemException:
+                logger.debug(f"{path} is not a content item, skipping")
+                raise
+            except Exception as e:
+                logger.error(f"Failed to parse {path}: {e}")
+                raise InvalidContentItemException from e
+        logger.warning(f"Could not find parser for {content_type} of {path}")
+        raise NotAContentItemException
 
     @staticmethod
     def parse(
         parser_cls: Type["ContentItemParser"],
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
         **kwargs,
-    ) -> Optional["ContentItemParser"]:
-        try:
-            parser = parser_cls(path, pack_marketplaces, **kwargs)
-            logger.info(f"Parsed {parser.node_id}")
-            return parser
-        except NotAContentItemException:
-            logger.debug(f"Skipping {path}")
-            return None
+    ) -> "ContentItemParser":
+        parser = parser_cls(path, pack_marketplaces, git_sha=git_sha, **kwargs)
+        logger.debug(f"Parsed {parser.node_id}")
+        return parser
 
     @property
     @abstractmethod
@@ -126,6 +154,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @property
     @abstractmethod
     def display_name(self) -> Optional[str]:
+        pass
+
+    @property
+    def version(self) -> int:
         pass
 
     @property
@@ -142,6 +174,33 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @abstractmethod
     def marketplaces(self) -> List[MarketplaceVersions]:
         pass
+
+    def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:
+        if file_marketplaces := [
+            MarketplaceVersions(mp) for mp in data.get("marketplaces", [])
+        ]:
+            marketplaces = file_marketplaces
+        else:
+            marketplaces = self.pack_marketplaces
+
+        marketplaces_set = set(marketplaces).intersection(self.supported_marketplaces)
+        marketplaces_set = self.update_marketplaces_set_with_xsoar_values(
+            marketplaces_set
+        )
+        return sorted(marketplaces_set)
+
+    @staticmethod
+    def update_marketplaces_set_with_xsoar_values(marketplaces_set: set) -> set:
+        if (
+            MarketplaceVersions.XSOAR in marketplaces_set
+            and MarketplaceVersions.XSOAR_ON_PREM not in marketplaces_set
+        ):
+            marketplaces_set.add(MarketplaceVersions.XSOAR_SAAS)
+
+        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_set:
+            marketplaces_set.add(MarketplaceVersions.XSOAR)
+
+        return marketplaces_set
 
     @property
     @abstractmethod
@@ -164,7 +223,14 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:
-        return path.suffix in UNIFIED_FILES_SUFFIXES and path.parent.name in ContentType.folders() and path.parent.parent.name not in ContentType.folders()
+        if path.suffix in UNIFIED_FILES_SUFFIXES:
+            if path.parent.name in ContentType.folders():
+                return path.parent.parent.name not in ContentType.folders()
+            if path.parent.parent.name in ContentType.folders():
+                return (
+                    ContentType.by_path(path) in ContentType.threat_intel_report_types()
+                )
+        return False
 
     @staticmethod
     def is_content_item(path: Path) -> bool:
@@ -181,6 +247,31 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(
             path
         )
+
+    def get_path_with_suffix(self, suffix: str) -> Path:
+        """Sets the path of the content item with a given suffix.
+
+        Args:
+            suffix (str): The suffix of the content item (JSON or YAML).
+
+        """
+        if not self.path.is_dir():
+            if not self.path.exists() or not self.path.suffix == suffix:
+                raise NotAContentItemException
+            path = self.path
+        else:
+            paths = [path for path in self.path.iterdir() if path.suffix == suffix]
+            if not paths:
+                raise NotAContentItemException
+            if len(paths) == 1:
+                path = paths[0]
+            else:
+                for path in paths:
+                    if path == self.path / f"{self.path.name}{suffix}":
+                        break
+                else:
+                    path = paths[0]
+        return path
 
     def should_skip_parsing(self) -> bool:
         """Returns true if any of the minimal conditions for parsing is not met.
@@ -211,6 +302,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target (str): The identifier of the target content object (e.g, its node_id).
             kwargs: Additional information about the relationship.
         """
+        # target type has to be the base type, because in the server they are the same
+        if target_type == ContentType.SCRIPT:
+            target_type = ContentType.BASE_SCRIPT
+        if target_type == ContentType.PLAYBOOK:
+            target_type = ContentType.BASE_PLAYBOOK
         self.relationships.add(
             relationship,
             source_id=self.object_id,
@@ -267,6 +363,19 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         """
         self.add_relationship(
             RelationshipType.USES_BY_NAME,
+            target=dependency_name,
+            target_type=dependency_type,
+            mandatorily=is_mandatory,
+        )
+
+    def add_dependency_by_cli_name(
+        self,
+        dependency_name: str,
+        dependency_type: ContentType,
+        is_mandatory: bool = True,
+    ):
+        self.add_relationship(
+            RelationshipType.USES_BY_CLI_NAME,
             target=dependency_name,
             target_type=dependency_type,
             mandatorily=is_mandatory,

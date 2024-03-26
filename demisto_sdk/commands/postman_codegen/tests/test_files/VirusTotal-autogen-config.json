@@ -1028,6 +1028,10 @@
                     "description": "",
                     "type_": "String"
                 },
+                {   "description": "",
+                    "name": "detected_referrer_samples",
+                    "type_": "Unknown"
+                },
                 {
                     "name": "Forcepoint ThreatSeeker category",
                     "description": "",
@@ -1078,6 +1082,10 @@
                     "description": "",
                     "type_": "String"
                 },
+                {   "description": "",
+                    "name": "domain_siblings",
+                    "type_": "Unknown"
+                },
                 {
                     "name": "sophos category",
                     "description": "",
@@ -1097,6 +1105,11 @@
                     "name": "verbose_msg",
                     "description": "",
                     "type_": "String"
+                },
+                {
+                    "description": "",
+                    "name": "detected_urls",
+                    "type_": "Unknown"
                 }
             ]
         },

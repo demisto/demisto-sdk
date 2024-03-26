@@ -1,0 +1,103 @@
+type: map
+mapping:
+  templates_data:
+    type: seq
+    sequence:
+    - include: templates_data_schema
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
+  widgets_data:
+    type: seq
+    sequence:
+    - include: widgets_data_schema
+
+
+schema;templates_data_schema:
+  type: map
+  mapping:
+    global_id:
+      type: str
+      required: true
+    report_name:
+      type: str
+      required: true
+    report_description:
+      type: str
+      required: false
+    default_template_id:
+      type: number
+      required: false
+    time_frame:
+      mapping:
+        relativeTime:
+          type: number
+          required: true
+    time_offset:
+      type: number
+      required: true
+    layout:
+      type: seq
+      required: true
+      sequence:
+      - include: layout_schema
+
+schema;layout_schema:
+  type: map
+  mapping:
+    id:
+      type: str
+      required: true
+    data:
+      type: seq
+      required: true
+      sequence:
+      - include: layout_data_schema
+
+schema;layout_data_schema:
+  type: map
+  mapping:
+    key:
+      type: str
+      required: true
+    data:
+      type: map
+      required: true
+      allowempty: true
+
+schema;widgets_data_schema:
+  type: map
+  mapping:
+    widget_key:
+      type: str
+    title:
+      type: str
+      required: false
+    creation_time:
+      type: number
+      required: false
+    description:
+      type: str
+      required: false
+    data:
+      type: map
+      required: false
+      allowempty: true
+    support_time_range:
+      type: bool
+      required: false
+    additional_info:
+      type: map
+      required: false
+      allowempty: true
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str

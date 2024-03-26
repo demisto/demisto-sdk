@@ -1,15 +1,35 @@
-from typing import Set
+from pathlib import Path
+from typing import Optional
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.indicator_incident_field import (
+    IndicatorIncidentField,
+)
+
+json = JSON_Handler()
 
 
-class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # type: ignore[call-arg]
-    cli_name: str = Field(alias="cliName")
-    field_type: str = Field(alias="type")
+class IncidentField(IndicatorIncidentField, content_type=ContentType.INCIDENT_FIELD):  # type: ignore[call-arg]
     associated_to_all: bool = Field(False, alias="associatedToAll")
 
-    def metadata_fields(self) -> Set[str]:
-        return {"name", "type", "description"}
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
+        summary = super().summary(marketplace, incident_to_alert)
+        summary["id"] = f"incident_{self.object_id}"
+        return summary
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "id" in _dict:
+            if isinstance(_dict["id"], str):
+                _id = _dict["id"].lower()
+                if _id.startswith("incident"):
+                    return True
+        return False

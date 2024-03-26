@@ -1,4 +1,8 @@
 {
   "fromVersion": "6.0.0",
-  "layout": "test"
+  "layout": {},
+  "id": "test",
+  "display_name": "test",
+  "name": "test"
+
 }

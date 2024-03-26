@@ -6,8 +6,8 @@ Note that adding code to CommonServerUserPython can override functions in Common
 from __future__ import print_function
 
 import base64
-from demisto_sdk.commands.common.handlers import JSON_Handler
-json = JSON_Handler()
+import json
+
 
 import logging
 import os
@@ -179,7 +179,7 @@ def handle_proxy(proxy_param_name='proxy', checkbox_default_value=False):
         :rtype: ``dict``
         :return: proxies dict for the 'proxies' parameter of 'requests' functions
     """
-    proxies = {}  # type: dict
+    proxies: dict = {}
     if demisto.params().get(proxy_param_name, checkbox_default_value):
         proxies = {
             'http': os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy', ''),
@@ -667,9 +667,9 @@ class IntegrationLogger(object):
     """
 
     def __init__(self):
-        self.messages = []  # type: list
-        self.write_buf = []  # type: list
-        self.replace_strs = []  # type: list
+        self.messages: list = []
+        self.write_buf: list = []
+        self.replace_strs: list = []
         self.buffering = True
         # if for some reason you don't want to auto add credentials.password to replace strings
         # set the os env COMMON_SERVER_NO_AUTO_REPLACE_STRS. Either in CommonServerUserPython, or docker env
@@ -1079,7 +1079,7 @@ def createContextSingle(obj, id=None, keyTransform=None, removeNull=False):
     :return: The converted context list
     :rtype: ``list``
     """
-    res = {}  # type: dict
+    res: dict = {}
     if keyTransform is None:
         def keyTransform(s): return s  # noqa
     keys = obj.keys()
@@ -1333,7 +1333,7 @@ def strip_tag(tag):
 def elem_to_internal(elem, strip_ns=1, strip=1):
     """Convert an Element into an internal dictionary (not JSON!)."""
 
-    d = OrderedDict()  # type: dict
+    d: dict = OrderedDict()
     elem_tag = elem.tag
     if strip_ns:
         elem_tag = strip_tag(elem.tag)
@@ -1388,7 +1388,7 @@ def internal_to_elem(pfsh, factory=ET.Element):
     Element class as the factory parameter.
     """
 
-    attribs = OrderedDict()  # type: dict
+    attribs: dict = OrderedDict()
     text = None
     tail = None
     sublist = []

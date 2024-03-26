@@ -1,23 +1,28 @@
-from typing import Optional
+from typing import Dict, Optional
 from unittest.mock import patch
 
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.incident_type import (
+    IncidentTypeValidator,
+)
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 
-def mock_structure(file_path=None, current_file=None, old_file=None):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
-    with patch.object(StructureValidator, '__init__', lambda a, b: None):
+def mock_structure(
+    file_path: Optional[str] = None,
+    current_file: Optional[dict] = None,
+    old_file: Optional[dict] = None,
+) -> StructureValidator:
+    with patch.object(StructureValidator, "__init__", lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
-        structure.scheme_name = 'incident_type'
+        structure.scheme_name = "incident_type"
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
-        structure.prev_ver = 'master'
-        structure.branch_name = ''
+        structure.prev_ver = "master"
+        structure.branch_name = ""
         structure.specific_validations = None
         return structure
 
@@ -29,46 +34,88 @@ data_is_valid_version = [
 ]
 
 
-@pytest.mark.parametrize('version, is_valid', data_is_valid_version)
+@pytest.mark.parametrize("version, is_valid", data_is_valid_version)
 def test_is_valid_version(version, is_valid):
     structure = StructureValidator("")
     structure.current_file = {"version": version}
     validator = IncidentTypeValidator(structure)
-    assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
+    assert (
+        validator.is_valid_version() == is_valid
+    ), f"is_valid_version({version}) returns {not is_valid}."
 
 
 data_is_id_equal_name = [
-    ('AWS EC2 Instance Misconfiguration', 'AWS EC2 Instance Misconfiguration', True),
-    ('AWS EC2 Instance Misconfiguration', 'AWS EC2 Instance Wrong configuration', False)
+    ("AWS EC2 Instance Misconfiguration", "AWS EC2 Instance Misconfiguration", True),
+    (
+        "AWS EC2 Instance Misconfiguration",
+        "AWS EC2 Instance Wrong configuration",
+        False,
+    ),
 ]
 
 
-@pytest.mark.parametrize('id_, name, is_valid', data_is_id_equal_name)
+@pytest.mark.parametrize("id_, name, is_valid", data_is_id_equal_name)
 def test_is_id_equal_name(id_, name, is_valid):
     structure = StructureValidator("")
     structure.current_file = {"id": id_, "name": name}
     validator = IncidentTypeValidator(structure)
-    assert validator.is_id_equals_name() == is_valid, f'is_id_equal_name returns {not is_valid}.'
+    assert (
+        validator.is_id_equals_name() == is_valid
+    ), f"is_id_equal_name returns {not is_valid}."
 
 
 data_is_including_int_fields = [
-    ({"fromVersion": "5.0.0", "hours": 1, "days": 2, "weeks": 3, "hoursR": 1, "daysR": 2, "weeksR": 3}, True),
-    ({"fromVersion": "5.0.0", "hours": 1, "days": 2, "weeks": "3", "hoursR": 1, "daysR": 2, "weeksR": 3}, False),
-    ({"fromVersion": "5.0.0", "hours": 1, "days": 2, "weeks": 3, "hoursR": 1, "daysR": 2}, False),
+    (
+        {
+            "fromVersion": "5.0.0",
+            "hours": 1,
+            "days": 2,
+            "weeks": 3,
+            "hoursR": 1,
+            "daysR": 2,
+            "weeksR": 3,
+        },
+        True,
+    ),
+    (
+        {
+            "fromVersion": "5.0.0",
+            "hours": 1,
+            "days": 2,
+            "weeks": "3",
+            "hoursR": 1,
+            "daysR": 2,
+            "weeksR": 3,
+        },
+        False,
+    ),
+    (
+        {
+            "fromVersion": "5.0.0",
+            "hours": 1,
+            "days": 2,
+            "weeks": 3,
+            "hoursR": 1,
+            "daysR": 2,
+        },
+        False,
+    ),
 ]
 
 
-@pytest.mark.parametrize('current_file, is_valid', data_is_including_int_fields)
+@pytest.mark.parametrize("current_file, is_valid", data_is_including_int_fields)
 def test_is_including_fields(current_file, is_valid):
     structure = mock_structure("", current_file)
     validator = IncidentTypeValidator(structure)
-    assert validator.is_including_int_fields() == is_valid, f'is_including_int_fields returns {not is_valid}.'
+    assert (
+        validator.is_including_int_fields() == is_valid
+    ), f"is_including_int_fields returns {not is_valid}."
 
 
-IS_FROM_VERSION_CHANGED_NO_OLD = {}  # type: dict[any, any]
+IS_FROM_VERSION_CHANGED_NO_OLD: Dict[any, any] = {}
 IS_FROM_VERSION_CHANGED_OLD = {"fromVersion": "5.0.0"}
 IS_FROM_VERSION_CHANGED_NEW = {"fromVersion": "5.0.0"}
-IS_FROM_VERSION_CHANGED_NO_NEW = {}  # type: dict[any, any]
+IS_FROM_VERSION_CHANGED_NO_NEW: Dict[any, any] = {}
 IS_FROM_VERSION_CHANGED_NEW_HIGHER = {"fromVersion": "5.5.0"}
 IS_CHANGED_FROM_VERSION_INPUTS = [
     (IS_FROM_VERSION_CHANGED_NO_OLD, IS_FROM_VERSION_CHANGED_NO_OLD, False),
@@ -79,7 +126,9 @@ IS_CHANGED_FROM_VERSION_INPUTS = [
 ]
 
 
-@pytest.mark.parametrize("current_from_version, old_from_version, answer", IS_CHANGED_FROM_VERSION_INPUTS)
+@pytest.mark.parametrize(
+    "current_from_version, old_from_version, answer", IS_CHANGED_FROM_VERSION_INPUTS
+)
 def test_is_changed_from_version(current_from_version, old_from_version, answer):
     structure = StructureValidator("")
     structure.old_file = old_from_version
@@ -91,10 +140,10 @@ def test_is_changed_from_version(current_from_version, old_from_version, answer)
 
 
 IS_VALID_PLAYBOOK_ID = [
-    ('valid playbook', True),
-    ('', True),
-    ('12b3a41b-04ce-4417-89b3-4efd95d28012', False),
-    ('abbababb-aaaa-bbbb-cccc-abcdabcdabcd', False)
+    ("valid playbook", True),
+    ("", True),
+    ("12b3a41b-04ce-4417-89b3-4efd95d28012", False),
+    ("abbababb-aaaa-bbbb-cccc-abcdabcdabcd", False),
 ]
 
 
@@ -123,20 +172,71 @@ def test_is_valid_autoextract_no_extract_rules():
 
 
 EXTRACT_VARIATIONS = [
-    ({"extractAsIsIndicatorTypeId": "", "isExtractingAllIndicatorTypes": False, "extractIndicatorTypesIDs": []}, True),
-    ({"extractAsIsIndicatorTypeId": "IP", "isExtractingAllIndicatorTypes": False, "extractIndicatorTypesIDs": []}, True),
-    ({"extractAsIsIndicatorTypeId": "", "isExtractingAllIndicatorTypes": False,
-      "extractIndicatorTypesIDs": ["IP", "CIDR"]}, True),
-    ({"extractAsIsIndicatorTypeId": "", "isExtractingAllIndicatorTypes": True, "extractIndicatorTypesIDs": []}, True),
-    ({"extractAsIsIndicatorTypeId": "IP", "isExtractingAllIndicatorTypes": False,
-      "extractIndicatorTypesIDs": ["IP"]}, False),
-    ({"extractAsIsIndicatorTypeId": "IP", "isExtractingAllIndicatorTypes": True,
-      "extractIndicatorTypesIDs": []}, False),
-    ({"extractAsIsIndicatorTypeId": "", "isExtractingAllIndicatorTypes": True,
-      "extractIndicatorTypesIDs": ["IP"]}, False),
-    ({"extractAsIsIndicatorTypeId": "IP", "isExtractingAllIndicatorTypes": True,
-      "extractIndicatorTypesIDs": ["IP"]}, False),
-    ({}, False)
+    (
+        {
+            "extractAsIsIndicatorTypeId": "",
+            "isExtractingAllIndicatorTypes": False,
+            "extractIndicatorTypesIDs": [],
+        },
+        True,
+    ),
+    (
+        {
+            "extractAsIsIndicatorTypeId": "IP",
+            "isExtractingAllIndicatorTypes": False,
+            "extractIndicatorTypesIDs": [],
+        },
+        True,
+    ),
+    (
+        {
+            "extractAsIsIndicatorTypeId": "",
+            "isExtractingAllIndicatorTypes": False,
+            "extractIndicatorTypesIDs": ["IP", "CIDR"],
+        },
+        True,
+    ),
+    (
+        {
+            "extractAsIsIndicatorTypeId": "",
+            "isExtractingAllIndicatorTypes": True,
+            "extractIndicatorTypesIDs": [],
+        },
+        True,
+    ),
+    (
+        {
+            "extractAsIsIndicatorTypeId": "IP",
+            "isExtractingAllIndicatorTypes": False,
+            "extractIndicatorTypesIDs": ["IP"],
+        },
+        False,
+    ),
+    (
+        {
+            "extractAsIsIndicatorTypeId": "IP",
+            "isExtractingAllIndicatorTypes": True,
+            "extractIndicatorTypesIDs": [],
+        },
+        False,
+    ),
+    (
+        {
+            "extractAsIsIndicatorTypeId": "",
+            "isExtractingAllIndicatorTypes": True,
+            "extractIndicatorTypesIDs": ["IP"],
+        },
+        False,
+    ),
+    (
+        {
+            "extractAsIsIndicatorTypeId": "IP",
+            "isExtractingAllIndicatorTypes": True,
+            "extractIndicatorTypesIDs": ["IP"],
+        },
+        False,
+    ),
+    ({}, False),
 ]
 
 
@@ -154,21 +254,19 @@ def test_is_valid_autoextract_fields(extract_field, answer):
     """
     structure = StructureValidator("")
     validator = IncidentTypeValidator(structure)
-    validator.current_file['extractSettings'] = {
-        'mode': "All",
-        'fieldCliNameToExtractSettings': {
-            "incident_field": extract_field
-        }
+    validator.current_file["extractSettings"] = {
+        "mode": "All",
+        "fieldCliNameToExtractSettings": {"incident_field": extract_field},
     }
     assert validator.is_valid_autoextract() is answer
 
 
 EXTRACTION_MODE_VARIATIONS = [
-    ('All', True),
-    ('Specific', True),
+    ("All", True),
+    ("Specific", True),
     (None, False),
-    ('', False),
-    ('all', False)
+    ("", False),
+    ("all", False),
 ]
 
 
@@ -186,14 +284,14 @@ def test_is_valid_autoextract_mode(extract_mode, answer):
     """
     structure = StructureValidator("")
     validator = IncidentTypeValidator(structure)
-    validator.current_file['extractSettings'] = {
-        'mode': extract_mode,
-        'fieldCliNameToExtractSettings': {
+    validator.current_file["extractSettings"] = {
+        "mode": extract_mode,
+        "fieldCliNameToExtractSettings": {
             "incident_field": {
                 "extractAsIsIndicatorTypeId": "",
                 "isExtractingAllIndicatorTypes": False,
-                "extractIndicatorTypesIDs": []
+                "extractIndicatorTypesIDs": [],
             }
-        }
+        },
     }
     assert validator.is_valid_autoextract() is answer

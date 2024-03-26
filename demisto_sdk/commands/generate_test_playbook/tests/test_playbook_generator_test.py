@@ -3,35 +3,41 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (PlaybookTestsGenerator,
-                                                                                 get_command_examples)
-
-yaml = YAML_Handler()
+from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
+    PlaybookTestsGenerator,
+    get_command_examples,
+)
 
 
 class TestGenerateTestPlaybook:
-    TEMP_DIR = 'temp'
-    TEST_FILE_PATH = Path(git_path()) / 'demisto_sdk' / 'tests' / 'test_files'
-    DUMMY_INTEGRATION_YML_PATH = TEST_FILE_PATH / 'fake_integration.yml'
-    CREATED_DIRS = list()  # type: list
+    TEMP_DIR = "temp"
+    TEST_FILE_PATH = Path(git_path()) / "demisto_sdk" / "tests" / "test_files"
+    DUMMY_INTEGRATION_YML_PATH = TEST_FILE_PATH / "fake_integration.yml"
+    CREATED_DIRS: list = list()
 
     @classmethod
     def setup_class(cls):
-        print("Setups TestGenerateTestPlaybook class")
+        print("Setups TestGenerateTestPlaybook class")  # noqa: T201
         Path(TestGenerateTestPlaybook.TEMP_DIR).mkdir(exist_ok=True)
 
     @classmethod
     def teardown_class(cls):
-        print("Tearing down TestGenerateTestPlaybook class")
+        print("Tearing down TestGenerateTestPlaybook class")  # noqa: T201
         if Path(TestGenerateTestPlaybook.TEMP_DIR).exists():
-            shutil.rmtree(TestGenerateTestPlaybook.TEMP_DIR, ignore_errors=False, onerror=None)
+            shutil.rmtree(
+                TestGenerateTestPlaybook.TEMP_DIR, ignore_errors=False, onerror=None
+            )
 
-    @pytest.mark.parametrize("use_all_brands,expected_yml",
-                             [(False, 'fake_integration_expected_test_playbook.yml'),
-                              (True, 'fake_integration_expected_test_playbook__all_brands.yml')])
+    @pytest.mark.parametrize(
+        "use_all_brands,expected_yml",
+        [
+            (False, "fake_integration_expected_test_playbook.yml"),
+            (True, "fake_integration_expected_test_playbook__all_brands.yml"),
+        ],
+    )
     def test_generate_test_playbook(self, use_all_brands, expected_yml):
         """
         Given:  An integration yml file
@@ -40,15 +46,17 @@ class TestGenerateTestPlaybook:
         """
         generator = PlaybookTestsGenerator(
             input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
-            file_type='integration',
+            file_type="integration",
             output=TestGenerateTestPlaybook.TEMP_DIR,
-            name='TestPlaybook',
-            use_all_brands=use_all_brands
+            name="TestPlaybook",
+            use_all_brands=use_all_brands,
         )
 
         generator.run()
         excepted_path = TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml
-        new_yml_path = Path(TestGenerateTestPlaybook.TEMP_DIR) / 'playbook-TestPlaybook_Test.yml'
+        new_yml_path = (
+            Path(TestGenerateTestPlaybook.TEMP_DIR) / "playbook-TestPlaybook_Test.yml"
+        )
         assert yaml.load(new_yml_path) == yaml.load(excepted_path)
 
     def test_generate_test_playbook__integration_under_packs(self, tmpdir):
@@ -58,27 +66,36 @@ class TestGenerateTestPlaybook:
         Then:   Make sure the generated test playbook is correct, and saved in the standard location
                 (.../Packs/<Pack name>/TestPlayBooks/playbook-<integration_name>_Test.yml)
         """
-        pack_folder = Path(tmpdir) / 'Packs' / 'DummyPack'
+        pack_folder = Path(tmpdir) / "Packs" / "DummyPack"
 
-        integration_folder = pack_folder / 'DummyIntegration'
+        integration_folder = pack_folder / "DummyIntegration"
         integration_folder.mkdir(parents=True)
 
-        integration_path = integration_folder / 'DummyIntegration.yml'
-        shutil.copy(TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH, integration_path)
+        integration_path = integration_folder / "DummyIntegration.yml"
+        shutil.copy(
+            TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH, integration_path
+        )
 
         generator = PlaybookTestsGenerator(
             input=integration_path,
-            file_type='integration',
+            file_type="integration",
             output="",
-            name='TestPlaybook',
-            use_all_brands=False
+            name="TestPlaybook",
+            use_all_brands=False,
         )
 
         generator.run()
 
-        expected_test_playbook_path = TestGenerateTestPlaybook.TEST_FILE_PATH / 'fake_integration_expected_test_playbook.yml'
-        actual_test_playbook_path = pack_folder / 'TestPlaybooks' / 'playbook-TestPlaybook_Test.yml'
-        assert yaml.load(actual_test_playbook_path) == yaml.load(expected_test_playbook_path)
+        expected_test_playbook_path = (
+            TestGenerateTestPlaybook.TEST_FILE_PATH
+            / "fake_integration_expected_test_playbook.yml"
+        )
+        actual_test_playbook_path = (
+            pack_folder / "TestPlaybooks" / "playbook-TestPlaybook_Test.yml"
+        )
+        assert yaml.load(actual_test_playbook_path) == yaml.load(
+            expected_test_playbook_path
+        )
 
     def test_generate_test_playbook__integration_not_under_packs(self):
         """
@@ -89,17 +106,23 @@ class TestGenerateTestPlaybook:
 
         generator = PlaybookTestsGenerator(
             input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
-            file_type='integration',
+            file_type="integration",
             output="",
-            name='TestPlaybook',
-            use_all_brands=False
+            name="TestPlaybook",
+            use_all_brands=False,
         )
 
         generator.run()
 
-        expected_test_playbook_yml = get_yaml(str(Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                              'fake_integration_expected_test_playbook.yml')))
-        actual_test_playbook_yml = get_yaml(str(Path('playbook-TestPlaybook_Test.yml')))
+        expected_test_playbook_yml = get_yaml(
+            str(
+                Path(
+                    TestGenerateTestPlaybook.TEST_FILE_PATH
+                    / "fake_integration_expected_test_playbook.yml"
+                )
+            )
+        )
+        actual_test_playbook_yml = get_yaml(str(Path("playbook-TestPlaybook_Test.yml")))
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 
@@ -113,20 +136,19 @@ class TestGenerateTestPlaybook:
         output.mkdir()
         generator = PlaybookTestsGenerator(
             input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
-            file_type='integration',
+            file_type="integration",
             output=output,
-            name='TestPlaybook',
-            use_all_brands=False
+            name="TestPlaybook",
+            use_all_brands=False,
         )
 
         generator.run()
 
         expected_test_playbook_yml = get_yaml(
-            TestGenerateTestPlaybook.TEST_FILE_PATH / 'fake_integration_expected_test_playbook.yml'
+            TestGenerateTestPlaybook.TEST_FILE_PATH
+            / "fake_integration_expected_test_playbook.yml"
         )
-        actual_test_playbook_yml = get_yaml(
-            output / 'playbook-TestPlaybook_Test.yml'
-        )
+        actual_test_playbook_yml = get_yaml(output / "playbook-TestPlaybook_Test.yml")
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 
@@ -141,16 +163,20 @@ class TestGenerateTestPlaybook:
 
         generator = PlaybookTestsGenerator(
             input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
-            file_type='integration',
+            file_type="integration",
             output=output,
-            name='TestPlaybook',
-            use_all_brands=False
+            name="TestPlaybook",
+            use_all_brands=False,
         )
 
         generator.run()
 
-        expected_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                              'fake_integration_expected_test_playbook.yml'))
+        expected_test_playbook_yml = get_yaml(
+            Path(
+                TestGenerateTestPlaybook.TEST_FILE_PATH
+                / "fake_integration_expected_test_playbook.yml"
+            )
+        )
         actual_test_playbook_yml = get_yaml(output)
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
@@ -167,16 +193,21 @@ class TestGenerateTestPlaybook:
         with pytest.raises(PlaybookTestsGenerator.InvalidOutputPathError):
             generator = PlaybookTestsGenerator(
                 input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
-                file_type='integration',
+                file_type="integration",
                 output=output,
-                name='TestPlaybook',
-                use_all_brands=False
+                name="TestPlaybook",
+                use_all_brands=False,
             )
             generator.run()
 
 
-@pytest.mark.parametrize("commands, excepted_num_tasks", [('zoom-create-user,zoom-delete-user', 6), (None, 8)])
-def test_generate_test_playbook_with_command_examples(tmp_path, commands, excepted_num_tasks):
+@pytest.mark.parametrize(
+    "commands, excepted_num_tasks",
+    [("zoom-create-user,zoom-delete-user", 6), (None, 8)],
+)
+def test_generate_test_playbook_with_command_examples(
+    tmp_path, commands, excepted_num_tasks
+):
     """
     Given:
         An integration yaml input with a command examples file and specified commands by the user.
@@ -187,42 +218,62 @@ def test_generate_test_playbook_with_command_examples(tmp_path, commands, except
         Ensure that the given arguments in the examples file was generate into the test playbook tasks
     """
     command_examples = tmp_path / "command_examples"
-    output_tpb = tmp_path / 'TestPlaybook'
+    output_tpb = tmp_path / "TestPlaybook"
     output_tpb.mkdir()
 
-    with open(command_examples, 'w+') as ce:
-        ce.write('!zoom-create-user first_name=fname last_name=lname email=flname@example.com\n'
-                 '!zoom-create-meeting type=Instant user=fname topic=Meeting\n!zoom-delete-user user=fname')
+    with open(command_examples, "w+") as ce:
+        ce.write(
+            "!zoom-create-user first_name=fname last_name=lname email=flname@example.com\n"
+            "!zoom-create-meeting type=Instant user=fname topic=Meeting\n!zoom-delete-user user=fname"
+        )
 
     generator = PlaybookTestsGenerator(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/fake_integration.yml',
-        file_type='integration',
+        input=f"{git_path()}/demisto_sdk/tests/test_files/fake_integration.yml",
+        file_type="integration",
         output=str(output_tpb),
-        name='TestPlaybook',
+        name="TestPlaybook",
         examples=str(command_examples),
-        commands=commands
+        commands=commands,
     )
 
     generator.run()
 
     tpb_yml = get_yaml(generator.test_playbook_yml_path)
 
-    assert len(tpb_yml.get('tasks', {})) == excepted_num_tasks
-    assert tpb_yml['tasks']['2']['scriptarguments']['first_name'] == {'simple': 'fname'}
-    assert tpb_yml['tasks']['4']['scriptarguments']['user'] == {'simple': 'fname'}
+    assert len(tpb_yml.get("tasks", {})) == excepted_num_tasks
+    assert tpb_yml["tasks"]["2"]["scriptarguments"]["first_name"] == {"simple": "fname"}
+    assert tpb_yml["tasks"]["4"]["scriptarguments"]["user"] == {"simple": "fname"}
 
     if commands:
-        assert tpb_yml['tasks']['4']['task']['script'] == 'Zoom|||zoom-delete-user'
+        assert tpb_yml["tasks"]["4"]["task"]["script"] == "Zoom|||zoom-delete-user"
     else:
-        assert tpb_yml['tasks']['4']['task']['script'] == 'Zoom|||zoom-create-meeting'
+        assert tpb_yml["tasks"]["4"]["task"]["script"] == "Zoom|||zoom-create-meeting"
 
 
-@pytest.mark.parametrize("command_examples, excepted_result", [
-    ("command_examples", {'zoom-create-meeting': {'topic': 'Meeting', 'type': 'Instant', 'user': 'fname'},
-                          'zoom-create-user': {'email': 'flname@example.com', 'first_name': 'fname',
-                                               'last_name': 'lname'}}),
-    ("!do-some-command arg=arg1 sarg=arg2", {"do-some-command": {"arg": "arg1", "sarg": "arg2"}})
-])
+@pytest.mark.parametrize(
+    "command_examples, excepted_result",
+    [
+        (
+            "command_examples",
+            {
+                "zoom-create-meeting": {
+                    "topic": "Meeting",
+                    "type": "Instant",
+                    "user": "fname",
+                },
+                "zoom-create-user": {
+                    "email": "flname@example.com",
+                    "first_name": "fname",
+                    "last_name": "lname",
+                },
+            },
+        ),
+        (
+            "!do-some-command arg=arg1 sarg=arg2",
+            {"do-some-command": {"arg": "arg1", "sarg": "arg2"}},
+        ),
+    ],
+)
 def test_get_command_examples(tmp_path, command_examples, excepted_result):
     """
     Given:
@@ -235,13 +286,15 @@ def test_get_command_examples(tmp_path, command_examples, excepted_result):
 
     if command_examples == "command_examples":
         command_examples_arg = tmp_path / command_examples
-        entity_type = 'integration'
-        with open(command_examples_arg, 'w+') as ce:
-            ce.write('!zoom-create-user first_name=fname last_name=lname email=flname@example.com\n'
-                     '!zoom-create-meeting type=Instant user=fname topic=Meeting')
+        entity_type = "integration"
+        with open(command_examples_arg, "w+") as ce:
+            ce.write(
+                "!zoom-create-user first_name=fname last_name=lname email=flname@example.com\n"
+                "!zoom-create-meeting type=Instant user=fname topic=Meeting"
+            )
     else:
         command_examples_arg = command_examples
-        entity_type = 'script'
+        entity_type = "script"
 
     result = get_command_examples(command_examples_arg, entity_type)
 

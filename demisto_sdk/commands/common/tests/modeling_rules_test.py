@@ -1,13 +1,13 @@
 import os
+from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.modeling_rule import ModelingRuleValidator
+from demisto_sdk.commands.common.hook_validations.modeling_rule import (
+    ModelingRuleValidator,
+)
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from TestSuite.test_tools import ChangeCWD
-
-yaml = YAML_Handler()
 
 
 def test_is_valid_modeling_rule(repo):
@@ -17,8 +17,8 @@ def test_is_valid_modeling_rule(repo):
     Then: Validate that the modeling rule is valid
 
     """
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
@@ -31,12 +31,11 @@ def test_is_invalid_modeling_rule(repo):
     When: running is_schema_file_exists
     Then: Validate that the modeling rule is invalid
     """
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     schema_path = dummy_modeling_rule.schema.path
-    if os.path.exists(schema_path):
-        os.remove(schema_path)
+    Path(schema_path).unlink(missing_ok=True)
 
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
@@ -50,15 +49,15 @@ def test_is_not_empty_rules_key(repo):
     Then: Validate that the modeling rule is invalid
     """
     yml_dict = {
-        'id': 'modeling-rule',
-        'name': 'Modeling Rule',
-        'fromversion': 3.3,
-        'tags': 'tag',
-        'rules': 'This is a test - not empty',
-        'schema': '',
+        "id": "modeling-rule",
+        "name": "Modeling Rule",
+        "fromversion": 3.3,
+        "tags": "tag",
+        "rules": "This is a test - not empty",
+        "schema": "",
     }
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     dummy_modeling_rule.yml.write_dict(yml_dict)
 
@@ -74,15 +73,15 @@ def test_is_not_empty_schema_key(repo):
     Then: Validate that the modeling rule is invalid
     """
     yml_dict = {
-        'id': 'modeling-rule',
-        'name': 'Modeling Rule',
-        'fromversion': 3.3,
-        'tags': 'tag',
-        'rules': '',
-        'schema': 'This is a test - not empty',
+        "id": "modeling-rule",
+        "name": "Modeling Rule",
+        "fromversion": 3.3,
+        "tags": "tag",
+        "rules": "",
+        "schema": "This is a test - not empty",
     }
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     dummy_modeling_rule.yml.write_dict(yml_dict)
 
@@ -98,14 +97,14 @@ def test_is_missing_key_from_yml(repo):
     Then: Validate that the modeling rule is invalid
     """
     yml_dict = {
-        'id': 'modeling-rule',
-        'name': 'Modeling Rule',
-        'fromversion': 3.3,
-        'tags': 'tag',
-        'rules': '',
+        "id": "modeling-rule",
+        "name": "Modeling Rule",
+        "fromversion": 3.3,
+        "tags": "tag",
+        "rules": "",
     }
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     dummy_modeling_rule.yml.write_dict(yml_dict)
 
@@ -120,34 +119,34 @@ def test_is_valid_rule_file_name(repo):
     When: running is_valid_rule_names
     Then: Validate that the modeling rule is valid
     """
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
         assert modeling_rule_validator.is_valid_rule_names()
 
 
-files_to_rename = ['xif', 'yml', 'schema', 'testdata']
+files_to_rename = ["xif", "yml", "schema", "testdata"]
 
 
-@pytest.mark.parametrize('file_to_rename', files_to_rename)
-def test_is_invalid_rule_file_name(repo, file_to_rename):
+@pytest.mark.parametrize("file_to_rename", files_to_rename)
+def test_is_invalid_rule_file_name(mocker, repo, file_to_rename):
     """
     Given: A modeling rule with invalid component file name
     When: running is_valid_rule_names
     Then: Validate that the modeling rule is invalid
     """
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
-    if file_to_rename == 'xif':
+    if file_to_rename == "xif":
         path_to_replace = dummy_modeling_rule.rules.path
         new_name = f'{path_to_replace.rsplit("/", 1)[0]}/MyRule1.xif'
-    elif file_to_rename == 'yml':
+    elif file_to_rename == "yml":
         path_to_replace = dummy_modeling_rule.yml.path
         new_name = f'{path_to_replace.rsplit("/", 1)[0]}/MyRule1.yml'
-    elif file_to_rename == 'schema':
+    elif file_to_rename == "schema":
         path_to_replace = dummy_modeling_rule.schema.path
         new_name = f'{path_to_replace.rsplit("/", 1)[0]}/MyRule1_schema.json'
     else:
@@ -156,21 +155,27 @@ def test_is_invalid_rule_file_name(repo, file_to_rename):
     os.rename(path_to_replace, new_name)
 
     with ChangeCWD(repo.path):
+        mocker.patch.object(Path, "exists", return_value=True)
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
         assert not modeling_rule_validator.is_valid_rule_names()
         assert not modeling_rule_validator._is_valid
 
 
-@pytest.mark.parametrize('schema, valid', [({"test_audit_raw": {"name": {"type": "sting", "is_array": False}}}, False),
-                                           ({"test_audit_raw": {"name": {"type": "string", "is_array": False}}}, True)])
+@pytest.mark.parametrize(
+    "schema, valid",
+    [
+        ({"test_audit_raw": {"name": {"type": "sting", "is_array": False}}}, False),
+        ({"test_audit_raw": {"name": {"type": "string", "is_array": False}}}, True),
+    ],
+)
 def test_is_schema_types_valid(repo, schema, valid):
     """
     Given: A modeling rule with invalid schema attribute types
     When: running is_schema_types_valid
     Then: Validate that the modeling rule is invalid
     """
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule', schema=schema)
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule("MyRule", schema=schema)
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     modeling_rule_validator = ModelingRuleValidator(structure_validator)
     assert modeling_rule_validator.is_schema_types_valid() == valid
@@ -182,52 +187,8 @@ def test_dataset_name_matches_in_xif_and_schema(repo):
     When: running dataset_name_matches_in_xif_and_schema.
     Then: Validate that the modeling rule is invalid.
     """
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     modeling_rule_validator = ModelingRuleValidator(structure_validator)
     assert not modeling_rule_validator.dataset_name_matches_in_xif_and_schema()
-
-
-def test_is_missing_testdata_file(repo):
-    """
-    Given: A modeling rule with missing testdata file
-    When: running is_valid_file
-    Then: Validate that the modeling rule is invalid
-    """
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
-    structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
-    dummy_modeling_rule.testdata._file_path.unlink(missing_ok=True)
-    with ChangeCWD(repo.path):
-        modeling_rule_validator = ModelingRuleValidator(structure_validator)
-        assert not modeling_rule_validator.does_testdata_file_exist()
-        assert not modeling_rule_validator.is_valid_file()
-        assert not modeling_rule_validator._is_valid
-
-
-def test_is_incomplete_testdata_file(repo):
-    """
-    Given: A modeling rule with an incomplete testdata file
-    When: running is_valid_file
-    Then: Validate that the modeling rule is invalid
-    """
-    from typer.testing import CliRunner
-
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_td_app
-    pack = repo.create_pack('TestPack')
-    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
-    structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
-    dummy_modeling_rule.testdata._file_path.unlink()
-    with open('demisto_sdk/tests/test_files/modeling_rules.xif') as f:
-        xif_rules = f.read()
-        dummy_modeling_rule.rules.write(xif_rules)
-    runner = CliRunner()
-    result = runner.invoke(init_td_app, [dummy_modeling_rule.testdata._file_path.parent.as_posix()])
-    assert result.exit_code == 0
-    with ChangeCWD(repo.path):
-        modeling_rule_validator = ModelingRuleValidator(structure_validator)
-        assert modeling_rule_validator.does_testdata_file_exist()
-        assert not modeling_rule_validator.is_testdata_formatted_correctly()
-        assert not modeling_rule_validator.is_valid_file()
-        assert not modeling_rule_validator._is_valid

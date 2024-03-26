@@ -1,10 +1,16 @@
-from typing import Set
+from pathlib import Path
 
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 
 
-class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
+class Playbook(BasePlaybook, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
+    is_test: bool = False
 
-    def metadata_fields(self) -> Set[str]:
-        return {"name", "description"}
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "tasks" in _dict:
+            if TEST_PLAYBOOKS_DIR not in path.parts and path.suffix == ".yml":
+                return True
+        return False

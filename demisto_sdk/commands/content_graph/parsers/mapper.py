@@ -1,29 +1,42 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import extract_field_from_mapping
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import (
+    JSONContentItemParser,
+)
 
 IGNORED_INCIDENT_TYPES = ["dbot_classification_incident_type_all"]
 
 
 class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.type = self.json_data.get("type")
         self.definition_id = self.json_data.get("definitionId")
         self.connect_to_dependencies()
 
-    @property
-    def name(self) -> Optional[str]:
-        return self.json_data.get("name") or self.json_data.get("brandName")
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update({"name": ["name", "brandName"]})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def get_filters_and_transformers_from_complex_value(
         self, complex_value: dict
@@ -52,28 +65,29 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
             add_dependency_func = self.add_dependency_by_name  # type: ignore
 
         if default_incident_type := self.json_data.get("defaultIncidentType"):
-            add_dependency_func(default_incident_type, content_type_to_map, is_mandatory=False)
+            add_dependency_func(
+                default_incident_type, content_type_to_map, is_mandatory=False
+            )
 
-        for incident_type, mapping_data in self.json_data.get("mapping", {}).items():
+        for incident_type, mapping_data in (
+            self.json_data.get("mapping") or {}
+        ).items():
             if incident_type not in IGNORED_INCIDENT_TYPES:
-                add_dependency_func(incident_type, content_type_to_map, is_mandatory=False)
-            internal_mapping: Dict[str, Any] = mapping_data.get("internalMapping")
+                add_dependency_func(
+                    incident_type, content_type_to_map, is_mandatory=False
+                )
+            internal_mapping: Dict[str, Any] = mapping_data.get("internalMapping") or {}
 
             if self.type == "mapping-outgoing":
                 # incident fields are in the simple / complex.root key of each key
                 for fields_mapper in internal_mapping.values():
                     if isinstance(fields_mapper, dict):
-                        if incident_field_simple := fields_mapper.get("simple"):
+                        mapping_value = fields_mapper.get(
+                            "simple"
+                        ) or fields_mapper.get("complex", {}).get("root")
+                        if field := extract_field_from_mapping(mapping_value):
                             self.add_dependency_by_id(
-                                incident_field_simple,
-                                fields_content_type,
-                                is_mandatory=False,
-                            )
-                        elif incident_field_complex := fields_mapper.get(
-                            "complex", {}
-                        ).get("root"):
-                            self.add_dependency_by_id(
-                                incident_field_complex,
+                                field,
                                 fields_content_type,
                                 is_mandatory=False,
                             )

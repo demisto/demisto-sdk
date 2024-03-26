@@ -1,18 +1,22 @@
 from pathlib import Path
-from typing import List, Set
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+from demisto_sdk.commands.content_graph.objects.base_script import (
+    BaseScript,
+)
 
 
-class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]
-    tags: List[str]
+class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]
+    """Class to differ from test script"""
 
-    def metadata_fields(self) -> Set[str]:
-        return {"name", "description", "tags"}
-
-    def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
-        if self.is_test:
-            return
-        return super().dump(dir, marketplace)
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if (
+            "script" in _dict
+            and isinstance(_dict["script"], str)
+            and path.suffix == ".yml"
+        ):
+            if TEST_PLAYBOOKS_DIR not in path.parts:
+                return True
+        return False

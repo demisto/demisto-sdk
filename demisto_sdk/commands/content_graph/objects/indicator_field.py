@@ -1,15 +1,32 @@
-from typing import Set
+from pathlib import Path
+from typing import Optional
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.indicator_incident_field import (
+    IndicatorIncidentField,
+)
 
 
-class IndicatorField(ContentItem, content_type=ContentType.INDICATOR_FIELD):  # type: ignore[call-arg]
-    cli_name: str = Field(alias="cliName")
-    type: str
+class IndicatorField(IndicatorIncidentField, content_type=ContentType.INDICATOR_FIELD):  # type: ignore[call-arg]
     associated_to_all: bool = Field(alias="associatedToAll")
+    type: str
 
-    def metadata_fields(self) -> Set[str]:
-        return {"name", "type", "description"}
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
+        summary = super().summary(marketplace, incident_to_alert)
+        summary["id"] = f"indicator_{self.object_id}"
+        return summary
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "id" in _dict:
+            _id = _dict["id"].lower()
+            if _id.startswith("indicator"):
+                return True
+        return False

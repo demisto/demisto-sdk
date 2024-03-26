@@ -4,18 +4,30 @@ from typing import List, Union
 from tabulate import tabulate
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import TextObject
-from demisto_sdk.commands.common.content.objects.pack_objects import (JSONContentObject, YAMLContentObject,
-                                                                      YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.logger import Colors
+from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import (
+    TextObject,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    JSONContentObject,
+    YAMLContentObject,
+    YAMLContentUnifiedObject,
+)
 
-ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
+ContentObject = Union[
+    YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject
+]
 
 
 class ObjectReport:
-    def __init__(self, content_object: ContentObject, content_test: bool = False, content_packs: bool = False,
-                 content_new: bool = False, content_all: bool = False):
-        """ Content objcet report, Each object has the following include state:
+    def __init__(
+        self,
+        content_object: ContentObject,
+        content_test: bool = False,
+        content_packs: bool = False,
+        content_new: bool = False,
+        content_all: bool = False,
+    ):
+        """Content objcet report, Each object has the following include state:
                 1. content_test.
                 2. content_new.
                 3. content_packs.
@@ -41,7 +53,7 @@ class ObjectReport:
             "packs": self._content_packs,
             "test": self._content_test,
             "new": self._content_new,
-            "all": self._content_all
+            "all": self._content_all,
         }
 
     def set_content_new(self):
@@ -63,7 +75,7 @@ class ObjectReport:
 
 class ArtifactsReport:
     def __init__(self, header: str):
-        """ Artifact report build from:
+        """Artifact report build from:
                 1. Table header.
                 2. Object reports entries.
 
@@ -84,7 +96,7 @@ class ArtifactsReport:
         return self
 
     def to_str(self, src_relative_to: Path = None):
-        """ Create pandas table as pretty string.
+        """Create pandas table as pretty string.
 
         Args:
             src_relative_to: content path to show content object path relative to.
@@ -95,13 +107,13 @@ class ArtifactsReport:
         objects = deepcopy(self._content_objects)
         if src_relative_to:
             for item in objects:
-                item['source'] = str(item['source'].relative_to(src_relative_to))
+                item["source"] = str(item["source"].relative_to(src_relative_to))
 
         # Transform list of dictionaries to headers and value
-        table = ''
+        table = ""
         if objects:
             headers = list(objects[0].keys())
             values = [x.values() for x in objects]
             table = tabulate(headers=headers, tabular_data=values)
 
-        return Colors.Fg.cyan + f'\n{self._header}\n' + Colors.reset + table
+        return f"\n[cyan]{self._header}[/cyan]\n" + table

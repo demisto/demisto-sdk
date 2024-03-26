@@ -1,16 +1,20 @@
+import logging
+
 import pytest
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 SECRETS_CMD = "secrets"
 
 
 def mock_git(mocker, is_merge: bool = False):
-    mocker.patch.object(SecretsValidator, 'get_branch_name', return_value='branch name')
-    mocker.patch('demisto_sdk.commands.secrets.secrets.run_command', return_value=is_merge)
+    mocker.patch.object(SecretsValidator, "get_current_commit", return_value="12345678")
+    mocker.patch(
+        "demisto_sdk.commands.secrets.secrets.run_command", return_value=is_merge
+    )
 
 
 def test_integration_secrets_incident_field_positive(mocker, repo):
@@ -25,27 +29,33 @@ def test_integration_secrets_incident_field_positive(mocker, repo):
     - Ensure secrets validation passes.
     - Ensure success secrets validation message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
-    pack = repo.create_pack('pack')
-    integration = pack.create_integration('integration')
+    pack = repo.create_pack("pack")
+    integration = pack.create_integration("integration")
     mock_git(mocker)
     mocker.patch.object(
-        SecretsValidator, 'get_all_diff_text_files',
-        return_value=[
-            integration.yml.rel_path
-        ]
+        SecretsValidator,
+        "get_all_diff_text_files",
+        return_value=[integration.yml.rel_path],
     )
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SECRETS_CMD, '-wl', repo.secrets.path])
-    assert "Starting secrets detection" in result.output
-    assert "Finished validating secrets, no secrets were found." in result.output
+        result = runner.invoke(main, [SECRETS_CMD, "-wl", repo.secrets.path])
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Starting secrets detection",
+                "Finished validating secrets, no secrets were found.",
+            ]
+        ]
+    )
     assert result.exit_code == 0
-    assert result.stderr == ""
 
 
-@pytest.mark.skip(reason='Dropped entropy so the secret is now passing')
+@pytest.mark.skip(reason="Dropped entropy so the secret is now passing")
 def test_integration_secrets_integration_negative(mocker, repo):
     """
     Given
@@ -58,27 +68,35 @@ def test_integration_secrets_integration_negative(mocker, repo):
     - Ensure secrets validation fails.
     - Ensure secret strings are in failure message.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
-    pack = repo.create_pack('PackName')
-    integration = pack.create_integration('sample')
+    pack = repo.create_pack("PackName")
+    integration = pack.create_integration("sample")
     mock_git(mocker)
     # Change working dir to repo
-    secret_string = 'Dynamics365ForMarketingEmail'
-    integration.yml.write({'this is a secrets': secret_string})
+    secret_string = "Dynamics365ForMarketingEmail"
+    integration.yml.write({"this is a secrets": secret_string})
     mocker.patch.object(
-        SecretsValidator, 'get_all_diff_text_files',
-        return_value=[integration.yml.rel_path]
+        SecretsValidator,
+        "get_all_diff_text_files",
+        return_value=[integration.yml.rel_path],
     )
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SECRETS_CMD, '-wl', repo.secrets.path])
-    assert "Starting secrets detection" in result.output
-    assert "Secrets were found in the following files:" in result.output
-    assert f"In File: {integration.yml.rel_path}" in result.stdout
-    assert "The following expressions were marked as secrets:" in result.stdout
-    assert secret_string in result.stdout
-    assert "Remove or whitelist secrets in order to proceed, then re-commit" in result.stdout
-    assert result.stderr == ""
+        result = runner.invoke(main, [SECRETS_CMD, "-wl", repo.secrets.path])
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Starting secrets detection",
+                "Secrets were found in the following files:",
+                f"In File: {integration.yml.rel_path}",
+                "The following expressions were marked as secrets:",
+                secret_string,
+                "Remove or whitelist secrets in order to proceed, then re-commit",
+            ]
+        ]
+    )
     assert result.exit_code == 1
 
 
@@ -93,30 +111,35 @@ def test_integration_secrets_integration_positive(mocker, repo):
     Then
     - Ensure secrets validation succeed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     # Change working dir to repo
-    pack = repo.create_pack('PackName')
-    integration = pack.create_integration('sample')
-    secret_string = 'email@white.listed'
+    pack = repo.create_pack("PackName")
+    integration = pack.create_integration("sample")
+    secret_string = "email@white.listed"
     integration.yml.update_description(secret_string)
-    repo.secrets.write_secrets(
-        generic_strings=[
-            secret_string
-        ])
+    repo.secrets.write_secrets(generic_strings=[secret_string])
     mocker.patch.object(
-        SecretsValidator, "get_all_diff_text_files",
-        return_value=[integration.code.rel_path]
+        SecretsValidator,
+        "get_all_diff_text_files",
+        return_value=[integration.code.rel_path],
     )
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SECRETS_CMD, '-wl', repo.secrets.path], catch_exceptions=False)
+        result = runner.invoke(
+            main, [SECRETS_CMD, "-wl", repo.secrets.path], catch_exceptions=False
+        )
     assert 0 == result.exit_code
-    assert not result.stderr
-    assert "no secrets were found" in result.stdout
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "no secrets were found",
+    )
 
 
-def test_integration_secrets_integration_global_whitelist_positive_using_git(mocker, repo):
+def test_integration_secrets_integration_global_whitelist_positive_using_git(
+    mocker, repo
+):
     """
     Given
     - An integration yml with secrets.
@@ -128,22 +151,26 @@ def test_integration_secrets_integration_global_whitelist_positive_using_git(moc
     Then
     - Ensure secrets validation succeed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
-    pack = repo.create_pack('pack')
-    integration = pack.create_integration('integration')
+    pack = repo.create_pack("pack")
+    integration = pack.create_integration("integration")
     mock_git(mocker)
     # Mock git diff
     mocker.patch.object(
-        SecretsValidator, "get_all_diff_text_files",
-        return_value=[integration.code.rel_path]
+        SecretsValidator,
+        "get_all_diff_text_files",
+        return_value=[integration.code.rel_path],
     )
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
     assert result.exit_code == 0
-    assert not result.stderr
-    assert "no secrets were found" in result.stdout
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "no secrets were found",
+    )
 
 
 def test_integration_secrets_integration_with_regex_expression(mocker, pack):
@@ -159,23 +186,31 @@ def test_integration_secrets_integration_with_regex_expression(mocker, pack):
     - Ensure secrets that the secret isn't in the output.
     - Ensure no error raised
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
-    pack.secrets.write_secrets('***.url\n')
-    integration = pack.create_integration('sample_integration')
+    pack.secrets.write_secrets("***.url\n")
+    integration = pack.create_integration("sample_integration")
     # Can used from integrations list
-    integration.code.write('''
+    integration.code.write(
+        """
     Random and unmeaningful file content
     a string containing ***.url\n
-    ''')
+    """
+    )
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SECRETS_CMD, '--input', integration.code.rel_path],
-                               catch_exceptions=False)
+        result = runner.invoke(
+            main,
+            [SECRETS_CMD, "--input", integration.code.rel_path],
+            catch_exceptions=False,
+        )
     assert result.exit_code == 0
-    assert not result.stderr
-    assert "no secrets were found" in result.stdout
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "no secrets were found",
+    )
 
 
 def test_integration_secrets_integration_positive_with_input_option(mocker, repo):
@@ -191,16 +226,22 @@ def test_integration_secrets_integration_positive_with_input_option(mocker, repo
     - Ensure secrets that the secret isn't in the output.
     - Ensure no error raised
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     # Create a pack
-    pack = repo.create_pack(name='sample_pack')
-    integration = pack.create_integration('sample_integration')
-    integration.code.write('text that should not get caught')
+    pack = repo.create_pack(name="sample_pack")
+    integration = pack.create_integration("sample_integration")
+    integration.code.write("text that should not get caught")
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
-        result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration.code.rel_path])
-    assert 'Finished validating secrets, no secrets were found' in result.stdout
+        CliRunner(mix_stderr=False).invoke(
+            main, [SECRETS_CMD, "--input", integration.code.rel_path]
+        )
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Finished validating secrets, no secrets were found",
+    )
 
 
 def test_integration_secrets_integration_negative_with_input_option(mocker, repo):
@@ -215,18 +256,26 @@ def test_integration_secrets_integration_negative_with_input_option(mocker, repo
     Then
     - Ensure secrets found.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
-    pack = repo.create_pack('sample_pack')
-    integration = pack.create_integration('sample_integration')
-    integration.code.write('email@not.whitlisted\n')
+    pack = repo.create_pack("sample_pack")
+    integration = pack.create_integration("sample_integration")
+    integration.code.write("email@not.whitlisted\n")
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
-        result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration.code.rel_path])
-    assert 'Secrets were found in the following files' in result.stdout
+        CliRunner(mix_stderr=False).invoke(
+            main, [SECRETS_CMD, "--input", integration.code.rel_path]
+        )
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Secrets were found in the following files",
+    )
 
 
-def test_integration_secrets_integration_negative_with_input_option_and_whitelist(mocker, repo):
+def test_integration_secrets_integration_negative_with_input_option_and_whitelist(
+    mocker, repo
+):
     """
     Given
     - A file containing secret
@@ -238,26 +287,52 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
     Then
     - Ensure secrets found.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
-    pack = repo.create_pack('pack')
+    pack = repo.create_pack("pack")
     integration = pack.create_integration()
-    integration.code.write('email@not.whitlisted\n')
+    integration.code.write("email@not.whitlisted\n")
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
-        result = CliRunner().invoke(main, [SECRETS_CMD, '--input', integration.code.rel_path, '-wl', repo.secrets.path])
+        result = CliRunner().invoke(
+            main,
+            [
+                SECRETS_CMD,
+                "--input",
+                integration.code.rel_path,
+                "-wl",
+                repo.secrets.path,
+            ],
+        )
     assert 1 == result.exit_code
-    assert 'Secrets were found in the following files' in result.stdout
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Secrets were found in the following files",
+    )
 
 
 def test_secrets_for_file_name_with_space_in_it(mocker, repo):
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
-    pack = repo.create_pack('pack')
-    integration = pack.create_integration('with space')
-    integration.code.write('email@not.whitlisted\n')
+    pack = repo.create_pack("pack")
+    integration = pack.create_integration("with space")
+    integration.code.write("email@not.whitlisted\n")
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
-        result = CliRunner().invoke(main, [SECRETS_CMD, '--input', integration.code.rel_path, '-wl', repo.secrets.path])
+        result = CliRunner().invoke(
+            main,
+            [
+                SECRETS_CMD,
+                "--input",
+                integration.code.rel_path,
+                "-wl",
+                repo.secrets.path,
+            ],
+        )
     assert 1 == result.exit_code
-    assert 'Secrets were found in the following files' in result.stdout
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Secrets were found in the following files",
+    )

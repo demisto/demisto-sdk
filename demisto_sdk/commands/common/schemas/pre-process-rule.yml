@@ -1,0 +1,105 @@
+type: map
+mapping:
+  action:
+    type: str
+    required: true
+  enabled:
+    type: bool
+    required: true
+  existingEventsFilters:
+    type: seq
+    sequence:
+    - include: existingEventsFilters_schema
+  fromVersion:
+    type: str
+    required: true
+  id:
+    type: str
+    required: true
+  index:
+    type: number
+    required: true
+  itemVersion:
+    type: str
+    required: true
+  linkTo:
+    type: str
+    required: true
+  locked:
+    type: bool
+    required: true
+  name:
+    type: str
+    required: true
+  description:
+    type: str
+    required: false
+  newEventFilters:
+    type: seq
+    sequence:
+    - include: newEventFilters_schema
+  packID:
+    type: str
+    required: true
+  period:
+    type: map
+    mapping:
+      by:
+        type: str
+      fromValue:
+        type: number
+  readyExistingEventsFilters:
+    type: seq
+    sequence:
+    - include: readyExistingEventsFilters_schema
+  readyNewEventFilters:
+    type: seq
+    sequence:
+    - include: readyNewEventFilters_schema
+  scriptName:
+    type: str
+    required: true
+  searchClosed:
+    type: bool
+    required: true
+  system:
+    type: bool
+    required: true
+  toServerVersion:
+    type: str
+    required: true
+  version:
+    type: number
+    required: true
+
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
+schema;existingEventsFilters_schema:
+  type: any
+
+schema;newEventFilters_schema:
+  type: any
+
+schema;readyExistingEventsFilters_schema:
+  type: any
+
+schema;readyNewEventFilters_schema:
+  type: any

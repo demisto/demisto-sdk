@@ -1,44 +1,40 @@
 from pathlib import Path
 from typing import Dict, Optional
 
-import click
-
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
 
-json = JSON_Handler()
-yaml = YAML_Handler()
-
 
 class ContentItemType:
-    INTEGRATION = 'integration'
-    SCRIPT = 'script'
+    INTEGRATION = "integration"
+    SCRIPT = "script"
 
 
 class Playbook:
-    def __init__(self, name, fromversion='4.5.0'):
+    def __init__(self, name, fromversion="4.5.0"):
         self.name = name
         self.fromversion = fromversion
 
         self.tasks = {
-            '0': create_start_task(),
-            '1': create_automation_task(1, 'DeleteContext', ContentItemType.SCRIPT, {'all': 'yes'})
+            "0": create_start_task(),
+            "1": create_automation_task(
+                1, "DeleteContext", ContentItemType.SCRIPT, {"all": "yes"}
+            ),
         }
         self.task_counter = len(self.tasks)
 
-        self.view = json.dumps({
-            "linkLabelsPosition": {},
-            "paper": {
-                "dimensions": {
-                    "height": 200,
-                    "width": 380,
-                    "x": 50,
-                    "y": 50
-                }
+        self.view = json.dumps(
+            {
+                "linkLabelsPosition": {},
+                "paper": {
+                    "dimensions": {"height": 200, "width": 380, "x": 50, "y": 50}
+                },
             }
-        })
+        )
 
     def add_task(self, task):
         self.tasks[str(self.task_counter)] = task
@@ -46,46 +42,37 @@ class Playbook:
 
     def to_dict(self):
         return {
-            'id': self.name,
-            'name': self.name,
-            'version': -1,
-            'fromversion': self.fromversion,
-            'starttaskid': "0",
-            'tasks': self.tasks,
-            'view': self.view,
-            'inputs': [],
-            'outputs': []
+            "id": self.name,
+            "name": self.name,
+            "version": -1,
+            "fromversion": self.fromversion,
+            "starttaskid": "0",
+            "tasks": self.tasks,
+            "view": self.view,
+            "inputs": [],
+            "outputs": [],
         }
 
 
 def create_start_task():
     return {
-        'id': "0",
-        'taskid': '0',
-        'type': 'start',
-        'task': {
-            'id': '0',
-            'version': -1,
-            'name': "",
-            'iscommand': False,
-            'brand': "",
-            'description': ""
+        "id": "0",
+        "taskid": "0",
+        "type": "start",
+        "task": {
+            "id": "0",
+            "version": -1,
+            "name": "",
+            "iscommand": False,
+            "brand": "",
+            "description": "",
         },
-        'nexttasks': {
-            '#none#': [
-                "1"
-            ]
-        },
-        'separatecontext': False,
-        'view': json.dumps({
-            "position": {
-                "x": 50,
-                "y": 50
-            }
-        }),
-        'note': False,
-        'timertriggers': [],
-        'ignoreworker': False
+        "nexttasks": {"#none#": ["1"]},
+        "separatecontext": False,
+        "view": json.dumps({"position": {"x": 50, "y": 50}}),
+        "note": False,
+        "timertriggers": [],
+        "ignoreworker": False,
     }
 
 
@@ -101,36 +88,31 @@ def create_end_task(id):
             "type": "title",
             "iscommand": False,
             "brand": "",
-            'description': ""
+            "description": "",
         },
         "separatecontext": False,
-        "view": json.dumps({
-            'position': {
-                'x': 50,
-                'y': id * 200
-            }
-        }),
+        "view": json.dumps({"position": {"x": 50, "y": id * 200}}),
         "note": False,
         "timertriggers": [],
         "ignoreworker": False,
-        "skipunavailable": False
+        "skipunavailable": False,
     }
 
 
-def create_automation_task(_id, automation_name, item_type: str, args: Optional[Dict] = None, brand: str = ""):
-    script_args = {}  # type:Dict
+def create_automation_task(
+    _id, automation_name, item_type: str, args: Optional[Dict] = None, brand: str = ""
+):
+    script_args: Dict = {}
     if args and len(args) > 0:
         for arg, val in args.items():
-            script_args[arg] = {
-                "simple": val
-            }
+            script_args[arg] = {"simple": val}
 
     if item_type == ContentItemType.INTEGRATION:
         """
         when integration_brand is used as prefix, only instances of this brand execute the command.
         to use with more than one integration, pass integration_brand = ""
         """
-        script_name = f'{brand}|||{automation_name}'
+        script_name = f"{brand}|||{automation_name}"
 
     elif item_type == ContentItemType.SCRIPT:
         script_name = automation_name
@@ -147,25 +129,16 @@ def create_automation_task(_id, automation_name, item_type: str, args: Optional[
             "script": script_name,
             "type": "regular",
             "iscommand": True,
-            "brand": ""
+            "brand": "",
         },
-        "nexttasks": {
-            "#none#": [
-                str(_id + 1)
-            ]
-        },
+        "nexttasks": {"#none#": [str(_id + 1)]},
         "scriptarguments": script_args,
         "separatecontext": False,
-        "view": json.dumps({
-            'position': {
-                'x': 50,
-                'y': _id * 200
-            }
-        }),
+        "view": json.dumps({"position": {"x": 50, "y": _id * 200}}),
         "note": False,
         "timertriggers": [],
         "ignoreworker": False,
-        "skipunavailable": False
+        "skipunavailable": False,
     }
 
 
@@ -180,26 +153,17 @@ def create_verify_outputs_task(id_, conditions=[]):
             "name": "Verify Outputs",
             "type": "condition",
             "iscommand": False,
-            'description': '',
-            "brand": ""
+            "description": "",
+            "brand": "",
         },
-        "nexttasks": {
-            "yes": [
-                str(id_ + 1)
-            ]
-        },
+        "nexttasks": {"yes": [str(id_ + 1)]},
         "separatecontext": False,
         "conditions": conditions,
-        "view": json.dumps({
-            'position': {
-                'x': 50,
-                'y': id_ * 200
-            }
-        }),
+        "view": json.dumps({"position": {"x": 50, "y": id_ * 200}}),
         "note": False,
         "timertriggers": [],
         "ignoreworker": False,
-        "skipunavailable": False
+        "skipunavailable": False,
     }
 
 
@@ -215,35 +179,29 @@ def outputs_to_condition(outputs):
     """
     conditions = []
     for output in outputs:
-        context_output_path = output.get('contextPath')
+        context_output_path = output.get("contextPath")
 
-        operator = 'isExists' if output.get('type', '') == 'Boolean' else 'isNotEmpty'
+        operator = "isExists" if output.get("type", "") == "Boolean" else "isNotEmpty"
 
         conditions.append(
             [
                 {
                     "operator": operator,
                     "left": {
-                        "value": {
-                            "simple": context_output_path
-                        },
-                        "iscontext": True
-                    }
+                        "value": {"simple": context_output_path},
+                        "iscontext": True,
+                    },
                 }
             ]
         )
 
-    condition = [
-        {
-            'label': 'yes',
-            'condition': conditions
-        }
-    ]
+    condition = [{"label": "yes", "condition": conditions}]
     return condition
 
 
-def create_automation_task_and_verify_outputs_task(test_playbook, command, args, item_type, no_outputs,
-                                                   brand: str = ""):
+def create_automation_task_and_verify_outputs_task(
+    test_playbook, command, args, item_type, no_outputs, brand: str = ""
+):
     """
     create automation task from command and verify outputs task from automation(script/integration command) outputs.
     both tasks added to test playbook. both of this tasks linked to each other
@@ -258,23 +216,25 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, args,
     Returns:
         test_playbook is updated
     """
-    command_name = command.get('name')
-    outputs = command.get('outputs', [])
+    command_name = command.get("name")
+    outputs = command.get("outputs", [])
     conditions = outputs_to_condition(outputs)
 
-    task_command = create_automation_task(test_playbook.task_counter,
-                                          command_name,
-                                          item_type,
-                                          args=args,
-                                          brand=brand)
+    task_command = create_automation_task(
+        test_playbook.task_counter, command_name, item_type, args=args, brand=brand
+    )
     test_playbook.add_task(task_command)
 
     if len(outputs) > 0:
         # add verify output task only if automation have outputs
         if no_outputs:
-            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
+            task_verify_outputs = create_verify_outputs_task(
+                test_playbook.task_counter, []
+            )
         else:
-            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, conditions)
+            task_verify_outputs = create_verify_outputs_task(
+                test_playbook.task_counter, conditions
+            )
 
         test_playbook.add_task(task_verify_outputs)
 
@@ -290,41 +250,57 @@ def get_command_examples(commands_file_path, entity_type) -> dict:
     Return:
         dict. Arguments separated by the commands.
     """
-    command_examples = []  # type: list
+    command_examples: list = []
 
     if entity_type == FileType.INTEGRATION.value:
         with open(commands_file_path) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
-        command_examples = commands_file_path.split('\n')
+        command_examples = commands_file_path.split("\n")
 
     # Split the command example to dictionary of arguments for each command
     result_commands = {}
     for command in command_examples:
-        command = command.split(' ', 1)
-        result_commands[command[0].strip('!')] = dict(arg.split('=') for arg in command[1].split(' ')) \
-            if len(command) > 1 else {}
+        command = command.split(" ", 1)
+        result_commands[command[0].strip("!")] = (
+            dict(arg.split("=") for arg in command[1].split(" "))
+            if len(command) > 1
+            else {}
+        )
 
     return result_commands
 
 
 class PlaybookTestsGenerator:
-    def __init__(self, input: str, output: str, name: str, file_type: str, no_outputs: bool = False,
-                 verbose: bool = False, use_all_brands: bool = False, commands: str = None, examples: str = None,
-                 upload: bool = False):
+    def __init__(
+        self,
+        input: str,
+        output: str,
+        name: str,
+        file_type: str,
+        no_outputs: bool = False,
+        verbose: bool = False,
+        use_all_brands: bool = False,
+        commands: str = None,
+        examples: str = None,
+        upload: bool = False,
+        **kwargs,
+    ):
         self.integration_yml_path = input
         self.output = output
 
-        generated_test_playbook_file_name = f'playbook-{name}_Test.yml'
+        generated_test_playbook_file_name = f"playbook-{name}_Test.yml"
 
         if output:
-            """ if an output folder path is provided, save it there"""
+            """if an output folder path is provided, save it there"""
             output_path = Path(output)
             if output_path.is_dir():
-                self.test_playbook_yml_path = str(output_path / generated_test_playbook_file_name)
+                self.test_playbook_yml_path = str(
+                    output_path / generated_test_playbook_file_name
+                )
             else:
-                """ if a destination path is specified for the playbook, and it's of a yml file, use it"""
-                if not output_path.suffix.lower() == '.yml':
+                """if a destination path is specified for the playbook, and it's of a yml file, use it"""
+                if not output_path.suffix.lower() == ".yml":
                     raise PlaybookTestsGenerator.InvalidOutputPathError(output)
                 self.test_playbook_yml_path = output
         else:
@@ -341,13 +317,15 @@ class PlaybookTestsGenerator:
                     break
 
             if pack_path:
-                folder = (pack_path / 'TestPlaybooks')
+                folder = pack_path / "TestPlaybooks"
                 folder.mkdir(exist_ok=True, parents=True)
             else:
-                """ otherwise, save the generated test-playbook in the folder from which SDK is called."""
+                """otherwise, save the generated test-playbook in the folder from which SDK is called."""
                 folder = Path()
 
-            self.test_playbook_yml_path = str(folder / generated_test_playbook_file_name)
+            self.test_playbook_yml_path = str(
+                folder / generated_test_playbook_file_name
+            )
 
         self.file_type = file_type
         self.name = name
@@ -360,9 +338,11 @@ class PlaybookTestsGenerator:
 
     class InvalidOutputPathError(BaseException):
         def __init__(self, output: str):
-            super().__init__(f'The output path provided ({output}) is neither a path to folder, nor to a yml file. '
-                             f'Please check the help section or documentation for possible values, '
-                             f'or call without the -o flag.')
+            super().__init__(
+                f"The output path provided ({output}) is neither a path to folder, nor to a yml file. "
+                f"Please check the help section or documentation for possible values, "
+                f"or call without the -o flag."
+            )
 
     def run(self):
         """
@@ -379,7 +359,9 @@ class PlaybookTestsGenerator:
 
         """
         if not Path(self.integration_yml_path).exists():
-            click.secho(f"File {self.integration_yml_path} was not found when trying to generate a test playbook", fg='bright_red')
+            logger.info(
+                f"[red]File {self.integration_yml_path} was not found when trying to generate a test playbook[/red]"
+            )
             if self.verbose:
                 raise FileNotFoundError()
             else:
@@ -387,56 +369,65 @@ class PlaybookTestsGenerator:
 
         yaml_obj = get_yaml(self.integration_yml_path)
 
-        test_playbook = Playbook(
-            name=self.name,
-            fromversion='4.5.0'
+        test_playbook = Playbook(name=self.name, fromversion="4.5.0")
+
+        command_examples_args = (
+            get_command_examples(self.examples, self.file_type) if self.examples else {}
         )
 
-        command_examples_args = get_command_examples(self.examples, self.file_type) if self.examples else {}
-
         if self.file_type == ContentItemType.INTEGRATION:
-            brand = '' if self.use_all_brands else yaml_obj.get('commonfields', {}).get('id', '')
+            brand = (
+                ""
+                if self.use_all_brands
+                else yaml_obj.get("commonfields", {}).get("id", "")
+            )
 
-            for command in yaml_obj.get('script').get('commands'):
+            for command in yaml_obj.get("script").get("commands"):
 
                 # Skip the commands that not specified in the `commands` argument
-                if self.commands and command.get('name') not in self.commands.split(','):
+                if self.commands and command.get("name") not in self.commands.split(
+                    ","
+                ):
                     continue
 
                 # Skip the commands that not specified in the command examples file if exist
-                if self.examples and command.get('name') not in command_examples_args:
+                if self.examples and command.get("name") not in command_examples_args:
                     continue
 
                 create_automation_task_and_verify_outputs_task(
                     test_playbook=test_playbook,
                     command=command,
-                    args=command_examples_args.get(command.get('name'), {}),
+                    args=command_examples_args.get(command.get("name"), {}),
                     item_type=ContentItemType.INTEGRATION,
                     no_outputs=self.no_outputs,
-                    brand=brand
+                    brand=brand,
                 )
 
         elif self.file_type == ContentItemType.SCRIPT:
             create_automation_task_and_verify_outputs_task(
                 test_playbook=test_playbook,
                 command=yaml_obj,
-                args=command_examples_args.get(yaml_obj.get('name'), {}),
+                args=command_examples_args.get(yaml_obj.get("name"), {}),
                 item_type=ContentItemType.SCRIPT,
-                no_outputs=self.no_outputs
+                no_outputs=self.no_outputs,
             )
 
         test_playbook.add_task(create_end_task(test_playbook.task_counter))
 
         if Path(self.test_playbook_yml_path).exists():
-            click.secho(f'Warning: There already exists a test playbook at {self.test_playbook_yml_path}, '
-                        f'it will be overwritten.', fg='yellow')
+            logger.info(
+                f"[yellow]Warning: There already exists a test playbook at {self.test_playbook_yml_path}, "
+                f"it will be overwritten.[/yellow]"
+            )
 
-        with open(self.test_playbook_yml_path, 'w') as yf:
+        with open(self.test_playbook_yml_path, "w") as yf:
             yaml.dump(test_playbook.to_dict(), yf)
 
-            click.secho(f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}\n', fg='green')
+            logger.info(
+                f"[green]Test playbook yml was saved at:\n{self.test_playbook_yml_path}[/green]\n"
+            )
 
         if self.upload:
-            return Uploader(input=self.test_playbook_yml_path).upload()
+            return Uploader(input=Path(self.test_playbook_yml_path)).upload()
 
         return True

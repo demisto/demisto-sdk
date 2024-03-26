@@ -1,20 +1,29 @@
 from pathlib import Path
-from typing import List, Set
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItemException
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    NotAContentItemException,
+)
+from demisto_sdk.commands.content_graph.parsers.json_content_item import (
+    JSONContentItemParser,
+)
 
 
 class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        if "layoutscontainer" not in path.name:
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        if "group" not in self.json_data:
+            logger.debug(f"{path}: Not a layout container, skipping.")
             raise NotAContentItemException
 
-        super().__init__(path, pack_marketplaces)
         self.kind = self.json_data.get("kind")
         self.tabs = self.json_data.get("tabs")
         self.definition_id = self.json_data.get("definitionId")
@@ -35,7 +44,12 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects the incident/indicator fields used as optional dependencies."""
@@ -49,7 +63,10 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             )
 
         for field in self.get_field_ids_recursively():
-            self.add_dependency_by_id(field, dependency_field_type, is_mandatory=False)
+            if field:
+                self.add_dependency_by_id(
+                    field, dependency_field_type, is_mandatory=False
+                )
 
     def get_field_ids_recursively(self) -> Set[str]:
         """Recursively iterates over the layout json data to extract all fieldId items.
@@ -67,7 +84,9 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             elif isinstance(current_object, dict):
                 for key, value in current_object.items():
                     if key == "fieldId" and isinstance(value, str):
-                        values.add(value.replace("incident_", ""))
+                        values.add(
+                            value.replace("incident_", "").replace("indicator_", "")
+                        )
                     else:
                         get_values(value)
 

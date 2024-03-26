@@ -25,6 +25,9 @@ configuration:
   required: false
 script:
   script: |
+    ### pack version: 1.0.3
+    # pack version: 1.0.3
+    #### pack version: 1.0.3
     register_module_line('Zoom', 'start', __line__())
     import datetime
     import jwt

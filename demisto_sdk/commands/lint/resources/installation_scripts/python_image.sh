@@ -9,20 +9,31 @@ cd /devwork
 chown -R :4000 /devwork/
 chmod -R 775 /devwork
 . /etc/os-release
-if [ "$ID" = "alpine" ]
+
+INSTALL_SUCCESS=0
+pip install --no-cache-dir --progress-bar off -r /test-requirements.txt || INSTALL_SUCCESS=1
+
+# if installation fails, we need to install gcc to compile
+if [ "$INSTALL_SUCCESS" -eq 1 ]
 then
-    apk add --no-cache --virtual .build-deps python3-dev gcc build-base;
-elif [ "$ID" = "debian" ]
-then
-    apt-get update && apt-get install -y --no-install-recommends gcc python3-dev
+    if [ "$ID" = "alpine" ]
+    then
+        apk update && apk add --no-cache --virtual .build-deps python3-dev gcc build-base;
+    elif [ "$ID" = "debian" ]
+    then
+        apt-get update && apt-get install -y --no-install-recommends gcc python3-dev
+    fi
+    pip install --no-cache-dir --progress-bar off -r /test-requirements.txt
+    if [ "$ID" = "alpine" ]
+    then
+        # Cleanup
+        apk del .build-deps || true
+    elif [ "$ID" = "debian" ]
+    then
+        apt-get purge -y --auto-remove gcc python3-dev
+    fi
+    pip freeze
 fi
-pip install --no-cache-dir -r /test-requirements.txt
-if [ "$ID" = "alpine" ]
-then
-    apk del .build-deps
-elif [ "$ID" = "debian" ]
-then
-    apt-get purge -y --auto-remove gcc python3-dev
-fi
-pip freeze
+
+
 unset REQUESTS_CA_BUNDLE

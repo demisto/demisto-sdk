@@ -40,13 +40,17 @@ def create_constraints(tx: Transaction) -> None:
 
 
 def create_nodes_constraints(tx: Transaction) -> None:
-    create_node_property_uniqueness_constraint(tx, CMD_UNIQUE_OBJ_ID, ContentType.COMMAND, 'object_id')
+    create_node_property_uniqueness_constraint(
+        tx, CMD_UNIQUE_OBJ_ID, ContentType.COMMAND, "object_id"
+    )
 
 
 def create_node_property_uniqueness_constraint(
     tx: Transaction, name: str, content_type: ContentType, prop: str
 ) -> None:
-    query = NODE_PROPERTY_UNIQUENESS_TEMPLATE.format(name=name, label=content_type, prop=prop)
+    query = NODE_PROPERTY_UNIQUENESS_TEMPLATE.format(
+        name=name, label=content_type, prop=prop
+    )
     run_query(tx, query)
 
 

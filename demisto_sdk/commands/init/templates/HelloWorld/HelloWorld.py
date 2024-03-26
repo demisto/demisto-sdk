@@ -246,7 +246,8 @@ import dateparser
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 import traceback
 from demisto_sdk.commands.common.handlers import JSON_Handler
-json = JSON_Handler()
+
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 import demistomock as demisto  # noqa: E402 lgtm [py/polluting-import]
@@ -257,12 +258,12 @@ from CommonServerUserPython import *  # noqa: E402 lgtm [py/polluting-import]
 urllib3.disable_warnings()
 
 
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 MAX_INCIDENTS_TO_FETCH = 50
-HELLOWORLD_SEVERITIES = ['Low', 'Medium', 'High', 'Critical']
+HELLOWORLD_SEVERITIES = ["Low", "Medium", "High", "Critical"]
 
 
-class Client(BaseClient):   # type: ignore
+class Client(BaseClient):  # type: ignore
     """Client class to interact with the service API
 
     This Client implements API calls, and does not contain any Demisto logic.
@@ -282,13 +283,7 @@ class Client(BaseClient):   # type: ignore
         :rtype: ``Dict[str, Any]``
         """
 
-        return self._http_request(
-            method='GET',
-            url_suffix='/ip',
-            params={
-                'ip': ip
-            }
-        )
+        return self._http_request(method="GET", url_suffix="/ip", params={"ip": ip})
 
     def get_domain_reputation(self, domain: str) -> Dict[str, Any]:
         """Gets the Domain reputation using the '/domain' API endpoint
@@ -301,16 +296,17 @@ class Client(BaseClient):   # type: ignore
         """
 
         return self._http_request(
-            method='GET',
-            url_suffix='/domain',
-            params={
-                'domain': domain
-            }
+            method="GET", url_suffix="/domain", params={"domain": domain}
         )
 
-    def search_alerts(self, alert_status: Optional[str], severity: Optional[str],
-                      alert_type: Optional[str], max_results: Optional[int],
-                      start_time: Optional[int]) -> List[Dict[str, Any]]:
+    def search_alerts(
+        self,
+        alert_status: Optional[str],
+        severity: Optional[str],
+        alert_type: Optional[str],
+        max_results: Optional[int],
+        start_time: Optional[int],
+    ) -> List[Dict[str, Any]]:
         """Searches for HelloWorld alerts using the '/get_alerts' API endpoint
 
         All the parameters are passed directly to the API as HTTP POST parameters in the request
@@ -339,24 +335,22 @@ class Client(BaseClient):   # type: ignore
         request_params: Dict[str, Any] = {}
 
         if alert_status:
-            request_params['alert_status'] = alert_status
+            request_params["alert_status"] = alert_status
 
         if alert_type:
-            request_params['alert_type'] = alert_type
+            request_params["alert_type"] = alert_type
 
         if severity:
-            request_params['severity'] = severity
+            request_params["severity"] = severity
 
         if max_results:
-            request_params['max_results'] = max_results
+            request_params["max_results"] = max_results
 
         if start_time:
-            request_params['start_time'] = start_time
+            request_params["start_time"] = start_time
 
         return self._http_request(
-            method='GET',
-            url_suffix='/get_alerts',
-            params=request_params
+            method="GET", url_suffix="/get_alerts", params=request_params
         )
 
     def get_alert(self, alert_id: str) -> Dict[str, Any]:
@@ -370,11 +364,7 @@ class Client(BaseClient):   # type: ignore
         """
 
         return self._http_request(
-            method='GET',
-            url_suffix='/get_alert_details',
-            params={
-                'alert_id': alert_id
-            }
+            method="GET", url_suffix="/get_alert_details", params={"alert_id": alert_id}
         )
 
     def update_alert_status(self, alert_id: str, alert_status: str) -> Dict[str, Any]:
@@ -391,12 +381,9 @@ class Client(BaseClient):   # type: ignore
         """
 
         return self._http_request(
-            method='GET',
-            url_suffix='/change_alert_status',
-            params={
-                'alert_id': alert_id,
-                'alert_status': alert_status
-            }
+            method="GET",
+            url_suffix="/change_alert_status",
+            params={"alert_id": alert_id, "alert_status": alert_status},
         )
 
     def scan_start(self, hostname: str) -> Dict[str, Any]:
@@ -410,11 +397,7 @@ class Client(BaseClient):   # type: ignore
         """
 
         return self._http_request(
-            method='GET',
-            url_suffix='/start_scan',
-            params={
-                'hostname': hostname
-            }
+            method="GET", url_suffix="/start_scan", params={"hostname": hostname}
         )
 
     def scan_status(self, scan_id: str) -> Dict[str, Any]:
@@ -428,11 +411,7 @@ class Client(BaseClient):   # type: ignore
         """
 
         return self._http_request(
-            method='GET',
-            url_suffix='/check_scan',
-            params={
-                'scan_id': scan_id
-            }
+            method="GET", url_suffix="/check_scan", params={"scan_id": scan_id}
         )
 
     def scan_results(self, scan_id: str) -> Dict[str, Any]:
@@ -446,11 +425,7 @@ class Client(BaseClient):   # type: ignore
         """
 
         return self._http_request(
-            method='GET',
-            url_suffix='/get_scan_results',
-            params={
-                'scan_id': scan_id
-            }
+            method="GET", url_suffix="/get_scan_results", params={"scan_id": scan_id}
         )
 
     def say_hello(self, name: str) -> str:
@@ -463,10 +438,12 @@ class Client(BaseClient):   # type: ignore
         :rtype: ``str``
         """
 
-        return f'Hello {name}'
+        return f"Hello {name}"
 
 
-def parse_domain_date(domain_date: Union[List[str], str], date_format: str = '%Y-%m-%dT%H:%M:%S.000Z') -> Optional[str]:
+def parse_domain_date(
+    domain_date: Union[List[str], str], date_format: str = "%Y-%m-%dT%H:%M:%S.000Z"
+) -> Optional[str]:
     """Converts whois date format to an ISO8601 string
 
     Converts the HelloWorld domain WHOIS date (YYYY-mm-dd HH:MM:SS) format
@@ -484,7 +461,11 @@ def parse_domain_date(domain_date: Union[List[str], str], date_format: str = '%Y
     if isinstance(domain_date, str):
         # if str parse the value
         return dateparser.parse(domain_date).strftime(date_format)
-    elif isinstance(domain_date, list) and len(domain_date) > 0 and isinstance(domain_date[0], str):
+    elif (
+        isinstance(domain_date, list)
+        and len(domain_date) > 0
+        and isinstance(domain_date[0], str)
+    ):
         # if list with at least one element, parse the first element
         return dateparser.parse(domain_date[0]).strftime(date_format)
     # in any other case return nothing
@@ -509,10 +490,10 @@ def convert_to_demisto_severity(severity: str) -> int:
     # might be required in your integration, so a dedicated function is
     # recommended. This mapping should also be documented.
     return {
-        'Low': 1,  # low severity
-        'Medium': 2,  # medium severity
-        'High': 3,  # high severity
-        'Critical': 4   # critical severity
+        "Low": 1,  # low severity
+        "Medium": 2,  # medium severity
+        "High": 3,  # high severity
+        "Critical": 4,  # critical severity
     }[severity]
 
 
@@ -592,10 +573,10 @@ def arg_to_timestamp(arg: Any, arg_name: str, required: bool = False) -> Optiona
         # we use dateparser to handle strings either in ISO8601 format, or
         # relative time stamps.
         # For example: format 2019-10-23T00:00:00 or "3 days", etc
-        date = dateparser.parse(arg, settings={'TIMEZONE': 'UTC'})
+        date = dateparser.parse(arg, settings={"TIMEZONE": "UTC"})
         if date is None:
             # if d is None it means dateparser failed to parse it
-            raise ValueError(f'Invalid date: {arg_name}')
+            raise ValueError(f"Invalid date: {arg_name}")
 
         return int(date.timestamp())
     if isinstance(arg, (int, float)):
@@ -631,13 +612,19 @@ def test_module(client: Client, first_fetch_time: int) -> str:
     # Cortex XSOAR will print everything you return different than 'ok' as
     # an error
     try:
-        client.search_alerts(max_results=1, start_time=first_fetch_time, alert_status=None, alert_type=None, severity=None)
+        client.search_alerts(
+            max_results=1,
+            start_time=first_fetch_time,
+            alert_status=None,
+            alert_type=None,
+            severity=None,
+        )
     except DemistoException as e:
-        if 'Forbidden' in str(e):
-            return 'Authorization Error: make sure API Key is correctly set'
+        if "Forbidden" in str(e):
+            return "Authorization Error: make sure API Key is correctly set"
         else:
             raise e
-    return 'ok'
+    return "ok"
 
 
 def say_hello_command(client: Client, args: Dict[str, Any]) -> CommandResults:
@@ -663,9 +650,9 @@ def say_hello_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     # so the null check here as XSOAR will always check it before your code is called.
     # Although it's not mandatory to check, you are welcome to do so.
 
-    name = args.get('name', None)
+    name = args.get("name", None)
     if not name:
-        raise ValueError('name not specified')
+        raise ValueError("name not specified")
 
     # Call the Client function and get the raw response
     result = client.say_hello(name)
@@ -674,7 +661,7 @@ def say_hello_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     # It will  be in markdown format - https://www.markdownguide.org/basic-syntax/
     # More complex output can be formatted using ``tableToMarkDown()`` defined
     # in ``CommonServerPython.py``
-    readable_output = f'## {result}'
+    readable_output = f"## {result}"
 
     # More information about Context:
     # https://xsoar.pan.dev/docs/integrations/context-and-outputs
@@ -684,16 +671,21 @@ def say_hello_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     # to generate the readable output.
     return CommandResults(
         readable_output=readable_output,
-        outputs_prefix='hello',
-        outputs_key_field='',
-        outputs=result
+        outputs_prefix="hello",
+        outputs_key_field="",
+        outputs=result,
     )
 
 
-def fetch_incidents(client: Client, max_results: int, last_run: Dict[str, int],
-                    first_fetch_time: Optional[int], alert_status: Optional[str],
-                    min_severity: str, alert_type: Optional[str]
-                    ) -> Tuple[Dict[str, int], List[dict]]:
+def fetch_incidents(
+    client: Client,
+    max_results: int,
+    last_run: Dict[str, int],
+    first_fetch_time: Optional[int],
+    alert_status: Optional[str],
+    min_severity: str,
+    alert_type: Optional[str],
+) -> Tuple[Dict[str, int], List[dict]]:
     """This function retrieves new alerts every interval (default is 1 minute).
 
     This function has to implement the logic of making sure that incidents are
@@ -744,7 +736,7 @@ def fetch_incidents(client: Client, max_results: int, last_run: Dict[str, int],
 
     # Get the last fetch time, if exists
     # last_run is a dict with a single key, called last_fetch
-    last_fetch = last_run.get('last_fetch', None)
+    last_fetch = last_run.get("last_fetch", None)
     # Handle first fetch time
     if last_fetch is None:
         # if missing, use what provided via first_fetch_time
@@ -761,20 +753,22 @@ def fetch_incidents(client: Client, max_results: int, last_run: Dict[str, int],
     incidents: List[Dict[str, Any]] = []
 
     # Get the CSV list of severities from min_severity
-    severity = ','.join(HELLOWORLD_SEVERITIES[HELLOWORLD_SEVERITIES.index(min_severity):])
+    severity = ",".join(
+        HELLOWORLD_SEVERITIES[HELLOWORLD_SEVERITIES.index(min_severity) :]
+    )
 
     alerts = client.search_alerts(
         alert_type=alert_type,
         alert_status=alert_status,
         max_results=max_results,
         start_time=last_fetch,
-        severity=severity
+        severity=severity,
     )
 
     for alert in alerts:
         # If no created_time set is as epoch (0). We use time in ms so we must
         # convert it from the HelloWorld API response
-        incident_created_time = int(alert.get('created', '0'))
+        incident_created_time = int(alert.get("created", "0"))
         incident_created_time_ms = incident_created_time * 1000
 
         # to prevent duplicates, we are only adding incidents with creation_time > last fetched incident
@@ -783,7 +777,7 @@ def fetch_incidents(client: Client, max_results: int, last_run: Dict[str, int],
                 continue
 
         # If no name is present it will throw an exception
-        incident_name = alert['name']
+        incident_name = alert["name"]
 
         # INTEGRATION DEVELOPER TIP
         # The incident dict is initialized with a few mandatory fields:
@@ -803,12 +797,12 @@ def fetch_incidents(client: Client, max_results: int, last_run: Dict[str, int],
         # In either case customers can override them. We leave the values
         # commented out here, but you can use them if you want.
         incident = {
-            'name': incident_name,
+            "name": incident_name,
             # 'details': alert['name'],
-            'occurred': timestamp_to_datestring(incident_created_time_ms),
-            'rawJSON': json.dumps(alert),
+            "occurred": timestamp_to_datestring(incident_created_time_ms),
+            "rawJSON": json.dumps(alert),
             # 'type': 'Hello World Alert',  # Map to a specific XSOAR incident Type
-            'severity': convert_to_demisto_severity(alert.get('severity', 'Low')),
+            "severity": convert_to_demisto_severity(alert.get("severity", "Low")),
             # 'CustomFields': {  # Map specific XSOAR Custom Fields
             #     'helloworldid': alert.get('alert_id'),
             #     'helloworldstatus': alert.get('alert_status'),
@@ -823,11 +817,13 @@ def fetch_incidents(client: Client, max_results: int, last_run: Dict[str, int],
             latest_created_time = incident_created_time
 
     # Save the next_run as a dict with the last_fetch key to be stored
-    next_run = {'last_fetch': latest_created_time}
+    next_run = {"last_fetch": latest_created_time}
     return next_run, incidents
 
 
-def ip_reputation_command(client: Client, args: Dict[str, Any], default_threshold: int) -> CommandResults:
+def ip_reputation_command(
+    client: Client, args: Dict[str, Any], default_threshold: int
+) -> CommandResults:
     """ip command: Returns IP reputation for a list of IPs
 
     :type client: ``Client``
@@ -858,15 +854,15 @@ def ip_reputation_command(client: Client, args: Dict[str, Any], default_threshol
     # We use argToList(), implemented in CommonServerPython.py to automatically
     # return a list of a single element even if the provided input is a scalar.
 
-    ips = argToList(args.get('ip'))
+    ips = argToList(args.get("ip"))
     if len(ips) == 0:
-        raise ValueError('IP(s) not specified')
+        raise ValueError("IP(s) not specified")
 
     # It's a good practice to document the threshold you use to determine
     # if a score is malicious in your integration documentation.
     # Thresholds should also be possible to override, as in this case,
     # where threshold is an actual argument of the command.
-    threshold = int(args.get('threshold', default_threshold))
+    threshold = int(args.get("threshold", default_threshold))
 
     # Context standard for IP class
     ip_standard_list: List[Common.IP] = []
@@ -874,7 +870,7 @@ def ip_reputation_command(client: Client, args: Dict[str, Any], default_threshol
 
     for ip in ips:
         ip_data = client.get_ip_reputation(ip)
-        ip_data['ip'] = ip
+        ip_data["ip"] = ip
 
         # HelloWorld score to XSOAR reputation mapping
         # See: https://xsoar.pan.dev/docs/integrations/dbot
@@ -882,7 +878,7 @@ def ip_reputation_command(client: Client, args: Dict[str, Any], default_threshol
         # the mapping.
 
         score = 0
-        reputation = int(ip_data.get('score', 0))
+        reputation = int(ip_data.get("score", 0))
         if reputation == 0:
             score = Common.DBotScore.NONE  # unknown
         elif reputation >= threshold:
@@ -905,17 +901,15 @@ def ip_reputation_command(client: Client, args: Dict[str, Any], default_threshol
         dbot_score = Common.DBotScore(
             indicator=ip,
             indicator_type=DBotScoreType.IP,
-            integration_name='HelloWorld',
+            integration_name="HelloWorld",
             score=score,
-            malicious_description=f'Hello World returned reputation {reputation}'
+            malicious_description=f"Hello World returned reputation {reputation}",
         )
 
         # Create the IP Standard Context structure using Common.IP and add
         # dbot_score to it.
         ip_standard_context = Common.IP(
-            ip=ip,
-            asn=ip_data.get('asn'),
-            dbot_score=dbot_score
+            ip=ip, asn=ip_data.get("asn"), dbot_score=dbot_score
         )
 
         ip_standard_list.append(ip_standard_context)
@@ -935,27 +929,31 @@ def ip_reputation_command(client: Client, args: Dict[str, Any], default_threshol
 
         # Define which fields we want to exclude from the context output as
         # they are too verbose.
-        ip_context_excluded_fields = ['objects', 'nir']
-        ip_data_list.append({k: ip_data[k] for k in ip_data if k not in ip_context_excluded_fields})
+        ip_context_excluded_fields = ["objects", "nir"]
+        ip_data_list.append(
+            {k: ip_data[k] for k in ip_data if k not in ip_context_excluded_fields}
+        )
 
     # In this case we want to use an custom markdown to specify the table title,
     # but otherwise ``CommandResults()`` will call ``tableToMarkdown()``
     #  automatically
-    readable_output = tableToMarkdown('IP List', ip_data_list)
+    readable_output = tableToMarkdown("IP List", ip_data_list)
 
     # INTEGRATION DEVELOPER TIP
     # The output key will be ``HelloWorld.IP``, using ``ip`` as the key field.
     # ``indicators`` is used to provide the context standard (IP)
     return CommandResults(
         readable_output=readable_output,
-        outputs_prefix='HelloWorld.IP',
-        outputs_key_field='ip',
+        outputs_prefix="HelloWorld.IP",
+        outputs_key_field="ip",
         outputs=ip_data_list,
-        indicators=ip_standard_list
+        indicators=ip_standard_list,
     )
 
 
-def domain_reputation_command(client: Client, args: Dict[str, Any], default_threshold: int) -> CommandResults:
+def domain_reputation_command(
+    client: Client, args: Dict[str, Any], default_threshold: int
+) -> CommandResults:
     """domain command: Returns domain reputation for a list of domains
 
     :type client: ``Client``
@@ -986,11 +984,11 @@ def domain_reputation_command(client: Client, args: Dict[str, Any], default_thre
     # We use argToList(), implemented in CommonServerPython.py to automatically
     # return a list of a single element even if the provided input is a scalar.
 
-    domains = argToList(args.get('domain'))
+    domains = argToList(args.get("domain"))
     if len(domains) == 0:
-        raise ValueError('domain(s) not specified')
+        raise ValueError("domain(s) not specified")
 
-    threshold = int(args.get('threshold', default_threshold))
+    threshold = int(args.get("threshold", default_threshold))
 
     # Context standard for Domain class
     domain_standard_list: List[Common.Domain] = []
@@ -999,17 +997,21 @@ def domain_reputation_command(client: Client, args: Dict[str, Any], default_thre
 
     for domain in domains:
         domain_data = client.get_domain_reputation(domain)
-        domain_data['domain'] = domain
+        domain_data["domain"] = domain
 
         # INTEGRATION DEVELOPER TIP
         # We want to convert the dates to ISO8601 as
         # Cortex XSOAR customers and integrations use this format by default
-        if 'creation_date' in domain_data:
-            domain_data['creation_date'] = parse_domain_date(domain_data['creation_date'])
-        if 'expiration_date' in domain_data:
-            domain_data['expiration_date'] = parse_domain_date(domain_data['expiration_date'])
-        if 'updated_date' in domain_data:
-            domain_data['updated_date'] = parse_domain_date(domain_data['updated_date'])
+        if "creation_date" in domain_data:
+            domain_data["creation_date"] = parse_domain_date(
+                domain_data["creation_date"]
+            )
+        if "expiration_date" in domain_data:
+            domain_data["expiration_date"] = parse_domain_date(
+                domain_data["expiration_date"]
+            )
+        if "updated_date" in domain_data:
+            domain_data["updated_date"] = parse_domain_date(domain_data["updated_date"])
 
         # HelloWorld score to XSOAR reputation mapping
         # See: https://xsoar.pan.dev/docs/integrations/dbot
@@ -1017,7 +1019,7 @@ def domain_reputation_command(client: Client, args: Dict[str, Any], default_thre
         # the mapping.
 
         score = 0
-        reputation = int(domain_data.get('score', 0))
+        reputation = int(domain_data.get("score", 0))
         if reputation == 0:
             score = Common.DBotScore.NONE  # unknown
         elif reputation >= threshold:
@@ -1039,25 +1041,25 @@ def domain_reputation_command(client: Client, args: Dict[str, Any], default_thre
 
         dbot_score = Common.DBotScore(
             indicator=domain,
-            integration_name='HelloWorld',
+            integration_name="HelloWorld",
             indicator_type=DBotScoreType.DOMAIN,
             score=score,
-            malicious_description=f'Hello World returned reputation {reputation}'
+            malicious_description=f"Hello World returned reputation {reputation}",
         )
 
         # Create the Domain Standard Context structure using Common.Domain and
         # add dbot_score to it.
         domain_standard_context = Common.Domain(
             domain=domain,
-            creation_date=domain_data.get('creation_date', None),
-            expiration_date=domain_data.get('expiration_date', None),
-            updated_date=domain_data.get('updated_date', None),
-            organization=domain_data.get('org', None),
-            name_servers=domain_data.get('name_servers', None),
-            registrant_name=domain_data.get('name', None),
-            registrant_country=domain_data.get('country', None),
-            registrar_name=domain_data.get('registrar', None),
-            dbot_score=dbot_score
+            creation_date=domain_data.get("creation_date", None),
+            expiration_date=domain_data.get("expiration_date", None),
+            updated_date=domain_data.get("updated_date", None),
+            organization=domain_data.get("org", None),
+            name_servers=domain_data.get("name_servers", None),
+            registrant_name=domain_data.get("name", None),
+            registrant_country=domain_data.get("country", None),
+            registrar_name=domain_data.get("registrar", None),
+            dbot_score=dbot_score,
         )
 
         domain_standard_list.append(domain_standard_context)
@@ -1066,7 +1068,7 @@ def domain_reputation_command(client: Client, args: Dict[str, Any], default_thre
     # In this case we want to use an custom markdown to specify the table title,
     # but otherwise ``CommandResults()`` will call ``tableToMarkdown()``
     #  automatically
-    readable_output = tableToMarkdown('Domain List', domain_data_list)
+    readable_output = tableToMarkdown("Domain List", domain_data_list)
 
     # INTEGRATION DEVELOPER TIP
     # The output key will be ``HelloWorld.Domain``, using ``domain`` as the key
@@ -1074,10 +1076,10 @@ def domain_reputation_command(client: Client, args: Dict[str, Any], default_thre
     # ``indicators`` is used to provide the context standard (Domain)
     return CommandResults(
         readable_output=readable_output,
-        outputs_prefix='HelloWorld.Domain',
-        outputs_key_field='domain',
+        outputs_prefix="HelloWorld.Domain",
+        outputs_key_field="domain",
         outputs=domain_data_list,
-        indicators=domain_standard_list
+        indicators=domain_standard_list,
     )
 
 
@@ -1103,58 +1105,53 @@ def search_alerts_command(client: Client, args: Dict[str, Any]) -> CommandResult
     :rtype: ``CommandResults``
     """
 
-    status = args.get('status')
+    status = args.get("status")
 
     # Check if severity contains allowed values, use all if default
     severities: List[str] = HELLOWORLD_SEVERITIES
-    severity = args.get('severity', None)
+    severity = args.get("severity", None)
     if severity:
-        severities = severity.split(',')
+        severities = severity.split(",")
         if not all(s in HELLOWORLD_SEVERITIES for s in severities):
             raise ValueError(
-                f'severity must be a comma-separated value '
-                f'with the following options: {",".join(HELLOWORLD_SEVERITIES)}')
+                f"severity must be a comma-separated value "
+                f'with the following options: {",".join(HELLOWORLD_SEVERITIES)}'
+            )
 
-    alert_type = args.get('alert_type')
+    alert_type = args.get("alert_type")
 
     # Convert the argument to a timestamp using helper function
     start_time = arg_to_timestamp(
-        arg=args.get('start_time'),
-        arg_name='start_time',
-        required=False
+        arg=args.get("start_time"), arg_name="start_time", required=False
     )
 
     # Convert the argument to an int using helper function
     max_results = arg_to_int(
-        arg=args.get('max_results'),
-        arg_name='max_results',
-        required=False
+        arg=args.get("max_results"), arg_name="max_results", required=False
     )
 
     # Severity is passed to the API as a CSV
     alerts = client.search_alerts(
-        severity=','.join(severities),
+        severity=",".join(severities),
         alert_status=status,
         alert_type=alert_type,
         start_time=start_time,
-        max_results=max_results
+        max_results=max_results,
     )
 
     # INTEGRATION DEVELOPER TIP
     # We want to convert the "created" time from timestamp(s) to ISO8601 as
     # Cortex XSOAR customers and integrations use this format by default
     for alert in alerts:
-        if 'created' not in alert:
+        if "created" not in alert:
             continue
-        created_time_ms = int(alert.get('created', '0')) * 1000
-        alert['created'] = timestamp_to_datestring(created_time_ms)
+        created_time_ms = int(alert.get("created", "0")) * 1000
+        alert["created"] = timestamp_to_datestring(created_time_ms)
 
     # in this example we are not providing a custom markdown, we will
     # let ``CommandResults`` generate it by default.
     return CommandResults(
-        outputs_prefix='HelloWorld.Alert',
-        outputs_key_field='alert_id',
-        outputs=alerts
+        outputs_prefix="HelloWorld.Alert", outputs_key_field="alert_id", outputs=alerts
     )
 
 
@@ -1176,28 +1173,28 @@ def get_alert_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     :rtype: ``CommandResults``
     """
 
-    alert_id = args.get('alert_id', None)
+    alert_id = args.get("alert_id", None)
     if not alert_id:
-        raise ValueError('alert_id not specified')
+        raise ValueError("alert_id not specified")
 
     alert = client.get_alert(alert_id=alert_id)
 
     # INTEGRATION DEVELOPER TIP
     # We want to convert the "created" time from timestamp(s) to ISO8601 as
     # Cortex XSOAR customers and integrations use this format by default
-    if 'created' in alert:
-        created_time_ms = int(alert.get('created', '0')) * 1000
-        alert['created'] = timestamp_to_datestring(created_time_ms)
+    if "created" in alert:
+        created_time_ms = int(alert.get("created", "0")) * 1000
+        alert["created"] = timestamp_to_datestring(created_time_ms)
 
     # tableToMarkdown() is defined is CommonServerPython.py and is used very
     # often to convert lists and dicts into a human readable format in markdown
-    readable_output = tableToMarkdown(f'HelloWorld Alert {alert_id}', alert)
+    readable_output = tableToMarkdown(f"HelloWorld Alert {alert_id}", alert)
 
     return CommandResults(
         readable_output=readable_output,
-        outputs_prefix='HelloWorld.Alert',
-        outputs_key_field='alert_id',
-        outputs=alert
+        outputs_prefix="HelloWorld.Alert",
+        outputs_key_field="alert_id",
+        outputs=alert,
     )
 
 
@@ -1222,32 +1219,32 @@ def update_alert_status_command(client: Client, args: Dict[str, Any]) -> Command
     :rtype: ``CommandResults``
     """
 
-    alert_id = args.get('alert_id', None)
+    alert_id = args.get("alert_id", None)
     if not alert_id:
-        raise ValueError('alert_id not specified')
+        raise ValueError("alert_id not specified")
 
-    status = args.get('status', None)
-    if status not in ('ACTIVE', 'CLOSED'):
-        raise ValueError('status must be either ACTIVE or CLOSED')
+    status = args.get("status", None)
+    if status not in ("ACTIVE", "CLOSED"):
+        raise ValueError("status must be either ACTIVE or CLOSED")
 
     alert = client.update_alert_status(alert_id, status)
 
     # INTEGRATION DEVELOPER TIP
     # We want to convert the "updated" time from timestamp(s) to ISO8601 as
     # Cortex XSOAR customers and integrations use this format by default
-    if 'updated' in alert:
-        updated_time_ms = int(alert.get('updated', '0')) * 1000
-        alert['updated'] = timestamp_to_datestring(updated_time_ms)
+    if "updated" in alert:
+        updated_time_ms = int(alert.get("updated", "0")) * 1000
+        alert["updated"] = timestamp_to_datestring(updated_time_ms)
 
     # tableToMarkdown() is defined is CommonServerPython.py and is used very
     # often to convert lists and dicts into a human readable format in markdown
-    readable_output = tableToMarkdown(f'HelloWorld Alert {alert_id}', alert)
+    readable_output = tableToMarkdown(f"HelloWorld Alert {alert_id}", alert)
 
     return CommandResults(
         readable_output=readable_output,
-        outputs_prefix='HelloWorld.Alert',
-        outputs_key_field='alert_id',
-        outputs=alert
+        outputs_prefix="HelloWorld.Alert",
+        outputs_key_field="alert_id",
+        outputs=alert,
     )
 
 
@@ -1269,9 +1266,9 @@ def scan_start_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     :rtype: ``CommandResults``
     """
 
-    hostname = args.get('hostname', None)
+    hostname = args.get("hostname", None)
     if not hostname:
-        raise ValueError('hostname not specified')
+        raise ValueError("hostname not specified")
 
     scan = client.scan_start(hostname=hostname)
 
@@ -1280,17 +1277,17 @@ def scan_start_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     # which is the input. It could be useful to have that information in the
     # XSOAR context, so we are adding it manually here, based on the command
     # input argument.
-    scan['hostname'] = hostname
+    scan["hostname"] = hostname
 
-    scan_id = scan.get('scan_id')
+    scan_id = scan.get("scan_id")
 
-    readable_output = f'Started scan {scan_id}'
+    readable_output = f"Started scan {scan_id}"
 
     return CommandResults(
         readable_output=readable_output,
-        outputs_prefix='HelloWorld.Scan',
-        outputs_key_field='scan_id',
-        outputs=scan
+        outputs_prefix="HelloWorld.Scan",
+        outputs_key_field="scan_id",
+        outputs=scan,
     )
 
 
@@ -1312,26 +1309,28 @@ def scan_status_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     :rtype: ``CommandResults``
     """
 
-    scan_id_list = argToList(args.get('scan_id', []))
+    scan_id_list = argToList(args.get("scan_id", []))
     if len(scan_id_list) == 0:
-        raise ValueError('scan_id(s) not specified')
+        raise ValueError("scan_id(s) not specified")
 
     scan_list: List[Dict[str, Any]] = []
     for scan_id in scan_id_list:
         scan = client.scan_status(scan_id=scan_id)
         scan_list.append(scan)
 
-    readable_output = tableToMarkdown('Scan status', scan_list)
+    readable_output = tableToMarkdown("Scan status", scan_list)
 
     return CommandResults(
         readable_output=readable_output,
-        outputs_prefix='HelloWorld.Scan',
-        outputs_key_field='scan_id',
-        outputs=scan_list
+        outputs_prefix="HelloWorld.Scan",
+        outputs_key_field="scan_id",
+        outputs=scan_list,
     )
 
 
-def scan_results_command(client: Client, args: Dict[str, Any]) -> Union[Dict[str, Any], CommandResults]:
+def scan_results_command(
+    client: Client, args: Dict[str, Any]
+) -> Union[Dict[str, Any], CommandResults]:
     """helloworld-scan-results command: Returns results for a HelloWorld scan
 
     :type client: ``Client``
@@ -1352,11 +1351,11 @@ def scan_results_command(client: Client, args: Dict[str, Any]) -> Union[Dict[str
     :rtype: ``Union[Dict[str, Any],CommandResults]``
     """
 
-    scan_id = args.get('scan_id', None)
+    scan_id = args.get("scan_id", None)
     if not scan_id:
-        raise ValueError('scan_id not specified')
+        raise ValueError("scan_id not specified")
 
-    scan_format = args.get('format', 'file')
+    scan_format = args.get("format", "file")
 
     # INTEGRATION DEVELOPER TIP
     # This function supports returning data in multiple formats, either in a json
@@ -1369,31 +1368,40 @@ def scan_results_command(client: Client, args: Dict[str, Any]) -> Union[Dict[str
     # anything special like a file, you can use this raw format.
 
     results = client.scan_results(scan_id=scan_id)
-    if scan_format == 'file':
-        return (
-            fileResult(
-                filename=f'{scan_id}.json',
-                data=json.dumps(results, indent=4),
-                file_type=entryTypes['entryInfoFile']
-            )
+    if scan_format == "file":
+        return fileResult(
+            filename=f"{scan_id}.json",
+            data=json.dumps(results, indent=4),
+            file_type=entryTypes["entryInfoFile"],
         )
-    elif scan_format == 'json':
+    elif scan_format == "json":
         # This scan returns CVE information. CVE is also part of the XSOAR
         # context standard, so we must extract CVE IDs and return them also.
         # See: https://xsoar.pan.dev/docs/integrations/context-standards#cve
         cves: List[Common.CVE] = []
-        entities = results.get('entities', [])
+        entities = results.get("entities", [])
         for e in entities:
-            if 'vulns' in e.keys() and isinstance(e['vulns'], list):
-                cves.extend([Common.CVE(id=c, cvss=None, published=None, modified=None, description=None) for c in e['vulns']])
+            if "vulns" in e.keys() and isinstance(e["vulns"], list):
+                cves.extend(
+                    [
+                        Common.CVE(
+                            id=c,
+                            cvss=None,
+                            published=None,
+                            modified=None,
+                            description=None,
+                        )
+                        for c in e["vulns"]
+                    ]
+                )
 
-        readable_output = tableToMarkdown(f'Scan {scan_id} results', entities)
+        readable_output = tableToMarkdown(f"Scan {scan_id} results", entities)
         return CommandResults(
             readable_output=readable_output,
-            outputs_prefix='HelloWorld.Scan',
-            outputs_key_field='scan_id',
+            outputs_prefix="HelloWorld.Scan",
+            outputs_key_field="scan_id",
             outputs=results,
-            indicators=list(set(cves))  # make the indicator list unique
+            indicators=list(set(cves)),  # make the indicator list unique
         )
     else:
         raise ValueError('Incorrect format, must be "json" or "file"')
@@ -1406,28 +1414,28 @@ def main() -> None:
     :rtype:
     """
 
-    api_key = demisto.params().get('apikey')
+    api_key = demisto.params().get("apikey")
 
     # get the service API url
-    base_url = urljoin(demisto.params()['url'], '/api/v1')
+    base_url = urljoin(demisto.params()["url"], "/api/v1")
 
     # if your Client class inherits from BaseClient, SSL verification is
     # handled out of the box by it, just pass ``verify_certificate`` to
     # the Client constructor
-    verify_certificate = not demisto.params().get('insecure', False)
+    verify_certificate = not demisto.params().get("insecure", False)
 
     # How much time before the first fetch to retrieve incidents
     first_fetch_time = arg_to_timestamp(
-        arg=demisto.params().get('first_fetch', '3 days'),
-        arg_name='First fetch time',
-        required=True
+        arg=demisto.params().get("first_fetch", "3 days"),
+        arg_name="First fetch time",
+        required=True,
     )
     # Using assert as a type guard (since first_fetch_time is always an int when required=True)
     assert isinstance(first_fetch_time, int)
 
     # if your Client class inherits from BaseClient, system proxy is handled
     # out of the box by it, just pass ``proxy`` to the Client constructor
-    proxy = demisto.params().get('proxy', False)
+    proxy = demisto.params().get("proxy", False)
 
     # INTEGRATION DEVELOPER TIP
     # You can use functions such as ``demisto.debug()``, ``demisto.info()``,
@@ -1435,33 +1443,29 @@ def main() -> None:
     # level on the server configuration
     # See: https://xsoar.pan.dev/docs/integrations/code-conventions#logging
 
-    demisto.debug(f'Command being called is {demisto.command()}')
+    demisto.debug(f"Command being called is {demisto.command()}")
     try:
-        headers = {
-            'Authorization': f'Bearer {api_key}'
-        }
+        headers = {"Authorization": f"Bearer {api_key}"}
         client = Client(
-            base_url=base_url,
-            verify=verify_certificate,
-            headers=headers,
-            proxy=proxy)
+            base_url=base_url, verify=verify_certificate, headers=headers, proxy=proxy
+        )
 
-        if demisto.command() == 'test-module':
+        if demisto.command() == "test-module":
             # This is the call made when pressing the integration Test button.
             result = test_module(client, first_fetch_time)
             return_results(result)
 
-        elif demisto.command() == 'fetch-incidents':
+        elif demisto.command() == "fetch-incidents":
             # Set and define the fetch incidents command to run after activated via integration settings.
-            alert_status = demisto.params().get('alert_status', None)
-            alert_type = demisto.params().get('alert_type', None)
-            min_severity = demisto.params().get('min_severity', None)
+            alert_status = demisto.params().get("alert_status", None)
+            alert_type = demisto.params().get("alert_type", None)
+            min_severity = demisto.params().get("min_severity", None)
 
             # Convert the argument to an int using helper function or set to MAX_INCIDENTS_TO_FETCH
             max_results = arg_to_int(
-                arg=demisto.params().get('max_fetch'),
-                arg_name='max_fetch',
-                required=False
+                arg=demisto.params().get("max_fetch"),
+                arg_name="max_fetch",
+                required=False,
             )
             if not max_results or max_results > MAX_INCIDENTS_TO_FETCH:
                 max_results = MAX_INCIDENTS_TO_FETCH
@@ -1473,7 +1477,7 @@ def main() -> None:
                 first_fetch_time=first_fetch_time,
                 alert_status=alert_status,
                 min_severity=min_severity,
-                alert_type=alert_type
+                alert_type=alert_type,
             )
 
             # saves next_run for the time fetch-incidents is invoked
@@ -1482,40 +1486,50 @@ def main() -> None:
             # of incidents to crate
             demisto.incidents(incidents)
 
-        elif demisto.command() == 'ip':
-            default_threshold_ip = int(demisto.params().get('threshold_ip', '65'))
-            return_results(ip_reputation_command(client, demisto.args(), default_threshold_ip))
+        elif demisto.command() == "ip":
+            default_threshold_ip = int(demisto.params().get("threshold_ip", "65"))
+            return_results(
+                ip_reputation_command(client, demisto.args(), default_threshold_ip)
+            )
 
-        elif demisto.command() == 'domain':
-            default_threshold_domain = int(demisto.params().get('threshold_domain', '65'))
-            return_results(domain_reputation_command(client, demisto.args(), default_threshold_domain))
+        elif demisto.command() == "domain":
+            default_threshold_domain = int(
+                demisto.params().get("threshold_domain", "65")
+            )
+            return_results(
+                domain_reputation_command(
+                    client, demisto.args(), default_threshold_domain
+                )
+            )
 
-        elif demisto.command() == 'helloworld-say-hello':
+        elif demisto.command() == "helloworld-say-hello":
             return_results(say_hello_command(client, demisto.args()))
 
-        elif demisto.command() == 'helloworld-search-alerts':
+        elif demisto.command() == "helloworld-search-alerts":
             return_results(search_alerts_command(client, demisto.args()))
 
-        elif demisto.command() == 'helloworld-get-alert':
+        elif demisto.command() == "helloworld-get-alert":
             return_results(get_alert_command(client, demisto.args()))
 
-        elif demisto.command() == 'helloworld-update-alert-status':
+        elif demisto.command() == "helloworld-update-alert-status":
             return_results(update_alert_status_command(client, demisto.args()))
 
-        elif demisto.command() == 'helloworld-scan-start':
+        elif demisto.command() == "helloworld-scan-start":
             return_results(scan_start_command(client, demisto.args()))
 
-        elif demisto.command() == 'helloworld-scan-status':
+        elif demisto.command() == "helloworld-scan-status":
             return_results(scan_status_command(client, demisto.args()))
 
-        elif demisto.command() == 'helloworld-scan-results':
+        elif demisto.command() == "helloworld-scan-results":
             return_results(scan_results_command(client, demisto.args()))
 
     # Log exceptions and return errors
     except Exception as e:
         demisto.error(traceback.format_exc())  # print the traceback
-        return_error(f'Failed to execute {demisto.command()} command.\nError:\n{str(e)}')
+        return_error(
+            f"Failed to execute {demisto.command()} command.\nError:\n{str(e)}"
+        )
 
 
-if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover
+if __name__ in ("__main__", "__builtin__", "builtins"):  # pragma: no cover
     main()

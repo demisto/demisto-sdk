@@ -1,11 +1,13 @@
 import os
 import re
 import time
+from pathlib import Path
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.tools import LOG_COLORS, get_yaml, print_color
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
 
 SUCCESS_RETURN_CODE = 0
@@ -25,8 +27,15 @@ class TestPlaybookRunner:
         base_link_to_workplan (str): the base link to see the full test playbook run in your xsoar instance.
     """
 
-    def __init__(self, test_playbook_path: str = '', all: bool = False, wait: bool = True, timeout: int = 90,
-                 insecure: bool = False):
+    def __init__(
+        self,
+        test_playbook_path: str = "",
+        all: bool = False,
+        wait: bool = True,
+        timeout: int = 90,
+        insecure: bool = False,
+        **kwargs,
+    ):
         self.test_playbook_path = test_playbook_path
         self.all_test_playbooks = all
         self.should_wait = wait
@@ -65,10 +74,12 @@ class TestPlaybookRunner:
 
         # Run all pack test playbooks
         elif os.path.isdir(self.test_playbook_path):
-            test_playbooks.extend(self.get_test_playbooks_from_folder(self.test_playbook_path))
+            test_playbooks.extend(
+                self.get_test_playbooks_from_folder(self.test_playbook_path)
+            )
 
         # Run specific test playbook
-        elif os.path.isfile(self.test_playbook_path):
+        elif Path(self.test_playbook_path).is_file():
             test_playbooks.append(self.test_playbook_path)
 
         return test_playbooks
@@ -81,11 +92,15 @@ class TestPlaybookRunner:
         is_path_valid = True
         if not self.all_test_playbooks:
             if not self.test_playbook_path:
-                print_color("Error: Missing option '-tpb' / '--test-playbook-path'.", LOG_COLORS.RED)
+                logger.info(
+                    "[red]Error: Missing option '-tpb' / '--test-playbook-path'.[/red]"
+                )
                 is_path_valid = False
 
-            elif not os.path.exists(self.test_playbook_path):
-                print_color(f'Error: Given input path: {self.test_playbook_path} does not exist', LOG_COLORS.RED)
+            elif not Path(self.test_playbook_path).exists():
+                logger.info(
+                    f"[red]Error: Given input path: {self.test_playbook_path} does not exist[/red]"
+                )
                 is_path_valid = False
 
         return is_path_valid
@@ -95,15 +110,17 @@ class TestPlaybookRunner:
         Get test playbook ID from test playbook file name
         """
         test_playbook_data = get_yaml(file_path=file_path)
-        return test_playbook_data.get('id')
+        return test_playbook_data.get("id")
 
     def get_test_playbooks_from_folder(self, folder_path):
         """
         Get all pack test playbooks
         """
-        full_path = f'{folder_path}/TestPlaybooks'
+        full_path = f"{folder_path}/TestPlaybooks"
         list_test_playbooks_files = os.listdir(full_path)
-        list_test_playbooks_files = [f'{full_path}/{tpb}' for tpb in list_test_playbooks_files]
+        list_test_playbooks_files = [
+            f"{full_path}/{tpb}" for tpb in list_test_playbooks_files
+        ]
         return list_test_playbooks_files
 
     def get_all_test_playbooks(self):
@@ -111,10 +128,10 @@ class TestPlaybookRunner:
         Get all the repo test playbooks
         """
         tpb_list: list = []
-        packs_list = os.listdir('Packs')
+        packs_list = os.listdir("Packs")
         for pack in packs_list:
-            if os.path.isdir(f'Packs/{pack}'):
-                tpb_list.extend(self.get_test_playbooks_from_folder(f'Packs/{pack}'))
+            if os.path.isdir(f"Packs/{pack}"):
+                tpb_list.extend(self.get_test_playbooks_from_folder(f"Packs/{pack}"))
         return tpb_list
 
     def run_test_playbook_by_id(self, test_playbook_id):
@@ -127,31 +144,37 @@ class TestPlaybookRunner:
         # create an incident with the given playbook
         try:
             incident_id = self.create_incident_with_test_playbook(
-                incident_name=f'inc_{test_playbook_id}', test_playbook_id=test_playbook_id)
+                incident_name=f"inc_{test_playbook_id}",
+                test_playbook_id=test_playbook_id,
+            )
         except ApiException as a:
-            print_color(str(a), LOG_COLORS.RED)
+            logger.info(f"[red]{a}[/red]")
             status_code = ERROR_RETURN_CODE
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
         if self.should_wait:
-            status_code = self.run_and_check_tpb_status(test_playbook_id, work_plan_link, incident_id)
+            status_code = self.run_and_check_tpb_status(
+                test_playbook_id, work_plan_link, incident_id
+            )
 
         else:
-            print_color(f'To see results please go to : {work_plan_link}', LOG_COLORS.NATIVE)
+            logger.info(f"To see results please go to : {work_plan_link}")
 
         return status_code
 
     def run_and_check_tpb_status(self, test_playbook_id, work_plan_link, incident_id):
         status_code = SUCCESS_RETURN_CODE
-        print_color(f'Waiting for the test playbook to finish running.. \n'
-                    f'To see the test playbook run in real-time please go to : {work_plan_link}', LOG_COLORS.GREEN)
+        logger.info(
+            f"[green]Waiting for the test playbook to finish running.. \n"
+            f"To see the test playbook run in real-time please go to : {work_plan_link}[/green]"
+        )
 
         elapsed_time = 0
         start_time = time.time()
 
         while elapsed_time < self.timeout:
             test_playbook_result = self.get_test_playbook_results_dict(incident_id)
-            if test_playbook_result['state'] == "inprogress":
+            if test_playbook_result["state"] == "inprogress":
                 time.sleep(10)
                 elapsed_time = int(time.time() - start_time)
             else:  # the test playbook has finished running
@@ -159,20 +182,27 @@ class TestPlaybookRunner:
 
         # Ended the loop because of timeout
         if elapsed_time >= self.timeout:
-            print_color(f'The command had timed out while the playbook is in progress.\n'
-                        f'To keep tracking the test playbook please go to : {work_plan_link}', LOG_COLORS.RED)
+            logger.info(
+                f"[red]The command had timed out while the playbook is in progress.\n"
+                f"To keep tracking the test playbook please go to : {work_plan_link}[/red]"
+            )
         else:
-            if test_playbook_result['state'] == "failed":
+            if test_playbook_result["state"] == "failed":
                 self.print_tpb_error_details(test_playbook_result, test_playbook_id)
-                print_color("The test playbook finished running with status: FAILED", LOG_COLORS.RED)
+                logger.info(
+                    "[red]The test playbook finished running with status: FAILED[/red]"
+                )
                 status_code = ERROR_RETURN_CODE
             else:
-                print_color("The test playbook has completed its run successfully", LOG_COLORS.GREEN)
+                logger.info(
+                    "[green]The test playbook has completed its run successfully[/green]"
+                )
 
         return status_code
 
-    def create_incident_with_test_playbook(self, incident_name, test_playbook_id):
-        # type: (str, str) -> int
+    def create_incident_with_test_playbook(
+        self, incident_name: str, test_playbook_id: str
+    ) -> int:
         """Create an incident in your xsoar instance with the given incident_name and the given test_playbook_id
 
         Args:
@@ -192,33 +222,45 @@ class TestPlaybookRunner:
         create_incident_request.name = incident_name
 
         try:
-            response = self.demisto_client.create_incident(create_incident_request=create_incident_request)
+            response = self.demisto_client.create_incident(
+                create_incident_request=create_incident_request
+            )
         except ApiException as e:
-            print_color(f'Failed to create incident with playbook id : "{test_playbook_id}", '
-                        'possible reasons are:\n'
-                        '1. This playbook name does not exist \n'
-                        '2. Schema problems in the playbook \n'
-                        '3. Unauthorized api key', LOG_COLORS.RED)
+            logger.info(
+                f'[red]Failed to create incident with playbook id : "{test_playbook_id}", '
+                "possible reasons are:\n"
+                "1. This playbook name does not exist \n"
+                "2. Schema problems in the playbook \n"
+                "3. Unauthorized api key[/red]"
+            )
             raise e
 
-        print_color(f'The test playbook: {self.test_playbook_path} was triggered successfully.', LOG_COLORS.GREEN)
+        logger.info(
+            f"[green]The test playbook: {self.test_playbook_path} was triggered successfully.[/green]"
+        )
         return response.id
 
     def get_test_playbook_results_dict(self, inc_id):
-        test_playbook_results = self.demisto_client.generic_request(method='GET', path=f'/inv-playbook/{inc_id}')
+        test_playbook_results = self.demisto_client.generic_request(
+            method="GET", path=f"/inv-playbook/{inc_id}"
+        )
         return eval(test_playbook_results[0])
 
     def print_tpb_error_details(self, tpb_res, tpb_id):
-        entries = tpb_res.get('entries')
+        entries = tpb_res.get("entries")
         if entries:
-            print_color(f'Test Playbook {tpb_id} has failed:', LOG_COLORS.RED)
+            logger.info(f"[red]Test Playbook {tpb_id} has failed:[/red]")
             for entry in entries:
-                if entry['type'] == ENTRY_TYPE_ERROR and entry['parentContent']:
-                    print_color(f'- Task ID: {entry["taskId"]}', LOG_COLORS.RED)
+                if entry["type"] == ENTRY_TYPE_ERROR and entry["parentContent"]:
+                    logger.info(f'[red]- Task ID: {entry["taskId"]}[/red]')
                     # Checks for passwords and replaces them with "******"
-                    parent_content = re.sub(r' (P|p)assword="[^";]*"', ' password=******', entry['parentContent'])
-                    print_color(f'  Command: {parent_content}', LOG_COLORS.RED)
-                    print_color(f'  Body:\n{entry["contents"]}', LOG_COLORS.RED)
+                    parent_content = re.sub(
+                        r' (P|p)assword="[^";]*"',
+                        " password=******",
+                        entry["parentContent"],
+                    )
+                    logger.info(f"[red]  Command: {parent_content}[/red]")
+                    logger.info(f'[red]  Body:\n{entry["contents"]}[/red]')
 
     def get_base_link_to_workplan(self):
         """Create a base link to the workplan in the specified xsoar instance
@@ -226,9 +268,9 @@ class TestPlaybookRunner:
             str: The link to the workplan
         """
 
-        base_url = os.environ.get('DEMISTO_BASE_URL')
-        return f'{base_url}/#/WorkPlan/'
+        base_url = os.environ.get("DEMISTO_BASE_URL")
+        return f"{base_url}/#/WorkPlan/"
 
     def upload_tpb(self, tpb_file):
-        uploader = Uploader(input=tpb_file, insecure=self.verify)  # type: ignore
+        uploader = Uploader(input=tpb_file, insecure=not self.verify)  # type: ignore
         uploader.upload()

@@ -6,10 +6,11 @@ from TestSuite.test_tools import ChangeCWD
 CONFIG = Configuration()
 
 # Layouts tests consts:
-LAYOUTS_CONTAINER_DATA = {'my_layoutscontainer': {
-    'id': 'my_layoutscontainer',
-    'name': 'my_layoutscontainer',
-    'indicatorsDetails': {
+LAYOUTS_CONTAINER_DATA = {
+    "my_layoutscontainer": {
+        "id": "my_layoutscontainer",
+        "name": "my_layoutscontainer",
+        "indicatorsDetails": {
             "tabs": [
                 {
                     "id": "tjlpilelnw",
@@ -30,16 +31,15 @@ LAYOUTS_CONTAINER_DATA = {'my_layoutscontainer': {
                             "type": "dynamicIndicator",
                             "w": 1,
                             "x": 0,
-                            "y": 0
+                            "y": 0,
                         }
-                    ]
+                    ],
                 }
             ]
-    }}}
-LAYOUT_DATA = {'my-layout': {
-    'typename': 'my-layout',
-    'scripts': ['script_to_test']
-}}
+        },
+    }
+}
+LAYOUT_DATA = {"my-layout": {"typename": "my-layout", "scripts": ["script_to_test"]}}
 
 
 def test_is_incident_type_using_real_playbook__happy_flow():
@@ -54,21 +54,29 @@ def test_is_incident_type_using_real_playbook__happy_flow():
     Then
         - Ensure that the playbook is in the id set.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     incident_type_data = {
-        "Zimperium Event": {
-            "playbooks": "Zimperium Incident Enrichment"
-        }
+        "Zimperium Event": {"playbooks": "Zimperium Incident Enrichment"}
     }
-    validator.playbook_set = [{'Zimperium Incident Enrichment': {
-        'name': 'Zimperium Incident Enrichment',
-        'file_path': 'Packs/Zimperium/Playbooks/Zimperium_Incident_Enrichment.yml',
-        'fromversion': '5.0.0'}
-    }]
+    validator.playbook_set = [
+        {
+            "Zimperium Incident Enrichment": {
+                "name": "Zimperium Incident Enrichment",
+                "file_path": "Packs/Zimperium/Playbooks/Zimperium_Incident_Enrichment.yml",
+                "fromversion": "5.0.0",
+            }
+        }
+    ]
 
-    assert validator._is_incident_type_default_playbook_found(incident_type_data=incident_type_data) is True, \
-        "The incident type default playbook id does not exist in the id set"
+    assert (
+        validator._is_incident_type_default_playbook_found(
+            incident_type_data=incident_type_data
+        )
+        is True
+    ), "The incident type default playbook id does not exist in the id set"
 
 
 def test_is_incident_type_using_real_playbook__no_matching_playbook_id():
@@ -83,20 +91,27 @@ def test_is_incident_type_using_real_playbook__no_matching_playbook_id():
     Then
         - Ensure that the playbook is in the id set.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    incident_type_data = {
-        "Zimperium Event": {
-            "playbooks": "a fake playbook id"
+    incident_type_data = {"Zimperium Event": {"playbooks": "a fake playbook id"}}
+    validator.playbook_set = [
+        {
+            "Zimperium Incident Enrichment": {
+                "name": "Zimperium Incident Enrichment",
+                "file_path": "Packs/Zimperium/Playbooks/Zimperium_Incident_Enrichment.yml",
+                "fromversion": "5.0.0",
+            }
         }
-    }
-    validator.playbook_set = [{'Zimperium Incident Enrichment': {
-        'name': 'Zimperium Incident Enrichment',
-        'file_path': 'Packs/Zimperium/Playbooks/Zimperium_Incident_Enrichment.yml',
-        'fromversion': '5.0.0'}
-    }]
+    ]
 
-    assert validator._is_incident_type_default_playbook_found(incident_type_data=incident_type_data) is False
+    assert (
+        validator._is_incident_type_default_playbook_found(
+            incident_type_data=incident_type_data
+        )
+        is False
+    )
 
 
 def test_is_incident_field_using_existing_script_positive():
@@ -111,24 +126,34 @@ def test_is_incident_field_using_existing_script_positive():
     Then
         - Ensure that the script is in the id set - i.e is_incident_field_scripts_found returns True.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    incident_field_data = {'Incident_field_test': {
-        'id': 'Incident_field_test',
-        'name': 'Incident_field_test',
-        'scripts': ['script_to_test']
+    incident_field_data = {
+        "Incident_field_test": {
+            "id": "Incident_field_test",
+            "name": "Incident_field_test",
+            "scripts": ["script_to_test"],
+        }
     }
-    }
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
                 "fromversion": "5.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
-    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is True, \
-        "The incident field's script id is in the id set thus result should be True."
+    assert (
+        validator._is_incident_field_scripts_found(
+            incident_field_data=incident_field_data
+        )
+        is True
+    ), "The incident field's script id is in the id set thus result should be True."
 
 
 def test_is_incident_field_using_existing_script_negative():
@@ -143,25 +168,35 @@ def test_is_incident_field_using_existing_script_negative():
     Then
         - Ensure that the script is not in the id set - i.e is_incident_field_scripts_found returns False.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    incident_field_data = {'Incident_field_test': {
-        'id': 'Incident_field_test',
-        'name': 'Incident_field_test',
-        'scripts': ['a fake script id']
-    }
+    incident_field_data = {
+        "Incident_field_test": {
+            "id": "Incident_field_test",
+            "name": "Incident_field_test",
+            "scripts": ["a fake script id"],
+        }
     }
 
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
                 "fromversion": "5.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
-    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is False, \
-        "The incident field's script id is not in the id set thus result should be False."
+    assert (
+        validator._is_incident_field_scripts_found(
+            incident_field_data=incident_field_data
+        )
+        is False
+    ), "The incident field's script id is not in the id set thus result should be False."
 
 
 def test_is_incident_field_using_existing_script_with_command_positive():
@@ -176,22 +211,28 @@ def test_is_incident_field_using_existing_script_with_command_positive():
     Then
         - Ensure that the script is in the id set and command - i.e is_incident_field_scripts_found returns True.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    incident_field_data = {'Incident_field_test': {
-        'id': 'Incident_field_test',
-        'name': 'Incident_field_test',
-        'scripts': ['script_to_test|||command_to_test']
-    }
+    incident_field_data = {
+        "Incident_field_test": {
+            "id": "Incident_field_test",
+            "name": "Incident_field_test",
+            "scripts": ["script_to_test|||command_to_test"],
+        }
     }
 
-    validator.script_set = [{"script_to_test_1": {
-        "name": "script_to_test_1",
+    validator.script_set = [
+        {
+            "script_to_test_1": {
+                "name": "script_to_test_1",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test_1.yml",
                 "fromversion": "5.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
     validator.integration_set = [
         {
@@ -199,15 +240,18 @@ def test_is_incident_field_using_existing_script_with_command_positive():
                 "name": "script_to_test",
                 "file_path": "Packs/Slack/Integrations/script_to_test/script_to_test.yml",
                 "fromversion": "5.0.0",
-                "commands": [
-                    "command_to_test"
-                ],
-                "pack": "script_to_test"
+                "commands": ["command_to_test"],
+                "pack": "script_to_test",
             }
-        }]
+        }
+    ]
 
-    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is True, \
-        "The incident field's script id is in the id set thus result should be True."
+    assert (
+        validator._is_incident_field_scripts_found(
+            incident_field_data=incident_field_data
+        )
+        is True
+    ), "The incident field's script id is in the id set thus result should be True."
 
 
 def test_is_incident_field_using_existing_script_with_command_negative():
@@ -222,22 +266,28 @@ def test_is_incident_field_using_existing_script_with_command_negative():
     Then
         - Ensure that the script is in the id set and non-existing command - i.e is_incident_field_scripts_found returns False.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    incident_field_data = {'Incident_field_test': {
-        'id': 'Incident_field_test',
-        'name': 'Incident_field_test',
-        'scripts': ['script_to_test|||command_to_test']
-    }
+    incident_field_data = {
+        "Incident_field_test": {
+            "id": "Incident_field_test",
+            "name": "Incident_field_test",
+            "scripts": ["script_to_test|||command_to_test"],
+        }
     }
 
-    validator.script_set = [{"script_to_test_1": {
-        "name": "script_to_test_1",
+    validator.script_set = [
+        {
+            "script_to_test_1": {
+                "name": "script_to_test_1",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test_1.yml",
                 "fromversion": "5.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
     validator.integration_set = [
         {
@@ -245,15 +295,18 @@ def test_is_incident_field_using_existing_script_with_command_negative():
                 "name": "script_to_test",
                 "file_path": "Packs/Slack/Integrations/script_to_test/script_to_test.yml",
                 "fromversion": "5.0.0",
-                "commands": [
-                    "command_to_test_1"
-                ],
-                "pack": "script_to_test"
+                "commands": ["command_to_test_1"],
+                "pack": "script_to_test",
             }
-        }]
+        }
+    ]
 
-    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is False, \
-        "The incident field's script id is in the id set but the command not thus result should be False."
+    assert (
+        validator._is_incident_field_scripts_found(
+            incident_field_data=incident_field_data
+        )
+        is False
+    ), "The incident field's script id is in the id set but the command not thus result should be False."
 
 
 def test_is_incident_field_using_existing_script_no_scripts():
@@ -268,24 +321,34 @@ def test_is_incident_field_using_existing_script_no_scripts():
     Then
         - Ensure is_incident_field_scripts_found returns True.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    incident_field_data = {'Incident_field_test': {
-        'id': 'Incident_field_test',
-        'name': 'Incident_field_test'
-    }
+    incident_field_data = {
+        "Incident_field_test": {
+            "id": "Incident_field_test",
+            "name": "Incident_field_test",
+        }
     }
 
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
                 "fromversion": "5.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
-    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is True, \
-        "The incident field doesn't have any scripts thus the result should be True."
+    assert (
+        validator._is_incident_field_scripts_found(
+            incident_field_data=incident_field_data
+        )
+        is True
+    ), "The incident field doesn't have any scripts thus the result should be True."
 
 
 def test_is_layouts_container_using_existing_script_positive():
@@ -300,18 +363,27 @@ def test_is_layouts_container_using_existing_script_positive():
     Then
         - Ensure that the script is in the id set - i.e is_layouts_container_scripts_found returns True.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
                 "fromversion": "6.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
-    assert validator._is_layouts_container_scripts_found(layouts_container_data=LAYOUTS_CONTAINER_DATA) is True, \
-        "The layouts container's script id is in the id set thus result should be True."
+    assert (
+        validator._is_layouts_container_scripts_found(
+            layouts_container_data=LAYOUTS_CONTAINER_DATA
+        )
+        is True
+    ), "The layouts container's script id is in the id set thus result should be True."
 
 
 def test_is_layouts_container_using_existing_script_negative():
@@ -326,18 +398,27 @@ def test_is_layouts_container_using_existing_script_negative():
     Then
         - Ensure that the script is not in the id set - i.e is_layouts_container_scripts_found returns False.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.script_set = [{"other_script_id": {
-        "name": "other_script_id",
+    validator.script_set = [
+        {
+            "other_script_id": {
+                "name": "other_script_id",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-other_script_id.yml",
                 "fromversion": "6.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
-    assert validator._is_layouts_container_scripts_found(layouts_container_data=LAYOUTS_CONTAINER_DATA) is False, \
-        "The layouts container's script id is not in the id set thus result should be False."
+    assert (
+        validator._is_layouts_container_scripts_found(
+            layouts_container_data=LAYOUTS_CONTAINER_DATA
+        )
+        is False
+    ), "The layouts container's script id is not in the id set thus result should be False."
 
 
 def test_is_layouts_container_using_existing_script_no_scripts():
@@ -352,47 +433,59 @@ def test_is_layouts_container_using_existing_script_no_scripts():
     Then
         - Ensure that is_layouts_container_scripts_found returns True.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    layouts_container_data_without_scripts = {'my_layoutscontainer': {
-        'id': 'my_layoutscontainer',
-        'name': 'my_layoutscontainer',
-        'indicatorsDetails': {
-            "tabs": [
-                {
-                    "id": "tjlpilelnw",
-                    "name": "Profile",
-                    "sections": [
-                        {
-                            "description": "Incidents that affected the user profile.",
-                            "h": 2,
-                            "i": "tjlpilelnw-978b0c1e-6739-432d-82d1-3b6641eed99f-tjlpilelnw",
-                            "maxW": 3,
-                            "minH": 1,
-                            "minW": 2,
-                            "moved": False,
-                            "name": "User incidents",
-                            "static": False,
-                            "type": "dynamicIndicator",
-                            "w": 1,
-                            "x": 0,
-                            "y": 0
-                        }
-                    ]
-                }
-            ]
-        }}}
+    layouts_container_data_without_scripts = {
+        "my_layoutscontainer": {
+            "id": "my_layoutscontainer",
+            "name": "my_layoutscontainer",
+            "indicatorsDetails": {
+                "tabs": [
+                    {
+                        "id": "tjlpilelnw",
+                        "name": "Profile",
+                        "sections": [
+                            {
+                                "description": "Incidents that affected the user profile.",
+                                "h": 2,
+                                "i": "tjlpilelnw-978b0c1e-6739-432d-82d1-3b6641eed99f-tjlpilelnw",
+                                "maxW": 3,
+                                "minH": 1,
+                                "minW": 2,
+                                "moved": False,
+                                "name": "User incidents",
+                                "static": False,
+                                "type": "dynamicIndicator",
+                                "w": 1,
+                                "x": 0,
+                                "y": 0,
+                            }
+                        ],
+                    }
+                ]
+            },
+        }
+    }
 
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
                 "fromversion": "6.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
-    assert validator._is_layouts_container_scripts_found(layouts_container_data=layouts_container_data_without_scripts)\
-        is True, "The layouts container's doesn't have any scripts thus result should be False."
+    assert (
+        validator._is_layouts_container_scripts_found(
+            layouts_container_data=layouts_container_data_without_scripts
+        )
+        is True
+    ), "The layouts container's doesn't have any scripts thus result should be False."
 
 
 def test_is_layout_using_existing_script_positive():
@@ -407,18 +500,24 @@ def test_is_layout_using_existing_script_positive():
     Then
         - Ensure that the script is in the id set - i.e is_layout_scripts_found returns True.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
                 "fromversion": "6.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
-    assert validator._is_layout_scripts_found(layout_data=LAYOUT_DATA) is True, \
-        "The layout's script id is in the id set thus result should be True."
+    assert (
+        validator._is_layout_scripts_found(layout_data=LAYOUT_DATA) is True
+    ), "The layout's script id is in the id set thus result should be True."
 
 
 def test_is_layout_using_existing_script_negative():
@@ -433,18 +532,24 @@ def test_is_layout_using_existing_script_negative():
     Then
         - Ensure that the script is not in the id set - i.e is_layout_scripts_found returns False.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.script_set = [{"other_script_id": {
-        "name": "other_script_id",
+    validator.script_set = [
+        {
+            "other_script_id": {
+                "name": "other_script_id",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-other_script_id.yml",
                 "fromversion": "6.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
-    assert validator._is_layout_scripts_found(layout_data=LAYOUT_DATA) is False, \
-        "The layout's script id is not in the id set thus result should be False."
+    assert (
+        validator._is_layout_scripts_found(layout_data=LAYOUT_DATA) is False
+    ), "The layout's script id is not in the id set thus result should be False."
 
 
 def test_is_layout_using_existing_script_no_scripts():
@@ -459,23 +564,29 @@ def test_is_layout_using_existing_script_no_scripts():
     Then
         - Ensure that is_layout_scripts_found returns True.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    layout_data_without_scripts = {'my-layout': {
-        'typename': 'my-layout',
-        'scripts': []
-    }}
+    layout_data_without_scripts = {
+        "my-layout": {"typename": "my-layout", "scripts": []}
+    }
 
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
                 "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
                 "fromversion": "6.0.0",
-                "pack": "DeveloperTools"
-    }
-    }]
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
 
-    assert validator._is_layout_scripts_found(layout_data=layout_data_without_scripts) is True, \
-        "The layout doesn't have any scripts thus result should be True."
+    assert (
+        validator._is_layout_scripts_found(layout_data=layout_data_without_scripts)
+        is True
+    ), "The layout doesn't have any scripts thus result should be True."
 
 
 def test_is_layout_using_existing_script_ignore_builtin_scripts():
@@ -491,23 +602,31 @@ def test_is_layout_using_existing_script_ignore_builtin_scripts():
         - Ensure that the builtin script is ignored - i.e is_layout_scripts_found returns True.
     """
 
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
-        "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
-        "fromversion": "6.0.0",
-        "pack": "DeveloperTools"
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "6.0.0",
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
+
+    layout_data = {
+        "my-layout": {
+            "typename": "my-layout",
+            "scripts": ["Builtin|||removeIndicatorField"],
+        }
     }
-    }]
 
-    layout_data = {'my-layout': {
-        'typename': 'my-layout',
-        'scripts': ['Builtin|||removeIndicatorField']
-    }}
-
-    assert validator._is_layout_scripts_found(layout_data=layout_data) is True, \
-        "The layout's script id is a builtin script therefore ignored and thus the result should be True."
+    assert (
+        validator._is_layout_scripts_found(layout_data=layout_data) is True
+    ), "The layout's script id is a builtin script therefore ignored and thus the result should be True."
 
 
 def test_is_layout_using_script_validate_integration_commands_scripts():
@@ -523,50 +642,51 @@ def test_is_layout_using_script_validate_integration_commands_scripts():
         - Ensure that the integration command script is not ignored - i.e is_layout_scripts_found returns True.
     """
 
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
-        "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
-        "fromversion": "6.0.0",
-        "pack": "DeveloperTools"
-    }
-    }]
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "6.0.0",
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
     validator.integration_set = [
         {
             "SlackV2": {
                 "name": "SlackV2",
                 "file_path": "Packs/Slack/Integrations/Slack/Slack.yml",
                 "fromversion": "5.0.0",
-                "commands": [
-                    "send-notification",
-                    "slack-send"
-                ],
-                "pack": "Slack"
+                "commands": ["send-notification", "slack-send"],
+                "pack": "Slack",
             }
         },
         {
             "Mail Sender (New)": {
                 "name": "Mail Sender (New)",
                 "file_path": "Packs/MailSenderNew/Integrations/MailSenderNew/MailSenderNew.yml",
-                "commands": [
-                    "send-mail"
-                ],
-                "tests": [
-                    "Mail Sender (New) Test"
-                ],
-                "pack": "MailSenderNew"
+                "commands": ["send-mail"],
+                "tests": ["Mail Sender (New) Test"],
+                "pack": "MailSenderNew",
             }
-        }
+        },
     ]
 
-    layout_data = {'my-layout': {
-        'typename': 'my-layout',
-        'scripts': ['SlackV2|||send-notification', 'Mail Sender (New)|||send-mail']
-    }}
+    layout_data = {
+        "my-layout": {
+            "typename": "my-layout",
+            "scripts": ["SlackV2|||send-notification", "Mail Sender (New)|||send-mail"],
+        }
+    }
 
-    assert validator._is_layout_scripts_found(layout_data=layout_data) is True, \
-        "The layout's script id is an integration command which is real command."
+    assert (
+        validator._is_layout_scripts_found(layout_data=layout_data) is True
+    ), "The layout's script id is an integration command which is real command."
 
 
 def test_is_layout_using_script_validate_integration_commands_scripts_on_wrong_command():
@@ -582,49 +702,51 @@ def test_is_layout_using_script_validate_integration_commands_scripts_on_wrong_c
         - Ensure that the integration command script is not ignored - i.e is_layout_scripts_found returns False.
     """
 
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.script_set = [{"script_to_test": {
-        "name": "script_to_test",
-        "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
-        "fromversion": "6.0.0",
-        "pack": "DeveloperTools"
-    }
-    }]
+    validator.script_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "6.0.0",
+                "pack": "DeveloperTools",
+            }
+        }
+    ]
     validator.integration_set = [
         {
             "SlackV2": {
                 "name": "SlackV2",
                 "file_path": "Packs/Slack/Integrations/Slack/Slack.yml",
                 "fromversion": "5.0.0",
-                "commands": [
-                    "slack-send"
-                ],
-                "pack": "Slack"
+                "commands": ["slack-send"],
+                "pack": "Slack",
             }
         },
         {
             "Mail Sender (New)": {
                 "name": "Mail Sender (New)",
                 "file_path": "Packs/MailSenderNew/Integrations/MailSenderNew/MailSenderNew.yml",
-                "commands": [
-                    "send-mail"
-                ],
-                "tests": [
-                    "Mail Sender (New) Test"
-                ],
-                "pack": "MailSenderNew"
+                "commands": ["send-mail"],
+                "tests": ["Mail Sender (New) Test"],
+                "pack": "MailSenderNew",
             }
-        }
+        },
     ]
 
-    layout_data = {'my-layout': {
-        'typename': 'my-layout',
-        'scripts': ['SlackV2|||send-notification', 'Mail Sender (New)|||send-mail']
-    }}
+    layout_data = {
+        "my-layout": {
+            "typename": "my-layout",
+            "scripts": ["SlackV2|||send-notification", "Mail Sender (New)|||send-mail"],
+        }
+    }
 
-    assert validator._is_layout_scripts_found(layout_data=layout_data) is False, \
-        "The layout's script id is an integration command which is not real command."
+    assert (
+        validator._is_layout_scripts_found(layout_data=layout_data) is False
+    ), "The layout's script id is an integration command which is not real command."
 
 
 def test_is_non_real_command_found__happy_flow():
@@ -638,17 +760,23 @@ def test_is_non_real_command_found__happy_flow():
     Then
         - Ensure that the scripts depend-on commands are valid.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     script_data = {
-        'name': 'OktaUpdateUser',
-        'fidepends-le_path': 'Packs/DeprecatedContent/Scripts/script-OktaUpdateUser.yml',
-        'fromversion': '5.0.0', 'deprecated': True, 'depends_on': ['okta-update-user'],
-        'tests': ['No test - deprecated script with no test prior'], 'pack': 'DeprecatedContent'
+        "name": "OktaUpdateUser",
+        "fidepends-le_path": "Packs/DeprecatedContent/Scripts/script-OktaUpdateUser.yml",
+        "fromversion": "5.0.0",
+        "deprecated": True,
+        "depends_on": ["okta-update-user"],
+        "tests": ["No test - deprecated script with no test prior"],
+        "pack": "DeprecatedContent",
     }
 
-    assert validator._is_non_real_command_found(script_data=script_data) is True, \
-        "The script has a non real command"
+    assert (
+        validator._is_non_real_command_found(script_data=script_data) is True
+    ), "The script has a non real command"
 
 
 def test_is_non_real_command_found__bad_command_name():
@@ -662,17 +790,23 @@ def test_is_non_real_command_found__bad_command_name():
     Then
         - Ensure that the scripts depend-on commands are non valid.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     script_data = {
-        'name': 'OktaUpdateUser',
-        'fidepends-le_path': 'Packs/DeprecatedContent/Scripts/script-OktaUpdateUser.yml',
-        'fromversion': '5.0.0', 'deprecated': True, 'depends_on': ['okta-update-user', 'okta-update-user-copy'],
-        'tests': ['No test - deprecated script with no test prior'], 'pack': 'DeprecatedContent'
+        "name": "OktaUpdateUser",
+        "fidepends-le_path": "Packs/DeprecatedContent/Scripts/script-OktaUpdateUser.yml",
+        "fromversion": "5.0.0",
+        "deprecated": True,
+        "depends_on": ["okta-update-user", "okta-update-user-copy"],
+        "tests": ["No test - deprecated script with no test prior"],
+        "pack": "DeprecatedContent",
     }
 
-    assert validator._is_non_real_command_found(script_data=script_data) is False, \
-        "The script has a non real command"
+    assert (
+        validator._is_non_real_command_found(script_data=script_data) is False
+    ), "The script has a non real command"
 
 
 def test_is_non_real_command_found__no_depend_on_name():
@@ -686,17 +820,22 @@ def test_is_non_real_command_found__no_depend_on_name():
     Then
         - Ensure that the scripts depend-on commands are valid.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     script_data = {
-        'name': 'OktaUpdateUser',
-        'fidepends-le_path': 'Packs/CommonScripts/Scripts/NoExecuteCommand.yml',
-        'fromversion': '5.0.0', 'deprecated': True,
-        'tests': ['No test'], 'pack': 'CommonScripts'
+        "name": "OktaUpdateUser",
+        "fidepends-le_path": "Packs/CommonScripts/Scripts/NoExecuteCommand.yml",
+        "fromversion": "5.0.0",
+        "deprecated": True,
+        "tests": ["No test"],
+        "pack": "CommonScripts",
     }
 
-    assert validator._is_non_real_command_found(script_data=script_data) is True, \
-        "The script has a non real command"
+    assert (
+        validator._is_non_real_command_found(script_data=script_data) is True
+    ), "The script has a non real command"
 
 
 def test_is_integration_classifier_and_mapper_found__exist():
@@ -710,11 +849,13 @@ def test_is_integration_classifier_and_mapper_found__exist():
     Then
         - Ensure that the integration classifier and mapper were found.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.mappers_set = [{
-        "Claroty-mapper":
-            {
+    validator.mappers_set = [
+        {
+            "Claroty-mapper": {
                 "name": "Claroty - Incoming Mapper",
                 "file_path": "Packs/Claroty/Classifiers/classifier-mapper-incoming-Claroty.json",
                 "fromversion": "6.0.0",
@@ -722,7 +863,7 @@ def test_is_integration_classifier_and_mapper_found__exist():
                 "incident_types": [
                     "Claroty Integrity Incident",
                     "Claroty Security Incident",
-                    "Claroty IT Incident"
+                    "Claroty IT Incident",
                 ],
                 "incident_fields": [
                     "Claroty Related Assets",
@@ -731,24 +872,25 @@ def test_is_integration_classifier_and_mapper_found__exist():
                     "Claroty Network ID",
                     "Claroty Resource ID",
                     "Claroty Alert Type",
-                    "Claroty Alert Resolved"
-                ]
+                    "Claroty Alert Resolved",
+                ],
             }
-    }]
+        }
+    ]
 
     validator.classifiers_set = [
-        {"Claroty":
-            {
+        {
+            "Claroty": {
                 "name": "Claroty - Classifier",
                 "file_path": "Packs/Claroty/Classifiers/classifier-Claroty.json",
                 "fromversion": "6.0.0",
                 "pack": "Claroty",
                 "incident_types": [
                     "Claroty Integrity Incident",
-                    "Claroty Security Incident"
-                ]
+                    "Claroty Security Incident",
+                ],
             }
-         }
+        }
     ]
 
     integration_data = {
@@ -759,18 +901,19 @@ def test_is_integration_classifier_and_mapper_found__exist():
             "claroty-get-assets",
             "claroty-query-alerts",
             "claroty-resolve-alert",
-            "claroty-get-single-alert"
+            "claroty-get-single-alert",
         ],
         "pack": "Claroty",
         "classifiers": "Claroty",
-        "mappers": [
-            "Claroty-mapper"
-        ]
-
+        "mappers": ["Claroty-mapper"],
     }
 
-    assert validator._is_integration_classifier_and_mapper_found(integration_data=integration_data) is True, \
-        "The incident classifier and mapper were not found"
+    assert (
+        validator._is_integration_classifier_and_mapper_found(
+            integration_data=integration_data
+        )
+        is True
+    ), "The incident classifier and mapper were not found"
 
 
 def test_is_integration_classifier_and_mapper_found__mapper_not_exist():
@@ -784,11 +927,13 @@ def test_is_integration_classifier_and_mapper_found__mapper_not_exist():
     Then
         - Ensure that the integration mapper was not found.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.mappers_set = [{
-        "Claroty-mapper_wrong":
-            {
+    validator.mappers_set = [
+        {
+            "Claroty-mapper_wrong": {
                 "name": "Claroty - Incoming Mapper",
                 "file_path": "Packs/Claroty/Classifiers/classifier-mapper-incoming-Claroty.json",
                 "fromversion": "6.0.0",
@@ -796,7 +941,7 @@ def test_is_integration_classifier_and_mapper_found__mapper_not_exist():
                 "incident_types": [
                     "Claroty Integrity Incident",
                     "Claroty Security Incident",
-                    "Claroty IT Incident"
+                    "Claroty IT Incident",
                 ],
                 "incident_fields": [
                     "Claroty Related Assets",
@@ -805,24 +950,25 @@ def test_is_integration_classifier_and_mapper_found__mapper_not_exist():
                     "Claroty Network ID",
                     "Claroty Resource ID",
                     "Claroty Alert Type",
-                    "Claroty Alert Resolved"
-                ]
+                    "Claroty Alert Resolved",
+                ],
             }
-    }]
+        }
+    ]
 
-    validator.classifiers_set = [{
-        "Claroty":
-            {
+    validator.classifiers_set = [
+        {
+            "Claroty": {
                 "name": "Claroty - Classifier",
                 "file_path": "Packs/Claroty/Classifiers/classifier-Claroty.json",
                 "fromversion": "6.0.0",
                 "pack": "Claroty",
                 "incident_types": [
                     "Claroty Integrity Incident",
-                    "Claroty Security Incident"
-                ]
+                    "Claroty Security Incident",
+                ],
             }
-    }
+        }
     ]
 
     integration_data = {
@@ -833,18 +979,19 @@ def test_is_integration_classifier_and_mapper_found__mapper_not_exist():
             "claroty-get-assets",
             "claroty-query-alerts",
             "claroty-resolve-alert",
-            "claroty-get-single-alert"
+            "claroty-get-single-alert",
         ],
         "pack": "Claroty",
         "classifiers": "Claroty",
-        "mappers": [
-            "Claroty-mapper"
-        ]
-
+        "mappers": ["Claroty-mapper"],
     }
 
-    assert validator._is_integration_classifier_and_mapper_found(integration_data=integration_data) is False, \
-        "The incident mapper was found"
+    assert (
+        validator._is_integration_classifier_and_mapper_found(
+            integration_data=integration_data
+        )
+        is False
+    ), "The incident mapper was found"
 
 
 def test_is_integration_classifier_and_mapper_found__classifier_not_exist():
@@ -858,11 +1005,13 @@ def test_is_integration_classifier_and_mapper_found__classifier_not_exist():
     Then
         - Ensure that the integration classifier was not found.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
-    validator.mappers_set = [{
-        "Claroty-mapper":
-            {
+    validator.mappers_set = [
+        {
+            "Claroty-mapper": {
                 "name": "Claroty - Incoming Mapper",
                 "file_path": "Packs/Claroty/Classifiers/classifier-mapper-incoming-Claroty.json",
                 "fromversion": "6.0.0",
@@ -870,7 +1019,7 @@ def test_is_integration_classifier_and_mapper_found__classifier_not_exist():
                 "incident_types": [
                     "Claroty Integrity Incident",
                     "Claroty Security Incident",
-                    "Claroty IT Incident"
+                    "Claroty IT Incident",
                 ],
                 "incident_fields": [
                     "Claroty Related Assets",
@@ -879,24 +1028,25 @@ def test_is_integration_classifier_and_mapper_found__classifier_not_exist():
                     "Claroty Network ID",
                     "Claroty Resource ID",
                     "Claroty Alert Type",
-                    "Claroty Alert Resolved"
-                ]
+                    "Claroty Alert Resolved",
+                ],
             }
-    }]
+        }
+    ]
 
-    validator.classifiers_set = [{
-        "Claroty_wrong_classifier":
-            {
+    validator.classifiers_set = [
+        {
+            "Claroty_wrong_classifier": {
                 "name": "Claroty - Classifier",
                 "file_path": "Packs/Claroty/Classifiers/classifier-Claroty.json",
                 "fromversion": "6.0.0",
                 "pack": "Claroty",
                 "incident_types": [
                     "Claroty Integrity Incident",
-                    "Claroty Security Incident"
-                ]
+                    "Claroty Security Incident",
+                ],
             }
-    }
+        }
     ]
 
     integration_data = {
@@ -907,18 +1057,19 @@ def test_is_integration_classifier_and_mapper_found__classifier_not_exist():
             "claroty-get-assets",
             "claroty-query-alerts",
             "claroty-resolve-alert",
-            "claroty-get-single-alert"
+            "claroty-get-single-alert",
         ],
         "pack": "Claroty",
         "classifiers": "Claroty",
-        "mappers": [
-            "Claroty-mapper"
-        ]
-
+        "mappers": ["Claroty-mapper"],
     }
 
-    assert validator._is_integration_classifier_and_mapper_found(integration_data=integration_data) is False, \
-        "The incident classifier was found"
+    assert (
+        validator._is_integration_classifier_and_mapper_found(
+            integration_data=integration_data
+        )
+        is False
+    ), "The incident classifier was found"
 
 
 def test_is_classifier_incident_types_found__exists():
@@ -932,7 +1083,9 @@ def test_is_classifier_incident_types_found__exists():
     Then
         - Ensure that the classifier incident types were found.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     validator.incident_types_set = [
         {
@@ -941,7 +1094,7 @@ def test_is_classifier_incident_types_found__exists():
                 "file_path": "Packs/Claroty/IncidentTypes/incidenttype-Claroty_Integrity_Incident.json",
                 "fromversion": "5.0.0",
                 "pack": "Claroty",
-                "playbooks": "Claroty Incident"
+                "playbooks": "Claroty Incident",
             }
         },
         {
@@ -950,9 +1103,9 @@ def test_is_classifier_incident_types_found__exists():
                 "file_path": "Packs/Claroty/IncidentTypes/incidenttype-Claroty_Security_Incident.json",
                 "fromversion": "5.0.0",
                 "pack": "Claroty",
-                "playbooks": "Claroty Incident"
+                "playbooks": "Claroty Incident",
             }
-        }
+        },
     ]
 
     classifier_data = {
@@ -960,14 +1113,13 @@ def test_is_classifier_incident_types_found__exists():
         "file_path": "Packs/Claroty/Classifiers/classifier-Claroty.json",
         "fromversion": "6.0.0",
         "pack": "Claroty",
-        "incident_types": [
-            "Claroty Integrity Incident",
-            "Claroty Security Incident"
-        ]
+        "incident_types": ["Claroty Integrity Incident", "Claroty Security Incident"],
     }
 
-    assert validator._is_classifier_incident_types_found(classifier_data=classifier_data) is True, \
-        "The classifier incidenttypes were not found"
+    assert (
+        validator._is_classifier_incident_types_found(classifier_data=classifier_data)
+        is True
+    ), "The classifier incidenttypes were not found"
 
 
 def test_is_classifier_incident_types_found__missing_classifier():
@@ -981,7 +1133,9 @@ def test_is_classifier_incident_types_found__missing_classifier():
     Then
         - Ensure that the missing incident type was not found.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     validator.incident_types_set = [
         {
@@ -990,7 +1144,7 @@ def test_is_classifier_incident_types_found__missing_classifier():
                 "file_path": "Packs/Claroty/IncidentTypes/incidenttype-Claroty_Security_Incident.json",
                 "fromversion": "5.0.0",
                 "pack": "Claroty",
-                "playbooks": "Claroty Incident"
+                "playbooks": "Claroty Incident",
             }
         }
     ]
@@ -1000,14 +1154,13 @@ def test_is_classifier_incident_types_found__missing_classifier():
         "file_path": "Packs/Claroty/Classifiers/classifier-Claroty.json",
         "fromversion": "6.0.0",
         "pack": "Claroty",
-        "incident_types": [
-            "Claroty Integrity Incident",
-            "Claroty Security Incident"
-        ]
+        "incident_types": ["Claroty Integrity Incident", "Claroty Security Incident"],
     }
 
-    assert validator._is_classifier_incident_types_found(classifier_data=classifier_data) is False, \
-        "The classifier incidenttypes was found"
+    assert (
+        validator._is_classifier_incident_types_found(classifier_data=classifier_data)
+        is False
+    ), "The classifier incidenttypes was found"
 
 
 def test_is_mapper_incident_types_found__exists():
@@ -1021,7 +1174,9 @@ def test_is_mapper_incident_types_found__exists():
     Then
         - Ensure that the mapper incident types were found.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     validator.incident_types_set = [
         {
@@ -1030,7 +1185,7 @@ def test_is_mapper_incident_types_found__exists():
                 "file_path": "Packs/Claroty/IncidentTypes/incidenttype-Claroty_Integrity_Incident.json",
                 "fromversion": "5.0.0",
                 "pack": "Claroty",
-                "playbooks": "Claroty Incident"
+                "playbooks": "Claroty Incident",
             }
         },
         {
@@ -1039,9 +1194,9 @@ def test_is_mapper_incident_types_found__exists():
                 "file_path": "Packs/Claroty/IncidentTypes/incidenttype-Claroty_Security_Incident.json",
                 "fromversion": "5.0.0",
                 "pack": "Claroty",
-                "playbooks": "Claroty Incident"
+                "playbooks": "Claroty Incident",
             }
-        }
+        },
     ]
 
     mapper_data = {
@@ -1049,10 +1204,7 @@ def test_is_mapper_incident_types_found__exists():
         "file_path": "Packs/Claroty/Classifiers/classifier-mapper-incoming-Claroty.json",
         "fromversion": "6.0.0",
         "pack": "Claroty",
-        "incident_types": [
-            "Claroty Integrity Incident",
-            "Claroty Security Incident"
-        ],
+        "incident_types": ["Claroty Integrity Incident", "Claroty Security Incident"],
         "incident_fields": [
             "Claroty Related Assets",
             "Claroty Category",
@@ -1060,12 +1212,13 @@ def test_is_mapper_incident_types_found__exists():
             "Claroty Network ID",
             "Claroty Resource ID",
             "Claroty Alert Type",
-            "Claroty Alert Resolved"
-        ]
+            "Claroty Alert Resolved",
+        ],
     }
 
-    assert validator._is_mapper_incident_types_found(mapper_data=mapper_data) is True, \
-        "The mapper incidenttypes were not found"
+    assert (
+        validator._is_mapper_incident_types_found(mapper_data=mapper_data) is True
+    ), "The mapper incidenttypes were not found"
 
 
 def test_is_mapper_incident_types_found__missing_classifier():
@@ -1079,7 +1232,9 @@ def test_is_mapper_incident_types_found__missing_classifier():
     Then
         - Ensure that the missing incident type was not found.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     validator.incident_types_set = [
         {
@@ -1088,7 +1243,7 @@ def test_is_mapper_incident_types_found__missing_classifier():
                 "file_path": "Packs/Claroty/IncidentTypes/incidenttype-Claroty_Security_Incident.json",
                 "fromversion": "5.0.0",
                 "pack": "Claroty",
-                "playbooks": "Claroty Incident"
+                "playbooks": "Claroty Incident",
             }
         }
     ]
@@ -1098,10 +1253,7 @@ def test_is_mapper_incident_types_found__missing_classifier():
         "file_path": "Packs/Claroty/Classifiers/classifier-mapper-incoming-Claroty.json",
         "fromversion": "6.0.0",
         "pack": "Claroty",
-        "incident_types": [
-            "Claroty Integrity Incident",
-            "Claroty Security Incident"
-        ],
+        "incident_types": ["Claroty Integrity Incident", "Claroty Security Incident"],
         "incident_fields": [
             "Claroty Related Assets",
             "Claroty Category",
@@ -1109,12 +1261,13 @@ def test_is_mapper_incident_types_found__missing_classifier():
             "Claroty Network ID",
             "Claroty Resource ID",
             "Claroty Alert Type",
-            "Claroty Alert Resolved"
-        ]
+            "Claroty Alert Resolved",
+        ],
     }
 
-    assert validator._is_mapper_incident_types_found(mapper_data=mapper_data) is False, \
-        "The mapper incidenttypes was found"
+    assert (
+        validator._is_mapper_incident_types_found(mapper_data=mapper_data) is False
+    ), "The mapper incidenttypes was found"
 
 
 def test_is_unique_file_valid_in_set(pack):
@@ -1134,14 +1287,14 @@ def test_is_unique_file_valid_in_set(pack):
             "certification": "certified",
             "tags": [],
             "use_cases": [],
-            "categories": [
-                "IT Services"
-            ],
-            "id": "VMware"
+            "categories": ["IT Services"],
+            "id": "VMware",
         }
     }
     pack.pack_metadata.write_json(pack_metadata_data)
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
     is_valid, error = validator.is_unique_file_valid_in_set(pack_path=pack.path)
     assert is_valid
     assert not error
@@ -1156,7 +1309,9 @@ def test_new_valid_is_pack_display_name_already_exist():
     Then
         - Ensure it is valid and no error is returned.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     validator.packs_set = {
         "VMware": {
@@ -1166,10 +1321,8 @@ def test_new_valid_is_pack_display_name_already_exist():
             "certification": "certified",
             "tags": [],
             "use_cases": [],
-            "categories": [
-                "IT Services"
-            ],
-            "id": "VMware"
+            "categories": ["IT Services"],
+            "id": "VMware",
         }
     }
 
@@ -1181,13 +1334,13 @@ def test_new_valid_is_pack_display_name_already_exist():
             "certification": "certified",
             "tags": [],
             "use_cases": [],
-            "categories": [
-                "IT Services"
-            ],
-            "id": "VMware"
+            "categories": ["IT Services"],
+            "id": "VMware",
         }
     }
-    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    is_valid, error = validator._is_pack_display_name_already_exist(
+        pack_metadata_data=pack_metadata_data
+    )
     assert is_valid
     assert not error
 
@@ -1202,7 +1355,9 @@ def test_valid_is_pack_display_name_already_exist():
         - Ensure it is valid and no error is returned.
     """
 
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     validator.packs_set = {
         "VMware": {
@@ -1212,10 +1367,8 @@ def test_valid_is_pack_display_name_already_exist():
             "certification": "certified",
             "tags": [],
             "use_cases": [],
-            "categories": [
-                "IT Services"
-            ],
-            "id": "VMware"
+            "categories": ["IT Services"],
+            "id": "VMware",
         }
     }
 
@@ -1227,13 +1380,13 @@ def test_valid_is_pack_display_name_already_exist():
             "certification": "certified",
             "tags": [],
             "use_cases": [],
-            "categories": [
-                "IT Services"
-            ],
-            "id": "VMware"
+            "categories": ["IT Services"],
+            "id": "VMware",
         }
     }
-    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    is_valid, error = validator._is_pack_display_name_already_exist(
+        pack_metadata_data=pack_metadata_data
+    )
     assert is_valid
     assert not error
 
@@ -1247,7 +1400,9 @@ def test_invalid_is_pack_display_name_already_exist():
     Then
         - Ensure it is invalid and the error message is returned.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     validator.packs_set = {
         "VMware": {
@@ -1257,10 +1412,8 @@ def test_invalid_is_pack_display_name_already_exist():
             "certification": "certified",
             "tags": [],
             "use_cases": [],
-            "categories": [
-                "IT Services"
-            ],
-            "id": "VMware"
+            "categories": ["IT Services"],
+            "id": "VMware",
         }
     }
 
@@ -1272,16 +1425,19 @@ def test_invalid_is_pack_display_name_already_exist():
             "certification": "certified",
             "tags": [],
             "use_cases": [],
-            "categories": [
-                "IT Services"
-            ],
-            "id": "VMware"
+            "categories": ["IT Services"],
+            "id": "VMware",
         }
     }
-    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    is_valid, error = validator._is_pack_display_name_already_exist(
+        pack_metadata_data=pack_metadata_data
+    )
     assert not is_valid
-    assert error == ("A pack named: VMware already exists in content repository, change the pack's "
-                     "name in the metadata file.", 'PA122')
+    assert error == (
+        "A pack named: VMware already exists in content repository, change the pack's "
+        "name in the metadata file.",
+        "PA122",
+    )
 
 
 def test_new_invalid_is_pack_display_name_already_exist():
@@ -1293,7 +1449,9 @@ def test_new_invalid_is_pack_display_name_already_exist():
     Then
         - Ensure it is invalid and the error message is returned.
     """
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
 
     validator.packs_set = {
         "CiscoEmailSecurity": {
@@ -1303,10 +1461,8 @@ def test_new_invalid_is_pack_display_name_already_exist():
             "certification": "certified",
             "tags": [],
             "use_cases": [],
-            "categories": [
-                "IT Services"
-            ],
-            "id": "VMware"
+            "categories": ["IT Services"],
+            "id": "VMware",
         }
     }
 
@@ -1318,212 +1474,195 @@ def test_new_invalid_is_pack_display_name_already_exist():
             "certification": "certified",
             "tags": [],
             "use_cases": [],
-            "categories": [
-                "IT Services"
-            ],
-            "id": "VMware"
+            "categories": ["IT Services"],
+            "id": "VMware",
         }
     }
-    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    is_valid, error = validator._is_pack_display_name_already_exist(
+        pack_metadata_data=pack_metadata_data
+    )
     assert not is_valid
-    assert error == ("A pack named: Cisco Email Security already exists in content repository, change the pack's "
-                     "name in the metadata file.", 'PA122')
+    assert error == (
+        "A pack named: Cisco Email Security already exists in content repository, change the pack's "
+        "name in the metadata file.",
+        "PA122",
+    )
 
 
 class TestPlaybookEntitiesVersionsValid:
-    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(
+        is_circle=False, is_test_run=True, configuration=CONFIG
+    )
     playbook_path = "Packs/Example/Playbooks/playbook-Example_Playbook.yml"
-    playbook_with_valid_versions = {"Example Playbook": {
-        "name": "Example Playbook",
-        "file_path": playbook_path,
-        "fromversion": "5.5.0",
-        "pack": "Example",
-        "implementing_scripts": [
-            "Script_version_5",
-            "Script_no_version",
-            "Script_version_5_5"
-        ],
-        "implementing_playbooks": [
-            "SubPlaybook_version_5",
-            "SubPlaybook_no_version",
-            "SubPlaybook_version_5_5",
-            "playbook_dup"
-        ],
-        "command_to_integration": {
-            "test-command": [
-                "Integration_version_5",
-                "Integration_version_4"
-            ]
+    playbook_with_valid_versions = {
+        "Example Playbook": {
+            "name": "Example Playbook",
+            "file_path": playbook_path,
+            "fromversion": "5.5.0",
+            "pack": "Example",
+            "implementing_scripts": [
+                "Script_version_5",
+                "Script_no_version",
+                "Script_version_5_5",
+            ],
+            "implementing_playbooks": [
+                "SubPlaybook_version_5",
+                "SubPlaybook_no_version",
+                "SubPlaybook_version_5_5",
+                "playbook_dup",
+            ],
+            "command_to_integration": {
+                "test-command": ["Integration_version_5", "Integration_version_4"]
+            },
         }
-    }}
+    }
 
-    playbook_with_invalid_scripts_version = {"Example Playbook": {
-        "name": "Example Playbook",
-        "file_path": playbook_path,
-        "fromversion": "5.0.0",
-        "pack": "Example",
-        "implementing_scripts": [
-            "Script_version_5_5"
-        ]
-    }}
-    playbook_with_invalid_sub_playbook_version_from_version_5_0_0 = {"Example Playbook": {
-        "name": "Example Playbook",
-        "file_path": playbook_path,
-        "fromversion": "5.0.0",
-        "pack": "Example",
-        "implementing_playbooks": [
-            "SubPlaybook_version_5_5",
-            "playbook_dup"
-        ]
-    }}
-    playbook_with_invalid_sub_playbook_version_from_version_6_0_0 = {"Example Playbook": {
-        "name": "Example Playbook",
-        "file_path": playbook_path,
-        "fromversion": "6.0.0",
-        "pack": "Example",
-        "implementing_playbooks": [
-            "SubPlaybook_version_6_5"
-        ]
-    }}
-    playbook_with_sub_playbook_not_in_id_set = {"Example Playbook": {
-        "name": "Example Playbook",
-        "file_path": playbook_path,
-        "fromversion": "5.0.0",
-        "pack": "Example",
-        "implementing_playbooks": [
-            "SubPlaybook_not_in_id_set"
-        ]
-    }}
-    playbook_with_valid_sub_playbook_name = {"Example Playbook": {
-        "name": "Example Playbook",
-        "file_path": playbook_path,
-        "fromversion": "5.0.0",
-        "pack": "Example",
-        "implementing_playbooks": [
-            "SubPlaybook_version_5_5"
-        ]
-    }}
-    playbook_with_invalid_sub_playbook_name = {"Example Playbook": {
-        "name": "Example Playbook",
-        "file_path": playbook_path,
-        "fromversion": "5.0.0",
-        "pack": "Example",
-        "implementing_playbooks": [
-            "SubPlaybook_version_5_5 "
-        ]
-    }}
+    playbook_with_invalid_scripts_version = {
+        "Example Playbook": {
+            "name": "Example Playbook",
+            "file_path": playbook_path,
+            "fromversion": "5.0.0",
+            "pack": "Example",
+            "implementing_scripts": ["Script_version_5_5"],
+        }
+    }
+    playbook_with_invalid_sub_playbook_version_from_version_5_0_0 = {
+        "Example Playbook": {
+            "name": "Example Playbook",
+            "file_path": playbook_path,
+            "fromversion": "5.0.0",
+            "pack": "Example",
+            "implementing_playbooks": ["SubPlaybook_version_5_5", "playbook_dup"],
+        }
+    }
+    playbook_with_invalid_sub_playbook_version_from_version_6_0_0 = {
+        "Example Playbook": {
+            "name": "Example Playbook",
+            "file_path": playbook_path,
+            "fromversion": "6.0.0",
+            "pack": "Example",
+            "implementing_playbooks": ["SubPlaybook_version_6_5"],
+        }
+    }
+    playbook_with_sub_playbook_not_in_id_set = {
+        "Example Playbook": {
+            "name": "Example Playbook",
+            "file_path": playbook_path,
+            "fromversion": "5.0.0",
+            "pack": "Example",
+            "implementing_playbooks": ["SubPlaybook_not_in_id_set"],
+        }
+    }
+    playbook_with_valid_sub_playbook_name = {
+        "Example Playbook": {
+            "name": "Example Playbook",
+            "file_path": playbook_path,
+            "fromversion": "5.0.0",
+            "pack": "Example",
+            "implementing_playbooks": ["SubPlaybook_version_5_5"],
+        }
+    }
+    playbook_with_invalid_sub_playbook_name = {
+        "Example Playbook": {
+            "name": "Example Playbook",
+            "file_path": playbook_path,
+            "fromversion": "5.0.0",
+            "pack": "Example",
+            "implementing_playbooks": ["SubPlaybook_version_5_5 "],
+        }
+    }
     id_set = {
-        'playbooks': [
+        "playbooks": [
             {
-                'SubPlaybook_version_5': {
-                    'name': 'SubPlaybook_version_5',
-                    'fromversion': "5.0.0",
+                "SubPlaybook_version_5": {
+                    "name": "SubPlaybook_version_5",
+                    "fromversion": "5.0.0",
                     "file_path": playbook_path,
                 }
             },
             {
-                'SubPlaybook_no_version': {
-                    'name': 'SubPlaybook_no_version',
-                    'fromversion': "",
+                "SubPlaybook_no_version": {
+                    "name": "SubPlaybook_no_version",
+                    "fromversion": "",
                     "file_path": playbook_path,
                 }
             },
             {
-                'SubPlaybook_version_5_5': {
-                    'name': 'SubPlaybook_version_5_5',
-                    'fromversion': "5.5.0",
+                "SubPlaybook_version_5_5": {
+                    "name": "SubPlaybook_version_5_5",
+                    "fromversion": "5.5.0",
                     "file_path": playbook_path,
                 }
             },
             {
-                'SubPlaybook_version_6_5': {
-                    'name': 'SubPlaybook_version_6_5',
-                    'fromversion': "6.5.0",
+                "SubPlaybook_version_6_5": {
+                    "name": "SubPlaybook_version_6_5",
+                    "fromversion": "6.5.0",
                     "file_path": playbook_path,
                 }
             },
             {
-                'Example Playbook': {
-                    'name': 'test',
-                    'fromversion': "5.5.0",
+                "Example Playbook": {
+                    "name": "test",
+                    "fromversion": "5.5.0",
                     "file_path": playbook_path,
                     "command_to_integration": {
                         "test-command": [
                             "Integration_version_4",
-                            "Integration_version_5"
+                            "Integration_version_5",
                         ]
-                    }
+                    },
                 }
             },
             {
-                'playbook_dup': {
-                    'name': 'test',
-                    'fromversion': "6.5.0",
+                "playbook_dup": {
+                    "name": "test",
+                    "fromversion": "6.5.0",
                     "file_path": playbook_path,
                     "command_to_integration": {
                         "test-command": [
                             "Integration_version_4",
-                            "Integration_version_5"
+                            "Integration_version_5",
                         ]
-                    }
+                    },
                 }
             },
             {
-                'playbook_dup': {
-                    'name': 'test',
-                    'fromversion': "5.0.0",
-                    'toversion': "5.9.9",
+                "playbook_dup": {
+                    "name": "test",
+                    "fromversion": "5.0.0",
+                    "toversion": "5.9.9",
                     "file_path": playbook_path,
                     "command_to_integration": {
                         "test-command": [
                             "Integration_version_4",
-                            "Integration_version_5"
+                            "Integration_version_5",
                         ]
-                    }
+                    },
                 }
             },
             {
-                'playbook_dup': {
-                    'name': 'test',
-                    'fromversion': "6.0.0",
+                "playbook_dup": {
+                    "name": "test",
+                    "fromversion": "6.0.0",
                     "file_path": playbook_path,
                     "command_to_integration": {
                         "test-command": [
                             "Integration_version_4",
-                            "Integration_version_5"
+                            "Integration_version_5",
                         ]
-                    }
+                    },
                 }
             },
         ],
-        'integrations': [
-            {
-                'Integration_version_5': {
-                    'fromversion': "5.0.0"
-                }
-            },
-            {
-                'Integration_version_4': {
-                    'fromversion': "4.0.0"
-                }
-            }
+        "integrations": [
+            {"Integration_version_5": {"fromversion": "5.0.0"}},
+            {"Integration_version_4": {"fromversion": "4.0.0"}},
         ],
-        'scripts': [
-            {
-                'Script_version_5': {
-                    'fromversion': "5.0.0"
-                }
-            },
-            {
-                'Script_no_version': {
-                    'fromversion': ""
-                }
-            },
-            {
-                'Script_version_5_5': {
-                    'fromversion': "5.5.0"
-                }
-            }
+        "scripts": [
+            {"Script_version_5": {"fromversion": "5.0.0"}},
+            {"Script_no_version": {"fromversion": ""}},
+            {"Script_version_5_5": {"fromversion": "5.5.0"}},
         ],
     }
 
@@ -1544,32 +1683,49 @@ class TestPlaybookEntitiesVersionsValid:
 
         """
         pack = repo.create_pack("Pack1")
-        playbook = pack.create_playbook('MyPlay')
+        playbook = pack.create_playbook("MyPlay")
         playbook.create_default_playbook()
         self.validator.playbook_set = self.id_set["playbooks"]
         self.validator.integration_set = self.id_set["integrations"]
         self.validator.script_set = self.id_set["scripts"]
 
         with ChangeCWD(repo.path):
-            is_sub_playbook_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_sub_playbook_not_in_id_set, playbook.yml.path)
+            (
+                is_sub_playbook_invalid,
+                error,
+            ) = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_sub_playbook_not_in_id_set, playbook.yml.path
+            )
             assert not is_sub_playbook_invalid
             assert "do not exist in the id_set" in error
 
             # all playbook's entities has valid versions
-            is_playbook_version_valid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_valid_versions, playbook.yml.path)
+            (
+                is_playbook_version_valid,
+                error,
+            ) = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_valid_versions, playbook.yml.path
+            )
             assert is_playbook_version_valid, error
             assert error is None
 
             # playbook uses scripts with invalid versions
-            is_script_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_scripts_version, playbook.yml.path)
+            (
+                is_script_version_invalid,
+                error,
+            ) = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_scripts_version, playbook.yml.path
+            )
             assert not is_script_version_invalid
 
             # playbook uses sub playbooks with invalid versions
-            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook.yml.path)
+            (
+                is_sub_playbook_version_invalid,
+                error,
+            ) = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0,
+                playbook.yml.path,
+            )
             assert not is_sub_playbook_version_invalid
 
     def test_are_playbook_entities_versions_valid_skip_unavailable(self, repo):
@@ -1588,11 +1744,11 @@ class TestPlaybookEntitiesVersionsValid:
         """
         pack = repo.create_pack("Pack1")
 
-        playbook1 = pack.create_playbook('MyPlay1')
+        playbook1 = pack.create_playbook("MyPlay1")
         playbook1.create_default_playbook()
         playbook1_data = playbook1.yml.read_dict()
 
-        playbook2 = pack.create_playbook('MyPlay2')
+        playbook2 = pack.create_playbook("MyPlay2")
         playbook2.create_default_playbook()
         playbook2_data = playbook2.yml.read_dict()
 
@@ -1603,36 +1759,44 @@ class TestPlaybookEntitiesVersionsValid:
         with ChangeCWD(repo.path):
             # playbook uses sub playbooks with invalid versions, skipunavailable is set and
             # mainplaybook fromversion is 6.0.0 - shouldn't fail
-            playbook1_data['tasks'] = {
-                '0': {
-                    'id': '0',
-                    'task': {
-                        'playbookName': 'SubPlaybook_version_6_5'
-                    },
-                    'skipunavailable': True
+            playbook1_data["tasks"] = {
+                "0": {
+                    "id": "0",
+                    "task": {"playbookName": "SubPlaybook_version_6_5"},
+                    "skipunavailable": True,
                 }
             }
             playbook1.yml.write_dict(playbook1_data)
-            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_sub_playbook_version_from_version_6_0_0, playbook1.yml.path)
+            (
+                is_sub_playbook_version_invalid,
+                error,
+            ) = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version_from_version_6_0_0,
+                playbook1.yml.path,
+            )
             assert is_sub_playbook_version_invalid
 
             # playbook uses sub playbooks with invalid versions but no skipunavailable
-            playbook2_data['tasks'] = {
-                '0': {
-                    'id': '0',
-                    'task': {
-                        'playbookName': 'SubPlaybook_version_5_5'
-                    },
-                    'skipunavailable': False
+            playbook2_data["tasks"] = {
+                "0": {
+                    "id": "0",
+                    "task": {"playbookName": "SubPlaybook_version_5_5"},
+                    "skipunavailable": False,
                 }
             }
             playbook2.yml.write_dict(playbook2_data)
-            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook2.yml.path)
+            (
+                is_sub_playbook_version_invalid,
+                error,
+            ) = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0,
+                playbook2.yml.path,
+            )
             assert not is_sub_playbook_version_invalid
 
-    def test_are_playbook_entities_versions_valid_integration_commands(self, repo, mocker):
+    def test_are_playbook_entities_versions_valid_integration_commands(
+        self, repo, mocker
+    ):
         """
 
         Given
@@ -1647,65 +1811,75 @@ class TestPlaybookEntitiesVersionsValid:
             - Validates that integrations version match the playbook version.
         """
         pack = repo.create_pack("Pack1")
-        playbook = pack.create_playbook('MyPlay')
+        playbook = pack.create_playbook("MyPlay")
         playbook.create_default_playbook()
 
         # setup validator
-        validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
-        validator.playbook_set = [{
-            playbook.name: {
-                'name': playbook.name,
-                'fromversion': "5.5.0",
-                "file_path": playbook.yml.path,
-                "command_to_integration": {
-                    "test-command": [
-                        "Integration_version_4",
-                        "Integration_version_5"
-                    ]
+        validator = IDSetValidations(
+            is_circle=False, is_test_run=True, configuration=CONFIG
+        )
+        validator.playbook_set = [
+            {
+                playbook.name: {
+                    "name": playbook.name,
+                    "fromversion": "5.5.0",
+                    "file_path": playbook.yml.path,
+                    "command_to_integration": {
+                        "test-command": [
+                            "Integration_version_4",
+                            "Integration_version_5",
+                        ]
+                    },
                 }
             }
-        }]
+        ]
 
         validator.integration_set = self.id_set["integrations"]
         validator.script_set = self.id_set["scripts"]
 
-        playbook_with_invalid_integration_version = {playbook.name: {
-            "name": playbook.name,
-            "file_path": playbook.yml.path,
-            "fromversion": "3.0.0",
-            "pack": "Example",
-            "command_to_integration": {
-                "test-command": [
-                    "Integration_version_4",
-                    "Integration_version_5"
-                ]
+        playbook_with_invalid_integration_version = {
+            playbook.name: {
+                "name": playbook.name,
+                "file_path": playbook.yml.path,
+                "fromversion": "3.0.0",
+                "pack": "Example",
+                "command_to_integration": {
+                    "test-command": ["Integration_version_4", "Integration_version_5"]
+                },
             }
-        }}
+        }
 
-        playbook_with_valid_integration_version = {playbook.name: {
-            "name": playbook.name,
-            "file_path": playbook.yml.path,
-            "fromversion": "5.0.0",
-            "pack": "Example",
-            "command_to_integration": {
-                "test-command": [
-                    "Integration_version_4",
-                    "Integration_version_5"
-                ]
+        playbook_with_valid_integration_version = {
+            playbook.name: {
+                "name": playbook.name,
+                "file_path": playbook.yml.path,
+                "fromversion": "5.0.0",
+                "pack": "Example",
+                "command_to_integration": {
+                    "test-command": ["Integration_version_4", "Integration_version_5"]
+                },
             }
-        }}
+        }
 
         with ChangeCWD(repo.path):
             # playbook uses integration's commands with invalid versions
-            mocker.patch.object(validator, 'handle_error', return_value=True)
-            is_integration_version_invalid, error = validator._are_playbook_entities_versions_valid(
-                playbook_with_invalid_integration_version, playbook.yml.path)
+            mocker.patch.object(validator, "handle_error", return_value=True)
+            (
+                is_integration_version_invalid,
+                error,
+            ) = validator._are_playbook_entities_versions_valid(
+                playbook_with_invalid_integration_version, playbook.yml.path
+            )
             assert not is_integration_version_invalid
 
             # playbook uses integration's commands with valid versions
-            mocker.patch.object(validator, 'handle_error', return_value=True)
-            is_integration_version_invalid, error = validator._are_playbook_entities_versions_valid(
-                playbook_with_valid_integration_version, playbook.yml.path)
+            mocker.patch.object(validator, "handle_error", return_value=True)
+            (
+                is_integration_version_invalid,
+                error,
+            ) = validator._are_playbook_entities_versions_valid(
+                playbook_with_valid_integration_version, playbook.yml.path
+            )
             assert is_integration_version_invalid
 
     def test_playbook_sub_playbook_exist(self, repo):
@@ -1727,7 +1901,8 @@ class TestPlaybookEntitiesVersionsValid:
         with ChangeCWD(repo.path):
             # playbook uses existing sub playbooks
             is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
-                self.playbook_with_valid_sub_playbook_name, pack.path)
+                self.playbook_with_valid_sub_playbook_name, pack.path
+            )
             assert is_subplaybook_name_exist
 
     def test_playbook_sub_playbook_not_exist(self, repo):
@@ -1749,7 +1924,8 @@ class TestPlaybookEntitiesVersionsValid:
         with ChangeCWD(repo.path):
             # playbook uses existing sub playbooks
             is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
-                self.playbook_with_invalid_sub_playbook_name, pack.path)
+                self.playbook_with_invalid_sub_playbook_name, pack.path
+            )
             assert not is_subplaybook_name_exist
 
 
@@ -1768,10 +1944,16 @@ def test_invalid_playbook_is_file_valid_in_id_set(mocker):
     """
     import demisto_sdk.commands.common.hook_validations.id as id_set
 
-    mocker.patch.object(id_set, 'get_playbook_data', return_value={})
+    mocker.patch.object(id_set, "get_playbook_data", return_value={})
     validator = IDSetValidations(is_circle=True, is_test_run=True, configuration=CONFIG)
 
-    mocker.patch.object(validator, '_are_playbook_entities_versions_valid', return_value=(False, "Some error message"))
-    mocker.patch.object(validator, 'is_subplaybook_name_valid', return_value=True)
+    mocker.patch.object(
+        validator,
+        "_are_playbook_entities_versions_valid",
+        return_value=(False, "Some error message"),
+    )
+    mocker.patch.object(validator, "is_subplaybook_name_valid", return_value=True)
 
-    assert not validator.is_file_valid_in_set(file_path="some_path", file_type=FileType.PLAYBOOK)
+    assert not validator.is_file_valid_in_set(
+        file_path="some_path", file_type=FileType.PLAYBOOK
+    )

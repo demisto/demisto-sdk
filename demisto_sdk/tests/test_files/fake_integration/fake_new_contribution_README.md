@@ -12,17 +12,21 @@ Use the Zoom integration manage your Zoom users and meetings
     | Use system proxy settings | additional data | False |
 
 4. Click **Test** to validate the URLs, token, and connection.
+
 ## Commands
+
 You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.
 After you successfully execute a command, a DBot message appears in the War Room with the command details.
+
 ### zoom-create-user
+
 ***
 Create a new user in zoom account
-
 
 #### Base Command
 
 `zoom-create-user`
+
 #### Input
 
 | **Argument Name** | **Description** | **Required** |
@@ -31,7 +35,6 @@ Create a new user in zoom account
 | last_name | Last name of the new user. | Required | 
 | email | The email of the new user. | Required | 
 | user_type | The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic. | Optional | 
-
 
 #### Context Output
 
@@ -45,13 +48,14 @@ Create a new user in zoom account
 | Zoom.User.type | number | The type of the user | 
 
 ### zoom-create-meeting
+
 ***
 Create a new zoom meeting (scheduled or instant)
-
 
 #### Base Command
 
 `zoom-create-meeting`
+
 #### Input
 
 | **Argument Name** | **Description** | **Required** |
@@ -63,7 +67,6 @@ Create a new zoom meeting (scheduled or instant)
 | start-time | Meeting start time. When using a format like “yyyy-MM-dd’T'HH:mm:ss'Z’”, always use GMT time. When using a format like “yyyy-MM-dd’T'HH:mm:ss”, you should use local time and you will need to specify the time zone. Only used for scheduled meetings and recurring meetings with fixed time. | Optional | 
 | timezone | Timezone to format start_time. For example, “America/Los_Angeles”. For scheduled meetings only. . | Optional | 
 
-
 #### Context Output
 
 | **Path** | **Type** | **Description** |
@@ -73,19 +76,19 @@ Create a new zoom meeting (scheduled or instant)
 | Zoom.Meeting.start_url | string | The URL to start the meeting | 
 
 ### zoom-fetch-recording
+
 ***
 Get meeting record and save as file in the warroom
-
 
 #### Base Command
 
 `zoom-fetch-recording`
+
 #### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
 | meeting_id | Meeting id to get the recording. | Required | 
-
 
 #### Context Output
 
@@ -103,13 +106,14 @@ Get meeting record and save as file in the warroom
 | File.SSDeep | unknown | Attachment's SSDeep hash | 
 
 ### zoom-list-users
+
 ***
 List the existing users
-
 
 #### Base Command
 
 `zoom-list-users`
+
 #### Input
 
 | **Argument Name** | **Description** | **Required** |
@@ -117,7 +121,6 @@ List the existing users
 | status | Which status of users to list. Possible values are: active, inactive, pending. Default is active. | Optional | 
 | page-size | Number of users to return. Max 300. Default is 30. | Optional | 
 | page-number | Which page of results to return. Default is 1. | Optional | 
-
 
 #### Context Output
 
@@ -141,20 +144,20 @@ List the existing users
 | Zoom.User.group_ids | string | Groups user belongs to | 
 
 ### zoom-delete-user
+
 ***
 Delete a user from Zoom
-
 
 #### Base Command
 
 `zoom-delete-user`
+
 #### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
 | user | The user ID or email to delete. | Required | 
 | action | The action to take. Possible values are: disassociate, delete. Default is disassociate. | Optional | 
-
 
 #### Context Output
 

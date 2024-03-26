@@ -3,15 +3,19 @@ from abc import abstractmethod
 from typing import Dict, Iterator, List, Union
 
 from demisto_sdk.commands.common.constants import ENTITY_NAME_SEPARATORS, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import Classifier
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import LayoutObject
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-json = JSON_Handler()
+from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import (
+    Classifier,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
+    LayoutObject,
+)
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 class BaseConverter:
-    ENTITY_NAME_SEPARATORS_REGEX = re.compile(fr'''[{'|'.join(ENTITY_NAME_SEPARATORS)}]''')
+    ENTITY_NAME_SEPARATORS_REGEX = re.compile(
+        rf"""[{'|'.join(ENTITY_NAME_SEPARATORS)}]"""
+    )
 
     def __init__(self):
         pass
@@ -21,8 +25,10 @@ class BaseConverter:
         pass
 
     @staticmethod
-    def get_entities_by_entity_type(entities: Union[Iterator[LayoutObject], Iterator[Classifier]],
-                                    entity_type: FileType) -> Union[List[LayoutObject], List[Classifier]]:
+    def get_entities_by_entity_type(
+        entities: Union[Iterator[LayoutObject], Iterator[Classifier]],
+        entity_type: FileType,
+    ) -> Union[List[LayoutObject], List[Classifier]]:
         """
         Returns all entities in the given pack whom entity type matches the 'entity_type' argument given.
         Args:
@@ -45,7 +51,7 @@ class BaseConverter:
         Returns:
             (str): The string replaced.
         """
-        return re.sub(self.ENTITY_NAME_SEPARATORS_REGEX, '_', name)
+        return re.sub(self.ENTITY_NAME_SEPARATORS_REGEX, "_", name)
 
     @staticmethod
     def dump_new_entity(new_entity_path: str, new_entity_dict: Dict) -> None:
@@ -59,5 +65,5 @@ class BaseConverter:
         Returns:
             (None): Creates a new file.
         """
-        with open(new_entity_path, 'w') as jf:
+        with open(new_entity_path, "w") as jf:
             json.dump(data=new_entity_dict, fp=jf, indent=2)

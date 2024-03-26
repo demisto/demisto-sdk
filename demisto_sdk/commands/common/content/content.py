@@ -1,40 +1,51 @@
 from __future__ import annotations
 
-import logging
 import os
 from typing import Any, Iterator
 
-from git import InvalidGitRepositoryError, Repo
+from git import InvalidGitRepositoryError
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import DOCUMENTATION, DOCUMENTATION_DIR, PACKS_DIR, TEST_PLAYBOOKS_DIR
+from demisto_sdk.commands.common.constants import (
+    DOCUMENTATION,
+    DOCUMENTATION_DIR,
+    PACKS_DIR,
+    TEST_PLAYBOOKS_DIR,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.content.objects.pack_objects.playbook.playbook import Playbook
-from demisto_sdk.commands.common.content.objects.pack_objects.script.script import Script
-from demisto_sdk.commands.common.content.objects.root_objects import ContentDescriptor, Documentation
+from demisto_sdk.commands.common.content.objects.pack_objects.playbook.playbook import (
+    Playbook,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects.script.script import (
+    Script,
+)
+from demisto_sdk.commands.common.content.objects.root_objects import (
+    ContentDescriptor,
+    Documentation,
+)
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
-
-logger = logging.getLogger('demisto-sdk')
+from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 
 
 class Content:
     def __init__(self, path: str | Path):
-        """ Content object.
+        """Content object.
 
-        Args:
-            path: Path to content.
+         Args:
+             path: Path to content.
 
-       Notes:
-            1. No validation to path validity.
+        Notes:
+             1. No validation to path validity.
 
-        TODO:
-            1. Add attribute which init only changed objects by git.
+         TODO:
+             1. Add attribute which init only changed objects by git.
         """
         self._path = Path(path)  # type: ignore
 
     @classmethod
     def from_cwd(cls) -> Content:
-        """ Generate Content object from git or from current path.
+        """Generate Content object from git or from current path.
 
         Notes:
             1. First try to get it from git -> If not succeed use current path.
@@ -43,17 +54,14 @@ class Content:
         TODO:
             1. Add attribute which init only changed objects by git.
         """
-        repo = cls.git()
-        if repo:
-            content = Content(repo.working_tree_dir)  # type: ignore
-        else:
-            content = Content(Path.cwd())
-
-        return content
+        try:
+            return Content(str(cls.git_util().repo.working_tree_dir))
+        except InvalidGitRepositoryError:
+            return Content(Path.cwd())
 
     @staticmethod
-    def git() -> Repo | None:
-        """ Git repository object.
+    def git_util() -> GitUtil:
+        """Git Util object.
 
         Returns:
             Repo: Repo object of content repo if exists else retun None.
@@ -64,24 +72,21 @@ class Content:
         Notes:
             1. Should be called when cwd inside content repository.
         """
-        try:
-            if content_path := os.getenv('DEMISTO_SDK_CONTENT_PATH'):
-                repo = Repo(content_path)
-                logger.debug(f'Using content path: {content_path}')
-            else:
-                repo = Repo(Path.cwd(), search_parent_directories=True)
-        except InvalidGitRepositoryError:
-            logger.debug('Git repo was not found.')
-            repo = None
+        if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
+            git_util = GitUtil(Path(content_path))
+            logger.debug(f"Using content path: {content_path}")
+        else:
+            git_util = GitUtil(search_parent_directories=True)
 
-        return repo
+        return git_util
 
     @property
     def path(self) -> Path:
         return self._path
 
-    def _content_files_list_generator_factory(self, dir_name: str, prefix: str = "*", suffix: str = "*") -> Iterator[
-            Any]:
+    def _content_files_list_generator_factory(
+        self, dir_name: str, prefix: str = "*", suffix: str = "*"
+    ) -> Iterator[Any]:
         """Generic content objcets iterable generator
 
         Args:
@@ -92,7 +97,9 @@ class Content:
         Returns:
             object: Any valid content object found in the given directory.
         """
-        objects_path = (self._path / dir_name).glob(patterns=[f"{prefix}*.{suffix}", f"*/*.{suffix}"])
+        objects_path = (self._path / dir_name).glob(
+            patterns=[f"{prefix}*.{suffix}", f"*/*.{suffix}"]
+        )
         for object_path in objects_path:
             yield path_to_pack_object(object_path)
 
@@ -112,21 +119,22 @@ class Content:
     @property
     def test_playbooks(self) -> Iterator[Playbook | Script]:
         """<content>/TestPlaybooks directory"""
-        return self._content_files_list_generator_factory(dir_name=TEST_PLAYBOOKS_DIR,
-                                                          suffix='yml')
+        return self._content_files_list_generator_factory(
+            dir_name=TEST_PLAYBOOKS_DIR, suffix="yml"
+        )
 
     @property
     def documentations(self) -> Iterator[Documentation]:
         """<content>/Documentation directory"""
-        return self._content_files_list_generator_factory(dir_name=DOCUMENTATION_DIR,
-                                                          prefix=DOCUMENTATION,
-                                                          suffix="json")
+        return self._content_files_list_generator_factory(
+            dir_name=DOCUMENTATION_DIR, prefix=DOCUMENTATION, suffix="json"
+        )
 
     @property
     def content_descriptor(self) -> ContentDescriptor | None:
         """<content>/content-descriptor.json file"""
         descriptor_object = None
-        path = self._path / 'content-descriptor.json'
+        path = self._path / "content-descriptor.json"
         if path.exists():
             descriptor_object = ContentDescriptor(path)
 

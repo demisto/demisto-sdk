@@ -17,8 +17,8 @@ ContentTypes = Integration
 
 class IsValidDbotValidator(BaseValidator[ContentTypes]):
     error_code = "IN101"
-    description = ""
-    rationale = ""
+    description = "Outputs of reputation commands must adhere to standards."
+    rationale = "Uniform outputs allow creating generic content. For more information, see https://xsoar.pan.dev/docs/integrations/generic-commands-reputation"
     error_message = "The integration contains reputation command(s) with missing outputs/malformed descriptions:{0}"
     related_field = "outputs"
     is_auto_fixable = False

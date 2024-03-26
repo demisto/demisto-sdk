@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 import toml
+from more_itertools import map_reduce
 
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -27,9 +28,11 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
     IDNameAllStatusesValidator,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
+    VALIDATION_CATEGORIES,
     BaseValidator,
     FixResult,
     ValidationResult,
+    get_all_validators,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
@@ -614,3 +617,37 @@ def test_all_error_codes_configured():
     assert (
         not non_configured_existing_error_codes
     ), f"The following error codes are not configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_existing_error_codes}."
+
+def test_validation_prefix():
+    """
+    Given   All validators
+    When    Checking for their prefixes
+    Then    Make sure it's from the allowed list of prefixes
+    """
+    prefix_to_validator = map_reduce(get_all_validators(), lambda v: v.error_category)
+    invalid = {
+        validation
+        for prefix, validation in prefix_to_validator.items()
+        if prefix not in VALIDATION_CATEGORIES
+    }
+    assert not invalid, sorted(invalid)
+
+
+def test_rationale():
+    """
+    Tests that all validators have a non-empty rationale.
+    If this test failed when you modified a validator, go ahead and add the rationale attribute, explaining *why* the validation exists.
+    """
+    assert not [
+        validator for validator in get_all_validators() if not validator.rationale
+    ]
+
+
+def test_description():
+    """
+    Tests that all validators have a non-empty description.
+    If this test failed when you modified a validator, go ahead and add the description attribute, explaining *what* the validation checks in content.
+    """
+    assert not [
+        validator for validator in get_all_validators() if not validator.description
+    ]

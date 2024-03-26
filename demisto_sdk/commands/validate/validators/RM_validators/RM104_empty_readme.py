@@ -22,6 +22,7 @@ class EmptyReadmeValidator(BaseValidator[ContentTypes]):
     )
     error_message = """Pack {0} written by a partner or pack containing playbooks must have a full README.md file with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme for more information"""
     related_field = "readme"
+    rationale = "Meaningful, complete documentations make it easier for users to use the content."
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
 

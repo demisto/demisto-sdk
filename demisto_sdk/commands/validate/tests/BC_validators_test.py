@@ -647,7 +647,7 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
                 create_script_object(paths=["toversion"], values=["5.0.0"]),
                 create_script_object(paths=["toversion"], values=["5.0.0"]),
             ],
-            id="Case 2: playbook - toversion changed",
+            id="Case 2: script - toversion changed",
         ),
     ],
 )

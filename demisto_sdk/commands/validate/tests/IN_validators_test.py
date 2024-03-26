@@ -29,7 +29,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy_and_insecure import (
     IsValidProxyAndInsecureValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN101_is_valid_dbot import IsValidDbotValidator
+from demisto_sdk.commands.validate.validators.IN_validators.IN101_is_valid_dbot import (
+    IsValidDbotValidator,
+)
 from demisto_sdk.commands.validate.validators.IN_validators.IN102_is_valid_checkbox_default_field import (
     IsValidCheckboxDefaultFieldValidator,
 )
@@ -5653,13 +5655,6 @@ def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
     )
 
 
-
-
-
-
-
-
-
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
@@ -5677,16 +5672,18 @@ def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
                                 "outputs": [
                                     {
                                         "contextPath": "DBotScore.Indicator",
-                                        "description": "test"
+                                        "description": "test",
                                     }
-                                    ],
+                                ],
                             }
                         ],
                     ],
                 ),
             ],
             1,
-            ["The integration contains reputation command(s) with missing outputs/malformed descriptions:\nThe command 'ip' is invalid:\n\tThe following outputs are missing:\n\t\t- The output 'DBotScore.Type', the description should be 'The indicator type.'\n\t\t- The output 'DBotScore.Vendor', the description should be 'The vendor used to calculate the score.'\n\t\t- The output 'DBotScore.Score', the description should be 'The actual score.'\n\tThe following outputs descriptions are invalid:\n\t\t- The output 'DBotScore.Indicator' description is invalid. Description should be 'The indicator that was tested.'"],
+            [
+                "The integration contains reputation command(s) with missing outputs/malformed descriptions:\nThe command 'ip' is invalid:\n\tThe following outputs are missing:\n\t\t- The output 'DBotScore.Type', the description should be 'The indicator type.'\n\t\t- The output 'DBotScore.Vendor', the description should be 'The vendor used to calculate the score.'\n\t\t- The output 'DBotScore.Score', the description should be 'The actual score.'\n\tThe following outputs descriptions are invalid:\n\t\t- The output 'DBotScore.Indicator' description is invalid. Description should be 'The indicator that was tested.'"
+            ],
         ),
     ],
 )

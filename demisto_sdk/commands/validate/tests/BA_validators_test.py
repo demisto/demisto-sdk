@@ -1559,3 +1559,54 @@ def test_ValidPackNameValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        ([create_script_object(), create_integration_object()], 0, []),
+        (
+            [
+                create_script_object(code="BSD\nMIT"),
+                create_script_object(
+                    code="MIT", test_code="here we are going to fail\nproprietary"
+                ),
+                create_integration_object(code="Copyright"),
+            ],
+            3,
+            [
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1, 2.",
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1.\nThe test code file contains copyright key words in line(s) 2.",
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1.",
+            ],
+        ),
+    ],
+)
+def test_IsPyFileContainCopyRightSectionValidator(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    Content item iterables.
+    - Case 1: One script and one integration without any copyright keywords in the code/test code.
+    - Case 2: 3 content items:
+        - One integration with copyright keywords in both line 1 and 2 in the code_file.
+        - One script with copyright keyword in the code in line 1 and in the test_code in line 2.
+        - One script with copyright keyword in the code in line 1.
+    When
+    - Running the IsPyFileContainCopyRightSectionValidator validation.
+    Then
+    - Make sure the right number of content_items failed and the right error was returned.
+    - Case 1: Shouldn't fail anything.
+    - Case 2: Should fail all.
+    """
+    results = IsPyFileContainCopyRightSectionValidator().is_valid(
+        content_items=content_items
+    )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

@@ -740,9 +740,7 @@ def create_dummy_integration_with_context_path(
 
     integration = create_integration_object()
     command = Command(name=command_name)
-    output = Output()
-    output.contextPath = context_path
-    command.outputs = [output]
+    command.outputs = [Output(contextPath=context_path)]
     integration.commands = [command]
 
     return integration

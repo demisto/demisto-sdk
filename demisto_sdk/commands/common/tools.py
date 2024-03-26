@@ -4466,8 +4466,7 @@ def safe_get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Pa
     Returns:
         Path: The extracted relative path.
     """
-    if isinstance(file_path, str):
-        file_path = Path(file_path)
+    file_path = Path(file_path)
     if file_path.is_absolute():
         file_path = file_path.relative_to(relative_to)
     return file_path

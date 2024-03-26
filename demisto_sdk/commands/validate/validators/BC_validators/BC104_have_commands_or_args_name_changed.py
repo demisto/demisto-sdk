@@ -66,11 +66,10 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                             f"In command '{checking_command}' the following existing arguments have been changed: {', '.join(diff_per_command)}"
                         )
             if args_diff:
-                type_and_list = f"{', '.join(args_diff)}."
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(type_and_list=type_and_list),
+                        message=self.error_message.format(type_and_list=args_diff),
                         content_object=content_item,
                     )
                 )

@@ -1,5 +1,9 @@
+import copy
+from pathlib import Path
+
 import pytest
 
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_assets_modeling_rule_object,
     create_classifier_object,
@@ -13,18 +17,24 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_incident_type_object,
     create_incoming_mapper_object,
     create_indicator_field_object,
+    create_indicator_type_object,
     create_integration_object,
     create_job_object,
     create_layout_object,
     create_list_object,
+    create_modeling_rule_object,
+    create_old_file_pointers,
     create_outgoing_mapper_object,
+    create_pack_object,
     create_parsing_rule_object,
     create_playbook_object,
     create_ps_integration_object,
     create_report_object,
     create_script_object,
+    create_trigger_object,
     create_widget_object,
     create_wizard_object,
+    create_xdrc_template_object,
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
 )
@@ -52,6 +62,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type
 from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name_contain_excluded_word import (
     ERROR_MSG_TEMPLATE,
     IsEntityNameContainExcludedWordValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA114_is_pack_changed import (
+    PackNameValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
     CliNameMatchIdValidator,
@@ -1201,3 +1214,345 @@ def test_IsEntityNameContainExcludedWordValidator(
     assert len(results) == expected_number_of_failures
     if results:
         assert results[0].message == expected_error_message
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [create_pack_object(), create_pack_object()],
+            1,
+            [
+                "Pack for content item '/newPackName' and all related files were changed from 'pack_171' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [create_integration_object(), create_integration_object()],
+            1,
+            [
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_173' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_parsing_rule_object(),
+                create_parsing_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'pack_175' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_correlation_rule_object(),
+                create_correlation_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'pack_177' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_playbook_object(),
+                create_playbook_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'pack_179' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_modeling_rule_object(),
+                create_modeling_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'pack_181' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_ps_integration_object(),
+                create_ps_integration_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_183' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_script_object(),
+                create_script_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'pack_185' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_classifier_object(),
+                create_classifier_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'pack_187' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_list_object(),
+                create_list_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'pack_189' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_job_object(),
+                create_job_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'pack_191' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_dashboard_object(),
+                create_dashboard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'pack_193' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_incident_type_object(),
+                create_incident_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'pack_195' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_incident_field_object(),
+                create_incident_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'pack_197' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_report_object(),
+                create_report_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'pack_199' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_xsiam_report_object(),
+                create_xsiam_report_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'pack_201' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_xsiam_dashboard_object(),
+                create_xsiam_dashboard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'pack_203' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_xdrc_template_object(),
+                create_xdrc_template_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from 'pack_205' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_assets_modeling_rule_object(),
+                create_assets_modeling_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'pack_207' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_trigger_object(),
+                create_trigger_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'pack_209' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_layout_object(),
+                create_layout_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'pack_211' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_widget_object(),
+                create_widget_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'pack_213' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_indicator_field_object(),
+                create_indicator_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'pack_215' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_wizard_object(),
+                create_wizard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'pack_217' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_definition_object(),
+                create_generic_definition_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'pack_219' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_field_object(),
+                create_generic_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'pack_221' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_type_object(),
+                create_generic_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'pack_223' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_module_object(),
+                create_generic_module_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'pack_225' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_incoming_mapper_object(),
+                create_incoming_mapper_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'pack_227' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_outgoing_mapper_object(),
+                create_outgoing_mapper_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'pack_229' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_indicator_type_object(),
+                create_indicator_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'pack_231' to 'newPackName', please undo."
+            ],
+        ),
+    ],
+)
+def test_ValidPackNameValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given:
+    content_items.
+        31 content items.
+        Each test contains one object where the pack name was changed, and one where it was not.
+
+    When:
+        - Calling the PackNameValidator is_valid function.
+
+    Then:
+        - Make sure the right amount of tests failed, and that the right error message is returned.
+        - For each test, one should fail while the other should pass.
+    """
+    old_content_items = copy.deepcopy(content_items)
+    create_old_file_pointers(content_items, old_content_items)
+    content_item_parts = list(content_items[1].path.parts)
+    packs_folder_index = content_item_parts.index(PACKS_FOLDER) + 1
+    content_item_parts[packs_folder_index] = "newPackName"
+    new_path = Path(*content_item_parts)
+    content_items[1].path = new_path
+    results = PackNameValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

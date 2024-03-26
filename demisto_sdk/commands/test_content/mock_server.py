@@ -403,7 +403,7 @@ class MITMProxy:
             path, get_log_file_path(playbook_or_integration_id, record=True)
         )
         command = (
-            "/home/ec2-user/.local/bin/mitmdump -ns ~/timestamp_replacer.py "
+            f"/home/{SSH_USER}/.local/bin/mitmdump -ns ~/timestamp_replacer.py "
             f"--set script_mode=clean --set keys_filepath={problem_keys_filepath}"
             f" -r {mock_file_path} -w {cleaned_mock_filepath} | sudo tee -a {log_file}"
         )
@@ -501,7 +501,7 @@ class MITMProxy:
         Writes proxy server run configuration options to the remote host, the details of which include:
         - Creating new tmp directory on remote machine if in record mode and moves the problematic keys file in to it
         - Creating the mitmdump_rc file that includes the script mode, keys file path, mock file path and log file path
-          for the mitmdump service and puts it in '/home/ec2-user/mitmdump_rc' in the remote machine.
+          for the mitmdump service and puts it in '/home/gcp-user/mitmdump_rc' in the remote machine.
         - starts the systemd mitmdump service
 
         Args:
@@ -555,7 +555,7 @@ class MITMProxy:
         """
         Does all needed preparation for starting the proxy service which include:
         - Creating the mitmdump_rc file that includes the script mode, keys file path, mock file path and log file path
-          for the mitmdump service and puts it in '/home/ec2-user/mitmdump_rc' in the remote machine.
+          for the mitmdump service and puts it in '/home/gcp-user/mitmdump_rc' in the remote machine.
 
         Args:
             file_content: The content of the mitmdump_rc file that includes the script mode, keys file path,

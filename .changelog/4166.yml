@@ -1,0 +1,6 @@
+changes:
+- description: Fixed an issue in **setup-env** where the pack was not uploaded correctly to XSOAR/XSIAM.
+  type: fix
+- description: Fixed an issue in **setup-env** where debug failed when running locally and not with docker.
+  type: fix
+pr_number: 4166

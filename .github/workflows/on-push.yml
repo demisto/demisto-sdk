@@ -205,9 +205,11 @@ jobs:
           coverage combine **/.coverage
           coverage report
           coverage xml
-      - name: Coveralls
+      - name: Coveralls-Action
         uses: coverallsapp/github-action@v2
-      - name: Coveralls v2
+      - name: Coveralls-Comment
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
           if [ -n "$COVERALLS_REPO_TOKEN" ]; then
             pip install coveralls
@@ -262,7 +264,7 @@ jobs:
 
   test-pre-commit-command:
     runs-on: ubuntu-latest
-    name: Test Demisto-SDK Pre-Commit Command
+    name: Test Pre-Commit Command
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -305,7 +307,7 @@ jobs:
 
           echo "# test" >> Tests/collect_tests.py
           git add .
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
 
       - name: run pre-commit on input files
         timeout-minutes: 60
@@ -321,6 +323,44 @@ jobs:
         with:
           artifacts-path-dir: content/test-pre-commit-command
           artifact-name: test-demisto-sdk-pre-commit-command-artifacts
+
+  test-validate-content-path:
+    runs-on: ubuntu-latest
+    name: Test validate-content-path
+    steps:
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whether validate_content_path changed
+        id: files-changed
+        uses: tj-actions/changed-files@v43
+        with:
+          files: |
+            demisto_sdk/scripts/validate_content_path.py
+            demisto_sdk/tests/validate_content_path_test.py
+
+      - name: Checkout Content
+        if: steps.files-changed.outputs.any_changed == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          repository: demisto/content
+          path: content
+
+      - name: Setup Python Environment
+        if: steps.files-changed.outputs.any_changed == 'true'
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.10"
+
+      - name: Validate content master paths
+        if: steps.files-changed.outputs.any_changed == 'true'
+        run: |
+          source $(poetry env info --path)/bin/activate
+          validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown --skip-suffix
+
 
   test-graph-commands:
     runs-on: ubuntu-latest

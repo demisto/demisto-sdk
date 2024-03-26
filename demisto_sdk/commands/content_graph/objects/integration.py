@@ -141,8 +141,10 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
         if marketplace != MarketplaceVersions.MarketplaceV2:
-            summary["isfetchevents"] = False
-            summary["isfetchassets"] = False
+            if summary.get("isfetchevents"):
+                summary["isfetchevents"] = False
+            if summary.get("isfetchassets"):
+                summary["isfetchassets"] = False
         if self.unified_data:
             summary["name"] = self.unified_data.get("display")
         return summary

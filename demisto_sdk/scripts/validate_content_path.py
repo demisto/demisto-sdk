@@ -111,9 +111,22 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     )
 )
 
-DIRS_ALLOWING_SPACE_IN_FILENAMES = frozenset(
-    TESTS_AND_DOC_DIRECTORIES + [TEST_PLAYBOOKS_DIR]
+ALLOWED_SUFFIXES = frozenset(
+    (
+        ".yml",
+        ".json",
+        ".md",
+        ".png",
+        ".py",
+        ".svg",
+        ".txt",
+        ".js",
+        ".xif",
+        ".ps1",
+        "",
+    )
 )
+DIRS_ALLOWING_SPACE_IN_FILENAMES = (TEST_PLAYBOOKS_DIR,)
 app = typer.Typer()
 
 
@@ -121,7 +134,7 @@ class InvalidPathException(Exception, ABC):
     message: ClassVar[str]
 
 
-class SpacesInFileNameError(InvalidPathException):
+class SpacesInFileName(InvalidPathException):
     message = "File name contains spaces."
 
 
@@ -155,6 +168,10 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
     )
 
 
+class InvalidSuffix(InvalidPathException):
+    message = "This file's suffix is not allowed."
+
+
 class InvalidCommandExampleFile(InvalidPathException):
     message = "This file's name must be command_examples"
 
@@ -177,6 +194,10 @@ class PathUnderDeprecatedContent(ExemptedPath):
 
 class PathIsUnified(ExemptedPath):
     message = "Paths of unified content items are not validated."
+
+
+class PathIsTestOrDocData(ExemptedPath):
+    message = "Paths under test_data or doc_files are not validated."
 
 
 def _validate(path: Path) -> None:
@@ -204,6 +225,9 @@ def _validate(path: Path) -> None:
         """
         raise PathUnderDeprecatedContent
 
+    if set(path.parts).intersection(TESTS_AND_DOC_DIRECTORIES):
+        raise PathIsTestOrDocData
+
     parts_inside_pack = parts_after_packs[1:]  # everything after Packs/<pack name>
     depth = len(parts_inside_pack) - 1
 
@@ -218,7 +242,10 @@ def _validate(path: Path) -> None:
     if " " in path.stem and set(parts_after_packs).isdisjoint(
         DIRS_ALLOWING_SPACE_IN_FILENAMES
     ):
-        raise SpacesInFileNameError
+        raise SpacesInFileName
+
+    if path.suffix not in ALLOWED_SUFFIXES:
+        raise InvalidSuffix
 
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
         _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
@@ -283,11 +310,14 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
             raise InvalidCommandExampleFile
         raise InvalidIntegrationScriptFileName
 
-    elif path.suffix not in {  # remaining supported suffixes
-        ".png",
-        ".svg",
-        ".txt",
-    }:
+    elif (
+        path.suffix
+        not in {  # remaining supported suffixes in integration/script folders
+            ".png",
+            ".svg",
+            ".txt",
+        }
+    ):
         raise InvalidIntegrationScriptFileType
 
 
@@ -315,6 +345,7 @@ def validate(
     skip_integration_script_file_name: bool = False,
     skip_integration_script_file_type: bool = False,
     skip_markdown: bool = False,
+    skip_suffix: bool = False,
 ) -> bool:
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
     try:
@@ -331,6 +362,7 @@ def validate(
             InvalidIntegrationScriptFileName: skip_integration_script_file_name,
             InvalidIntegrationScriptFileType: skip_integration_script_file_type,
             InvalidIntegrationScriptMarkdownFileName: skip_markdown,
+            InvalidSuffix: skip_suffix,
         }.items():
             if isinstance(e, exception_type) and skip:
                 logger.warning(f"skipping {path} ({e.message})")
@@ -365,6 +397,7 @@ def validate_paths(
     skip_integration_script_file_name: bool = False,
     skip_integration_script_file_type: bool = False,
     skip_markdown: bool = False,
+    skip_suffix: bool = False,
 ) -> None:
     """Validate given paths"""
     if not all(
@@ -378,6 +411,7 @@ def validate_paths(
                 skip_integration_script_file_name=skip_integration_script_file_name,
                 skip_integration_script_file_type=skip_integration_script_file_type,
                 skip_markdown=skip_markdown,
+                skip_suffix=skip_suffix,
             )
             for path in paths
         )
@@ -394,6 +428,7 @@ def validate_all(
     skip_integration_script_file_name: bool = False,
     skip_integration_script_file_type: bool = False,
     skip_markdown: bool = False,
+    skip_suffix: bool = False,
 ):
     """
     Used in the SDK CI for testing compatibility with content.
@@ -415,11 +450,14 @@ def validate_all(
                 skip_integration_script_file_name=skip_integration_script_file_name,
                 skip_integration_script_file_type=skip_integration_script_file_type,
                 skip_markdown=skip_markdown,
+                skip_suffix=skip_suffix,
             )
         ]
     )
     valid = (total := len(paths)) - invalid
     logger.info(f"{total=},[green]{valid=}[/green],[red]{invalid=}[/red]")
+    if invalid:
+        raise typer.Exit(1)
 
 
 def main():

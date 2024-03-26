@@ -1,6 +1,9 @@
+from typing import List
+
 import pytest
 
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects import Integration
 from demisto_sdk.commands.content_graph.objects.integration import Command, Output
 from demisto_sdk.commands.validate.tests.test_tools import (
@@ -12,6 +15,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC101_is_breaking_context_output_backwards import (
+    IsBreakingContextOutputBackwardsValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC102_is_context_path_changed import (
     IsContextPathChangedValidator,
@@ -626,6 +632,106 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
 
     with ChangeCWD(REPO.path):
         assert WasMarketplaceModifiedValidator().is_valid(renamed_content_items) == []
+
+
+@pytest.mark.parametrize(
+    "content_items, old_content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_script_object(paths=["outputs"], values=[[]]),
+                create_script_object(
+                    paths=["outputs"],
+                    values=[[{"contextPath": "output_1", "description": "test_1"}]],
+                ),
+                create_script_object(
+                    paths=["outputs"],
+                    values=[[{"contextPath": "output_2", "description": "test_2"}]],
+                ),
+            ],
+            [
+                create_script_object(paths=["outputs"], values=[[]]),
+                create_script_object(paths=["outputs"], values=[[]]),
+                create_script_object(
+                    paths=["outputs"],
+                    values=[[{"contextPath": "output_2", "description": "test_2"}]],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_script_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {"contextPath": "output_1", "description": "test_1"},
+                            {"contextPath": "output_2", "description": "test_1"},
+                        ]
+                    ],
+                ),
+                create_script_object(
+                    paths=["outputs"],
+                    values=[[{"contextPath": "output_5", "description": "test_2"}]],
+                ),
+                create_script_object(paths=["outputs"], values=[[]]),
+            ],
+            [
+                create_script_object(
+                    paths=["outputs"],
+                    values=[[{"contextPath": "output_2", "description": "test_1"}]],
+                ),
+                create_script_object(
+                    paths=["outputs"],
+                    values=[[{"contextPath": "output_3", "description": "test_2"}]],
+                ),
+                create_script_object(
+                    paths=["outputs"],
+                    values=[[{"contextPath": "output_4", "description": "test_3"}]],
+                ),
+            ],
+            2,
+            [
+                "The following output keys: output_3. Has been removed, please undo.",
+                "The following output keys: output_4. Has been removed, please undo.",
+            ],
+        ),
+    ],
+)
+def test_IsBreakingContextOutputBackwardsValidator_is_valid(
+    content_items: List[Script],
+    old_content_items: List[Script],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
+):
+    """
+    Given
+    content_items and old content items.
+        - Case 1: Three valid scripts:
+            - One old script without outputs and a modified script without outputs.
+            - One old script without outputs and a modified script with outputs.
+            - One old script with outputs and a modified script with the same outputs.
+        - Case 2: Two invalid scripts:
+            - One old script with 1 output and a modified script with the same output and a new one.
+            - One old script with 1 output and a modified script with a different output.
+            - One old script with 1 output and a modified script without outputs.
+    When
+    - Calling the IsBreakingContextOutputBackwardsValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Shouldn't fail any.
+        - Case 2: Should fail only the last two.
+    """
+    create_old_file_pointers(content_items, old_content_items)
+    results = IsBreakingContextOutputBackwardsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
 
 
 def create_dummy_integration_with_context_path(

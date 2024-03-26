@@ -1,4 +1,11 @@
 # Changelog
+## 1.27.5
+* Added the `validate-content-path` **pre-commit** hook [#4084](https://github.com/demisto/demisto-sdk/pull/4084)
+* Fixed an issue where **setup-env** command failed when demistomock.py file does not exist locally. [#4094](https://github.com/demisto/demisto-sdk/pull/4094)
+* Fixed an issue where **prepare-content** command didn't add contribution section to description files when support level of pack-metadata was `developer` support. [#4151](https://github.com/demisto/demisto-sdk/pull/4151)
+* Fixes an issue in **graph** commands where empty pack folders were not being ignored. [#4154](https://github.com/demisto/demisto-sdk/pull/4154)
+* Update file paths in `test_content` from ec2-user to gcp-user. [#3828](https://github.com/demisto/demisto-sdk/pull/3828)
+
 ## 1.27.4
 * Added support for `run_isolated` field to the **pre-commit** configuration file. [#3952](https://github.com/demisto/demisto-sdk/pull/3952)
 * Added support for `pass_docker_extra_args` field to the **pre-commit** configuration file. [#3952](https://github.com/demisto/demisto-sdk/pull/3952)

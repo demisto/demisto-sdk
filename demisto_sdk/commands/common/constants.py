@@ -1502,7 +1502,7 @@ GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union(
     {"send-mail", "send-notification", "cve-latest", "cve-search"}
 )
 
-DBOT_SCORES_DICT = {
+DBOT_SCORES_DICT: Dict[str, str] = {
     "DBotScore.Indicator": "The indicator that was tested.",
     "DBotScore.Type": "The indicator type.",
     "DBotScore.Vendor": "The vendor used to calculate the score.",

@@ -157,11 +157,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @property
     def ignored_errors(self) -> List[str]:
-        ignored_errors = self.get_ignored_errors(PACK_METADATA_FILENAME)
-        if not ignored_errors:
-            file_path = safe_get_relative_path(self.path, CONTENT_PATH)
-            ignored_errors = self.get_ignored_errors(file_path / PACK_METADATA_FILENAME)
-        return ignored_errors
+        if ignored_errors := self.get_ignored_errors(PACK_METADATA_FILENAME):
+            return ignored_errors
+        file_path = safe_get_relative_path(self.path, CONTENT_PATH)
+        return self.get_ignored_errors(file_path / PACK_METADATA_FILENAME)
 
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         ignored_errors = self.get_ignored_errors((Path(file_path)).name)

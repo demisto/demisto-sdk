@@ -804,3 +804,4 @@ def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
         len(result) == 1
         and result[0].message
         == "Changing the minimal supported version field `fromversion` is not allowed. Please undo, or request a force merge."
+

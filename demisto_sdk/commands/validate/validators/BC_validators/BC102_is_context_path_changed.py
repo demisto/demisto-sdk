@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration]
+ContentTypes = Integration
 
 
 def is_context_path_changed(content_item: Integration) -> bool:

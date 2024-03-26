@@ -732,7 +732,7 @@ def test_IsBreakingContextOutputBackwardsValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
 )
-    
+
 
 @pytest.mark.parametrize(
     "content_items, old_content_items",
@@ -803,5 +803,4 @@ def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
     assert (
         len(result) == 1
         and result[0].message
-        == "Changing the minimal supported version field `fromversion` is not allowed. Please undo, or request a force merge."
-
+        == "Changing the minimal supported version field `fromversion` is not allowed. Please undo, or request a force merge.")

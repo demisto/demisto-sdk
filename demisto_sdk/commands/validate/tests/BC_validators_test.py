@@ -738,14 +738,14 @@ def create_dummy_integration_with_context_path(
     command_name: str, context_path: str
 ) -> Integration:
 
-    dummy_integration = create_integration_object()
+    integration = create_integration_object()
     command = Command(name=command_name)
     output = Output()
     output.contextPath = context_path
     command.outputs = [output]
-    dummy_integration.commands = [command]
+    integration.commands = [command]
 
-    return dummy_integration
+    return integration
 
 
 @pytest.mark.parametrize(

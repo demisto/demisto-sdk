@@ -160,9 +160,13 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         Returns:
             Dict[str, Any]: JSON dictionary representation of the class.
         """
+        import inspect
+
         self.__add_lazy_properties()
         cached_properties = {
-            i for i in dir(self) if isinstance(getattr(self, i), cached_property)
+            name
+            for name, value in inspect.getmembers(self)
+            if isinstance(value, cached_property)
         }
         json_dct = json.loads(
             self.json(exclude={"commands", "database_id"} | cached_properties)

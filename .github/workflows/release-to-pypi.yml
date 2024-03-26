@@ -15,7 +15,7 @@ jobs:
       - name: Fetch and checkout release tag
         run: |
           git fetch --tags
-          git checkout tags/v1.27.5
+          git checkout tags/v${{ github.event.pull_request.head.ref }}
 
       - uses: tj-actions/branch-names@v8
         id: branch-name
@@ -41,3 +41,13 @@ jobs:
       - name: Poetry build
         run: |
           poetry build
+
+      - name: Publish SDK to PyPi
+        run: |
+          poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+
+      - name: Comment PR that SDK has been released
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            Demisto-SDK ${{ steps.branch-name.outputs.current_branch }} has been released successfully into pypi :smiley:

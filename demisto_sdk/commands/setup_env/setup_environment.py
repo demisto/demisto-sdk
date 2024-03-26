@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     COMMON_SERVER_PYTHON_PATH,
     CONTENT_PATH,
     PYTHONPATH,
+    PYTHONPATH_STR,
 )
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.files import FileReadError, TextFile
@@ -419,6 +420,7 @@ def configure_vscode_launch(
                         "console": "integratedTerminal",
                         "cwd": "${workspaceFolder}",
                         "justMyCode": False,
+                        "env": {"PYTHONPATH": PYTHONPATH_STR},
                     },
                     {
                         "name": "Python: Debug Tests",
@@ -428,6 +430,7 @@ def configure_vscode_launch(
                         "purpose": ["debug-test"],
                         "console": "integratedTerminal",
                         "justMyCode": False,
+                        "env": {"PYTHONPATH": PYTHONPATH_STR},
                     },
                 ],
             }
@@ -593,6 +596,10 @@ def upload_and_create_instance(
     client = get_client_from_server_type()
     pack = integration_script.in_pack
     assert isinstance(pack, Pack)
+    # we need to reparse the pack, since by default it is not parsed with the integration script
+    pack = BaseContent.from_path(pack.path)
+    assert isinstance(pack, Pack)
+
     with tempfile.TemporaryDirectory() as temp_dir:
         pack.upload(
             client=client.xsoar_client,

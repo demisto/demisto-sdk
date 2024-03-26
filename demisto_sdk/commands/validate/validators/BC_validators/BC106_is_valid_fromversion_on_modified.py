@@ -24,9 +24,7 @@ class IsValidFromversionOnModifiedValidator(BaseValidator[ContentTypes]):
     rationale = "Changing the `fromversion` for a content item can break backward compatibility. For 'fromversion' info, see: https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests"
     error_message = "Changing the minimal supported version field `fromversion` is not allowed. Please undo, or request a force merge."
     related_field = "fromversion"
-    is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.MODIFIED]
-    related_file_type = [RelatedFileType.YML, RelatedFileType.JSON]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

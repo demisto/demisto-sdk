@@ -418,7 +418,7 @@ jobs:
         with:
           artifacts-path-dir: test-old-validate-command
           artifact-name: test-old-validate-command-artifacts
-          command-to-run: demisto-sdk validate -a --graph --skip-pack-dependencies --prev-ver origin/master
+          validate-arguments: "-a --graph --skip-pack-dependencies --prev-ver origin/master"
 
   validate-files-new-validate:
     runs-on: ubuntu-latest

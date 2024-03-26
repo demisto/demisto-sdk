@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from itertools import chain
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, Set
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 
-def is_context_path_changed(content_item: Integration) -> bool:
+def is_context_path_changed(content_item: Integration) -> Set[str]:
     """
     This method checks if an output context path (an integration) is changed.
     """
@@ -33,14 +33,14 @@ def is_context_path_changed(content_item: Integration) -> bool:
         )
     )
 
-    return not old_outputs_context_path.issubset(new_outputs_context_path)
+    return old_outputs_context_path.difference(new_outputs_context_path)
 
 
 class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC102"
     description = "Validate that the context path has been changed."
     rationale = "Changing the paths may break dependent content items, which rely on the existing paths."
-    error_message = "Changing output context paths is not allowed."
+    error_message = "Changing output context paths is not allowed. Restore the following: {}"
     related_field = "outputs"
     expected_git_statuses = [
         GitStatuses.RENAMED,
@@ -51,9 +51,9 @@ class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(",".join(sorted(missing))),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (is_context_path_changed(content_item=content_item))
+            if (missing := is_context_path_changed(content_item=content_item))
         ]

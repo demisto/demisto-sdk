@@ -762,11 +762,9 @@ def test_IsContextPathChangedValidator():
     # integration is valid so we get an empty list
     assert not IsContextPathChangedValidator().is_valid(content_items=[new_integration])
 
-    changed_integration = create_dummy_integration_with_context_path(
-        command_name=command_name, context_path="test.test1"
-    )
-
-    new_integration.old_base_content_object = changed_integration
+    new_integration.commands[0].outputs[0].contextPath = f"{old_context_path}1"
 
     # integration is invalid, so we get a list which contains ValidationResult
-    assert IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+    errors = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+    assert errors, "Should have failed validation"
+    assert errors[0].message.endswith(old_context_path)

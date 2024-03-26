@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue when running **pre-commit** from content subdirectory.
+  type: fix
+pr_number: 4182

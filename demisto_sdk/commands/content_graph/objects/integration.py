@@ -99,6 +99,14 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
         remove_nulls_from_dictionary(command)
         return command
 
+    def get_outputs_context_path(self) -> list:
+        """
+        This method returns a list of the all command's outputs context path.
+        """
+        outputs_context_path_list: List[Optional[str]] = []
+        outputs_context_path_list.extend(output.contextPath for output in self.outputs)
+        return outputs_context_path_list
+
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
     is_fetch: bool = Field(False, alias="isfetch")

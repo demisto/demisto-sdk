@@ -1,6 +1,8 @@
 import pytest
 
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects import Integration
+from demisto_sdk.commands.content_graph.objects.integration import Command, Output
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
@@ -10,6 +12,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC102_is_context_path_changed import (
+    IsContextPathChangedValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
@@ -621,3 +626,48 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
 
     with ChangeCWD(REPO.path):
         assert WasMarketplaceModifiedValidator().is_valid(renamed_content_items) == []
+
+
+def create_dummy_integration_with_context_path(
+    command_name: str, context_path: str
+) -> Integration:
+
+    dummy_integration = create_integration_object()
+    command = Command(name=command_name)
+    output = Output()
+    output.contextPath = context_path
+    command.outputs = [output]
+    dummy_integration.commands = [command]
+
+    return dummy_integration
+
+
+@pytest.mark.parametrize(
+    "old_context_path, new_context_path, len_expected_result",
+    [
+        pytest.param(
+            "test.test",
+            "test.test1",
+            1,
+            id="context path has been changed",
+        ),
+        pytest.param(
+            "test.test",
+            "test.test",
+            0,
+            id="valid integration",
+        ),
+    ],
+)
+def test_IsContextPathChangedValidator(
+    old_context_path, new_context_path, len_expected_result
+):
+    new_integration = create_dummy_integration_with_context_path(
+        command_name="command", context_path=new_context_path
+    )
+    old_integration = create_dummy_integration_with_context_path(
+        command_name="command", context_path=old_context_path
+    )
+    new_integration.old_base_content_object = old_integration
+    result = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+    assert len(result) == len_expected_result

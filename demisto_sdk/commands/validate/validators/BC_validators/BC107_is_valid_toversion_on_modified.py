@@ -18,7 +18,7 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
     description = (
         "Check that the toversion property was not changed on existing Content files."
     )
-    rationale = ""
+    rationale = "Changing the `toversion` field for a content item can break backward compatibility."
     error_message = "Changing the maximal supported version field `toversion` is not allowed. Please undo, or request a force merge."
     related_field = "toversion"
     is_auto_fixable = False

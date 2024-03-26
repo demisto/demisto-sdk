@@ -3,9 +3,9 @@ from typing import List
 import pytest
 
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
-from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects import Integration
 from demisto_sdk.commands.content_graph.objects.integration import Command, Output
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,

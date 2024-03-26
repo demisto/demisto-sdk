@@ -38,7 +38,7 @@ def is_context_path_changed(content_item: Integration) -> bool:
 
 class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC102"
-    description = "context path has been changed."
+    description = "Validate that the context path has been changed."
     rationale = "Changing the paths may break dependent content items, which rely on the existing paths."
     error_message = "Changing output context paths is not allowed."
     related_field = ""

@@ -185,11 +185,6 @@ class BaseContent(BaseNode):
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
 
-    def __eq__(self, other: object):
-        if not isinstance(other, BaseContent):
-            return False
-        return self.path == other.path
-
     def _save(
         self,
         path: Path,

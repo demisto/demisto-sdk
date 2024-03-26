@@ -216,19 +216,19 @@ def test_handle_api_modules(mocker, git_repo: Repo):
     )
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(git_repo.path))
     with ChangeCWD(git_repo.path):
-        graph = git_repo.create_graph()
+        git_repo.create_graph()
         files_to_run = group_by_language(
             {Path(script.yml.path).relative_to(git_repo.path)}
         )
-    integration_graph_object = integration.get_graph_object(graph)
+    files_to_run = {(path, obj.path) for path, obj in files_to_run[0]["2.7"]}
     assert (
         Path(script.yml.path).relative_to(git_repo.path),
-        integration_graph_object,
-    ) in files_to_run[0]["2.7"]
+        integration.object.path.relative_to(git_repo.path),
+    ) in files_to_run
     assert (
         Path(integration.yml.path).relative_to(git_repo.path),
-        integration_graph_object,
-    ) in files_to_run[0]["2.7"]
+        integration.object.path.relative_to(git_repo.path),
+    ) in files_to_run
 
 
 def test_mypy_hooks(mocker):

@@ -27,6 +27,7 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
     IntegrationScript,
+    Output,
 )
 
 
@@ -47,13 +48,9 @@ class Parameter(BaseModel):
     fromlicense: Optional[str] = None
 
 
-class Output(BaseModel):
-    description: str = ""
-    contentPath: Optional[str] = None
-    contextPath: Optional[str] = None
+class IntegrationOutput(Output):
     important: Optional[bool] = False
     importantDescription: Optional[str] = None
-    type: Optional[str] = None
 
 
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -61,7 +58,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
 
     # From HAS_COMMAND relationship
     args: List[Argument] = Field([], exclude=True)
-    outputs: List[Output] = Field([], exclude=True)
+    outputs: List[IntegrationOutput] = Field([], exclude=True)
 
     deprecated: bool = Field(False)
     description: Optional[str] = Field("")

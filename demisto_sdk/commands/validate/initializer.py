@@ -24,7 +24,6 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -323,7 +322,7 @@ class Initializer:
                 set(self.load_files(self.file_path.split(",")))
             )
         elif self.all_files:
-            content_dto = ContentDTO.from_path(CONTENT_PATH)
+            content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)
@@ -483,9 +482,15 @@ class Initializer:
                     obj.git_status = git_status
                     # Check if the file exists
                     if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
-                        obj.old_base_content_object = BaseContent.from_path(
-                            old_path, git_sha=git_sha, raise_on_exception=True
-                        )
+                        try:
+                            obj.old_base_content_object = BaseContent.from_path(
+                                old_path, git_sha=git_sha, raise_on_exception=True
+                            )
+                        except (NotAContentItemException, InvalidContentItemException):
+                            logger.debug(
+                                f"Could not parse the old_base_content_object for {obj.path}, setting a copy of the object as the old_base_content_object."
+                            )
+                            obj.old_base_content_object = obj.copy(deep=True)
                     else:
                         obj.old_base_content_object = obj.copy(deep=True)
                     if obj.old_base_content_object:

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where **generate-docs** command didn't work on newly-created integrations in existing Packs.
+  type: fix
+pr_number: 4162

@@ -21,7 +21,7 @@ class IsValidFromversionOnModifiedValidator(BaseValidator[ContentTypes]):
     description = (
         "Check that the fromversion property was not changed on existing Content files."
     )
-    rationale = ""
+    rationale = "Changing the `fromversion` for a content item can break backward compatibility. For 'fromversion' info, see: https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests"
     error_message = "Changing the minimal supported version field `fromversion` is not allowed. Please undo, or request a force merge."
     related_field = "fromversion"
     is_auto_fixable = False

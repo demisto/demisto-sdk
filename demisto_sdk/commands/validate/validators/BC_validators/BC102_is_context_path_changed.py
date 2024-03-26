@@ -21,13 +21,13 @@ def is_context_path_changed(content_item: Integration) -> bool:
 
     new_outputs_context_path = set(
         chain.from_iterable(
-            command.output_context_paths for command in content_item.commands
+            command.outputs_context_paths for command in content_item.commands
         )
     )
 
     old_outputs_context_path = set(
         chain.from_iterable(
-            command.output_context_paths
+            command.outputs_context_paths
             # Since old_base_content_object is an integration, we ignore the mypy comment
             for command in content_item.old_base_content_object.commands  # type:ignore[union-attr]
         )

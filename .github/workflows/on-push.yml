@@ -515,6 +515,7 @@ jobs:
         run: |
           poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
   generate_validate_docs:
+    name: Generate Validate Docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

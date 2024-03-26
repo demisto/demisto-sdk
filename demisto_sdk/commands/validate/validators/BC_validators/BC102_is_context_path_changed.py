@@ -48,7 +48,6 @@ class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
         GitStatuses.ADDED,
         GitStatuses.MODIFIED,
     ]
-    related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

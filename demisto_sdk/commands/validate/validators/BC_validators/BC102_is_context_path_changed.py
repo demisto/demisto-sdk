@@ -17,7 +17,7 @@ class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC102"
     description = "context path has been changed."
     rationale = "To prevent context paths from changing."
-    error_message = "You've changed the context path in the file, please undo."
+    error_message = "Changing output context paths is not allowed."
     related_field = ""
     is_auto_fixable = False
     expected_git_statuses = [

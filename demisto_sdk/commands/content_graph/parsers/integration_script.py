@@ -29,7 +29,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"object_id": "commonfields.id"})
+        super().field_mapping.update(
+            {"object_id": "commonfields.id", "version": "commonfields.version"}
+        )
         return super().field_mapping
 
     @cached_property
@@ -84,3 +86,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
         if not subtype and self.type == "python":
             subtype = "python2"
         return subtype
+
+    @property
+    def auto_update_docker_image(self):
+        return (
+            get_value(self.yml_data, "autoUpdateDockerImage", "")
+        ).lower() != "false"

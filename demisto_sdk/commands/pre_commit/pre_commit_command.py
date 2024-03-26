@@ -9,6 +9,7 @@ from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import more_itertools
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
@@ -45,6 +46,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_context import (
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
+INTEGRATIONS_BATCH = 300
 
 
 class PreCommitRunner:
@@ -345,11 +347,14 @@ def group_by_language(
             infra_files.append(file)
 
     language_to_files: Dict[str, Set] = defaultdict(set)
-    with multiprocessing.Pool() as pool:
-        integrations_scripts = pool.map(
-            BaseContent.from_path, integrations_scripts_mapping.keys()
-        )
-
+    integrations_scripts = []
+    for integration_script_paths in more_itertools.chunked_even(
+        integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
+    ):
+        with multiprocessing.Pool(processes=cpu_count()) as pool:
+            integrations_scripts.extend(
+                pool.map(BaseContent.from_path, integration_script_paths)
+            )
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
         if not integration_script or not isinstance(
@@ -400,6 +405,7 @@ def pre_commit_manager(
     staged_only: bool = False,
     commited_only: bool = False,
     git_diff: bool = False,
+    prev_version: Optional[str] = None,
     all_files: bool = False,
     mode: str = "",
     skip_hooks: Optional[List[str]] = None,
@@ -444,6 +450,7 @@ def pre_commit_manager(
         commited_only=commited_only,
         use_git=git_diff,
         all_files=all_files,
+        prev_version=prev_version,
     )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
@@ -487,6 +494,7 @@ def preprocess_files(
     commited_only: bool = False,
     use_git: bool = False,
     all_files: bool = False,
+    prev_version: Optional[str] = None,
 ) -> Set[Path]:
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
@@ -496,7 +504,7 @@ def preprocess_files(
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = git_util._get_all_changed_files()
+        raw_files = git_util._get_all_changed_files(prev_version)
         if not commited_only:
             raw_files = raw_files.union(staged_files)
     elif all_files:

@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -27,11 +27,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME,
     GitStatuses,
     MarketplaceVersions,
-    RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.files import TextFile
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import set_value, write_dict
@@ -112,6 +109,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+        keep_untouched = (cached_property,)
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
@@ -202,7 +200,11 @@ class BaseContent(BaseNode):
         """
         for key, val in self.field_mapping.items():
             attr = getattr(self, key)
-            if key == "marketplaces":
+            if key == "docker_image":
+                attr = str(attr)
+            elif key in ["params"]:
+                continue
+            elif key == "marketplaces":
                 if (
                     MarketplaceVersions.XSOAR_SAAS in attr
                     and MarketplaceVersions.XSOAR in attr
@@ -258,14 +260,6 @@ class BaseContent(BaseNode):
     ) -> None:
         # Implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
-
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        """Return a dict of the content item's related items with the list of possible paths, and the status of each related file.
-
-        Returns:
-            Dict[RelatedFileType, dict]: The dict of the content item's related items with the list of possible paths, and the status of each related file.
-        """
-        return {}
 
     @staticmethod
     @lru_cache
@@ -325,45 +319,6 @@ class BaseContent(BaseNode):
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         pass
-
-    @property
-    def related_content(self) -> Dict:
-        if not self.related_content_dict:
-            self.related_content_dict = self.get_related_content()
-            if self.old_base_content_object:
-                git_util = GitUtil()
-                remote, branch = git_util.handle_prev_ver(
-                    self.old_base_content_object.git_sha  # type: ignore[arg-type]
-                )
-                for file in self.related_content_dict.values():
-                    for path in file["path"]:
-                        status = git_util._check_file_status(path, remote, branch)
-                        file["git_status"] = (
-                            None
-                            if (not status and not file["git_status"])
-                            else GitStatuses(status)
-                        )
-        return self.related_content_dict
-
-    def get_related_text_file(self, file_type: RelatedFileType) -> str:
-
-        for file_path in self.related_content[file_type]["path"]:
-            try:
-                if self.git_sha:
-                    file = TextFile.read_from_git_path(
-                        path=file_path,
-                        tag=self.git_sha,
-                    )
-                else:
-                    file = TextFile.read_from_local_path(path=file_path)
-                self.related_content[file_type]["path"] = [file_path]
-                return file
-            except Exception as e:
-                logger.error(f"Failed to get related text file, error: {e}")
-                continue
-        raise NotAContentItemException(
-            f"The {file_type.value} file could not be found in the following paths: {', '.join(self.related_content[file_type]['path'])}"
-        )
 
 
 class UnknownContent(BaseNode):

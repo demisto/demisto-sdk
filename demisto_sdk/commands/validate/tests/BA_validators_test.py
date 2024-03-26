@@ -1,5 +1,9 @@
+import copy
+from pathlib import Path
+
 import pytest
 
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_assets_modeling_rule_object,
     create_classifier_object,
@@ -13,20 +17,29 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_incident_type_object,
     create_incoming_mapper_object,
     create_indicator_field_object,
+    create_indicator_type_object,
     create_integration_object,
     create_job_object,
     create_layout_object,
     create_list_object,
+    create_modeling_rule_object,
+    create_old_file_pointers,
     create_outgoing_mapper_object,
+    create_pack_object,
     create_parsing_rule_object,
     create_playbook_object,
     create_ps_integration_object,
     create_report_object,
     create_script_object,
+    create_trigger_object,
     create_widget_object,
     create_wizard_object,
+    create_xdrc_template_object,
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_version import (
+    IsValidVersionValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
@@ -43,11 +56,24 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
+    IsEntityTypeInEntityNameValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name_contain_excluded_word import (
+    ERROR_MSG_TEMPLATE,
+    IsEntityNameContainExcludedWordValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA114_is_pack_changed import (
+    PackNameValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
     CliNameMatchIdValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_version_synched import (
     FromToVersionSyncedValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA119_is_py_file_contain_copy_right_section import (
+    IsPyFileContainCopyRightSectionValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
@@ -174,7 +200,7 @@ def test_IDNameValidator_fix(content_item, expected_name, expected_fix_msg):
     When
     - Calling the IDNameValidator_fix fix function.
     Then
-        - Make sure the the object name was changed to match the id, and that the right fix msg is returned.
+        - Make sure that the object name was changed to match the id, and that the right fix msg is returned.
     """
     assert IDNameValidator().fix(content_item).message == expected_fix_msg
     assert content_item.name == expected_name
@@ -249,7 +275,7 @@ def test_CliNameMatchIdValidator_fix(content_item, expected_name, expected_fix_m
     When
     - Calling the CliNameMatchIdValidator fix function.
     Then
-        - Make sure the the object cli name was changed to match the id, and that the right fix msg is returned.
+        - Make sure that the object cli name was changed to match the id, and that the right fix msg is returned.
     """
     assert CliNameMatchIdValidator().fix(content_item).message == expected_fix_msg
     assert content_item.cli_name == expected_name
@@ -572,7 +598,7 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_fix(
     When
     - Calling the IsFromVersionSufficientIndicatorFieldValidator fix function.
     Then
-        - Make sure the the integration fromversion was raised and that the right message was returned.
+        - Make sure that the integration fromversion was raised and that the right message was returned.
         - Case 1: Should raise the version to 6.1.0.
         - Case 2: Should raise the version to 5.5.0.
         - Case 3: Should raise the version to 5.0.0.
@@ -754,7 +780,7 @@ def test_IsFromVersionSufficientIntegrationValidator_fix(
     When
     - Calling the IsFromVersionSufficientIntegrationValidator fix function.
     Then
-        - Make sure the the integration fromversion was raised and that the right message was returned.
+        - Make sure that the integration fromversion was raised and that the right message was returned.
         - Case 1: Should raise the version to 5.5.0.
         - Case 2: Should raise the version to 5.5.0.
         - Case 3: Should raise the version to 5.0.0.
@@ -930,3 +956,657 @@ def test_IsDeprecatedCorrectlyValidator_is_valid():
     for result in results:
         assert result.content_object.deprecated
         assert result.content_object.description == "Some description"
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_indicator_field_object(),
+                create_incident_field_object(),
+                create_widget_object(),
+                create_wizard_object(dict_to_update={"version": -1}),
+                create_integration_object(),
+                create_script_object(),
+                create_dashboard_object(),
+                create_incident_type_object(),
+                create_generic_module_object(),
+                create_generic_type_object(),
+                create_incoming_mapper_object(),
+                create_outgoing_mapper_object(),
+                create_generic_definition_object(),
+                create_classifier_object(),
+                create_list_object(["version"], [-1]),
+                create_playbook_object(),
+                create_generic_field_object(),
+                create_layout_object(),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_incident_field_object(["version"], [-2]),
+                create_list_object(["version"], [1]),
+                create_integration_object(["commonfields.version"], [0]),
+            ],
+            3,
+            [
+                "The version for our files should always be -1, please update the file.",
+                "The version for our files should always be -1, please update the file.",
+                "The version for our files should always be -1, please update the file.",
+            ],
+        ),
+    ],
+)
+def test_IsValidVersionValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items list.
+        - Case 1: A list of one of each content_item supported by the validation with a valid ID.
+        - Case 2: A list of one IncidentField, List, and Integration, all with invalid versions.
+    When
+    - Calling the IsValidVersionValidator is_valid function.
+    Then
+        - Make sure the right amount of failures return and that the error msg is correct.
+        - Case 1: Shouldn't fail anything.
+        - Case 2: Should fail all 3 content items.
+    """
+    results = IsValidVersionValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidVersionValidator_fix():
+    """
+    Given
+    - An integration with an invalid version.
+    When
+    - Calling the IsValidVersionValidator fix function.
+    Then
+    - Make sure that the object version was changed to -1, and that the right fix msg was returned.
+    """
+    content_item = create_integration_object(["commonfields.version"], [0])
+    assert content_item.version != -1
+    assert (
+        IsValidVersionValidator().fix(content_item).message
+        == "Updated the content item version to -1."
+    )
+    assert content_item.version == -1
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_msg",
+    [
+        pytest.param(
+            [
+                create_integration_object(
+                    paths=["name", "display"],
+                    values=["Test v1", "Testv1"],
+                ),
+                create_integration_object(
+                    paths=["name", "display"],
+                    values=["Test Integration", "TestIntegration"],
+                ),
+            ],
+            "The following fields: name, display shouldn't contain the word 'Integration'.",
+            id="Case 1: Integration in name or display (valid and invalid)",
+        ),
+        pytest.param(
+            [
+                create_script_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_script_object(
+                    paths=["name"],
+                    values=["Test Script"],
+                ),
+            ],
+            "The following field: name shouldn't contain the word 'Script'.",
+            id="Case 2: Script in name or display (valid and invalid)",
+        ),
+        pytest.param(
+            [
+                create_playbook_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_playbook_object(
+                    paths=["name"],
+                    values=["Test Playbook"],
+                ),
+            ],
+            "The following field: name shouldn't contain the word 'Playbook'.",
+            id="Case 3: Playbook in name or display (valid and invalid)",
+        ),
+        pytest.param(
+            [
+                create_playbook_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_script_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_integration_object(
+                    paths=["name", "display"],
+                    values=["Test v1", "Testv1"],
+                ),
+            ],
+            "",
+            id="Case 4: All content items are valid",
+        ),
+    ],
+)
+def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg):
+    """
+    Given
+    - Case 1: Two content items of type 'Integration' are validated.
+        - The first integration doest not have its type in 'name' and 'display' fields.
+        - The second integration does have its type in 'name' and 'display' fields.
+    - Case 2: Two content items of type 'Script' are validated.
+        - The first script doest not have its type in 'name' field.
+        - The second script does have its type in 'name' field.
+    - Case 3: Two content items of type 'Playbook' are validated.
+        - The first playbook doest not have its type in 'name' field.
+        - The second playbook does have its type in 'name' field.
+    - Case 4:
+        - All content items are valid.
+    When
+    - Running the IsEntityTypeInEntityNameValidator validation.
+    Then
+    - Case 1:
+        - Don't fail the validation.
+        - Fail the validation with a relevant message containing 'name' and 'display' fields.
+    - Case 2:
+        - Don't fail the validation.
+        - Fail the validation with a relevant message containing 'name' field.
+    - Case 3:
+        - Don't fail the validation.
+        - Fail the validation with a relevant message containing 'name' field.
+    - Case 4:
+        - Don't fail the validation and is_valid function return empty array.
+    """
+    result = IsEntityTypeInEntityNameValidator().is_valid(content_items)
+    if result:
+        assert result[0].message == expected_msg
+        assert len(result) == 1
+    else:
+        assert len(result) == 0
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_error_message",
+    [
+        pytest.param(
+            [create_integration_object()],
+            0,
+            "",
+            id="valid integration",
+        ),
+        pytest.param(
+            [create_integration_object(paths=["display"], values=["partner"])],
+            1,
+            ERROR_MSG_TEMPLATE.format("partner"),
+            id="invalid integration",
+        ),
+        pytest.param([create_playbook_object()], 0, "", id="valid playbook"),
+        pytest.param(
+            [create_playbook_object(paths=["name"], values=["community"])],
+            1,
+            ERROR_MSG_TEMPLATE.format("community"),
+            id="invalid playbook",
+        ),
+        pytest.param([create_script_object()], 0, "", id="valid script"),
+        pytest.param(
+            [create_script_object(paths=["name"], values=["community"])],
+            1,
+            ERROR_MSG_TEMPLATE.format("community"),
+            id="invalid script",
+        ),
+        pytest.param([create_classifier_object()], 0, "", id="valid classifier"),
+        pytest.param(
+            [create_classifier_object(paths=["name"], values=["partner"])],
+            1,
+            ERROR_MSG_TEMPLATE.format("partner"),
+            id="invalid classifier",
+        ),
+    ],
+)
+def test_IsEntityNameContainExcludedWordValidator(
+    content_items, expected_number_of_failures, expected_error_message
+):
+    """
+    Given
+    - Case 1: Content item of type 'Integration' which contains a valid entity name.
+    - Case 2: Content item of type 'Integration' which contains an invalid entity name.
+    - Case 3: Content item of type 'Playbook' which contains a valid entity name.
+    - Case 4: Content item of type 'Playbook' which contains an invalid entity name.
+
+    - Case 5: Content item of type 'Script' which contains a valid entity name.
+    - Case 6: Content item of type 'Script' which contains an invalid entity name.
+
+    - Case 7: Content item of type 'Classifier' which contains a valid entity name.
+    - Case 8: Content item of type 'Classifier' which contains an invalid entity name.
+
+    When
+    - Running the IsEntityNameContainExcludedWordValidator validation.
+    Then
+    - Case 1: Don't fail the validation.
+    - Case 2: Fail the validation with a relevant message containing 'name' field.
+    - Case 3: Don't fail the validation.
+    - Case 4: Fail the validation with a relevant message containing 'name' field.
+    - Case 5: Don't fail the validation.
+    - Case 6: Fail the validation with a relevant message containing 'name' field.
+    - Case 7: Don't fail the validation.
+    - Case 8: Fail the validation with a relevant message containing 'name' field.
+    """
+    results = IsEntityNameContainExcludedWordValidator().is_valid(
+        content_items=content_items
+    )
+    assert len(results) == expected_number_of_failures
+    if results:
+        assert results[0].message == expected_error_message
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [create_pack_object(), create_pack_object()],
+            1,
+            [
+                "Pack for content item '/newPackName' and all related files were changed from 'pack_171' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [create_integration_object(), create_integration_object()],
+            1,
+            [
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_173' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_parsing_rule_object(),
+                create_parsing_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'pack_175' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_correlation_rule_object(),
+                create_correlation_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'pack_177' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_playbook_object(),
+                create_playbook_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'pack_179' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_modeling_rule_object(),
+                create_modeling_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'pack_181' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_ps_integration_object(),
+                create_ps_integration_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_183' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_script_object(),
+                create_script_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'pack_185' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_classifier_object(),
+                create_classifier_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'pack_187' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_list_object(),
+                create_list_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'pack_189' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_job_object(),
+                create_job_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'pack_191' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_dashboard_object(),
+                create_dashboard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'pack_193' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_incident_type_object(),
+                create_incident_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'pack_195' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_incident_field_object(),
+                create_incident_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'pack_197' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_report_object(),
+                create_report_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'pack_199' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_xsiam_report_object(),
+                create_xsiam_report_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'pack_201' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_xsiam_dashboard_object(),
+                create_xsiam_dashboard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'pack_203' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_xdrc_template_object(),
+                create_xdrc_template_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from 'pack_205' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_assets_modeling_rule_object(),
+                create_assets_modeling_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'pack_207' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_trigger_object(),
+                create_trigger_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'pack_209' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_layout_object(),
+                create_layout_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'pack_211' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_widget_object(),
+                create_widget_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'pack_213' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_indicator_field_object(),
+                create_indicator_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'pack_215' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_wizard_object(),
+                create_wizard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'pack_217' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_definition_object(),
+                create_generic_definition_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'pack_219' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_field_object(),
+                create_generic_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'pack_221' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_type_object(),
+                create_generic_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'pack_223' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_module_object(),
+                create_generic_module_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'pack_225' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_incoming_mapper_object(),
+                create_incoming_mapper_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'pack_227' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_outgoing_mapper_object(),
+                create_outgoing_mapper_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'pack_229' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_indicator_type_object(),
+                create_indicator_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'pack_231' to 'newPackName', please undo."
+            ],
+        ),
+    ],
+)
+def test_ValidPackNameValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given:
+    content_items.
+        31 content items.
+        Each test contains one object where the pack name was changed, and one where it was not.
+
+    When:
+        - Calling the PackNameValidator is_valid function.
+
+    Then:
+        - Make sure the right amount of tests failed, and that the right error message is returned.
+        - For each test, one should fail while the other should pass.
+    """
+    old_content_items = copy.deepcopy(content_items)
+    create_old_file_pointers(content_items, old_content_items)
+    content_item_parts = list(content_items[1].path.parts)
+    packs_folder_index = content_item_parts.index(PACKS_FOLDER) + 1
+    content_item_parts[packs_folder_index] = "newPackName"
+    new_path = Path(*content_item_parts)
+    content_items[1].path = new_path
+    results = PackNameValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        ([create_script_object(), create_integration_object()], 0, []),
+        (
+            [
+                create_script_object(code="BSD\nMIT"),
+                create_script_object(
+                    code="MIT", test_code="here we are going to fail\nproprietary"
+                ),
+                create_integration_object(code="Copyright"),
+            ],
+            3,
+            [
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1, 2.",
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1.\nThe test code file contains copyright key words in line(s) 2.",
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1.",
+            ],
+        ),
+    ],
+)
+def test_IsPyFileContainCopyRightSectionValidator(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    Content item iterables.
+    - Case 1: One script and one integration without any copyright keywords in the code/test code.
+    - Case 2: 3 content items:
+        - One integration with copyright keywords in both line 1 and 2 in the code_file.
+        - One script with copyright keyword in the code in line 1 and in the test_code in line 2.
+        - One script with copyright keyword in the code in line 1.
+    When
+    - Running the IsPyFileContainCopyRightSectionValidator validation.
+    Then
+    - Make sure the right number of content_items failed and the right error was returned.
+    - Case 1: Shouldn't fail anything.
+    - Case 2: Should fail all.
+    """
+    results = IsPyFileContainCopyRightSectionValidator().is_valid(
+        content_items=content_items
+    )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

@@ -17,12 +17,12 @@ RELATED_FILES_DICT = {
     "1": "RelatedFileType.YML",
     "2": "RelatedFileType.JSON",
     "3": "RelatedFileType.README",
-    "4": "RelatedFileType.DESCRIPTION",
+    "4": "RelatedFileType.DESCRIPTION_File",
     "5": "RelatedFileType.IMAGE",
     "6": "RelatedFileType.DARK_SVG",
     "7": "RelatedFileType.LIGHT_SVG",
-    "8": "RelatedFileType.CODE",
-    "9": "RelatedFileType.TEST_CODE",
+    "8": "RelatedFileType.CODE_FILE",
+    "9": "RelatedFileType.TEST_CODE_FILE",
     "10": "RelatedFileType.SCHEMA",
     "11": "RelatedFileType.XIF",
     "12": "RelatedFileType.PACK_IGNORE",
@@ -57,8 +57,8 @@ CONTENT_TYPES_DICT = {
         "content_type": "Classifier",
     },
     "7": {
-        "import": "from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType",
-        "content_type": "IncidentType",
+        "import": "from demisto_sdk.commands.content_graph.objects.job import Job",
+        "content_type": "Job",
     },
     "8": {
         "import": "from demisto_sdk.commands.content_graph.objects.layout import Layout",
@@ -159,6 +159,7 @@ $supported_content_types
 $class_declaration
     error_code = "$error_code"
     description = "$error_description"
+    rationale = "$rationale"
     error_message = "$error_message"$fix_message
     related_field = "$related_field"
     is_auto_fixable = $is_auto_fixable$expected_git_statuses$support_deprecated$related_files
@@ -202,6 +203,7 @@ class ValidationInitializer:
         """
         self.initialize_error_code()
         self.initialize_error_description()
+        self.initialize_validate_rationale()
         self.initialize_error_message()
         self.initialize_validator_related_field()
 
@@ -237,6 +239,16 @@ class ValidationInitializer:
         self.related_field = str(
             input(
                 "Please enter the error's related_field or press enter to leave blank for now: "
+            )
+        )
+
+    def initialize_validate_rationale(self):
+        """
+        Request the rationale from the user.
+        """
+        self.rationale = str(
+            input(
+                "Please enter the rationale for this validation; *why* do we have this validation? (not what it does)"
             )
         )
 
@@ -472,16 +484,12 @@ Fill the content types as the numbers they appear as: """
             self.imports += "from typing import Iterable, List\n\n"
         else:
             self.imports += "from typing import Iterable, List, Union\n\n"
-        if self.git_statuses and self.related_files:
-            self.imports += "from demisto_sdk.commands.common.constants import (GitStatuses, RelatedFileType)\n"
-        elif self.git_statuses:
+        if self.git_statuses:
             self.imports += (
                 "from demisto_sdk.commands.common.constants import GitStatuses\n"
             )
-        elif self.related_files:
-            self.imports += (
-                "from demisto_sdk.commands.common.constants import RelatedFileType\n"
-            )
+        if self.related_files:
+            self.imports += "from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType\n"
         for content_type in self.content_types:
             self.imports += (
                 f"{CONTENT_TYPES_DICT.get(content_type, {}).get('import', '')}\n"
@@ -533,7 +541,11 @@ Fill the content types as the numbers they appear as: """
         if self.support_fix:
             self.fix_method = """def fix(self, content_item: ContentTypes) -> FixResult:
         # Add your fix right here
-        pass
+        return FixResult(
+            validator=self,
+            message=self.fix_message,
+            content_object=content_item,
+        )
             """
 
     def generate_file_info(self):
@@ -568,6 +580,7 @@ Fill the content types as the numbers they appear as: """
                 class_declaration=self.class_declaration,
                 error_code=self.error_code,
                 error_description=self.error_description,
+                rationale=self.rationale,
                 error_message=self.error_message,
                 fix_message=self.fix_message,
                 related_field=self.related_field,

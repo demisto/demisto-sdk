@@ -11,7 +11,7 @@ from git import (
     Repo,  # noqa: TID251: required to create GitUtil
 )
 from git.diff import Lit_change_type
-from git.exc import GitError, NoSuchPathError
+from git.exc import GitError
 from git.objects import Blob, Commit
 from git.remote import Remote
 
@@ -34,7 +34,7 @@ class CommitOrBranchNotFoundError(GitError):
         super().__init__(f"Commit/Branch {commit_or_branch} could not be found")
 
 
-class GitFileNotFoundError(NoSuchPathError):
+class GitFileNotFoundError(FileNotFoundError):
     def __init__(self, commit_or_branch: str, path: str, from_remote: bool = True):
         if from_remote:
             commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
@@ -74,6 +74,19 @@ class GitUtil:
         return cls(path)
 
     def path_from_git_root(self, path: Union[Path, str]) -> Path:
+
+        """
+        Given an absolute path, return the path to the file/directory from the
+        repo/git root. For example, `/<some_local_path>/Packs/HelloWorld/pack_metadata.json`
+        will return `Packs/HelloWorld/pack_metadata.json`.
+
+        Arguments:
+        - `path` (``Path|str``): The path to the file/folder.
+
+        Returns:
+        - `Path` relative to the working directory.
+        """
+
         try:
             return Path(path).relative_to(Path(self.repo.working_dir))
         except ValueError:
@@ -689,7 +702,7 @@ class GitUtil:
             if item
         }
 
-    def _get_all_changed_files(self, prev_ver: str = "") -> Set[Path]:
+    def _get_all_changed_files(self, prev_ver: Optional[str] = None) -> Set[Path]:
         """
         Get all the files changed in the current branch without status distinction.
 
@@ -800,7 +813,7 @@ class GitUtil:
                     return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 
-    def handle_prev_ver(self, prev_ver: str = ""):
+    def handle_prev_ver(self, prev_ver: Optional[str] = None):
         # check for sha1 in regex
         sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
         if prev_ver and sha1_pattern.match(prev_ver):
@@ -849,7 +862,7 @@ class GitUtil:
         try:
             commit = self.repo.commit(commit_hash)
             return commit.hexsha == commit_hash
-        except ValueError:
+        except (ValueError, gitdb.exc.BadName):
             return False
 
     def get_current_working_branch(self) -> str:

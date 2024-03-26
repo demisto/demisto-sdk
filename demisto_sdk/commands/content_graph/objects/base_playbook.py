@@ -1,20 +1,25 @@
-from typing import Callable, Dict, Optional
+from functools import cached_property
+from typing import Callable, Optional
 
 import demisto_client
 
 from demisto_sdk.commands.common.constants import (
-    PACKS_README_FILE_NAME,
     MarketplaceVersions,
-    RelatedFileType,
 )
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    ImageRelatedFile,
+    ReadmeRelatedFile,
+)
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_playbooks_prepare import (
     MarketplaceIncidentToAlertPlaybooksPreparer,
 )
 
 
 class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
+    version: Optional[int] = 0
+
     def summary(
         self,
         marketplace: Optional[MarketplaceVersions] = None,
@@ -43,38 +48,10 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_playbook
 
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        related_content_files = super().get_related_content()
-        related_content_files.update(
-            {
-                RelatedFileType.IMAGE: {
-                    "path": [
-                        str(
-                            self.path.parents[1]
-                            / "doc_files"
-                            / str(self.path.parts[-1])
-                            .replace(".yml", ".png")
-                            .replace("playbook-", "")
-                        ),
-                        str(self.path).replace(".yml", ".png"),
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.README: {
-                    "path": [
-                        str(
-                            self.path.parent
-                            / str(self.path.parts[-1]).replace(
-                                ".yml", f"_{PACKS_README_FILE_NAME}"
-                            )
-                        )
-                    ],
-                    "git_status": None,
-                },
-            }
-        )
-        return related_content_files
+    @cached_property
+    def readme(self) -> ReadmeRelatedFile:
+        return ReadmeRelatedFile(self.path, is_pack_readme=False, git_sha=self.git_sha)
 
-    @property
-    def readme(self) -> str:
-        return self.get_related_text_file(RelatedFileType.README)
+    @cached_property
+    def image(self) -> ImageRelatedFile:
+        return ImageRelatedFile(self.path, git_sha=self.git_sha)

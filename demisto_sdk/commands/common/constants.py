@@ -29,7 +29,12 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
     "CI_PROJECT_ID", "1061"
 )  # Default value is the ID of the content repo on GitLab
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
-DOCKER_REGISTRY_URL = os.getenv("DOCKER_IO", "docker.io")
+
+DEFAULT_DOCKER_REGISTRY_URL = "docker.io"
+DOCKER_REGISTRY_URL = os.getenv(
+    "DEMISTO_SDK_CONTAINER_REGISTRY",
+    os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+)
 
 
 # Authentication
@@ -833,6 +838,8 @@ PACK_METADATA_KEYWORDS: str = "keywords"
 PACK_METADATA_PRICE: str = "price"
 PACK_METADATA_DEPENDENCIES: str = "dependencies"
 PACK_METADATA_IRON_BANK_TAG: str = "Iron Bank"
+PACK_METADATA_SERVER_MIN_VERSION: str = "serverMinVersion"
+PACK_METADATA_EXCLUDED_DEPENDENCIES: str = "excludedDependencies"
 
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
 USE_CASE_TAG: str = "Use Case"
@@ -854,6 +861,17 @@ PACK_METADATA_MANDATORY_FILLED_FIELDS = [
     PACK_METADATA_CATEGORIES,
     PACK_METADATA_USE_CASES,
 ]
+
+PACK_METADATA_REQUIRE_RN_FIELDS: set = {
+    PACK_METADATA_SUPPORT,
+    PACK_METADATA_DEPENDENCIES,
+    PACK_METADATA_NAME,
+    PACK_METADATA_PRICE,
+    MARKETPLACE_KEY_PACK_METADATA,
+    PACK_METADATA_SERVER_MIN_VERSION,
+    PACK_METADATA_EXCLUDED_DEPENDENCIES,
+}
+
 API_MODULES_PACK = "ApiModules"
 API_MODULE_FILE_SUFFIX = "ApiModule"
 API_MODULE_PY_REGEX = r"{}{}/{}/{}/([^/]+)/([^.]+)\.py".format(
@@ -890,6 +908,7 @@ PARSING_RULE_NAME_SUFFIX = "Parsing Rule"
 MODELING_RULE_PREFIX = "modelingrule"
 MODELING_RULE_ID_SUFFIX = "ModelingRule"
 MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
+ASSETS_MODELING_RULE_NAME_SUFFIX = "Asset Collection"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
 ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
@@ -898,10 +917,13 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
-PACKS_README_FILE_NAME = "README.md"
+PACKS_README_FILE_NAME = (
+    INTEGRATIONS_README_FILE_NAME
+) = SCRIPTS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
+GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
 
@@ -1480,7 +1502,7 @@ GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union(
     {"send-mail", "send-notification", "cve-latest", "cve-search"}
 )
 
-DBOT_SCORES_DICT = {
+DBOT_SCORES_DICT: Dict[str, str] = {
     "DBotScore.Indicator": "The indicator that was tested.",
     "DBotScore.Type": "The indicator type.",
     "DBotScore.Vendor": "The vendor used to calculate the score.",
@@ -1528,6 +1550,7 @@ INCORRECT_PACK_NAME_WORDS = [
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
 SUPPORT_LEVEL_HEADER = "supportlevelheader"
+CLASSIFICATION_TYPE = "classification"
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
@@ -2112,21 +2135,3 @@ PACK_DEFAULT_MARKETPLACES: List = [
     MarketplaceVersions.XSOAR.value,
     MarketplaceVersions.MarketplaceV2.value,
 ]
-
-
-class RelatedFileType(Enum):
-    YML = "YML"
-    JSON = "JSON"
-    README = "README"
-    DESCRIPTION = "DESCRIPTION"
-    IMAGE = "IMAGE"
-    DARK_SVG = "DARK_SVG"
-    LIGHT_SVG = "LIGHT_SVG"
-    CODE = "CODE"
-    TEST_CODE = "TEST_CODE"
-    SCHEMA = "SCHEMA"
-    XIF = "XIF"
-    PACK_IGNORE = "PACK_IGNORE"
-    SECRETS_IGNORE = "SECRETS_IGNORE"
-    AUTHOR_IMAGE = "AUTHOR_IMAGE"
-    RELEASE_NOTES = "RELEASE_NOTES"

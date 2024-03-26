@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -5,10 +6,8 @@ from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
-    PACKS_README_FILE_NAME,
     Auto,
     MarketplaceVersions,
-    RelatedFileType,
 )
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker_helper import (
@@ -21,24 +20,48 @@ from demisto_sdk.commands.common.native_image import (
 )
 from demisto_sdk.commands.content_graph.common import lazy_property
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    CodeRelatedFile,
+    ReadmeRelatedFile,
+    TestCodeRelatedFile,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 
 
+class Output(BaseModel):
+    description: Optional[str] = ""
+    contentPath: Optional[str] = None
+    contextPath: Optional[str] = None
+    type: Optional[str] = None
+
+
 class Argument(BaseModel):
     name: str
     description: str = ""
-    required: Optional[bool] = False
+    required: Optional[bool] = None
     default: Optional[bool] = None
     predefined: Optional[List[str]] = None
-    isArray: Optional[bool] = False
+    isArray: Optional[bool] = None
     defaultvalue: Optional[Any] = None
-    secret: Optional[bool] = False
+    secret: Optional[bool] = None
     deprecated: Optional[bool] = False
     type: Optional[str] = None
     hidden: Optional[bool] = False
     auto: Optional[Auto] = None
+
+    @property
+    def to_raw_dict(self) -> Dict:
+        """Generate a Dict representation of the Argument object.
+
+        Returns:
+            Dict: The Dict representation of the Argument object.
+        """
+        dictified_arg = self.dict(exclude_none=True)
+        if "auto" in dictified_arg:
+            dictified_arg["auto"] = str(dictified_arg["auto"])
+        return dictified_arg
 
 
 class IntegrationScript(ContentItem):
@@ -46,10 +69,12 @@ class IntegrationScript(ContentItem):
     subtype: Optional[str]
     docker_image: DockerImage = DockerImage("")
     alt_docker_images: List[str] = []
+    auto_update_docker_image: bool = True
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
     unified_data: dict = Field(None, exclude=True)
+    version: Optional[int] = 0
 
     @lazy_property
     def python_version(self) -> Optional[str]:
@@ -105,37 +130,20 @@ class IntegrationScript(ContentItem):
             ).get_supported_native_image_versions(get_raw_version=True)
         return []
 
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        related_content_files = super().get_related_content()
+    @cached_property
+    def code_file(self) -> CodeRelatedFile:
         suffix = (
             ".ps1" if self.is_powershell else ".js" if self.is_javascript else ".py"
         )
-        related_content_files.update(
-            {
-                RelatedFileType.README: {
-                    "path": [
-                        str(self.path.parent / PACKS_README_FILE_NAME),
-                        str(self.path).replace(".yml", f"_{PACKS_README_FILE_NAME}"),
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.TEST_CODE: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_test{suffix}")
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.CODE: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}{suffix}"),
-                        str(self.path),
-                    ],
-                    "git_status": None,
-                },
-            }
-        )
-        return related_content_files
+        return CodeRelatedFile(self.path, suffix=suffix, git_sha=self.git_sha)
 
-    @property
-    def readme(self) -> str:
-        return self.get_related_text_file(RelatedFileType.README)
+    @cached_property
+    def test_code_file(self) -> TestCodeRelatedFile:
+        suffix = (
+            ".ps1" if self.is_powershell else ".js" if self.is_javascript else ".py"
+        )
+        return TestCodeRelatedFile(self.path, suffix=suffix, git_sha=self.git_sha)
+
+    @cached_property
+    def readme(self) -> ReadmeRelatedFile:
+        return ReadmeRelatedFile(self.path, is_pack_readme=False, git_sha=self.git_sha)

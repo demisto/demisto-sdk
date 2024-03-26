@@ -16,7 +16,7 @@ inputs:
   command-to-run:
     required: false
     type: string
-    description: "The validate terminal command to run."
+    description: "The validate command arguments to run."
 
 
 runs:

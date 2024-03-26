@@ -29,6 +29,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy_and_insecure import (
     IsValidProxyAndInsecureValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN101_is_valid_dbot import (
+    IsValidDbotValidator,
+)
 from demisto_sdk.commands.validate.validators.IN_validators.IN102_is_valid_checkbox_default_field import (
     IsValidCheckboxDefaultFieldValidator,
 )
@@ -5643,6 +5646,139 @@ def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
         - Case 2: Should fail all.
     """
     results = IsRepCommandContainIsArrayArgumentValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "arguments": [],
+                                "outputs": [
+                                    {
+                                        "contextPath": "DBotScore.Indicator",
+                                        "description": "The indicator that was tested.",
+                                    },
+                                    {
+                                        "contextPath": "DBotScore.Type",
+                                        "description": "The indicator type.",
+                                    },
+                                    {
+                                        "contextPath": "DBotScore.Vendor",
+                                        "description": "The vendor used to calculate the score.",
+                                    },
+                                    {
+                                        "contextPath": "DBotScore.Score",
+                                        "description": "The actual score.",
+                                    },
+                                ],
+                            },
+                            {
+                                "name": "non_rep_command",
+                                "description": "not a reputation command.",
+                                "arguments": [],
+                                "outputs": [],
+                            },
+                        ],
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "arguments": [],
+                                "outputs": [
+                                    {
+                                        "contextPath": "DBotScore.Indicator",
+                                        "description": "test",
+                                    }
+                                ],
+                            },
+                        ],
+                    ],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "url",
+                                "description": "url command",
+                                "arguments": [],
+                                "outputs": [
+                                    {
+                                        "contextPath": "DBotScore.Indicator",
+                                        "description": "The indicator that was tested.",
+                                    },
+                                    {
+                                        "contextPath": "DBotScore.Type",
+                                        "description": "The indicator type.",
+                                    },
+                                    {
+                                        "contextPath": "DBotScore.Vendor",
+                                        "description": "The vendor used to calculate the score.",
+                                    },
+                                    {
+                                        "contextPath": "DBotScore.Score",
+                                        "description": "The non actual score.",
+                                    },
+                                ],
+                            }
+                        ],
+                    ],
+                ),
+            ],
+            2,
+            [
+                "The integration contains reputation command(s) with missing outputs/malformed descriptions:\nThe command 'ip' is invalid:\n\tThe following outputs are missing:\n\t\t- The output 'DBotScore.Type', the description should be 'The indicator type.'\n\t\t- The output 'DBotScore.Vendor', the description should be 'The vendor used to calculate the score.'\n\t\t- The output 'DBotScore.Score', the description should be 'The actual score.'\n\tThe following outputs descriptions are invalid:\n\t\t- The output 'DBotScore.Indicator' description is invalid. Description should be 'The indicator that was tested.'",
+                "The integration contains reputation command(s) with missing outputs/malformed descriptions:\nThe command 'url' is invalid:\n\tThe following outputs descriptions are invalid:\n\t\t- The output 'DBotScore.Score' description is invalid. Description should be 'The actual score.'",
+            ],
+        ),
+    ],
+)
+def test_IsValidDbotValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations:
+            - One integration with a reputation command with all the outputs and the right description.
+            - One integration without a reputation command without any outputs.
+        - Case 2: Two invalid integrations:
+            - One integration with a reputation command with one output with wrong description and three missing outputs.
+            - One integration with all four outputs, one of them is with a wrong description.
+    When
+    - Calling the IsValidDbotValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned including the right outputs.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all.
+    """
+    results = IsValidDbotValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [

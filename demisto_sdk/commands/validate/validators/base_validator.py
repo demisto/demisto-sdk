@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import is_abstract_class
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -28,6 +29,43 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
+
+VALIDATION_CATEGORIES = {
+    "BA": "Basic",
+    "BC": "Backward Compatability",
+    "CJ": "Conf.json",
+    "CL": "Classifier",
+    "DA": "Dashboard",
+    "DB": "DBot",
+    "DO": "Docker Image",
+    "DS": "Description",
+    "IF": "Incident Field",
+    "IM": "Author Image",
+    "IN": "Integration",
+    "IT": "Incident Type",
+    "PA": "Pack",
+    "PB": "Playbook",
+    "RM": "Readme",
+    "RP": "Reputation (Incident Type)",
+    "SC": "Script",
+    "GF": "Generic Field",
+    "LI": "List",
+    "LO": "Layout",
+    "MP": "Mapper",
+    "PP": "Pre-Process Rule",
+    "RN": "Release Note",
+    "ST": "Structure",
+    "WD": "Widget",
+    "XC": "XSOAR Configuration",
+    "WZ": "Wizard",
+    "MR": "Modeling Rule",
+    "CR": "Correlation Rule",
+    "XR": "XSIAM Report",
+    "PR": "Parsing Rule",
+    "XT": "XDRC Template",
+    "XD": "XSIAM Dashboard",
+    "GR": "Graph",
+}
 
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
@@ -133,6 +171,18 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         # Exclude the properties from the repr
         fields = {"graph": {"exclude": True}, "dockerhub_client": {"exclude": True}}
 
+    @property
+    def error_category(self) -> str:
+        return self.error_code[:2]
+
+
+def get_all_validators() -> List[BaseValidator]:
+    return [
+        validator()
+        for validator in BaseValidator.__subclasses__()
+        if not is_abstract_class(validator)
+    ]
+
 
 class BaseResult(BaseModel):
     validator: BaseValidator
@@ -205,7 +255,10 @@ class InvalidContentItemResult(BaseResult, BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.path.relative_to(CONTENT_PATH))}: [{self.error_code}] - {self.message}"
+        path: Path = self.path
+        if path.is_absolute():
+            path = path.relative_to(CONTENT_PATH)
+        return f"{path}: [{self.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):

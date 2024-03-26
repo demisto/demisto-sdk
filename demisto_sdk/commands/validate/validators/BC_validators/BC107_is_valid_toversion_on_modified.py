@@ -21,9 +21,7 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
     rationale = "Changing the `toversion` field for a content item can break backward compatibility."
     error_message = "Changing the maximal supported version field `toversion` is not allowed. Please undo, or request a force merge."
     related_field = "toversion"
-    is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.MODIFIED]
-    related_file_type = [RelatedFileType.YML, RelatedFileType.JSON]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

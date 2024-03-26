@@ -42,12 +42,12 @@ jobs:
         run: |
           poetry build
 
-      - name: Publish SDK to PyPi
-        run: |
-          poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
-
-      - name: Comment PR that SDK has been released
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: |
-            Demisto-SDK ${{ steps.branch-name.outputs.current_branch }} has been released successfully into pypi :smiley:
+#      - name: Publish SDK to PyPi
+#        run: |
+#          poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+#
+#      - name: Comment PR that SDK has been released
+#        uses: thollander/actions-comment-pull-request@v2
+#        with:
+#          message: |
+#            Demisto-SDK ${{ steps.branch-name.outputs.current_branch }} has been released successfully into pypi :smiley:

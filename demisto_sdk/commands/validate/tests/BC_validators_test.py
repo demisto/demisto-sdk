@@ -746,32 +746,27 @@ def create_dummy_integration_with_context_path(
     return integration
 
 
-@pytest.mark.parametrize(
-    "old_context_path, new_context_path, len_expected_result",
-    [
-        pytest.param(
-            "test.test",
-            "test.test1",
-            1,
-            id="context path has been changed",
-        ),
-        pytest.param(
-            "test.test",
-            "test.test",
-            0,
-            id="valid integration",
-        ),
-    ],
-)
-def test_IsContextPathChangedValidator(
-    old_context_path, new_context_path, len_expected_result
-):
+def test_IsContextPathChangedValidator():
+    command_name = "command"
+    old_context_path = "test.test"
+
     new_integration = create_dummy_integration_with_context_path(
-        command_name="command", context_path=new_context_path
+        command_name=command_name, context_path=old_context_path
     )
     old_integration = create_dummy_integration_with_context_path(
-        command_name="command", context_path=old_context_path
+        command_name=command_name, context_path=old_context_path
     )
+
     new_integration.old_base_content_object = old_integration
-    result = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
-    assert len(result) == len_expected_result
+
+    # integration is valid so we get an empty list
+    assert not IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+
+    changed_integration = create_dummy_integration_with_context_path(
+        command_name=command_name, context_path="test.test1"
+    )
+
+    new_integration.old_base_content_object = changed_integration
+
+    # integration is invalid, so we get a list which contains ValidationResult
+    assert IsContextPathChangedValidator().is_valid(content_items=[new_integration])

@@ -1,3 +1,5 @@
+import pytest
+
 from demisto_sdk.commands.validate.tests.test_tools import create_generic_field_object
 from demisto_sdk.commands.validate.validators.GF_validators.GF100_generic_field_group import (
     REQUIRED_GROUP_VALUE,
@@ -54,7 +56,8 @@ def test_GenericFieldGroupValidator_is_valid():
     assert not GenericFieldGroupValidator().is_valid([generic_field])
 
 
-def test_UnsearchableKeyValidator_is_valid():
+@pytest.mark.parametrize("unsearchable", (False, None))
+def test_UnsearchableKeyValidator_is_valid(unsearchable: bool):
     """
     Given:
         - GenericField content items
@@ -66,7 +69,9 @@ def test_UnsearchableKeyValidator_is_valid():
         - Ensure that no ValidationResult returned when unsearchable set to true
     """
     # not valid
-    generic_field = create_generic_field_object(paths=["unsearchable"], values=[False])
+    generic_field = create_generic_field_object(
+        paths=["unsearchable"], values=[unsearchable]
+    )
     assert UnsearchableKeyValidator().is_valid([generic_field])
 
     # valid

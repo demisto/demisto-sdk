@@ -165,12 +165,15 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         self.__add_lazy_properties()
         cached_properties = {
             name
-            for name, value in inspect.getmembers(self)
+            for name, value in inspect.getmembers(self.__class__)
             if isinstance(value, cached_property)
         }
         json_dct = json.loads(
             self.json(
-                exclude={"commands", "database_id", "author_image_file"}
+                exclude={
+                    "commands",
+                    "database_id",
+                }
                 | cached_properties
             )
         )

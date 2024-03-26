@@ -1,6 +1,6 @@
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set
 
 import demisto_client
 
@@ -96,12 +96,13 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
         remove_nulls_from_dictionary(command)
         return command
 
-    @property
-    def outputs_context_paths(self) -> list:
+    def diff_outputs_context_path(self, other) -> Set[Optional[str]]:
         """
-        This method returns a list of the all command's outputs context path.
+        This method returns the context path diff between two commands objects.
         """
-        return [output.contextPath for output in self.outputs]
+        outputs_set = {output.contextPath for output in self.outputs}
+        outputs_other_set = {output.contextPath for output in other.outputs}
+        return outputs_set.difference(outputs_other_set)
 
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]

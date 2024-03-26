@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from itertools import chain
-from typing import Iterable, List, Union, Set
+from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -14,33 +12,40 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 
-def is_context_path_changed(content_item: Integration) -> Set[str]:
+def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[str]]]:
     """
-    This method checks if an output context path (an integration) is changed.
+    This method returns the diff between the integrations versions per command.
     """
+    final_diff = {}
+    old_integration = integration.old_base_content_object
+    mapping_old_commands = {
+        # Since we're sure old_integration has 'commands' attribute, we ignore it (down casting does not solve it)
+        command.name: command
+        for command in old_integration.commands  # type:ignore[union-attr]
+    }
+    mapping_new_commands = {command.name: command for command in integration.commands}
+    for command in mapping_new_commands:
+        if command in mapping_old_commands:
+            if diff := mapping_new_commands[command].diff_outputs_context_path(
+                mapping_old_commands[command]
+            ):
+                final_diff[command] = diff
 
-    new_outputs_context_path = set(
-        chain.from_iterable(
-            command.outputs_context_paths for command in content_item.commands
-        )
+    return final_diff
+
+
+def create_error_message(missing: dict) -> str:
+    return "\n".join(
+        f'for command = {command}, here are the outputs that have been changed or removed: {",".join(value)}'
+        for command, value in missing.items()
     )
-
-    old_outputs_context_path = set(
-        chain.from_iterable(
-            command.outputs_context_paths
-            # Since old_base_content_object is an integration, we ignore the mypy comment
-            for command in content_item.old_base_content_object.commands  # type:ignore[union-attr]
-        )
-    )
-
-    return old_outputs_context_path.difference(new_outputs_context_path)
 
 
 class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC102"
     description = "Validate that the context path has been changed."
     rationale = "Changing the paths may break dependent content items, which rely on the existing paths."
-    error_message = "Changing output context paths is not allowed. Restore the following: {}"
+    error_message = "Changing output context paths is not allowed. Restore the following outputs: {}"
     related_field = "outputs"
     expected_git_statuses = [
         GitStatuses.RENAMED,
@@ -51,9 +56,9 @@ class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(",".join(sorted(missing))),
+                message=self.error_message.format(create_error_message(missing)),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (missing := is_context_path_changed(content_item=content_item))
+            if (missing := is_context_path_changed(integration=content_item))
         ]

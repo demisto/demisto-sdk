@@ -767,4 +767,4 @@ def test_IsContextPathChangedValidator():
     # integration is invalid, so we get a list which contains ValidationResult
     errors = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
     assert errors, "Should have failed validation"
-    assert errors[0].message.endswith(old_context_path)
+    assert old_context_path in errors[0].message

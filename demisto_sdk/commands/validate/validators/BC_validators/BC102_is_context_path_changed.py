@@ -41,8 +41,7 @@ class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
     description = "Validate that the context path has been changed."
     rationale = "Changing the paths may break dependent content items, which rely on the existing paths."
     error_message = "Changing output context paths is not allowed."
-    related_field = ""
-    is_auto_fixable = False
+    related_field = "outputs"
     expected_git_statuses = [
         GitStatuses.RENAMED,
         GitStatuses.MODIFIED,

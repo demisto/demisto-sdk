@@ -526,7 +526,11 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v42
         with:
-          files: demisto_sdk/commands/validate/**
+          files: |
+            demisto_sdk/commands/validate/**
+            demisto_sdk/commands/content_graph/objects/**
+            demisto_sdk/commands/content_graph/parsers/**
+            demisto_sdk/commands/common
 
       - name: Setup Environment
         if: steps.changed-files.outputs.any_changed == 'true'

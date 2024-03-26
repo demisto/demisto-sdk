@@ -20,7 +20,6 @@ from demisto_sdk.commands.content_graph.objects.list import List as List_Obj
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -42,7 +41,6 @@ ContentTypes = Union[
     IncidentField,
     IndicatorField,
     IndicatorType,
-    TestPlaybook,
     GenericDefinition,
     GenericField,
     GenericModule,

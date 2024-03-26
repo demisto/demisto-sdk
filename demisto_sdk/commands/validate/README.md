@@ -1,9 +1,8 @@
-This file contains information about our new validate flow, for more information about the old validate flow, please refer to [old_validate_readme](demisto_sdk/commands/validate/old_validate_readme.md)
+This file contains information about our new validate flow. For more information about the old validate flow, refer to [old_validate_readme](demisto_sdk/commands/validate/old_validate_readme.md).
 
 ## Validate
 
-Makes sure your content repository files are in order and have valid file scheme.
-This file 
+Makes sure your content repository files are in order and have a valid file scheme.
 
 **Use Cases**
 This command is used to make sure that the content repo files are valid and are able to be processed by the platform.
@@ -29,17 +28,17 @@ Run validate all without multiprocessing, for debugging purposes.
 * **-j, --json-file**
 The JSON file path to which to output the command results.
 * **--category-to-run**
-Run specific validations by stating category they're listed under in the config file.
+Run specific validations by stating the category they're listed under in the config file.
 * **-f, --fix**
-Wether to autofix failing validations with an available auto fix or not.
+Whether to autofix failing validations with an available auto fix or not.
 * **--config-path**
-Path for a config file to run, if not given - will run the default path at: [demisto_sdk/commands/validate/default_config.toml](default_config.toml)
+Path for a config file to run. If not given - will run the default path at: [demisto_sdk/commands/validate/default_config.toml](default_config.toml)
 * **--ignore-support-level**
-Wether to skip validations based on their support level or not.
+Whether to skip validations based on their support level or not.
 * **--run-old-validate**
-"Wether to run the old validate flow or not. Alteratively, you can configure the RUN_OLD_VALIDATE env variable.
+Whether to run the old validate flow or not. Alternatively, you can configure the RUN_OLD_VALIDATE env variable.
 * **--skip-new-validate**
-Wether to skip the new validate flow or not. Alteratively, you can configure the SKIP_NEW_VALIDATE env variable.
+Whether to skip the new validate flow or not. Alternatively, you can configure the SKIP_NEW_VALIDATE env variable.
 
 **Examples**:
 
@@ -53,7 +52,7 @@ This indicates that the command runs post commit.
 This will validate the file Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml only.
 
 `demisto-sdk validate -a`
-This will validate all files under `Packs` directory.
+This will validate all files under the `Packs` directory.
 
 `demisto-sdk validate -i Packs/HelloWorld`
 This will validate all files under the content pack `HelloWorld`.
@@ -65,16 +64,16 @@ This will validate all files in the repo using the old validate method.
 This will validate all files in the repo using the settings configured in the config file in the given path.
 
 ### Error Codes and Ignoring Them
-Each error found by validate  has an error code attached to it - the code can be found in brackets preceding the error itself.
+Each error found by validate has an error code attached to it. The code can be found in brackets preceding the error itself.  
 For example: `path/to/file: [IN103] - The type field of the proxy parameter should be 8`
-In addition, each pack has a `.pack-ignore` file. In order to ignore a certain validation for a given file, the error-code needs to be listed in the **ignorable_errors** section in the config-file (more about this in the config file section), and the user need to mention the file name (only the name and extension, without the whole path), and the error code to ignore.
+In addition, each pack has a `.pack-ignore` file. In order to ignore a certain validation for a given file, the error-code needs to be listed in the **ignorable_errors** section in the config-file (see the [Config file section](#config-file)), and the user needs to mention the file name (only the name and extension, without the whole path), and the error code to ignore.
 For example: This .pack-ignore will not fail ipinfo_v2.yml on the validations with the codes BA108 & BA109.
 [file:ipinfo_v2.yml]
 ignore=BA108,BA109
 
 ### Config file
-You can define a config file to suit your bussiness needs. If no file is defined, the  [default config file](default_config.toml) will be used.
-The default configuration covers basic validations, which prevent successful upload of the content to XSOAR.
+You can define a config file to suit your business needs. If no file is defined, the  [default config file](default_config.toml) will be used.
+The default configuration covers basic validations, which prevents unsuccessful uploads of the validated content to Cortex XSOAR.
 #### How to define a configuration file
 You can define the following sections:
 **ignorable_errors** - a list of the error codes that can be ignored for individual content items in the .pack-ignore file.

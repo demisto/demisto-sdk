@@ -1,3 +1,4 @@
+import inspect
 from abc import ABC
 from collections import defaultdict
 from functools import cached_property, lru_cache
@@ -14,7 +15,7 @@ from typing import (
     Type,
     cast,
 )
-import inspect
+
 import demisto_client
 from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field

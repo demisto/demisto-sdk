@@ -89,11 +89,10 @@ class ContentItem(BaseContent):
             return ignored_errors
         file_path = safe_get_relative_path(self.path, CONTENT_PATH)
         return self.get_ignored_errors(file_path)
-    
 
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
-             return ignored_errors
+            return ignored_errors
         file_path = safe_get_relative_path(file_path, CONTENT_PATH)
         return self.get_ignored_errors(file_path)
 

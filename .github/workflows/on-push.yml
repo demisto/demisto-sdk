@@ -530,7 +530,7 @@ jobs:
             demisto_sdk/commands/validate/**
             demisto_sdk/commands/content_graph/objects/**
             demisto_sdk/commands/content_graph/parsers/**
-            demisto_sdk/commands/common
+            demisto_sdk/commands/common/**
 
       - name: Setup Environment
         if: steps.changed-files.outputs.any_changed == 'true'

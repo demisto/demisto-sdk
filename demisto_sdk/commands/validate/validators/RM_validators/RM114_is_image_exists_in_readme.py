@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.constants import DOC_FILE_IMAGE_REGEX
 from demisto_sdk.commands.common.tools import (
     extract_image_paths_from_str,
     get_full_image_paths_from_relative,
@@ -44,7 +45,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                             get_pack_name(content_item.path),
                             extract_image_paths_from_str(
                                 text=content_item.readme.file_content,
-                                regex_str=r"\.\./doc_files/[a-zA-Z0-9_-]+\.png",
+                                regex_str=DOC_FILE_IMAGE_REGEX,
                             ),
                         )
                         if image_path and not image_path.is_file()

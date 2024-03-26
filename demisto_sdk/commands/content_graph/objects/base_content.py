@@ -14,7 +14,7 @@ from typing import (
     Type,
     cast,
 )
-
+import inspect
 import demisto_client
 from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
@@ -160,7 +160,6 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         Returns:
             Dict[str, Any]: JSON dictionary representation of the class.
         """
-        import inspect
 
         self.__add_lazy_properties()
         cached_properties = {

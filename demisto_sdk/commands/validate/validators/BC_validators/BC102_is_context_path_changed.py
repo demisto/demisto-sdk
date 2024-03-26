@@ -16,7 +16,7 @@ ContentTypes = Union[Integration]
 class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC102"
     description = "context path has been changed."
-    rationale = "To prevent context paths from changing."
+    rationale = "Changing the paths may break dependent content items, which rely on the existing paths."
     error_message = "Changing output context paths is not allowed."
     related_field = ""
     is_auto_fixable = False

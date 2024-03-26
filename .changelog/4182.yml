@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue when running **pre-commit** from content subdirectory.
+- description: Fixed an issue where **pre-commit** failed when called from an inner directory of a content repo.
   type: fix
 pr_number: 4182

@@ -43,6 +43,8 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
 
     def get_malformed_files(self, content_item: ContentTypes) -> Dict[str, List[str]]:
         malformed_files = {}
+        if "CommonServerPython" in content_item.name:
+            return {}
         if content_item.code_file.exist and (
             invalid_lines := check_text_content_contain_sub_text(
                 sub_text_list=["BSD", "MIT", "Copyright", "proprietary"],

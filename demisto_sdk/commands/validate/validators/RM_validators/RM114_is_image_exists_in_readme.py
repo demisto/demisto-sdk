@@ -43,7 +43,8 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                         for image_path in get_full_image_paths_from_relative(
                             get_pack_name(content_item.path),
                             extract_image_paths_from_str(
-                                text=content_item.readme.file_content
+                                text=content_item.readme.file_content,
+                                regex_str=r"\.\./doc_files/[a-zA-Z0-9_-]+\.png",
                             ),
                         )
                         if image_path and not image_path.is_file()

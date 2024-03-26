@@ -45,7 +45,6 @@ class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     expected_git_statuses = [
         GitStatuses.RENAMED,
-        GitStatuses.ADDED,
         GitStatuses.MODIFIED,
     ]
 

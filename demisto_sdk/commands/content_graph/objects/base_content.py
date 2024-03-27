@@ -1,3 +1,4 @@
+import inspect
 from abc import ABC
 from collections import defaultdict
 from functools import cached_property, lru_cache
@@ -12,7 +13,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    Union,
     cast,
 )
 
@@ -88,6 +88,7 @@ class BaseContentMetaclass(ModelMetaclass):
             if isinstance(getattr(super_cls, attr), LazyProperty)
         }:
             model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]
+
         return model_cls
 
 
@@ -160,9 +161,22 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         Returns:
             Dict[str, Any]: JSON dictionary representation of the class.
         """
-        self.__add_lazy_properties()
 
-        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
+        self.__add_lazy_properties()
+        cached_properties = {
+            name
+            for name, value in inspect.getmembers(self.__class__)
+            if isinstance(value, cached_property)
+        }
+        json_dct = json.loads(
+            self.json(
+                exclude={
+                    "commands",
+                    "database_id",
+                }
+                | cached_properties
+            )
+        )
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
@@ -229,7 +243,7 @@ class BaseContent(BaseNode):
     def ignored_errors(self) -> List[str]:
         raise NotImplementedError
 
-    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+    def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         """Return the errors that should be ignored for the given related file path.
 
         Args:

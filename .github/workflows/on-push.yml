@@ -208,9 +208,11 @@ jobs:
           coverage combine **/.coverage
           coverage report
           coverage xml
-      - name: Coveralls
+      - name: Coveralls-Action
         uses: coverallsapp/github-action@v2
-      - name: Coveralls v2
+      - name: Coveralls-Comment
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
           if [ -n "$COVERALLS_REPO_TOKEN" ]; then
             pip install coveralls
@@ -266,7 +268,7 @@ jobs:
 
   test-pre-commit-command:
     runs-on: ubuntu-latest
-    name: Test Demisto-SDK Pre-Commit Command
+    name: Test Pre-Commit Command
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -310,7 +312,7 @@ jobs:
 
           echo "# test" >> Tests/collect_tests.py
           git add .
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
 
       - name: run pre-commit on input files
         timeout-minutes: 60
@@ -336,22 +338,33 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check whether validate_content_path changed
+        id: files-changed
+        uses: tj-actions/changed-files@v43
+        with:
+          files: |
+            demisto_sdk/scripts/validate_content_path.py
+            demisto_sdk/tests/validate_content_path_test.py
+
       - name: Checkout Content
+        if: steps.files-changed.outputs.any_changed == 'true'
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           repository: demisto/content
           path: content
 
       - name: Setup Python Environment
+        if: steps.files-changed.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
         with:
           python-version: "3.10"
 
       - name: Validate content master paths
+        if: steps.files-changed.outputs.any_changed == 'true'
         run: |
           source $(poetry env info --path)/bin/activate
-          validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown
+          validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown --skip-suffix
 
 
   test-graph-commands:
@@ -410,7 +423,7 @@ jobs:
         with:
           artifacts-path-dir: test-old-validate-command
           artifact-name: test-old-validate-command-artifacts
-          validate-script-path: Tests/scripts/validate.sh
+          validate-arguments: "-a --graph --skip-pack-dependencies --prev-ver origin/master"
 
   validate-files-new-validate:
     runs-on: ubuntu-latest
@@ -427,7 +440,7 @@ jobs:
         with:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
-          validate-script-path: Tests/scripts/new_validate.sh
+          validate-arguments: "-a --prev-ver origin/master --run-new-validate --skip-old-validate --config-path sdk_validation_config.toml"
 
   test-lint:
     runs-on: ubuntu-latest
@@ -507,3 +520,42 @@ jobs:
       - name: Notify Failed Jobs
         run: |
           poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
+  generate_validate_docs:
+    name: Generate Validate Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whether validate files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v42
+        with:
+          files: |
+            demisto_sdk/commands/validate/**
+            demisto_sdk/commands/content_graph/objects/**
+            demisto_sdk/commands/content_graph/parsers/**
+            demisto_sdk/commands/common/**
+
+      - name: Setup Environment
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.10"
+
+      - name: Generate Docs
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
+
+      - name: Upload artifacts
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          path: validation_docs.md
+          if-no-files-found: error
+          name: validation_docs
+
+      - name: Output to GitHub Action Summary
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY

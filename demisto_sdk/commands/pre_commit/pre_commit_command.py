@@ -122,9 +122,9 @@ class PreCommitRunner:
                 stdout,
             )
         if process.stdout:
-            logger.info(process.stdout)
+            logger.info("%s", process.stdout)
         if process.stderr:
-            logger.error(process.stderr)
+            logger.error("%s", process.stderr)
         return process.returncode
 
     @staticmethod

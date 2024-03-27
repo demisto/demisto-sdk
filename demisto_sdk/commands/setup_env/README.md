@@ -26,7 +26,7 @@ Create a virtualenv for the environment.
 - **--overwrite-virtualenv**
 Overwrite existing virtualenvs. Use with the create-virtualenv flag.
 
-- **-secret-id**
+- **--secret-id**
 Secret ID, to use with Google Secret Manager instance. If not provided, will use the integration id.
 - **--instance-name**
 Instance name to configure in XSOAR/XSIAM.

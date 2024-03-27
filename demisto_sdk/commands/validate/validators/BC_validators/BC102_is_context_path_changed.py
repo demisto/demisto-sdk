@@ -48,7 +48,7 @@ def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[
         # in case the command has been removed and does not exist in the new commands
         else:
             result[command] = {
-                f"The command = {command} has been removed. This is a breaking changes"
+                f"Command {command} has been removed from the integration. This is a breaking change, and is not allowed."
             }
 
     return result

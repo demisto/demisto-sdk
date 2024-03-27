@@ -54,6 +54,14 @@ In this example, both hooks will be skipped.
   needs: ["sample-hook"]
 ```
 
+## parallel key
+The parallel indicates whether a hook should run in parallel, by default hooks such as mypy, ruff and docker produce multiple hooks which run in parallel.
+Default is True. In order to avoid running a specific hook in parallel you can set it to false.
+```yaml
+- id: sample-hook
+  parallel: false
+```
+
 ## Steps
 
 ### External tools

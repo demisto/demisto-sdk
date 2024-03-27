@@ -391,6 +391,7 @@ class TestPreprocessFiles:
         expected_output = {
             Path(integration.yml.rel_path),
             Path(integration.code.rel_path),
+            Path(integration.test.path),
         }
         mocker.patch.object(GitUtil, "get_all_files", return_value=relative_paths)
         output = preprocess_files(input_files=input_files)

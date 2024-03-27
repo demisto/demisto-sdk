@@ -3,6 +3,8 @@ from typing import List
 import pytest
 
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects import Integration
+from demisto_sdk.commands.content_graph.objects.integration import Command, Output
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -18,6 +20,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC101_is_breaking_context_output_backwards import (
     IsBreakingContextOutputBackwardsValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC102_is_context_path_changed import (
+    IsContextPathChangedValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
@@ -804,4 +809,85 @@ def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
         len(result) == 1
         and result[0].message
         == "Changing the minimal supported version field `fromversion` is not allowed. Please undo, or request a force merge."
+    )
+
+
+def create_dummy_integration_with_context_path(
+    command_name: str, context_path: str
+) -> Integration:
+
+    integration = create_integration_object()
+    command = Command(name=command_name)
+    command.outputs = [Output(contextPath=context_path)]
+    integration.commands = [command]
+
+    return integration
+
+
+def test_IsContextPathChangedValidator():
+    """
+    Given
+    integration and old integration.
+        - Case 1: no changes in context path - a valid integration
+        - Case 2: context path has been changed - an invalid integration
+    When
+    - Calling the IsContextPathChangedValidator.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Shouldn't fail any.
+        - Case 2: Should fail.
+    """
+    command_name = "command"
+    old_context_path = "test.test"
+
+    new_integration = create_dummy_integration_with_context_path(
+        command_name=command_name, context_path=old_context_path
+    )
+    old_integration = create_dummy_integration_with_context_path(
+        command_name=command_name, context_path=old_context_path
+    )
+
+    new_integration.old_base_content_object = old_integration
+
+    # integration is valid so we get an empty list
+    assert not IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+
+    new_integration.commands[0].outputs[0].contextPath = f"{old_context_path}1"
+
+    # integration is invalid, so we get a list which contains ValidationResult
+    errors = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+    assert errors, "Should have failed validation"
+    assert old_context_path in errors[0].message
+    assert errors[0].message.startswith(
+        "Changing output context paths is not allowed. Restore the following outputs:"
+    )
+
+
+def test_IsContextPathChangedValidator_remove_command():
+    """
+    Given
+    -  an integration and its previous version:
+        in the new integration, a command has been removed
+    When
+    - Calling the IsContextPathChangedValidator.
+    Then
+     - Make sure the validation fail and the right error message is returned.
+    """
+    command_name = "command"
+    old_context_path = "test.test"
+
+    new_integration = create_integration_object()
+    old_integration = create_dummy_integration_with_context_path(
+        command_name=command_name, context_path=old_context_path
+    )
+
+    new_integration.old_base_content_object = old_integration
+
+    # integration is invalid, since command was removed
+    errors = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+
+    assert errors, "Should have failed validation"
+    assert (
+        f"Command {command_name} has been removed from the integration. This is a breaking change, and is not allowed."
+        in errors[0].message
     )

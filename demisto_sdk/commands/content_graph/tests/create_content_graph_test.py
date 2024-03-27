@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Tuple
 from zipfile import ZipFile
 
 import pytest
+from pydantic import ValidationError
 
 from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
@@ -916,7 +917,8 @@ class TestCreateContentGraph:
         assert dockerhub_api_mocker.called == is_taken_from_dockerhub
 
 
-def test_add_relationship__to_Pydentic_and_back():
+@pytest.mark.parametrize("true_as_string", ["True", "true"])
+def test_add_relationship__to_Pydentic_and_back(true_as_string):
     """
     Given:
         - A set of relationship data
@@ -932,10 +934,42 @@ def test_add_relationship__to_Pydentic_and_back():
     relationships = Relationships()
     relationships.add(
         RelationshipType.DEPENDS_ON,
-        mandatorily="True",
+        mandatorily=true_as_string,
         source=None,
         non_define_attribute="fake",
     )
 
     added_relationship = relationships[RelationshipType.DEPENDS_ON][0]
     assert added_relationship == {"mandatorily": True}
+
+
+@pytest.mark.parametrize(
+    "target_type, source_marketplaces,source_type,  mandatorily",
+    [
+        (None, None, None, "disallowed"),
+        (None, None, "disallowed", None),
+        (None, "disallowed", None, None),
+        ("disallowed", None, None, None),
+    ],
+)
+def test_add_relationship__to_Pydentic_and_back___assertion_error(
+    target_type, source_marketplaces, source_type, mandatorily
+):
+    """
+    Given:
+        - A set of relationship data where all properties are None, except for one property that has an disallowed value.
+    When:
+        - This data is added to a Relationship object using the 'add' method
+    Then:
+        - Verify that the data was added through the Pydantic 'Relationship' object and will fail with an "AssertionError" due to the disallowed value.
+    """
+    relationships = Relationships()
+    with pytest.raises(ValidationError) as e:
+        relationships.add(
+            relationship=RelationshipType.DEPENDS_ON,
+            target_type=target_type,
+            source_marketplaces=source_marketplaces,
+            source_type=source_type,
+            mandatorily=mandatorily,
+        )
+        assert e._assert_start_repr == "AssertionError('assert "

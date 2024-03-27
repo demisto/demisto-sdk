@@ -36,7 +36,7 @@ def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[
 
 def create_error_message(missing: dict) -> str:
     return "\n".join(
-        f'for command = {command}, here are the outputs that have been changed or removed: {",".join(value)}'
+        f'In the {command} command, the following outputs are missing for backward-compatability: {",".join(sorted(value))}'
         for command, value in missing.items()
     )
 

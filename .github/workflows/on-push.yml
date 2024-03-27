@@ -296,9 +296,10 @@ jobs:
 
       - name: change content permissions
         run: |
-          git config --global core.fileMode false
-          sudo chmod -R 777 content
-          sudo chown -R $USER content
+          cd content
+          git config core.fileMode false
+          sudo chmod -R 777 .
+          sudo chown -R $USER .
 
       - name: run pre-commit on changed files
         timeout-minutes: 60

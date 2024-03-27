@@ -24,7 +24,15 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.YML]
 
-    def compare_names(self, old_names, new_names):
+    def compare_names(self, old_names: List[str], new_names: List[str]) -> List[str]:
+        """
+        Compare two lists of names and return the names that are in the old list but not in the new list, including duplicates.
+        Args:
+            old_names: list of old names
+            new_names: list of new names
+        Returns:
+            list of names that are in the old list but not in the new list
+        """
         return list((Counter(old_names) - Counter(new_names)).elements())
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -49,14 +57,14 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                 )
 
             # arguments name changed
-            args_diff_per_command = []
+            args_diff_per_command_summary = []
             for command in content_item.old_base_content_object.commands:  # type: ignore
                 new_args_per_command = []
-                checking_command = command.name
                 old_args_per_command = [argument.name for argument in command.args]
+                current_command_name = command.name
                 # find the same command in the new content item to compare the arguments
                 for command in content_item.commands:
-                    if command.name == checking_command:
+                    if command.name == current_command_name:
                         new_args_per_command = [
                             argument.name for argument in command.args
                         ]
@@ -66,15 +74,15 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                         old_args_per_command, new_args_per_command
                     )
                     if diff_per_command:
-                        args_diff_per_command.append(
-                            f"In command '{checking_command}' the following arguments have been changed: {', '.join(diff_per_command)}."
+                        args_diff_per_command_summary.append(
+                            f"In command '{current_command_name}' the following arguments have been changed: {', '.join(diff_per_command)}."
                         )
-            if args_diff_per_command:
+            if args_diff_per_command_summary:
                 results.append(
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            unique_message=f"to the names of existing arguments: {', '.join(args_diff_per_command)}"
+                            unique_message=f"to the names of existing arguments: {' '.join(args_diff_per_command_summary)}"
                         ),
                         content_object=content_item,
                     )

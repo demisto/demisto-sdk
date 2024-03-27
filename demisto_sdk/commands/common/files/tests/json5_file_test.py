@@ -107,7 +107,7 @@ class TestJson5File(FileTesting):
         )
         # make sure that the URL is sent correctly
         assert (
-            f"{DEMISTO_GIT_PRIMARY_BRANCH}{json5_file_path}"
+            f"{DEMISTO_GIT_PRIMARY_BRANCH}/{json5_file_path}"
             in requests_mocker.call_args.args[0]
         )
 

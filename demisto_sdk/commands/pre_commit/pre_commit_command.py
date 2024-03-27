@@ -435,7 +435,7 @@ def pre_commit_manager(
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
         dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
         run_docker_hooks (bool, optional): Whether to run docker based hooks or not.
-        pre_commit_template_path (str, optional): Path to the template pre-commit file.
+        pre_commit_template_path (Path, optional): Path to the template pre-commit file.
 
     Returns:
         int: Return code of pre-commit.

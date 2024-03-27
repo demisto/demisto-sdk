@@ -1,4 +1,6 @@
 changes:
 - description: Fixed an issue where **pre-commit** command showed wrong hooks failing.
   type: fix
+- description: Added support for a new argument **parallel* for each hook to determine whether a hook should that is split should run in parallel or not.
+  type: feature
 pr_number: 4130

@@ -297,6 +297,7 @@ jobs:
         run: |
           mkdir -p content/.pre-commit
           sudo chown -R $USER:$USER content/.pre-commit
+          sudo chmod -R 777 content/.pre-commit
       - name: run pre-commit on changed files
         timeout-minutes: 60
         run: |

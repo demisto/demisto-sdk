@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import GitStatuses
@@ -18,24 +19,25 @@ def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[
     """
     result = defaultdict(set)
     old_integration = integration.old_base_content_object
-    mapping_old_commands = {
+    old_command_outputs = {
         # Since we're sure old_integration has 'commands' attribute, we ignore it (down casting does not solve it)
         command.name: command
         for command in old_integration.commands  # type:ignore[union-attr]
     }
-    mapping_new_commands = {command.name: command for command in integration.commands}
-    for command in sorted(set(mapping_new_commands).intersection(mapping_old_commands)):
-            if diff := mapping_new_commands[command].diff_outputs_context_path(
-                mapping_old_commands[command]
-            ):
-                final_diff[command] = diff
+    new_command_outputs = {command.name: command for command in integration.commands}
+    for command in sorted(set(new_command_outputs).intersection(old_command_outputs)):
+        if diff := new_command_outputs[command].diff_outputs_context_path(
+            old_command_outputs[command]
+        ):
+            result[command] = diff
 
-    return final_diff
+    return result
 
 
 def create_error_message(missing: dict) -> str:
     return "\n".join(
-        f'In the {command} command, the following outputs are missing for backward-compatability: {",".join(sorted(value))}'
+        f"In the {command} command, the following outputs are missing for backward-compatability:"
+        f' {",".join(sorted(value))}'
         for command, value in missing.items()
     )
 

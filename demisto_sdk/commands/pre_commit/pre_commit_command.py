@@ -125,9 +125,9 @@ class PreCommitRunner:
                 stdout,
             )
         if process.stdout:
-            logger.info(process.stdout)
+            logger.info("%s", process.stdout)
         if process.stderr:
-            logger.error(process.stderr)
+            logger.error("%s", process.stderr)
         return process.returncode
 
     @staticmethod
@@ -440,6 +440,7 @@ def pre_commit_manager(
     staged_only: bool = False,
     commited_only: bool = False,
     git_diff: bool = False,
+    prev_version: Optional[str] = None,
     all_files: bool = False,
     mode: str = "",
     skip_hooks: Optional[List[str]] = None,
@@ -484,6 +485,7 @@ def pre_commit_manager(
         commited_only=commited_only,
         use_git=git_diff,
         all_files=all_files,
+        prev_version=prev_version,
     )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
@@ -554,6 +556,7 @@ def preprocess_files(
     commited_only: bool = False,
     use_git: bool = False,
     all_files: bool = False,
+    prev_version: Optional[str] = None,
 ) -> Set[Path]:
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
@@ -563,7 +566,7 @@ def preprocess_files(
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = git_util._get_all_changed_files()
+        raw_files = git_util._get_all_changed_files(prev_version)
         if not commited_only:
             raw_files = raw_files.union(staged_files)
     elif all_files:

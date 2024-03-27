@@ -9,6 +9,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 class IsFromVersionSufficientValidator(BaseValidator, ABC):
     error_code = "BA106"
+    description = "Validate that the item's fromversion field is sufficient."
     fix_message = "Raised the fromversion field to {0}"
     rationale = (
         "This field makes sure content can use the latest and greatest features of the platform. "

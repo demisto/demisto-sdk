@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.common.constants import (
+    CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
@@ -15,6 +16,7 @@ from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     DIRS_ALLOWING_SPACE_IN_FILENAMES,
     ZERO_DEPTH_FILES,
+    InvalidClassifier,
     InvalidDepthOneFile,
     InvalidDepthOneFolder,
     InvalidDepthZeroFile,
@@ -310,3 +312,33 @@ def test_invalid_suffix(folder: str, suffix: str):
 )
 def test_layout_file_valid(file_name: str):
     _validate(DUMMY_PACK_PATH / LAYOUTS_DIR / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "classifier-foo.json",
+        "mapper-foo.json",
+        "classifier-mapper-foo.json",
+    ),
+)
+def test_classifier_mapper_file_valid(file_name: str):
+    _validate(DUMMY_PACK_PATH / CLASSIFIERS_DIR / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "not-classifier.json",
+        "clasifier.json",
+        "Clasifier.json",
+        "Mapper.json",
+        "maper.json",
+        "foo.json",
+        "classifier.yml",
+        "mapper.md",
+    ),
+)
+def test_classifier_mapper_file_invalid(file_name: str):
+    with pytest.raises(InvalidClassifier):
+        _validate(DUMMY_PACK_PATH / CLASSIFIERS_DIR / file_name)

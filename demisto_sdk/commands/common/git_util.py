@@ -702,7 +702,7 @@ class GitUtil:
             if item
         }
 
-    def _get_all_changed_files(self, prev_ver: str = "") -> Set[Path]:
+    def _get_all_changed_files(self, prev_ver: Optional[str] = None) -> Set[Path]:
         """
         Get all the files changed in the current branch without status distinction.
 
@@ -805,7 +805,7 @@ class GitUtil:
                     return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 
-    def handle_prev_ver(self, prev_ver: str = ""):
+    def handle_prev_ver(self, prev_ver: Optional[str] = None):
         # check for sha1 in regex
         sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
         if prev_ver and sha1_pattern.match(prev_ver):

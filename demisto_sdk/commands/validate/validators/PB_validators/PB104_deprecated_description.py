@@ -32,7 +32,7 @@ class DeprecatedDescriptionValidator(BaseValidator[ContentTypes]):
     @staticmethod
     def _is_deprecated_with_invalid_description(content_item: ContentTypes) -> bool:
         is_deprecated = content_item.deprecated
-        description = content_item.description
+        description = content_item.description or ""
 
         if is_deprecated and not any(
             re.search(pattern, description)

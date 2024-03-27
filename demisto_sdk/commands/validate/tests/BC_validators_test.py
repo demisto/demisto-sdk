@@ -788,12 +788,12 @@ def test_IsContextPathChangedValidator():
 def test_IsContextPathChangedValidator_remove_command():
     """
     Given
-    integration and old integration:
-        - in the new integration, command has been removed
+    -  an integration and its previous version:
+        in the new integration, a command has been removed
     When
     - Calling the IsContextPathChangedValidator.
     Then
-        - Make sure the validation fail and the right error message is returned.
+     - Make sure the validation fail and the right error message is returned.
     """
     command_name = "command"
     old_context_path = "test.test"

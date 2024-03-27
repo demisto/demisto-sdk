@@ -423,12 +423,6 @@ def group_by_language(
             },
         )
 
-    unparsed_paths = set(integrations_scripts_mapping.keys()) - {
-        integration_script.path.parent for integration_script in integrations_scripts
-    }
-    for path in unparsed_paths:
-        infra_files.extend(integrations_scripts_mapping[path])
-
     if infra_files:
         language_to_files[DEFAULT_PYTHON_VERSION].update(
             [(infra, None) for infra in infra_files]

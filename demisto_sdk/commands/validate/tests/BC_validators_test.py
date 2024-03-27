@@ -768,3 +768,6 @@ def test_IsContextPathChangedValidator():
     errors = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
     assert errors, "Should have failed validation"
     assert old_context_path in errors[0].message
+    assert errors[0].message.startswith(
+        "Changing output context paths is not allowed. Restore the following outputs:"
+    )

@@ -37,6 +37,21 @@ def should_update_graph(
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
 ):
+    if content_graph_interface.commit:
+        try:
+            changed_pack_ids = git_util.get_all_changed_pack_ids(
+                content_graph_interface.commit
+            )
+        except Exception:
+            logger.debug(
+                "Failed to get changed packs from git. Setting to update graph."
+            )
+            # If we can't get the changed packs, it could mean the followiing:
+            # 1. We are not fetched from a git repository and unable to fetch
+            # 2. The current graph that is running is not in the same repo as we run now
+            # 3. The graph which is running is a graph that was created from unit-testing
+            # Anyway, we cannot trust the current graph, so we need to update it.
+            return True
     return any(
         (
             not content_graph_interface.is_alive(),  # if neo4j service is not alive, we need to update
@@ -44,9 +59,7 @@ def should_update_graph(
             packs_to_update,  # if there are packs to update, we need to update
             use_git
             and content_graph_interface.commit
-            and git_util.get_all_changed_pack_ids(
-                content_graph_interface.commit
-            ),  # if there are any changed packs and we are using git, we need to update
+            and changed_pack_ids,  # if there are any changed packs and we are using git, we need to update
             content_graph_interface.content_parser_latest_hash
             != content_graph_interface._get_latest_content_parser_hash(),  # if the parse hash changed, we need to update
         )
@@ -116,7 +129,9 @@ def update_content_graph(
 
     else:
         # Try to import from local folder
-        success_local = content_graph_interface.import_graph()
+        success_local = False
+        if not is_external_repo:
+            success_local = content_graph_interface.import_graph()
 
         if not success_local:
             builder.init_database()
@@ -125,7 +140,7 @@ def update_content_graph(
             success_remote = content_graph_interface.import_graph(
                 download=True, fail_on_error=is_external_repo
             )
-            if not success_remote:
+            if not success_remote and not is_external_repo:
                 logger.warning(
                     "Importing graph from bucket failed. Creating from scratch"
                 )

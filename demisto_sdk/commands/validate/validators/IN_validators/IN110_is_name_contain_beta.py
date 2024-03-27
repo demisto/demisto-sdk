@@ -14,7 +14,7 @@ ContentTypes = Integration
 
 
 class IsNameContainBetaValidator(BaseValidator[ContentTypes]):
-    error_code = "IN109"
+    error_code = "IN110"
     description = "Validate that the name field doesn't include the substring 'beta'."
     rationale = "The name field in an integration should not contain the word 'beta'. This ensures unambiguous identification of production-ready integrations."
     error_message = (

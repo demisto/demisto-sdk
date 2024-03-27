@@ -1,6 +1,7 @@
 import os
 
 from neo4j.exceptions import (
+    ClientError,
     DatabaseError,
     ServiceUnavailable,
     TransactionError,
@@ -14,7 +15,7 @@ def recover_if_fails(func):
     def func_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except (ServiceUnavailable, DatabaseError, TransactionError) as e:
+        except (ServiceUnavailable, DatabaseError, TransactionError, ClientError) as e:
             if os.getenv("CI"):
                 logger.error(
                     "Failed to communicate with Neo4j in CI environment", exc_info=True

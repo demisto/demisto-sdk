@@ -54,8 +54,6 @@ class PreCommitContext:
         We initialize the hooks and all_files for later use.
         """
         shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
-        shutil.rmtree(PRE_COMMIT_FOLDER_SHARED, ignore_errors=True)
-
         PRE_COMMIT_FOLDER_SHARED.mkdir(parents=True, mode=0o777)
         PRECOMMIT_FOLDER.mkdir(parents=True)
         PRECOMMIT_CONFIG.mkdir()

@@ -127,27 +127,6 @@ def test_is_no_rolename(content_item, expected_result):
     )
 
 
-def test_is_no_rolename_fix():
-    """
-    Given
-        A playbook which has id and an empty rolename.
-    When
-    - Calling the IsNoRolenameValidator fix function.
-    Then
-        - Make sure that the rolename was modified correctly, and that the right msg was returned.
-    """
-    content_item = create_playbook_object(
-        paths=["rolename"],
-        values=[[]],
-    )
-    validator = IsNoRolenameValidator()
-    assert (
-        validator.fix(content_item).message
-        == "Removed the 'rolename' from the following playbook 'Detonate File - JoeSecurity V2'."
-    )
-    assert "rolename" not in content_item.data
-
-
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [

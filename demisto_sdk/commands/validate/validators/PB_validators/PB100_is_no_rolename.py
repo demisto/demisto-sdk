@@ -5,7 +5,6 @@ from typing import Iterable, List
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixResult,
     ValidationResult,
 )
 
@@ -17,11 +16,7 @@ class IsNoRolenameValidator(BaseValidator[ContentTypes]):
     description = "Validate whether the playbook has a rolename. If the Playbook has a rolename it is not valid."
     rationale = "We shouldn't ship playbooks with a role set as this is customisable by the customer."
     error_message = "The playbook '{playbook_name}' can not have a rolename, please remove the field."
-    fix_message = (
-        "Removed the 'rolename' from the following playbook '{playbook_name}'."
-    )
     related_field = "rolename"
-    is_auto_fixable = True
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -35,14 +30,3 @@ class IsNoRolenameValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if content_item.data.get("rolename", None)
         ]
-
-    def fix(
-        self,
-        content_item: ContentTypes,
-    ) -> FixResult:
-        content_item.data.pop("rolename", None)
-        return FixResult(
-            validator=self,
-            message=self.fix_message.format(playbook_name=content_item.name),
-            content_object=content_item,
-        )

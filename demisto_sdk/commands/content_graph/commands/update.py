@@ -143,7 +143,7 @@ def update_content_graph(
             create_content_graph(
                 content_graph_interface, marketplace, dependencies, output_path
             )
-
+            return
         packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])

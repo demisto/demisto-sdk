@@ -220,3 +220,9 @@ repos:
   rev: v0.13
   hooks:
   - id: validate-pyproject
+- repo: https://github.com/sourcery-ai/sourcery
+  rev: v1.8.0
+  hooks:
+    - id: sourcery
+      args: [--diff=git diff master, --fix, --no-summary]
+      require_serial: true

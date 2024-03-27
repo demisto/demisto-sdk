@@ -233,10 +233,8 @@ def is_error_ignored(
                     related_file_object.file_path
                 ):
                     return True
-            except Exception as err:
-                logger.warning(
-                    f"Unable to determine if error code {err_code} should be ignored, got {err}"
-                )
+            except Exception:
+                continue
         return False
     else:
         # If the validation should run on the main content, will check if the validation's error code is ignored by the file.

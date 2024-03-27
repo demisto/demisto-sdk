@@ -7,6 +7,28 @@ ignorable_errors = [
 ]
 
 
+[use_git]
+select = [
+    "BA101", "BA105", "BA106", "BA116", "BA118",
+    "DO104",
+    "IN108", "IN130",
+    "PA107", "PA108", "PA111", "PA115", "PA128", "PA130",
+    "RP101",
+]
+warning = []
+
+
+[path_based_validations]
+select = [
+    "BA101", "BA105", "BA106", "BA116", "BA118",
+    "DO104",
+    "IN108", "IN130",
+    "PA107", "PA108", "PA111", "PA115", "PA128", "PA130",
+    "RP101",
+]
+warning = []
+
+
 [xsoar_best_practices_use_git]
 select = [
     "BA100", "BA101", "BA105", "BA106", "BA110", "BA111", "BA116", "BA118", "BA124", "BA126",

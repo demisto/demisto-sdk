@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in **graph update** where the graph failed to update in external repos.
+  type: fix
+pr_number: 4190

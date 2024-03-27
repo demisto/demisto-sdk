@@ -20,6 +20,9 @@ class GeneratedHooks:
     hook_ids: List[str]
     parallel: bool = True
 
+    def __str__(self):
+        return f"generated-hooks: {', '.join(self.hook_ids)}, parallel: {self.parallel}"
+
 
 class Hook:
     def __init__(

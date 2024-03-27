@@ -215,28 +215,38 @@ class PreCommitRunner:
             original_hook_id,
             generated_hooks,
         ) in PreCommitRunner.original_hook_id_to_generated_hook_ids.items():
-            if generated_hooks:
-                logger.debug(
-                    f"Running hook {original_hook_id} with generated-hook-ids: {generated_hooks}"
-                )
-                with ThreadPool(num_processes) as pool:
-                    current_hooks_exit_codes = pool.map(
-                        partial(
-                            PreCommitRunner.run_hook,
+            if generated_hooks and generated_hooks.parallel:
+                logger.debug(f"Running hook {original_hook_id} with {generated_hooks}")
+                if generated_hooks.parallel:
+                    with ThreadPool(num_processes) as pool:
+                        current_hooks_exit_codes = pool.map(
+                            partial(
+                                PreCommitRunner.run_hook,
+                                precommit_env=precommit_env,
+                                verbose=verbose,
+                                stdout=subprocess.PIPE
+                                if len(generated_hooks) > 1
+                                else None,
+                            ),
+                            generated_hooks,
+                        )
+                else:
+                    current_hooks_exit_codes = [
+                        PreCommitRunner.run_hook(
+                            hook_id,
                             precommit_env=precommit_env,
                             verbose=verbose,
-                            stdout=subprocess.PIPE
-                            if len(generated_hooks) > 1
-                            else None,
-                        ),
-                        generated_hooks,
-                    )
+                            stdout=None,
+                        )
+                        for hook_id in generated_hooks
+                    ]
+
+                all_hooks_exit_codes.extend(current_hooks_exit_codes)
+
             else:
                 logger.debug(
                     f"Skipping hook {original_hook_id} as it does not have any generated-hook-ids"
                 )
-
-            all_hooks_exit_codes.extend(current_hooks_exit_codes)
 
         return_code = int(any(all_hooks_exit_codes))
         if return_code and show_diff_on_failure:

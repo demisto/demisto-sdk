@@ -34,7 +34,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook
+from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 
 NO_SPLIT = None
 
@@ -241,7 +241,7 @@ class DockerHook(Hook):
 
     def prepare_hook(
         self,
-    ) -> List[str]:
+    ) -> GeneratedHooks:
         """
         Group all the files by dockerimages
         Split those images by config files
@@ -311,7 +311,7 @@ class DockerHook(Hook):
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
 
-        return docker_hook_ids
+        return GeneratedHooks(hook_ids=docker_hook_ids, parallel=self.parallel)
 
     def generate_hooks(
         self,

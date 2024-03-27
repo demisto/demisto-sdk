@@ -30,7 +30,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
+from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
@@ -50,7 +50,7 @@ INTEGRATIONS_BATCH = 300
 
 class PreCommitRunner:
 
-    original_hook_id_to_generated_hook_ids: Dict[str, List[str]] = {}
+    original_hook_id_to_generated_hook_ids: Dict[str, GeneratedHooks] = {}
 
     @staticmethod
     def prepare_hooks(pre_commit_context: PreCommitContext) -> None:
@@ -213,11 +213,11 @@ class PreCommitRunner:
         all_hooks_exit_codes = []
         for (
             original_hook_id,
-            generated_hook_ids,
+            generated_hooks,
         ) in PreCommitRunner.original_hook_id_to_generated_hook_ids.items():
-            if generated_hook_ids:
+            if generated_hooks:
                 logger.debug(
-                    f"Running hook {original_hook_id} with generated-hook-ids: {generated_hook_ids}"
+                    f"Running hook {original_hook_id} with generated-hook-ids: {generated_hooks}"
                 )
                 with ThreadPool(num_processes) as pool:
                     current_hooks_exit_codes = pool.map(
@@ -226,10 +226,10 @@ class PreCommitRunner:
                             precommit_env=precommit_env,
                             verbose=verbose,
                             stdout=subprocess.PIPE
-                            if len(generated_hook_ids) > 1
+                            if len(generated_hooks) > 1
                             else None,
                         ),
-                        generated_hook_ids,
+                        generated_hooks,
                     )
             else:
                 logger.debug(

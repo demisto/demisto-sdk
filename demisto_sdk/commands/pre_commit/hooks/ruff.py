@@ -1,8 +1,9 @@
 import os
 from copy import deepcopy
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from demisto_sdk.commands.pre_commit.hooks.hook import (
+    GeneratedHooks,
     Hook,
     join_files,
     safe_update_hook_args,
@@ -23,7 +24,7 @@ class RuffHook(Hook):
 
     def prepare_hook(
         self,
-    ) -> List[str]:
+    ) -> GeneratedHooks:
         """
         Prepares the Ruff hook for each Python version.
         Changes the hook's name, files and the "--target-version" argument according to the Python version.
@@ -54,7 +55,4 @@ class RuffHook(Hook):
             ruff_hook_ids.append(hook["alias"])
             self.hooks.append(hook)
 
-        if self.parallel:
-            return ruff_hook_ids
-
-        return [self.base_hook["id"]]
+        return GeneratedHooks(hook_ids=ruff_hook_ids, parallel=self.parallel)

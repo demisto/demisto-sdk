@@ -919,8 +919,9 @@ def test_have_the_args_changed_validator__fails():
     create_old_file_pointers(modified_content_items, old_content_items)
 
     results = HaveTheArgsChangedValidator().is_valid(modified_content_items)
-    assert results[0].message == (
-        "One or more argument names in the 'myScript' file have been changed. Please undo the change."
+    assert (
+        " contain changes to the names of the following existing arguments: old_arg. Please undo the changes."
+        in results[0].message
     )
 
 

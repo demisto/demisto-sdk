@@ -381,8 +381,8 @@ def group_by_language(
                 # we need to add the api module for each integration that uses it, so it will execute the api module check
                 integrations_scripts.add(imported_by)
                 integrations_scripts_mapping[imported_by.path.parent].update(
-                    add_related_files(api_module.path)
-                    | add_related_files(imported_by.path)
+                    add_related_files(api_module.path.relative_to(CONTENT_PATH))
+                    | add_related_files(imported_by.path.relative_to(CONTENT_PATH))
                 )
 
     for integration_script in integrations_scripts:

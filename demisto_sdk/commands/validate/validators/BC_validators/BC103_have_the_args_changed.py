@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+from typing import Iterable, List
+
+from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.validate.tools import compare_lists
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    ValidationResult,
+)
+
+ContentTypes = Script
+
+
+class HaveTheArgsChangedValidator(BaseValidator[ContentTypes]):
+    error_code = "BC103"
+    description = "Check if the argument name has been changed."
+    rationale = "If an existing argument has been renamed, it will break backward compatibility."
+    error_message = (
+        "Possible backward compatibility break: Your updates to this file: '{file_path}' contain changes "
+        "to the names of the following existing arguments: {args}. Please undo the changes."
+    )
+    related_field = "name"  # TODO: check if this is the correct field
+    is_auto_fixable = False
+    expected_git_statuses = [GitStatuses.MODIFIED]
+    related_file_type = [RelatedFileType.YML]
+
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        results: List[ValidationResult] = []
+        for content_item in content_items:
+
+            current_args = [arg.name for arg in content_item.args]
+            old_args = [arg.name for arg in content_item.old_base_content_object.args]  # type: ignore
+            args_diff = compare_lists(sub_list=old_args, main_list=current_args)
+
+            if args_diff:
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            file_path=content_item.path, args=", ".join(args_diff)
+                        ),
+                        content_object=content_item,
+                    )
+                )
+
+        return results

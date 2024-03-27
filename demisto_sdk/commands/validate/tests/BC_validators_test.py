@@ -1,4 +1,3 @@
-import re
 from typing import List
 
 import pytest
@@ -825,14 +824,6 @@ def create_dummy_integration_with_context_path(
     return integration
 
 
-def check_for_test_dot_test(string):
-    """
-    Checks if the old_context_path "test.test" that was changed is in the given string (which is the error message).
-    """
-    pattern = r"(?<![\w.])test\.test(?![\w.])"
-    return bool(re.search(pattern, string))
-
-
 def test_IsContextPathChangedValidator():
     """
     Given
@@ -847,7 +838,7 @@ def test_IsContextPathChangedValidator():
         - Case 2: Should fail.
     """
     command_name = "command"
-    old_context_path = "test.test"
+    old_context_path = "something.else"
 
     new_integration = create_dummy_integration_with_context_path(
         command_name=command_name, context_path=old_context_path
@@ -866,8 +857,7 @@ def test_IsContextPathChangedValidator():
     # integration is invalid, so we get a list which contains ValidationResult
     errors = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
     assert errors, "Should have failed validation"
-    # check if the old_context_path "test.test" appears in the error message
-    assert check_for_test_dot_test(errors[0].message)
+    assert old_context_path in errors[0].message
     assert errors[0].message.startswith(
         "Changing output context paths is not allowed. Restore the following outputs:"
     )
@@ -884,7 +874,7 @@ def test_IsContextPathChangedValidator_remove_command():
      - Make sure the validation fail and the right error message is returned.
     """
     command_name = "command"
-    old_context_path = "test.test"
+    old_context_path = "something.else"
 
     new_integration = create_integration_object()
     old_integration = create_dummy_integration_with_context_path(

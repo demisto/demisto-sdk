@@ -121,7 +121,9 @@ def update_content_graph(
 
     else:
         # Try to import from local folder
-        success_local = content_graph_interface.import_graph()
+        success_local = False
+        if not is_external_repo:
+            success_local = content_graph_interface.import_graph()
 
         if not success_local:
             builder.init_database()

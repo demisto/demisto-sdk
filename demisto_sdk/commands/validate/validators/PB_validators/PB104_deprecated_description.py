@@ -17,8 +17,8 @@ DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement
 
 class DeprecatedDescriptionValidator(BaseValidator[ContentTypes]):
     error_code = "PB104"
-    description = "Validate whether a deprecated playbook has a valid description"
-    rationale = "Description of deprecated content should be consistent"
+    description = "Validate whether a deprecated playbook has a valid description."
+    rationale = "Description of deprecated content should be consistent."
     run_on_deprecated = True
     error_message = (
         "The deprecated playbook '{playbook_name}' has invalid description.\n"

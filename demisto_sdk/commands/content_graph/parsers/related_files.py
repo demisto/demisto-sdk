@@ -97,7 +97,7 @@ class TextFiles(RelatedFile):
                         path=self.file_path
                     )
             except Exception as e:
-                logger.error(f"Failed to get related text file, error: {e}")
+                logger.debug(f"Failed to get related text file, error: {e}")
         return self.file_content_str
 
 

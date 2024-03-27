@@ -296,6 +296,7 @@ jobs:
 
       - name: change content permissions
         run: |
+          git config --global core.fileMode false
           sudo chmod -R 777 content
           sudo chown -R $USER content
 

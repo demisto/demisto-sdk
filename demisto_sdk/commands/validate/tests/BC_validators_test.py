@@ -8,6 +8,8 @@ from demisto_sdk.commands.content_graph.objects.integration import Command, Outp
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_incident_type_object,
+    create_incoming_mapper_object,
     create_integration_object,
     create_old_file_pointers,
     create_pack_object,
@@ -24,6 +26,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC102_is_context_pat
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC106_is_valid_fromversion_on_modified import (
+    IsValidFromversionOnModifiedValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
@@ -731,6 +736,79 @@ def test_IsBreakingContextOutputBackwardsValidator_is_valid(
             result.message == expected_msg
             for result, expected_msg in zip(results, expected_msgs)
         ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, old_content_items",
+    [
+        pytest.param(
+            [
+                create_integration_object(paths=["fromversion"], values=["5.0.0"]),
+                create_integration_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            [
+                create_integration_object(paths=["fromversion"], values=["6.0.0"]),
+                create_integration_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            id="Case 1: integration - fromversion changed",
+        ),
+        pytest.param(
+            [
+                create_script_object(paths=["fromversion"], values=["5.0.0"]),
+                create_script_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            [
+                create_script_object(paths=["fromversion"], values=["6.0.0"]),
+                create_script_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            id="Case 2: script - fromversion changed",
+        ),
+        pytest.param(
+            [
+                create_incident_type_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incident_type_object(paths=["fromVersion"], values=["6.0.0"]),
+            ],
+            [
+                create_incident_type_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incident_type_object(paths=["fromVersion"], values=["5.0.0"]),
+            ],
+            id="Case 3: incident type - fromversion changed",
+        ),
+        pytest.param(
+            [
+                create_incoming_mapper_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incoming_mapper_object(paths=["fromVersion"], values=["6.0.0"]),
+            ],
+            [
+                create_incoming_mapper_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incoming_mapper_object(paths=["fromVersion"], values=["5.0.0"]),
+            ],
+            id="Case 4: mapper - fromversion changed",
+        ),
+    ],
+)
+def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
+    content_items, old_content_items
+):
+    """
+    Given:
+        - Case 1: two content item of type 'Integration', one with modified `fromversion`.
+        - Case 2: two content item of type 'Script', one with modified `fromversion`.
+        - Case 3: two content item of type 'Incident Type', one with modified `fromversion`.
+        - Case 4: two content item of type 'Mapper', one with modified `fromversion`.
+    When:
+        - Calling the `IsValidFromversionOnModifiedValidator` validator.
+    Then:
+        - The is_valid function will catch the change in `fromversion` and will fail the validation only on the relevant content_item.
+    """
+    create_old_file_pointers(content_items, old_content_items)
+    result = IsValidFromversionOnModifiedValidator().is_valid(content_items)
+
+    assert (
+        len(result) == 1
+        and result[0].message
+        == "Changing the minimal supported version field `fromversion` is not allowed. Please undo, or request a force merge."
     )
 
 

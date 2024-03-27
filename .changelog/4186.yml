@@ -1,0 +1,7 @@
+changes:
+- description: Fixed an issue in **graph update** where all content packs were being parsed when....?
+  type: fix
+- description: Fixed an issue in **graph update** to create the graph from scratch if changed packs can not be determined.
+  type: fix
+
+pr_number: 4186

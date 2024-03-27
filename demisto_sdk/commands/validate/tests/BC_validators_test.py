@@ -24,6 +24,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC101_is_breaking_co
 from demisto_sdk.commands.validate.validators.BC_validators.BC102_is_context_path_changed import (
     IsContextPathChangedValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC103_have_the_args_changed import (
+    HaveTheArgsChangedValidator,
+)
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
 )
@@ -891,3 +894,55 @@ def test_IsContextPathChangedValidator_remove_command():
         f"Command {command_name} has been removed from the integration. This is a breaking change, and is not allowed."
         in errors[0].message
     )
+
+
+def test_have_the_args_changed_validator__fails():
+    """
+    Given:
+        - Script content item with a changed argument name.
+        - Old Script content item with the old argument name.
+
+    When:
+        - Calling the `HaveTheArgsChangedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Should fail the validation since the user changed the argument name.
+    """
+    modified_content_items = [
+        create_script_object(paths=["args[0].name"], values=["new_arg"])
+    ]
+    old_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+
+    create_old_file_pointers(modified_content_items, old_content_items)
+
+    results = HaveTheArgsChangedValidator().is_valid(modified_content_items)
+    assert results[0].message == (
+        "One or more argument names in the 'myScript' file have been changed. Please undo the change."
+    )
+
+
+def test_have_the_args_changed_validator__passes():
+    """
+    Given:
+        - Script content item with a new argument name, and an existing argument name.
+        - Old Script content item with the existing argument name.
+    When:
+        - Calling the `HaveTheArgsChangedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Should pass the validation since the user didn't change existing argument names, only added new ones.
+    """
+    modified_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+    new_arg = create_script_object(paths=["args[0].name"], values=["new_arg"]).args[0]
+    modified_content_items[0].args.append(new_arg)
+    old_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+
+    create_old_file_pointers(modified_content_items, old_content_items)

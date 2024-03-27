@@ -16,7 +16,7 @@ def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[
     """
     This method returns the diff between the integrations versions per command.
     """
-    final_diff = {}
+    result = defaultdict(set)
     old_integration = integration.old_base_content_object
     mapping_old_commands = {
         # Since we're sure old_integration has 'commands' attribute, we ignore it (down casting does not solve it)

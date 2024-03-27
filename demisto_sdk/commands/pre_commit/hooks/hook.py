@@ -23,6 +23,7 @@ class Hook:
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
+        self.parallel = hook.get("parallel", True)
         self.hook_index = self.hooks.index(self.base_hook)
         self.hooks.remove(self.base_hook)
         self.mode = context.mode

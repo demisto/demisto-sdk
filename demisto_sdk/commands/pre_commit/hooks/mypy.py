@@ -30,4 +30,7 @@ class MypyHook(Hook):
             mypy_hook_ids.append(mypy_python_version)
             self.hooks.append(hook)
 
-        return mypy_hook_ids
+        if self.parallel:
+            return mypy_hook_ids
+
+        return [self.base_hook["id"]]

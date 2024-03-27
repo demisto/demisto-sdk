@@ -54,4 +54,7 @@ class RuffHook(Hook):
             ruff_hook_ids.append(hook["alias"])
             self.hooks.append(hook)
 
-        return ruff_hook_ids
+        if self.parallel:
+            return ruff_hook_ids
+
+        return [self.base_hook["id"]]

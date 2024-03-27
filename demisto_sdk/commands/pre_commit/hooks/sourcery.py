@@ -54,4 +54,7 @@ class SourceryHook(Hook):
             sourcery_hook_ids.append(sourcery_python_version)
             self.hooks.append(hook)
 
-        return sourcery_hook_ids
+        if self.parallel:
+            return sourcery_hook_ids
+
+        return [self.base_hook["id"]]

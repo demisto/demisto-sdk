@@ -810,6 +810,6 @@ def test_IsContextPathChangedValidator_remove_command():
 
     assert errors, "Should have failed validation"
     assert (
-        f"The command = {command_name} has been removed. This is a breaking changes"
+        f"Command {command_name} has been removed from the integration. This is a breaking change, and is not allowed."
         in errors[0].message
     )

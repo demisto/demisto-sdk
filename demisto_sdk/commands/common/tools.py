@@ -4189,7 +4189,7 @@ def get_file_by_status(
             )
 
         # handle renamed files which are in tuples
-        elif file_path in file:
+        elif isinstance(file, tuple) and file_path in file:
             filtered_modified_files.add(file)
             return (
                 filtered_modified_files,
@@ -4454,3 +4454,19 @@ def remove_nulls_from_dictionary(data):
     for key in list_of_keys:
         if data[key] in ("", None, [], {}, ()):
             del data[key]
+
+
+def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
+    """Extract the relative path that is relative to the given path.
+
+    Args:
+        file_path (Union[str, Path]): The path to extract the relative path from.
+        relative_to (Path): The path to get the relative path to.
+
+    Returns:
+        Path: The extracted relative path.
+    """
+    file_path = Path(file_path)
+    if file_path.is_absolute():
+        file_path = file_path.relative_to(relative_to)
+    return file_path

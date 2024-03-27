@@ -67,6 +67,7 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
 
 def merge_coverage_report():
     coverage_path = CONTENT_PATH / ".coverage"
+    coverage_path.chmod(0o777)
     coverage_path.unlink(missing_ok=True)
     cov = coverage.Coverage(data_file=coverage_path)
     # this is the path where the pre-commit created the coverage files
@@ -85,6 +86,7 @@ def merge_coverage_report():
 
 def merge_junit_reports():
     junit_reports_path = PRECOMMIT_FOLDER / "pytest-junit"
+    junit_reports_path.chmod(0o777)
     if not junit_reports_path.exists():
         logger.warning("No junit reports found, skipping junit report.")
         return

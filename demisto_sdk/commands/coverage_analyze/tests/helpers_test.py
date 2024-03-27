@@ -264,7 +264,6 @@ class TestCoverageSummary:
             mock_min_cov_request = requests_mock.get(self.default_url, json=text_data)
             self.check_get_files(tmpdir, mock_min_cov_request, 0)
 
-        @pytest.mark.skip
         def test_with_no_cache(self, mocker, requests_mock):
             import builtins
 

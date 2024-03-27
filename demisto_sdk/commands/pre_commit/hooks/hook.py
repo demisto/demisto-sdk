@@ -35,7 +35,7 @@ class Hook:
         self.base_hook = deepcopy(hook)
         self.hook_index = self.hooks.index(self.base_hook)
         self.hooks.remove(self.base_hook)
-        self.parallel = hook.pop("parallel", True)
+        self.parallel = self.base_hook.pop("parallel", True)
         self.mode = context.mode
         self.all_files = context.all_files
         self.input_mode = bool(context.input_files)

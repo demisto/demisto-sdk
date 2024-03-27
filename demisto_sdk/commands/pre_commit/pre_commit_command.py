@@ -218,6 +218,7 @@ class PreCommitRunner:
             if generated_hooks and generated_hooks.parallel:
                 logger.debug(f"Running hook {original_hook_id} with {generated_hooks}")
                 if generated_hooks.parallel:
+                    hook_ids = generated_hooks.hook_ids
                     with ThreadPool(num_processes) as pool:
                         current_hooks_exit_codes = pool.map(
                             partial(
@@ -225,10 +226,10 @@ class PreCommitRunner:
                                 precommit_env=precommit_env,
                                 verbose=verbose,
                                 stdout=subprocess.PIPE
-                                if len(generated_hooks) > 1
+                                if len(hook_ids) > 1
                                 else None,
                             ),
-                            generated_hooks,
+                            hook_ids,
                         )
                 else:
                     current_hooks_exit_codes = [

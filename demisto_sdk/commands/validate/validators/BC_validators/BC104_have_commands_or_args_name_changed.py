@@ -54,7 +54,6 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                 old_args_per_command = [argument.name for argument in command.args]
                 current_command_name = command.name
 
-                # find the same command in the new content item to compare the arguments
                 find_new_command = find_command(
                     content_item.commands, current_command_name
                 )

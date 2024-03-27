@@ -77,7 +77,6 @@ def merge_coverage_report():
     ):
         logger.warning("No coverage files found, skipping coverage report.")
         return
-    created_coverage_path.chmod(0o777)
     fixed_files = [str(file) for file in files if fix_coverage_report_path(Path(file))]
     cov.combine(fixed_files)
     for file in files:
@@ -87,7 +86,6 @@ def merge_coverage_report():
 
 def merge_junit_reports():
     junit_reports_path = PRECOMMIT_FOLDER / "pytest-junit"
-    junit_reports_path.chmod(0o777)
     if not junit_reports_path.exists():
         logger.warning("No junit reports found, skipping junit report.")
         return

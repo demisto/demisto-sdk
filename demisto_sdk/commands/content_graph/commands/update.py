@@ -37,6 +37,13 @@ def should_update_graph(
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
 ):
+    if content_graph_interface.commit:
+        try:
+            changed_pack_ids = git_util.get_all_changed_pack_ids(
+                content_graph_interface.commit
+            )
+        except Exception:
+            return True
     return any(
         (
             not content_graph_interface.is_alive(),  # if neo4j service is not alive, we need to update
@@ -44,9 +51,7 @@ def should_update_graph(
             packs_to_update,  # if there are packs to update, we need to update
             use_git
             and content_graph_interface.commit
-            and git_util.get_all_changed_pack_ids(
-                content_graph_interface.commit
-            ),  # if there are any changed packs and we are using git, we need to update
+            and changed_pack_ids,  # if there are any changed packs and we are using git, we need to update
             content_graph_interface.content_parser_latest_hash
             != content_graph_interface._get_latest_content_parser_hash(),  # if the parse hash changed, we need to update
         )

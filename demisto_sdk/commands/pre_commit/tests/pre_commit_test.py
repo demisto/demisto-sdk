@@ -161,7 +161,13 @@ def test_config_files(mocker, repo: Repo):
 
     python_version_to_files, _ = group_by_language(files_to_run)
     pre_commit_context = pre_commit_command.PreCommitContext(
-        None, None, None, python_version_to_files, ""
+        None,
+        None,
+        None,
+        python_version_to_files,
+        "",
+        pre_commit_template_path=TEST_DATA_PATH
+        / ".pre-commit-config_template-test.yaml",
     )
     assert (
         Path(script1.yml.path).relative_to(repo.path)
@@ -437,7 +443,13 @@ def test_exclude_hooks_by_version(mocker, repo: Repo):
         "3.8": {(Path("file2.py"), None)},
     }
     pre_commit_context = pre_commit_command.PreCommitContext(
-        None, None, None, python_version_to_files, ""
+        None,
+        None,
+        None,
+        python_version_to_files,
+        "",
+        pre_commit_template_path=TEST_DATA_PATH
+        / ".pre-commit-config_template-test.yaml",
     )
     PreCommitRunner.prepare_hooks(pre_commit_context)
 
@@ -468,7 +480,13 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
         "3.8": {(Path("file2.py"), Obj(support_level="community"))},
     }
     pre_commit_context = pre_commit_command.PreCommitContext(
-        None, None, None, python_version_to_files, ""
+        None,
+        None,
+        None,
+        python_version_to_files,
+        "",
+        pre_commit_template_path=TEST_DATA_PATH
+        / ".pre-commit-config_template-test.yaml",
     )
 
     PreCommitRunner.prepare_hooks(pre_commit_context)
@@ -598,7 +616,13 @@ def test_skip_hook_with_mode(mocker):
         "3.8": {(Path("file2.py"), None)},
     }
     pre_commit_runner = pre_commit_command.PreCommitContext(
-        None, None, "nightly", python_version_to_files, ""
+        None,
+        None,
+        "nightly",
+        python_version_to_files,
+        "",
+        pre_commit_template_path=TEST_DATA_PATH
+        / ".pre-commit-config_template-test.yaml",
     )
     repos = pre_commit_runner._get_repos(pre_commit_runner.precommit_template)
     assert not repos["https://github.com/charliermarsh/ruff-pre-commit"]["hooks"]

@@ -62,7 +62,7 @@ class PreCommitContext:
         self.precommit_template: dict = get_file_or_remote(
             self.pre_commit_template_path
         )
-        remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
+        remote_config_file = get_remote_file(str(self.pre_commit_template_path))
         if remote_config_file and remote_config_file != self.precommit_template:
             # TODO - maybe check it up only if its content repo?
             logger.info(

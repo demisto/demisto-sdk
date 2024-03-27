@@ -132,7 +132,7 @@ def update_content_graph(
             success_remote = content_graph_interface.import_graph(
                 download=True, fail_on_error=is_external_repo
             )
-            if not success_remote or not is_external_repo:
+            if not success_remote and not is_external_repo:
                 logger.warning(
                     "Importing graph from bucket failed. Creating from scratch"
                 )

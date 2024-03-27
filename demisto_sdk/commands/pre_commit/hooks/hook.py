@@ -23,6 +23,9 @@ class GeneratedHooks:
     def __str__(self):
         return f"generated-hooks: {', '.join(self.hook_ids)}, parallel: {self.parallel}"
 
+    def __bool__(self) -> bool:
+        return len(self.hook_ids) > 0
+
 
 class Hook:
     def __init__(

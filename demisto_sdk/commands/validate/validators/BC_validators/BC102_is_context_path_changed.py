@@ -4,13 +4,24 @@ from collections import defaultdict
 from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
 ContentTypes = Integration
+
+
+def diff_outputs_context_path(
+    new_command: Command, old_command: Command
+) -> Set[Optional[str]]:
+    """
+    This method returns the context path diff between two commands objects.
+    """
+    old_command_outputs_set = {output.contextPath for output in old_command.outputs}
+    new_command_outputs_set = {output.contextPath for output in new_command.outputs}
+    return old_command_outputs_set.difference(new_command_outputs_set)
 
 
 def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[str]]]:
@@ -26,8 +37,8 @@ def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[
     }
     new_command_outputs = {command.name: command for command in integration.commands}
     for command in sorted(set(new_command_outputs).intersection(old_command_outputs)):
-        if diff := new_command_outputs[command].diff_outputs_context_path(
-            old_command_outputs[command]
+        if diff := diff_outputs_context_path(
+            new_command_outputs[command], old_command_outputs[command]
         ):
             result[command] = diff
 

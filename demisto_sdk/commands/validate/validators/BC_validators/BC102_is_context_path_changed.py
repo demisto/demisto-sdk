@@ -24,8 +24,7 @@ def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[
         for command in old_integration.commands  # type:ignore[union-attr]
     }
     mapping_new_commands = {command.name: command for command in integration.commands}
-    for command in mapping_new_commands:
-        if command in mapping_old_commands:
+    for command in sorted(set(mapping_new_commands).intersection(mapping_old_commands)):
             if diff := mapping_new_commands[command].diff_outputs_context_path(
                 mapping_old_commands[command]
             ):

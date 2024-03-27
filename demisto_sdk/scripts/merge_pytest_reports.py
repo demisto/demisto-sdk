@@ -71,7 +71,6 @@ def merge_coverage_report():
     cov = coverage.Coverage(data_file=coverage_path)
     # this is the path where the pre-commit created the coverage files
     created_coverage_path = PRECOMMIT_FOLDER / "coverage"
-
     if not created_coverage_path.exists() or not (
         files := list(created_coverage_path.iterdir())
     ):

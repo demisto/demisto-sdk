@@ -15,7 +15,6 @@ from demisto_sdk.commands.content_graph.objects.integration import (
 from demisto_sdk.commands.validate.tools import find_param
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixResult,
     ValidationResult,
 )
 
@@ -25,12 +24,15 @@ ContentTypes = Integration
 class IsValidFetchIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN126"
     description = "Validate that a fetch integration is not missing the first_fetch & max_fetch params."
+    rationale = (
+        "'first_fetch' and 'max_fetch' parameters in fetch integrations ensure correct incident retrieval. "
+        "Their absence or incorrect format can lead to errors or inconsistencies. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/fetching-incidents#first-run"
+    )
     error_message = (
         "The integration is a fetch integration and missing the following params: {0}."
     )
-    fix_message = "Added the following params to the integration: {0}."
     related_field = "configurations."
-    is_auto_fixable = True
     missing_fetch_params: ClassVar[dict] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -72,14 +74,3 @@ class IsValidFetchIntegrationValidator(BaseValidator[ContentTypes]):
             if not find_param(params, key)
         }
         return self.missing_fetch_params.get(integration_name, {})
-
-    def fix(self, content_item: ContentTypes) -> FixResult:
-        for missing_param in self.missing_fetch_params[content_item.name].values():
-            content_item.params.append(missing_param)
-        return FixResult(
-            validator=self,
-            message=self.fix_message.format(
-                ", ".join(list(self.missing_fetch_params[content_item.name].keys()))
-            ),
-            content_object=content_item,
-        )

@@ -3,22 +3,31 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import venv
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import dotenv
 from demisto_client.demisto_api.rest import ApiException
 from lxml import etree
+from requests.exceptions import ConnectionError, Timeout
 
 from demisto_sdk.commands.common import docker_helper
 from demisto_sdk.commands.common.clients import (
     get_client_from_server_type,
 )
 from demisto_sdk.commands.common.constants import DEF_DOCKER
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.content_constant_paths import (
+    COMMON_SERVER_PYTHON_PATH,
+    CONTENT_PATH,
+    PYTHONPATH,
+    PYTHONPATH_STR,
+)
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
+from demisto_sdk.commands.common.files import FileReadError, TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -84,17 +93,41 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
             docker_python_path.append(
                 f"{docker_prefix}/{path.relative_to(CONTENT_PATH.absolute())}"
             )
+
     if (
-        f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"
+        f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"  # CommonServerPython does not exist locally
         not in docker_python_path
     ):
-        raise RuntimeError(
-            "Could not set debug-in-docker on VSCode. Probably CONTENT_PATH is not set properly."
+        try:
+            common_server_python_contnet = TextFile.read_from_github_api(
+                str(COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py"),
+                verify_ssl=False,
+            )
+        except (FileReadError, ConnectionError, Timeout):
+            logger.error(
+                f"Could not retrieve common server python content from content github from path {COMMON_SERVER_PYTHON_PATH}/CommonServerUserPython.py"
+            )
+            raise RuntimeError(
+                "Could not set debug-in-docker on VSCode. Either CONTENT_PATH is not set properly or CommonServerPython could not be read"
+            )
+
+        Path(COMMON_SERVER_PYTHON_PATH).mkdir(parents=True, exist_ok=True)
+
+        TextFile.write(
+            common_server_python_contnet,
+            output_path=COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py",
         )
+
+        docker_python_path.append(
+            f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"
+        )
+
     return docker_python_path
 
 
-def update_dotenv(file_path: Path, values: Dict[str, str], quote_mode="never"):
+def update_dotenv(
+    file_path: Path, values: Dict[str, Optional[str]], quote_mode="never"
+):
     """
     Configure the .env file with the given values. Generates the file if it doesn't exist.
 
@@ -242,21 +275,17 @@ def configure_module_discovery(ide_type: IDEType):
         ide_type (IDEType): The IDE type to configure
     """
     if ide_type == IDEType.VSCODE:
-        update_dotenv(
-            file_path=DOTENV_PATH,
-            values={
-                "PYTHONPATH": ":".join([str(path) for path in PYTHONPATH]),
-                "MYPYPATH": ":".join(
-                    [
-                        str(path)
-                        for path in PYTHONPATH
-                        if "site-packages" not in str(path)
-                    ]
-                ),
-            },
-        )
+        ide_folder = CONTENT_PATH / ".vscode"
+        ide_folder.mkdir(exist_ok=True, parents=True)
+        configure_vscode_settings(ide_folder=ide_folder)
+        # Delete PYTHONPATH and MYPYPATH from env file because they are not needed
+        env_file = CONTENT_PATH / ".env"
+        env_vars = dotenv.dotenv_values(env_file)
+        env_vars.pop("PYTHONPATH", None)
+        env_vars.pop("MYPYPATH", None)
+        update_dotenv(env_file, env_vars)
 
-    elif ide_type == IDEType.PYCHARM:
+    if ide_type == IDEType.PYCHARM:
         python_discovery_paths = PYTHONPATH.copy()
 
         # Remove 'CONTENT_PATH' from the python discovery paths as it is already configured by default,
@@ -297,7 +326,6 @@ def configure_vscode_tasks(
                         "env": {
                             "PYTHONPATH": ":".join(docker_python_path),
                         },
-                        "envFiles": [str(DOTENV_PATH)],
                     },
                 },
                 {
@@ -393,6 +421,7 @@ def configure_vscode_launch(
                         "console": "integratedTerminal",
                         "cwd": "${workspaceFolder}",
                         "justMyCode": False,
+                        "env": {"PYTHONPATH": PYTHONPATH_STR},
                     },
                     {
                         "name": "Python: Debug Tests",
@@ -402,6 +431,7 @@ def configure_vscode_launch(
                         "purpose": ["debug-test"],
                         "console": "integratedTerminal",
                         "justMyCode": False,
+                        "env": {"PYTHONPATH": PYTHONPATH_STR},
                     },
                 ],
             }
@@ -462,6 +492,74 @@ def configure_vscode(
     configure_devcontainer(integration_script, test_docker_image)
 
 
+def install_uv_all(requirements: List[str], env: dict) -> bool:
+    """This installs all requirements with uv
+
+    Args:
+        requirements (List[str]): List of requirements to install
+        env (dict): The environment variables
+
+    Returns:
+        bool: True if all requirements were installed successfully, False otherwise
+    """
+    try:
+        subprocess.run(
+            [
+                str(Path(sys.executable).parent / "uv"),
+                "pip",
+                "-q",
+                "install",
+            ]
+            + requirements,
+            check=True,
+            env=env,
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def install_single(requirement: str, env: dict) -> None:
+    """Install a single requirement
+    First try to install with uv, if fails try with pip, if fails skip and log an error
+
+    Args:
+        requirement (str): The requirement to install
+        env (dict): The environment variables
+    """
+    try:
+        subprocess.run(
+            [
+                str(Path(sys.executable).parent / "uv"),
+                "pip",
+                "-q",
+                "install",
+                requirement,
+            ],
+            check=True,
+            env=env,
+        )
+        logger.info(f"Installed {requirement} (individually) using uv")
+
+    except subprocess.CalledProcessError:
+        logger.warning(f"Could not install {requirement} using uv, trying with pip")
+        try:
+            subprocess.run(
+                [
+                    str(Path(sys.executable).parent / "pip"),
+                    "-q",
+                    "install",
+                    requirement,
+                ],
+                check=True,
+            )
+            logger.info(f"Installed {requirement} (individually) using pip")
+        except subprocess.CalledProcessError:
+            logger.error(
+                f"Failed to install {requirement} with pip, skipping. Install manually if needed."
+            )
+
+
 def install_virtualenv(
     integration_script: IntegrationScript,
     test_docker_image: str,
@@ -493,23 +591,15 @@ def install_virtualenv(
     logger.info(f"Creating virtualenv for {integration_script.name}")
     shutil.rmtree(venv_path, ignore_errors=True)
     venv.create(venv_path, with_pip=True)
-    for req in requirements:
-        if not req:
-            continue
-        try:
-            subprocess.run(
-                [
-                    f"{venv_path / 'bin' / 'pip'}",
-                    "-q",
-                    "--disable-pip-version-check",
-                    "install",
-                    req,
-                ],
-                check=True,
-            )
-            logger.info(f"Installed {req}")
-        except subprocess.CalledProcessError:
-            logger.warning(f"Could not install {req}, skipping...")
+    env = os.environ.copy()
+    env.update({"VIRTUAL_ENV": str(venv_path)})
+    requirements = [req for req in requirements if req]
+    if not install_uv_all(requirements, env):
+        logger.warning("Failed to install all requirements, trying one by one...")
+        for req in requirements:
+            install_single(req, env)
+
+    logger.info(f"Installed requirements to {venv_path}")
     return interpreter_path
 
 
@@ -567,9 +657,13 @@ def upload_and_create_instance(
     client = get_client_from_server_type()
     pack = integration_script.in_pack
     assert isinstance(pack, Pack)
+    # we need to reparse the pack, since by default it is not parsed with the integration script
+    pack = BaseContent.from_path(pack.path)
+    assert isinstance(pack, Pack)
+
     with tempfile.TemporaryDirectory() as temp_dir:
         pack.upload(
-            client=client.client,
+            client=client.xsoar_client,
             marketplace=client.marketplace,
             target_demisto_version=client.version,
             zip=True,
@@ -587,10 +681,23 @@ def upload_and_create_instance(
 
 
 def add_demistomock_and_commonserveruser(integration_script: IntegrationScript):
-    shutil.copy(
-        CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py",
-        integration_script.path.parent / "demistomock.py",
-    )
+    source_demisto_mock_path = CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py"
+    target_demisto_mock_path = integration_script.path.parent / "demistomock.py"
+    if source_demisto_mock_path.exists():
+        shutil.copy(
+            source_demisto_mock_path,
+            target_demisto_mock_path,
+        )
+    else:
+        try:
+            demisto_mock_content = TextFile.read_from_github_api(
+                "/Tests/demistomock/demistomock.py", verify_ssl=False
+            )
+        except (FileReadError, ConnectionError, Timeout):
+            raise RuntimeError("Could not read demistomock.py from Github")
+
+        TextFile.write(demisto_mock_content, output_path=target_demisto_mock_path)
+
     (integration_script.path.parent / "CommonServerUserPython.py").touch()
 
 
@@ -625,7 +732,7 @@ def configure_integration(
         integration_script, IntegrationScript
     ), "Expected Integration Script"
     add_demistomock_and_commonserveruser(integration_script)
-    docker_image = integration_script.docker_image
+    docker_image: Union[str, DockerImage] = integration_script.docker_image
     interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
     configure_params(integration_script, secret_id, instance_name, test_module)
     if not docker_image:

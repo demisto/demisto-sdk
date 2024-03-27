@@ -442,7 +442,7 @@ class DockerHubClient:
             str: the full docker-image included the tag, for example demisto/pan-os-python:2.0.0
 
         """
-        return f"{docker_image}/{self.get_latest_docker_image_tag(docker_image)}"
+        return f"{docker_image}:{self.get_latest_docker_image_tag(docker_image)}"
 
     def get_repository_images(
         self, repo: str = DEFAULT_REPOSITORY

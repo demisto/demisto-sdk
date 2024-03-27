@@ -13,12 +13,10 @@ from demisto_sdk.commands.common.logger import (
 from demisto_sdk.commands.common.tools import (
     get_all_repo_pack_ids,
     is_external_repository,
+    string_to_bool,
 )
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
-from demisto_sdk.commands.content_graph.commands.create import (
-    create,
-    create_content_graph,
-)
+from demisto_sdk.commands.content_graph.commands.create import create_content_graph
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_PASSWORD,
@@ -75,6 +73,16 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
+    force_create_graph = os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE")
+    logger.debug(f"DEMISTO_SDK_GRAPH_FORCE_CREATE = {force_create_graph}")
+
+    if string_to_bool(force_create_graph, False):
+        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
+        create_content_graph(
+            content_graph_interface, marketplace, dependencies, output_path
+        )
+        return
+
     if not imported_path and not use_git:
         logger.info("A path to import the graph from was not provided, using git")
         use_git = True
@@ -94,7 +102,10 @@ def update_content_graph(
             f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
         )
         content_graph_interface.export_graph(
-            output_path, override_commit=use_git, marketplace=marketplace
+            output_path,
+            override_commit=use_git,
+            marketplace=marketplace,
+            clean_import_dir=False,
         )
 
         return
@@ -127,7 +138,8 @@ def update_content_graph(
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")
-    builder.update_graph(packs_to_update)
+
+    builder.update_graph(tuple(packs_to_update) if packs_to_update else None)
 
     if dependencies:
         content_graph_interface.create_pack_dependencies()
@@ -194,19 +206,19 @@ def update(
         "INFO",
         "-clt",
         "--console-log-threshold",
-        help=("Minimum logging threshold for the console logger."),
+        help="Minimum logging threshold for the console logger.",
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
         "--file-log-threshold",
-        help=("Minimum logging threshold for the file logger."),
+        help="Minimum logging threshold for the file logger.",
     ),
-    log_file_path: str = typer.Option(
-        "demisto_sdk_debug.log",
+    log_file_path: Optional[str] = typer.Option(
+        None,
         "-lp",
         "--log-file-path",
-        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
+        help="Path to save log files onto.",
     ),
 ) -> None:
     """
@@ -214,19 +226,6 @@ def update(
     and updates it with the changes in the given repository
     or by an argument of packs to update with.
     """
-    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
-        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
-        ctx.invoke(
-            create,
-            ctx,
-            marketplace=marketplace,
-            no_dependencies=no_dependencies,
-            output_path=output_path,
-            console_log_threshold=console_log_threshold,
-            file_log_threshold=file_log_threshold,
-            log_file_path=log_file_path,
-        )
-        return
     logging_setup(
         console_log_threshold=console_log_threshold,
         file_log_threshold=file_log_threshold,

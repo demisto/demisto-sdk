@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterable, List, Set
 
 from packaging.version import Version
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.pre_commit.hooks.utils import get_property
 from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
@@ -44,13 +45,20 @@ class Hook:
         self._exclude_hooks_by_support_level()
 
     def _set_files_on_hook(
-        self, hook: dict, files: Iterable[Path], should_filter: bool = True
+        self,
+        hook: dict,
+        files: Iterable[Path],
+        should_filter: bool = True,
+        use_args: bool = False,
+        base_path: Path = CONTENT_PATH,
     ) -> int:
         """
 
         Args:
             hook: mutates the hook with files returned from filter_files_matching_hook_config
             files: the list of files to set on the hook
+            use_args: if True, the files will be added to the args of the hook, and pass_filenames will be set to False
+            base_path: The content base path of the hook. In docker hooks, it will be `/src`. Use with `use_args`.
 
         Returns: the number of files that ultimately are set on the hook. Use this to decide if to run the hook at all
 
@@ -59,6 +67,13 @@ class Hook:
         if should_filter:
             files_to_run_on_hook = self.filter_files_matching_hook_config(files)
         hook["files"] = join_files(files_to_run_on_hook)
+        if use_args:
+            if "args" not in hook:
+                hook["args"] = []
+            hook["args"].extend(
+                (str(base_path / file) for file in files_to_run_on_hook)
+            )
+            hook["pass_filenames"] = False
         return len(files_to_run_on_hook)
 
     def filter_files_matching_hook_config(
@@ -176,7 +191,8 @@ def join_files(files: Set[Path], separator: str = "|") -> str:
         str: The joined string.
     """
     return separator.join(
-        str(file) if Path(file).is_file() else f"{str(file)}{os.sep}" for file in files
+        str(file) if (CONTENT_PATH / file).is_file() else f"{str(file)}{os.sep}"
+        for file in files
     )
 
 

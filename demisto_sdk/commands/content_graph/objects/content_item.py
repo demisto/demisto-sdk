@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, Union
 
 import demisto_client
 from packaging.version import Version
@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
+    get_relative_path,
     replace_incident_to_alert,
     write_dict,
 )
@@ -83,17 +84,32 @@ class ContentItem(BaseContent):
         )
 
     @property
-    def ignored_errors(self) -> list:
+    def ignored_errors(self) -> List[str]:
+        if ignored_errors := self.get_ignored_errors(self.path.name):
+            return ignored_errors
+        file_path = get_relative_path(self.path, CONTENT_PATH)
+        return self.get_ignored_errors(file_path)
+
+    def ignored_errors_related_files(self, file_path: Path) -> List[str]:
+        if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
+            return ignored_errors
+        file_path = get_relative_path(file_path, CONTENT_PATH)
+        return self.get_ignored_errors(file_path)
+
+    def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:
             return (
                 list(
                     self.in_pack.ignored_errors_dict.get(  # type: ignore
-                        f"file:{self.path.name}", []
+                        f"file:{path}", []
                     ).items()
                 )[0][1].split(",")
                 or []
             )
         except:  # noqa: E722
+            logger.debug(
+                f"Failed to extract ignored errors list from {path} for {self.object_id}"
+            )
             return []
 
     @property
@@ -112,9 +128,6 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        # This function converts the pack attribute, which is a parser object to the pack model
-        # This happens since we cant mark the pack type as `Pack` because it is a forward reference.
-        # When upgrading to pydantic v2, remove this method and change pack type to `Pack` directly.
         pack = self.pack
         if not pack or isinstance(pack, fields.FieldInfo):
             pack = None
@@ -123,7 +136,7 @@ class ContentItem(BaseContent):
         if not pack:
             if pack_name := get_pack_name(self.path):
                 pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name
+                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
                 )  # type: ignore[assignment]
         if pack:
             self.pack = pack

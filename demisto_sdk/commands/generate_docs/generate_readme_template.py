@@ -1,9 +1,6 @@
-import logging
 from pathlib import Path
 
 from demisto_sdk.commands.generate_docs.readme_templates import README_TEMPLATES
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def generate_readme_template(input_path: Path, readme_template: str):

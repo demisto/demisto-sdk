@@ -1,6 +1,6 @@
 import tempfile
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.constants import (
@@ -9,8 +9,10 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
@@ -22,12 +24,15 @@ from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_
 from TestSuite.file import File
 from TestSuite.repo import Repo
 
-REPO = Repo(tmpdir=Path(tempfile.mkdtemp()))
+REPO = Repo(tmpdir=Path(tempfile.mkdtemp()), init_git=True)
 
 
 def create_integration_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+    readme_content: Optional[str] = None,
+    code: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -41,8 +46,17 @@ def create_integration_object(
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
-    integration = pack.create_integration(yml=yml_content)
-    integration.code.write("from MicrosoftApiModule import *")
+    if pack_info:
+        pack.set_data(**pack_info)
+
+    additional_params = {}
+
+    if readme_content is not None:
+        additional_params["readme"] = readme_content
+
+    integration = pack.create_integration(yml=yml_content, **additional_params)
+    code = code or "from MicrosoftApiModule import *"
+    integration.code.write(code)
     return BaseContent.from_path(Path(integration.path))  # type:ignore
 
 
@@ -90,20 +104,30 @@ def create_correlation_rule_object(
 def create_playbook_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+    readme_content: Optional[str] = None,
 ):
     """Creating an playbook object with altered fields from a default playbook yml structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
-
+        pack_info (Optional[List[str]]): The playbook's pack name.
+        readme_content (Optional[List[Any]]): The playbook's readme.
     Returns:
         The playbook object.
     """
     yml_content = load_yaml("playbook.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
-    playbook = pack.create_playbook()
+    if pack_info:
+        pack.set_data(**pack_info)
+    additional_params = {}
+
+    if readme_content is not None:
+        additional_params["readme"] = readme_content
+
+    playbook = pack.create_playbook(**additional_params)
     playbook.create_default_playbook(name="sample")
     playbook.yml.update(yml_content)
     parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
@@ -155,13 +179,18 @@ def create_ps_integration_object(
 
 
 def create_script_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+    code: Optional[str] = None,
+    test_code: Optional[str] = None,
 ):
     """Creating an script object with altered fields from a default script yml structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
+        pack_name (str): The name of the pack that the script will be inside of
 
     Returns:
         The script object.
@@ -169,17 +198,26 @@ def create_script_object(
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
     script = pack.create_script(yml=yml_content)
-    script.code.write("from MicrosoftApiModule import *")
+    code = code or "from MicrosoftApiModule import *"
+    script.code.write(code)
+    if test_code:
+        script.test.write(test_code)
     return BaseContent.from_path(Path(script.path))
 
 
-def create_metadata_object(
+def create_pack_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     fields_to_delete: Optional[List[str]] = None,
-) -> PackMetadata:
-    """Creating an pack_metadata object with altered fields from a default pack_metadata json structure.
+    readme_text: str = "",
+    image: Optional[str] = None,
+    playbooks: int = 0,
+    name: Optional[str] = None,
+) -> Pack:
+    """Creating an pack object with altered fields from a default pack_metadata json structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
@@ -194,6 +232,12 @@ def create_metadata_object(
     pack = REPO.create_pack()
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
+    pack.readme.write_text(readme_text)
+    if image is not None:
+        pack.author_image.write(image)
+    if playbooks:
+        for _ in range(playbooks):
+            pack.create_playbook()
     return BaseContent.from_path(Path(pack.path))
 
 
@@ -307,7 +351,7 @@ def create_incident_type_object(
 
 def create_incident_field_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> IncidentField:
     """Creating an incident_field object with altered fields from a default incident_field json structure.
 
     Args:
@@ -321,7 +365,9 @@ def create_incident_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_incident_field(name="incident_field", content=json_content)
-    return BaseContent.from_path(Path(pack.incident_fields[0].path))
+    return cast(
+        IncidentField, BaseContent.from_path(Path(pack.incident_fields[0].path))
+    )
 
 
 def create_report_object(
@@ -551,7 +597,7 @@ def create_generic_definition_object(
 
 def create_generic_field_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> GenericField:
     """Creating an generic_field object with altered fields from a default generic_field json structure.
 
     Args:
@@ -565,7 +611,7 @@ def create_generic_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_generic_field(name="generic_field", content=json_content)
-    return BaseContent.from_path(Path(pack.generic_fields[0].path))
+    return cast(GenericField, BaseContent.from_path(Path(pack.generic_fields[0].path)))
 
 
 def create_generic_type_object(
@@ -663,7 +709,13 @@ def create_indicator_type_object(
     return BaseContent.from_path(Path(pack.indicator_types[0].path))
 
 
-def create_old_file_pointers(content_items, old_content_items):
+def create_old_file_pointers(content_items, old_content_items) -> None:
+    """Given two iterables of content_items and their old_content_items, assign each content_item its matching old_content_item.
+
+    Args:
+        content_items (Iterable): Iterables object of content_items.
+        old_content_items (Iterable): Iterables object of olf_content_items.
+    """
     for content_item, old_content_item in zip(content_items, old_content_items):
         content_item.old_base_content_object = old_content_item
 

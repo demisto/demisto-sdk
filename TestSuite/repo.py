@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.commands.create import create_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
+from demisto_sdk.commands.content_graph.objects.repository import from_path
 from TestSuite.conf_json import ConfJSON
 from TestSuite.docker_native_image_config import DockerNativeImageConfiguration
 from TestSuite.global_secrets import GlobalSecrets
@@ -35,9 +36,11 @@ class Repo:
     """
 
     def __init__(self, tmpdir: Path, init_git: bool = False):
+        # clear the cache of the content DTO if we create a repo parser
+        from_path.cache_clear()
         self.packs: List[Pack] = list()
         self._tmpdir = tmpdir
-        self._packs_path = tmpdir / "Packs"
+        self._packs_path: Path = tmpdir / "Packs"
         self._packs_path.mkdir()
         self.path = str(self._tmpdir)
 
@@ -325,7 +328,7 @@ class Repo:
 
     def init_git(self):
         if not self.git_util:
-            GitUtil.REPO_CLS.init(self.path)
+            GitUtil.REPO_CLS.init(self.path, initial_branch=DEMISTO_GIT_PRIMARY_BRANCH)
             self.git_util = GitUtil(self.path)
             self.git_util.commit_files("Initial Commit")
             self.git_util.repo.create_head(DEMISTO_GIT_PRIMARY_BRANCH)

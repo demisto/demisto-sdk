@@ -36,6 +36,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
+        self.is_fetch_events_and_assets = self.script_info.get(
+            "isfetcheventsandassets", False
+        )
         self.is_mappable = self.script_info.get("ismappable", False)
         self.is_feed = self.script_info.get("feed", False)
         self.is_beta = self.script_info.get("beta", False)
@@ -55,7 +58,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 "type": "script.type",
                 "subtype": "script.subtype",
                 "alt_docker_images": "script.alt_dockerimages",
-                "configuration": "configuration",
+                "params": "configuration",
             }
         )
         return super().field_mapping
@@ -66,7 +69,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     @property
     def params(self) -> Optional[List]:
-        return get_value(self.yml_data, self.field_mapping.get("configuration", ""), [])
+        return get_value(self.yml_data, self.field_mapping.get("params", ""), [])
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.
@@ -134,6 +137,13 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         if self.is_unified or self.script_info.get("script") not in ("-", "", None):
             return self.script_info.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(
-            self.path.parent
-        )[1]
+        if not self.git_sha:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data(
+                self.path.parent
+            )[1]
+        else:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
+                self.path, self.git_sha, self.yml_data
+            )[
+                1
+            ]

@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
@@ -41,8 +42,8 @@ def repository(mocker):
         packs=[],
     )
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
-        return_value=[repository],
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
+        return_value=repository,
     )
     return repository
 
@@ -94,7 +95,7 @@ def mock_integration(
         marketplaces=[MarketplaceVersions.XSOAR],
         deprecated=False,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         category="blabla",
         commands=[Command(name="test-command", description="")],
     )
@@ -126,7 +127,7 @@ def mock_script(
         marketplaces=marketplaces,
         deprecated=False,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,
@@ -879,6 +880,8 @@ class TestCreateContentGraph:
         """
         from packaging.version import Version
 
+        from demisto_sdk.commands.common.files.file import File
+
         dockerhub_api_mocker = mocker.patch(
             "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
             return_value=Version(expected_python_version),
@@ -887,13 +890,14 @@ class TestCreateContentGraph:
             "demisto_sdk.commands.common.docker_images_metadata.DockerImagesMetadata._instance",
             None,
         )
-        mocker.patch(
-            "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        mocker.patch.object(
+            File,
+            "read_from_github_api",
             return_value={
                 "docker_images": {
                     "python3": {
                         "3.10.11.54799": {"python_version": "3.10.11"},
-                        "3.10.12.63474": {"python_version": "3.10.12"},
+                        "3.10.12.63474": {"python_version": "3.10.11"},
                     }
                 }
             },

@@ -28,21 +28,26 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 from demisto_sdk.commands.content_graph.tests.update_content_graph_test import (
     _get_pack_by_id,
 )
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 FORMAT_CMD = "format"
 
 
 @pytest.fixture(autouse=True)
-def setup_method(mocker, repo):
+def setup_method(mocker, tmp_path_factory, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
+    from demisto_sdk.commands.common.files.file import File
 
     bc.CONTENT_PATH = Path(repo.path)
-    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
+    mocker.patch.object(
+        neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
+    )
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+    mocker.patch.object(
+        File,
+        "read_from_github_api",
         return_value={
             "docker_images": {
                 "python3": {
@@ -285,15 +290,15 @@ def repository(mocker, repo) -> ContentDTO:
     )
     repository.packs.extend([pack1, pack2])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
         if not packs_to_update:
-            return [repository]
+            return repository
         repo_copy = repository.copy()
         repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
-        return [repo_copy]
+        return repo_copy
 
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
     return repository

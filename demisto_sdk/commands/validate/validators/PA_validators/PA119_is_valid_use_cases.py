@@ -16,6 +16,10 @@ ContentTypes = Pack
 class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
     error_code = "PA119"
     description = "Validate that the metadata's usecases field include valid usecases."
+    rationale = (
+        "See the list of allowed `useCases` in the platform: "
+        "https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
+    )
     error_message = "The pack metadata contains non approved usecases: {0}.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     fix_message = "Removed the following use cases: {0}."
     related_field = "useCases"
@@ -52,9 +56,9 @@ class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
             set: the set of non approved usecases
         """
         non_approved_usecases = set()
-        if non_approved_usecases := set(content_item.use_cases) - set(
-            approved_usecases
-        ):
+        if non_approved_usecases := set(
+            content_item.pack_metadata_dict.get("useCases", [])  # type: ignore[union-attr]
+        ) - set(approved_usecases):
             self.non_approved_usecases_dict[content_item.name] = non_approved_usecases
         return non_approved_usecases
 

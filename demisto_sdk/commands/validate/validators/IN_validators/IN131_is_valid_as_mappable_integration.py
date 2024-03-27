@@ -3,13 +3,11 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
-    GET_MAPPING_FIELDS_COMMAND,
     GET_MAPPING_FIELDS_COMMAND_NAME,
 )
-from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixResult,
     ValidationResult,
 )
 
@@ -19,12 +17,13 @@ ContentTypes = Integration
 class IsValidAsMappableIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN131"
     description = "Validate that the integration is valid as a mappable integration."
-    error_message = f"The integration is a mappable integration and is missing the {GET_MAPPING_FIELDS_COMMAND_NAME} command. Please add the command."
-    fix_message = (
-        f"Added the {GET_MAPPING_FIELDS_COMMAND_NAME} command to the integration."
+    rationale = (
+        "For easy debugging and troubleshooting, integrations supporting schema mapping (ismappable: true) should include the 'get-mapping-fields' command. "
+        "This validator ensures the command is present in the integration YAML, enhancing maintainability and user experience."
+        "For more info, visit https://xsoar.pan.dev/docs/integrations/mirroring_integration#get-mapping-fields"
     )
+    error_message = f"The integration is a mappable integration and is missing the {GET_MAPPING_FIELDS_COMMAND_NAME} command. Please add the command."
     related_field = "ismappable, commands"
-    is_auto_fixable = True
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -42,11 +41,3 @@ class IsValidAsMappableIntegrationValidator(BaseValidator[ContentTypes]):
                 ]
             )
         ]
-
-    def fix(self, content_item: ContentTypes) -> FixResult:
-        content_item.commands.append(Command(**GET_MAPPING_FIELDS_COMMAND))
-        return FixResult(
-            validator=self,
-            message=self.fix_message,
-            content_object=content_item,
-        )

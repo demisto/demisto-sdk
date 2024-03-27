@@ -66,7 +66,7 @@ repos:
     - freezegun==1.2.2 ; python_version >= "3.8" and python_version < "3.11"
     - future==0.18.3 ; python_version >= "3.8" and python_version < "3.11"
     - gitdb==4.0.10 ; python_version >= "3.8" and python_version < "3.11"
-    - gitpython==3.1.37 ; python_version >= "3.8" and python_version < "3.11"
+    - gitpython==3.1.41 ; python_version >= "3.8" and python_version < "3.11"
     - giturlparse==0.10.0 ; python_version >= "3.8" and python_version < "3.11"
     - google-api-core==2.11.0 ; python_version >= "3.8" and python_version < "3.11"
     - google-api-core[grpc]==2.11.0 ; python_version >= "3.8" and python_version < "3.11"
@@ -145,7 +145,7 @@ repos:
     - ruamel-yaml-clib==0.2.7 ; platform_python_implementation == "CPython" and python_version < "3.11" and python_version >= "3.8"
     - ruamel-yaml==0.17.22 ; python_version >= "3.8" and python_version < "3.11"
     - setuptools==67.7.2 ; python_version >= "3.8" and python_version < "3.11"
-    - shellingham==1.5.0.post1 ; python_version >= "3.8" and python_version < "3.11"
+    - shellingham==1.5.4 ; python_version >= "3.8" and python_version < "3.11"
     - six==1.16.0 ; python_version >= "3.8" and python_version < "3.11"
     - slack-sdk==3.21.3 ; python_version >= "3.8" and python_version < "3.11"
     - smmap==5.0.0 ; python_version >= "3.8" and python_version < "3.11"
@@ -157,7 +157,7 @@ repos:
     - tomli==2.0.1 ; python_version >= "3.8" and python_version < "3.11"
     - tqdm==4.65.0 ; python_version >= "3.8" and python_version < "3.11"
     - typed-ast==1.5.4 ; python_version >= "3.8" and python_version < "3.11"
-    - typer[all]==0.7.0 ; python_version >= "3.8" and python_version < "3.11"
+    - typer[all]==0.9.0 ; python_version >= "3.8" and python_version < "3.11"
     - types-chardet==5.0.4.5 ; python_version >= "3.8" and python_version < "3.11"
     - types-cryptography==3.3.23.2 ; python_version >= "3.8" and python_version < "3.11"
     - types-dateparser==1.1.4.9 ; python_version >= "3.8" and python_version < "3.11"
@@ -188,6 +188,7 @@ repos:
     - tzlocal==4.3 ; python_version >= "3.8" and python_version < "3.11"
     - ujson==5.7.0 ; python_version >= "3.8" and python_version < "3.11"
     - urllib3==1.26.15 ; python_version >= "3.8" and python_version < "3.11"
+    - uv==0.1.24 ; python_version >= "3.8" and python_version < "3.11"
     - virtualenv==20.23.0 ; python_version >= "3.8" and python_version < "3.11"
     - vulture==2.7 ; python_version >= "3.8" and python_version < "3.11"
     - wcmatch==8.4.1 ; python_version >= "3.8" and python_version < "3.11"
@@ -204,6 +205,8 @@ repos:
   rev: v4.4.0
   hooks:
   - id: trailing-whitespace
+    args:
+    - --markdown-linebreak-ext=md
   - id: end-of-file-fixer
   - id: check-docstring-first
     exclude: demisto_sdk/commands/init/templates/.*

@@ -4,11 +4,13 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
 import regex
+from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
     MarketplaceVersions,
 )
@@ -16,7 +18,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
-    get_file,
     get_json,
     get_pack_ignore_content,
     get_pack_latest_rn_version,
@@ -37,11 +38,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
     ContentItemsList,
 )
-
-DEFAULT_MARKETPLACES = [
-    MarketplaceVersions.XSOAR.value,
-    MarketplaceVersions.MarketplaceV2.value,
-]
 
 
 class PackContentItems:
@@ -143,14 +139,20 @@ class PackMetadataParser:
         self.server_min_version: str = metadata.get("serverMinVersion", "")
         self.current_version: str = metadata.get("currentVersion", "")
         self.version_info: str = ""
-        self.commit: str = GitUtil().get_current_commit_hash() or ""
+        try:
+            self.commit: str = GitUtil().get_current_commit_hash() or ""
+        except InvalidGitRepositoryError as e:
+            logger.warning(
+                f"Failed to get commit hash for pack {self.name}. Error: {e}"
+            )
+            self.commit = ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
         self.keywords: List[str] = metadata.get("keywords", [])
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
         self.marketplaces: List[str] = (
-            metadata.get("marketplaces") or DEFAULT_MARKETPLACES
+            metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
         )
         if MarketplaceVersions.XSOAR.value in self.marketplaces:
             # Since we want xsoar-saas and xsoar to contain the same content items.
@@ -176,7 +178,7 @@ class PackMetadataParser:
         self.content_commit_hash: Optional[str] = (
             metadata.get("contentCommitHash") or ""
         )
-
+        self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
 
     @property
@@ -229,7 +231,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     content_type = ContentType.PACK
 
-    def __init__(self, path: Path, git_sha: Optional[str] = None) -> None:
+    def __init__(
+        self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False
+    ) -> None:
         """Parses a pack and its content items.
 
         Args:
@@ -266,8 +270,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")
-        self.parse_pack_folders()
-        self.parse_ignored_errors()
+        self.parse_ignored_errors(git_sha)
+        if not metadata_only:
+            self.parse_pack_folders()
         self.get_rn_info()
 
         logger.debug(f"Successfully parsed {self.node_id}")
@@ -337,21 +342,12 @@ class PackParser(BaseContentParser, PackMetadataParser):
             return True
         return False
 
-    def parse_ignored_errors(self):
+    def parse_ignored_errors(self, git_sha: Optional[str]):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {})  # type: ignore
+        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {}) if not git_sha else {}  # type: ignore
 
     def get_rn_info(self):
         self.latest_rn_version = get_pack_latest_rn_version(str(self.path))
-        if self.latest_rn_version:
-            self.latest_rn_content = get_file(
-                str(
-                    self.path
-                    / "ReleaseNotes"
-                    / f"{self.latest_rn_version.replace('.', '_')}.md"
-                ),
-                return_content=True,
-            )
 
     @cached_property
     def field_mapping(self):

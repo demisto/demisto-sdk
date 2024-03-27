@@ -219,7 +219,17 @@ class ReadMeValidator(BaseValidator):
     def mdx_verify_server(self) -> bool:
         server_started = mdx_server_is_up()
         if not server_started:
-            return False
+            if self.handle_error(
+                "Validation of MDX file failed due to unable to start the mdx server. You can skip this by adding RM103"
+                " to the list of skipped validations under '.pack-ignore'.",
+                error_code="RM103",
+                file_path=self.file_path,
+            ):
+                return False
+            logger.info(
+                "[yellow]Validation of MDX file failed due to unable to start the mdx server, skipping.[/yellow]"
+            )
+            return True
         for _ in range(RETRIES_VERIFY_MDX):
             try:
                 readme_content = self.fix_mdx()
@@ -245,6 +255,7 @@ class ReadMeValidator(BaseValidator):
                 start_local_MDX_server()
         return True
 
+    @error_codes("RM103")
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = self.should_run_mdx_validation()
@@ -309,14 +320,20 @@ class ReadMeValidator(BaseValidator):
             re.IGNORECASE,
         )
         if invalid_paths:
+            handled_errors = []
             for path in invalid_paths:
                 path = path[2]
                 alternative_path = path.replace("blob", "raw")
                 error_message, error_code = Errors.image_path_error(
                     path, alternative_path
                 )
-                self.handle_error(error_message, error_code, file_path=self.file_path)
-            return False
+                handled_errors.append(
+                    self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    )
+                )
+            if any(handled_errors):
+                return False
         return True
 
     def verify_readme_image_paths(self) -> bool:
@@ -335,6 +352,7 @@ class ReadMeValidator(BaseValidator):
             return False
         return True
 
+    @error_codes("RM112")
     def verify_readme_relative_urls(self) -> bool:
         """Validate readme (not pack readme) relative urls.
 
@@ -344,7 +362,6 @@ class ReadMeValidator(BaseValidator):
         # If there are errors in one of the following validations return False
         return not self.check_readme_relative_url_paths()
 
-    @error_codes("RM112")
     def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:
         """Validate readme url relative paths.
             prints an error if relative paths in README are found since they are not supported.
@@ -374,6 +391,7 @@ class ReadMeValidator(BaseValidator):
 
         return error_list
 
+    @error_codes("RM114")
     def verify_image_exist(self) -> bool:
         """Validate README images are actually exits.
 
@@ -392,8 +410,10 @@ class ReadMeValidator(BaseValidator):
             )
             if not image_file_path.is_file():
                 error_message, error_code = Errors.image_does_not_exist(image_path)
-                self.handle_error(error_message, error_code, file_path=self.file_path)
-                return False
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
+                    return False
 
         return True
 
@@ -406,7 +426,9 @@ class ReadMeValidator(BaseValidator):
             bool: True if the daemon is accessible
         """
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="DockerPing")  # type: ignore
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="DockerPing"
+            )  # type: ignore
             docker_client.ping()
             return True
         except Exception:
@@ -444,7 +466,7 @@ class ReadMeValidator(BaseValidator):
                         missing_module.append(pack)
         if missing_module:
             valid = False
-            logger.error(
+            logger.debug(
                 f"The npm modules: {missing_module} are not installed. To run the mdx server locally, use "
                 f"'npm install' to install all required node dependencies. Otherwise, if docker is installed, the server"
                 f"will run in a docker container"
@@ -611,9 +633,10 @@ class ReadMeValidator(BaseValidator):
 
         if not is_valid:
             error_message, error_code = Errors.readme_error(errors)
-            self.handle_error(error_message, error_code, file_path=self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
 
-        return is_valid
+        return True
 
     def _find_section_in_text(
         self, sections_list: List[str], ignore_packs: Optional[List[str]] = None
@@ -659,9 +682,9 @@ class ReadMeValidator(BaseValidator):
         is_valid = not bool(errors)
         if not is_valid:
             error_message, error_code = Errors.readme_error(errors)
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-
-        return is_valid
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
     @error_codes("RM100")
     def verify_readme_is_not_too_short(self):
@@ -675,8 +698,8 @@ class ReadMeValidator(BaseValidator):
                 f'\nFile "{self.content_path}/{self.file_path}", line 0'
             )
             error_message, error_code = Errors.readme_error(error)
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-            is_valid = False
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
         return is_valid
 
     @error_codes("RM102,IN136")
@@ -812,7 +835,7 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
-    # @error_codes("RM114")
+    @error_codes("RM115")
     def has_no_markdown_lint_errors(self):
         """
         Will check if the readme has markdownlint.

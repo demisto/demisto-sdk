@@ -1457,6 +1457,12 @@ def test_modeling_rule(
         show_default=True,
         help="The number of times to retry the request against the server.",
     ),
+    delete_existing_dataset: bool = typer.Option(
+        False,
+        "--delete_existing_dataset",
+        "-dd",
+        help="Deletion of the existing dataset from the tenant. Default: False.",
+    ),
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
@@ -1469,17 +1475,11 @@ def test_modeling_rule(
         "--file-log-threshold",
         help="Minimum logging threshold for the file logger.",
     ),
-    log_file_path: str = typer.Option(
-        "demisto_sdk_debug.log",
+    log_file_path: Optional[str] = typer.Option(
+        None,
         "-lp",
         "--log-file-path",
-        help="Path to the log file. Default: ./demisto_sdk_debug.log.",
-    ),
-    delete_existing_dataset: bool = typer.Option(
-        False,
-        "--delete_existing_dataset",
-        "-dd",
-        help="Deletion of the existing dataset from the tenant. Default: False.",
+        help="Path to save log files onto.",
     ),
 ):
     """

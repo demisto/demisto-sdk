@@ -3659,6 +3659,7 @@ def pre_commit(
     pre_commit_template_path: Optional[Path] = typer.Option(
         None,
         "--template-path",
+        envvar="PRE_COMMIT_TEMPLATE_PATH",
         help="A custom path for pre-defined pre-commit template, if not provided will use the default template",
     ),
 ):

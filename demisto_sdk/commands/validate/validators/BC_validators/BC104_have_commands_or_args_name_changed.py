@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from collections import Counter
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.validate.tools import compare_lists, find_command
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -24,17 +24,6 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.YML]
 
-    def compare_names(self, old_names: List[str], new_names: List[str]) -> List[str]:
-        """
-        Compare two lists of names and return the names that are in the old list but not in the new list, including duplicates.
-        Args:
-            old_names: list of old names
-            new_names: list of new names
-        Returns:
-            list of names that are in the old list but not in the new list
-        """
-        return list((Counter(old_names) - Counter(new_names)).elements())
-
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
@@ -44,7 +33,9 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
             new_commands_names = [command.name for command in content_item.commands]
             old_commands_names = [command.name for command in old_content_item.commands]  # type: ignore
 
-            commands_diff = self.compare_names(old_commands_names, new_commands_names)
+            commands_diff = compare_lists(
+                sub_list=old_commands_names, main_list=new_commands_names
+            )
             if commands_diff:
                 results.append(
                     ValidationResult(
@@ -62,16 +53,20 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                 new_args_per_command = []
                 old_args_per_command = [argument.name for argument in command.args]
                 current_command_name = command.name
+
                 # find the same command in the new content item to compare the arguments
-                for command in content_item.commands:
-                    if command.name == current_command_name:
-                        new_args_per_command = [
-                            argument.name for argument in command.args
-                        ]
-                        break
+                find_new_command = find_command(
+                    content_item.commands, current_command_name
+                )
+                new_args_per_command = (
+                    [argument.name for argument in command.args]
+                    if find_new_command
+                    else []
+                )
+
                 if new_args_per_command:
-                    diff_per_command = self.compare_names(
-                        old_args_per_command, new_args_per_command
+                    diff_per_command = compare_lists(
+                        sub_list=old_args_per_command, main_list=new_args_per_command
                     )
                     if diff_per_command:
                         args_diff_per_command_summary.append(

@@ -4,6 +4,7 @@ from demisto_sdk.commands.validate.tests.test_tools import create_playbook_objec
 from demisto_sdk.commands.validate.tools import (
     collect_all_inputs_from_inputs_section,
     collect_all_inputs_in_use,
+    compare_lists,
 )
 
 
@@ -87,3 +88,20 @@ def test_collect_all_inputs_from_inputs_section(content_item, expected_result):
         - A set with all inputs defined in the inputs section with no duplicates or empty spaces are returned.
     """
     assert collect_all_inputs_from_inputs_section(content_item) == expected_result
+
+
+def test_compare_lists():
+    """
+    Given:
+        - Two lists with some elements in common and some that are not.
+    When:
+        - Running compare_lists
+    Then:
+        - Return a list of the elements that are in the sub_list but not in the main_list, including duplicates if not all elements are in the main_list.
+    """
+    main_list = ["a", "b", "c"]
+    sub_list = ["a", "b", "b", "d"]
+    assert compare_lists(sub_list, main_list) == [
+        "b",
+        "d",
+    ]

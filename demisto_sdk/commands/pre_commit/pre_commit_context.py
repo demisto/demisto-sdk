@@ -55,7 +55,10 @@ class PreCommitContext:
         """
         shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
         shutil.rmtree(PRE_COMMIT_FOLDER_SHARED, ignore_errors=True)
+
         PRE_COMMIT_FOLDER_SHARED.mkdir(parents=True, mode=777)
+        (PRE_COMMIT_FOLDER_SHARED / "coverage").mkdir(parents=True, mode=777)
+
         PRECOMMIT_FOLDER.mkdir(parents=True)
         PRECOMMIT_CONFIG.mkdir()
         PRECOMMIT_DOCKER_CONFIGS.mkdir()

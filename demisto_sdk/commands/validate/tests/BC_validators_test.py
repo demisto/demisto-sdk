@@ -747,6 +747,18 @@ def create_dummy_integration_with_context_path(
 
 
 def test_IsContextPathChangedValidator():
+    """
+    Given
+    integration and old integration.
+        - Case 1: no changes in context path - a valid integration
+        - Case 2: context path has been changed - an invalid integration
+    When
+    - Calling the IsContextPathChangedValidator.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Shouldn't fail any.
+        - Case 2: Should fail.
+    """
     command_name = "command"
     old_context_path = "test.test"
 
@@ -770,4 +782,34 @@ def test_IsContextPathChangedValidator():
     assert old_context_path in errors[0].message
     assert errors[0].message.startswith(
         "Changing output context paths is not allowed. Restore the following outputs:"
+    )
+
+
+def test_IsContextPathChangedValidator_remove_command():
+    """
+    Given
+    integration and old integration:
+        - in the new integration, command has been removed
+    When
+    - Calling the IsContextPathChangedValidator.
+    Then
+        - Make sure the validation fail and the right error message is returned.
+    """
+    command_name = "command"
+    old_context_path = "test.test"
+
+    new_integration = create_integration_object()
+    old_integration = create_dummy_integration_with_context_path(
+        command_name=command_name, context_path=old_context_path
+    )
+
+    new_integration.old_base_content_object = old_integration
+
+    # integration is invalid, since command was removed
+    errors = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+
+    assert errors, "Should have failed validation"
+    assert (
+        f"The command = {command_name} has been removed. This is a breaking changes"
+        in errors[0].message
     )

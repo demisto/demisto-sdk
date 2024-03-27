@@ -36,11 +36,20 @@ def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[
         for command in old_integration.commands  # type:ignore[union-attr]
     }
     new_command_outputs = {command.name: command for command in integration.commands}
-    for command in sorted(set(new_command_outputs).intersection(old_command_outputs)):
-        if diff := diff_outputs_context_path(
-            new_command_outputs[command], old_command_outputs[command]
-        ):
-            result[command] = diff
+
+    for command in sorted(old_command_outputs):
+
+        if command in new_command_outputs:
+            if diff := diff_outputs_context_path(
+                new_command_outputs[command], old_command_outputs[command]
+            ):
+                result[command] = diff
+
+        # in case the command has been removed and does not exist in the new commands
+        else:
+            result[command] = {
+                f"The command = {command} has been removed. This is a breaking changes"
+            }
 
     return result
 

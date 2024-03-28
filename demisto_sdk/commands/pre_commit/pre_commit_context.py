@@ -64,7 +64,6 @@ class PreCommitContext:
         )
         remote_config_file = get_remote_file(str(self.pre_commit_template_path))
         if remote_config_file and remote_config_file != self.precommit_template:
-            # TODO - maybe check it up only if its content repo?
             logger.info(
                 f"Your local {PRECOMMIT_TEMPLATE_NAME} is not up to date to the remote one."
             )

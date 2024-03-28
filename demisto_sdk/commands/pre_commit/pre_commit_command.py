@@ -43,6 +43,8 @@ from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_context import (
     PRECOMMIT_CONFIG_MAIN_PATH,
+    PRECOMMIT_DOCKER_CONFIGS,
+    PRECOMMIT_TEMPLATE_PATH,
     PreCommitContext,
 )
 
@@ -474,6 +476,7 @@ def pre_commit_manager(
     dry_run: bool = False,
     run_docker_hooks: bool = True,
     run_hook: Optional[str] = None,
+    pre_commit_template_path: Optional[Path] = None,
 ) -> int:
     """Run pre-commit hooks .
 
@@ -490,6 +493,7 @@ def pre_commit_manager(
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
         dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
         run_docker_hooks (bool, optional): Whether to run docker based hooks or not.
+        pre_commit_template_path (Path, optional): Path to the template pre-commit file.
 
     Returns:
         int: Return code of pre-commit.
@@ -535,6 +539,7 @@ def pre_commit_manager(
         run_hook,
         skipped_hooks,
         run_docker_hooks,
+        pre_commit_template_path=pre_commit_template_path or PRECOMMIT_TEMPLATE_PATH,
     )
     return PreCommitRunner.prepare_and_run(
         pre_commit_context,

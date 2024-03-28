@@ -1623,32 +1623,50 @@ def test_IsPyFileContainCopyRightSectionValidator(
 
 
 @pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        pytest.param([create_incident_field_object()], 0, id="incident_field"),
+        pytest.param([create_widget_object()], 0, id="widget"),
+        pytest.param([create_report_object()], 0, id="report"),
+        pytest.param([create_xsiam_report_object()], 0, id="xsiam_report"),
+        pytest.param([create_script_object()], 0, id="script"),
+        pytest.param([create_dashboard_object()], 0, id="dashboard"),
+        pytest.param([create_incident_type_object()], 0, id="incident_type"),
+        pytest.param([create_generic_type_object()], 0, id="generic_type"),
+        pytest.param([create_outgoing_mapper_object()], 0, id="outgoing_mapper"),
+        pytest.param([create_generic_definition_object()], 0, id="generic_definition"),
+        pytest.param([create_classifier_object()], 0, id="classifier"),
+        pytest.param([create_xsiam_dashboard_object()], 0, id="xsiam_dashboard"),
+        pytest.param([create_job_object()], 0, id="job"),
+        pytest.param([create_list_object()], 0, id="list"),
+        pytest.param([create_parsing_rule_object()], 0, id="parsing_rule"),
+        pytest.param([create_playbook_object()], 0, id="playbook"),
+        pytest.param([create_generic_field_object()], 0, id="generic_field"),
+        pytest.param([create_correlation_rule_object()], 0, id="correlation_rule"),
+        pytest.param(
+            [create_assets_modeling_rule_object()], 0, id="assets_modeling_rule"
+        ),
+        pytest.param([create_layout_object()], 0, id="layout"),
+    ],
+)
+def test_IsContentItemNameContainTrailingSpacesValidator_is_valid_success(
+    content_items: Iterable[ContentTypes113], expected_number_of_failures: int
+):
+    """Test validate BA113 - Trailing spaces in content item name
+    Given:
+        A list of content items with names that have trailing spaces.
+    When:
+        The IsContentItemNameContainTrailingSpacesValidator's is_valid method is called.
+    Then:
+        The validator should return a list of ValidationResult objects, each with a message indicating that the content item's name should not have trailing spaces.
+    """
+    results = IsContentItemNameContainTrailingSpacesValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+
+
+@pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_field_error_messages",
     [
-        pytest.param([create_incident_field_object()], 0, [], id="incident_field"),
-        pytest.param([create_widget_object()], 0, [], id="widget"),
-        pytest.param([create_report_object()], 0, [], id="report"),
-        pytest.param([create_xsiam_report_object()], 0, [], id="xsiam_report"),
-        pytest.param([create_script_object()], 0, [], id="script"),
-        pytest.param([create_dashboard_object()], 0, [], id="dashboard"),
-        pytest.param([create_incident_type_object()], 0, [], id="incident_type"),
-        pytest.param([create_generic_type_object()], 0, [], id="generic_type"),
-        pytest.param([create_outgoing_mapper_object()], 0, [], id="outgoing_mapper"),
-        pytest.param(
-            [create_generic_definition_object()], 0, [], id="generic_definition"
-        ),
-        pytest.param([create_classifier_object()], 0, [], id="classifier"),
-        pytest.param([create_xsiam_dashboard_object()], 0, [], id="xsiam_dashboard"),
-        pytest.param([create_job_object()], 0, [], id="job"),
-        pytest.param([create_list_object()], 0, [], id="list"),
-        pytest.param([create_parsing_rule_object()], 0, [], id="parsing_rule"),
-        pytest.param([create_playbook_object()], 0, [], id="playbook"),
-        pytest.param([create_generic_field_object()], 0, [], id="generic_field"),
-        pytest.param([create_correlation_rule_object()], 0, [], id="correlation_rule"),
-        pytest.param(
-            [create_assets_modeling_rule_object()], 0, [], id="assets_modeling_rule"
-        ),
-        pytest.param([create_layout_object()], 0, [], id="layout"),
         pytest.param(
             [
                 create_classifier_object(
@@ -1805,26 +1823,25 @@ def test_IsPyFileContainCopyRightSectionValidator(
         ),
     ],
 )
-def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(
+def test_IsContentItemNameContainTrailingSpacesValidator_is_valid_failure(
     content_items: Iterable[ContentTypes113],
     expected_number_of_failures: int,
     expected_field_error_messages: List[str],
 ):
-    """Test validate BA113 - Trailing spaces in content item name
+    """
     Given:
-        A list of content items with names that have trailing spaces.
+        A list of content items with names that may contain trailing spaces.
     When:
-        The IsContentItemNameContainTrailingSpacesValidator's is_valid method is called.
+        The `IsContentItemNameContainTrailingSpacesValidator.is_valid` method is called.
     Then:
-        The validator should return a list of ValidationResult objects, each with a message indicating that the content item's name should not have trailing spaces.
+        The method should return the correct number of validation failures and the correct error messages.
     """
     results = IsContentItemNameContainTrailingSpacesValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
-    if results:
-        assert (
-            results[0].message
-            == f"The following fields have a trailing spaces: {expected_field_error_messages[0]}."
-        )
+    assert (
+        results[0].message
+        == f"The following fields have a trailing spaces: {expected_field_error_messages[0]}."
+    )
 
 
 @pytest.mark.parametrize(

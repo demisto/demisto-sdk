@@ -90,8 +90,7 @@ class IsContentItemNameContainTrailingSpacesValidator(BaseValidator[ContentTypes
 
     def get_fields_with_trailing_spaces(self, content_item: ContentTypes) -> List[str]:
         """
-        Get the fields of a content item that contain trailing spaces. These fields are saved in self.violations
-        under the object id of the content item. This is done for the fix function to know which fields to correct.
+        Finds the fields of a content item that have trailing spaces, and saves them in `self.violations` for a later `fix`.
         """
         item_fields = {"object_id": content_item.object_id, "name": content_item.name}
         self.violations[content_item.object_id] = [

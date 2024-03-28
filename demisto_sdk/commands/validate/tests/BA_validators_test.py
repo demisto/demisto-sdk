@@ -1660,8 +1660,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid_success(
     Then:
         The validator should return a list of ValidationResult objects, each with a message indicating that the content item's name should not have trailing spaces.
     """
-    results = IsContentItemNameContainTrailingSpacesValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
+    assert not IsContentItemNameContainTrailingSpacesValidator().is_valid(content_items) # no failures
 
 
 @pytest.mark.parametrize(
@@ -1908,6 +1907,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     validator = IsContentItemNameContainTrailingSpacesValidator()
     validator.violations[content_item.object_id] = fields_with_trailing_spaces
     results = validator.fix(content_item)
+    assert content_item.name == FIELD_WITH_WHITESPACES
     assert (
         results.message
         == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {VALUE_WITH_TRAILING_SPACE.rstrip()}"

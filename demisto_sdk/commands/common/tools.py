@@ -2027,9 +2027,15 @@ def is_external_repository() -> bool:
 
     """
     try:
-        git_repo = GitUtil().repo
-        private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
-        return Path(private_settings_path).exists()
+        remote = GitUtil().repo.remote()
+        return (
+            not remote
+            or (not (parsed_url := giturlparse.parse(remote.url)))
+            or (
+                f"{parsed_url.owner}/{parsed_url.name}"
+                not in ("cortex-xdr/content", "demisto/content")
+            )
+        )
     except git.InvalidGitRepositoryError:
         return True
 

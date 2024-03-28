@@ -196,8 +196,8 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             return True
         return False
 
-    def save(self):
-        super().save()
+    def save(self, output_path: Path = None):
+        super().save(output_path)
         data = self.data
         data["script"]["commands"] = [command.to_raw_dict for command in self.commands]
         data["configuration"] = [param.dict(exclude_none=True) for param in self.params]

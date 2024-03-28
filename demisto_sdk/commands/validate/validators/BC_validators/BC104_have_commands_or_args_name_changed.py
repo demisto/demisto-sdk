@@ -18,7 +18,7 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC104"
     description = "Check if the command name or argument name has been changed."
     rationale = "If an existing command or argument has been renamed, it will break backward compatibility"
-    error_message = "Possible backward compatibility break: Your updates to this file contain changes {unique_message} Please undo the changes."
+    error_message = "Possible backward compatibility break: Your updates to this file: {file_path} contain changes {unique_message} Please undo the changes."
     related_field = "name"  # TODO - what is the field name?
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
@@ -41,7 +41,8 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            unique_message=f"to the names of the following existing commands: {', '.join(commands_diff)}."
+                            file_path=content_item.path,
+                            unique_message=f"to the names of the following existing commands: {', '.join(commands_diff)}.",
                         ),
                         content_object=content_item,
                     )
@@ -58,7 +59,7 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                     content_item.commands, current_command_name
                 )
                 new_args_per_command = (
-                    [argument.name for argument in command.args]
+                    [argument.name for argument in find_new_command.args]
                     if find_new_command
                     else []
                 )
@@ -76,10 +77,16 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            unique_message=f"to the names of existing arguments: {' '.join(args_diff_per_command_summary)}"
+                            file_path=content_item.path,
+                            unique_message=f"to the names of existing arguments: {' '.join(args_diff_per_command_summary)}",
                         ),
                         content_object=content_item,
                     )
                 )
 
         return results
+
+
+# TODO is it ok to return 2 validation results, one for args and one for commands?
+# TODO do i need to add the file path?
+# TODO do I need to add a new validation for 103 as i did for 104?

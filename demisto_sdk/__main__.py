@@ -3602,6 +3602,12 @@ def pre_commit(
         "-g",
         help="Whether to use git to determine which files to run on",
     ),
+    prev_version: Optional[str] = typer.Option(
+        None,
+        "--prev-version",
+        help="The previous version to compare against. "
+        "If not provided, the previous version will be determined using git.",
+    ),
     all_files: bool = typer.Option(
         False, "--all-files", "-a", help="Whether to run on all files"
     ),
@@ -3650,6 +3656,12 @@ def pre_commit(
         "--log-file-path",
         help="Path to save log files onto.",
     ),
+    pre_commit_template_path: Optional[Path] = typer.Option(
+        None,
+        "--template-path",
+        envvar="PRE_COMMIT_TEMPLATE_PATH",
+        help="A custom path for pre-defined pre-commit template, if not provided will use the default template",
+    ),
 ):
     logging_setup(
         console_log_threshold=console_log_threshold,
@@ -3664,6 +3676,7 @@ def pre_commit(
         staged_only,
         commited_only,
         git_diff,
+        prev_version,
         all_files,
         mode,
         skip,
@@ -3675,6 +3688,7 @@ def pre_commit(
         run_docker_hooks=docker,
         dry_run=dry_run,
         run_hook=run_hook,
+        pre_commit_template_path=pre_commit_template_path,
     )
     if return_code:
         raise typer.Exit(1)

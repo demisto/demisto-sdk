@@ -25,6 +25,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     subprocess,
 )
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 TEST_DATA_PATH = (
     Path(git_path()) / "demisto_sdk" / "commands" / "pre_commit" / "tests" / "test_data"
@@ -161,7 +162,13 @@ def test_config_files(mocker, repo: Repo):
 
     python_version_to_files, _ = group_by_language(files_to_run)
     pre_commit_context = pre_commit_command.PreCommitContext(
-        None, None, None, python_version_to_files, ""
+        None,
+        None,
+        None,
+        python_version_to_files,
+        "",
+        pre_commit_template_path=TEST_DATA_PATH
+        / ".pre-commit-config_template-test.yaml",
     )
     assert (
         Path(script1.yml.path).relative_to(repo.path)
@@ -193,6 +200,41 @@ def test_config_files(mocker, repo: Repo):
     assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
     assert list((Path(repo.path) / "docker-config").iterdir())
     assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
+
+
+def test_handle_api_modules(mocker, git_repo: Repo):
+    """
+    Given:
+        - A repository with a pack that contains an API module and a pack that contains an integration that uses the API module
+
+    When:
+        - Running demisto-sdk pre-commit
+
+    Then:
+        - Ensure that the API module is added to the files to run
+        - Ensure that the integration that uses the API module is added to the files to run, both related to the *integration*
+    """
+    pack1 = git_repo.create_pack("ApiModules")
+    script = pack1.create_script("TestApiModule")
+    pack2 = git_repo.create_pack("Pack2")
+    integration = pack2.create_integration(
+        "integration1", code="from TestApiModule import *"
+    )
+    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(git_repo.path))
+    with ChangeCWD(git_repo.path):
+        git_repo.create_graph()
+        files_to_run = group_by_language(
+            {Path(script.yml.path).relative_to(git_repo.path)}
+        )
+    files_to_run = {(path, obj.path) for path, obj in files_to_run[0]["2.7"]}
+    assert (
+        Path(script.yml.path).relative_to(git_repo.path),
+        integration.object.path.relative_to(git_repo.path),
+    ) in files_to_run
+    assert (
+        Path(integration.yml.path).relative_to(git_repo.path),
+        integration.object.path.relative_to(git_repo.path),
+    ) in files_to_run
 
 
 def test_mypy_hooks(mocker):
@@ -355,6 +397,7 @@ class TestPreprocessFiles:
         expected_output = {
             Path(integration.yml.rel_path),
             Path(integration.code.rel_path),
+            Path(integration.test.rel_path),
         }
         mocker.patch.object(GitUtil, "get_all_files", return_value=relative_paths)
         output = preprocess_files(input_files=input_files)
@@ -437,7 +480,13 @@ def test_exclude_hooks_by_version(mocker, repo: Repo):
         "3.8": {(Path("file2.py"), None)},
     }
     pre_commit_context = pre_commit_command.PreCommitContext(
-        None, None, None, python_version_to_files, ""
+        None,
+        None,
+        None,
+        python_version_to_files,
+        "",
+        pre_commit_template_path=TEST_DATA_PATH
+        / ".pre-commit-config_template-test.yaml",
     )
     PreCommitRunner.prepare_hooks(pre_commit_context)
 
@@ -468,7 +517,13 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
         "3.8": {(Path("file2.py"), Obj(support_level="community"))},
     }
     pre_commit_context = pre_commit_command.PreCommitContext(
-        None, None, None, python_version_to_files, ""
+        None,
+        None,
+        None,
+        python_version_to_files,
+        "",
+        pre_commit_template_path=TEST_DATA_PATH
+        / ".pre-commit-config_template-test.yaml",
     )
 
     PreCommitRunner.prepare_hooks(pre_commit_context)
@@ -598,7 +653,13 @@ def test_skip_hook_with_mode(mocker):
         "3.8": {(Path("file2.py"), None)},
     }
     pre_commit_runner = pre_commit_command.PreCommitContext(
-        None, None, "nightly", python_version_to_files, ""
+        None,
+        None,
+        "nightly",
+        python_version_to_files,
+        "",
+        pre_commit_template_path=TEST_DATA_PATH
+        / ".pre-commit-config_template-test.yaml",
     )
     repos = pre_commit_runner._get_repos(pre_commit_runner.precommit_template)
     assert not repos["https://github.com/charliermarsh/ruff-pre-commit"]["hooks"]

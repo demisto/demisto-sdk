@@ -332,16 +332,19 @@ class Initializer:
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)
         else:
-            self.use_git = (True,)
+            self.use_git = True
             self.committed_only = True
             (
                 content_objects_to_run,
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
-        content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
-            content_objects_to_run
-        )
+        if not self.use_git:
+            content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
+                content_objects_to_run
+            )
+        else:
+            content_objects_to_run_with_packs = content_objects_to_run
         for non_content_item in non_content_items:
             logger.warning(
                 f"Invalid content path provided: {str(non_content_item)}. Please provide a valid content item or pack path."

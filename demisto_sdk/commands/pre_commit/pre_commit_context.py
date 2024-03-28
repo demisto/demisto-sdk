@@ -48,6 +48,7 @@ class PreCommitContext:
     skipped_hooks: Set[str] = field(default_factory=set)
     run_docker_hooks: bool = True
     dry_run: bool = False
+    pre_commit_template_path: Path = PRECOMMIT_TEMPLATE_PATH
 
     def __post_init__(self):
         """
@@ -58,15 +59,17 @@ class PreCommitContext:
         PRECOMMIT_FOLDER.mkdir(parents=True)
         PRECOMMIT_CONFIG.mkdir()
         PRECOMMIT_DOCKER_CONFIGS.mkdir()
-        self.precommit_template: dict = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)  # type: ignore[assignment]
-        remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
+        self.precommit_template: dict = get_file_or_remote(
+            self.pre_commit_template_path
+        )
+        remote_config_file = get_remote_file(str(self.pre_commit_template_path))
         if remote_config_file and remote_config_file != self.precommit_template:
             logger.info(
                 f"Your local {PRECOMMIT_TEMPLATE_NAME} is not up to date to the remote one."
             )
         if not isinstance(self.precommit_template, dict):
             raise TypeError(
-                f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
+                f"Pre-commit template in {self.pre_commit_template_path} is not a dictionary."
             )
         self.hooks = self._get_hooks(self.precommit_template)
         self.hooks_need_docker = self._hooks_need_docker()

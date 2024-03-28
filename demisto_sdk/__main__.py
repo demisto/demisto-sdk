@@ -3656,6 +3656,12 @@ def pre_commit(
         "--log-file-path",
         help="Path to save log files onto.",
     ),
+    pre_commit_template_path: Optional[Path] = typer.Option(
+        None,
+        "--template-path",
+        envvar="PRE_COMMIT_TEMPLATE_PATH",
+        help="A custom path for pre-defined pre-commit template, if not provided will use the default template",
+    ),
 ):
     logging_setup(
         console_log_threshold=console_log_threshold,
@@ -3682,6 +3688,7 @@ def pre_commit(
         run_docker_hooks=docker,
         dry_run=dry_run,
         run_hook=run_hook,
+        pre_commit_template_path=pre_commit_template_path,
     )
     if return_code:
         raise typer.Exit(1)

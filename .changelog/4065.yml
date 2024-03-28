@@ -1,4 +1,0 @@
-changes:
-- description: Installing virtual environment in **setup-env** command will use `uv` and will fall back to `pip` to install requirements.
-  type: feature
-pr_number: 4065

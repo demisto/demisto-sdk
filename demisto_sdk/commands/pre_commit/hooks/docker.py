@@ -37,6 +37,7 @@ from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 
 NO_SPLIT = None
+USER_DEMITSO = "demisto"
 
 
 @lru_cache()

@@ -13,6 +13,7 @@ import more_itertools
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
+    API_MODULES_PACK,
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
     PACKS_FOLDER,
@@ -25,10 +26,13 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     write_dict,
 )
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
@@ -136,9 +140,9 @@ class PreCommitRunner:
         )
 
         if process.stdout:
-            logger.info(process.stdout)
+            logger.info("%s", process.stdout)
         if process.stderr:
-            logger.error(process.stderr)
+            logger.error("%s", process.stderr)
         return process.returncode
 
     @staticmethod
@@ -337,6 +341,7 @@ def group_by_language(
     """
     integrations_scripts_mapping = defaultdict(set)
     infra_files = []
+    api_modules = []
     for file in files:
         if file.is_dir():
             continue
@@ -361,19 +366,50 @@ def group_by_language(
             infra_files.append(file)
 
     language_to_files: Dict[str, Set] = defaultdict(set)
-    integrations_scripts = []
+    integrations_scripts: Set[IntegrationScript] = set()
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
         with multiprocessing.Pool(processes=cpu_count()) as pool:
-            integrations_scripts.extend(
-                pool.map(BaseContent.from_path, integration_script_paths)
-            )
+            content_items = pool.map(BaseContent.from_path, integration_script_paths)
+            for content_item in content_items:
+                if not content_item or not isinstance(content_item, IntegrationScript):
+                    continue
+                # content-item is a script/integration
+                integrations_scripts.add(content_item)
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
-        if not integration_script or not isinstance(
-            integration_script, IntegrationScript
-        ):
+        if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
+            # add api modules to the api_modules list, we will handle them later
+            api_modules.append(integration_script)
+            continue
+    if api_modules:
+        with ContentGraphInterface() as graph:
+            update_content_graph(graph)
+            api_modules: List[Script] = graph.search(  # type: ignore[no-redef]
+                object_id=[api_module.object_id for api_module in api_modules]
+            )
+        for api_module in api_modules:
+            assert isinstance(api_module, Script)
+            for imported_by in api_module.imported_by:
+                # we need to add the api module for each integration that uses it, so it will execute the api module check
+                integrations_scripts.add(imported_by)
+                integrations_scripts_mapping[imported_by.path.parent].update(
+                    add_related_files(
+                        api_module.path
+                        if not api_module.path.is_absolute()
+                        else api_module.path.relative_to(CONTENT_PATH)
+                    )
+                    | add_related_files(
+                        imported_by.path
+                        if not imported_by.path.is_absolute()
+                        else imported_by.path.relative_to(CONTENT_PATH)
+                    )
+                )
+
+    for integration_script in integrations_scripts:
+        if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
+            # we dont need to lint them individually, they will be run with the integrations that uses them
             continue
         if integration_script.deprecated:
             # we exclude deprecate integrations and scripts from pre-commit.
@@ -399,7 +435,14 @@ def group_by_language(
                 (path, integration_script)
                 for path in integrations_scripts_mapping[code_file_path]
             },
-            {(integration_script.path.relative_to(CONTENT_PATH), integration_script)},
+            {
+                (
+                    integration_script.path.relative_to(CONTENT_PATH)
+                    if integration_script.path.is_absolute()
+                    else integration_script.path,
+                    integration_script,
+                )
+            },
         )
 
     if infra_files:
@@ -502,6 +545,33 @@ def pre_commit_manager(
     )
 
 
+def add_related_files(file: Path) -> Set[Path]:
+    """This returns the related files set, including the original file
+    If the file is `.yml`, it will add the `.py` file and the test file.
+    If the file is `.py` or `.ps1`, it will add the tests file.
+
+    Args:
+        file (Path): The file to add related files for.
+
+    Returns:
+        Set[Path]: The set of related files.
+    """
+    files_to_run = set()
+    files_to_run.add(file)
+    if ".yml" in (file.suffix for file in files_to_run):
+        py_file_path = file.with_suffix(".py")
+        if py_file_path.exists():
+            files_to_run.add(py_file_path)
+    if {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}):
+        if ".py" in (file.suffix for file in files_to_run):
+            test_file = file.with_name(f"{file.stem}_test.py")
+        else:
+            test_file = file.with_name(f"{file.stem}.Tests.ps1")
+        if test_file.exists():
+            files_to_run.add(test_file)
+    return files_to_run
+
+
 def preprocess_files(
     input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
@@ -532,20 +602,7 @@ def preprocess_files(
         if file.is_dir():
             files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
-            files_to_run.add(file)
-            # If the current file is a yml file, add the matching python file to files_to_run
-            if file.suffix == ".yml":
-                py_file_path = file.with_suffix(".py")
-                if py_file_path.exists():
-                    files_to_run.add(py_file_path)
-            if file.suffix in (".py", ".ps1"):
-                if file.suffix == ".py":
-                    test_file = file.with_name(f"{file.stem}_test.py")
-                else:
-                    test_file = file.with_name(f"{file.stem}.Tests.ps1")
-                if test_file.exists():
-                    files_to_run.add(test_file)
-
+            files_to_run.update(add_related_files(file))
     # convert to relative file to content path
     relative_paths = {
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file

@@ -1,4 +1,0 @@
-changes:
-- description: Add `--prev-version` argument to **pre-commit** command.
-  type: feature
-pr_number: 4177

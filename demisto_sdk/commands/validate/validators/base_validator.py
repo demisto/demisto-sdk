@@ -274,6 +274,23 @@ class InvalidContentItemResult(BaseResult, BaseModel):
         }
 
 
+class ValidationCaughtExceptionResult(BaseResult, BaseModel):
+    validator: Optional[BaseValidator] = None  # type: ignore[assignment]
+    message: str
+    content_object: Optional[BaseContent] = None  # type: ignore[assignment]
+    error_code: Optional[str] = None  # type: ignore[assignment]
+
+    @property
+    def format_readable_message(self):
+        return self.message
+
+    @property
+    def format_json_message(self):
+        return {
+            "message": self.message,
+        }
+
+
 def is_support_level_support_validation(
     err_code: str, support_level_dict: dict, item_support_level: str
 ) -> bool:

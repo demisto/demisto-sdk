@@ -239,6 +239,7 @@ def test_gather_validations_to_run(
                 ],
                 "fixed validations": [],
                 "invalid content items": [],
+                "Validations that caught exceptions": [],
             },
         ),
         (
@@ -248,6 +249,7 @@ def test_gather_validations_to_run(
                 "validations": [],
                 "fixed validations": [],
                 "invalid content items": [],
+                "Validations that caught exceptions": [],
             },
         ),
         (
@@ -281,6 +283,7 @@ def test_gather_validations_to_run(
                     }
                 ],
                 "invalid content items": [],
+                "Validations that caught exceptions": [],
             },
         ),
     ],

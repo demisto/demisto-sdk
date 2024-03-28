@@ -14,7 +14,7 @@ ContentTypes = Integration
 class IsValidDisplayNameForNonDeprecatedIntegrationValidator(
     BaseValidator[ContentTypes]
 ):
-    error_code = "IN158"
+    error_code = "IN160"
     description = "Validate that the display name for non-deprecated integration doesn't end with '(Deprecated)'."
     rationale = (
         "This ensures accurate representation of the integration's status, avoiding confusion for users "

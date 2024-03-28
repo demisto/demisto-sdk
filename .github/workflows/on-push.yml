@@ -294,6 +294,13 @@ jobs:
           cd content
           echo -e "[validate]\nrun_specific_validations=BA101" > .demisto-sdk-conf
 
+      - name: change content permissions
+        run: |
+          cd content
+          git config core.fileMode false
+          sudo chmod -R 777 .
+          sudo chown -R $USER .
+
       - name: run pre-commit on changed files
         timeout-minutes: 60
         run: |

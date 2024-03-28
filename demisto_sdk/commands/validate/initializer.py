@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.tools import (
     detect_file_level,
     get_file_by_status,
     get_relative_path_from_packs_dir,
-    is_external_repository,
+    is_external_repo,
     specify_files_from_directory,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -181,7 +181,7 @@ class Initializer:
         elif self.branch_name in ["master", "main", DEMISTO_GIT_PRIMARY_BRANCH]:
             self.git_util
             message = "Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
-            if not is_external_repository() or self.committed_only:
+            if not is_external_repo() or self.committed_only:
                 logger.warning(message)
             else:
                 raise Exception(message)

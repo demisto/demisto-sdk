@@ -2027,6 +2027,19 @@ def is_external_repository() -> bool:
 
     """
     try:
+        git_repo = GitUtil().repo
+        private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
+        return Path(private_settings_path).exists()
+    except git.InvalidGitRepositoryError:
+        return True
+
+
+def is_external_repo() -> bool:
+    """
+    Returns True if script executed from an external repository (use this instead of is_external_repository)
+
+    """
+    try:
         remote = GitUtil().repo.remote()
         return (
             not remote

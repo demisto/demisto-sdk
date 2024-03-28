@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
-    MarketplaceVersions,
+    MarketplaceVersions, ISO_TIMESTAMP_FORMAT,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
@@ -112,18 +112,23 @@ class PackContentItems:
         )
 
 
-NOW = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+NOW = datetime.now().strftime(ISO_TIMESTAMP_FORMAT)
 
 
 class PackMetadataParser:
     """A pack metadata parser."""
 
     def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
+        logger.debug(f"Start {metadata}")
         self.name: str = metadata.get("name", "")
         self.display_name: str = metadata.get("name", "")
         self.description: str = metadata.get("description", "")
         self.support: str = metadata.get("support", "")
-        self.created: str = metadata.get("created") or NOW
+        self.created = metadata.get("firstCreated")
+        if not self.created:
+            self.created = GitUtil().get_file_creation_date(file_path=path)
+            metadata['firstCreated'] = self.created
+            metadata['created'] = self.created
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None
@@ -180,6 +185,8 @@ class PackMetadataParser:
         )
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
+        logger.debug(f"Stop {metadata}")
+
 
     @property
     def url(self) -> str:

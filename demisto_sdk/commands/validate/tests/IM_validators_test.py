@@ -154,5 +154,7 @@ def test_DefaultImageValidator_is_valid(mocker: MockerFixture):
     assert len(results) == 1
     assert (
         results[0].message
-        == "This is the default image, please change to the integration image."
+        == "The integration is using the default image at {0}, please change to the integration image.".format(
+            DEFAULT_IMAGE
+        )
     )

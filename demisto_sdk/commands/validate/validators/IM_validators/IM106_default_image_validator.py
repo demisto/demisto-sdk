@@ -12,6 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
+from demisto_sdk.tests.constants_test import DEFAULT_IMAGE
 
 ContentTypes = Integration
 
@@ -30,7 +31,7 @@ class DefaultImageValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    "TestSuite/assets/default_integration/sample_image.png",
+                    DEFAULT_IMAGE,
                 ),
                 content_object=content_item,
             )

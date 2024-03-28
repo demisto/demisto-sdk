@@ -14,7 +14,7 @@ ContentTypes = IncidentField
 class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
     error_code = "IF113"
     description = "Checks if field name starts with its pack name or one of the itemPrefixes from pack metadata"
-    rationale = ""
+    rationale = "Required by the platform."
     error_message = "Field name: {field_name} is invalid. Field name must start with the relevant pack name"
     related_field = "name"
 

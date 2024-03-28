@@ -25,13 +25,14 @@ class IncidentFieldParser(
         self.content = self.json_data.get("content")
         self.system = self.json_data.get("system")
         self.group = self.json_data.get("group")
-        self.unsearchable = self.json_data.get("unsearchable")
 
         self.connect_to_dependencies()
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"object_id": "id", "cli_name": "cliName"})
+        super().field_mapping.update(
+            {"object_id": "id", "cli_name": "cliName", "unsearchable": "unsearchable"}
+        )
         return super().field_mapping
 
     @property
@@ -52,6 +53,10 @@ class IncidentFieldParser(
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @property
+    def unsearchable(self) -> Optional[bool]:
+        return get_value(self.json_data, self.field_mapping.get("unsearchable", ""))
 
     def connect_to_dependencies(self) -> None:
         """Collects incident types used as optional dependencies, and scripts as mandatory dependencies."""

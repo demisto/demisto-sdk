@@ -199,7 +199,7 @@ def test_IsCliNameReservedWordValidator_not_valid(reserved_word):
     )
 
 
-def test_IsFieldTypeChangedValidator_not_valid():
+def test_IsFieldTypeChangedValidator_is_valid():
     """
     Given:
         - IncidentFiled content items
@@ -207,19 +207,22 @@ def test_IsFieldTypeChangedValidator_not_valid():
         - run is_valid method
     Then:
         - Ensure that the ValidationResult returned
-          for the IncidentField whose 'type' field is changed
+          for the IncidentField whose 'type' field has changed
+        - Ensure that no ValidationResult returned when 'type' field has not changed
     """
-    content_items = [
-        create_incident_field_object(["type"], ["html"]),
-    ]
+    # not valid
+    content_item = create_incident_field_object(["type"], ["html"])
     old_content_items = [create_incident_field_object(["type"], ["short text"])]
-    create_old_file_pointers(content_items, old_content_items)
-    results = IsFieldTypeChangedValidator().is_valid(content_items)
-    assert results
-    assert results[0].message == "Changing incident field type is not allowed"
+    create_old_file_pointers([content_item], old_content_items)
+    assert IsFieldTypeChangedValidator().is_valid([content_item])
+
+    # valid
+    content_item.field_type = "short text"
+    assert not IsFieldTypeChangedValidator().is_valid([content_item])
 
 
-def test_UnsearchableKeyValidator_not_valid():
+@pytest.mark.parametrize("unsearchable", (False, None))
+def test_UnsearchableKeyValidator_is_valid(unsearchable: bool):
     """
     Given:
         - IncidentFiled content items
@@ -227,41 +230,16 @@ def test_UnsearchableKeyValidator_not_valid():
         - run is_valid method
     Then:
         - Ensure that the ValidationResult returned
-          for the IncidentField whose 'unsearchable' field set to False
+          for the IncidentField whose 'unsearchable' field is set to false or not or undefined
+        - Ensure that no ValidationResult returned when unsearchable set to true
     """
-    content_items = [
-        create_incident_field_object(paths=["unsearchable"], values=[False])
-    ]
-    results = UnsearchableKeyValidator().is_valid(content_items)
-    assert results
-    assert results[0].message == (
-        "Warning: Indicator and incident fields should include the `unsearchable` key set to true."
-        " When missing or set to false, the platform will index the data in this field."
-        " Unnecessary indexing of fields might affect the performance and disk usage in environments."
-        " While considering the above mentioned warning, you can bypass this error by adding it to the .pack-ignore file."
-    )
+    # not valid
+    content_item = create_incident_field_object(paths=["unsearchable"], values=[unsearchable])
+    assert UnsearchableKeyValidator().is_valid([content_item])
 
-
-def test_UnsearchableKeyValidator_not_valid_without_unsearchable():
-    """
-    Given:
-        - IncidentFiled content items
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that the ValidationResult returned
-          for the IncidentField whose 'unsearchable' field is undefined
-    """
-    incident_field = create_incident_field_object()
-    incident_field.unsearchable = None
-    results = UnsearchableKeyValidator().is_valid([incident_field])
-    assert results
-    assert results[0].message == (
-        "Warning: Indicator and incident fields should include the `unsearchable` key set to true."
-        " When missing or set to false, the platform will index the data in this field."
-        " Unnecessary indexing of fields might affect the performance and disk usage in environments."
-        " While considering the above mentioned warning, you can bypass this error by adding it to the .pack-ignore file."
-    )
+    # valid
+    content_item.unsearchable = True
+    assert not UnsearchableKeyValidator().is_valid([content_item])
 
 
 def test_IsValidContentFieldValidator_valid():
@@ -366,40 +344,6 @@ def test_IsCliNameReservedWordValidator_valid():
     assert not results
 
 
-def test_IsFieldTypeChangedValidator_valid():
-    """
-    Given:
-        - IncidentFiled whose type has not changed
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that no ValidationResult returned
-    """
-    content_items = [
-        create_incident_field_object(["type"], ["html"]),
-    ]
-    old_content_items = [create_incident_field_object(["type"], ["html"])]
-    create_old_file_pointers(content_items, old_content_items)
-    results = IsFieldTypeChangedValidator().is_valid(content_items)
-    assert not results
-
-
-def test_UnsearchableKeyValidator_valid():
-    """
-    Given:
-        - IncidentFiled whose 'unsearchable' is set to True
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that no ValidationResult returned
-    """
-    content_items = [
-        create_incident_field_object(paths=["unsearchable"], values=[True])
-    ]
-    results = UnsearchableKeyValidator().is_valid(content_items)
-    assert not results
-
-
 def test_IsValidContentFieldValidator_fix():
     """
     Given:
@@ -446,3 +390,19 @@ def test_IsValidGroupFieldValidator_fix():
     result = IsValidGroupFieldValidator().fix(incident_field)
     assert result.message == f"`group` field is set to {REQUIRED_GROUP_VALUE}."
     assert incident_field.group == REQUIRED_GROUP_VALUE
+
+
+def test_IsFieldTypeChangedValidator_fix():
+    """
+    Given:
+        - IncidentField that its `type` field has changed
+    When:
+        - run fix method
+    Then:
+        - Ensure the field `type` has changed back
+    """
+    content_item = create_incident_field_object(["type"], ["html"])
+    old_content_items = [create_incident_field_object(["type"], ["short text"])]
+    create_old_file_pointers([content_item], old_content_items)
+    IsFieldTypeChangedValidator().fix(content_item)
+    assert content_item.field_type == "short text"

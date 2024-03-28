@@ -15,15 +15,17 @@ ContentTypes = IncidentField
 class UnsearchableKeyValidator(BaseValidator[ContentTypes]):
     error_code = "IF115"
     description = "Checks if the `unsearchable` key set to true"
-    rationale = ""
+    rationale = (
+        "Marking many items searchable causes index and search loads on the platform. "
+        "Official demisto/content IncidentField files must be set to Unsearchable. "
+        "In custom content, it's recommended to keep the number of searchable fields to a minimum."
+    )
     error_message = (
-        "Warning: Indicator and incident fields should include the `unsearchable` key set to true."
-        " When missing or set to false, the platform will index the data in this field."
-        " Unnecessary indexing of fields might affect the performance and disk usage in environments."
-        " While considering the above mentioned warning, you can bypass this error by adding it to the .pack-ignore file."
+        "Warning: Incident fields should have `unsearchable` set to true. "
+        "Otherwise, the platform will index the data in this field, potentially affecting performance and disk usage. "
+        "To suppress this validation, use the .pack-ignore file."
     )
     related_field = "unsearchable"
-    is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

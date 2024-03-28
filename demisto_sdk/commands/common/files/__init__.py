@@ -1,4 +1,5 @@
 from demisto_sdk.commands.common.files.binary_file import BinaryFile  # noqa: F401
+from demisto_sdk.commands.common.files.errors import *
 from demisto_sdk.commands.common.files.ini_file import IniFile  # noqa: F401
 from demisto_sdk.commands.common.files.json5_file import Json5File  # noqa: F401
 from demisto_sdk.commands.common.files.json_file import JsonFile  # noqa: F401

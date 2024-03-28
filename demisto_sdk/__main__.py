@@ -825,6 +825,8 @@ def validate(ctx, config, file_paths: str, **kwargs):
             kwargs["post_commit"] = True
         exit_code = 0
         if not kwargs["skip_old_validate"]:
+            if kwargs["run_new_validate"]:
+                kwargs["graph"] = False
             validator = OldValidateManager(
                 is_backward_check=not kwargs["no_backward_comp"],
                 only_committed_files=kwargs["post_commit"],
@@ -3600,6 +3602,12 @@ def pre_commit(
         "-g",
         help="Whether to use git to determine which files to run on",
     ),
+    prev_version: Optional[str] = typer.Option(
+        None,
+        "--prev-version",
+        help="The previous version to compare against. "
+        "If not provided, the previous version will be determined using git.",
+    ),
     all_files: bool = typer.Option(
         False, "--all-files", "-a", help="Whether to run on all files"
     ),
@@ -3662,6 +3670,7 @@ def pre_commit(
         staged_only,
         commited_only,
         git_diff,
+        prev_version,
         all_files,
         mode,
         skip,

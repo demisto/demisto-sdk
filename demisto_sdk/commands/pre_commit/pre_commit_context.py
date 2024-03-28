@@ -27,6 +27,7 @@ PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
 PRECOMMIT_FOLDER = CACHE_DIR / "pre-commit"
 PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
 PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
+PRECOMMIT_DOCKER_CONFIGS = PRECOMMIT_CONFIG / "docker"
 
 # This has to be relative to content path so the docker will be able to write to it
 PRE_COMMIT_FOLDER_SHARED = CONTENT_PATH / ".pre-commit"

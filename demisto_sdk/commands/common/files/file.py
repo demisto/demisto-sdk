@@ -333,8 +333,8 @@ class File(ABC):
         Reads a file from Github api.
 
         Args:
-            path: the path to the file in Github
-            repo: the repository name
+            path: the path to the file in Github from the repo's root
+            repo: the repository name, e.g.: demisto/content
             encoding: any custom encoding if needed
             tag: the branch/sha to take the file from within Github
             handler: whether a custom handler is required, if not takes the default.
@@ -344,7 +344,9 @@ class File(ABC):
         Returns:
             Any: the file content in the desired format
         """
-        url = f"https://raw.githubusercontent.com/{repo}/{tag}/{path}"
+        if "/" not in path:
+            path = f'/{path}'
+        url = f"https://raw.githubusercontent.com/{repo}/{tag}{path}"
         github_token = os.getenv(GitCredentials.ENV_GITHUB_TOKEN_NAME, "")
 
         timeout = 10

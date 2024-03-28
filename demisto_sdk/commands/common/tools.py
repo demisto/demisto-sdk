@@ -2034,6 +2034,26 @@ def is_external_repository() -> bool:
         return True
 
 
+def is_external_repo() -> bool:
+    """
+    Returns True if script executed from an external repository (use this instead of is_external_repository)
+
+    """
+    try:
+        remote = GitUtil().repo.remote()
+        return (
+            not remote
+            or (not (parsed_url := giturlparse.parse(remote.url)))
+            or (
+                f"{parsed_url.owner}/{parsed_url.name}"
+                not in ("cortex-xdr/content", "demisto/content")
+            )
+        )
+    except Exception as e:
+        logger.debug(f"failed to get repo information, {str(e)}")
+        return True
+
+
 def get_content_id_set() -> dict:
     """Getting the ID Set from official content's bucket"""
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()

@@ -141,7 +141,7 @@ class ContentGitRepo:
             res = runner.invoke(
                 main,
                 "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
-                "--no-docker-checks --debug-git --allow-skipped",
+                "--no-docker-checks --debug-git --allow-skipped --run-old-validate --skip-new-validate",
             )
 
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
@@ -150,7 +150,7 @@ class ContentGitRepo:
             res = runner.invoke(
                 main,
                 "validate -g --skip-pack-dependencies --no-docker-checks --debug-git "
-                "--allow-skipped",
+                "--allow-skipped --run-old-validate --skip-new-validate",
             )
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
@@ -158,7 +158,7 @@ class ContentGitRepo:
             res = runner.invoke(
                 main,
                 "validate -g --skip-pack-dependencies --no-docker-checks --debug-git -iu "
-                "--allow-skipped",
+                "--allow-skipped --run-old-validate --skip-new-validate",
             )
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 

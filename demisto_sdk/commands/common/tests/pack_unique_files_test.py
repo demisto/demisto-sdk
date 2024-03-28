@@ -216,7 +216,17 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
+            runner.invoke(
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    pack.path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
+            )
         assert str_in_call_args_list(
             logger_error.call_args_list,
             "Contributed packs must include email or url",
@@ -274,7 +284,17 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_changed_url)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
+            runner.invoke(
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    pack.path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
+            )
 
         error_text = (
             "The metadata URL leads to a GitHub repo instead of a support page."
@@ -328,7 +348,17 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
+            runner.invoke(
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    pack.path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
+            )
         assert str_in_call_args_list(
             logger_error.call_args_list,
             "The pack price was changed from 2 to 3 - revert the change",

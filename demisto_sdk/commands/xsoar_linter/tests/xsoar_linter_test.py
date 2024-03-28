@@ -45,18 +45,17 @@ def test_build_xsoar_linter_command():
     """
     expected = [
         f"{Path(sys.executable).parent}/pylint",
-        "-E",
         "--disable=all",
         "--fail-under=-100",
         "--fail-on=E",
         "--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'",
-        "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,E9012,W9013,",
-        "--load-plugins=base_checker,",
+        "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,E9012,W9013",
+        "--load-plugins=base_checker",
     ]
 
     output = build_xsoar_linter_command("base")
     assert len(output) == len(expected)
-    assert all([a == b for a, b in zip(output, expected)])
+    assert output == expected
 
 
 @pytest.mark.parametrize(

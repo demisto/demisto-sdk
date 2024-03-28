@@ -1,7 +1,8 @@
-from enum import Enum
 from typing import Dict, List, Union
 
 from pydantic import BaseModel, validator
+
+from demisto_sdk.commands.common.StrEnum import StrEnum
 
 INITIAL_DESCRIPTION = "enter description about this PR"
 INITIAL_TYPE = "<breaking|feature|fix|internal>"
@@ -16,7 +17,7 @@ INITIAL_LOG: Dict[str, Union[int, List[dict]]] = {
 }
 
 
-class LogType(str, Enum):
+class LogType(StrEnum):
     breaking = "breaking"
     feature = "feature"
     fix = "fix"

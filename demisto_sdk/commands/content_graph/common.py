@@ -1,4 +1,3 @@
-import enum
 import os
 import re
 from pathlib import Path
@@ -16,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_json,
@@ -44,7 +44,7 @@ class Neo4jRelationshipResult(NamedTuple):
     nodes_to: List[graph.Node]
 
 
-class RelationshipType(str, enum.Enum):
+class RelationshipType(StrEnum):
     DEPENDS_ON = "DEPENDS_ON"
     HAS_COMMAND = "HAS_COMMAND"
     IMPORTS = "IMPORTS"
@@ -57,8 +57,11 @@ class RelationshipType(str, enum.Enum):
     USES_COMMAND_OR_SCRIPT = "USES_COMMAND_OR_SCRIPT"
     USES_PLAYBOOK = "USES_PLAYBOOK"
 
+    def __str__(self) -> str:
+        return self.value
 
-class ContentType(str, enum.Enum):
+
+class ContentType(StrEnum):
     BASE_CONTENT = "BaseContent"
     BASE_NODE = "BaseNode"
     BASE_PLAYBOOK = "BasePlaybook"
@@ -99,6 +102,9 @@ class ContentType(str, enum.Enum):
     XDRC_TEMPLATE = "XDRCTemplate"
     LAYOUT_RULE = "LayoutRule"
     ASSETS_MODELING_RULE = "AssetsModelingRule"
+
+    def __str__(self) -> str:
+        return self.value
 
     @property
     def labels(self) -> List[str]:

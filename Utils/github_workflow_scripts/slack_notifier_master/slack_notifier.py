@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import Collection, Dict, List, Optional, Set, Tuple
 
 import typer
-from github import Github, WorkflowRun
+from github import Github
+from github.WorkflowRun import WorkflowRun
 from slack_sdk import WebClient
 
 from demisto_sdk.commands.common.logger import logger

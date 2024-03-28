@@ -25,7 +25,7 @@ jobs:
       - name: Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Validate Changelog
         env:
@@ -53,23 +53,26 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
-      - name: Run Pre Commit
-        uses: pre-commit/action@v3.0.1
+      - name: Cache pre-commit
+        uses: actions/cache@v4
         with:
-          extra_args: --all-files
+          path: ~/.cache/pre-commit
+          key: pre-commit-3|3.11|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}
+
+      - name: Run pre-commit
+        run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files
 
       - name: Run Pytest collection
-        run: |
-          poetry run pytest --collect-only .
+        run: poetry run pytest --collect-only .
 
   unit-tests:
     name: Unit Tests / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     defaults:
       run:
@@ -114,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     defaults:
       run:
@@ -153,7 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     defaults:
       run:
@@ -196,8 +199,8 @@ jobs:
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
-      - name: Download all artifacts
+          python-version: "3.11"
+      - name: Download all artifacts # TODO - download only the relevant artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
         run: |
@@ -228,6 +231,7 @@ jobs:
       - name: Checkout content
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           repository: demisto/content
           path: content
 
@@ -238,7 +242,7 @@ jobs:
       - name: Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           working-dir: content
           poetry-install-arguments: "--with ci"
 
@@ -272,14 +276,15 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Checkout Content
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           repository: demisto/content
           path: content
+          ref: ds-sdk-py311
+          fetch-depth: 0
 
       - name: Cache Pre commit
         id: cache-pre-commit
@@ -372,7 +377,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Checkout content
         uses: actions/checkout@v4
@@ -449,13 +454,14 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Checkout content
         uses: actions/checkout@v4
         with:
           repository: demisto/content
           path: content
+          fetch-depth: 0
 
       - name: Run lint on python and powershell files
         run: |
@@ -506,7 +512,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4

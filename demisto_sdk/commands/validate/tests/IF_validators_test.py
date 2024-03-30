@@ -2,7 +2,6 @@ from typing import List
 
 import pytest
 
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -36,10 +35,13 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
 from demisto_sdk.commands.validate.validators.IF_validators.IF111_is_field_type_changed import (
     IsFieldTypeChangedValidator,
 )
-from demisto_sdk.commands.validate.validators.IF_validators.IF113_name_field_prefix import NameFieldPrefixValidator
+from demisto_sdk.commands.validate.validators.IF_validators.IF113_name_field_prefix import (
+    NameFieldPrefixValidator,
+)
 from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_key import (
     UnsearchableKeyValidator,
 )
+from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.mark.parametrize(
@@ -237,7 +239,9 @@ def test_UnsearchableKeyValidator_is_valid(unsearchable: bool):
         - Ensure that no ValidationResult returned when unsearchable set to true
     """
     # not valid
-    content_item = create_incident_field_object(paths=["unsearchable"], values=[unsearchable])
+    content_item = create_incident_field_object(
+        paths=["unsearchable"], values=[unsearchable]
+    )
     assert UnsearchableKeyValidator().is_valid([content_item])
 
     # valid
@@ -412,8 +416,7 @@ def test_IsFieldTypeChangedValidator_fix():
 
 
 def test_NameFieldPrefixValidator_is_valid():
-    """
-    """
+    """ """
     # not valid
     with ChangeCWD(REPO.path):
         content_item = create_incident_field_object(pack_info={"name": "Foo"})

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import Iterable, List, cast
+from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -17,6 +18,7 @@ class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
     rationale = "Required by the platform."
     error_message = "Field name must start with the relevant pack name or one of the item prefixes found in pack metadata."
     related_field = "name"
+    expected_git_statuses = [GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -26,9 +28,7 @@ class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                not name_include_allowed_prefix(content_item)
-            )
+            if (not name_include_allowed_prefix(content_item))
         ]
 
 
@@ -42,9 +42,7 @@ def name_include_allowed_prefix(content_item: ContentTypes) -> bool:
     return False
 
 
-def allowed_prefixes(
-    content_item: ContentTypes
-) -> set:
+def allowed_prefixes(content_item: ContentTypes) -> set:
     """
     Collects from pack metadata all the allowed prefixes
     """

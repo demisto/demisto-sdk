@@ -548,12 +548,12 @@ class TestStructureValidator:
         structure = StructureValidator(str(tmp_path / "integration.yml"))
         assert structure.is_valid_scheme()
 
-        yml["commonfields"]["id:xsoar"] = "not-valid"  # can't edit the id
+        yml["commonfields"]["id:xsoar"] = "editid"  # edit id
 
-        write_dict(tmp_path / "integration-invalid.yml", yml)
+        write_dict(tmp_path / "integration-editid.yml", yml)
 
-        structure = StructureValidator(str(tmp_path / "integration-invalid.yml"))
-        assert not structure.is_valid_scheme()
+        structure = StructureValidator(str(tmp_path / "integration-editid.yml"))
+        assert structure.is_valid_scheme()
 
 
 class TestGetMatchingRegex:

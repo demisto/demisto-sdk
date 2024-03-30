@@ -1,4 +1,5 @@
 from demisto_sdk.commands.pre_commit.hooks.hook import (
+    GeneratedHooks,
     Hook,
     join_files,
     safe_update_hook_args,
@@ -6,7 +7,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import (
 
 
 class ValidateFormatHook(Hook):
-    def prepare_hook(self):
+    def prepare_hook(self) -> GeneratedHooks:
         """
         Prepares the Validate or the Format hook.
         In case of nightly mode and all files, runs validate/format with the --all flag, (nightly mode is not supported on specific files).
@@ -26,3 +27,4 @@ class ValidateFormatHook(Hook):
             safe_update_hook_args(self.base_hook, "-g")
 
         self.hooks.insert(self.hook_index, self.base_hook)
+        return GeneratedHooks(hook_ids=[self.base_hook["id"]], parallel=self.parallel)

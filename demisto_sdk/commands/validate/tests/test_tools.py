@@ -709,7 +709,13 @@ def create_indicator_type_object(
     return BaseContent.from_path(Path(pack.indicator_types[0].path))
 
 
-def create_old_file_pointers(content_items, old_content_items):
+def create_old_file_pointers(content_items, old_content_items) -> None:
+    """Given two iterables of content_items and their old_content_items, assign each content_item its matching old_content_item.
+
+    Args:
+        content_items (Iterable): Iterables object of content_items.
+        old_content_items (Iterable): Iterables object of olf_content_items.
+    """
     for content_item, old_content_item in zip(content_items, old_content_items):
         content_item.old_base_content_object = old_content_item
 

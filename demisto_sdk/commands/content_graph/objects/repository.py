@@ -27,16 +27,15 @@ def from_path(path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = 
     The class function uses this function so the behavior is the same.
     """
     repo_parser = RepositoryParser(path)
+    packs = tuple(repo_parser.iter_packs(packs_to_parse))
     with tqdm.tqdm(
-        total=len(tuple(repo_parser.iter_packs()))
-        if not packs_to_parse
-        else len(packs_to_parse),
+        total=len(packs),
         unit="packs",
         desc="Parsing packs",
         position=0,
         leave=True,
     ) as progress_bar:
-        repo_parser.parse(progress_bar=progress_bar)
+        repo_parser.parse(packs_to_parse=packs, progress_bar=progress_bar)
     return ContentDTO.from_orm(repo_parser)
 
 

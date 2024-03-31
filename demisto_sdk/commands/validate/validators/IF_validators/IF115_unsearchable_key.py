@@ -14,7 +14,7 @@ ContentTypes = IncidentField
 
 class UnsearchableKeyValidator(BaseValidator[ContentTypes]):
     error_code = "IF115"
-    description = "Checks if the `unsearchable` key set to true"
+    description = "Checks if the `unsearchable` key set to true."
     rationale = (
         "Marking many items searchable causes index and search loads on the platform. "
         "Official demisto/content IncidentField files must be set to Unsearchable. "

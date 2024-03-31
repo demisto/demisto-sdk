@@ -251,7 +251,6 @@ def test_UnsearchableKeyValidator_is_valid(unsearchable: bool):
 
 def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
     """
-
     Given:
         - IncidentField content items
     When:
@@ -263,7 +262,13 @@ def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
     # not valid
     with ChangeCWD(REPO.path):
         content_item = create_incident_field_object(pack_info={"name": "Foo"})
-        assert NameFieldPrefixValidator().is_valid([content_item])
+        results = NameFieldPrefixValidator().is_valid([content_item])
+        assert results
+        assert results[0].message == (
+            "Field name must start with the relevant pack name or one of the item prefixes found in pack metadata."
+            "\nFollowing prefixes are allowed for this IncidentField:"
+            "\nFoo"
+        )
 
         # valid
         content_item.name = "Foo CVE"
@@ -271,17 +276,24 @@ def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
 
 
 @pytest.mark.parametrize(
-    "item_prefix, valid_prefix",
+    "item_prefix, valid_prefix, expected_allowed_prefixes",
     [
         pytest.param(
-            ["Foo test", "Test Incident"], "Foo test CVE", id="itemPrefix is a list"
+            ["Foo test", "Test Incident"],
+            "Foo test CVE",
+            ["Foo", "Foo test", "Test Incident"],
+            id="itemPrefix is a list",
         ),
-        pytest.param("Foo test", "Foo test CVE", id="itemPrefix is a str"),
-        pytest.param(None, "Foo CVE", id="no itemPrefix exists"),
+        pytest.param(
+            "Foo test", "Foo test CVE", ["Foo", "Foo test"], id="itemPrefix is a str"
+        ),
+        pytest.param(None, "Foo CVE", ["Foo"], id="no itemPrefix exists"),
     ],
 )
 def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
-    item_prefix: Optional[Union[List[str], str]], valid_prefix: str
+    item_prefix: Optional[Union[List[str], str]],
+    valid_prefix: str,
+    expected_allowed_prefixes: str,
 ):
     """
     Given:
@@ -300,7 +312,10 @@ def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
         content_item = create_incident_field_object(
             pack_info={"name": "Foo", "itemPrefix": item_prefix}
         )
-        assert NameFieldPrefixValidator().is_valid([content_item])
+        results = NameFieldPrefixValidator().is_valid([content_item])
+        assert results
+        for prefix in expected_allowed_prefixes:
+            assert prefix in results[0].message
 
         # valid
         content_item.name = valid_prefix
@@ -469,5 +484,6 @@ def test_IsFieldTypeChangedValidator_fix():
     content_item = create_incident_field_object(["type"], ["html"])
     old_content_items = [create_incident_field_object(["type"], ["short text"])]
     create_old_file_pointers([content_item], old_content_items)
-    IsFieldTypeChangedValidator().fix(content_item)
+    results = IsFieldTypeChangedValidator().fix(content_item)
     assert content_item.field_type == "short text"
+    assert results.message == "Changed the `type` field back to `short text`."

@@ -16,7 +16,11 @@ class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
     error_code = "IF113"
     description = "Checks if field name starts with its pack name or one of the item prefixes from pack metadata."
     rationale = "Required by the platform."
-    error_message = "Field name must start with the relevant pack name or one of the item prefixes found in pack metadata."
+    error_message = (
+        "Field name must start with the relevant pack name or one of the item prefixes found in pack metadata."
+        "\nFollowing prefixes are allowed for this IncidentField:"
+        "\n{allowed_prefixes}"
+    )
     related_field = "name"
     expected_git_statuses = [GitStatuses.ADDED]
 
@@ -24,7 +28,9 @@ class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(field_name=content_item.name),
+                message=self.error_message.format(
+                    allowed_prefixes=", ".join(allowed_prefixes(content_item))
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

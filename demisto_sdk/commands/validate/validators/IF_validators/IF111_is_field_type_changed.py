@@ -15,10 +15,10 @@ ContentTypes = IncidentField
 
 class IsFieldTypeChangedValidator(BaseValidator[ContentTypes]):
     error_code = "IF111"
-    description = "Checks if the field type changed"
-    rationale = "Changing type of IncidentField is not allowed by the platform"
-    error_message = "Changing incident field type is not allowed"
-    fix_message = "The `type` field has changed back"
+    description = "Checks if the field type changed."
+    rationale = "Changing type of IncidentField is not allowed by the platform."
+    error_message = "Changing incident field type is not allowed."
+    fix_message = "Changed the `type` field back to `{old_type}`."
     related_field = "type"
     is_auto_fixable = True
     expected_git_statuses = [GitStatuses.MODIFIED]
@@ -43,6 +43,6 @@ class IsFieldTypeChangedValidator(BaseValidator[ContentTypes]):
         ).field_type
         return FixResult(
             validator=self,
-            message=self.fix_message,
+            message=self.fix_message.format(old_type=content_item.field_type),
             content_object=content_item,
         )

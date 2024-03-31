@@ -11,6 +11,7 @@ SCHEMA_FOLDER = GIT_ROOT / "demisto_sdk" / "commands" / "common" / "schemas"
 NON_SUPPORTED_KEYS = ["id"]
 SUPPORTED_KEYS = [
     "isfetch",
+    "isfetchevents",
     "defaultValue",
     "defaultvalue",
     "required",

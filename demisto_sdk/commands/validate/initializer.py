@@ -340,9 +340,9 @@ class Initializer:
                 non_content_items,
             ) = self.get_files_using_git()
         if not self.use_git:
-            content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
-                content_objects_to_run
-            )
+            content_objects_to_run_with_packs: Set[
+                BaseContent
+            ] = self.get_items_from_packs(content_objects_to_run)
         else:
             content_objects_to_run_with_packs = content_objects_to_run
         for non_content_item in non_content_items:

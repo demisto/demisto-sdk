@@ -232,6 +232,16 @@ mapping:
                 type: str
               description:xsoar_on_prem:
                 type: str
+              id:xsoar:
+                type: text
+              id:marketplacev2:
+                type: text
+              id:xpanse:
+                type: text
+              id:xsoar_saas:
+                type: text
+              id:xsoar_on_prem:
+                type: text
           note:
             type: bool
           nexttasks:
@@ -291,6 +301,16 @@ mapping:
             - type: map
               allowempty: true
 
+          id:xsoar:
+            type: text
+          id:marketplacev2:
+            type: text
+          id:xpanse:
+            type: text
+          id:xsoar_saas:
+            type: text
+          id:xsoar_on_prem:
+            type: text
   system:
     type: bool
   fromversion:
@@ -346,6 +366,16 @@ mapping:
     type: bool
   deprecated:xsoar_on_prem:
     type: bool
+  id:xsoar:
+    type: str
+  id:marketplacev2:
+    type: str
+  id:xpanse:
+    type: str
+  id:xsoar_saas:
+    type: str
+  id:xsoar_on_prem:
+    type: str
 schema;task_schema:
   type: map
   allowempty: true

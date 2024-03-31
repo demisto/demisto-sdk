@@ -46,6 +46,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA108_is_folder_name_has_separators import (
+    IsFolderNameHasSeparatorsValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
     IsEntityTypeInEntityNameValidator,
 )
@@ -1123,3 +1126,50 @@ def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg)
         assert len(result) == 1
     else:
         assert len(result) == 0
+
+@pytest.mark.parametrize(
+    "content_items, expected_msg",
+    [
+        pytest.param(
+            [
+                create_integration_object(
+                    integration_folder_name = "invalid_integration_name"
+                ),
+            ],
+            "The folder name 'invalid_integration_name' should be without any separator.",
+            id="an invalid integration name",
+        ),
+        pytest.param(
+            [
+                create_integration_object(
+                    integration_folder_name = "invalidIntegrationName"
+                ),
+            ],
+            "",
+            id="a valid integration name.",
+        ),
+        pytest.param(
+            [
+                create_script_object(
+                    script_folder_name = "invalid-script-name"
+                ),
+            ],
+            "The folder name 'invalid-script-name' should be without any separator.",
+            id="an invalid script name",
+        ),
+        pytest.param(
+            [
+                create_script_object(
+                    script_folder_name = "invalidScriptName"
+                ),
+            ],
+            "",
+            id="a valid script name",
+        ),
+    ],
+)
+def test_IsFolderNameHasSeparatorsValidator_is_valid(content_items, expected_msg):
+    result = IsFolderNameHasSeparatorsValidator().is_valid(content_items)
+
+    if result:
+        assert result[0].message == expected_msg

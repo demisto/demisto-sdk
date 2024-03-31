@@ -76,7 +76,7 @@ Validate only specific validations by error codes.
 Whether use the content graph
 
 **Examples**:
-`demisto-sdk validate -g --no-backwards-comp`
+`demisto-sdk validate -g --no-backward-comp`
 This will validate only changed files from content origin/master branch and will exclude backwards
 compatibility checks.
 <br><br>

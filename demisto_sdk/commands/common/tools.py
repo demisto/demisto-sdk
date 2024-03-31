@@ -2049,7 +2049,8 @@ def is_external_repo() -> bool:
                 not in ("cortex-xdr/content", "demisto/content")
             )
         )
-    except git.InvalidGitRepositoryError:
+    except Exception as e:
+        logger.debug(f"failed to get repo information, {str(e)}")
         return True
 
 

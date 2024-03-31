@@ -1,6 +1,6 @@
 changes:
-- description: A new version of validate is available. For more information, refer to the [docs](docs-site TBA). Note that the old validate flow is starting to go under deprecation process and will eventually be deleted.
+- description: A new version of validate is available. For more information, refer to the [docs](docs-site TBA). Note that the old validate flow is beginning to go under a deprecation process and will eventually be removed.
   type: feature
-- description: The new validate flow is activated automatically while the old one is disabled. If you want to change this behavior, use the **--run-old-validate** and **--skip-new-validate** flags or the **RUN_OLD_VALIDATE** and **SKIP_NEW_VALIDATE** env variables.
+- description: The new validate flow is enabled by default while the old one is disabled. If you want to change this behavior, use the **--run-old-validate** and **--skip-new-validate** flags or the **RUN_OLD_VALIDATE** and **SKIP_NEW_VALIDATE** environment variables.
   type: breaking
 pr_number: 4114

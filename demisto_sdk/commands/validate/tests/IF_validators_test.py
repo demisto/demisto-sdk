@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Union
 
 import pytest
 
@@ -415,8 +415,17 @@ def test_IsFieldTypeChangedValidator_fix():
     assert content_item.field_type == "short text"
 
 
-def test_NameFieldPrefixValidator_is_valid():
-    """ """
+def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
+    """
+
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose prefix name that not start with relevant pack name
+    """
     # not valid
     with ChangeCWD(REPO.path):
         content_item = create_incident_field_object(pack_info={"name": "Foo"})
@@ -424,4 +433,41 @@ def test_NameFieldPrefixValidator_is_valid():
 
         # valid
         content_item.name = "Foo CVE"
+        assert not NameFieldPrefixValidator().is_valid([content_item])
+
+
+@pytest.mark.parametrize(
+    "item_prefix, valid_prefix",
+    [
+        pytest.param(
+            ["Foo test", "Test Incident"], "Foo test CVE", id="itemPrefix is a list"
+        ),
+        pytest.param("Foo test", "Foo test CVE", id="itemPrefix is a str"),
+        pytest.param(None, "Foo CVE", id="no itemPrefix exists"),
+    ],
+)
+def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
+    item_prefix: Optional[Union[List[str], str]], valid_prefix: str
+):
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose prefix name is not in `itemPrefix`
+          which is in pack_metadata
+        - Ensure that no ValidationResult returned when prefix name
+          is in itemPrefix which is in pack_metadata
+    """
+    # not valid
+    with ChangeCWD(REPO.path):
+        content_item = create_incident_field_object(
+            pack_info={"name": "Foo", "itemPrefix": item_prefix}
+        )
+        assert NameFieldPrefixValidator().is_valid([content_item])
+
+        # valid
+        content_item.name = valid_prefix
         assert not NameFieldPrefixValidator().is_valid([content_item])

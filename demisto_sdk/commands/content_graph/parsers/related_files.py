@@ -207,15 +207,13 @@ class PNGFiles(ImageFiles):
     def get_file_size(self):
         return self.file_path.stat()
 
-    def load_image(self) -> Union[str, bytes]:
-        encoded_image: Union[str, bytes] = ""
+    def load_image(self) -> Union[str, bytearray, memoryview]:
+        encoded_image = ""
         with open(self.file_path, "rb") as image:
             image_data = image.read()
-            encoded_image = (
-                encoded_image.decode("utf-8")
-                if isinstance(encoded_image, bytes)
-                else base64.b64encode(image_data)
-            )
+            encoded_image = base64.b64encode(image_data)  # type: ignore
+            if isinstance(encoded_image, bytes):
+                encoded_image = encoded_image.decode("utf-8")
         return encoded_image
 
 

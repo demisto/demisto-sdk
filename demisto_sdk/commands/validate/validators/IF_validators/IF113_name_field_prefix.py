@@ -10,6 +10,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = IncidentField
+PACKS_IGNORE = ["Common Types", "Core Alert Fields"]
 
 
 class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
@@ -34,7 +35,10 @@ class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (not name_include_allowed_prefix(content_item))
+            if (
+                content_item.pack_name not in PACKS_IGNORE
+                and not name_include_allowed_prefix(content_item)
+            )
         ]
 
 

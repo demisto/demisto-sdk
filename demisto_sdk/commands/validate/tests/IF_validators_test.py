@@ -36,6 +36,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF111_is_field_type_
     IsFieldTypeChangedValidator,
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF113_name_field_prefix import (
+    PACKS_IGNORE,
     NameFieldPrefixValidator,
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_key import (
@@ -319,6 +320,26 @@ def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
 
         # valid
         content_item.name = valid_prefix
+        assert not NameFieldPrefixValidator().is_valid([content_item])
+
+
+@pytest.mark.parametrize(
+    "special_pack",
+    PACKS_IGNORE
+)
+def test_NameFieldPrefixValidator_is_valid_with_special_packs(special_pack: str):
+    """
+    Given:
+        - IncidentField content item whose pack name is one of the special packs
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    with ChangeCWD(REPO.path):
+        content_item = create_incident_field_object(
+            pack_info={"name": special_pack}
+        )
         assert not NameFieldPrefixValidator().is_valid([content_item])
 
 

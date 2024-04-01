@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    ImageRelatedFile,
+    RelatedFileType,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -30,5 +33,17 @@ class ImageTooLargeValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.image.get_file_size().st_size > IMAGE_MAX_SIZE
+            if self.is_image_valid(content_item.image)
         ]
+
+    def is_image_valid(self, image: ImageRelatedFile):
+        file_type = image.file_path.suffix
+        if file_type == ".png":
+            return image.get_file_size().st_size > IMAGE_MAX_SIZE
+
+        elif file_type == ".svg":
+            # No size validation done for SVG images
+            return False
+
+        image_size = int(((image.get_file_size().st_size - 22) / 4) * 3)
+        return image_size > IMAGE_MAX_SIZE

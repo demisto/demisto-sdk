@@ -55,9 +55,22 @@ def test_ImageExistsValidator_is_valid_image_path():
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_integration_object(image="short image")], 0, []),
         (
-            [create_integration_object(image="A very big image" * 1000)],
+            [
+                create_integration_object(
+                    paths=["image"], values=["data:image/png;base64,short image"]
+                )
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["image"],
+                    values=["data:image/png;base64," + ("A very big image" * 1000)],
+                )
+            ],
             1,
             [
                 "You've created/modified a yml or package with a large sized image. Please make sure to change the image dimensions at: TestIntegration_image.png."
@@ -70,9 +83,9 @@ def test_ImageTooLargeValidator_is_valid(
 ):
     """
     Given:
-    content_items with 2 integrations:
-        - One integration with an image that is not in a valid size.
-        - One integration with an image that is in a valid size.
+    content_items:
+        - Case 1: Integration with an image that is not in a valid size.
+        - Case 2: Integration with an image that is in a valid size.
 
     When:
         - Calling the ImageTooLargeValidator is_valid function.

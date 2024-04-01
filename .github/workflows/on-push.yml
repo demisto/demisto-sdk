@@ -335,7 +335,7 @@ jobs:
 
       - name: Check whether validate_content_path changed
         id: files-changed
-        uses: tj-actions/changed-files@v43
+        uses: tj-actions/changed-files@v44
         with:
           files: |
             demisto_sdk/scripts/validate_content_path.py
@@ -524,7 +524,7 @@ jobs:
 
       - name: Check whether validate files changed
         id: changed-files
-        uses: tj-actions/changed-files@v42
+        uses: tj-actions/changed-files@v44
         with:
           files: |
             demisto_sdk/commands/validate/**

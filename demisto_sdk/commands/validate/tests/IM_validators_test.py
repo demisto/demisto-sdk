@@ -1,9 +1,8 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
-    create_metadata_object,
+    create_pack_object,
 )
 from demisto_sdk.commands.validate.validators.IM_validators.IM100_image_exists_validation import (
     ImageExistsValidator,
@@ -19,9 +18,9 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
 def test_ImageExistsValidator_is_valid_image_path():
     """
     Given:
-    content_items (Integrations).
-        - Case 1: Image path doesn't exist.
-        - Case 2: Image path exists.
+    content_items with 2 integrations:
+        - One integration without image.
+        - One integration with an existing image.
 
     When:
         - Calling the ImageExistsValidator is_valid function.
@@ -32,11 +31,13 @@ def test_ImageExistsValidator_is_valid_image_path():
         - Case 2: Shouldn't fail.
     """
     content_items = [create_integration_object(), create_integration_object()]
-    content_items[0].related_content[RelatedFileType.IMAGE]["path"][0] = ""
-    result = ImageExistsValidator().is_valid(content_items)
-    assert len(result) == 1
+    content_items[0].image.exist = False
+    results = ImageExistsValidator().is_valid(content_items)
+    assert len(results) == 1
     assert all(
         "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at TestIntegration_image.png."
+        in result.message
+        for result in results
     )
 
 
@@ -60,13 +61,13 @@ def test_AuthorImageExistsValidator_is_valid_image_path():
         - Case 2: Shouldn't fail.
     """
     content_items = [
-        create_metadata_object(paths=["support"], values=["community"]),
-        create_metadata_object(paths=["support"], values=["partner"]),
-        create_metadata_object(paths=["support"], values=["partner"]),
-        create_metadata_object(paths=["support"], values=["community"]),
+        create_pack_object(paths=["support"], values=["community"]),
+        create_pack_object(paths=["support"], values=["partner"]),
+        create_pack_object(paths=["support"], values=["partner"]),
+        create_pack_object(paths=["support"], values=["community"]),
     ]
-    content_items[2].related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
-    content_items[3].related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
+    content_items[2].author_image_file.exist = False
+    content_items[3].author_image_file.exist = False
     results = AuthorImageExistsValidator().is_valid(content_items)
     assert len(results) == 1
     assert all(
@@ -79,9 +80,9 @@ def test_AuthorImageExistsValidator_is_valid_image_path():
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], 0, []),
+        ([create_pack_object()], 0, []),
         (
-            [create_metadata_object(image="")],
+            [create_pack_object(image="")],
             1,
             ["The author image should not be empty. Please provide a relevant image."],
         ),

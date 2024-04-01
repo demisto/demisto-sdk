@@ -320,14 +320,20 @@ class ReadMeValidator(BaseValidator):
             re.IGNORECASE,
         )
         if invalid_paths:
+            handled_errors = []
             for path in invalid_paths:
                 path = path[2]
                 alternative_path = path.replace("blob", "raw")
                 error_message, error_code = Errors.image_path_error(
                     path, alternative_path
                 )
-                self.handle_error(error_message, error_code, file_path=self.file_path)
-            return False
+                handled_errors.append(
+                    self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    )
+                )
+            if any(handled_errors):
+                return False
         return True
 
     def verify_readme_image_paths(self) -> bool:
@@ -385,6 +391,7 @@ class ReadMeValidator(BaseValidator):
 
         return error_list
 
+    @error_codes("RM114")
     def verify_image_exist(self) -> bool:
         """Validate README images are actually exits.
 
@@ -403,8 +410,10 @@ class ReadMeValidator(BaseValidator):
             )
             if not image_file_path.is_file():
                 error_message, error_code = Errors.image_does_not_exist(image_path)
-                self.handle_error(error_message, error_code, file_path=self.file_path)
-                return False
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
+                    return False
 
         return True
 
@@ -624,9 +633,10 @@ class ReadMeValidator(BaseValidator):
 
         if not is_valid:
             error_message, error_code = Errors.readme_error(errors)
-            self.handle_error(error_message, error_code, file_path=self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
 
-        return is_valid
+        return True
 
     def _find_section_in_text(
         self, sections_list: List[str], ignore_packs: Optional[List[str]] = None
@@ -672,9 +682,9 @@ class ReadMeValidator(BaseValidator):
         is_valid = not bool(errors)
         if not is_valid:
             error_message, error_code = Errors.readme_error(errors)
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-
-        return is_valid
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
     @error_codes("RM100")
     def verify_readme_is_not_too_short(self):
@@ -688,8 +698,8 @@ class ReadMeValidator(BaseValidator):
                 f'\nFile "{self.content_path}/{self.file_path}", line 0'
             )
             error_message, error_code = Errors.readme_error(error)
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-            is_valid = False
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
         return is_valid
 
     @error_codes("RM102,IN136")
@@ -825,7 +835,7 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
-    # @error_codes("RM114")
+    @error_codes("RM115")
     def has_no_markdown_lint_errors(self):
         """
         Will check if the readme has markdownlint.

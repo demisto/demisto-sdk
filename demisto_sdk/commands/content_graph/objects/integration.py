@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
@@ -7,6 +8,12 @@ from demisto_sdk.commands.common.tools import remove_nulls_from_dictionary, writ
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    DarkSVGRelatedFile,
+    DescriptionRelatedFile,
+    ImageRelatedFile,
+    LightSVGRelatedFile,
+)
 
 if TYPE_CHECKING:
     # avoid circular imports
@@ -14,12 +21,13 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions, RelatedFileType
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
     IntegrationScript,
+    Output,
 )
 
 
@@ -40,13 +48,9 @@ class Parameter(BaseModel):
     fromlicense: Optional[str] = None
 
 
-class Output(BaseModel):
-    description: str = ""
-    contentPath: Optional[str] = None
-    contextPath: Optional[str] = None
+class IntegrationOutput(Output):
     important: Optional[bool] = False
     importantDescription: Optional[str] = None
-    type: Optional[str] = None
 
 
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -54,7 +58,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
 
     # From HAS_COMMAND relationship
     args: List[Argument] = Field([], exclude=True)
-    outputs: List[Output] = Field([], exclude=True)
+    outputs: List[IntegrationOutput] = Field([], exclude=True)
 
     deprecated: bool = Field(False)
     description: Optional[str] = Field("")
@@ -96,7 +100,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
-    is_fetch_assets: bool = False
+    is_fetch_assets: bool = Field(False, alias="isfetchassets")
     is_fetch_events_and_assets: bool = False
     is_feed: bool = False
     is_beta: bool = False
@@ -133,6 +137,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
+        if marketplace != MarketplaceVersions.MarketplaceV2:
+            if summary.get("isfetchevents"):
+                summary["isfetchevents"] = False
+            if summary.get("isfetchassets"):
+                summary["isfetchassets"] = False
         if self.unified_data:
             summary["name"] = self.unified_data.get("display")
         return summary
@@ -149,6 +158,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     },  # for all commands, keep the name and description
                     "is_fetch": True,
                     "is_fetch_events": True,
+                    "is_fetch_assets": True,
                 }
             )
         )
@@ -159,6 +169,12 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
+        if current_marketplace != MarketplaceVersions.MarketplaceV2:
+            script: dict = data.get("script", {})
+            if script.get("isfetchevents"):
+                data["script"]["isfetchevents"] = False
+            if script.get("isfetchassets"):
+                data["script"]["isfetchassets"] = False
 
         if supported_native_images := self.get_supported_native_images(
             ignore_native_image=kwargs.get("ignore_native_image") or False,
@@ -187,40 +203,18 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data["configuration"] = [param.dict(exclude_none=True) for param in self.params]
         write_dict(self.path, data, indent=4)
 
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        related_content_files = super().get_related_content()
-        related_content_files.update(
-            {
-                RelatedFileType.IMAGE: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_image.png")
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.DARK_SVG: {
-                    "path": [str(self.path.parent / f"{self.path.parts[-2]}_dark.svg")],
-                    "git_status": None,
-                },
-                RelatedFileType.LIGHT_SVG: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_light.svg")
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.DESCRIPTION: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_description.md")
-                    ],
-                    "git_status": None,
-                },
-            }
-        )
-        return related_content_files
+    @cached_property
+    def description_file(self) -> DescriptionRelatedFile:
+        return DescriptionRelatedFile(self.path, git_sha=self.git_sha)
 
-    @property
-    def description_file(self) -> str:
-        return self.get_related_text_file(RelatedFileType.DESCRIPTION)
+    @cached_property
+    def dark_svg(self) -> DarkSVGRelatedFile:
+        return DarkSVGRelatedFile(self.path, git_sha=self.git_sha)
 
-    @property
-    def image_file(self) -> str:
-        return self.related_content[RelatedFileType.IMAGE]["path"][0]
+    @cached_property
+    def light_svg(self) -> LightSVGRelatedFile:
+        return LightSVGRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def image(self) -> ImageRelatedFile:
+        return ImageRelatedFile(self.path, git_sha=self.git_sha)

@@ -1,4 +1,37 @@
 # Changelog
+## 1.28.0
+* Added the `validate-xsoar-config` pre-commit hook, replacing `XC` validations. [#4150](https://github.com/demisto/demisto-sdk/pull/4150)
+* Add `--prev-version` argument to **pre-commit** command. [#4177](https://github.com/demisto/demisto-sdk/pull/4177)
+* Installing virtual environment in **setup-env** command will use `uv` and will fall back to `pip` to install requirements. [#4065](https://github.com/demisto/demisto-sdk/pull/4065)
+* Fixed an issue where **pre-commit** failed when called from an inner directory of a content repo. [#4182](https://github.com/demisto/demisto-sdk/pull/4182)
+* Fixed an issue where **generate-docs** command didn't work on newly-created integrations in existing Packs. [#4162](https://github.com/demisto/demisto-sdk/pull/4162)
+* Fixed an issue in **setup-env** where the pack was not uploaded correctly to XSOAR/XSIAM. [#4166](https://github.com/demisto/demisto-sdk/pull/4166)
+* Fixed an issue in **setup-env** where debug failed when running locally and not with docker. [#4166](https://github.com/demisto/demisto-sdk/pull/4166)
+* Added a script for generating validation docs [#4103](https://github.com/demisto/demisto-sdk/pull/4103)
+
+## 1.27.5
+* Added the `validate-content-path` **pre-commit** hook [#4084](https://github.com/demisto/demisto-sdk/pull/4084)
+* Fixed an issue where **setup-env** command failed when demistomock.py file does not exist locally. [#4094](https://github.com/demisto/demisto-sdk/pull/4094)
+* Fixed an issue where **prepare-content** command didn't add contribution section to description files when support level of pack-metadata was `developer` support. [#4151](https://github.com/demisto/demisto-sdk/pull/4151)
+* Fixes an issue in **graph** commands where empty pack folders were not being ignored. [#4154](https://github.com/demisto/demisto-sdk/pull/4154)
+* Update file paths in `test_content` from ec2-user to gcp-user. [#3828](https://github.com/demisto/demisto-sdk/pull/3828)
+
+## 1.27.4
+* Added support for `run_isolated` field to the **pre-commit** configuration file. [#3952](https://github.com/demisto/demisto-sdk/pull/3952)
+* Added support for `pass_docker_extra_args` field to the **pre-commit** configuration file. [#3952](https://github.com/demisto/demisto-sdk/pull/3952)
+* Added the `auto_update_docker_image` field to the content-graph for scripts and integrations. [#4133](https://github.com/demisto/demisto-sdk/pull/4133)
+* Fixed an issue in **validate** where several failed silently when the readme was malformed and the validation was ignored in the pack ignore errors. [#4129](https://github.com/demisto/demisto-sdk/pull/4129)
+
+## 1.27.3
+* Fixed an issue in **lint** and **pre-commit** with custom container registry [#4039](https://github.com/demisto/demisto-sdk/pull/4039)
+
+## 1.27.2
+* Updated the *DO106* error code in the **validate** command to not fail when a docker image is younger than 3 months instead of 3 days. [#4119](https://github.com/demisto/demisto-sdk/pull/4119)
+* Fixed an issue where **lint** crashed when collecting invalid logs. [#4072](https://github.com/demisto/demisto-sdk/pull/4072)
+* Adds auto-update to existing integration README and fixes README generation for existing Packs in contribution flow. [#3820](https://github.com/demisto/demisto-sdk/pull/3820)
+* Fixed an issue where new release notes were generated without marketplace specific tags when needed. [#4118](https://github.com/demisto/demisto-sdk/pull/4118)
+* Improved reviewer instructions on outdated pack submissions. [#4113](https://github.com/demisto/demisto-sdk/pull/4113)
+
 ## 1.27.1
 * Updated the **validate** command (`PA114`) to verify the "currentVersion" field was raised in the pack_metadata when changing specific fields in the pack_metadata file. [#3972](https://github.com/demisto/demisto-sdk/pull/3972)
 * Added support for **update-release-notes** command to update release notes when changing specific fields in the pack_metadata file. [#3972](https://github.com/demisto/demisto-sdk/pull/3972)

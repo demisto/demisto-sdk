@@ -1,6 +1,7 @@
+import inspect
 from abc import ABC
 from collections import defaultdict
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -12,7 +13,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    Union,
     cast,
 )
 
@@ -27,11 +27,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME,
     GitStatuses,
     MarketplaceVersions,
-    RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.files import TextFile
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import set_value, write_dict
@@ -91,6 +88,7 @@ class BaseContentMetaclass(ModelMetaclass):
             if isinstance(getattr(super_cls, attr), LazyProperty)
         }:
             model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]
+
         return model_cls
 
 
@@ -112,6 +110,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+        keep_untouched = (cached_property,)
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
@@ -162,9 +161,22 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         Returns:
             Dict[str, Any]: JSON dictionary representation of the class.
         """
-        self.__add_lazy_properties()
 
-        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
+        self.__add_lazy_properties()
+        cached_properties = {
+            name
+            for name, value in inspect.getmembers(self.__class__)
+            if isinstance(value, cached_property)
+        }
+        json_dct = json.loads(
+            self.json(
+                exclude={
+                    "commands",
+                    "database_id",
+                }
+                | cached_properties
+            )
+        )
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
@@ -231,7 +243,7 @@ class BaseContent(BaseNode):
     def ignored_errors(self) -> List[str]:
         raise NotImplementedError
 
-    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+    def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         """Return the errors that should be ignored for the given related file path.
 
         Args:
@@ -262,14 +274,6 @@ class BaseContent(BaseNode):
     ) -> None:
         # Implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
-
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        """Return a dict of the content item's related items with the list of possible paths, and the status of each related file.
-
-        Returns:
-            Dict[RelatedFileType, dict]: The dict of the content item's related items with the list of possible paths, and the status of each related file.
-        """
-        return {}
 
     @staticmethod
     @lru_cache
@@ -329,45 +333,6 @@ class BaseContent(BaseNode):
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         pass
-
-    @property
-    def related_content(self) -> Dict:
-        if not self.related_content_dict:
-            self.related_content_dict = self.get_related_content()
-            if self.old_base_content_object:
-                git_util = GitUtil()
-                remote, branch = git_util.handle_prev_ver(
-                    self.old_base_content_object.git_sha  # type: ignore[arg-type]
-                )
-                for file in self.related_content_dict.values():
-                    for path in file["path"]:
-                        status = git_util._check_file_status(path, remote, branch)
-                        file["git_status"] = (
-                            None
-                            if (not status and not file["git_status"])
-                            else GitStatuses(status)
-                        )
-        return self.related_content_dict
-
-    def get_related_text_file(self, file_type: RelatedFileType) -> str:
-
-        for file_path in self.related_content[file_type]["path"]:
-            try:
-                if self.git_sha:
-                    file = TextFile.read_from_git_path(
-                        path=file_path,
-                        tag=self.git_sha,
-                    )
-                else:
-                    file = TextFile.read_from_local_path(path=file_path)
-                self.related_content[file_type]["path"] = [file_path]
-                return file
-            except Exception as e:
-                logger.error(f"Failed to get related text file, error: {e}")
-                continue
-        raise NotAContentItemException(
-            f"The {file_type.value} file could not be found in the following paths: {', '.join(self.related_content[file_type]['path'])}"
-        )
 
 
 class UnknownContent(BaseNode):

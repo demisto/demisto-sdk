@@ -14,9 +14,10 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import is_abstract_class
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -25,8 +26,46 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseContentMetaclass,
 )
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
+
+VALIDATION_CATEGORIES = {
+    "BA": "Basic",
+    "BC": "Backward Compatability",
+    "CJ": "Conf.json",
+    "CL": "Classifier",
+    "DA": "Dashboard",
+    "DB": "DBot",
+    "DO": "Docker Image",
+    "DS": "Description",
+    "IF": "Incident Field",
+    "IM": "Author Image",
+    "IN": "Integration",
+    "IT": "Incident Type",
+    "PA": "Pack",
+    "PB": "Playbook",
+    "RM": "Readme",
+    "RP": "Reputation (Incident Type)",
+    "SC": "Script",
+    "GF": "Generic Field",
+    "LI": "List",
+    "LO": "Layout",
+    "MP": "Mapper",
+    "PP": "Pre-Process Rule",
+    "RN": "Release Note",
+    "ST": "Structure",
+    "WD": "Widget",
+    "XC": "XSOAR Configuration",
+    "WZ": "Wizard",
+    "MR": "Modeling Rule",
+    "CR": "Correlation Rule",
+    "XR": "XSIAM Report",
+    "PR": "Parsing Rule",
+    "XT": "XDRC Template",
+    "XD": "XSIAM Dashboard",
+    "GR": "Graph",
+}
 
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
@@ -34,6 +73,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     Class variables:
     error_code: (ClassVar[str]): The validation's error code.
     description: (ClassVar[str]): The validation's error description.
+    rationale: (ClassVar[str]): The validation's rationale.
     error_message: (ClassVar[str]): The validation's error message.
     fix_message: (ClassVar[str]): The validation's fixing message.
     related_field: (ClassVar[str]): The validation's related field.
@@ -46,6 +86,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     error_code: ClassVar[str]
     description: ClassVar[str]
+    rationale: ClassVar[str]
     error_message: ClassVar[str]
     fix_message: ClassVar[str] = ""
     related_field: ClassVar[str]
@@ -130,6 +171,18 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         # Exclude the properties from the repr
         fields = {"graph": {"exclude": True}, "dockerhub_client": {"exclude": True}}
 
+    @property
+    def error_category(self) -> str:
+        return self.error_code[:2]
+
+
+def get_all_validators() -> List[BaseValidator]:
+    return [
+        validator()
+        for validator in BaseValidator.__subclasses__()
+        if not is_abstract_class(validator)
+    ]
+
 
 class BaseResult(BaseModel):
     validator: BaseValidator
@@ -138,7 +191,10 @@ class BaseResult(BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.content_object.path.relative_to(CONTENT_PATH))}: [{self.validator.error_code}] - {self.message}"
+        path: Path = self.content_object.path
+        if path.is_absolute():
+            path = path.relative_to(CONTENT_PATH)
+        return f"{str(path)}: [{self.validator.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
@@ -171,13 +227,14 @@ def is_error_ignored(
     if related_file_type:
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:
-            for path in content_item.related_content.get(related_file, {}).get(
-                "path", ""
-            ):
-                if err_code in content_item.ignored_errors_related_files(path):
-                    # If the error code is found in one of the paths, will set the path in the related_content and return True.
-                    content_item.related_content[related_file]["path"] = [path]
+            try:
+                related_file_object = getattr(content_item, related_file.value)
+                if err_code in content_item.ignored_errors_related_files(
+                    related_file_object.file_path
+                ):
                     return True
+            except Exception:
+                continue
         return False
     else:
         # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
@@ -201,13 +258,33 @@ class InvalidContentItemResult(BaseResult, BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.path.relative_to(CONTENT_PATH))}: [{self.error_code}] - {self.message}"
+        path: Path = self.path
+        if path.is_absolute():
+            path = path.relative_to(CONTENT_PATH)
+        return f"{path}: [{self.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
         return {
             "file path": str(self.path.relative_to(CONTENT_PATH)),
             "error code": self.error_code,
+            "message": self.message,
+        }
+
+
+class ValidationCaughtExceptionResult(BaseResult, BaseModel):
+    validator: Optional[BaseValidator] = None  # type: ignore[assignment]
+    message: str
+    content_object: Optional[BaseContent] = None  # type: ignore[assignment]
+    error_code: Optional[str] = None  # type: ignore[assignment]
+
+    @property
+    def format_readable_message(self):
+        return self.message
+
+    @property
+    def format_json_message(self):
+        return {
             "message": self.message,
         }
 

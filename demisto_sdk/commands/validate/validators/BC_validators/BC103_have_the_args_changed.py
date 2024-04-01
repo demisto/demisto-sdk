@@ -19,7 +19,7 @@ class HaveTheArgsChangedValidator(BaseValidator[ContentTypes]):
     description = "Check if the argument name has been changed."
     rationale = "If an existing argument has been renamed, it will break backward compatibility."
     error_message = (
-        "Possible backward compatibility break: Your updates to this file: '{file_path}' contain changes "
+        "Possible backward compatibility break: Your updates to this file contain changes "
         "to the names of the following existing arguments: {args}. Please undo the changes."
     )
     related_field = "name"  # TODO: check if this is the correct field
@@ -39,9 +39,7 @@ class HaveTheArgsChangedValidator(BaseValidator[ContentTypes]):
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(
-                            file_path=content_item.path, args=", ".join(args_diff)
-                        ),
+                        message=self.error_message.format(args=", ".join(args_diff)),
                         content_object=content_item,
                     )
                 )

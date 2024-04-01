@@ -212,7 +212,7 @@ def create_script_object(
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
-    script = pack.create_script(yml=yml_content,  **additional_params)
+    script = pack.create_script(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"
     script.code.write(code)
     if test_code:

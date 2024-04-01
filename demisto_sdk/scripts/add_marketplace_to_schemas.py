@@ -12,6 +12,7 @@ NON_SUPPORTED_KEYS = [""]
 SUPPORTED_KEYS = [
     "id",
     "isfetch",
+    "isfetchevents",
     "defaultValue",
     "defaultvalue",
     "required",

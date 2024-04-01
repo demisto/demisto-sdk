@@ -142,6 +142,16 @@ mapping:
         type: bool
       isfetch:xsoar_on_prem:
         type: bool
+      isfetchevents:xsoar:
+        type: bool
+      isfetchevents:marketplacev2:
+        type: bool
+      isfetchevents:xpanse:
+        type: bool
+      isfetchevents:xsoar_saas:
+        type: bool
+      isfetchevents:xsoar_on_prem:
+        type: bool
   system:
     type: bool
   hidden:

@@ -32,6 +32,7 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    image: Optional[str] = None,
     code: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
@@ -57,6 +58,8 @@ def create_integration_object(
     integration = pack.create_integration(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"
     integration.code.write(code)
+    if image is not None:
+        integration.image.write(image)
     return BaseContent.from_path(Path(integration.path))  # type:ignore
 
 

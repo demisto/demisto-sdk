@@ -7,6 +7,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IM_validators.IM100_image_exists_validation import (
     ImageExistsValidator,
 )
+from demisto_sdk.commands.validate.validators.IM_validators.IM101_image_too_large import ImageTooLargeValidator
 from demisto_sdk.commands.validate.validators.IM_validators.IM108_author_image_is_empty import (
     AuthorImageIsEmptyValidator,
 )
@@ -40,6 +41,29 @@ def test_ImageExistsValidator_is_valid_image_path():
         for result in results
     )
 
+def test_ImageTooLargeValidator_is_valid():
+    """
+    Given:
+    content_items with 2 integrations:
+        - One integration with an image that is not in a valid size.
+        - One integration with an image that is in a valid size.
+
+    When:
+        - Calling the ImageTooLargeValidator is_valid function.
+
+    Then:
+        - Make sure the right amount of integration image path failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
+    """
+    content_items = [create_integration_object(image="short image"), create_integration_object(image="A very big image"*1000)]
+    results = ImageTooLargeValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert all(
+        "You've created/modified a yml or package with a large sized image. Please make sure to change the image dimensions at: TestIntegration_image.png."
+        in result.message
+        for result in results
+    )
 
 def test_AuthorImageExistsValidator_is_valid_image_path():
     """

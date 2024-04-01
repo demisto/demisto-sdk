@@ -7,7 +7,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IM_validators.IM100_image_exists_validation import (
     ImageExistsValidator,
 )
-from demisto_sdk.commands.validate.validators.IM_validators.IM101_image_too_large import ImageTooLargeValidator
+from demisto_sdk.commands.validate.validators.IM_validators.IM101_image_too_large import (
+    ImageTooLargeValidator,
+)
 from demisto_sdk.commands.validate.validators.IM_validators.IM108_author_image_is_empty import (
     AuthorImageIsEmptyValidator,
 )
@@ -41,6 +43,7 @@ def test_ImageExistsValidator_is_valid_image_path():
         for result in results
     )
 
+
 def test_ImageTooLargeValidator_is_valid():
     """
     Given:
@@ -56,7 +59,10 @@ def test_ImageTooLargeValidator_is_valid():
         - Case 1: Should fail.
         - Case 2: Shouldn't fail.
     """
-    content_items = [create_integration_object(image="short image"), create_integration_object(image="A very big image"*1000)]
+    content_items = [
+        create_integration_object(image="short image"),
+        create_integration_object(image="A very big image" * 1000),
+    ]
     results = ImageTooLargeValidator().is_valid(content_items)
     assert len(results) == 1
     assert all(
@@ -64,6 +70,7 @@ def test_ImageTooLargeValidator_is_valid():
         in result.message
         for result in results
     )
+
 
 def test_AuthorImageExistsValidator_is_valid_image_path():
     """

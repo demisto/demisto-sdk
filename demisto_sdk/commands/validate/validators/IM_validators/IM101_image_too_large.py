@@ -1,14 +1,13 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Integration
@@ -23,7 +22,7 @@ class ImageTooLargeValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.IMAGE]
-    
+
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         image_max_size = 10 * 1024  # 10kB
         return [

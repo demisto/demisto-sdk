@@ -11,11 +11,11 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IM_validators.IM100_image_exists_validation import (
     ImageExistsValidator,
 )
-from demisto_sdk.commands.validate.validators.IM_validators.IM106_default_image_validator import (
-    DefaultImageValidator,
-)
 from demisto_sdk.commands.validate.validators.IM_validators.IM101_image_too_large import (
     ImageTooLargeValidator,
+)
+from demisto_sdk.commands.validate.validators.IM_validators.IM106_default_image_validator import (
+    DefaultImageValidator,
 )
 from demisto_sdk.commands.validate.validators.IM_validators.IM108_author_image_is_empty import (
     AuthorImageIsEmptyValidator,

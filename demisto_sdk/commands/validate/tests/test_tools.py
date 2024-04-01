@@ -54,7 +54,7 @@ def create_integration_object(
 
     if readme_content is not None:
         additional_params["readme"] = readme_content
-        
+
     if integration_folder_name is not None:
         additional_params["name"] = integration_folder_name
 
@@ -200,13 +200,10 @@ def create_script_object(
     Returns:
         The script object.
     """
-    
     additional_params = {}
-    
     if script_folder_name is not None:
         additional_params["name"] = script_folder_name
-    
-    
+
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()

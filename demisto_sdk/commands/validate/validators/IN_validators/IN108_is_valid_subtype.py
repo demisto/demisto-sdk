@@ -16,6 +16,7 @@ ContentTypes = Union[Integration, Script]
 class ValidSubtypeValidator(BaseValidator[ContentTypes]):
     error_code = "IN108"
     description = "Validate wether the subtype is valid or not."
+    rationale = "This field describes the major python version, `python2` or `python3`."
     error_message = "The subtype {0} is invalid, please change to python2 or python3."
     fix_message = ""
     related_field = "subtype"

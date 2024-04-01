@@ -922,14 +922,10 @@ def test_create_contribution_items_version_note(repo: Repo):
 > | XDRScript | 1.2.2 | 1.2.4
 >
 > **For the Reviewer:**
-> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand the changes the contributor intended to contribute, and **solve the conflicts accordingly**.
-> 2. In case improvements are needed, instruct the contributor to edit the code through the **GitHub Codespaces** and **Not through the XSOAR UI**.
->
-> **For the Contributor:**
- @
-> In case you are requested by your reviewer to improve the code or to make changes, submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
->
-> **To use the GitHub Codespaces, see the following [link](https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-codespace) for more information.**
+> 1. Currently the diff you see on Github is between the contribution original version and the contribution changes since the contribution was made on an outdated version.
+> 2. You will see the diff between the contribution changes and Content master only after you fix all conflicts.
+> 3. Fix conflicts only after completing the review process and once the contributor has finished resubmitting changes.
+> For more details see Confluence page [link](https://confluence-dc.paloaltonetworks.com/display/DemistoContent/Conducting+Code+Review).
 """
     )
 

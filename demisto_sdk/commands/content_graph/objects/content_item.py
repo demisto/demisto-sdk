@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
+    get_relative_path,
     replace_incident_to_alert,
     write_dict,
 )
@@ -84,10 +85,16 @@ class ContentItem(BaseContent):
 
     @property
     def ignored_errors(self) -> List[str]:
-        return self.get_ignored_errors(self.path.name)
+        if ignored_errors := self.get_ignored_errors(self.path.name):
+            return ignored_errors
+        file_path = get_relative_path(self.path, CONTENT_PATH)
+        return self.get_ignored_errors(file_path)
 
-    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
-        return self.get_ignored_errors((Path(file_path)).name)
+    def ignored_errors_related_files(self, file_path: Path) -> List[str]:
+        if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
+            return ignored_errors
+        file_path = get_relative_path(file_path, CONTENT_PATH)
+        return self.get_ignored_errors(file_path)
 
     def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:
@@ -121,9 +128,6 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        # This function converts the pack attribute, which is a parser object to the pack model
-        # This happens since we cant mark the pack type as `Pack` because it is a forward reference.
-        # When upgrading to pydantic v2, remove this method and change pack type to `Pack` directly.
         pack = self.pack
         if not pack or isinstance(pack, fields.FieldInfo):
             pack = None

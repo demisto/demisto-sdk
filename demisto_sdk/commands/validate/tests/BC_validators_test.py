@@ -896,44 +896,43 @@ def test_IsContextPathChangedValidator_remove_command():
     )
 
 
-def setup_integration_with_3_commands():
-    # Create a new content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
-    content_item = create_integration_object()
-    content_item.commands.append(create_integration_object().commands[0])
-    content_item.commands.append(create_integration_object().commands[0])
-    content_item.commands[2].args.append(
-        create_integration_object().commands[0].args[0]
-    )
-    return content_item
+def setup_integration_with_3_commands_and_5_args():
+    # Create a new content item with 3 commands with unique names. all commands have only 1 argument except the third command which has 2 arguments.
+    integration = create_integration_object()
+    integration.commands.append(create_integration_object().commands[0])
+    integration.commands.append(create_integration_object().commands[0])
+    integration.commands[2].args.append(create_integration_object().commands[0].args[0])
+    integration.commands[0].name = "test-command_0"
+    integration.commands[1].name = "test-command_1"
+    integration.commands[2].name = "test-command_2"
+    return integration
 
 
 def test_HaveCommandsOrArgsNameChangedValidator__fails():
     """
     Given
-    - A new content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
-    - An old content item with the same structure as the new content item, but with different command and argument names.
+        - A new content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
+        - An old content item with the same structure as the new content item, but with different command and argument names.
     When
-    - Calling the HaveCommandsOrArgsNameChangedValidator.
+        - Calling the HaveCommandsOrArgsNameChangedValidator.
     Then
-    - Make sure the validation fails and the right error message is returned:
-        - The first command has no changes.
-        - The second command name has changed, and all its arguments names have changed as well, since the name changed we report the name change only.
-        - The third command name has not changed, but one of its arguments name has changed.
+        - Make sure the validation fails and the right error message is returned notifying only on changes in the second command name, and third command argument name.
+            - The first command has no changes.
+            - The second command name has changed from 'test-command_1' to 'new-command_1', and its arg name has changed from 'old_arg_1' to 'new_arg_1'.
+                (the args change souled be ignored since we reported on its command name change.)
+            - The third command name has not changed, but one of its arguments name has changed from 'old_arg_2' to 'new_arg_2'.
 
     """
     # Setup new content item with changes in command and argument names
-    new_content_item = setup_integration_with_3_commands
-    new_content_item.commands[0].name = "test-command_0"
-    new_content_item.commands[1].name = "new_command_1"
-    new_content_item.commands[2].name = "old_command_2"
+    new_content_item = setup_integration_with_3_commands_and_5_args()
+    new_content_item.commands[1].name = "new-command_1"
     new_content_item.commands[1].args[0].name = "new_arg_1"
-    new_content_item.commands[2].args[0].name = "new_arg_2"
+    new_content_item.commands[2].args[1].name = "new_arg_2"
 
     # Setup old content item with original command and argument names
-    old_content_item = setup_integration_with_3_commands
-    old_content_item.commands[0].name = "test-command_0"
-    old_content_item.commands[1].name = "old_command_1"
-    old_content_item.commands[2].name = "old_command_2"
+    old_content_item = setup_integration_with_3_commands_and_5_args()
+    old_content_item.commands[1].name = "old-command_1"
+    old_content_item.commands[1].args[0].name = "old_arg_1"
     old_content_item.commands[2].args[1].name = "old_arg_2"
 
     # Create old file pointers and validate
@@ -942,46 +941,37 @@ def test_HaveCommandsOrArgsNameChangedValidator__fails():
 
     # Assert error messages
     assert (
-        "contain changes to the names of the following existing commands: old_command_1. Please undo the changes."
+        "contain changes to the names of the following existing commands: old-command_1. Please undo the changes."
         in results[0].message
     )
     assert (
-        "contain changes to the names of existing arguments: In command 'old_command_2' the following arguments have been changed: old_arg_2. Please undo the changes."
+        "contain changes to the names of existing arguments: In command 'test-command_2' the following arguments have been changed: old_arg_2. Please undo the changes."
         in results[1].message
     )
 
 
-# TODO fix test
 def test_HaveCommandsOrArgsNameChangedValidator__passes():
     """
     Given
     - A new content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
-    - An old content item with the same structure as the new content item, but with different command and argument names.
+    - An old content item with the same structure as the new content item, but with addition of a new command an new argument to existing commands.
     When
     - Calling the HaveCommandsOrArgsNameChangedValidator.
     Then
-    - Make sure the validation passes and no error messages are returned.
+    - Make sure the validation passes and no error messages are returned, since adding new commands or arguments is allowed.
     """
     # Setup new content item with changes in command and argument names
-    new_content_item = setup_integration_with_3_commands
-    # new_content_item.commands.append(create_integration_object().commands[0])
-    new_content_item.commands[0].name = "test-command_0"
-    new_content_item.commands[1].name = "test-command_1"
-    new_content_item.commands[2].name = "old_command_2"
+    new_content_item = setup_integration_with_3_commands_and_5_args()
+
+    new_content_item.commands.append(create_integration_object().commands[0])
+    new_content_item.commands[2].args.append(
+        create_integration_object().commands[0].args[0]
+    )
     new_content_item.commands[3].name = "new_command_3"
-    new_content_item.commands[1].args[0].name = "old_arg_1"
-    new_content_item.commands[2].args[0].name = "old_arg_2"
+    new_content_item.commands[2].args[2].name = "new_arg_2"
 
     # Setup old content item with original command and argument names
-    old_content_item = setup_integration_with_3_commands
-    old_content_item.commands[0].name = "test-command_0"
-    old_content_item.commands[1].name = "test-command_1"
-    old_content_item.commands[2].name = "old_command_2"
-    old_content_item.commands[2].args[1].name = "old_arg_2"
+    old_content_item = setup_integration_with_3_commands_and_5_args()
 
-    # Create old file pointers and validate
     create_old_file_pointers([new_content_item], [old_content_item])
-    results = HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])
-
-    # Assert no error messages
-    assert not results
+    assert not HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])

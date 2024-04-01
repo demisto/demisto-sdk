@@ -6,7 +6,7 @@ import toml
 from demisto_sdk.commands.common.logger import logger
 
 USE_GIT = "use_git"
-VALIDATE_ALL = "validate_all"
+PATH_BASED_VALIDATIONS = "path_based_validations"
 DEFAULT_CATEGORY = "default_mandatory_validations"
 PATH = Path(__file__).parents[0].resolve()
 CONFIG_FILE_PATH = f"{PATH}/default_config.toml"
@@ -53,7 +53,7 @@ class ConfigReader:
             Tuple[List, List, List, dict]: the select, warning, and ignorable errors sections from the given category,
             and the support_level dict with errors to ignore.
         """
-        flag = self.category_to_run or (USE_GIT if use_git else VALIDATE_ALL)
+        flag = self.category_to_run or (USE_GIT if use_git else PATH_BASED_VALIDATIONS)
         section = self.config_file_content.get(flag, {})
         return ConfiguredValidations(
             section.get("select", []),

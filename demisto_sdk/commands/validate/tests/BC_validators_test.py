@@ -844,7 +844,7 @@ def test_IsContextPathChangedValidator():
         - Case 2: Should fail.
     """
     command_name = "command"
-    old_context_path = "test.test"
+    old_context_path = "something.else"
 
     new_integration = create_dummy_integration_with_context_path(
         command_name=command_name, context_path=old_context_path
@@ -880,7 +880,7 @@ def test_IsContextPathChangedValidator_remove_command():
      - Make sure the validation fail and the right error message is returned.
     """
     command_name = "command"
-    old_context_path = "test.test"
+    old_context_path = "something.else"
 
     new_integration = create_integration_object()
     old_integration = create_dummy_integration_with_context_path(

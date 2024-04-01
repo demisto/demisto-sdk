@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import Any, Dict
 
 from demisto_sdk.commands.pre_commit.hooks.hook import (
+    GeneratedHooks,
     Hook,
     join_files,
     safe_update_hook_args,
@@ -23,15 +24,19 @@ class RuffHook(Hook):
 
     def prepare_hook(
         self,
-    ) -> None:
+    ) -> GeneratedHooks:
         """
         Prepares the Ruff hook for each Python version.
         Changes the hook's name, files and the "--target-version" argument according to the Python version.
         Args:
         """
+        ruff_hook_ids = []
+
         for python_version in self.context.python_version_to_files:
+            ruff_python_version = f"ruff-py{python_version}"
             hook: Dict[str, Any] = {
-                "name": f"ruff-py{python_version}",
+                "name": ruff_python_version,
+                "alias": ruff_python_version,
             }
             hook.update(deepcopy(self.base_hook))
             target_version = (
@@ -47,5 +52,7 @@ class RuffHook(Hook):
                     if file.suffix == ".py"
                 }
             )
-
+            ruff_hook_ids.append(hook["alias"])
             self.hooks.append(hook)
+
+        return GeneratedHooks(hook_ids=ruff_hook_ids, parallel=self.parallel)

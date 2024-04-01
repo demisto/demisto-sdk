@@ -1917,4 +1917,3 @@ def test_IsFolderNameHasSeparatorsValidator_is_valid(content_items, expected_msg
 
     if result:
         assert result[0].message == expected_msg
-        

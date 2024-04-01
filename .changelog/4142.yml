@@ -1,4 +1,0 @@
-changes:
-- description: Added an implicit validation for the graph's *relationship* object by converting it to utilize Pydantic.
-  type: internal
-pr_number: 4142

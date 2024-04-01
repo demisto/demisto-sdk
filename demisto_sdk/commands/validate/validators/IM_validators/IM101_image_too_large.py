@@ -10,6 +10,8 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
+IMAGE_MAX_SIZE = 10 * 1024  # 10kB
+
 ContentTypes = Integration
 
 
@@ -24,7 +26,6 @@ class ImageTooLargeValidator(BaseValidator[ContentTypes]):
     related_file_type = [RelatedFileType.IMAGE]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        image_max_size = 10 * 1024  # 10kB
         return [
             ValidationResult(
                 validator=self,
@@ -32,5 +33,5 @@ class ImageTooLargeValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.image.get_file_size().st_size > image_max_size
+            if content_item.image.get_file_size().st_size > IMAGE_MAX_SIZE
         ]

@@ -865,7 +865,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 "run_specific_validations",
                 "no_multiprocessing",
             ]:
-                if old_validate_flag in kwargs and kwargs[old_validate_flag]:
+                if kwargs.get(old_validate_flag):
                     logger.warning(
                         f"The following flag {old_validate_flag.replace('_', '-')} is related only to the old validate and is being called while not running the old validate flow, therefore the flag will be ignored."
                     )

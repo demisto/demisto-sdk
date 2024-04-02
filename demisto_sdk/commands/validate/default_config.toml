@@ -74,5 +74,5 @@ warning = []
 
 
 [Custom_Categories]
-select = []
+select = ["BA109"]
 warning = []

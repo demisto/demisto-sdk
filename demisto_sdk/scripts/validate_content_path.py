@@ -1,4 +1,6 @@
 from abc import ABC
+from functools import partial
+from multiprocessing import Pool
 from pathlib import Path
 from typing import ClassVar, List, Sequence
 
@@ -47,6 +49,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.content_graph.common import ContentType
 
@@ -410,23 +413,25 @@ def validate_paths(
     skip_suffix: bool = False,
 ) -> None:
     """Validate given paths"""
-    if not all(
-        (
-            validate(
-                path,
-                github_action,
-                skip_depth_one_file=skip_depth_one_file,
-                skip_depth_one_folder=skip_depth_one_folder,
-                skip_depth_zero_file=skip_depth_zero_file,
-                skip_integration_script_file_name=skip_integration_script_file_name,
-                skip_integration_script_file_type=skip_integration_script_file_type,
-                skip_markdown=skip_markdown,
-                skip_suffix=skip_suffix,
+    with Pool(cpu_count()) as pool:
+
+        if not all(
+            pool.map(
+                partial(
+                    validate,
+                    github_action=github_action,
+                    skip_depth_one_file=skip_depth_one_file,
+                    skip_depth_one_folder=skip_depth_one_folder,
+                    skip_depth_zero_file=skip_depth_zero_file,
+                    skip_integration_script_file_name=skip_integration_script_file_name,
+                    skip_integration_script_file_type=skip_integration_script_file_type,
+                    skip_markdown=skip_markdown,
+                    skip_suffix=skip_suffix,
+                ),
+                paths,
             )
-            for path in paths
-        )
-    ):
-        raise typer.Exit(1)
+        ):
+            raise typer.Exit(1)
 
 
 @app.command(name="validate-all")

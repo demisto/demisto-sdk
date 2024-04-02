@@ -1871,6 +1871,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {VALUE_WITH_TRAILING_SPACE.rstrip()}"
     )
 
+
 @pytest.mark.parametrize(
     "content_items, expected_msg",
     [

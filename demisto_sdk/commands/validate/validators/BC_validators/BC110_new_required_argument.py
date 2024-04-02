@@ -20,7 +20,7 @@ class NewRequiredArgumentValidator(BaseValidator[ContentTypes]):
         "Validate that no new *required* argument are added to an existing command."
     )
     rationale = "Adding a new argument to an existing command and defining it as *required* or changing an non required argument to be required will break backward compatibility."
-    error_message = "Possible backward compatibility break: You have added the following new *required* arguments:{custom_message} Please undo the changes."
+    error_message = "Possible backward compatibility break: You have added the following new *required* arguments: {custom_message} Please undo the changes."
     related_field = ""  # TODO - what is the field name?
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]

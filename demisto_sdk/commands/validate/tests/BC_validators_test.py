@@ -36,6 +36,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC106_is_valid_fromv
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC110_new_required_argument import (
+    NewRequiredArgumentValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 ALL_MARKETPLACES = list(MarketplaceVersions)
@@ -975,3 +978,57 @@ def test_HaveCommandsOrArgsNameChangedValidator__passes():
 
     create_old_file_pointers([new_content_item], [old_content_item])
     assert not HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])
+
+
+def test_NewRequiredArgumentValidator__fails():
+    """
+    Given
+    - A old content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
+    - A new content item with the same structure as the old content item, but with changes in the second command argument to be required and a new required argument in the third command.
+    When
+    - Calling the NewRequiredArgumentValidator.
+    Then
+    - Make sure the validation fails and the right error message is returned notifying on the new required argument in the second command and the third command.
+    """
+    new_content_item = setup_integration_with_3_commands_and_5_args()
+    new_content_item.commands[2].args.append(
+        create_integration_object().commands[0].args[0]
+    )
+    # change existing arg to be required
+    new_content_item.commands[1].args[0].required = True
+    # add new required arg
+    new_content_item.commands[2].args[2].required = True
+    old_content_item = setup_integration_with_3_commands_and_5_args()
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    res = NewRequiredArgumentValidator().is_valid([new_content_item])
+    assert (
+        "in command 'test-command_1' you have added a new required argument: 'from_date'.in command 'test-command_2' you have added a new required argument: 'from_date'. Please undo the changes."
+        in res[0].message
+    )
+
+
+def test_NewRequiredArgumentValidator__passes():
+    """
+    Given
+    - A old content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
+    - A new content item with the same structure as the old content item, but with changes in the second command argument to be required and a new required argument in the new forth command.
+    When
+    - Calling the NewRequiredArgumentValidator.
+    Then
+    - Make sure the validation passes and no error messages are returned, since adding new required arguments is allowed
+        if the new required argument is in a new command or if it has a default value.
+    """
+    new_content_item = setup_integration_with_3_commands_and_5_args()
+    # add a new command
+    new_content_item.commands.append(create_integration_object().commands[0])
+    # change existing arg to be required but with a default value
+    new_content_item.commands[1].args[0].required = True
+    new_content_item.commands[1].args[0].defaultvalue = "test"
+    # change arg in the new command to be required
+    new_content_item.commands[3].args[0].required = True
+
+    old_content_item = setup_integration_with_3_commands_and_5_args()
+    create_old_file_pointers([new_content_item], [old_content_item])
+
+    assert not NewRequiredArgumentValidator().is_valid([new_content_item])

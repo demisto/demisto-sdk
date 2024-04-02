@@ -839,11 +839,11 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 "config_path",
                 "category_to_run",
             ]:
-                if new_validate_flag in kwargs:
+                if new_validate_flag in kwargs and kwargs[new_validate_flag]:
                     logger.warning(
                         f"The following flag {new_validate_flag.replace('_', '-')} is related only to the new validate and is being called while not running the new validate flow, therefore the flag will be ignored."
                     )
-        if run_old_validate:
+        if not run_old_validate:
             for old_validate_flag in [
                 "no_backward_comp",
                 "no_conf_json",
@@ -865,7 +865,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 "run_specific_validations",
                 "no_multiprocessing",
             ]:
-                if old_validate_flag in kwargs:
+                if old_validate_flag in kwargs and kwargs[old_validate_flag]:
                     logger.warning(
                         f"The following flag {old_validate_flag.replace('_', '-')} is related only to the old validate and is being called while not running the old validate flow, therefore the flag will be ignored."
                     )

@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue in **pre-commit** when using `--all-files` it crashed with memory error.
-  type: fix
-pr_number: 4196

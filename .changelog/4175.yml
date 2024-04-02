@@ -1,4 +1,0 @@
-changes:
-- description: Added handling for API Modules in **pre-commit**.
-  type: feature
-pr_number: 4175

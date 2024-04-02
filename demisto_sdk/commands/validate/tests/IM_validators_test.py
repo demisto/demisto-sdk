@@ -1,6 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 
+from demisto_sdk.commands.common.constants import DEFAULT_IMAGE
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     ImageRelatedFile,
 )
@@ -20,7 +21,6 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM108_author_image_i
 from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_exists_validation import (
     AuthorImageExistsValidator,
 )
-from demisto_sdk.tests.constants_test import DEFAULT_IMAGE
 
 
 def test_ImageExistsValidator_is_valid_image_path():

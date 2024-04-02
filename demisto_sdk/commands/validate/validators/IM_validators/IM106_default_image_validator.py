@@ -4,6 +4,7 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64,
+    DEFAULT_IMAGE,
     DEFAULT_IMAGE_BASE64,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -12,7 +13,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-from demisto_sdk.tests.constants_test import DEFAULT_IMAGE
 
 ContentTypes = Integration
 

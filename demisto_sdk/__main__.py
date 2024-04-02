@@ -839,7 +839,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 "config_path",
                 "category_to_run",
             ]:
-                if new_validate_flag in kwargs and kwargs[new_validate_flag]:
+                if kwargs.get(new_validate_flag):
                     logger.warning(
                         f"The following flag {new_validate_flag.replace('_', '-')} is related only to the new validate and is being called while not running the new validate flow, therefore the flag will be ignored."
                     )

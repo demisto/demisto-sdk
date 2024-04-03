@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.tools import get_files_in_dir
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -17,7 +16,7 @@ ContentTypes = Union[Integration, Script]
 ENTITY_NAME_SEPARATORS = [" ", "_", "-"]
 
 
-class FileNameHasSeparatorsValidator_is_valid(BaseValidator[ContentTypes]):
+class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     error_code = "BA109"
     description = "Check if there are separators in the script or integration files names."
     rationale = ""

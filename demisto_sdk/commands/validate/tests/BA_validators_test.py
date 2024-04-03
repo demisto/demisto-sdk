@@ -57,6 +57,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA109_file_name_has_separators import FileNameHasSeparatorsValidator
 from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
     IsEntityTypeInEntityNameValidator,
 )
@@ -1867,3 +1868,27 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         results.message
         == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {VALUE_WITH_TRAILING_SPACE.rstrip()}"
     )
+
+
+@pytest.mark.parametrize(
+    "content_item, expected_messages",
+    [
+        pytest.param(
+            create_integration_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            "aaaa",
+            id="bbbb",
+        ),
+    ],
+)
+def test_FileNameHasSeparatorsValidator_is_valid(
+    content_item, expected_messages
+):
+    """
+
+    """
+    validator = FileNameHasSeparatorsValidator()
+    ValidationResultList =  validator.is_valid(content_item)
+    
+    assert ValidationResultList[0] == expected_messages

@@ -65,12 +65,11 @@ class TestResult:
         return (
             self.name == other.name
             and self.status == other.status
-            and self.time == other.status
             and self.message == other.message
         )
 
     def __hash__(self):
-        return hash((self.name, self.status, self.time, self.message))
+        return hash((self.name, self.status, self.message))
 
 
 class PytestTestSuite:

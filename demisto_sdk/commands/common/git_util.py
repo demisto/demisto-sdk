@@ -702,7 +702,7 @@ class GitUtil:
             if item
         }
 
-    def _get_all_changed_files(self, prev_ver: str = "") -> Set[Path]:
+    def _get_all_changed_files(self, prev_ver: Optional[str] = None) -> Set[Path]:
         """
         Get all the files changed in the current branch without status distinction.
 
@@ -712,16 +712,8 @@ class GitUtil:
         Returns:
             Set[Path]: of Paths to files changed in the current branch.
         """
-        try:
-            self.fetch()
 
-        except Exception as e:
-            logger.warning(
-                f"Failed to fetch branch '{self.get_current_working_branch()}' "
-                f"from remote '{self.repo.remote().name}' ({self.repo.remote().url}). Continuing without fetching."
-            )
-            logger.debug(f"Error: {e}")
-
+        self.fetch()
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
@@ -813,7 +805,7 @@ class GitUtil:
                     return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 
-    def handle_prev_ver(self, prev_ver: str = ""):
+    def handle_prev_ver(self, prev_ver: Optional[str] = None):
         # check for sha1 in regex
         sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
         if prev_ver and sha1_pattern.match(prev_ver):
@@ -1062,7 +1054,14 @@ class GitUtil:
         return bool(self.repo.ignored(file_path))
 
     def fetch(self):
-        self.repo.remote(DEMISTO_GIT_UPSTREAM).fetch()
+        try:
+            self.repo.remote(DEMISTO_GIT_UPSTREAM).fetch()
+        except Exception as e:
+            logger.warning(
+                f"Failed to fetch branch '{self.get_current_working_branch()}' "
+                f"from remote '{self.repo.remote().name}' ({self.repo.remote().url}). Continuing without fetching."
+            )
+            logger.debug(f"Error: {e}")
 
     def fetch_all(self):
         for remote in self.repo.remotes:

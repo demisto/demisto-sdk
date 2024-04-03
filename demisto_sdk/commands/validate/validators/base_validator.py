@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import is_abstract_class
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -28,6 +29,43 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
+
+VALIDATION_CATEGORIES = {
+    "BA": "Basic",
+    "BC": "Backward Compatability",
+    "CJ": "Conf.json",
+    "CL": "Classifier",
+    "DA": "Dashboard",
+    "DB": "DBot",
+    "DO": "Docker Image",
+    "DS": "Description",
+    "IF": "Incident Field",
+    "IM": "Author Image",
+    "IN": "Integration",
+    "IT": "Incident Type",
+    "PA": "Pack",
+    "PB": "Playbook",
+    "RM": "Readme",
+    "RP": "Reputation (Incident Type)",
+    "SC": "Script",
+    "GF": "Generic Field",
+    "LI": "List",
+    "LO": "Layout",
+    "MP": "Mapper",
+    "PP": "Pre-Process Rule",
+    "RN": "Release Note",
+    "ST": "Structure",
+    "WD": "Widget",
+    "XC": "XSOAR Configuration",
+    "WZ": "Wizard",
+    "MR": "Modeling Rule",
+    "CR": "Correlation Rule",
+    "XR": "XSIAM Report",
+    "PR": "Parsing Rule",
+    "XT": "XDRC Template",
+    "XD": "XSIAM Dashboard",
+    "GR": "Graph",
+}
 
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
@@ -133,6 +171,18 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         # Exclude the properties from the repr
         fields = {"graph": {"exclude": True}, "dockerhub_client": {"exclude": True}}
 
+    @property
+    def error_category(self) -> str:
+        return self.error_code[:2]
+
+
+def get_all_validators() -> List[BaseValidator]:
+    return [
+        validator()
+        for validator in BaseValidator.__subclasses__()
+        if not is_abstract_class(validator)
+    ]
+
 
 class BaseResult(BaseModel):
     validator: BaseValidator
@@ -175,13 +225,16 @@ def is_error_ignored(
     if err_code not in ignorable_errors:
         return False
     if related_file_type:
-        content_item_as_dict = content_item.dict()
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:
-            if related_file_object := content_item_as_dict.get(related_file.value):
-                return err_code in content_item.ignored_errors_related_files(
-                    related_file_object.path
-                )
+            try:
+                related_file_object = getattr(content_item, related_file.value)
+                if err_code in content_item.ignored_errors_related_files(
+                    related_file_object.file_path
+                ):
+                    return True
+            except Exception:
+                continue
         return False
     else:
         # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
@@ -215,6 +268,23 @@ class InvalidContentItemResult(BaseResult, BaseModel):
         return {
             "file path": str(self.path.relative_to(CONTENT_PATH)),
             "error code": self.error_code,
+            "message": self.message,
+        }
+
+
+class ValidationCaughtExceptionResult(BaseResult, BaseModel):
+    validator: Optional[BaseValidator] = None  # type: ignore[assignment]
+    message: str
+    content_object: Optional[BaseContent] = None  # type: ignore[assignment]
+    error_code: Optional[str] = None  # type: ignore[assignment]
+
+    @property
+    def format_readable_message(self):
+        return self.message
+
+    @property
+    def format_json_message(self):
+        return {
             "message": self.message,
         }
 

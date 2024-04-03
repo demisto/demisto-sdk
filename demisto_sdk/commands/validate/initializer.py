@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.tools import (
     detect_file_level,
     get_file_by_status,
     get_relative_path_from_packs_dir,
+    is_external_repo,
     specify_files_from_directory,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -178,9 +179,12 @@ class Initializer:
             self.committed_only = True
 
         elif self.branch_name in ["master", "main", DEMISTO_GIT_PRIMARY_BRANCH]:
-            raise Exception(
-                "Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
-            )
+            self.git_util
+            message = "Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
+            if not is_external_repo() or self.committed_only:
+                logger.warning(message)
+            else:
+                raise Exception(message)
 
     def print_git_config(self):
         """Printing the git configurations - all the relevant flags."""
@@ -322,21 +326,25 @@ class Initializer:
                 set(self.load_files(self.file_path.split(",")))
             )
         elif self.all_files:
+            logger.info("Running validation on all files.")
             content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)
         else:
-            self.use_git = (True,)
+            self.use_git = True
             self.committed_only = True
             (
                 content_objects_to_run,
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
-        content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
-            content_objects_to_run
-        )
+        if not self.use_git:
+            content_objects_to_run_with_packs: Set[
+                BaseContent
+            ] = self.get_items_from_packs(content_objects_to_run)
+        else:
+            content_objects_to_run_with_packs = content_objects_to_run
         for non_content_item in non_content_items:
             logger.warning(
                 f"Invalid content path provided: {str(non_content_item)}. Please provide a valid content item or pack path."

@@ -419,6 +419,8 @@ RN_CONTENT_ENTITY_WITH_STARS = [
     FileType.GENERIC_FIELD,
 ]
 
+DEFAULT_IMAGE = "demisto_sdk/tests/test_files/default_image.png"
+
 DEFAULT_IMAGE_PREFIX = "data:image/png;base64,"
 DEFAULT_IMAGE_BASE64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAACYVBMVEVHcEwAT4UAT4UAT4YAf/8A//8AT4UAf78AT4U"
@@ -1502,7 +1504,7 @@ GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union(
     {"send-mail", "send-notification", "cve-latest", "cve-search"}
 )
 
-DBOT_SCORES_DICT = {
+DBOT_SCORES_DICT: Dict[str, str] = {
     "DBotScore.Indicator": "The indicator that was tested.",
     "DBotScore.Type": "The indicator type.",
     "DBotScore.Vendor": "The vendor used to calculate the score.",
@@ -1591,7 +1593,7 @@ GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 
 FEATURE_BRANCHES = ["v4.5.0"]
 VERSION_REGEX = r"(\d{1,2}\.){2}\d{1,2}$"
-
+DOC_FILE_IMAGE_REGEX = r"\.\./doc_files/[a-zA-Z0-9_-]+\.png"
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"

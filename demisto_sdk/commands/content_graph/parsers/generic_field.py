@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -23,7 +24,7 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"group": "group"})
+        super().field_mapping.update({"group": "group", "unsearchable": "unsearchable"})
         return super().field_mapping
 
     @property
@@ -36,7 +37,11 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
 
     @property
     def group(self) -> Optional[int]:
-        return self.json_data.get("group")
+        return get_value(self.json_data, self.field_mapping.get("group", ""))
+
+    @property
+    def unsearchable(self) -> Optional[bool]:
+        return get_value(self.json_data, self.field_mapping.get("unsearchable", ""))
 
     def connect_to_dependencies(self) -> None:
         """Collects the generic types associated to the generic field as optional dependencies."""

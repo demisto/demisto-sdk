@@ -1874,11 +1874,8 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     "content_item, expected_messages",
     [
         pytest.param(
-            create_integration_object(
-                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
-            ),
-            "aaaa",
-            id="bbbb",
+            create_integration_object(),
+            id="The {0} files {1} should be named {2}, respectively, without any separators in the base name.",
         ),
     ],
 )
@@ -1891,4 +1888,4 @@ def test_FileNameHasSeparatorsValidator_is_valid(
     validator = FileNameHasSeparatorsValidator()
     ValidationResultList =  validator.is_valid(content_item)
     
-    assert ValidationResultList[0] == expected_messages
+    assert ValidationResultList[0].message == expected_messages

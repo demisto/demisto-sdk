@@ -4,7 +4,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.tools import compare_lists, find_command
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -19,10 +18,9 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
     description = "Check if the command name or argument name has been changed."
     rationale = "If an existing command or argument has been renamed, it will break backward compatibility"
     error_message = "Possible backward compatibility break: Your updates to this file contain changes {unique_message} Please undo the changes."
-    related_field = "name"  # TODO - what is the field name?
+    related_field = "script.commands.arguments.name"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
-    related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []

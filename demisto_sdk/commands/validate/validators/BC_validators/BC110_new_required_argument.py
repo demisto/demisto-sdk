@@ -4,7 +4,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.tools import find_command
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -19,12 +18,11 @@ class NewRequiredArgumentValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that no new *required* argument are added to an existing command."
     )
-    rationale = "Adding a new argument to an existing command and defining it as *required* or changing an non required argument to be required will break backward compatibility."
+    rationale = "Adding a new argument to an existing command and defining it as *required* or changing an non-required argument to be required will break backward compatibility."
     error_message = "Possible backward compatibility break: You have added the following new *required* arguments: {custom_message} Please undo the changes."
-    related_field = ""  # TODO - what is the field name?
+    related_field = "script.commands.arguments"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
-    related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []

@@ -4,7 +4,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.tools import compare_lists
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -25,7 +24,6 @@ class HaveTheArgsChangedValidator(BaseValidator[ContentTypes]):
     related_field = "args.name"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
-    related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []

@@ -22,7 +22,7 @@ class HaveTheArgsChangedValidator(BaseValidator[ContentTypes]):
         "Possible backward compatibility break: Your updates to this file contain changes "
         "to the names of the following existing arguments: {args}. Please undo the changes."
     )
-    related_field = "name"  # TODO: check if this is the correct field
+    related_field = "args.name"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.YML]

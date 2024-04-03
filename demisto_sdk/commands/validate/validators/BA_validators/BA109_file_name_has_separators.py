@@ -17,16 +17,15 @@ ContentTypes = Union[Integration, Script]
 ENTITY_NAME_SEPARATORS = [" ", "_", "-"]
 
 
-class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
+class FileNameHasSeparatorsValidator_is_valid(BaseValidator[ContentTypes]):
     error_code = "BA109"
     description = "Check if there are separators in the script or integration files names."
     rationale = ""
-    error_message = (
-        "The {0} files {1} should be named {2}, respectively, without any separators in the base name."
-    )
+    error_message = ("The {0} files {1} should be named {2}, respectively, without any separators in the base name.")
     related_field = ""
     is_auto_fixable = False
-    files_name_for_error_message: list[str] = []
+    invalid_files: list[str] = []
+    valid_files:list[str] = []
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -34,8 +33,8 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     content_item.content_type,
-                    ' and '.join([f"'{word}'" for word in self.files_name_for_error_message[1]]),
-                    ' and '.join([f"'{word}'" for word in self.files_name_for_error_message[0]]),
+                    ' and '.join([f"'{word}'" for word in self.invalid_files]),
+                    ' and '.join([f"'{word}'" for word in self.valid_files]),
                 ),
                 content_object=content_item,
             )
@@ -44,6 +43,15 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         ]
 
     def check_separators_in_files(self, content_item):
+        """
+        Check if there are separators in the file names of the content item.
+
+        Args:
+            content_item: The content item to check.
+
+        Returns:
+            bool: True if there are invalid file names, False otherwise.
+        """
         invalid_files = []
         valid_files = []
 
@@ -72,22 +80,22 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
                 valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
 
         if invalid_files:
-            self.files_name_for_error_message = [invalid_files, valid_files]
+            self.invalid_files = invalid_files
+            self.valid_files = valid_files
             return True
 
         return False
 
     def remove_separators_from_name(self, base_name) -> str:
         """
-        Removes separators from a given name of folder or file.
+        Remove separators from a given name.
 
         Args:
-            base_name: The base name of the folder/file.
+            base_name (str): The base name to remove separators from.
 
-        Return:
-            The base name without separators.
+        Returns:
+            str: The base name without separators.
         """
-
         for separator in ENTITY_NAME_SEPARATORS:
             if separator in base_name:
                 base_name = base_name.replace(separator, "")

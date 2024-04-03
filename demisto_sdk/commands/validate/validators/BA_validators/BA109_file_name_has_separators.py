@@ -19,15 +19,13 @@ ENTITY_NAME_SEPARATORS = [" ", "_", "-"]
 
 class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     error_code = "BA109"
-    description = "Check if there are separators in the script files names."
+    description = "Check if there are separators in the script or integration files names."
     rationale = ""
     error_message = (
-        "The {0} files {1} should be named {2} without any separator in the base name."
+        "The {0} files {1} should be named {2}, respectively, without any separators in the base name."
     )
-    # error_message = "The {entity_type} files {invalid_files} should be named {valid_files} without any separator in the base name."
     related_field = ""
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.ADDED]
     files_name_for_error_message: list[str] = []
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -36,8 +34,8 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     content_item.content_type,
-                    content_item.name,
-                    self.files_name_for_error_message[0],
+                    ' and '.join([f"'{word}'" for word in self.files_name_for_error_message[1]]),
+                    ' and '.join([f"'{word}'" for word in self.files_name_for_error_message[0]]),
                 ),
                 content_object=content_item,
             )
@@ -74,7 +72,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
                 valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
 
         if invalid_files:
-            self.files_name_for_error_message = [invalid_files[0], valid_files[0]]
+            self.files_name_for_error_message = [invalid_files, valid_files]
             return True
 
         return False

@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = Pack
+ContentTypes = Union[Pack, Integration]
 
 
 class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
@@ -23,8 +24,17 @@ class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         datasource_count = 0
         for content_item in content_items:
+            if content_item == Integration:
+                fetch_incidents_command = False
+                for command in content_item.commands:  # type: ignore
+                    if command.name == "fetch-incidents":
+                        fetch_incidents_command = True
+                        break
             if MarketplaceVersions.MarketplaceV2 in content_item.marketplaces and (
-                content_item.is_fetch or content_item.is_fetch_events  # type: ignore
+                (
+                    content_item.is_fetch or content_item.is_fetch_events or content_item.is_mappable or content_item.is_fetch_events_and_assets  # type: ignore
+                )
+                or fetch_incidents_command
             ):
                 datasource_count += 1
         return [

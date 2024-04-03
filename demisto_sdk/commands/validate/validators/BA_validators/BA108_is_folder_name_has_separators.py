@@ -18,6 +18,7 @@ class IsFolderNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     description = "Check if there are separators in the folder name."
     error_message = "The folder name '{0}' should be without any separator."
     related_field = ""
+    rationale = "To ensure consistent, readable folder structures by avoiding separators like spaces, underscores, or hyphens."
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.ADDED]
 

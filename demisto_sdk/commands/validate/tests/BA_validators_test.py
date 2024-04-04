@@ -1877,18 +1877,14 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     [
         pytest.param(
             [
-                create_integration_object(
-                    name="invalid_integration_name"
-                ),
+                create_integration_object(name="invalid_integration_name"),
             ],
             "The folder name 'invalid_integration_name' should be without any separator.",
             id="an invalid integration name",
         ),
         pytest.param(
             [
-                create_integration_object(
-                    name="invalidIntegrationName"
-                ),
+                create_integration_object(name="invalidIntegrationName"),
             ],
             "",
             id="a valid integration name.",

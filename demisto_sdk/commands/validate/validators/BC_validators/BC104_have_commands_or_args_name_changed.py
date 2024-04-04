@@ -17,7 +17,7 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC104"
     description = "Check if the command name or argument name has been changed."
     rationale = "If an existing command or argument has been renamed, it will break backward compatibility"
-    error_message = "Possible backward compatibility break: Your updates to this file contain changes {unique_message} Please undo the changes."
+    error_message = "Possible backward compatibility break: Your updates to this file contain changes {final_message} Please undo the changes."
     related_field = "script.commands.arguments.name"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
@@ -34,16 +34,14 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
             commands_diff = compare_lists(
                 sub_list=old_commands_names, main_list=new_commands_names
             )
-            if commands_diff:
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            unique_message=f"to the names of the following existing commands: {', '.join(commands_diff)}.",
-                        ),
-                        content_object=content_item,
-                    )
-                )
+
+            command_change_message = (
+                "to the names of the following existing commands:"
+                + ", ".join(f'"{w}"' for w in commands_diff)
+                + "."
+                if commands_diff
+                else ""
+            )
 
             # arguments name changed
             args_diff_per_command_summary = []
@@ -67,14 +65,33 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                     )
                     if diff_per_command:
                         args_diff_per_command_summary.append(
-                            f"In command '{current_command_name}' the following arguments have been changed: {', '.join(diff_per_command)}."
+                            f'In command "{current_command_name}" the following arguments have been changed: '
+                            + ", ".join(f'"{w}"' for w in diff_per_command)
                         )
-            if args_diff_per_command_summary:
+            args_change_message = (
+                "to the names of existing arguments: "
+                + ", ".join(args_diff_per_command_summary)
+                + "."
+                if args_diff_per_command_summary
+                else ""
+            )
+
+            messages = [
+                message
+                for message in [command_change_message, args_change_message]
+                if message
+            ]
+            final_message = (
+                " In addition, you have made changes ".join(messages)
+                if messages
+                else None
+            )
+            if final_message:
                 results.append(
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            unique_message=f"to the names of existing arguments: {' '.join(args_diff_per_command_summary)}",
+                            final_message=final_message,
                         ),
                         content_object=content_item,
                     )

@@ -13,7 +13,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[Integration, Script]
-ENTITY_NAME_SEPARATORS = [" ", "_", "-"]
+ENTITY_NAME_SEPARATORS = ["_", "-"]
 
 
 class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):

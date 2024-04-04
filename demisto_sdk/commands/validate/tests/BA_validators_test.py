@@ -1882,7 +1882,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
             id="invalid integration",
         ),
         pytest.param(
-            create_integration_object(paths=["name"],values=["TestIntegration"]),
+            create_integration_object(name="TestIntegration!@"),
             [""],
             id="valid integration",
         ),

@@ -370,6 +370,10 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
         json={"token": "1234", "issued_at": "1234", "expires_in": 300},
     )
     requests_mock.get(
+        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/list",
+        json={"success": True},
+    )
+    requests_mock.get(
         f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/3.10.13.99999",
         json={"success": True},
     )

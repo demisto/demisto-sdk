@@ -20,7 +20,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     error_code = "BA109"
     description = (
         "Check if there are separators in the script or integration files names."
-        )
+    )
     rationale = ""
     error_message = "The {0} files {1} should be named {2}, respectively, without any separators in the base name."
     related_field = ""
@@ -59,7 +59,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         files_to_check = get_files_in_dir(
             os.path.dirname(content_item.path), ["yml", "py", "md", "png"], False
         )
-        
+    
         files_to_check = sorted(
             files_to_check
         )  # Used to keep the error message consistent

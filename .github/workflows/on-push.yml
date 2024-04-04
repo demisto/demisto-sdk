@@ -358,7 +358,7 @@ jobs:
         if: steps.files-changed.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Validate content master paths
         if: steps.files-changed.outputs.any_changed == 'true'
@@ -542,7 +542,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Generate Docs
         if: steps.changed-files.outputs.any_changed == 'true'

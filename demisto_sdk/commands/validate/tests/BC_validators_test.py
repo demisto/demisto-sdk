@@ -1,5 +1,6 @@
-from typing import List
 from copy import deepcopy
+from typing import List
+
 import pytest
 
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
@@ -24,7 +25,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC101_is_breaking_co
 from demisto_sdk.commands.validate.validators.BC_validators.BC102_is_context_path_changed import (
     IsContextPathChangedValidator,
 )
-from demisto_sdk.commands.validate.validators.BC_validators.BC104_have_commands_or_args_name_changed import HaveCommandsOrArgsNameChangedValidator
+from demisto_sdk.commands.validate.validators.BC_validators.BC104_have_commands_or_args_name_changed import (
+    HaveCommandsOrArgsNameChangedValidator,
+)
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
 )
@@ -37,8 +40,10 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_tover
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC110_new_required_argument import (
+    NewRequiredArgumentValidator,
+)
 from TestSuite.repo import ChangeCWD
-from demisto_sdk.commands.validate.validators.BC_validators.BC110_new_required_argument import NewRequiredArgumentValidator
 
 ALL_MARKETPLACES = list(MarketplaceVersions)
 XSIAM_MARKETPLACE = [ALL_MARKETPLACES[1]]
@@ -990,6 +995,7 @@ def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content
         and result[0].message
         == "Changing the maximal supported version field `toversion` is not allowed. Please undo, or request a force merge."
     )
+
 
 def test_HaveCommandsOrArgsNameChangedValidator__fails():
     """

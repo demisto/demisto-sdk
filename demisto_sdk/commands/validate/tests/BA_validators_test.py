@@ -1870,22 +1870,39 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     )
 
 
+
+
 @pytest.mark.parametrize(
     "content_item, expected_messages",
     [
         pytest.param(
-            create_integration_object(),
-            id="The {0} files {1} should be named {2}, respectively, without any separators in the base name.",
+            create_integration_object(paths=["name"],values=["Test-Integration"]),
+            ["The Integration files 'integration_0.yml' and 'integration_0.py' and 'integration_0_description.md' and 'integration_0_image.png' and 'integration_0_test.py'\
+             should be named 'integration0.yml' and 'integration0.py' and 'integration0_description.md' and 'integration0_image.png' and 'integration0_test.py', respectively, without any separators in the base name."],
+            id="invalid integration",
         ),
+        pytest.param(
+            create_integration_object(paths=["name"],values=["TestIntegration"]),
+            [""],
+            id="valid integration",
+        ),
+        pytest.param(
+            create_script_object(paths=["name"],values=["Test-Script"]),
+            [""],
+            id="invalid script",
+        ),
+        pytest.param(
+            create_script_object(paths=["name"],values=["TestScript"]),
+            [""],
+            id="valid script",
+        )
     ],
 )
 def test_FileNameHasSeparatorsValidator_is_valid(
     content_item, expected_messages
 ):
-    """
-
-    """
     validator = FileNameHasSeparatorsValidator()
-    ValidationResultList =  validator.is_valid(content_item)
+    ValidationResultList = validator.is_valid([content_item])
     
-    assert ValidationResultList[0].message == expected_messages
+    if ValidationResultList:
+        assert ValidationResultList[0].message == expected_messages

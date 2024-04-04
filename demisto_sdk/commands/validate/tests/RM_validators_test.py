@@ -7,12 +7,16 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_pack_object,
     create_playbook_object,
+    create_script_object,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme_not_equal_pack_description import (
     IsPackReadmeNotEqualPackDescriptionValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
+    IsReadmeExistsValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_copy_right_section import (
     IsContainCopyRightSectionValidator,
@@ -253,3 +257,60 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
         ),
     ]
     assert not IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_playbook_object(),
+                create_playbook_object(),
+            ],
+            1,
+            [
+                "The Playbook 'Detonate File - JoeSecurity V2' doesn't have a README file. Please add a README.md file in the content item's directory."
+            ],
+        ),
+        (
+            [
+                create_script_object(),
+                create_script_object(),
+            ],
+            1,
+            [
+                "The Script 'myScript' doesn't have a README file. Please add a README.md file in the content item's directory."
+            ],
+        ),
+        (
+            [
+                create_integration_object(),
+                create_integration_object(),
+            ],
+            1,
+            [
+                "The Integration 'TestIntegration' doesn't have a README file. Please add a README.md file in the content item's directory."
+            ],
+        ),
+    ],
+)
+def test_IsReadmeExistsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given:
+        - Integration, Script and Playbook objects- one have and one does not have README file
+    When:
+        - run is_valid method from IsReadmeExistsValidator
+    Then:
+        - Ensure that for each test only one ValidationResult returns with the correct message
+    """
+    content_items[1].readme.exist = False
+    results = IsReadmeExistsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

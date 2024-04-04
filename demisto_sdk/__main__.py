@@ -777,18 +777,18 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Wether to skip validations based on their support level or not.",
 )
 @click.option(
-    "--skip-old-validate",
+    "--run-old-validate",
     is_flag=True,
     show_default=True,
     default=False,
-    help="Wether to skip the old validate flow.",
+    help="Wether to run the old validate flow or not. Alteratively, you can configure the RUN_OLD_VALIDATE env variable.",
 )
 @click.option(
-    "--run-new-validate",
+    "--skip-new-validate",
     is_flag=True,
     show_default=True,
     default=False,
-    help="Wether to run the new validate flow.",
+    help="Wether to skip the new validate flow or not. Alteratively, you can configure the SKIP_NEW_VALIDATE env variable.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
@@ -824,8 +824,54 @@ def validate(ctx, config, file_paths: str, **kwargs):
             kwargs["use_git"] = True
             kwargs["post_commit"] = True
         exit_code = 0
-        if not kwargs["skip_old_validate"]:
-            if kwargs["run_new_validate"]:
+        run_new_validate = not kwargs["skip_new_validate"] or (
+            (env_flag := os.getenv("SKIP_NEW_VALIDATE"))
+            and str(env_flag).lower() == "true"
+        )
+        run_old_validate = kwargs["run_old_validate"] or (
+            (env_flag := os.getenv("RUN_OLD_VALIDATE"))
+            and str(env_flag).lower() == "true"
+        )
+        if not run_new_validate:
+            for new_validate_flag in [
+                "fix",
+                "ignore_support_level",
+                "config_path",
+                "category_to_run",
+            ]:
+                if kwargs.get(new_validate_flag):
+                    logger.warning(
+                        f"The following flag {new_validate_flag.replace('_', '-')} is related only to the new validate and is being called while not running the new validate flow, therefore the flag will be ignored."
+                    )
+        if not run_old_validate:
+            for old_validate_flag in [
+                "no_backward_comp",
+                "no_conf_json",
+                "id_set",
+                "graph",
+                "skip_pack_release_notes",
+                "print_ignored_errors",
+                "print_ignored_files",
+                "no_docker_checks",
+                "silence_init_prints",
+                "skip_pack_dependencies",
+                "id_set_path",
+                "create_id_set",
+                "skip_schema_check",
+                "debug_git",
+                "include_untracked",
+                "quiet_bc_validation",
+                "allow_skipped",
+                "run_specific_validations",
+                "no_multiprocessing",
+            ]:
+                if kwargs.get(old_validate_flag):
+                    logger.warning(
+                        f"The following flag {old_validate_flag.replace('_', '-')} is related only to the old validate and is being called while not running the old validate flow, therefore the flag will be ignored."
+                    )
+
+        if run_old_validate:
+            if not kwargs["skip_new_validate"]:
                 kwargs["graph"] = False
             validator = OldValidateManager(
                 is_backward_check=not kwargs["no_backward_comp"],
@@ -857,7 +903,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 specific_validations=kwargs.get("run_specific_validations"),
             )
             exit_code += validator.run_validation()
-        if kwargs["run_new_validate"]:
+        if run_new_validate:
             validation_results = ResultWriter(
                 json_file_path=kwargs.get("json_file"),
             )
@@ -3656,6 +3702,12 @@ def pre_commit(
         "--log-file-path",
         help="Path to save log files onto.",
     ),
+    pre_commit_template_path: Optional[Path] = typer.Option(
+        None,
+        "--template-path",
+        envvar="PRE_COMMIT_TEMPLATE_PATH",
+        help="A custom path for pre-defined pre-commit template, if not provided will use the default template",
+    ),
 ):
     logging_setup(
         console_log_threshold=console_log_threshold,
@@ -3682,6 +3734,7 @@ def pre_commit(
         run_docker_hooks=docker,
         dry_run=dry_run,
         run_hook=run_hook,
+        pre_commit_template_path=pre_commit_template_path,
     )
     if return_code:
         raise typer.Exit(1)

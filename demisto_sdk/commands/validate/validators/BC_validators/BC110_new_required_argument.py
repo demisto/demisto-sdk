@@ -52,7 +52,7 @@ class NewRequiredArgumentValidator(BaseValidator[ContentTypes]):
                             if (
                                 not old_corresponding_arg
                             ) or not old_corresponding_arg.required:
-                                custom_message += f"in command '{current_command_name}' you have added a new required argument: '{arg.name}'."
+                                custom_message += f"in command '{current_command_name}' you have added a new required argument:'{arg.name}'. "
             if custom_message:
                 results.append(
                     ValidationResult(

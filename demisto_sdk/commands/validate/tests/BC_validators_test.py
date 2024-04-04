@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import List
 
 import pytest
@@ -47,6 +48,53 @@ ALL_MARKETPLACES_FOR_IN_PACK = [marketplace.value for marketplace in ALL_MARKETP
 XSIAM_MARKETPLACE_FOR_IN_PACK = [ALL_MARKETPLACES_FOR_IN_PACK[1]]
 XSOAR_MARKETPLACE = [ALL_MARKETPLACES[0]]
 XSOAR_MARKETPLACE_FOR_IN_PACK = [ALL_MARKETPLACES_FOR_IN_PACK[0]]
+
+
+# Create a new content item with 3 commands with unique names. all commands have only 1 argument except the third command which has 2 arguments.
+generic_integration_with_3_commands_and_4_args = create_integration_object(
+    paths=["script.commands"],
+    values=[
+        [
+            {
+                "name": "command_1",
+                "description": "test",
+                "arguments": [
+                    {
+                        "name": "arg_1_command_1",
+                        "description": "nothing description.",
+                    }
+                ],
+                "outputs": [],
+            },
+            {
+                "name": "command_2",
+                "description": "test",
+                "arguments": [
+                    {
+                        "name": "arg_1_command_2",
+                        "description": "nothing description.",
+                    }
+                ],
+                "outputs": [],
+            },
+            {
+                "name": "command_3",
+                "description": "test",
+                "arguments": [
+                    {
+                        "name": "arg_1_command_3",
+                        "description": "nothing description.",
+                    },
+                    {
+                        "name": "arg_2_command_3",
+                        "description": "nothing description.",
+                    },
+                ],
+                "outputs": [],
+            },
+        ]
+    ],
+)
 
 
 @pytest.mark.parametrize(
@@ -899,18 +947,6 @@ def test_IsContextPathChangedValidator_remove_command():
     )
 
 
-def setup_integration_with_3_commands_and_5_args():
-    # Create a new content item with 3 commands with unique names. all commands have only 1 argument except the third command which has 2 arguments.
-    integration = create_integration_object()
-    integration.commands.append(create_integration_object().commands[0])
-    integration.commands.append(create_integration_object().commands[0])
-    integration.commands[2].args.append(create_integration_object().commands[0].args[0])
-    integration.commands[0].name = "test-command_0"
-    integration.commands[1].name = "test-command_1"
-    integration.commands[2].name = "test-command_2"
-    return integration
-
-
 def test_HaveCommandsOrArgsNameChangedValidator__fails():
     """
     Given
@@ -921,60 +957,76 @@ def test_HaveCommandsOrArgsNameChangedValidator__fails():
     Then
         - Make sure the validation fails and the right error message is returned notifying only on changes in the second command name, and third command argument name.
             - The first command has no changes.
-            - The second command name has changed from 'test-command_1' to 'new-command_1', and its arg name has changed from 'old_arg_1' to 'new_arg_1'.
+            - The second command name has changed from 'old_command_1' to 'command_1', and its arg name has changed from 'oldarg_1_command_1' to 'arg_1_command_1.
                 (the args change souled be ignored since we reported on its command name change.)
-            - The third command name has not changed, but one of its arguments name has changed from 'old_arg_2' to 'new_arg_2'.
+            - The third command name has not changed, but one of its arguments name has changed from 'old_arg_1_command_2' to 'arg_1_command_2'.
 
     """
     # Setup new content item with changes in command and argument names
-    new_content_item = setup_integration_with_3_commands_and_5_args()
-    new_content_item.commands[1].name = "new-command_1"
-    new_content_item.commands[1].args[0].name = "new_arg_1"
-    new_content_item.commands[2].args[1].name = "new_arg_2"
+    new_content_item = generic_integration_with_3_commands_and_4_args
 
     # Setup old content item with original command and argument names
-    old_content_item = setup_integration_with_3_commands_and_5_args()
-    old_content_item.commands[1].name = "old-command_1"
-    old_content_item.commands[1].args[0].name = "old_arg_1"
-    old_content_item.commands[2].args[1].name = "old_arg_2"
+    old_content_item = deepcopy(new_content_item)
+    old_content_item.commands[1].name = "old_command_1"
+    old_content_item.commands[1].args[0].name = "old_arg_1_command_1"
+    old_content_item.commands[2].args[0].name = "old_arg_1_command_2"
 
     # Create old file pointers and validate
     create_old_file_pointers([new_content_item], [old_content_item])
     results = HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])
 
-    # Assert error messages
     assert (
-        "contain changes to the names of the following existing commands: old-command_1. Please undo the changes."
+        'changes to the names of the following existing commands:"old_command_1". In addition, you have made changes to the names of existing arguments: In command "command_3" the following arguments have been changed: "old_arg_1_command_2".'
         in results[0].message
-    )
-    assert (
-        "contain changes to the names of existing arguments: In command 'test-command_2' the following arguments have been changed: old_arg_2. Please undo the changes."
-        in results[1].message
     )
 
 
 def test_HaveCommandsOrArgsNameChangedValidator__passes():
     """
     Given
-    - A new content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
-    - An old content item with the same structure as the new content item, but with addition of a new command an new argument to existing commands.
+    - An old content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
+    - A new content item with the same structure as the old content item, but with addition of a new argument to the third command, and a new command as well.
     When
     - Calling the HaveCommandsOrArgsNameChangedValidator.
     Then
     - Make sure the validation passes and no error messages are returned, since adding new commands or arguments is allowed.
     """
     # Setup new content item with changes in command and argument names
-    new_content_item = setup_integration_with_3_commands_and_5_args()
+    old_content_item = generic_integration_with_3_commands_and_4_args
+    new_content_item = deepcopy(old_content_item)
 
-    new_content_item.commands.append(create_integration_object().commands[0])
-    new_content_item.commands[2].args.append(
-        create_integration_object().commands[0].args[0]
+    new_content_item.commands.append(
+        create_integration_object(
+            paths=["script.commands"], values=[[{"name": "command_4"}]]
+        ).commands[0]
     )
-    new_content_item.commands[3].name = "new_command_3"
-    new_content_item.commands[2].args[2].name = "new_arg_2"
+    # add a new argument to the third command
+    new_content_item.commands[2].args.append(
+        create_integration_object(
+            paths=[
+                "script.commands",
+            ],
+            values=[
+                [
+                    {
+                        "name": "command_1",
+                        "description": "test",
+                        "arguments": [
+                            {
+                                "name": "arg_3_command_1",
+                            }
+                        ],
+                        "outputs": [],
+                    }
+                ]
+            ],
+        )
+        .commands[0]
+        .args[0]
+    )
 
     # Setup old content item with original command and argument names
-    old_content_item = setup_integration_with_3_commands_and_5_args()
+    old_content_item = generic_integration_with_3_commands_and_4_args
 
     create_old_file_pointers([new_content_item], [old_content_item])
     assert not HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])
@@ -990,20 +1042,40 @@ def test_NewRequiredArgumentValidator__fails():
     Then
     - Make sure the validation fails and the right error message is returned notifying on the new required argument in the second command and the third command.
     """
-    new_content_item = setup_integration_with_3_commands_and_5_args()
+    old_content_item = generic_integration_with_3_commands_and_4_args
+    new_content_item = deepcopy(old_content_item)
+    # add new required arg
     new_content_item.commands[2].args.append(
-        create_integration_object().commands[0].args[0]
+        create_integration_object(
+            paths=[
+                "script.commands",
+            ],
+            values=[
+                [
+                    {
+                        "name": "test_command",
+                        "arguments": [
+                            {
+                                "name": "arg_3_command_3",
+                                "required": True,
+                            }
+                        ],
+                    }
+                ]
+            ],
+        )
+        .commands[0]
+        .args[0]
     )
+
     # change existing arg to be required
     new_content_item.commands[1].args[0].required = True
-    # add new required arg
-    new_content_item.commands[2].args[2].required = True
-    old_content_item = setup_integration_with_3_commands_and_5_args()
 
     create_old_file_pointers([new_content_item], [old_content_item])
     res = NewRequiredArgumentValidator().is_valid([new_content_item])
+
     assert (
-        "in command 'test-command_1' you have added a new required argument: 'from_date'.in command 'test-command_2' you have added a new required argument: 'from_date'. Please undo the changes."
+        "added the following new *required* arguments: in command 'command_2' you have added a new required argument:'arg_1_command_2'. in command 'command_3' you have added a new required argument:'arg_3_command_1'."
         in res[0].message
     )
 
@@ -1012,23 +1084,39 @@ def test_NewRequiredArgumentValidator__passes():
     """
     Given
     - A old content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
-    - A new content item with the same structure as the old content item, but with changes in the second command argument to be required and a new required argument in the new forth command.
+    - A new content item with the same structure as the old content item, but with changes in the second command argument to be required and a new required argument in the new forth command with a required argument.
     When
     - Calling the NewRequiredArgumentValidator.
     Then
     - Make sure the validation passes and no error messages are returned, since adding new required arguments is allowed
         if the new required argument is in a new command or if it has a default value.
     """
-    new_content_item = setup_integration_with_3_commands_and_5_args()
-    # add a new command
-    new_content_item.commands.append(create_integration_object().commands[0])
-    # change existing arg to be required but with a default value
+    new_content_item = deepcopy(generic_integration_with_3_commands_and_4_args)
+    # change existing arg to be required but add a default value
     new_content_item.commands[1].args[0].required = True
     new_content_item.commands[1].args[0].defaultvalue = "test"
-    # change arg in the new command to be required
-    new_content_item.commands[3].args[0].required = True
-
-    old_content_item = setup_integration_with_3_commands_and_5_args()
+    # add new command with required arg without a default value
+    new_content_item.commands.append(
+        create_integration_object(
+            paths=[
+                "script.commands",
+            ],
+            values=[
+                [
+                    {
+                        "name": "command_4",
+                        "arguments": [
+                            {
+                                "name": "arg_1_command_4",
+                                "required": True,
+                            }
+                        ],
+                    }
+                ]
+            ],
+        ).commands[0]
+    )
+    old_content_item = generic_integration_with_3_commands_and_4_args
     create_old_file_pointers([new_content_item], [old_content_item])
 
     assert not NewRequiredArgumentValidator().is_valid([new_content_item])

@@ -1872,8 +1872,6 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     )
 
 
-
-
 @pytest.mark.parametrize(
     "content_item, expected_messages",
     [

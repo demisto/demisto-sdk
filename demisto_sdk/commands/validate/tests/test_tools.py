@@ -54,7 +54,7 @@ def create_integration_object(
 
     if readme_content is not None:
         additional_params["readme"] = readme_content
-    
+
     if name is not None:
         additional_params["name"] = name
 

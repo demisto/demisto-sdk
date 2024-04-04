@@ -40,7 +40,7 @@ chardet = ">=4,<6"
 click = "^8.0.0"
 coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
-coverage = "^7.2.1"
+coverage = "^7.2.1,<7.4"  # in 7.4 we get empty results
 decorator = "^5.1.1"
 demisto-py = "^3.2.10"
 dictor = "^0.1.9"

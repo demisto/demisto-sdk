@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import demisto_client
 from pydantic import Field
@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call-arg]
     kind: Optional[str]
-    tabs: Optional[List[str]]
+    tabs: Optional[List[Dict[str, Any]]]
     definition_id: Optional[str] = Field(alias="definitionId")
     group: str
     edit: bool

@@ -43,7 +43,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
             if (self.check_separators_in_files(content_item))
         ]
 
-    def check_separators_in_files(self, content_item):
+    def check_separators_in_files(self, content_item: ContentTypes):
         """
         Check if there are separators in the file names of the content item.
 
@@ -62,7 +62,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         
         files_to_check = sorted(
             files_to_check
-            ) # Used to keep the error message consistent
+        ) # Used to keep the error message consistent
 
         for file_path in files_to_check:
             if (file_name := Path(file_path).name).startswith("README"):
@@ -91,7 +91,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
 
         return False
 
-    def remove_separators_from_name(self, base_name) -> str:
+    def remove_separators_from_name(self, base_name: str) -> str:
         """
         Remove separators from a given name.
 

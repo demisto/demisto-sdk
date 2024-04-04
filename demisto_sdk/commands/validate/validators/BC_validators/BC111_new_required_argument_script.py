@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.content_graph.objects.integration import Script
-from demisto_sdk.commands.validate.tools import find_command
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -13,13 +12,13 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Script
 
 
-class NewRequiredArgumentValidator(BaseValidator[ContentTypes]):
+class NewRequiredArgumentScriptValidator(BaseValidator[ContentTypes]):
     error_code = "BC111"
     description = (
         "Validate that no new *required* argument are added to an existing script."
     )
     rationale = "Adding a new argument to an existing script and defining it as *required* or changing an non-required argument to be required will break backward compatibility."
-    error_message = "Possible backward compatibility break: You have added the following new *required* arguments: {arg_list} Please undo the changes."
+    error_message = "Possible backward compatibility break: You have added the following new *required* arguments: {arg_list}. Please undo the changes."
     related_field = "script.arguments"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
@@ -37,7 +36,7 @@ class NewRequiredArgumentValidator(BaseValidator[ContentTypes]):
                     old_corresponding_arg = next(
                         (
                             arg
-                            for arg in old_content_item.args
+                            for arg in old_content_item.args  # type: ignore
                             if arg.name == current_arg_name
                         ),
                         None,
@@ -52,7 +51,9 @@ class NewRequiredArgumentValidator(BaseValidator[ContentTypes]):
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(arg_list=arg_list),
+                        message=self.error_message.format(
+                            arg_list=", ".join(f'"{w}"' for w in arg_list)
+                        ),
                         content_object=content_item,
                     )
                 )

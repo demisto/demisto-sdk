@@ -36,8 +36,8 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_tover
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
 )
-from demisto_sdk.commands.validate.validators.BC_validators.BC111_script_new_required_argument import (
-    ScriptNewRequiredArgumentValidator,
+from demisto_sdk.commands.validate.validators.BC_validators.BC111_new_required_argument_script import (
+    NewRequiredArgumentScriptValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -952,7 +952,7 @@ def test_HaveCommandsOrArgsNameChangedValidator__script__fails():
         - An old script with 2 non-required args.
         - A new script with the same first 2 arguments, but they are required, and a new arg added.
     When
-        calling the ScriptNewRequiredArgumentValidator.
+        calling the NewRequiredArgumentScriptValidator.
     Then
         - Make sure the validation fails and the right error message is returned.
     """
@@ -971,7 +971,7 @@ def test_HaveCommandsOrArgsNameChangedValidator__script__fails():
     )
 
     create_old_file_pointers([new_content_item], [old_content_item])
-    res = ScriptNewRequiredArgumentValidator().is_valid([new_content_item])
+    res = NewRequiredArgumentScriptValidator().is_valid([new_content_item])
     assert (
         res[0].message
         == 'Possible backward compatibility break: You have added the following new *required* arguments: "arg1", "arg2". Please undo the changes.'
@@ -984,7 +984,7 @@ def test_HaveCommandsOrArgsNameChangedValidator__script__passes():
         - An old script with 2 non-required args.
         - A new script with the same first 2 arguments, but they are required, and a new arg added.
     When
-        calling the ScriptNewRequiredArgumentValidator.
+        calling the NewRequiredArgumentScriptValidator.
     Then
         - Make sure the validation passes, since the new required arguments have a default value, or are not new.
     """
@@ -1003,4 +1003,4 @@ def test_HaveCommandsOrArgsNameChangedValidator__script__passes():
     )
 
     create_old_file_pointers([new_content_item], [old_content_item])
-    assert not ScriptNewRequiredArgumentValidator().is_valid([new_content_item])
+    assert not NewRequiredArgumentScriptValidator().is_valid([new_content_item])

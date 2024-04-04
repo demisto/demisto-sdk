@@ -1877,8 +1877,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     [
         pytest.param(
             create_integration_object(name="Test-Integration"),
-            ["The Integration files 'Test-Integration_description.md' and 'Test-Integration.yml' and 'Test-Integration_image.png' and 'Test-Integration_test.py' and\
-             'Test-Integration.py' should be named 'TestIntegration_description.md' and 'TestIntegration.yml' and 'TestIntegration_image.png' and 'TestIntegration_test.py' and 'TestIntegration.py', respectively, without any separators in the base name."],
+            "The Integration files 'Test-Integration.py' and 'Test-Integration.yml' and 'Test-Integration_description.md' and 'Test-Integration_image.png' and 'Test-Integration_test.py' should be named 'TestIntegration.py' and 'TestIntegration.yml' and 'TestIntegration_description.md' and 'TestIntegration_image.png' and 'TestIntegration_test.py', respectively, without any separators in the base name.",
             id="invalid integration",
         ),
         pytest.param(
@@ -1887,12 +1886,12 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
             id="valid integration",
         ),
         pytest.param(
-            create_script_object(paths=["name"],values=["Test-Script"]),
-            [""],
+            create_script_object(name="Test-Script"),
+            "The Script files 'Test-Script.py' and 'Test-Script.yml' and 'Test-Script_description.md' and 'Test-Script_image.png' and 'Test-Script_test.py' should be named 'TestScript.py' and 'TestScript.yml' and 'TestScript_description.md' and 'TestScript_image.png' and 'TestScript_test.py', respectively, without any separators in the base name.",
             id="invalid script",
         ),
         pytest.param(
-            create_script_object(paths=["name"],values=["TestScript"]),
+            create_script_object(name="TestScript"),
             [""],
             id="valid script",
         )

@@ -188,6 +188,7 @@ def create_script_object(
     pack_info: Optional[Dict[str, Any]] = None,
     code: Optional[str] = None,
     test_code: Optional[str] = None,
+    name: Optional[str] = None,
 ):
     """Creating an script object with altered fields from a default script yml structure.
 
@@ -199,12 +200,16 @@ def create_script_object(
     Returns:
         The script object.
     """
+    additional_params = {}
+    if name is not None:
+        additional_params["name"] = name
+
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
-    script = pack.create_script(yml=yml_content)
+    script = pack.create_script(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"
     script.code.write(code)
     if test_code:

@@ -1876,13 +1876,13 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     "content_item, expected_messages",
     [
         pytest.param(
-            create_integration_object(paths=["name"],values=["Test-Integration"]),
-            ["The Integration files 'integration_0.yml' and 'integration_0.py' and 'integration_0_description.md' and 'integration_0_image.png' and 'integration_0_test.py'\
-             should be named 'integration0.yml' and 'integration0.py' and 'integration0_description.md' and 'integration0_image.png' and 'integration0_test.py', respectively, without any separators in the base name."],
+            create_integration_object(name="Test-Integration"),
+            ["The Integration files 'Test-Integration_description.md' and 'Test-Integration.yml' and 'Test-Integration_image.png' and 'Test-Integration_test.py' and\
+             'Test-Integration.py' should be named 'TestIntegration_description.md' and 'TestIntegration.yml' and 'TestIntegration_image.png' and 'TestIntegration_test.py' and 'TestIntegration.py', respectively, without any separators in the base name."],
             id="invalid integration",
         ),
         pytest.param(
-            create_integration_object(name="TestIntegration!@"),
+            create_integration_object(name="TestIntegration"),
             [""],
             id="valid integration",
         ),

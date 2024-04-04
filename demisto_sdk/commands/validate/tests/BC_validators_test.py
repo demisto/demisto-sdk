@@ -36,6 +36,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_tover
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC111_new_required_argument import (
+    NewRequiredArgumentValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 ALL_MARKETPLACES = list(MarketplaceVersions)
@@ -941,3 +944,63 @@ def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content
         and result[0].message
         == "Changing the maximal supported version field `toversion` is not allowed. Please undo, or request a force merge."
     )
+
+
+def test_HaveCommandsOrArgsNameChangedValidator__script__fails():
+    """
+    Given
+        - An old script with 2 non-required args.
+        - A new script with the same first 2 arguments, but they are required, and a new arg added.
+    When
+        calling the NewRequiredArgumentValidator.
+    Then
+        - Make sure the validation fails and the right error message is returned.
+    """
+    new_content_item = create_script_object(
+        paths=["args"],
+        values=[
+            [
+                {"name": "arg1", "required": True},
+                {"name": "arg2", "required": True},
+                {"name": "arg3"},
+            ]
+        ],
+    )
+    old_content_item = create_script_object(
+        paths=["args"], values=[[{"name": "arg1"}, {"name": "arg2"}]]
+    )
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    res = NewRequiredArgumentValidator().is_valid([new_content_item])
+    assert (
+        res[0].message
+        == 'Possible backward compatibility break: You have added the following new *required* arguments: "arg1", "arg2". Please undo the changes.'
+    )
+
+
+def test_HaveCommandsOrArgsNameChangedValidator__script__passes():
+    """
+    Given
+        - An old script with 2 non-required args.
+        - A new script with the same first 2 arguments, but they are required, and a new arg added.
+    When
+        calling the NewRequiredArgumentValidator.
+    Then
+        - Make sure the validation passes, since the new required arguments have a default value, or are not new.
+    """
+    new_content_item = create_script_object(
+        paths=["args"],
+        values=[
+            [
+                {"name": "arg1", "required": True},
+                {"name": "arg2", "required": True, "defaultvalue": "test"},
+                {"name": "arg3"},
+            ]
+        ],
+    )
+    old_content_item = create_script_object(
+        paths=["args"], values=[[{"name": "arg1", "required": True}, {"name": "arg2"}]]
+    )
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    assert not NewRequiredArgumentValidator().is_valid([new_content_item])

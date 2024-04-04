@@ -62,7 +62,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         
         files_to_check = sorted(
             files_to_check
-        ) # Used to keep the error message consistent
+        )  # Used to keep the error message consistent
 
         for file_path in files_to_check:
             if (file_name := Path(file_path).name).startswith("README"):

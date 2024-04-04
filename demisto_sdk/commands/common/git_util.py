@@ -712,16 +712,8 @@ class GitUtil:
         Returns:
             Set[Path]: of Paths to files changed in the current branch.
         """
-        try:
-            self.fetch()
 
-        except Exception as e:
-            logger.warning(
-                f"Failed to fetch branch '{self.get_current_working_branch()}' "
-                f"from remote '{self.repo.remote().name}' ({self.repo.remote().url}). Continuing without fetching."
-            )
-            logger.debug(f"Error: {e}")
-
+        self.fetch()
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
@@ -1062,7 +1054,14 @@ class GitUtil:
         return bool(self.repo.ignored(file_path))
 
     def fetch(self):
-        self.repo.remote(DEMISTO_GIT_UPSTREAM).fetch()
+        try:
+            self.repo.remote(DEMISTO_GIT_UPSTREAM).fetch()
+        except Exception as e:
+            logger.warning(
+                f"Failed to fetch branch '{self.get_current_working_branch()}' "
+                f"from remote '{self.repo.remote().name}' ({self.repo.remote().url}). Continuing without fetching."
+            )
+            logger.debug(f"Error: {e}")
 
     def fetch_all(self):
         for remote in self.repo.remotes:

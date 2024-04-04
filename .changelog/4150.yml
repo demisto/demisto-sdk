@@ -1,4 +1,0 @@
-changes:
-- description: Added the `validate-xsoar-config` pre-commit hook, replacing `XC` validations.
-  type: feature
-pr_number: 4150

@@ -13,6 +13,7 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
     field_type: Optional[str] = Field(alias="type")
     version: Optional[int] = 0
     group: int = Field(None, exclude=True)
+    unsearchable: Optional[bool] = Field(None, exclude=True)
 
     def metadata_fields(self) -> Set[str]:
         return super().metadata_fields().union({"field_type"})

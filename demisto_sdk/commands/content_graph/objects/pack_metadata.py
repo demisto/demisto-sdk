@@ -419,7 +419,7 @@ class PackMetadata(BaseModel):
             )
 
             self._replace_item_if_has_higher_toversion(
-                content_item, content_item_metadata, content_item_summary
+                content_item, content_item_metadata, content_item_summary, marketplace
             )
 
         else:
@@ -448,6 +448,7 @@ class PackMetadata(BaseModel):
         content_item: ContentItem,
         content_item_metadata: dict,
         content_item_summary: dict,
+        marketplace: MarketplaceVersions,
     ):
         """
         Replaces the content item metadata object in the content items metadata list
@@ -457,10 +458,23 @@ class PackMetadata(BaseModel):
             content_item (ContentItem): The current content item to check.
             content_item_metadata (dict): The existing content item metadata object in the list.
             content_item_summary (dict): The current content item summary to update if needed.
+            marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
         """
+        if marketplace == MarketplaceVersions.XSOAR:
+            logger.debug("debug for debug uploading to XSOAR6 marketplace")
+            if (
+                parse(content_item.toversion) > Version("7.9.9")
+                and content_item.toversion != DEFAULT_CONTENT_ITEM_TO_VERSION
+            ):
+                logger.debug(
+                    f"content_item {content_item} has a toversion {content_item.toversion} higher than applicable for XSOAR marketplace"
+                )
+                return
+
         if parse(content_item.toversion) > parse(
             content_item_metadata["toversion"] or DEFAULT_CONTENT_ITEM_TO_VERSION
         ):
+
             logger.debug(
                 f'Current content item with name "{content_item.name}" has higher `toversion` than the existing object, '
                 "updating its metadata."

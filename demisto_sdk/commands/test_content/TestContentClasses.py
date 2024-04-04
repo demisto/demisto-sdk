@@ -309,8 +309,12 @@ class TestPlaybook:
             "instances_ips", ",".join(self.build_context.instances_ips)
         )
 
-        self.test_suite.add_property("playbook.is_mockable", self.is_mockable)  # type:ignore[arg-type]
-        self.test_suite.add_property("is_mockable", self.configuration.is_mockable)  # type:ignore[arg-type]
+        self.test_suite.add_property(
+            "playbook.is_mockable", self.is_mockable
+        )  # type:ignore[arg-type]
+        self.test_suite.add_property(
+            "is_mockable", self.configuration.is_mockable
+        )  # type:ignore[arg-type]
         self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
         self.test_suite.add_property("from_version", self.configuration.from_version)
         self.test_suite.add_property("to_version", self.configuration.to_version)
@@ -335,7 +339,7 @@ class TestPlaybook:
         )
         self.test_suite.add_property(
             "runnable_on_docker_only",
-            self.configuration.runnable_on_docker_only, # type:ignore[arg-type]
+            self.configuration.runnable_on_docker_only,  # type:ignore[arg-type]
         )
 
     def close_test_suite(self, results: Optional[List[Result]] = None):
@@ -348,7 +352,7 @@ class TestPlaybook:
         )
         test_case.system_out = "\n".join(self.test_suite_system_out)
         test_case.system_err = "\n".join(self.test_suite_system_err)
-        test_case.result += results # type:ignore[arg-type]
+        test_case.result += results  # type:ignore[arg-type]
         self.test_suite.add_testcase(test_case)
         self.build_context.tests_data_keeper.test_results_xml_file.add_testsuite(
             self.test_suite

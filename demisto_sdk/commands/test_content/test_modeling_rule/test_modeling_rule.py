@@ -1341,7 +1341,7 @@ def log_error_to_test_case(
 def add_result_to_test_case(
     err: str, test_case: TestCase, modeling_rule_test_suite: TestSuite
 ) -> Tuple[bool, TestSuite]:
-    test_case.result += [Error(err)] #  type:ignore[arg-type]
+    test_case.result += [Error(err)]  #  type:ignore[arg-type]
     modeling_rule_test_suite.add_testcase(test_case)
     return False, modeling_rule_test_suite
 
@@ -1561,7 +1561,9 @@ def test_modeling_rule(
                 extra={"markup": True},
             )
         if modeling_rule_test_suite:
-            modeling_rule_test_suite.add_property("start_time", start_time) #  type:ignore[arg-type]
+            modeling_rule_test_suite.add_property(
+                "start_time", start_time
+            )  #  type:ignore[arg-type]
             xml.add_testsuite(modeling_rule_test_suite)
 
     if output_junit_file:

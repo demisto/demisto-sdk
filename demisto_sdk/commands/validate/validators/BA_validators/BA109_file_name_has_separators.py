@@ -43,7 +43,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
             if (self.check_separators_in_files(content_item))
         ]
 
-    def check_separators_in_files(self, content_item: ContentTypes):
+    def check_separators_in_files(self, content_item: ContentTypes) -> bool:
         """
         Check if there are separators in the file names of the content item.
 

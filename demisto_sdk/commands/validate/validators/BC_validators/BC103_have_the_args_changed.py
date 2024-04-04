@@ -22,7 +22,6 @@ class HaveTheArgsChangedValidator(BaseValidator[ContentTypes]):
         "to the names of the following existing arguments: {args}. Please undo the changes."
     )
     related_field = "args.name"
-    is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

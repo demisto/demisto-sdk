@@ -1562,8 +1562,8 @@ def test_modeling_rule(
             )
         if modeling_rule_test_suite:
             modeling_rule_test_suite.add_property(
-                "start_time", start_time
-            )  #  type:ignore[arg-type]
+                "start_time", start_time  #  type:ignore[arg-type]
+            )
             xml.add_testsuite(modeling_rule_test_suite)
 
     if output_junit_file:

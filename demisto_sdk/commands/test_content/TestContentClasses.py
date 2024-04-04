@@ -310,11 +310,11 @@ class TestPlaybook:
         )
 
         self.test_suite.add_property(
-            "playbook.is_mockable", self.is_mockable
-        )  # type:ignore[arg-type]
+            "playbook.is_mockable", self.is_mockable  # type:ignore[arg-type]
+        )
         self.test_suite.add_property(
-            "is_mockable", self.configuration.is_mockable
-        )  # type:ignore[arg-type]
+            "is_mockable", self.configuration.is_mockable  # type:ignore[arg-type]
+        )
         self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
         self.test_suite.add_property("from_version", self.configuration.from_version)
         self.test_suite.add_property("to_version", self.configuration.to_version)

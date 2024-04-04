@@ -13,7 +13,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 
-class NewRequiredArgumentValidator(BaseValidator[ContentTypes]):
+class NewRequiredArgumentIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "BC110"
     description = (
         "Validate that no new *required* argument are added to an existing command."

@@ -40,8 +40,8 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_tover
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
 )
-from demisto_sdk.commands.validate.validators.BC_validators.BC110_new_required_argument import (
-    NewRequiredArgumentValidator,
+from demisto_sdk.commands.validate.validators.BC_validators.BC110_new_required_argument_integration import (
+    NewRequiredArgumentIntegrationValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -1122,7 +1122,7 @@ def test_NewRequiredArgumentValidator__fails():
     new_content_item.commands[1].args[0].required = True
 
     create_old_file_pointers([new_content_item], [old_content_item])
-    res = NewRequiredArgumentValidator().is_valid([new_content_item])
+    res = NewRequiredArgumentIntegrationValidator().is_valid([new_content_item])
 
     assert (
         "added the following new *required* arguments: in command 'command_2' you have added a new required argument:'arg_1_command_2'. in command 'command_3' you have added a new required argument:'arg_3_command_1'."
@@ -1169,4 +1169,4 @@ def test_NewRequiredArgumentValidator__passes():
     old_content_item = generic_integration_with_3_commands_and_4_args
     create_old_file_pointers([new_content_item], [old_content_item])
 
-    assert not NewRequiredArgumentValidator().is_valid([new_content_item])
+    assert not NewRequiredArgumentIntegrationValidator().is_valid([new_content_item])

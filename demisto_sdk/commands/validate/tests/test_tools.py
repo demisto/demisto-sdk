@@ -186,7 +186,7 @@ def create_script_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
-    script_folder_name: Optional[str] = None,
+    name: Optional[str] = None,
     code: Optional[str] = None,
     test_code: Optional[str] = None,
 ):
@@ -201,8 +201,8 @@ def create_script_object(
         The script object.
     """
     additional_params = {}
-    if script_folder_name is not None:
-        additional_params["name"] = script_folder_name
+    if name is not None:
+        additional_params["name"] = name
 
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)

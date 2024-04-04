@@ -1895,14 +1895,14 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         ),
         pytest.param(
             [
-                create_script_object(script_folder_name="invalid-script-name"),
+                create_script_object(name="invalid-script-name"),
             ],
             "The folder name 'invalid-script-name' should be without any separator.",
             id="an invalid script name",
         ),
         pytest.param(
             [
-                create_script_object(script_folder_name="invalidScriptName"),
+                create_script_object(name="invalidScriptName"),
             ],
             "",
             id="a valid script name",

@@ -23,7 +23,7 @@ class IsFolderNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        separators = [" ", "_", "-"]
+        separators = ["_", "-"]
         return [
             ValidationResult(
                 validator=self,

@@ -32,7 +32,7 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
-    integration_folder_name: Optional[str] = None,
+    name: Optional[str] = None,
     code: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
@@ -55,8 +55,8 @@ def create_integration_object(
     if readme_content is not None:
         additional_params["readme"] = readme_content
 
-    if integration_folder_name is not None:
-        additional_params["name"] = integration_folder_name
+    if name is not None:
+        additional_params["name"] = name
 
     integration = pack.create_integration(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"

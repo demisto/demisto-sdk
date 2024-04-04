@@ -93,6 +93,7 @@ typing-extensions = "^4.1.1"                     # not a mypy types- dependency
 pre-commit = "^3.5.0"
 lxml = "^5.0.0"
 uv = "^0.1.5"
+toml = "^0.10.2"
 
 
 [tool.poetry.group.types.dependencies]

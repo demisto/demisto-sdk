@@ -19,7 +19,6 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
     rationale = "If an existing command or argument has been renamed, it will break backward compatibility"
     error_message = "Possible backward compatibility break: Your updates to this file contain changes {final_message} Please undo the changes."
     related_field = "script.commands.arguments.name"
-    is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

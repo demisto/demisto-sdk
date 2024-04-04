@@ -33,7 +33,7 @@ def create_integration_object(
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
     code: Optional[str] = None,
-    name: Optional[str]= None
+    name: Optional[str]= None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 

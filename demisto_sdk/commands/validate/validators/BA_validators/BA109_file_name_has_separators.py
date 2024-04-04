@@ -18,13 +18,15 @@ ENTITY_NAME_SEPARATORS = ["_", "-"]
 
 class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     error_code = "BA109"
-    description = "Check if there are separators in the script or integration files names."
+    description = (
+        "Check if there are separators in the script or integration files names."
+        )
     rationale = ""
-    error_message = ("The {0} files {1} should be named {2}, respectively, without any separators in the base name.")
+    error_message = "The {0} files {1} should be named {2}, respectively, without any separators in the base name."
     related_field = ""
     is_auto_fixable = False
     invalid_files: list[str] = []
-    valid_files:list[str] = []
+    valid_files: list[str] = []
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -32,8 +34,8 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     content_item.content_type,
-                    ' and '.join([f"'{word}'" for word in self.invalid_files]),
-                    ' and '.join([f"'{word}'" for word in self.valid_files]),
+                    " and ".join([f"'{word}'" for word in self.invalid_files]),
+                    " and ".join([f"'{word}'" for word in self.valid_files]),
                 ),
                 content_object=content_item,
             )
@@ -58,7 +60,9 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
             os.path.dirname(content_item.path), ["yml", "py", "md", "png"], False
         )
         
-        files_to_check = sorted(files_to_check) # Used to keep the error message consistent
+        files_to_check = sorted(
+            files_to_check
+            ) # Used to keep the error message consistent
 
         for file_path in files_to_check:
             if (file_name := Path(file_path).name).startswith("README"):

@@ -71,6 +71,7 @@ repos:
     description: Run pytest with network enabled on the code in content packs
     entry: coverage
     language: docker
+    files: Packs\/.*_test\.py$
     env:
       COVERAGE_FILE: /src/.pre-commit/coverage/.coverage
     args:

@@ -1909,10 +1909,12 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         ),
     ],
 )
-def test_IsFolderNameHasSeparatorsValidator_is_valid(content_items, expected_number_of_failures, expected_msg):
+def test_IsFolderNameHasSeparatorsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msg
+):
     result = IsFolderNameHasSeparatorsValidator().is_valid(content_items)
 
     assert len(result) == expected_number_of_failures
-    
+
     if result:
         assert result[0].message == expected_msg

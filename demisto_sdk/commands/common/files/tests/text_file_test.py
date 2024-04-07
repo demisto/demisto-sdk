@@ -170,7 +170,7 @@ class TestTextFile(FileTesting):
             assert TextFile.read_from_github_api(path) == Path(path).read_text()
             # make sure that the URL is sent correctly
             assert (
-                f"{DEMISTO_GIT_PRIMARY_BRANCH}/{path}"
+                f"{DEMISTO_GIT_PRIMARY_BRANCH}{path}"
                 in requests_mocker.call_args.args[0]
             )
 

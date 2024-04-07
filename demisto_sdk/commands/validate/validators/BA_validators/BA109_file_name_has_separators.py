@@ -52,8 +52,8 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         Returns:
             bool: True if there are invalid file names, False otherwise.
         """
-        invalid_files = []
-        valid_files = []
+        invalid_files: list[str] = []
+        valid_files: list[str] = []
 
         files_to_check = get_files_in_dir(
             str(content_item.path.parent), ["yml", "py", "md", "png"], False

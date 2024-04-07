@@ -319,9 +319,6 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
                     )
 
     logged = flatten_call_args(logger_info.call_args_list)
-    assert mocked_get_installed.called_once_with(
-        "/contentpacks/metadata/installed", "GET"
-    )
     assert logged[-1] == "\n".join(
         (
             "[green]SUCCESSFUL UPLOADS:",

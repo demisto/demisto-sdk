@@ -1,4 +1,0 @@
-changes:
-- description: Fixes an issue where *Fetch Events* and *Fetch Assets* checkboxes appeared in Xsoar Machines.
-  type: fix
-pr_number: 4160

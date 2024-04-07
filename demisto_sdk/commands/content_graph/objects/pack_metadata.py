@@ -460,23 +460,18 @@ class PackMetadata(BaseModel):
             content_item_summary (dict): The current content item summary to update if needed.
             marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
         """
-        if marketplace == MarketplaceVersions.XSOAR:
-            logger.debug("debug for debug uploading to XSOAR6 marketplace")
-            logger.debug(f"This is content_item: {content_item}")
-            logger.debug(f"This is toversion: {content_item.toversion}")
-            if (
-                parse(content_item.toversion) > Version("7.9.9")
-                and content_item.toversion != DEFAULT_CONTENT_ITEM_TO_VERSION
-            ):
-                logger.debug(
-                    f"content_item {content_item} has a toversion {content_item.toversion} higher than applicable for XSOAR marketplace"
-                )
-                return
-
+        if marketplace == MarketplaceVersions.XSOAR and parse(
+            content_item.fromversion
+        ) > Version("7.9.9"):
+            logger.debug(
+                f"Content_item: {content_item.name} has a fromversion\
+                    {content_item.fromversion} higher than applicable\
+                        for XSOAR6 marketplace. Skipping metadata update."
+            )
+            return
         if parse(content_item.toversion) > parse(
             content_item_metadata["toversion"] or DEFAULT_CONTENT_ITEM_TO_VERSION
         ):
-
             logger.debug(
                 f'Current content item with name "{content_item.name}" has higher `toversion` than the existing object, '
                 "updating its metadata."

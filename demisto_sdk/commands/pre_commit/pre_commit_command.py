@@ -538,7 +538,7 @@ def pre_commit_manager(
         else:
             pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
 
-    logger.info(f'Running pre-commit using template {pre_commit_template_path}')
+    logger.info(f"Running pre-commit using template {pre_commit_template_path}")
 
     pre_commit_context = PreCommitContext(
         list(input_files) if input_files else None,

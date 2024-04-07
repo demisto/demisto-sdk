@@ -20,9 +20,9 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     description = (
         "Check if there are separators in the script or integration files names."
     )
-    rationale = ""
+    rationale = "Filenames for scripts and integrations should not contain separators to maintain consistency and readability."
     error_message = "The {0} files {1} should be named {2}, respectively, without any separators in the base name."
-    related_field = ""
+    related_field = "file path"
     is_auto_fixable = False
     invalid_files: list[str] = []
     valid_files: list[str] = []

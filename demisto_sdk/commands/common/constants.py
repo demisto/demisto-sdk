@@ -2054,6 +2054,8 @@ TABLE_INCIDENT_TO_ALERT = {
 FORMATTING_SCRIPT = "indicator-format"
 
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
+DOCKERFILES_REPO = "demisto/dockerfiles"
+CONTENT_REPO = "demisto/content"
 
 TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
 

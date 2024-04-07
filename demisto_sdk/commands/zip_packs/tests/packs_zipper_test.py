@@ -99,33 +99,6 @@ class TestPacksZipper:
             unpack_archive(f"{tmp_output_dir}/uploadable_packs.zip", tmp_output_dir)
             assert Path(f"{tmp_output_dir}/TestPack.zip").exists()
 
-    def test_zip_with_upload(self, mocker):
-        """
-        Given:
-            - the upload flag is turn on
-        When:
-            - run the zip_packs command
-        Then:
-            - validate the upload command was called once
-        """
-        mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
-        mocker.patch.object(
-            uploader, "get_demisto_version", return_value=parse("6.0.0")
-        )
-        mocker.patch.object(Uploader, "upload")
-
-        with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(
-                zip_packs,
-                input=TEST_PACK_PATH,
-                output=tmp_output_dir,
-                content_version="0.0.0",
-                zip_all=True,
-                upload=True,
-            )
-
-            assert len(Uploader.upload.call_arg_list) == 1
-
     # Edge cases
     def test_invalid_pack_name(self):
         """

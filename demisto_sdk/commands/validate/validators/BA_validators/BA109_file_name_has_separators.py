@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Iterable, List, Union
 
@@ -57,7 +56,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         valid_files = []
 
         files_to_check = get_files_in_dir(
-            os.path.dirname(content_item.path), ["yml", "py", "md", "png"], False
+            str(content_item.path.parent), ["yml", "py", "md", "png"], False
         )
 
         files_to_check = sorted(

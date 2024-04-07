@@ -18,6 +18,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_layout_object,
     create_list_object,
     create_outgoing_mapper_object,
+    create_pack_object,
     create_parsing_rule_object,
     create_playbook_object,
     create_ps_integration_object,
@@ -58,6 +59,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_shoul
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_version_synched import (
     FromToVersionSyncedValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA125_customer_facing_docs_disallowed_terms import (
+    CustomerFacingDocsDisallowedTermsValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
@@ -1196,6 +1200,71 @@ def test_IsEntityNameContainExcludedWordValidator(
     - Case 8: Fail the validation with a relevant message containing 'name' field.
     """
     results = IsEntityNameContainExcludedWordValidator().is_valid(
+        content_items=content_items
+    )
+    assert len(results) == expected_number_of_failures
+    if results:
+        assert results[0].message == expected_error_message
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_error_message",
+    [
+        pytest.param([create_integration_object()], 0, "", id="valid content items"),
+        pytest.param(
+            [create_integration_object(readme_content="test-module")],
+            1,
+            "Found internal terms in a customer-facing documentation file: test-module",
+            id="invalid content items"
+        ),
+        pytest.param(
+            [create_integration_object(description_content="test-module")],
+            1,
+            "Found internal terms in a customer-facing documentation file: test-module",
+            id="invalid content items"
+        ),
+        pytest.param([create_script_object()], 0, "", id="valid content items"),
+        pytest.param(
+            [create_script_object(readme_content='test-module ')],
+            1,
+            "Found internal terms in a customer-facing documentation file: test-module",
+            id="invalid content items",
+        ),
+        pytest.param([create_playbook_object()], 0, "", id="valid content items"),
+        pytest.param(
+            [create_playbook_object(readme_content='test-module ')],
+            1,
+            "Found internal terms in a customer-facing documentation file: test-module",
+            id="invalid content items",
+        ),
+        pytest.param([create_pack_object()], 0, "", id="valid content items"),
+        pytest.param(
+            [create_pack_object(readme_text='test-module ')],
+            1,
+            "Found internal terms in a customer-facing documentation file: test-module",
+            id="invalid content items",
+        ),
+        pytest.param(
+            [create_pack_object(release_note_content='test-module ')],
+            1,
+            "Found internal terms in a customer-facing documentation file: test-module",
+            id="invalid content items",
+        ),
+    ]
+)
+def test_CustomerFacingDocsDisallowedTermsValidator(
+    content_items, expected_number_of_failures, expected_error_message
+):
+    """
+    Given
+    - Case 1: Content items containing disallowed terms in their related files.
+    - Case 2: Content items containing only valid terms in their related files.
+    When
+    - Running the CustomerFacingDocsDisallowedTermsValidator validation.
+    Then
+    - Case 1: Fail the validation with a relevant message containing the found disallowed terms.
+    - Case 2: Don't fail the validation.
+    """
+    results = CustomerFacingDocsDisallowedTermsValidator().is_valid(
         content_items=content_items
     )
     assert len(results) == expected_number_of_failures

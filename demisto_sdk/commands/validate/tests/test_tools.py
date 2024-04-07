@@ -31,6 +31,7 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    description_content: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -43,15 +44,9 @@ def create_integration_object(
     """
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
-    pack = REPO.create_pack()
-    if pack_info:
-        pack.set_data(**pack_info)
-
-    additional_params = {}
-
-    if readme_content is not None:
-        additional_params["readme"] = readme_content
-
+    if description_content is not None:
+        additional_params["description"] = description_content
+    
     integration = pack.create_integration(yml=yml_content, **additional_params)
 
     integration.code.write("from MicrosoftApiModule import *")
@@ -180,6 +175,7 @@ def create_script_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
+    readme_content: Optional[str] = None,
 ):
     """Creating an script object with altered fields from a default script yml structure.
 
@@ -194,9 +190,13 @@ def create_script_object(
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
+    additional_params = {}
     if pack_info:
         pack.set_data(**pack_info)
-    script = pack.create_script(yml=yml_content)
+    if readme_content is not None:
+        additional_params["readme"] = readme_content
+
+    script = pack.create_script(yml=yml_content, **additional_params )
     script.code.write("from MicrosoftApiModule import *")
     return BaseContent.from_path(Path(script.path))
 
@@ -209,6 +209,7 @@ def create_pack_object(
     image: Optional[str] = None,
     playbooks: int = 0,
     name: Optional[str] = None,
+    release_note_content: Optional[str] = ""
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -226,6 +227,8 @@ def create_pack_object(
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
     pack.readme.write_text(readme_text)
+
+    pack.release_notes.write_text(release_note_content)
     if image is not None:
         pack.author_image.write(image)
     if playbooks:

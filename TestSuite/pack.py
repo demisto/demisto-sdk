@@ -170,6 +170,7 @@ class Pack(TestSuiteBase):
 
         self._release_notes = self._pack_path / "ReleaseNotes"
         self._release_notes.mkdir()
+        # self._release_notes = TextBased(self._release_notes, "1_0_0.md")
 
         self._lists_path = self._pack_path / "Lists"
         self._lists_path.mkdir()

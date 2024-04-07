@@ -462,6 +462,8 @@ class PackMetadata(BaseModel):
         """
         if marketplace == MarketplaceVersions.XSOAR:
             logger.debug("debug for debug uploading to XSOAR6 marketplace")
+            logger.debug(f"This is content_item: {content_item}")
+            logger.debug(f"This is toversion: {content_item.toversion}")
             if (
                 parse(content_item.toversion) > Version("7.9.9")
                 and content_item.toversion != DEFAULT_CONTENT_ITEM_TO_VERSION

@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     get_file,
+    get_relative_path,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -156,10 +157,16 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @property
     def ignored_errors(self) -> List[str]:
-        return self.get_ignored_errors(PACK_METADATA_FILENAME)
+        if ignored_errors := self.get_ignored_errors(PACK_METADATA_FILENAME):
+            return ignored_errors
+        file_path = get_relative_path(self.path, CONTENT_PATH)
+        return self.get_ignored_errors(file_path / PACK_METADATA_FILENAME)
 
-    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
-        return self.get_ignored_errors((Path(file_path)).name)
+    def ignored_errors_related_files(self, file_path: Path) -> List[str]:
+        if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
+            return ignored_errors
+        file_path = get_relative_path(file_path, CONTENT_PATH)
+        return self.get_ignored_errors(file_path)
 
     def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:

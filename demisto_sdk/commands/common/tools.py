@@ -2034,6 +2034,26 @@ def is_external_repository() -> bool:
         return True
 
 
+def is_external_repo() -> bool:
+    """
+    Returns True if script executed from an external repository (use this instead of is_external_repository)
+
+    """
+    try:
+        remote = GitUtil().repo.remote()
+        return (
+            not remote
+            or (not (parsed_url := giturlparse.parse(remote.url)))
+            or (
+                f"{parsed_url.owner}/{parsed_url.name}"
+                not in ("cortex-xdr/content", "demisto/content")
+            )
+        )
+    except Exception as e:
+        logger.debug(f"failed to get repo information, {str(e)}")
+        return True
+
+
 def get_content_id_set() -> dict:
     """Getting the ID Set from official content's bucket"""
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
@@ -4189,7 +4209,7 @@ def get_file_by_status(
             )
 
         # handle renamed files which are in tuples
-        elif file_path in file:
+        elif isinstance(file, tuple) and file_path in file:
             filtered_modified_files.add(file)
             return (
                 filtered_modified_files,
@@ -4454,3 +4474,19 @@ def remove_nulls_from_dictionary(data):
     for key in list_of_keys:
         if data[key] in ("", None, [], {}, ()):
             del data[key]
+
+
+def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
+    """Extract the relative path that is relative to the given path.
+
+    Args:
+        file_path (Union[str, Path]): The path to extract the relative path from.
+        relative_to (Path): The path to get the relative path to.
+
+    Returns:
+        Path: The extracted relative path.
+    """
+    file_path = Path(file_path)
+    if file_path.is_absolute():
+        file_path = file_path.relative_to(relative_to)
+    return file_path

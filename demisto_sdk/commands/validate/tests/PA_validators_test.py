@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
 )
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFile
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_old_file_pointers,
@@ -77,6 +78,9 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA125_is_valid_pack_
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA127_is_valid_url_field import (
     IsValidURLFieldValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA128_validate_pack_files import (
+    PackFilesValidator,
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA130_is_current_version_correct_format import (
     IsCurrentVersionCorrectFormatValidator,
@@ -1360,3 +1364,43 @@ def test_ShouldPackBeDeprecatedValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize("file_attribute", ("readme", "secrets_ignore", "pack_ignore"))
+def test_PackFilesValidator(file_attribute: str):
+    """
+    Given   A pack
+    When    Calling PackFilesValidator.is_valid
+    Then    Make sure it only fails when one of the required files has exist=False
+    """
+    pack = create_pack_object()
+    meta_file: RelatedFile = getattr(pack, file_attribute)
+
+    assert meta_file.exist  # sanity check
+    assert not PackFilesValidator().is_valid([pack])  # valid as default
+
+    meta_file.exist = False  # mock deleting the file
+    assert PackFilesValidator().is_valid([pack])  # invalid once deleted
+
+
+@pytest.mark.parametrize("file_attribute", ("readme", "secrets_ignore", "pack_ignore"))
+def test_PackFilesValidator_fix(file_attribute: str):
+    """
+    Given   A pack
+    When    Calling PackFilesValidator.fix
+    Then    Make sure the file is created
+    """
+    pack = create_pack_object()
+    meta_file: RelatedFile = getattr(pack, file_attribute)
+
+    meta_file.file_path.unlink()
+    meta_file.exist = False
+
+    assert not meta_file.exist  # sanity check
+    assert not meta_file.file_path.exists()  # sanity check
+
+    assert PackFilesValidator().is_valid([pack])  # invalid once deleted
+    PackFilesValidator().fix(pack)
+
+    assert meta_file.file_path.exists()
+    assert meta_file.exist  # changed in the fix

@@ -1,10 +1,12 @@
 import logging
 import tempfile
 from pathlib import Path
+from typing import Set
 from unittest.mock import patch
 
 import pytest
 import toml
+from more_itertools import map_reduce
 
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -26,9 +28,11 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
     IDNameAllStatusesValidator,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
+    VALIDATION_CATEGORIES,
     BaseValidator,
     FixResult,
     ValidationResult,
+    get_all_validators,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
@@ -146,7 +150,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
         (
             None,
             False,
-            {"validate_all": {"select": ["BA101", "BC100", "PA108"]}},
+            {"path_based_validations": {"select": ["BA101", "BC100", "PA108"]}},
             ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
             False,
         ),
@@ -190,7 +194,7 @@ def test_gather_validations_to_run(
     a category_to_run, a use_git flag, a config file content, and a ignore_support_level flag.
         - Case 1: No category to run, use_git flag set to True, config file content with only use_git.select section, and ignore_support_level set to False.
         - Case 2: A custom category to run, use_git flag set to True, config file content with use_git.select, and custom_category with both ignorable_errors and select sections, and ignore_support_level set to False.
-        - Case 3: No category to run, use_git flag set to False, config file content with validate_all.select section, and ignore_support_level set to False.
+        - Case 3: No category to run, use_git flag set to False, config file content with path_based_validations.select section, and ignore_support_level set to False.
         - Case 4: No category to run, use_git flag set to True, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to False.
         - Case 5: No category to run, use_git flag set to True, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to True.
     When
@@ -198,7 +202,7 @@ def test_gather_validations_to_run(
     Then
         - Case 1: Make sure the retrieved results contains only use_git.select results
         - Case 2: Make sure the retrieved results contains the custom category results and ignored the use_git results.
-        - Case 3: Make sure the retrieved results contains the validate_all results.
+        - Case 3: Make sure the retrieved results contains the path_based_validations results.
         - Case 4: Make sure the retrieved results contains both the support level and the use_git sections.
         - Case 5: Make sure the retrieved results contains only the use_git section.
     """
@@ -235,6 +239,7 @@ def test_gather_validations_to_run(
                 ],
                 "fixed validations": [],
                 "invalid content items": [],
+                "Validations that caught exceptions": [],
             },
         ),
         (
@@ -244,6 +249,7 @@ def test_gather_validations_to_run(
                 "validations": [],
                 "fixed validations": [],
                 "invalid content items": [],
+                "Validations that caught exceptions": [],
             },
         ),
         (
@@ -277,6 +283,7 @@ def test_gather_validations_to_run(
                     }
                 ],
                 "invalid content items": [],
+                "Validations that caught exceptions": [],
             },
         ),
     ],
@@ -592,3 +599,59 @@ def test_get_items_status(repo):
         expected_results[item_path] == git_status
         for item_path, git_status in results.items()
     )
+
+
+def test_all_error_codes_configured():
+    """
+    test that the set of all validation errors that exist in the new format and the set of all the validation errors configured in the sdk_validation_config are equal to ensure all new validations are being tested.
+    """
+    config_file_path = "demisto_sdk/commands/validate/sdk_validation_config.toml"
+    config_file_content: dict = toml.load(config_file_path)
+    configured_errors_set: Set[str] = set()
+    for section in ("use_git", "path_based_validations"):
+        for key in ("select", "warning"):
+            configured_errors_set = configured_errors_set.union(
+                set(config_file_content[section][key])
+            )
+    existing_error_codes: Set[str] = set(
+        [validator.error_code for validator in BaseValidator.__subclasses__()]
+    )
+    non_configured_existing_error_codes = existing_error_codes - configured_errors_set
+    assert (
+        not non_configured_existing_error_codes
+    ), f"The following error codes are not configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_existing_error_codes}."
+
+
+def test_validation_prefix():
+    """
+    Given   All validators
+    When    Checking for their prefixes
+    Then    Make sure it's from the allowed list of prefixes
+    """
+    prefix_to_validator = map_reduce(get_all_validators(), lambda v: v.error_category)
+    invalid = {
+        validation
+        for prefix, validation in prefix_to_validator.items()
+        if prefix not in VALIDATION_CATEGORIES
+    }
+    assert not invalid, sorted(invalid)
+
+
+def test_rationale():
+    """
+    Tests that all validators have a non-empty rationale.
+    If this test failed when you modified a validator, go ahead and add the rationale attribute, explaining *why* the validation exists.
+    """
+    assert not [
+        validator for validator in get_all_validators() if not validator.rationale
+    ]
+
+
+def test_description():
+    """
+    Tests that all validators have a non-empty description.
+    If this test failed when you modified a validator, go ahead and add the description attribute, explaining *what* the validation checks in content.
+    """
+    assert not [
+        validator for validator in get_all_validators() if not validator.description
+    ]

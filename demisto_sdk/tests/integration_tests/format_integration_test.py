@@ -814,6 +814,8 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                     "--no-docker-checks",
                     "--no-conf-json",
                     "--allow-skipped",
+                    "--run-old-validate",
+                    "--skip-new-validate",
                 ],
                 catch_exceptions=False,
             )

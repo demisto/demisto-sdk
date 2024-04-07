@@ -344,7 +344,7 @@ class File(ABC):
         Returns:
             Any: the file content in the desired format
         """
-        if "/" not in path:
+        if not path.startswith("/"):
             path = f"/{path}"
         url = f"https://raw.githubusercontent.com/{repo}/{tag}{path}"
         github_token = os.getenv(GitCredentials.ENV_GITHUB_TOKEN_NAME, "")

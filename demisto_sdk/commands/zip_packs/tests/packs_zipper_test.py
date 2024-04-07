@@ -124,7 +124,7 @@ class TestPacksZipper:
                 upload=True,
             )
 
-            assert Uploader.upload.called_once()
+            assert len(Uploader.upload.call_arg_list) == 1
 
     # Edge cases
     def test_invalid_pack_name(self):

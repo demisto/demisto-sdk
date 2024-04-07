@@ -24,8 +24,8 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     error_message = "The {0} files {1} should be named {2}, respectively, without any separators in the base name."
     related_field = "file path"
     is_auto_fixable = False
-    invalid_files: list[str] = []
-    valid_files: list[str] = []
+    invalid_files: List = [str]
+    valid_files: List[str] = []
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -52,8 +52,8 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         Returns:
             bool: True if there are invalid file names, False otherwise.
         """
-        invalid_files: list[str] = []
-        valid_files: list[str] = []
+        invalid_files: List[str] = []
+        valid_files: List[str] = []
 
         files_to_check = get_files_in_dir(
             str(content_item.path.parent), ["yml", "py", "md", "png"], False

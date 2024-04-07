@@ -1873,33 +1873,41 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
 
 
 @pytest.mark.parametrize(
-    "content_item, expected_messages",
+    "content_item, expected_number_of_failures, expected_messages",
     [
         pytest.param(
             create_integration_object(name="Test-Integration"),
+            1,
             "The Integration files 'Test-Integration.py' and 'Test-Integration.yml' and 'Test-Integration_description.md' and 'Test-Integration_image.png' and 'Test-Integration_test.py' should be named 'TestIntegration.py' and 'TestIntegration.yml' and 'TestIntegration_description.md' and 'TestIntegration_image.png' and 'TestIntegration_test.py', respectively, without any separators in the base name.",
             id="invalid integration",
         ),
         pytest.param(
             create_integration_object(name="TestIntegration"),
+            0,
             [""],
             id="valid integration",
         ),
         pytest.param(
             create_script_object(name="Test-Script"),
+            1,
             "The Script files 'Test-Script.py' and 'Test-Script.yml' and 'Test-Script_description.md' and 'Test-Script_image.png' and 'Test-Script_test.py' should be named 'TestScript.py' and 'TestScript.yml' and 'TestScript_description.md' and 'TestScript_image.png' and 'TestScript_test.py', respectively, without any separators in the base name.",
             id="invalid script",
         ),
         pytest.param(
             create_script_object(name="TestScript"),
+            0,
             [""],
             id="valid script",
         ),
     ],
 )
-def test_FileNameHasSeparatorsValidator_is_valid(content_item, expected_messages):
+def test_FileNameHasSeparatorsValidator_is_valid(
+    content_item, expected_number_of_failures, expected_messages
+):
     validator = FileNameHasSeparatorsValidator()
     ValidationResultList = validator.is_valid([content_item])
+
+    assert len(ValidationResultList) == expected_number_of_failures
 
     if ValidationResultList:
         assert ValidationResultList[0].message == expected_messages

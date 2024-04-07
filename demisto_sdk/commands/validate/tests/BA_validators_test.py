@@ -1879,7 +1879,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
             [
                 create_integration_object(name="invalid_integration_name"),
             ],
-            "The folder name 'invalid_integration_name' should be without any separator.",
+            "The folder name 'invalid_integration_name' should not contain any of the following separators: '_', '-'",
             id="an invalid integration name",
         ),
         pytest.param(
@@ -1893,7 +1893,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
             [
                 create_script_object(name="invalid-script-name"),
             ],
-            "The folder name 'invalid-script-name' should be without any separator.",
+            "The folder name 'invalid-script-name' should not contain any of the following separators: '_', '-'",
             id="an invalid script name",
         ),
         pytest.param(

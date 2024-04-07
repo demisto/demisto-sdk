@@ -16,10 +16,9 @@ ContentTypes = Union[Integration, Script]
 class IsFolderNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     error_code = "BA108"
     description = "Check if there are separators in the folder name."
-    error_message = "The folder name '{0}' should be without any separator."
-    related_field = ""
+    error_message = "The folder name '{0}' should not contain any of the following separators: {1}"
+    related_field = "file path"
     rationale = "To ensure consistent, readable folder structures by avoiding separators like spaces, underscores, or hyphens."
-    is_auto_fixable = False
     expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -27,9 +26,9 @@ class IsFolderNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.path.parent.name),
+                message = self.error_message.format(content_item.path.parent.name, ", ".join(f"'{sep}'" for sep in separators)),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (any(char in separators for char in content_item.path.parent.name))
+            if (any(separator in content_item.path.parent.name for separator in separators))
         ]

@@ -1873,12 +1873,13 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
 
 
 @pytest.mark.parametrize(
-    "content_items, expected_msg",
+    "content_items, expected_number_of_failures, expected_msg",
     [
         pytest.param(
             [
                 create_integration_object(name="invalid_integration_name"),
             ],
+            1,
             "The folder name 'invalid_integration_name' should not contain any of the following separators: '_', '-'",
             id="an invalid integration name",
         ),
@@ -1886,6 +1887,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
             [
                 create_integration_object(name="invalidIntegrationName"),
             ],
+            0,
             "",
             id="a valid integration name.",
         ),
@@ -1893,6 +1895,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
             [
                 create_script_object(name="invalid-script-name"),
             ],
+            1,
             "The folder name 'invalid-script-name' should not contain any of the following separators: '_', '-'",
             id="an invalid script name",
         ),
@@ -1900,13 +1903,16 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
             [
                 create_script_object(name="invalidScriptName"),
             ],
+            0,
             "",
             id="a valid script name",
         ),
     ],
 )
-def test_IsFolderNameHasSeparatorsValidator_is_valid(content_items, expected_msg):
+def test_IsFolderNameHasSeparatorsValidator_is_valid(content_items, expected_number_of_failures, expected_msg):
     result = IsFolderNameHasSeparatorsValidator().is_valid(content_items)
 
+    assert len(result) == expected_number_of_failures
+    
     if result:
         assert result[0].message == expected_msg

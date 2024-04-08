@@ -555,7 +555,7 @@ jobs:
         run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY
 
   verify-pip-installation:
-    name: Verify pip installation
+    name: Verify SDK Pip Installation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

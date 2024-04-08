@@ -419,6 +419,8 @@ RN_CONTENT_ENTITY_WITH_STARS = [
     FileType.GENERIC_FIELD,
 ]
 
+DEFAULT_IMAGE = "demisto_sdk/tests/test_files/default_image.png"
+
 DEFAULT_IMAGE_PREFIX = "data:image/png;base64,"
 DEFAULT_IMAGE_BASE64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAACYVBMVEVHcEwAT4UAT4UAT4YAf/8A//8AT4UAf78AT4U"
@@ -2052,6 +2054,8 @@ TABLE_INCIDENT_TO_ALERT = {
 FORMATTING_SCRIPT = "indicator-format"
 
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
+DOCKERFILES_REPO = "demisto/dockerfiles"
+CONTENT_REPO = "demisto/content"
 
 TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
 

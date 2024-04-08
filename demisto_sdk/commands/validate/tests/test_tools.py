@@ -46,9 +46,19 @@ def create_integration_object(
     """
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
+    
+    pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
+
+    additional_params = {}
+    
     if description_content is not None:
         additional_params["description"] = description_content
-    
+
+    if readme_content is not None:
+        additional_params["readme"] = readme_content
+
     integration = pack.create_integration(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"
     integration.code.write(code)
@@ -236,7 +246,6 @@ def create_pack_object(
     pack.pack_metadata.write_json(json_content)
     pack.readme.write_text(readme_text)
 
-    pack.release_notes.write_text(release_note_content)
     if image is not None:
         pack.author_image.write(image)
     if playbooks:

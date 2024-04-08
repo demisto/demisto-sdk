@@ -43,7 +43,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
     create_nodes,
-    delete_all_graph_nodes,
     get_relationships_to_preserve,
     get_schema,
     remove_content_private_nodes,
@@ -662,8 +661,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self.zip_import_dir(output_path)
 
     def clean_graph(self):
-        with self.driver.session() as session:
-            session.execute_write(delete_all_graph_nodes)
+        neo4j_service.clean()
         self._id_to_obj = {}
 
     def search(

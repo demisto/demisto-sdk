@@ -184,3 +184,11 @@ def get_neo4j_import_path() -> Path:
     if not is_running_on_docker():
         return LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER
     return NEO4J_DIR / NEO4J_IMPORT_FOLDER
+
+
+def clean():
+    """Clean the neo4j data folder"""
+    if is_running_on_docker():
+        shutil.rmtree(NEO4J_DIR / NEO4J_DATA_FOLDER, ignore_errors=True)
+    else:
+        shutil.rmtree(LOCAL_NEO4J_PATH / NEO4J_DATA_FOLDER, ignore_errors=True)

@@ -462,11 +462,9 @@ class PackMetadata(BaseModel):
         """
         if marketplace == MarketplaceVersions.XSOAR and parse(
             content_item.fromversion
-        ) > Version("7.9.9"):
+        ) >= Version("8.0.0"):
             logger.debug(
-                f"Content_item: {content_item.name} has a fromversion\
-                    {content_item.fromversion} higher than applicable\
-                        for XSOAR6 marketplace. Skipping metadata update."
+                f"Content_item: {content_item.name} has a fromversion {content_item.fromversion} higher than applicable for XSOAR6 marketplace. Skipping metadata update."
             )
             return
         if parse(content_item.toversion) > parse(

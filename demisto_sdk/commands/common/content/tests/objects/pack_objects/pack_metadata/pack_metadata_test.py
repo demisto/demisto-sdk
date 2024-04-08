@@ -455,38 +455,48 @@ def test__enhance_pack_properties__internal_and_external(
 
 
 @pytest.mark.parametrize(
-    "marketplace_version, current_toversion, new_toversion, expected_toversion",
+    "marketplace_version, new_from_version, current_toversion, new_toversion, expected_toversion",
     [
-        (MarketplaceVersions.XSOAR, "7.9.9", "8.2.0", "7.9.9"),
-        (MarketplaceVersions.XSOAR, "6.2.0", "7.9.9", "7.9.9"),
-        (MarketplaceVersions.XSOAR, "7.9.9", DEFAULT_CONTENT_ITEM_TO_VERSION, ""),
-        (MarketplaceVersions.XSOAR_SAAS, "6.2.0", "8.5.0", "8.5.0"),
+        (MarketplaceVersions.XSOAR, "8.0.0", "7.9.9", "8.2.0", "7.9.9"),
+        (MarketplaceVersions.XSOAR, "5.5.0", "6.2.0", "7.9.9", "7.9.9"),
+        (
+            MarketplaceVersions.XSOAR,
+            "5.5.0",
+            "7.9.9",
+            DEFAULT_CONTENT_ITEM_TO_VERSION,
+            "",
+        ),
+        (MarketplaceVersions.XSOAR_SAAS, "8.0.0", "6.2.0", "8.5.0", "8.5.0"),
     ],
 )
 def test_replace_item_if_has_higher_toversion(
-    marketplace_version, current_toversion, new_toversion, expected_toversion
+    marketplace_version,
+    new_from_version,
+    current_toversion,
+    new_toversion,
+    expected_toversion,
 ):
+    """Tests the _replace_item_if_has_higher_toversion
+    updates to the highest version supported by the MarketplaceVersions.XSOAR
+    ARGS:
+        marketplace_version: MarketplaceVersions the flow is running on.
+        new_from_version: the fromversion of content item in the pack metadata
+        current_toversion: current toversion of content item in the pack metadata
+        new_toversion: a new toversion of content item
+        expected_toversion
+    Given:
+        - a Pack Metadata and an integration uploading to MarketplaceVersions.XSOAR
+    When:
+        - Calling the _replace_item_if_has_higher_toversion method.
+    Then:
+        - Verify that the content_item_metadata toversion is set correctly.
+        Scenario 1: On MarketplaceVersions.XSOAR should not update the metadata to a version higher than 7.9.9
+        Scenario 2: On MarketplaceVersions.XSOAR should update to higher version while still lower than the max 7.9.9
+        Scenario 3: On all marketplaces will update the metdata of content item toversion to empty if new toversion is DEFAULT_CONTENT_ITEM_TO_VERSION
+        Scenario 4: On MarketplaceVersions.XSOAR_SAAS should update metadata to the highest version.
+    """
     content_item_metadata = {"toversion": current_toversion}
     marketplace = marketplace_version
-    """Tests the _replace_item_if_has_higher_toversion
-        updates to the highest version supported by the MarketplaceVersions.XSOAR
-        ARGS:
-            marketplace_version: MarketplaceVersions the flow is running on.
-            current_toversion: current toversion of content item in the pack metadata
-            new_toversion: a new toversion of content item
-            expected_toversion
-        Given:
-            - a Pack Metadata and an integration uploading to MarketplaceVersions.XSOAR
-        When:
-            - Calling the _replace_item_if_has_higher_toversion method.
-        Then:
-            - Verify that the content_item_metadata toversion is set correctly.
-            Scenario 1: On MarketplaceVersions.XSOAR should not update the metadata to a version higher than 7.9.9
-            Scenario 2: On MarketplaceVersions.XSOAR should update to higher version while still lower than the max 7.9.9
-            Scenario 3: On all marketplaces will update the metdata of content item toversion to empty if new toversion is DEFAULT_CONTENT_ITEM_TO_VERSION
-            Scenario 4: On MarketplaceVersions.XSOAR_SAAS should update metadata to the highest version.
-    """
-
     my_instance = PackMetadata(
         name="test",
         display_name="",
@@ -509,6 +519,7 @@ def test_replace_item_if_has_higher_toversion(
     )  # type: ignore
     integration = mock_integration()
     integration.toversion = new_toversion
+    integration.fromversion = new_from_version
     my_instance._replace_item_if_has_higher_toversion(
         integration, content_item_metadata, integration.summary(), marketplace
     )

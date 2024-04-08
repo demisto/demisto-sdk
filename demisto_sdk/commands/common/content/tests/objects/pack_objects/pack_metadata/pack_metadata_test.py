@@ -455,22 +455,24 @@ def test__enhance_pack_properties__internal_and_external(
 
 
 @pytest.mark.parametrize(
-    "marketplace_version, new_from_version, current_toversion, new_toversion, expected_toversion",
+    "marketplace_version, current_fromversion, new_from_version, current_toversion, new_toversion, expected_toversion",
     [
-        (MarketplaceVersions.XSOAR, "8.0.0", "7.9.9", "8.2.0", "7.9.9"),
-        (MarketplaceVersions.XSOAR, "5.5.0", "6.2.0", "7.9.9", "7.9.9"),
+        (MarketplaceVersions.XSOAR, "5.5.0", "8.0.0", "7.9.9", "8.2.0", "7.9.9"),
+        (MarketplaceVersions.XSOAR, "5.5.0", "6.5.0", "7.2.0", "7.9.9", "7.9.9"),
         (
             MarketplaceVersions.XSOAR,
             "5.5.0",
+            "6.5.0",
             "7.9.9",
             DEFAULT_CONTENT_ITEM_TO_VERSION,
             "",
         ),
-        (MarketplaceVersions.XSOAR_SAAS, "8.0.0", "6.2.0", "8.5.0", "8.5.0"),
+        (MarketplaceVersions.XSOAR_SAAS, "5.5.0", "8.0.0", "6.2.0", "8.5.0", "8.5.0"),
     ],
 )
 def test_replace_item_if_has_higher_toversion(
     marketplace_version,
+    current_fromversion,
     new_from_version,
     current_toversion,
     new_toversion,
@@ -480,6 +482,7 @@ def test_replace_item_if_has_higher_toversion(
     updates to the highest version supported by the MarketplaceVersions.XSOAR
     ARGS:
         marketplace_version: MarketplaceVersions the flow is running on.
+        current_fromversion: current fromversion of content item in the pack metadata
         new_from_version: the fromversion of content item in the pack metadata
         current_toversion: current toversion of content item in the pack metadata
         new_toversion: a new toversion of content item
@@ -495,7 +498,10 @@ def test_replace_item_if_has_higher_toversion(
         Scenario 3: On all marketplaces will update the metdata of content item toversion to empty if new toversion is DEFAULT_CONTENT_ITEM_TO_VERSION
         Scenario 4: On MarketplaceVersions.XSOAR_SAAS should update metadata to the highest version.
     """
-    content_item_metadata = {"toversion": current_toversion}
+    content_item_metadata = {
+        "fromversion": current_fromversion,
+        "toversion": current_toversion,
+    }
     marketplace = marketplace_version
     my_instance = PackMetadata(
         name="test",

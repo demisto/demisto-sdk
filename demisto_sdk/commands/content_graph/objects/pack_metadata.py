@@ -460,13 +460,18 @@ class PackMetadata(BaseModel):
             content_item_summary (dict): The current content item summary to update if needed.
             marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
         """
-        if marketplace == MarketplaceVersions.XSOAR and parse(
-            content_item.fromversion
-        ) >= Version("8.0.0"):
-            logger.debug(
-                f"Content_item: {content_item.name} has a fromversion {content_item.fromversion} higher than applicable for XSOAR6 marketplace. Skipping metadata update."
-            )
-            return
+        if marketplace == MarketplaceVersions.XSOAR:
+            if parse(content_item.fromversion) > Version("7.9.9"):
+                logger.debug(
+                    f"Content_item: {content_item.name} has a fromversion {content_item.fromversion} higher than applicable for XSOAR6 marketplace. Skipping metadata update."
+                )
+                return
+            elif parse(content_item_metadata["fromversion"]) >= Version("8.0.0"):
+                logger.debug(
+                    f'Content item:{content_item_metadata["name"]} fromversion:{content_item_metadata["fromversion"]} is not compatible with XSOAR6 marketplace. Replacing'
+                )
+                content_item_metadata.update(content_item_summary)
+                self._set_empty_toversion_if_default(content_item_metadata)
         if parse(content_item.toversion) > parse(
             content_item_metadata["toversion"] or DEFAULT_CONTENT_ITEM_TO_VERSION
         ):

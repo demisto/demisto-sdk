@@ -192,6 +192,8 @@ def clean():
         data_folder = NEO4J_DIR / NEO4J_DATA_FOLDER
     else:
         data_folder = LOCAL_NEO4J_PATH / NEO4J_DATA_FOLDER
+    if not data_folder.exists():
+        return
     for file in data_folder.iterdir():
         if file.is_dir():
             shutil.rmtree(file, ignore_errors=True)

@@ -571,4 +571,4 @@ jobs:
         run: pip install -e demisto_sdk
 
       - name: Verify Installation
-        run: demisto-sdk -e
+        run: demisto-sdk --version

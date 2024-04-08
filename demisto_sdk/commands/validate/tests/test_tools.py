@@ -257,7 +257,7 @@ def create_pack_object(
         for _ in range(playbooks):
             pack.create_playbook()
 
-    return BaseContent.from_path(Path(pack.path))
+    return BaseContent.from_path(pack_path)
 
 
 def remove_fields_from_dict(

@@ -3824,9 +3824,17 @@ def dump_api(
         CONTENT_PATH,
         "-o",
         "--output",
-        help="The output directory to save the exported demisto-sdk api.",
+        help="The output directory or JSON file to save the demisto-sdk api.",
     ),
 ):
+    """
+    This commands dumps the `demisto-sdk` API to a file.
+    It is used to view the help of all commands in one file.
+
+    Args:
+        ctx (typer.Context):
+        output_path (Path, optional): The output directory or JSON file to save the demisto-sdk api.
+    """
     output_json: dict = {}
     for command_name, command in main.commands.items():
         if isinstance(command, click.Group):

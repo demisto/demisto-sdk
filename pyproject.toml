@@ -14,7 +14,7 @@ classifiers=[
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: Implementation :: CPython'
 ]
-exclude = ["TestSuite/**", "*/tests/*", "tests"]
+exclude = ["TestSuite/**", "tests_end_to_end/**", "demisto_sdk/tests/**", "demisto_sdk/**/tests/**", "demisto_sdk/**/test_data/**", "demisto_sdk/**/test_files/**"]
 
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"

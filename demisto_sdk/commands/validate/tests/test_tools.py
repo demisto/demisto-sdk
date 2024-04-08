@@ -3,7 +3,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 from unittest.mock import MagicMock
 
+from packaging.version import Version
+
 from demisto_sdk.commands.common.constants import (
+    RELEASE_NOTES_DIR,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -227,7 +230,7 @@ def create_pack_object(
     image: Optional[str] = None,
     playbooks: int = 0,
     name: Optional[str] = None,
-    release_note_content: Optional[str] = ""
+    release_note_content: Optional[str] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -242,6 +245,20 @@ def create_pack_object(
     update_keys(json_content, paths, values)
     remove_fields_from_dict(json_content, fields_to_delete)
     pack = REPO.create_pack()
+    pack_path = Path(pack.path)
+
+    if release_note_content is not None:
+        if (version := Version(json_content.get("version", "1.0.0"))) == Version(
+            "1.0.0"
+        ):
+            raise ValueError(
+                "Can't write release notes for v1.0.0, set version to another value"
+            )
+        # Writes the release notes
+        (
+            pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".md")
+        ).write_text(release_note_content)
+
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
     pack.readme.write_text(readme_text)
@@ -251,7 +268,8 @@ def create_pack_object(
     if playbooks:
         for _ in range(playbooks):
             pack.create_playbook()
-    return BaseContent.from_path(Path(pack.path))
+
+    return BaseContent.from_path(pack_path)
 
 
 def remove_fields_from_dict(

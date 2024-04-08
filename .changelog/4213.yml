@@ -1,4 +1,0 @@
-changes:
-- description: Exclude test files/modules from the package build.
-  type: internal
-pr_number: 4213

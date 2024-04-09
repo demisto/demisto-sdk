@@ -49,10 +49,6 @@ def test_xsiam_report_file_valid():
     ),
 )
 def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
-    """
-    The first test fails since the report name does not start with the pack's name
-    The second one fails since the extension is incorrect (should be .json)
-    """
     pack_name = "myPack"
     pack_path = Path("content", "Packs", pack_name)
     with pytest.raises(InvalidXSIAMReportFileName):

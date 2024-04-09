@@ -16,6 +16,7 @@ from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     DIRS_ALLOWING_SPACE_IN_FILENAMES,
+    XSIAM_REPORTS_DIR,
     ZERO_DEPTH_FILES,
     InvalidClassifier,
     InvalidDepthOneFile,
@@ -26,6 +27,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidLayoutFileName,
     InvalidSuffix,
     InvalidXDRCTemplatesFileName,
+    InvalidXSIAMReportFileName,
     PathIsFolder,
     PathIsTestOrDocData,
     PathIsUnified,
@@ -33,7 +35,6 @@ from demisto_sdk.scripts.validate_content_path import (
     SpacesInFileName,
     _validate,
 )
-
 
 @pytest.mark.parametrize(
     "suffix",
@@ -56,6 +57,25 @@ def test_xdrc_template_file_invalid(file: str, suffix: str):
     folder = "MyXDRCTemplate"
     with pytest.raises(InvalidXDRCTemplatesFileName):
         _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{file}.{suffix}")
+
+def test_xsiam_report_file_valid():
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    _validate(pack_path / XSIAM_REPORTS_DIR / f"{pack_name}_Report.json")
+
+
+@pytest.mark.parametrize(
+    "file_prefix, suffix",
+    (
+        pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
+        pytest.param("myPack", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    with pytest.raises(InvalidXSIAMReportFileName):
+        _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")
 
 
 def test_content_entities_dir_length():

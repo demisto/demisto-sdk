@@ -172,6 +172,10 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
     )
 
 
+class InvalidXSIAMReportFileName(InvalidPathException):
+    message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
+
+
 class InvalidSuffix(InvalidPathException):
     message = "This file's suffix is not allowed."
 
@@ -273,6 +277,11 @@ def _validate(path: Path) -> None:
             and (path.stem.startswith("classifier-") or path.stem.startswith("mapper-"))
         ):
             raise InvalidClassifier
+
+        if first_level_folder == XSIAM_REPORTS_DIR and not (
+            path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix == ".json"
+        ):
+            raise InvalidXSIAMReportFileName
 
     if depth == 2:
         if first_level_folder in {

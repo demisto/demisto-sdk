@@ -96,13 +96,13 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     tasks = tasks_json["tasks"]
     assert (
         tasks[0]["python"]["file"]
-        == f"/{str(repo_path)}/Packs/pack_0/Integrations/integration_0/integration_0.py"
+        == f"{str(repo_path)}/Packs/pack_0/Integrations/integration_0/integration_0.py"
     )
     assert tasks[0]["dockerRun"]["image"] == image
     assert tasks[1]["python"]["module"] == "pytest"
     assert (
         tasks[1]["python"]["args"][-1]
-        == f"/{str(repo_path)}/Packs/pack_0/Integrations/integration_0/integration_0_test.py"
+        == f"{str(repo_path)}/Packs/pack_0/Integrations/integration_0/integration_0_test.py"
     )
     assert tasks[1]["dockerRun"]["image"] == test_image
 

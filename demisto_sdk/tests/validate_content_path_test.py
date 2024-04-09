@@ -47,8 +47,8 @@ def test_xdrc_template_file_valid(suffix: str):
 @pytest.mark.parametrize(
     "file, suffix",
     (
-        pytest.param("MyXDRCTemplate_test", "json", id="bad name, good suffix"),
-        pytest.param("MyXDRCTemplate_test", "yml", id="bad name, good suffix"),
+        pytest.param("MyXDRCTemplate_test", "json", id="bad name, good suffix - json"),
+        pytest.param("MyXDRCTemplate_test", "yml", id="bad name, good suffix - yml"),
         pytest.param("MyXDRCTemplate", "py", id="good name, bad suffix"),
     ),
 )

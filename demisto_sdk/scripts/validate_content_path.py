@@ -154,6 +154,10 @@ class InvalidLayoutFileName(InvalidPathException):
     message = "The Layout folder can only contain JSON files, with names starting with `layout-` or `layoutscontainer-`"
 
 
+class InvalidClassifier(InvalidPathException):
+    message = "The Classifiers folder can only contain JSON files, with names starting with `classifier-` or `mapper-`"
+
+
 class InvalidIntegrationScriptFileName(InvalidPathException):
     message = "This file's name must start with the name of its parent folder."
 
@@ -264,15 +268,17 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidLayoutFileName
 
-    if depth == 2:
-        if first_level_folder in {
-            ContentType.INTEGRATION.as_folder,
-            ContentType.SCRIPT.as_folder,
-        }:
-            _validate_integration_script_file(path, parts_after_packs)
-        elif first_level_folder in {ContentType.XDRC_TEMPLATE.as_folder}:
-            if path.stem != path.parent.name:
-                raise InvalidXDRCTemplatesFileName
+        if first_level_folder == CLASSIFIERS_DIR and not (
+            path.suffix == ".json"
+            and (path.stem.startswith("classifier-") or path.stem.startswith("mapper-"))
+        ):
+            raise InvalidClassifier
+
+    if depth == 2 and first_level_folder in {
+        ContentType.INTEGRATION.as_folder,
+        ContentType.SCRIPT.as_folder,
+    }:
+        _validate_integration_script_file(path, parts_after_packs)
 
 
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):
@@ -464,6 +470,8 @@ def validate_all(
     )
     valid = (total := len(paths)) - invalid
     logger.info(f"{total=},[green]{valid=}[/green],[red]{invalid=}[/red]")
+    if invalid:
+        raise typer.Exit(1)
 
 
 def main():

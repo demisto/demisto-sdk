@@ -34,9 +34,10 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook
+from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 
 NO_SPLIT = None
+USER_DEMITSO = "demisto"
 
 
 @lru_cache()
@@ -241,7 +242,7 @@ class DockerHook(Hook):
 
     def prepare_hook(
         self,
-    ):
+    ) -> GeneratedHooks:
         """
         Group all the files by dockerimages
         Split those images by config files
@@ -257,7 +258,7 @@ class DockerHook(Hook):
             logger.debug(
                 "No files matched docker hook filter, skipping docker preparation"
             )
-            return
+            return []
         filtered_files_with_objects = {
             (file, obj)
             for file, obj in self.context.files_to_run_with_objects
@@ -286,6 +287,7 @@ class DockerHook(Hook):
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
         logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
+        docker_hook_ids = []
         with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
             results = []
             for image, files_objs in sorted(
@@ -303,11 +305,14 @@ class DockerHook(Hook):
         for result in results:
             hooks = result.result()
             self.hooks.extend(hooks)
+            docker_hook_ids.extend([hook["id"] for hook in hooks])
 
         end_time = time.time()
         logger.debug(
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
+
+        return GeneratedHooks(hook_ids=docker_hook_ids, parallel=self.parallel)
 
     def generate_hooks(
         self,

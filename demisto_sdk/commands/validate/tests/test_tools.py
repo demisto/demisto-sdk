@@ -3,7 +3,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 from unittest.mock import MagicMock
 
+from packaging.version import Version
+
 from demisto_sdk.commands.common.constants import (
+    RELEASE_NOTES_DIR,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -32,6 +35,7 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    code: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -54,8 +58,8 @@ def create_integration_object(
         additional_params["readme"] = readme_content
 
     integration = pack.create_integration(yml=yml_content, **additional_params)
-
-    integration.code.write("from MicrosoftApiModule import *")
+    code = code or "from MicrosoftApiModule import *"
+    integration.code.write(code)
     return BaseContent.from_path(Path(integration.path))  # type:ignore
 
 
@@ -181,6 +185,8 @@ def create_script_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
+    code: Optional[str] = None,
+    test_code: Optional[str] = None,
 ):
     """Creating an script object with altered fields from a default script yml structure.
 
@@ -198,7 +204,10 @@ def create_script_object(
     if pack_info:
         pack.set_data(**pack_info)
     script = pack.create_script(yml=yml_content)
-    script.code.write("from MicrosoftApiModule import *")
+    code = code or "from MicrosoftApiModule import *"
+    script.code.write(code)
+    if test_code:
+        script.test.write(test_code)
     return BaseContent.from_path(Path(script.path))
 
 
@@ -210,6 +219,7 @@ def create_pack_object(
     image: Optional[str] = None,
     playbooks: int = 0,
     name: Optional[str] = None,
+    release_note_content: Optional[str] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -224,6 +234,20 @@ def create_pack_object(
     update_keys(json_content, paths, values)
     remove_fields_from_dict(json_content, fields_to_delete)
     pack = REPO.create_pack()
+    pack_path = Path(pack.path)
+
+    if release_note_content is not None:
+        if (version := Version(json_content.get("version", "1.0.0"))) == Version(
+            "1.0.0"
+        ):
+            raise ValueError(
+                "Can't write release notes for v1.0.0, set version to another value"
+            )
+        # Writes the release notes
+        (
+            pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".md")
+        ).write_text(release_note_content)
+
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
     pack.readme.write_text(readme_text)
@@ -232,7 +256,8 @@ def create_pack_object(
     if playbooks:
         for _ in range(playbooks):
             pack.create_playbook()
-    return BaseContent.from_path(Path(pack.path))
+
+    return BaseContent.from_path(pack_path)
 
 
 def remove_fields_from_dict(
@@ -703,7 +728,13 @@ def create_indicator_type_object(
     return BaseContent.from_path(Path(pack.indicator_types[0].path))
 
 
-def create_old_file_pointers(content_items, old_content_items):
+def create_old_file_pointers(content_items, old_content_items) -> None:
+    """Given two iterables of content_items and their old_content_items, assign each content_item its matching old_content_item.
+
+    Args:
+        content_items (Iterable): Iterables object of content_items.
+        old_content_items (Iterable): Iterables object of olf_content_items.
+    """
     for content_item, old_content_item in zip(content_items, old_content_items):
         content_item.old_base_content_object = old_content_item
 

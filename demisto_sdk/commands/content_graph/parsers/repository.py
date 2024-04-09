@@ -1,7 +1,7 @@
 import multiprocessing
 import traceback
 from pathlib import Path
-from typing import Iterator, List, Optional
+from typing import Iterator, List, Optional, Tuple
 
 from tqdm import tqdm
 
@@ -36,12 +36,12 @@ class RepositoryParser:
 
     def parse(
         self,
-        packs_to_parse: Optional[List[Path]] = None,
+        packs_to_parse: Optional[Tuple[Path, ...]] = None,
         progress_bar: Optional[tqdm] = None,
     ):
         if not packs_to_parse:
             # if no packs to parse were provided, parse all packs
-            packs_to_parse = list(self.iter_packs())
+            packs_to_parse = tuple(self.iter_packs())
         try:
             logger.debug("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
@@ -60,8 +60,8 @@ class RepositoryParser:
     def parse_pack(pack_path: Path) -> Optional[PackParser]:
         try:
             return PackParser(pack_path)
-        except NotAContentItemException:
-            logger.error(f"Pack {pack_path.name} is not a valid pack. Skipping")
+        except (NotAContentItemException, FileNotFoundError):
+            logger.warning(f"Pack {pack_path.name} is not a valid pack. Skipping")
             return None
 
     @staticmethod
@@ -72,7 +72,9 @@ class RepositoryParser:
             and path.name not in IGNORED_PACKS_FOR_PARSING
         )
 
-    def iter_packs(self, packs_to_parse: Optional[List[str]] = None) -> Iterator[Path]:
+    def iter_packs(
+        self, packs_to_parse: Optional[Tuple[str, ...]] = None
+    ) -> Iterator[Path]:
         """Iterates all packs in the repository.
 
         Yields:

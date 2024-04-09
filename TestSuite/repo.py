@@ -332,6 +332,7 @@ class Repo:
             self.git_util = GitUtil(self.path)
             self.git_util.commit_files("Initial Commit")
             self.git_util.repo.create_head(DEMISTO_GIT_PRIMARY_BRANCH)
+            self.git_util.repo.create_remote("origin", "dummy_url")
 
     def working_dir(self):
         return self.path

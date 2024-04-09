@@ -1,11 +1,19 @@
 import pytest
+from pytest_mock import MockerFixture
 
+from demisto_sdk.commands.common.constants import DEFAULT_IMAGE
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    ImageRelatedFile,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_pack_object,
 )
 from demisto_sdk.commands.validate.validators.IM_validators.IM100_image_exists_validation import (
     ImageExistsValidator,
+)
+from demisto_sdk.commands.validate.validators.IM_validators.IM106_default_image_validator import (
+    DefaultImageValidator,
 )
 from demisto_sdk.commands.validate.validators.IM_validators.IM108_author_image_is_empty import (
     AuthorImageIsEmptyValidator,
@@ -111,4 +119,41 @@ def test_AuthorImageIsEmptyValidator_is_valid(
             result.message == expected_msg
             for result, expected_msg in zip(results, expected_msgs)
         ]
+    )
+
+
+def test_DefaultImageValidator_is_valid(mocker: MockerFixture):
+    """
+    Given:
+        - First integration with a default image.
+        - Second integration with a sample image
+
+    When:
+        - Calling the DefaultImageValidator is_valid function.
+
+    Then:
+        - Make sure the right amount of integration image validation failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
+    """
+    from pathlib import Path
+
+    default_image = ImageRelatedFile(main_file_path=Path(DEFAULT_IMAGE))
+    sample_image = ImageRelatedFile(
+        main_file_path=Path("TestSuite/assets/default_integration/sample_image.png")
+    )
+
+    content_items = [create_integration_object(), create_integration_object()]
+    mocker.patch.object(
+        content_items[0].image, "load_image", return_value=default_image.load_image()
+    )
+    mocker.patch.object(
+        content_items[1].image, "load_image", return_value=sample_image.load_image()
+    )
+    results = DefaultImageValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert results[
+        0
+    ].message == "The integration is using the default image at {0}, please change to the integration image.".format(
+        DEFAULT_IMAGE
     )

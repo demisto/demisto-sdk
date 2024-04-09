@@ -173,7 +173,7 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
 
 
 class InvalidXSIAMReportFileName(InvalidPathException):
-    message = "Name of XSIAM report files must have a prefix equal to the pack's name, e.g. `myPack_report1.json`"
+    message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
 
 
 class InvalidSuffix(InvalidPathException):

@@ -42,14 +42,18 @@ def test_xsiam_report_file_valid():
 
 
 @pytest.mark.parametrize(
-    "pack_name, file_prefix, suffix",
-    (("myPack", "wrongPrefix", "json"), ("myPack", "myPack", "py")),
+    "file_prefix, suffix",
+    (
+        pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
+        pytest.param("myPack", "py", id="good name, bad suffix"),
+    ),
 )
-def test_xsiam_report_file_invalid(pack_name: str, file_prefix: str, suffix: str):
+def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
     """
     The first test fails since the report name does not start with the pack's name
     The second one fails since the extension is incorrect (should be .json)
     """
+    pack_name = "myPack"
     pack_path = Path("content", "Packs", pack_name)
     with pytest.raises(InvalidXSIAMReportFileName):
         _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")

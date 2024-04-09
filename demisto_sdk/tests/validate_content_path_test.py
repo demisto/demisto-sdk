@@ -22,6 +22,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidDepthZeroFile,
     InvalidIntegrationScriptFileName,
     InvalidIntegrationScriptFileType,
+    InvalidXSIAMReportFileName,
     InvalidLayoutFileName,
     InvalidSuffix,
     PathIsFolder,
@@ -29,9 +30,23 @@ from demisto_sdk.scripts.validate_content_path import (
     PathIsUnified,
     PathUnderDeprecatedContent,
     SpacesInFileName,
+    XSIAM_REPORTS_DIR,
     _validate,
 )
 
+def test_xsiam_report_file_valid():
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    _validate(pack_path / XSIAM_REPORTS_DIR / f"{pack_name}_Report.json")
+
+def test_xsiam_report_file_invalid():
+    pack_name = "myPrivatePack"
+    wrong_prefix = "wrongPrefix"
+    pack_path = Path("content", "Packs", pack_name)
+    with pytest.raises(InvalidXSIAMReportFileName):
+        _validate(pack_path / XSIAM_REPORTS_DIR / f"{wrong_prefix}_Report.json")
+
+    
 
 def test_content_entities_dir_length():
     """
@@ -57,7 +72,6 @@ folders_not_allowed_to_contain_files = (
 ).difference(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
 
 DUMMY_PACK_PATH = Path("content", "Packs", "myPack")
-
 
 @pytest.mark.parametrize("file_name", ZERO_DEPTH_FILES)
 def test_depth_zero_pass(file_name: str):

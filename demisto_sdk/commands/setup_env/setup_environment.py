@@ -327,7 +327,7 @@ def configure_vscode_tasks(
                         "env": {
                             "PYTHONPATH": ":".join(docker_python_path),
                         },
-                        "envfiles": [str(DOTENV_DOCKER_PATH)],
+                        "envFiles": [str(DOTENV_DOCKER_PATH)],
                     },
                 },
                 {
@@ -352,7 +352,7 @@ def configure_vscode_tasks(
                         ],
                         "customOptions": f"-w /app/{integration_script.path.parent.relative_to(CONTENT_PATH.absolute())}",
                         "env": {"PYTHONPATH": ":".join(docker_python_path)},
-                        "envfiles": [str(DOTENV_DOCKER_PATH)],
+                        "envFiles": [str(DOTENV_DOCKER_PATH)],
                     },
                 },
             ],

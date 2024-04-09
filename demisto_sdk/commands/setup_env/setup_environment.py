@@ -44,6 +44,7 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 BACKUP_FILES_SUFFIX = ".demisto_sdk_backup"
 DOTENV_PATH = CONTENT_PATH / ".env"
+DOTENV_DOCKER_PATH = CONTENT_PATH / ".env.docker"
 
 
 class IDEType(Enum):
@@ -281,10 +282,9 @@ def configure_module_discovery(ide_type: IDEType):
         env_file = CONTENT_PATH / ".env"
         env_vars = dotenv.dotenv_values(env_file)
         env_vars["PYTHONPATH"] = PYTHONPATH_STR
-        update_dotenv(env_file, env_vars)
-        env_file_docker = CONTENT_PATH / ".env.docker"
+        update_dotenv(DOTENV_PATH, env_vars)
         env_vars.pop("PYTHONPATH", None)
-        update_dotenv(env_file_docker, env_vars)
+        update_dotenv(DOTENV_DOCKER_PATH, env_vars)
 
     if ide_type == IDEType.PYCHARM:
         python_discovery_paths = PYTHONPATH.copy()
@@ -327,7 +327,7 @@ def configure_vscode_tasks(
                         "env": {
                             "PYTHONPATH": ":".join(docker_python_path),
                         },
-                        "envfiles": [str(CONTENT_PATH / ".env.docker")],
+                        "envfiles": [str(DOTENV_DOCKER_PATH)],
                     },
                 },
                 {
@@ -352,7 +352,7 @@ def configure_vscode_tasks(
                         ],
                         "customOptions": f"-w /app/{integration_script.path.parent.relative_to(CONTENT_PATH.absolute())}",
                         "env": {"PYTHONPATH": ":".join(docker_python_path)},
-                        "envfiles": [str(CONTENT_PATH / ".env.docker")],
+                        "envfiles": [str(DOTENV_DOCKER_PATH)],
                     },
                 },
             ],
@@ -640,6 +640,11 @@ def configure_params(
                     )
             update_dotenv(
                 file_path=DOTENV_PATH,
+                values={"DEMISTO_PARAMS": json.dumps(params)},
+                quote_mode="never",
+            )
+            update_dotenv(
+                file_path=DOTENV_DOCKER_PATH,
                 values={"DEMISTO_PARAMS": json.dumps(params)},
                 quote_mode="never",
             )

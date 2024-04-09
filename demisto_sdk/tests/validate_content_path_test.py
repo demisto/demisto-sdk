@@ -153,7 +153,11 @@ def test_depth_one_pass(folder: str):
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
     except PathIsTestOrDocData:
         pass
-    except (InvalidIntegrationScriptFileType, InvalidIntegrationScriptFileName, InvalidXDRCTemplatesFileName):
+    except (
+        InvalidIntegrationScriptFileType,
+        InvalidIntegrationScriptFileName,
+        InvalidXDRCTemplatesFileName,
+    ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
         pass

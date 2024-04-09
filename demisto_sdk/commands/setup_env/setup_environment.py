@@ -278,12 +278,13 @@ def configure_module_discovery(ide_type: IDEType):
         ide_folder = CONTENT_PATH / ".vscode"
         ide_folder.mkdir(exist_ok=True, parents=True)
         configure_vscode_settings(ide_folder=ide_folder)
-        # Delete PYTHONPATH and MYPYPATH from env file because they are not needed
         env_file = CONTENT_PATH / ".env"
         env_vars = dotenv.dotenv_values(env_file)
-        env_vars.pop("PYTHONPATH", None)
-        env_vars.pop("MYPYPATH", None)
+        env_vars["PYTHONPATH"] = PYTHONPATH_STR
         update_dotenv(env_file, env_vars)
+        env_file_docker = CONTENT_PATH / ".env.docker"
+        env_vars.pop("PYTHONPATH", None)
+        update_dotenv(env_file_docker, env_vars)
 
     if ide_type == IDEType.PYCHARM:
         python_discovery_paths = PYTHONPATH.copy()
@@ -326,6 +327,7 @@ def configure_vscode_tasks(
                         "env": {
                             "PYTHONPATH": ":".join(docker_python_path),
                         },
+                        "envfiles": [str(CONTENT_PATH / ".env.docker")],
                     },
                 },
                 {
@@ -350,6 +352,7 @@ def configure_vscode_tasks(
                         ],
                         "customOptions": f"-w /app/{integration_script.path.parent.relative_to(CONTENT_PATH.absolute())}",
                         "env": {"PYTHONPATH": ":".join(docker_python_path)},
+                        "envfiles": [str(CONTENT_PATH / ".env.docker")],
                     },
                 },
             ],

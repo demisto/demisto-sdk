@@ -791,7 +791,7 @@ def clean_repo():
     """
     for path in PYTHONPATH:
         for temp_file in CONTENT_PATH.rglob(f"{path.name}.py"):
-            if temp_file.parent != path:
+            if temp_file.parent != path and ".venv" not in temp_file.parts:
                 temp_file.unlink(missing_ok=True)
     for path in CONTENT_PATH.rglob("*.pyc"):
         path.unlink(missing_ok=True)

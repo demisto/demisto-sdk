@@ -171,8 +171,10 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
         "This file's name must either be (parent folder)_description.md, or README.md"
     )
 
+
 class InvalidXSIAMReportFileName(InvalidPathException):
     message = "Name of XSIAM report files must have a prefix equal to the pack's name, e.g. `myPack_report1.yml`"
+
 
 class InvalidSuffix(InvalidPathException):
     message = "This file's suffix is not allowed."

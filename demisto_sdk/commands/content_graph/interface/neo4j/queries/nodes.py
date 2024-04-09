@@ -260,7 +260,7 @@ def delete_all_graph_nodes(tx: Transaction) -> None:
         CALL { WITH n
         DETACH DELETE n
         };
-"""
+    """
     run_query(tx, query)
 
 

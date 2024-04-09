@@ -181,8 +181,10 @@ class InvalidCommandExampleFile(InvalidPathException):
 
 
 class InvalidXDRCTemplatesFileName(InvalidPathException):
-    message = "Names XDRC template files must match the directory containing them."
+    message = "Name of XDRC template files must match the directory containing them."
 
+class InvalidXDRCTemplatesFileSuffix(InvalidPathException):
+    message = "File suffix of XDRC template files must either be json or yml."
 
 class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
@@ -274,12 +276,18 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidClassifier
 
-    if depth == 2 and first_level_folder in {
-        ContentType.INTEGRATION.as_folder,
-        ContentType.SCRIPT.as_folder,
-    }:
-        _validate_integration_script_file(path, parts_after_packs)
-
+    if depth == 2:
+        if first_level_folder in {
+            ContentType.INTEGRATION.as_folder,
+            ContentType.SCRIPT.as_folder,
+        }:
+            _validate_integration_script_file(path, parts_after_packs)
+        elif first_level_folder ==  ContentType.XDRC_TEMPLATE.as_folder:
+            if path.stem != path.parent.name:
+                raise InvalidXDRCTemplatesFileName
+            if path.suffix not in {".json", ".yml"}:
+                raise InvalidXDRCTemplatesFileSuffix
+""
 
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):
     """Only use from _validate"""

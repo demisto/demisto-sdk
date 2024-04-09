@@ -47,16 +47,12 @@ def test_xdrc_template_file_valid(suffix: str):
 @pytest.mark.parametrize(
     "file, suffix",
     (
-        ("MyXDRCTemplate_test", "json"),
-        ("MyXDRCTemplate_test", "yml"),
-        ("MyXDRCTemplate", "py"),
+        pytest.param("MyXDRCTemplate_test", "json", id="bad name, good suffix"),
+        pytest.param("MyXDRCTemplate_test", "yml", id="bad name, good suffix"),
+        pytest.param("MyXDRCTemplate", "py", id="good name, bad suffix"),
     ),
 )
 def test_xdrc_template_file_invalid(file: str, suffix: str):
-    """
-    The first two tests will fail because the file name is incorrect
-    The last one will fail because the file extension is incorrect (should be .json or .yml)
-    """
     folder = "MyXDRCTemplate"
     with pytest.raises(InvalidXDRCTemplatesFileName):
         _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{file}.{suffix}")

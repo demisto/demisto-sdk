@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_FOLDER,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
+    XDRC_TEMPLATE_DIR,
 )
 from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
@@ -25,6 +26,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidIntegrationScriptFileType,
     InvalidLayoutFileName,
     InvalidSuffix,
+    InvalidXDRCTemplatesFileName,
     InvalidXSIAMReportFileName,
     PathIsFolder,
     PathIsTestOrDocData,
@@ -33,6 +35,29 @@ from demisto_sdk.scripts.validate_content_path import (
     SpacesInFileName,
     _validate,
 )
+
+
+@pytest.mark.parametrize(
+    "suffix",
+    ("json", "yml"),
+)
+def test_xdrc_template_file_valid(suffix: str):
+    folder = "foo"
+    _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{folder}.{suffix}")
+
+
+@pytest.mark.parametrize(
+    "file, suffix",
+    (
+        pytest.param("MyXDRCTemplate_test", "json", id="bad name, good suffix - json"),
+        pytest.param("MyXDRCTemplate_test", "yml", id="bad name, good suffix - yml"),
+        pytest.param("MyXDRCTemplate", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xdrc_template_file_invalid(file: str, suffix: str):
+    folder = "MyXDRCTemplate"
+    with pytest.raises(InvalidXDRCTemplatesFileName):
+        _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{file}.{suffix}")
 
 
 def test_xsiam_report_file_valid():
@@ -141,8 +166,13 @@ def test_depth_one_pass(folder: str):
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
     except PathIsTestOrDocData:
         pass
-    except (InvalidIntegrationScriptFileType, InvalidIntegrationScriptFileName):
+    except (
+        InvalidIntegrationScriptFileType,
+        InvalidIntegrationScriptFileName,
+        InvalidXDRCTemplatesFileName,
+    ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
+        # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
         pass
 
 

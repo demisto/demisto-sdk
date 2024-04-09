@@ -173,7 +173,7 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
 
 
 class InvalidXSIAMReportFileName(InvalidPathException):
-    message = "Name of XSIAM report files must have a prefix equal to the pack's name, e.g. `myPack_report1.yml`"
+    message = "Name of XSIAM report files must have a prefix equal to the pack's name, e.g. `myPack_report1.json`"
 
 
 class InvalidSuffix(InvalidPathException):
@@ -275,7 +275,7 @@ def _validate(path: Path) -> None:
             raise InvalidClassifier
 
         if first_level_folder == XSIAM_REPORTS_DIR and not (
-            path.stem.startswith(f"{parts_after_packs[0]}_")
+            path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix == ".json"
         ):
             raise InvalidXSIAMReportFileName
 

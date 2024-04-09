@@ -41,12 +41,18 @@ def test_xsiam_report_file_valid():
     _validate(pack_path / XSIAM_REPORTS_DIR / f"{pack_name}_Report.json")
 
 
-def test_xsiam_report_file_invalid():
-    pack_name = "myPrivatePack"
-    wrong_prefix = "wrongPrefix"
+@pytest.mark.parametrize(
+    "pack_name, file_prefix, suffix",
+    (("myPack", "wrongPrefix", "json"), ("myPack", "myPack", "py")),
+)
+def test_xsiam_report_file_invalid(pack_name: str, file_prefix: str, suffix: str):
+    """
+    The first test fails since the report name does not start with the pack's name
+    The second one fails since the extension is incorrect (should be .json)
+    """
     pack_path = Path("content", "Packs", pack_name)
     with pytest.raises(InvalidXSIAMReportFileName):
-        _validate(pack_path / XSIAM_REPORTS_DIR / f"{wrong_prefix}_Report.json")
+        _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")
 
 
 def test_content_entities_dir_length():

@@ -761,6 +761,7 @@ def configure_integration(
         )
 
     if create_virtualenv and integration_script.type.startswith("python"):
+        (base_path / ".vscode" / "launch.json").unlink(missing_ok=True)
         pack = integration_script.in_pack
         assert isinstance(pack, Pack), "Expected pack"
         base_path = pack.path

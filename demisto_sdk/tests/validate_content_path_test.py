@@ -26,7 +26,6 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidLayoutFileName,
     InvalidSuffix,
     InvalidXDRCTemplatesFileName,
-    InvalidXDRCTemplatesFileSuffix,
     PathIsFolder,
     PathIsTestOrDocData,
     PathIsUnified,
@@ -46,25 +45,21 @@ def test_xdrc_template_file_valid(suffix: str):
 
 
 @pytest.mark.parametrize(
-    "suffix",
-    ("json", "yml"),
+    "file, suffix",
+    (
+        ("MyXDRCTemplate_test", "json"),
+        ("MyXDRCTemplate_test", "yml"),
+        ("MyXDRCTemplate", "py"),
+    ),
 )
-def test_xdrc_template_file_invalid(suffix: str):
+def test_xdrc_template_file_invalid(file: str, suffix: str):
+    """
+    The first two tests will fail because the file name is incorrect
+    The last one will fail because the file extension is incorrect (should be .json or .yml)
+    """
     folder = "MyXDRCTemplate"
     with pytest.raises(InvalidXDRCTemplatesFileName):
-        _validate(
-            DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{folder}_test.{suffix}"
-        )
-
-
-@pytest.mark.parametrize(
-    "suffix",
-    ("py", "txt"),
-)
-def test_xdrc_template_file_suffix_invalid(suffix: str):
-    folder = "MyXDRCTemplate"
-    with pytest.raises(InvalidXDRCTemplatesFileSuffix):
-        _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{folder}.{suffix}")
+        _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{file}.{suffix}")
 
 
 def test_content_entities_dir_length():

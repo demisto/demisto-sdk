@@ -74,7 +74,7 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     )
     dotenv_text = (repo_path / ".env").read_text()
     assert "DEMISTO_PARAMS" in dotenv_text
-    assert "PYTHONPATH" not in dotenv_text
+    assert "PYTHONPATH" in dotenv_text
     vscode_folder = (
         repo_path / ".vscode" if not create_virtualenv else Path(pack.path) / ".vscode"
     )

@@ -44,7 +44,6 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 BACKUP_FILES_SUFFIX = ".demisto_sdk_backup"
 DOTENV_PATH = CONTENT_PATH / ".env"
-DOTENV_DOCKER_PATH = CONTENT_PATH / ".env.docker"
 
 
 class IDEType(Enum):
@@ -283,8 +282,6 @@ def configure_module_discovery(ide_type: IDEType):
         env_vars = dotenv.dotenv_values(env_file)
         env_vars["PYTHONPATH"] = PYTHONPATH_STR
         update_dotenv(DOTENV_PATH, env_vars)
-        env_vars.pop("PYTHONPATH", None)
-        update_dotenv(DOTENV_DOCKER_PATH, env_vars)
 
     if ide_type == IDEType.PYCHARM:
         python_discovery_paths = PYTHONPATH.copy()
@@ -307,7 +304,6 @@ def configure_vscode_tasks(
     if integration_script.type == "powershell":
         logger.debug("Powershell integration, skipping tasks.json")
         return
-    docker_python_path = get_docker_python_path("/app")
 
     def build_tasks():
         return {
@@ -316,18 +312,18 @@ def configure_vscode_tasks(
                 {
                     "type": "docker-run",
                     "label": "docker-run: debug",
-                    "python": {
-                        "file": f"/app/{integration_script.path.with_suffix('.py').relative_to(CONTENT_PATH.absolute())}"
-                    },
+                    "python": {"file": str(integration_script.path.with_suffix(".py"))},
                     "dockerRun": {
                         "image": integration_script.docker_image,
                         "volumes": [
-                            {"localPath": str(CONTENT_PATH), "containerPath": "/app"}
+                            {
+                                "localPath": str(CONTENT_PATH),
+                                "containerPath": str(CONTENT_PATH),
+                            }
                         ],
                         "env": {
-                            "PYTHONPATH": ":".join(docker_python_path),
+                            "PYTHONPATH": PYTHONPATH_STR,
                         },
-                        "envFiles": [str(DOTENV_DOCKER_PATH)],
                     },
                 },
                 {
@@ -339,7 +335,11 @@ def configure_vscode_tasks(
                         "args": [
                             "-s",
                             "-vv",
-                            f"/app/{integration_script.path.with_name(integration_script.path.stem + '_test.py').relative_to(CONTENT_PATH.absolute())}",
+                            str(
+                                integration_script.path.with_name(
+                                    integration_script.path.stem + "_test.py"
+                                )
+                            ),
                         ],
                     },
                     "dockerRun": {
@@ -347,12 +347,11 @@ def configure_vscode_tasks(
                         "volumes": [
                             {
                                 "localPath": str(CONTENT_PATH),
-                                "containerPath": "/app",
+                                "containerPath": str(CONTENT_PATH),
                             }
                         ],
-                        "customOptions": f"-w /app/{integration_script.path.parent.relative_to(CONTENT_PATH.absolute())}",
-                        "env": {"PYTHONPATH": ":".join(docker_python_path)},
-                        "envFiles": [str(DOTENV_DOCKER_PATH)],
+                        "customOptions": f"-w {integration_script.path.parent}",
+                        "env": {"PYTHONPATH": PYTHONPATH_STR},
                     },
                 },
             ],
@@ -392,7 +391,10 @@ def configure_vscode_launch(
                         "preLaunchTask": "docker-run: debug",
                         "python": {
                             "pathMappings": [
-                                {"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}
+                                {
+                                    "localRoot": str(CONTENT_PATH),
+                                    "remoteRoot": str(CONTENT_PATH),
+                                }
                             ],
                             "projectType": "general",
                             "justMyCode": False,
@@ -407,7 +409,7 @@ def configure_vscode_launch(
                             "pathMappings": [
                                 {
                                     "localRoot": str(CONTENT_PATH),
-                                    "remoteRoot": "/app",
+                                    "remoteRoot": str(CONTENT_PATH),
                                 },
                             ],
                             "projectType": "general",
@@ -624,9 +626,12 @@ def configure_params(
     if not secret_id:
         secret_id = integration_script.name.replace(" ", "_")
         secret_id = re.sub(r"[()]", "", secret_id)
-    if (project_id := os.getenv("DEMISTO_SDK_GCP_PROJECT_ID")) and isinstance(
-        integration_script, Integration
-    ):
+    if not isinstance(integration_script, Integration):
+        logger.info(
+            "Skipping Google Secret Manager lookup as script does not have parameters."
+        )
+        return
+    if project_id := os.getenv("DEMISTO_SDK_GCP_PROJECT_ID"):
         try:
             params = get_integration_params(secret_id, project_id)
             if params and instance_name:
@@ -643,11 +648,7 @@ def configure_params(
                 values={"DEMISTO_PARAMS": json.dumps(params)},
                 quote_mode="never",
             )
-            update_dotenv(
-                file_path=DOTENV_DOCKER_PATH,
-                values={"DEMISTO_PARAMS": json.dumps(params)},
-                quote_mode="never",
-            )
+
         except SecretManagerException:
             logger.warning(
                 f"Failed to fetch integration params for '{secret_id}' from Google Secret Manager."

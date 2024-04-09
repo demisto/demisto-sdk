@@ -413,7 +413,7 @@ def configure_vscode_launch(
                     },
                     {
                         "name": "Python: Debug Integration locally",
-                        "type": "python",
+                        "type": "debugpy",
                         "request": "launch",
                         "program": f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
                         if devcontainer
@@ -425,7 +425,7 @@ def configure_vscode_launch(
                     },
                     {
                         "name": "Python: Debug Tests",
-                        "type": "python",
+                        "type": "debugpy",
                         "request": "launch",
                         "program": "${file}",
                         "purpose": ["debug-test"],

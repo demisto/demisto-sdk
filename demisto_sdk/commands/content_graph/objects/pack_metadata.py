@@ -466,9 +466,9 @@ class PackMetadata(BaseModel):
                     f"Content_item: {content_item.name} has a fromversion {content_item.fromversion} higher than applicable for XSOAR6 marketplace. Skipping metadata update."
                 )
                 return
-            elif parse(content_item_metadata["fromversion"]) >= Version("8.0.0"):
+            if parse(content_item_metadata["fromversion"]) >= Version("8.0.0"):
                 logger.debug(
-                    f'Content item:{content_item_metadata["name"]} fromversion:{content_item_metadata["fromversion"]} is not compatible with XSOAR6 marketplace. Replacing'
+                    f'Content item:{content_item_metadata["name"]} fromversion: {content_item_metadata["fromversion"]} is not compatible with XSOAR6 marketplace. Replacing'
                 )
                 content_item_metadata.update(content_item_summary)
                 self._set_empty_toversion_if_default(content_item_metadata)

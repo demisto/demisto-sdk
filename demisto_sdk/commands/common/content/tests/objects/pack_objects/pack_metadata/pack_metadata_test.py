@@ -455,7 +455,7 @@ def test__enhance_pack_properties__internal_and_external(
 
 
 @pytest.mark.parametrize(
-    "marketplace_version, current_fromversion, new_from_version, current_toversion, new_toversion, expected_toversion",
+    "marketplace_version, current_fromversion, new_fromversion, current_toversion, new_toversion, expected_toversion",
     [
         (MarketplaceVersions.XSOAR, "5.5.0", "8.0.0", "7.9.9", "8.2.0", "7.9.9"),
         (MarketplaceVersions.XSOAR, "5.5.0", "6.5.0", "7.2.0", "7.9.9", "7.9.9"),
@@ -473,7 +473,7 @@ def test__enhance_pack_properties__internal_and_external(
 def test_replace_item_if_has_higher_toversion(
     marketplace_version,
     current_fromversion,
-    new_from_version,
+    new_fromversion,
     current_toversion,
     new_toversion,
     expected_toversion,
@@ -483,7 +483,7 @@ def test_replace_item_if_has_higher_toversion(
     ARGS:
         marketplace_version: MarketplaceVersions the flow is running on.
         current_fromversion: current fromversion of content item in the pack metadata
-        new_from_version: the fromversion of content item in the pack metadata
+        new_fromversion: the fromversion of content item in the pack metadata
         current_toversion: current toversion of content item in the pack metadata
         new_toversion: a new toversion of content item
         expected_toversion
@@ -525,7 +525,7 @@ def test_replace_item_if_has_higher_toversion(
     )  # type: ignore
     integration = mock_integration()
     integration.toversion = new_toversion
-    integration.fromversion = new_from_version
+    integration.fromversion = new_fromversion
     my_instance._replace_item_if_has_higher_toversion(
         integration, content_item_metadata, integration.summary(), marketplace
     )

@@ -199,6 +199,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
         if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_set:
             marketplaces_set.add(MarketplaceVersions.XSOAR)
+            marketplaces_set.remove(MarketplaceVersions.XSOAR_ON_PREM)
 
         return marketplaces_set
 

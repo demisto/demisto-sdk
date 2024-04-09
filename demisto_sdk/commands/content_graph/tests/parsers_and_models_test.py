@@ -2808,12 +2808,11 @@ def test_fix_layout_incident_to_alert(
         ({MarketplaceVersions.XPANSE}, {MarketplaceVersions.XPANSE}),
         (
             {MarketplaceVersions.XSOAR_ON_PREM},
-            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR},
+            {MarketplaceVersions.XSOAR},
         ),
         (
             {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR_SAAS},
             {
-                MarketplaceVersions.XSOAR_ON_PREM,
                 MarketplaceVersions.XSOAR_SAAS,
                 MarketplaceVersions.XSOAR,
             },
@@ -2821,7 +2820,6 @@ def test_fix_layout_incident_to_alert(
         (
             {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.MarketplaceV2},
             {
-                MarketplaceVersions.XSOAR_ON_PREM,
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.XSOAR,
             },

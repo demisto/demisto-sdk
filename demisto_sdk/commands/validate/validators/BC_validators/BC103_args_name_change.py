@@ -4,7 +4,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.validate.tools import compare_lists
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -13,9 +12,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Script
 
 
-class HaveTheArgsChangedValidator(BaseValidator[ContentTypes]):
+class ArgsNameChangeValidator(BaseValidator[ContentTypes]):
     error_code = "BC103"
-    description = "Check if the argument name has been changed."
+    description = "Check if an argument name has been changed."
     rationale = "If an existing argument has been renamed, it will break backward compatibility."
     error_message = (
         "Possible backward compatibility break: Your updates to this file contain changes "
@@ -30,7 +29,7 @@ class HaveTheArgsChangedValidator(BaseValidator[ContentTypes]):
 
             current_args = [arg.name for arg in content_item.args]
             old_args = [arg.name for arg in content_item.old_base_content_object.args]  # type: ignore
-            args_diff = compare_lists(sub_list=old_args, main_list=current_args)
+            args_diff = set(old_args) - set(current_args)
 
             if args_diff:
                 results.append(

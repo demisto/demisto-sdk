@@ -24,8 +24,8 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC101_is_breaking_co
 from demisto_sdk.commands.validate.validators.BC_validators.BC102_is_context_path_changed import (
     IsContextPathChangedValidator,
 )
-from demisto_sdk.commands.validate.validators.BC_validators.BC103_have_the_args_changed import (
-    HaveTheArgsChangedValidator,
+from demisto_sdk.commands.validate.validators.BC_validators.BC103_args_name_change import (
+    ArgsNameChangeValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
@@ -946,7 +946,7 @@ def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content
     )
 
 
-def test_have_the_args_changed_validator__fails():
+def test_args_name_change_validator__fails():
     """
     Given:
         - Script content item with a changed argument name.
@@ -956,8 +956,7 @@ def test_have_the_args_changed_validator__fails():
         - Calling the `HaveTheArgsChangedValidator` function.
 
     Then:
-        - The results should be as expected.
-        - Should fail the validation since the user changed the argument name.
+        - Ensure the results are as expected with the changed argument name in the message.
     """
     modified_content_items = [
         create_script_object(paths=["args[0].name"], values=["new_arg"])
@@ -968,14 +967,11 @@ def test_have_the_args_changed_validator__fails():
 
     create_old_file_pointers(modified_content_items, old_content_items)
 
-    results = HaveTheArgsChangedValidator().is_valid(modified_content_items)
-    assert (
-        " contain changes to the names of the following existing arguments: old_arg. Please undo the changes."
-        in results[0].message
-    )
+    results = ArgsNameChangeValidator().is_valid(modified_content_items)
+    assert "old_arg." in results[0].message
 
 
-def test_have_the_args_changed_validator__passes():
+def test_args_name_change_validator__passes():
     """
     Given:
         - Script content item with a new argument name, and an existing argument name.
@@ -997,3 +993,4 @@ def test_have_the_args_changed_validator__passes():
     ]
 
     create_old_file_pointers(modified_content_items, old_content_items)
+    assert not ArgsNameChangeValidator().is_valid(modified_content_items)

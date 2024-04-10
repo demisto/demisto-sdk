@@ -43,10 +43,7 @@ class BaseContentParser(ABC):
 
     @staticmethod
     def update_marketplaces_set_with_xsoar_values(marketplaces_set: set) -> set:
-        if (
-            MarketplaceVersions.XSOAR in marketplaces_set
-            and MarketplaceVersions.XSOAR_ON_PREM not in marketplaces_set
-        ):
+        if MarketplaceVersions.XSOAR in marketplaces_set:
             marketplaces_set.add(MarketplaceVersions.XSOAR_SAAS)
 
         if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_set:

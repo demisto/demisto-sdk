@@ -208,7 +208,7 @@ class PackMetadataParser:
         ] = BaseContentParser.update_marketplaces_set_with_xsoar_values(
             {MarketplaceVersions(mp) for mp in marketplaces}
         )
-        return [mp.value for mp in marketplace_set]
+        return sorted([mp.value for mp in marketplace_set])
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():

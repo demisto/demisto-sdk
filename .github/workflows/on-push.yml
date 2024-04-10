@@ -311,7 +311,6 @@ jobs:
 
       - name: run pre-commit on input files
         timeout-minutes: 60
-        continue-on-error: true # TODO - fail if there is an error here
         run: |
           source $(poetry env info --path)/bin/activate
           cd content

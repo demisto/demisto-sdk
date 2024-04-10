@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the graph was not fully cleaned before import in **graph update**
+  type: fix
+pr_number: 4215

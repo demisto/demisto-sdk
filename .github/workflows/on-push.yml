@@ -191,6 +191,7 @@ jobs:
     needs: [unit-tests, integration-tests, graph-tests]
     if: github.ref_name != 'master'
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.10

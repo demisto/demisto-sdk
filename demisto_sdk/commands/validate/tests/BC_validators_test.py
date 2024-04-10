@@ -946,57 +946,82 @@ def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content
     )
 
 
-def test_HaveCommandsOrArgsNameChangedValidator__script__fails():
+@pytest.mark.parametrize(
+    "new_args, breaking_arg",
+    [
+        pytest.param(
+            [{"name": "arg1", "required": False}, {"name": "arg2", "required": True}],
+            "arg2",
+            id="two args, new one required",
+        ),
+        pytest.param(
+            [
+                {"name": "arg1", "required": True},
+            ],
+            "arg1",
+            id="one arg, required",
+        ),
+    ],
+)
+def test_NewRequiredArgumentScriptValidator__fails(new_args, breaking_arg):
     """
     Given
-        - An old script with 2 non-required args.
-        - A new script with the same first 2 arguments, but they are required, and a new arg added.
+        - An old script with 1 non-required arg.
+        - A new script with a required arg:
+        case 1: the required arg is new.
+        case 2: the old arg was changed to be required.
     When
         calling the NewRequiredArgumentScriptValidator.
     Then
-        - Make sure the validation fails and the right error message is returned.
+        - Make sure the validation fails and the right breaking arg is mentioned in the error message.
     """
     new_content_item = create_script_object(
         paths=["args"],
-        values=[
-            [
-                {"name": "arg1", "required": True},
-                {"name": "arg2", "required": True},
-                {"name": "arg3"},
-            ]
-        ],
+        values=[new_args],
     )
-    old_content_item = create_script_object(
-        paths=["args"], values=[[{"name": "arg1"}, {"name": "arg2"}]]
-    )
+    old_content_item = create_script_object(paths=["args"], values=[[{"name": "arg1"}]])
 
     create_old_file_pointers([new_content_item], [old_content_item])
     res = NewRequiredArgumentScriptValidator().is_valid([new_content_item])
-    assert (
-        res[0].message
-        == 'Possible backward compatibility break: You have added the following new *required* arguments: "arg1", "arg2". Please undo the changes.'
-    )
+    assert breaking_arg in res[0].message
 
 
-def test_HaveCommandsOrArgsNameChangedValidator__script__passes():
-    """
-    Given
-        - An old script with 2 non-required args.
-        - A new script with the same first 2 arguments, but they are required, and a new arg added.
-    When
-        calling the NewRequiredArgumentScriptValidator.
-    Then
-        - Make sure the validation passes, since the new required arguments have a default value, or are not new.
-    """
-    new_content_item = create_script_object(
-        paths=["args"],
-        values=[
+@pytest.mark.parametrize(
+    "new_args",
+    [
+        pytest.param(
+            [
+                {"name": "arg1", "required": False},
+                {"name": "arg2", "required": False},
+            ],
+            id="two args, both not required",
+        ),
+        pytest.param(
             [
                 {"name": "arg1", "required": True},
                 {"name": "arg2", "required": True, "defaultvalue": "test"},
-                {"name": "arg3"},
-            ]
-        ],
+            ],
+            id="two args, both required, second one with default value",
+        ),
+    ],
+)
+def test_NewRequiredArgumentScriptValidator__passes(new_args):
+    """
+    Given
+        - An old script with 2 args, one required and one not.
+        - A new script:
+        case 1: with 2 args, both not required.
+        case 2: with 2 args, both required, and the second one has a default value.
+    When
+        calling the NewRequiredArgumentScriptValidator.
+    Then
+        - Make sure the validation passes:
+        case 1: the first arg was changed to be not required which is allowed.
+        case 2: the first arg did not change, and the second arg was changed to be required but has a default value which is allowed.
+    """
+    new_content_item = create_script_object(
+        paths=["args"],
+        values=[new_args],
     )
     old_content_item = create_script_object(
         paths=["args"], values=[[{"name": "arg1", "required": True}, {"name": "arg2"}]]

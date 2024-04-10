@@ -15,9 +15,9 @@ ContentTypes = Script
 class NewRequiredArgumentScriptValidator(BaseValidator[ContentTypes]):
     error_code = "BC111"
     description = (
-        "Validate that no new *required* argument are added to an existing script."
+        "Ensure that no new *required* arguments are added to an existing script."
     )
-    rationale = "Adding a new argument to an existing script and defining it as *required* or changing an non-required argument to be required will break backward compatibility."
+    rationale = "Adding a new required argument or changing a non-required one to required without specifying a default value breaks backward compatibility."
     error_message = "Possible backward compatibility break: You have added the following new *required* arguments: {arg_list}. Please undo the changes."
     related_field = "script.arguments"
     is_auto_fixable = False
@@ -29,24 +29,22 @@ class NewRequiredArgumentScriptValidator(BaseValidator[ContentTypes]):
         for content_item in content_items:
             old_content_item = content_item.old_base_content_object
 
-            for arg in content_item.args:  # type: ignore
-                current_arg_name = arg.name
-
-                if arg.required and not arg.defaultvalue:
-                    old_corresponding_arg = next(
+            arg_list = [
+                arg.name
+                for arg in content_item.args  # type: ignore
+                if arg.required
+                and not arg.defaultvalue
+                and (
+                    not next(
                         (
-                            arg
-                            for arg in old_content_item.args  # type: ignore
-                            if arg.name == current_arg_name
+                            old_arg
+                            for old_arg in old_content_item.args  # type: ignore
+                            if old_arg.name == arg.name and old_arg.required
                         ),
                         None,
                     )
-
-                    if (
-                        # If the argument is new or the argument was not required before
-                        not old_corresponding_arg
-                    ) or not old_corresponding_arg.required:
-                        arg_list.append(current_arg_name)
+                )
+            ]
             if arg_list:
                 results.append(
                     ValidationResult(

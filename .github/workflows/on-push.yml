@@ -552,3 +552,23 @@ jobs:
       - name: Output to GitHub Action Summary
         if: steps.changed-files.outputs.any_changed == 'true'
         run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY
+
+  verify-pip-installation:
+    name: Verify SDK Pip Installation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+
+      - name: pip intsall current project
+        run: pip install .
+
+      - name: Verify Installation
+        run: demisto-sdk --version

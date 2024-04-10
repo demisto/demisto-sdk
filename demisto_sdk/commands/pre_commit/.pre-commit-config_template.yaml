@@ -16,55 +16,8 @@ repos:
     min_py_version: '3.7'
     files: .+_test.py$
 
-- repo: https://github.com/hadialqattan/pycln
-  rev: v2.1.2
-  hooks:
-  - id: pycln
-    min_py_version: '3.7'
-    args:
-    - --all
-- repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: v0.0.272
-  hooks:
-  - id: ruff
-    min_py_version: '3.7'
-    args:
-    - --fix
-- repo: https://github.com/pre-commit/mirrors-autopep8
-  rev: v2.0.4
-  hooks:
-  - id: autopep8
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.982
-  hooks:
-  - id: mypy
-    min_py_version: '3.7'
-    args:
-    - --ignore-missing-imports
-    - --check-untyped-defs
-    - --show-error-codes
-    - --follow-imports=silent
-    - --allow-redefinition
-    exclude: test_data|tests_data|.venv|.*_test.py$|infrastructure_tests|.vulture_whitelist.py|demistomock.py|Templates|conftest.py
-    language: system
-    entry: mypy
-
 - repo: local
   hooks:
-  - id: pylint-in-docker
-    name: pylint-in-docker
-    description: Run pylint on the code in content packs
-    entry: pylint
-    files: Packs\/.*\.py$
-    exclude: _test\.py|.vulture_whitelist\.py|test_data
-    args:
-    - --ignore=demistomock.py,CommonServerPython.py,CommonServerUserPython.py,conftest.py,.venv
-    - -E
-    - --disable=bad-option-value,unsubscriptable-object
-    - -d duplicate-string-formatting-argument
-    - "--msg-template='{path}:{line}:{column}: {msg_id} {obj}: {msg}'"
-    - --generated-members=requests.packages.urllib3,requests.codes.ok
-
 
   - id: pytest-in-docker
     name: pytest-in-docker
@@ -101,24 +54,6 @@ repos:
     - -CI
     - -Path
     files: .Tests.ps1$
-    copy_files:
-    - Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1
-    - Tests/demistomock/demistomock.ps1
-    run_isolated: true
-
-  - id: pwsh-analyze-in-docker
-    name: pwsh-analyze-in-docker
-    description: Run powershell analyze
-    entry: pwsh
-    args:
-    - -Command
-    - Invoke-ScriptAnalyzer
-    - -EnableExit
-    - -Severity
-    - Error
-    - -Path
-    files: .ps1$
-    exclude: .Tests.ps1$|test_data
     copy_files:
     - Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1
     - Tests/demistomock/demistomock.ps1

@@ -1,0 +1,4 @@
+changes:
+- description: Added the **dump-api** command to dump the demisto-sdk API to a JSON file.
+  type: internal
+pr_number: 4214

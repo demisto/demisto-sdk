@@ -191,7 +191,6 @@ jobs:
     needs: [unit-tests, integration-tests, graph-tests]
     if: github.ref_name != 'master'
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.10
@@ -208,6 +207,7 @@ jobs:
           coverage xml
       - name: Coveralls-Action
         uses: coverallsapp/github-action@v2
+        continue-on-error: true
       - name: Coveralls-Comment
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}

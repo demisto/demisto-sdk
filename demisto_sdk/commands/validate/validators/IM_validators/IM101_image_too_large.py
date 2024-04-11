@@ -29,21 +29,25 @@ class ImageTooLargeValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.name + "_image.png"),
+                message=self.error_message.format(content_item.path),
                 content_object=content_item,
             )
             for content_item in content_items
-            if self.is_image_valid(content_item.image)
+            if self.is_image_valid(content_item)
         ]
 
-    def is_image_valid(self, image: ImageRelatedFile):
-        file_type = image.file_path.suffix
+    def is_image_valid(self, content_item: ContentTypes):
+        file_type = content_item.image.file_path.suffix
         if file_type == ".png":
-            return image.get_file_size().st_size > IMAGE_MAX_SIZE
+            return content_item.image.get_file_size().st_size > IMAGE_MAX_SIZE
 
         elif file_type == ".svg":
             # No size validation done for SVG images
             return False
 
-        image_size = int(((image.get_file_size().st_size - 22) / 4) * 3)
-        return image_size > IMAGE_MAX_SIZE
+        elif file_type == ".yml":
+            image_size = int(((len(content_item.data['image']) - 22) / 4) * 3)
+            return image_size > IMAGE_MAX_SIZE
+
+        # image can't be saved in a different file type
+        return True

@@ -201,14 +201,14 @@ class PackMetadataParser:
         return [capital_case(c) for c in self.pack_metadata_dict.get("useCases", [])]
 
     @property
-    def marketplaces(self) -> List[str]:
+    def marketplaces(self) -> List[MarketplaceVersions]:
         marketplaces = self._metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
         marketplace_set: Set[
             MarketplaceVersions
         ] = BaseContentParser.update_marketplaces_set_with_xsoar_values(
             {MarketplaceVersions(mp) for mp in marketplaces}
         )
-        return sorted([mp.value for mp in marketplace_set])
+        return sorted(list(marketplace_set))
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():
@@ -320,7 +320,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, [MarketplaceVersions(mp) for mp in self.marketplaces]
+                content_item_path, self.marketplaces
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)

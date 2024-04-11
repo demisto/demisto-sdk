@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Script
 
-
+# This validation is similar to BC110, but specifically for scripts.
 class NewRequiredArgumentScriptValidator(BaseValidator[ContentTypes]):
     error_code = "BC111"
     description = (

@@ -93,11 +93,14 @@ def test_collect_all_inputs_from_inputs_section(content_item, expected_result):
 def test_compare_lists():
     """
     Given:
-        - Two lists with some elements in common and some that are not.
+        - A `main_list` containing the elements "a", "b", and "c".
+        - A `sub_list` containing the elements "a", "b", "b", and "d".
+
     When:
-        - Running compare_lists
+        - The function `compare_lists` is called with `sub_list` and `main_list` as arguments.
+
     Then:
-        - Return a list of the elements that are in the sub_list but not in the main_list, including duplicates if not all elements are in the main_list.
+        - The function should return a list containing the elements "b" and "d", which are present in `sub_list` but not in `main_list`.
     """
     main_list = ["a", "b", "c"]
     sub_list = ["a", "b", "b", "d"]

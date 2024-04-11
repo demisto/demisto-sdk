@@ -54,7 +54,8 @@ XSOAR_MARKETPLACE_FOR_IN_PACK = [ALL_MARKETPLACES_FOR_IN_PACK[0]]
 
 
 # Create a new content item with 3 commands with unique names. all commands have only 1 argument except the third command which has 2 arguments.
-generic_integration_with_3_commands_and_4_args = create_integration_object(
+
+GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS = create_integration_object(
     paths=["script.commands"],
     values=[
         [
@@ -1007,13 +1008,13 @@ def test_HaveCommandsOrArgsNameChangedValidator__fails():
     Then
         - Make sure the validation fails and the right error message is returned notifying only on changes in the second command name, and third command argument name.
             - The first command has no changes.
-            - The second command name has changed from 'old_command_1' to 'command_1', and its arg name has changed from 'oldarg_1_command_1' to 'arg_1_command_1.
+            - The second command name has changed from 'old_command_1' to 'command_1', and its arg name has changed from 'old_arg_1_command_1' to 'arg_1_command_1.
                 (the args change souled be ignored since we reported on its command name change.)
             - The third command name has not changed, but one of its arguments name has changed from 'old_arg_1_command_2' to 'arg_1_command_2'.
 
     """
     # Setup new content item with changes in command and argument names
-    new_content_item = generic_integration_with_3_commands_and_4_args
+    new_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
 
     # Setup old content item with original command and argument names
     old_content_item = deepcopy(new_content_item)
@@ -1042,7 +1043,7 @@ def test_HaveCommandsOrArgsNameChangedValidator__passes():
     - Make sure the validation passes and no error messages are returned, since adding new commands or arguments is allowed.
     """
     # Setup new content item with changes in command and argument names
-    old_content_item = generic_integration_with_3_commands_and_4_args
+    old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
     new_content_item = deepcopy(old_content_item)
 
     new_content_item.commands.append(
@@ -1076,7 +1077,7 @@ def test_HaveCommandsOrArgsNameChangedValidator__passes():
     )
 
     # Setup old content item with original command and argument names
-    old_content_item = generic_integration_with_3_commands_and_4_args
+    old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
 
     create_old_file_pointers([new_content_item], [old_content_item])
     assert not HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])
@@ -1092,7 +1093,7 @@ def test_NewRequiredArgumentValidator__fails():
     Then
     - Make sure the validation fails and the right error message is returned notifying on the new required argument in the second command and the third command.
     """
-    old_content_item = generic_integration_with_3_commands_and_4_args
+    old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
     new_content_item = deepcopy(old_content_item)
     # add new required arg
     new_content_item.commands[2].args.append(
@@ -1125,7 +1126,7 @@ def test_NewRequiredArgumentValidator__fails():
     res = NewRequiredArgumentIntegrationValidator().is_valid([new_content_item])
 
     assert (
-        "added the following new *required* arguments: in command 'command_2' you have added a new required argument:'arg_1_command_2'. in command 'command_3' you have added a new required argument:'arg_3_command_1'."
+        "added the following new *required* arguments: in command 'command_2' you have added a new required argument:'arg_1_command_2'. in command 'command_3' you have added a new required argument:'arg_3_command_3'."
         in res[0].message
     )
 
@@ -1141,7 +1142,7 @@ def test_NewRequiredArgumentValidator__passes():
     - Make sure the validation passes and no error messages are returned, since adding new required arguments is allowed
         if the new required argument is in a new command or if it has a default value.
     """
-    new_content_item = deepcopy(generic_integration_with_3_commands_and_4_args)
+    new_content_item = deepcopy(GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS)
     # change existing arg to be required but add a default value
     new_content_item.commands[1].args[0].required = True
     new_content_item.commands[1].args[0].defaultvalue = "test"
@@ -1166,7 +1167,7 @@ def test_NewRequiredArgumentValidator__passes():
             ],
         ).commands[0]
     )
-    old_content_item = generic_integration_with_3_commands_and_4_args
+    old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
     create_old_file_pointers([new_content_item], [old_content_item])
 
     assert not NewRequiredArgumentIntegrationValidator().is_valid([new_content_item])

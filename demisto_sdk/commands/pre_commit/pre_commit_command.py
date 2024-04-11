@@ -42,6 +42,7 @@ from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
 from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_context import (
+    DEFAULT_PRE_COMMIT_TEMPLATE_PATH,
     PRECOMMIT_CONFIG_MAIN_PATH,
     PRECOMMIT_TEMPLATE_PATH,
     PreCommitContext,
@@ -531,6 +532,20 @@ def pre_commit_manager(
     if secrets and "secrets" in skipped_hooks:
         skipped_hooks.remove("secrets")
 
+    if not pre_commit_template_path:
+        if PRECOMMIT_TEMPLATE_PATH.exists():
+            pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
+        else:
+            pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
+
+    if pre_commit_template_path and not pre_commit_template_path.exists():
+        logger.error(
+            f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
+        )
+        return 1
+
+    logger.info(f"Running pre-commit using template {pre_commit_template_path}")
+
     pre_commit_context = PreCommitContext(
         list(input_files) if input_files else None,
         all_files,
@@ -539,7 +554,7 @@ def pre_commit_manager(
         run_hook,
         skipped_hooks,
         run_docker_hooks,
-        pre_commit_template_path=pre_commit_template_path or PRECOMMIT_TEMPLATE_PATH,
+        pre_commit_template_path=pre_commit_template_path,
     )
     return PreCommitRunner.prepare_and_run(
         pre_commit_context,

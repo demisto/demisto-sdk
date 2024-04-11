@@ -4490,3 +4490,23 @@ def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
     if file_path.is_absolute():
         file_path = file_path.relative_to(relative_to)
     return file_path
+
+
+def convert_path_to_str(data: Union[dict, list]):
+    """This converts recursively all Path objects to strings in the given data.
+
+    Args:
+        data (Union[dict, list]): The data to convert.
+    """
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, (dict, list)):
+                convert_path_to_str(value)
+            elif isinstance(value, Path):
+                data[key] = str(value)
+    elif isinstance(data, list):
+        for index, item in enumerate(data):
+            if isinstance(item, (dict, list)):
+                convert_path_to_str(item)
+            elif isinstance(item, Path):
+                data[index] = str(item)

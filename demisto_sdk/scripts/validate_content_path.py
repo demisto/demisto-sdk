@@ -172,12 +172,20 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
     )
 
 
+class InvalidXSIAMReportFileName(InvalidPathException):
+    message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
+
+
 class InvalidSuffix(InvalidPathException):
     message = "This file's suffix is not allowed."
 
 
 class InvalidCommandExampleFile(InvalidPathException):
     message = "This file's name must be command_examples"
+
+
+class InvalidXDRCTemplatesFileName(InvalidPathException):
+    message = "Name of XDRC template files must match the directory containing them, e.g. `{parent folder}.json`, or `{parent folder}.yml`"
 
 
 class ExemptedPath(Exception, ABC):
@@ -270,11 +278,21 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidClassifier
 
-    if depth == 2 and first_level_folder in {
-        ContentType.INTEGRATION.as_folder,
-        ContentType.SCRIPT.as_folder,
-    }:
-        _validate_integration_script_file(path, parts_after_packs)
+        if first_level_folder == XSIAM_REPORTS_DIR and not (
+            path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix == ".json"
+        ):
+            raise InvalidXSIAMReportFileName
+
+    if depth == 2:
+        if first_level_folder in {
+            ContentType.INTEGRATION.as_folder,
+            ContentType.SCRIPT.as_folder,
+        }:
+            _validate_integration_script_file(path, parts_after_packs)
+        elif first_level_folder == ContentType.XDRC_TEMPLATE.as_folder and not (
+            path.stem == path.parent.name and path.suffix in {".json", ".yml"}
+        ):
+            raise InvalidXDRCTemplatesFileName
 
 
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):

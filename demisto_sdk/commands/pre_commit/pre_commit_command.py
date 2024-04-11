@@ -475,6 +475,7 @@ def pre_commit_manager(
     show_diff_on_failure: bool = False,
     dry_run: bool = False,
     run_docker_hooks: bool = True,
+    docker_image: Optional[str] = None,
     run_hook: Optional[str] = None,
     pre_commit_template_path: Optional[Path] = None,
 ) -> int:
@@ -539,6 +540,7 @@ def pre_commit_manager(
         run_hook,
         skipped_hooks,
         run_docker_hooks,
+        docker_image,
         pre_commit_template_path=pre_commit_template_path or PRECOMMIT_TEMPLATE_PATH,
     )
     return PreCommitRunner.prepare_and_run(

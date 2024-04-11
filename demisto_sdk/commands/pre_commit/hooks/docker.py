@@ -89,27 +89,6 @@ def with_native_tags(
     return all_tags_to_files
 
 
-def docker_tag_to_runfiles(
-    files_to_run: Iterable[Tuple[Path, Optional[IntegrationScript]]], docker_image_flag
-) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
-    """
-    Iterates over all files snf groups the files by the dockerimages
-    Args:
-        files_to_run: PosixFiles to run the command on
-        docker_image_flag: the docker_image config value
-
-    Returns: A dict of image to List of files(Tuple[path, obj]) including native images
-
-    """
-    tags_to_files = defaultdict(list)
-    for file, obj in files_to_run:
-        if not obj:
-            continue
-        for docker_image in obj.docker_images:
-            tags_to_files[docker_image].append((file, obj))
-    return with_native_tags(tags_to_files, docker_image_flag)
-
-
 @functools.lru_cache(maxsize=512)
 def devtest_image(
     image_tag: str,
@@ -196,6 +175,34 @@ class DockerHook(Hook):
     This class will make common manipulations on commands that need to run in docker
     """
 
+    def docker_tag_to_runfiles(
+        self,
+        files_to_run: Iterable[Tuple[Path, Optional[IntegrationScript]]],
+        docker_image_flag,
+    ) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
+        """
+        Iterates over all files snf groups the files by the dockerimages
+        Args:
+            files_to_run: PosixFiles to run the command on
+            docker_image_flag: the docker_image config value
+
+        Returns: A dict of image to List of files(Tuple[path, obj]) including native images
+
+        """
+        tags_to_files = defaultdict(list)
+        for file, obj in files_to_run:
+            if not obj:
+                continue
+
+            if self.context.docker_image:
+                tags_to_files[self.context.docker_image].append((file, obj))
+            else:
+                for docker_image in obj.docker_images:
+                    tags_to_files[docker_image].append((file, obj))
+        if self.context.docker_image:
+            return tags_to_files
+        return with_native_tags(tags_to_files, docker_image_flag)
+
     def clean_args_from_hook(self, hooks: List[Dict]):
         """This clean unsupported args from the generated hooks
 
@@ -264,7 +271,7 @@ class DockerHook(Hook):
             for file, obj in self.context.files_to_run_with_objects
             if file in filtered_files
         }
-        tag_to_files_objs = docker_tag_to_runfiles(
+        tag_to_files_objs = self.docker_tag_to_runfiles(
             filtered_files_with_objects,
             self._get_property("docker_image", "from-yml"),
         )

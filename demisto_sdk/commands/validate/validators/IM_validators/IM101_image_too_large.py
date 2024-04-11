@@ -4,7 +4,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import (
-    ImageRelatedFile,
     RelatedFileType,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -46,7 +45,7 @@ class ImageTooLargeValidator(BaseValidator[ContentTypes]):
             return False
 
         elif file_type == ".yml":
-            image_size = int(((len(content_item.data['image']) - 22) / 4) * 3)
+            image_size = int(((len(content_item.data["image"]) - 22) / 4) * 3)
             return image_size > IMAGE_MAX_SIZE
 
         # image can't be saved in a different file type

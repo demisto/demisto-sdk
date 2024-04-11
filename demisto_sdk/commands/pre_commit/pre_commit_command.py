@@ -538,6 +538,12 @@ def pre_commit_manager(
         else:
             pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
 
+    if pre_commit_template_path and not pre_commit_template_path.exists():
+        logger.error(
+            f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
+        )
+        return 1
+
     logger.info(f"Running pre-commit using template {pre_commit_template_path}")
 
     pre_commit_context = PreCommitContext(

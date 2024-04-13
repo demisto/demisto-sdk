@@ -100,7 +100,7 @@ def test_compare_lists():
         - The function `compare_lists` is called with `sub_list` and `main_list` as arguments.
 
     Then:
-        - The function should return a list containing the elements "b" and "d", which are present in `sub_list` but not in `main_list`.
+        - Ensuring the value returned is a list containing the elements "b" and "d", which are present in `sub_list` but not in `main_list`.
     """
     main_list = ["a", "b", "c"]
     sub_list = ["a", "b", "b", "d"]

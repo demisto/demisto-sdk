@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where `xsoar_on_prem` tag, was not removed as part of the parsing process.
+  type: fix
+pr_number: 4218

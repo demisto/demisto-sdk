@@ -952,28 +952,28 @@ def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content
         pytest.param(
             [{"name": "arg1", "required": False}, {"name": "arg2", "required": True}],
             "arg2",
-            id="two args, new one required",
+            id="new required arg",
         ),
         pytest.param(
             [
                 {"name": "arg1", "required": True},
             ],
             "arg1",
-            id="one arg, required",
+            id="changed to required",
         ),
     ],
 )
 def test_NewRequiredArgumentScriptValidator__fails(new_args, breaking_arg):
     """
-    Given
-        - An old script with 1 non-required arg.
-        - A new script with a required arg:
-        case 1: the required arg is new.
-        case 2: the old arg was changed to be required.
-    When
-        calling the NewRequiredArgumentScriptValidator.
-    Then
-        - Make sure the validation fails and the right breaking arg is mentioned in the error message.
+    Given:
+        - An older version of a script that has one non-required argument.
+        - A newer version of the same script where an argument is now required. This can occur in two cases:
+            Case 1: The required argument is a new addition to the script.
+            Case 2: An existing argument from the older version has been updated to be required in the new version.
+    When:
+        - The NewRequiredArgumentScriptValidator is invoked to validate the changes in the script.
+    Then:
+        - The validation should fail because a non-required argument has been made required. The error message should correctly identify the argument that caused the validation to fail.
     """
     new_content_item = create_script_object(
         paths=["args"],
@@ -994,30 +994,30 @@ def test_NewRequiredArgumentScriptValidator__fails(new_args, breaking_arg):
                 {"name": "arg1", "required": False},
                 {"name": "arg2", "required": False},
             ],
-            id="two args, both not required",
+            id="non required args",
         ),
         pytest.param(
             [
                 {"name": "arg1", "required": True},
                 {"name": "arg2", "required": True, "defaultvalue": "test"},
             ],
-            id="two args, both required, second one with default value",
+            id="required with default value",
         ),
     ],
 )
 def test_NewRequiredArgumentScriptValidator__passes(new_args):
     """
-    Given
-        - An old script with 2 args, one required and one not.
-        - A new script:
-        case 1: with 2 args, both not required.
-        case 2: with 2 args, both required, and the second one has a default value.
-    When
-        calling the NewRequiredArgumentScriptValidator.
-    Then
-        - Make sure the validation passes:
-        case 1: the first arg was changed to be not required which is allowed.
-        case 2: the first arg did not change, and the second arg was changed to be required but has a default value which is allowed.
+    Given:
+        - An older version of a script that has two arguments: one required and one not required.
+        - A newer version of the same script in two cases:
+            Case 1: Both arguments are not required.
+            Case 2: Both arguments are required, but the second one has a default value.
+    When:
+        - The NewRequiredArgumentScriptValidator is invoked to validate the changes in the script.
+    Then:
+        - The validation should pass in both cases:
+            Case 1: The first argument was changed to be not required, which is allowed.
+            Case 2: The first argument did not change, and the second argument was changed to be required but has a default value, which is allowed.
     """
     new_content_item = create_script_object(
         paths=["args"],

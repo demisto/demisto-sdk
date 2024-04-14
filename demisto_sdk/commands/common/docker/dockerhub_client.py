@@ -105,9 +105,11 @@ class DockerHubClient:
             logger.warning(
                 f"Error when trying to get dockerhub token, error\n:{_error}"
             )
-            if _error.response.status_code in (
-                requests.codes.unauthorized, requests.codes.too_many_requests
-            ) and self.auth:
+            if (
+                _error.response.status_code
+                in (requests.codes.unauthorized, requests.codes.too_many_requests)
+                and self.auth
+            ):
                 # in case of rate-limits with a username:password, retrieve the token without username:password
                 logger.debug("Trying to get dockerhub token without username:password")
                 try:

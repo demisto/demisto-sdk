@@ -153,6 +153,8 @@ def find_command(commands: List[Command], command_to_find: str) -> Optional[Comm
 def compare_lists(sub_list: List[str], main_list: List[str]) -> List[str]:
     """
     Compares two lists and returns the elements that are in the sub list but not in the main list, including duplicates.
+    for example:
+    compare_lists(['a', 'b', 'c', 'c', 'd'], ['a', 'b', 'c']) -> ['c', 'd']
     Args:
         sub_list: list of elements to compare if they are a subset of main_list
         main_list: the list to compare against

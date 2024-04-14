@@ -46,6 +46,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplac
 from demisto_sdk.commands.validate.validators.BC_validators.BC110_new_required_argument_integration import (
     NewRequiredArgumentIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC111_new_required_argument_script import (
+    NewRequiredArgumentScriptValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 ALL_MARKETPLACES = list(MarketplaceVersions)
@@ -1224,3 +1227,88 @@ def test_NewRequiredArgumentValidator__passes():
     create_old_file_pointers([new_content_item], [old_content_item])
 
     assert not NewRequiredArgumentIntegrationValidator().is_valid([new_content_item])
+
+
+@pytest.mark.parametrize(
+    "new_args, breaking_arg",
+    [
+        pytest.param(
+            [{"name": "arg1", "required": False}, {"name": "arg2", "required": True}],
+            "arg2",
+            id="new required arg",
+        ),
+        pytest.param(
+            [
+                {"name": "arg1", "required": True},
+            ],
+            "arg1",
+            id="changed to required",
+        ),
+    ],
+)
+def test_NewRequiredArgumentScriptValidator__fails(new_args, breaking_arg):
+    """
+    Given:
+        - An older version of a script that has one non-required argument.
+        - A newer version of the same script where an argument is now required. This can occur in two cases:
+            Case 1: The required argument is a new addition to the script.
+            Case 2: An existing argument from the older version has been updated to be required in the new version.
+    When:
+        - The NewRequiredArgumentScriptValidator is invoked to validate the changes in the script.
+    Then:
+        - The validation should fail because a non-required argument has been made required. The error message should correctly identify the argument that caused the validation to fail.
+    """
+    new_content_item = create_script_object(
+        paths=["args"],
+        values=[new_args],
+    )
+    old_content_item = create_script_object(paths=["args"], values=[[{"name": "arg1"}]])
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    res = NewRequiredArgumentScriptValidator().is_valid([new_content_item])
+    assert breaking_arg in res[0].message
+
+
+@pytest.mark.parametrize(
+    "new_args",
+    [
+        pytest.param(
+            [
+                {"name": "arg1", "required": False},
+                {"name": "arg2", "required": False},
+            ],
+            id="non required args",
+        ),
+        pytest.param(
+            [
+                {"name": "arg1", "required": True},
+                {"name": "arg2", "required": True, "defaultvalue": "test"},
+            ],
+            id="required with default value",
+        ),
+    ],
+)
+def test_NewRequiredArgumentScriptValidator__passes(new_args):
+    """
+    Given:
+        - An older version of a script that has two arguments: one required and one not required.
+        - A newer version of the same script in two cases:
+            Case 1: Both arguments are not required.
+            Case 2: Both arguments are required, but the second one has a default value.
+    When:
+        - The NewRequiredArgumentScriptValidator is invoked to validate the changes in the script.
+    Then:
+        - The validation should pass in both cases:
+            Case 1: The first argument was changed to be not required, which is allowed.
+            Case 2: The first argument did not change, and the second argument was changed to be required but has a default value, which is allowed.
+    """
+    new_content_item = create_script_object(
+        paths=["args"],
+        values=[new_args],
+    )
+    old_content_item = create_script_object(
+        paths=["args"], values=[[{"name": "arg1", "required": True}, {"name": "arg2"}]]
+    )
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    assert not NewRequiredArgumentScriptValidator().is_valid([new_content_item])

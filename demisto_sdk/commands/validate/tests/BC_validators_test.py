@@ -25,6 +25,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC101_is_breaking_co
 from demisto_sdk.commands.validate.validators.BC_validators.BC102_is_context_path_changed import (
     IsContextPathChangedValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC103_args_name_change import (
+    ArgsNameChangeValidator,
+)
 from demisto_sdk.commands.validate.validators.BC_validators.BC104_have_commands_or_args_name_changed import (
     HaveCommandsOrArgsNameChangedValidator,
 )
@@ -996,6 +999,56 @@ def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content
         and result[0].message
         == "Changing the maximal supported version field `toversion` is not allowed. Please undo, or request a force merge."
     )
+
+
+def test_args_name_change_validator__fails():
+    """
+    Given:
+        - Script content item with a changed argument name.
+        - Old Script content item with the old argument name.
+
+    When:
+        - Calling the `HaveTheArgsChangedValidator` function.
+
+    Then:
+        - Ensure the results are as expected with the changed argument name in the message.
+    """
+    modified_content_items = [
+        create_script_object(paths=["args[0].name"], values=["new_arg"])
+    ]
+    old_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+
+    create_old_file_pointers(modified_content_items, old_content_items)
+
+    results = ArgsNameChangeValidator().is_valid(modified_content_items)
+    assert "old_arg." in results[0].message
+
+
+def test_args_name_change_validator__passes():
+    """
+    Given:
+        - Script content item with a new argument name, and an existing argument name.
+        - Old Script content item with the existing argument name.
+    When:
+        - Calling the `HaveTheArgsChangedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Should pass the validation since the user didn't change existing argument names, only added new ones.
+    """
+    modified_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+    new_arg = create_script_object(paths=["args[0].name"], values=["new_arg"]).args[0]
+    modified_content_items[0].args.append(new_arg)
+    old_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+
+    create_old_file_pointers(modified_content_items, old_content_items)
+    assert not ArgsNameChangeValidator().is_valid(modified_content_items)
 
 
 def test_HaveCommandsOrArgsNameChangedValidator__fails():

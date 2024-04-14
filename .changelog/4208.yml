@@ -1,4 +1,0 @@
-changes:
-- description: Fix metadata (i.e. description) for XSOAR6 marketplace.
-  type: fix
-pr_number: 4208

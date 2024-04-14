@@ -1,4 +1,0 @@
-changes:
-- description: Added support to delete packs in **graph update**
-  type: fix
-pr_number: 4205

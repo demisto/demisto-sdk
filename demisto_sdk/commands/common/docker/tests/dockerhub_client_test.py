@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
 import pytest
+import requests
 from freezegun import freeze_time
 from packaging.version import Version
 from requests import Response, Session
@@ -15,6 +16,7 @@ def dockerhub_client() -> DockerHubClient:
     dockerhub_client = DockerHubClient(username="test", password="test")
     dockerhub_client.do_registry_get_request.cache_clear()
     dockerhub_client.do_docker_hub_get_request.cache_clear()
+    dockerhub_client._docker_hub_auth_tokens = {}
     return dockerhub_client
 
 
@@ -69,6 +71,29 @@ def test_get_token_with_existing_not_expired_token(
     requests_mock.get("https://auth.docker.io/token")
     assert dockerhub_client.get_token(repo="test") == "1234"
     assert not requests_mock.called
+
+
+def test_get_token_ratelimit_with_username_password(mocker, dockerhub_client: DockerHubClient):
+    """
+    Given:
+        - no token from at the cache
+        - rate-limit error with username/password
+        - successful response without username/password
+
+    When:
+        - running get_token method
+
+    Then:
+        - ensure that the token is returned successfully
+    """
+    rate_limit_response = Response()
+    rate_limit_response.status_code = 429
+    rate_limit_response._content = b''
+    valid_response = Response()
+    valid_response.status_code = 200
+    valid_response._content = json.dumps({"token": "token_from_api", "issued_at": "1234", "expires_in": 300}).encode("utf-8")
+    mocker.patch.object(Session, "get", side_effect=[rate_limit_response, valid_response])
+    assert dockerhub_client.get_token(repo="test") == "token_from_api"
 
 
 @freeze_time("2024-01-01 12:00:00")

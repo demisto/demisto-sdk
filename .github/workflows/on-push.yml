@@ -200,7 +200,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Download all artifacts # TODO - download only the relevant artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
         run: |
@@ -278,15 +278,15 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Checkout Content
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           repository: demisto/content
           path: content
           ref: ds-sdk-py311
-          fetch-depth: 0
 
       - name: Cache Pre commit
         id: cache-pre-commit

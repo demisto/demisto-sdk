@@ -283,16 +283,18 @@ def test_docker_image_flag(mocker):
         return_value="devtestimg",
     )
     DockerHook(**hook).prepare_hook()
-    assert hook["repo"]["hooks"][0]["entry"] == "test-python3-custom-image"
+    assert hook["repo"]["hooks"][0]["id"] == "test-python3-custom-image"
 
 
 def test_docker_target_flag(mocker):
     file_path = Path("SomeFile.py")
-    files = [(file_path, Obj(object_id="id1"))]
+    files = [
+        (file_path, Obj(object_id="id1", docker_image="demisto/python3:3.10.13.89009"))
+    ]
     hook = create_hook(
         {"id": "test"},
         docker_image="python3-candidate-image",
-        docker_flag="native:target",
+        docker_flag="native:candidate",
     )
     mocker.patch.object(
         PreCommitContext,
@@ -304,4 +306,4 @@ def test_docker_target_flag(mocker):
         return_value="devtestimg",
     )
     DockerHook(**hook).prepare_hook()
-    assert hook["repo"]["hooks"][0]["entry"] == "test-python3-custom-image"
+    assert hook["repo"]["hooks"][0]["entry"] == "test-python3-candidate-image"

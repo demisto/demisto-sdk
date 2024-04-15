@@ -63,8 +63,8 @@ def with_native_tags(
             supported_native_images = ScriptIntegrationSupportedNativeImages(
                 _id=obj.object_id,
                 native_image_config=native_image_config,
-                docker_image=docker_image or image,
-            ).get_supported_native_docker_tags(docker_flags)
+                docker_image=image,
+            ).get_supported_native_docker_tags(docker_flags, include_candidate=True)
 
             for native_image in supported_native_images:
                 all_tags_to_files[docker_image or native_image].append((file, obj))
@@ -97,8 +97,8 @@ def docker_tag_to_runfiles(
         if not obj:
             continue
         else:
-            for docker_image in obj.docker_images:
-                tags_to_files[docker_image].append((file, obj))
+            for image in obj.docker_images:
+                tags_to_files[image].append((file, obj))
     return with_native_tags(tags_to_files, docker_flags, docker_image)
 
 

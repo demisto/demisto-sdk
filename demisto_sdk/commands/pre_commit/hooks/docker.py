@@ -40,6 +40,20 @@ NO_SPLIT = None
 USER_DEMITSO = "demisto"
 
 
+@lru_cache()
+def get_docker_python_path() -> str:
+    """
+    precommit by default mounts the content repo to source.
+    This means CommonServerPython's path is /src/Packs/Base/...CSP.py
+    Returns: A PYTHONPATH formatted string
+    """
+    path_to_replace = str(Path(CONTENT_PATH).absolute())
+    docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
+    path = ":".join(docker_path)
+    logger.debug(f"pythonpath in docker being set to {path}")
+    return path
+
+
 def with_native_tags(
     tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]],
     docker_flags: Set[str],
@@ -100,20 +114,6 @@ def docker_tag_to_runfiles(
             for image in obj.docker_images:
                 tags_to_files[image].append((file, obj))
     return with_native_tags(tags_to_files, docker_flags, docker_image)
-
-
-@lru_cache()
-def get_docker_python_path() -> str:
-    """
-    precommit by default mounts the content repo to source.
-    This means CommonServerPython's path is /src/Packs/Base/...CSP.py
-    Returns: A PYTHONPATH formatted string
-    """
-    path_to_replace = str(Path(CONTENT_PATH).absolute())
-    docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
-    path = ":".join(docker_path)
-    logger.debug(f"pythonpath in docker being set to {path}")
-    return path
 
 
 @functools.lru_cache(maxsize=512)

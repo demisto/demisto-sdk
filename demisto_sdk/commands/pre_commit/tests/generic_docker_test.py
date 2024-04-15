@@ -269,7 +269,7 @@ def test_docker_pass_extra_args(mocker):
     assert "--rm=false" in hook["repo"]["hooks"][0]["entry"]
 
 
-def test_docker_image_flag(mocker):
+def test_image_ref_argument(mocker):
     """
     Given:
         - An object to run pre-commit on
@@ -297,7 +297,7 @@ def test_docker_image_flag(mocker):
     assert hook["repo"]["hooks"][0]["id"] == "test-python3-custom-image"
 
 
-def test_docker_target_flag(mocker):
+def test_docker_image_argument(mocker):
     """
     Given:
         - An object to run pre-commit on
@@ -328,4 +328,4 @@ def test_docker_target_flag(mocker):
         return_value="devtestimg",
     )
     DockerHook(**hook).prepare_hook()
-    assert hook["repo"]["hooks"][0]["entry"] == "test-python3-candidate-image"
+    assert hook["repo"]["hooks"][0]["id"] == "test-python3-candidate-image"

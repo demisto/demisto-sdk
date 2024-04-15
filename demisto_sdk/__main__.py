@@ -3687,6 +3687,16 @@ def pre_commit(
     docker: bool = typer.Option(
         True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
     ),
+    image_ref: Optional[str] = typer.Option(
+        None,
+        "--image-ref",
+        help="The docker image reference to run docker hooks with. Overrides the docker image from YAML or native image config.",
+    ),
+    docker_image: Optional[str] = typer.Option(
+        None,
+        "--docker-image",
+        help="Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.",
+    ),
     run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
     console_log_threshold: str = typer.Option(
         "INFO",
@@ -3733,6 +3743,8 @@ def pre_commit(
         verbose,
         show_diff_on_failure,
         run_docker_hooks=docker,
+        image_ref=image_ref,
+        docker_image=docker_image,
         dry_run=dry_run,
         run_hook=run_hook,
         pre_commit_template_path=pre_commit_template_path,

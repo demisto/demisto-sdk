@@ -68,6 +68,8 @@ def create_hook(
     mode: str = "",
     all_files=False,
     input_files: Optional[List[Path]] = None,
+    docker_image: Optional[str] = None,
+    docker_flag: Optional[str] = None,
 ):
     """
     This function mocks hook as he returns in _get_hooks() function
@@ -75,7 +77,14 @@ def create_hook(
 
     repo_and_hook: dict = {
         "repo": {"repo": "repo", "hooks": [hook]},
-        "context": PreCommitContext(input_files, all_files, mode, {}),
+        "context": PreCommitContext(
+            input_files,
+            all_files,
+            mode,
+            {},
+            image_ref=docker_image,
+            docker_image=docker_flag,
+        ),
     }
     repo_and_hook["hook"] = repo_and_hook["repo"]["hooks"][0]
     return repo_and_hook

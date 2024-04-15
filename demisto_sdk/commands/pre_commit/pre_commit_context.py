@@ -49,6 +49,8 @@ class PreCommitContext:
     run_hook: Optional[str] = None
     skipped_hooks: Set[str] = field(default_factory=set)
     run_docker_hooks: bool = True
+    image_ref: Optional[str] = None
+    docker_image: Optional[str] = None
     dry_run: bool = False
     pre_commit_template_path: Path = PRECOMMIT_TEMPLATE_PATH
 

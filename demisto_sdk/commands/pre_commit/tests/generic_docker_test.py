@@ -267,3 +267,43 @@ def test_docker_pass_extra_args(mocker):
     mocker.patch.object(PreCommitContext, "dry_run", True)
     DockerHook(**hook).prepare_hook()
     assert "--rm=false" in hook["repo"]["hooks"][0]["entry"]
+
+
+def test_docker_image_flag(mocker):
+    file_path = Path("SomeFile.py")
+    files = [(file_path, Obj(object_id="id1"))]
+    hook = create_hook({"id": "test"}, docker_image="python3-custom-image")
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        files,
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    DockerHook(**hook).prepare_hook()
+    assert hook["repo"]["hooks"][0]["id"] == "test-python3-custom-image"
+
+
+def test_docker_target_flag(mocker):
+    file_path = Path("SomeFile.py")
+    files = [
+        (file_path, Obj(object_id="id1", docker_image="demisto/python3:3.10.13.89009"))
+    ]
+    hook = create_hook(
+        {"id": "test"},
+        docker_image="python3-candidate-image",
+        docker_flag="native:candidate",
+    )
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        files,
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    DockerHook(**hook).prepare_hook()
+    assert hook["repo"]["hooks"][0]["entry"] == "test-python3-candidate-image"

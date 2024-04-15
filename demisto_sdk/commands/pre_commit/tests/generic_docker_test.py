@@ -270,9 +270,20 @@ def test_docker_pass_extra_args(mocker):
 
 
 def test_docker_image_flag(mocker):
+    """
+    Given:
+        - An object to run pre-commit on
+
+    When:
+        - Providing the `image_ref` flag to override the image to a custom image
+
+    Then:
+        - The hook will run on the provided image ref instead of the image of the YAML
+
+    """
     file_path = Path("SomeFile.py")
     files = [(file_path, Obj(object_id="id1"))]
-    hook = create_hook({"id": "test"}, docker_image="python3-custom-image")
+    hook = create_hook({"id": "test"}, image_ref="python3-custom-image")
     mocker.patch.object(
         PreCommitContext,
         "files_to_run_with_objects",
@@ -287,14 +298,25 @@ def test_docker_image_flag(mocker):
 
 
 def test_docker_target_flag(mocker):
+    """
+    Given:
+        - An object to run pre-commit on
+
+    When:
+        - Providing the `docker_image` to `native:candidate` and `image_ref` flag for a candidate to test a custom candidate
+
+    Then:
+        - The hook will run on the provided image ref instead of the image of the native image config file
+
+    """
     file_path = Path("SomeFile.py")
     files = [
         (file_path, Obj(object_id="id1", docker_image="demisto/python3:3.10.13.89009"))
     ]
     hook = create_hook(
         {"id": "test"},
-        docker_image="python3-candidate-image",
-        docker_flag="native:candidate",
+        image_ref="python3-candidate-image",
+        docker_image="native:candidate",
     )
     mocker.patch.object(
         PreCommitContext,

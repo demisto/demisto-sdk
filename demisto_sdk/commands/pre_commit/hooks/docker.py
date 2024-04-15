@@ -57,6 +57,7 @@ def with_native_tags(
     docker_flags = set(docker_image_flag.split(","))
     is_target = False
     if docker_flags == DockerImageFlagOption.NATIVE_TARGET:
+        # we need to set to native dev since we want to filter by integrations/scripts supports the native dev
         docker_flags = {DockerImageFlagOption.NATIVE_DEV.value}
         is_target = True
 

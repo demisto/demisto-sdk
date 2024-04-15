@@ -108,11 +108,10 @@ def docker_tag_to_runfiles(
     docker_flags = set(docker_image_flag.split(","))
     tags_to_files = defaultdict(list)
     for file, obj in files_to_run:
-        if not obj:
-            continue
-        else:
+        if obj:
             for image in obj.docker_images:
                 tags_to_files[image].append((file, obj))
+
     return with_native_tags(tags_to_files, docker_flags, docker_image)
 
 

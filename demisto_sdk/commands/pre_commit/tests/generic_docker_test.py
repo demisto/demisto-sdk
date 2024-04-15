@@ -267,3 +267,65 @@ def test_docker_pass_extra_args(mocker):
     mocker.patch.object(PreCommitContext, "dry_run", True)
     DockerHook(**hook).prepare_hook()
     assert "--rm=false" in hook["repo"]["hooks"][0]["entry"]
+
+
+def test_image_ref_argument(mocker):
+    """
+    Given:
+        - An object to run pre-commit on
+
+    When:
+        - Providing the `image_ref` flag to override the image to a custom image
+
+    Then:
+        - The hook will run on the provided image ref instead of the image of the YAML
+
+    """
+    file_path = Path("SomeFile.py")
+    files = [(file_path, Obj(object_id="id1"))]
+    hook = create_hook({"id": "test"}, image_ref="python3-custom-image")
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        files,
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    DockerHook(**hook).prepare_hook()
+    assert hook["repo"]["hooks"][0]["id"] == "test-python3-custom-image"
+
+
+def test_docker_image_argument(mocker):
+    """
+    Given:
+        - An object to run pre-commit on
+
+    When:
+        - Providing the `docker_image` to `native:candidate` and `image_ref` flag for a candidate to test a custom candidate
+
+    Then:
+        - The hook will run on the provided image ref instead of the image of the native image config file
+
+    """
+    file_path = Path("SomeFile.py")
+    files = [
+        (file_path, Obj(object_id="id1", docker_image="demisto/python3:3.10.13.89009"))
+    ]
+    hook = create_hook(
+        {"id": "test"},
+        image_ref="python3-candidate-image",
+        docker_image="native:candidate",
+    )
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        files,
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    DockerHook(**hook).prepare_hook()
+    assert hook["repo"]["hooks"][0]["id"] == "test-python3-candidate-image"

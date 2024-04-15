@@ -13,7 +13,7 @@ ContentTypes = Integration
 
 class IsContainingMultipleDefaultArgsValidator(BaseValidator[ContentTypes]):
     error_code = "IN134"
-    description = "Checks whether a content item has multiple default arguments."
+    description = "Check whether a content item has multiple default arguments."
     rationale = (
         "Multiple default arguments are not supported by the platform, and could lead to unexpected behavior. "
         "For more info about command arguments, see https://xsoar.pan.dev/docs/integrations/yaml-file#command-arguments"

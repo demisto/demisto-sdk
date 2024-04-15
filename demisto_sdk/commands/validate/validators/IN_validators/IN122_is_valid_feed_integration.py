@@ -19,7 +19,7 @@ ContentTypes = Integration
 class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN122"
     description = (
-        "Validate that all existing params are in the right format for feed params."
+        "Validate that all existing parameters are in the correct format for feed parameters."
     )
     rationale = (
         "Malformed or missing parameters can lead to errors or incomplete data. "

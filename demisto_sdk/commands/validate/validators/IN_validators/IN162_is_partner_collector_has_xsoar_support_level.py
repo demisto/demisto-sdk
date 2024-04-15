@@ -19,9 +19,9 @@ ContentTypes = Integration
 
 class IsPartnerCollectorHasXsoarSupportLevelValidator(BaseValidator[ContentTypes]):
     error_code = "IN162"
-    description = "Validate that the support level header for a collector integration in a Partner pack is set to Xsoar."
+    description = "Validate that the support level header for a collector integration in a partner pack is set to XSOAR."
     rationale = (
-        "Collector integrations in Partner packs should specify {XSOAR_SUPPORT} level support "
+        "Collector integrations in partner packs should specify {XSOAR_SUPPORT} level support "
         "to accurately inform users about the support level provided by Cortex XSOAR. "
         "For more information about 'support level header' see https://xsoar.pan.dev/docs/documentation/integration-description#support-level-header-yml-metadata-key."
     )

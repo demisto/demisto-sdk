@@ -14,7 +14,7 @@ ContentTypes = IncidentField
 
 class IsValidContentFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IF101"
-    description = "Checks if the incident field is marked as content."
+    description = "Check if the incident field is marked as content."
     rationale = "Required by the platform."
     error_message = "The `content` key must be set to true."
     fix_message = "`content` field is set to true."

@@ -33,7 +33,7 @@ FIELD_TYPES = {
 
 class IsValidFieldTypeValidator(BaseValidator[ContentTypes]):
     error_code = "IF103"
-    description = "Checks if given field type is valid."
+    description = "Check if given field type is valid."
     rationale = "The types of the IncidentField are limited by the platform."
     error_message = "Type: `{file_type}` is not one of available types.\navailable types: {type_fields}."
     related_field = "type"

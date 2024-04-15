@@ -17,7 +17,7 @@ ContentTypes = Integration
 
 class IsValidHiddenValueValidator(BaseValidator[ContentTypes]):
     error_code = "IN156"
-    description = "Validate that the hidden field value contain only valid values."
+    description = "Validate that the hidden field value contains only valid values."
     rationale = (
         "Incorrect values can cause unexpected behavior or compatibility issues."
     )

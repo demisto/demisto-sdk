@@ -15,7 +15,7 @@ ContentTypes = Pack
 
 class IsVersionMatchRnValidator(BaseValidator[ContentTypes]):
     error_code = "PA101"
-    description = "Validate that the version mentioned in the Pack metadata matches the latest RN version."
+    description = "Validate that the version mentioned in the pack metadata matches the latest RN version."
     rationale = (
         "Clear documentation for each version change helps users know what's new."
         "For more information, see https://xsoar.pan.dev/docs/packs/packs-format#content-packs-versioning"

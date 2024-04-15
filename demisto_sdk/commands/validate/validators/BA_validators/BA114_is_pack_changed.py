@@ -17,7 +17,7 @@ ContentTypes = BaseContent
 class PackNameValidator(BaseValidator[ContentTypes]):
     error_code = "BA114"
     description = (
-        "Validate that we didn't move a content item from one pack to another."
+        "Validate that a content item wasn't moved from one pack to another."
     )
     rationale = "Pack of a content item should not be changed."
     error_message = "Pack for content item '{0}' and all related files were changed from '{1}' to '{2}', please undo."

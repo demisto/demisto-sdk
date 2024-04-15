@@ -17,8 +17,8 @@ class IsValidDisplayNameForNonDeprecatedIntegrationValidator(
     error_code = "IN160"
     description = "Validate that the display name for non-deprecated integration doesn't end with '(Deprecated)'."
     rationale = (
-        "This ensures accurate representation of the integration's status, avoiding confusion for users "
-        "For more about deprecation see: https://xsoar.pan.dev/docs/reference/articles/deprecation-process-and-hidden-packs#how-to-deprecate-an-integration"
+        "Avoids confusion and ensures that users are correctly informed about the integration's status. "
+        "For more about deprecation, see: https://xsoar.pan.dev/docs/reference/articles/deprecation-process-and-hidden-packs#how-to-deprecate-an-integration"
     )
     error_message = "All integrations whose display_names end with `(Deprecated)` must have `deprecated:true`.\nPlease run demisto-sdk format --deprecate -i {0}"
     related_field = "deprecated, display"

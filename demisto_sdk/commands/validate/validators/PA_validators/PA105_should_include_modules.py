@@ -16,9 +16,9 @@ ContentTypes = Pack
 class ShouldIncludeModulesValidator(BaseValidator[ContentTypes]):
     error_code = "PA105"
     description = (
-        "Validate that the pack has the marketplacev2 label if it include modules."
+        "Validate that the pack has the marketplacev2 label if it includes modules."
     )
-    rationale = "This field is only used in XSIAM."
+    rationale = "This field is only used in Cortex XSIAM."
     error_message = "Module field can be added only for XSIAM packs (marketplacev2)."
     fix_message = "Emptied the modules field."
     related_field = "modules"

@@ -53,7 +53,7 @@ class IsFromVersionSufficientIntegrationValidator(
 
 
 def is_from_version_insufficient(content_item: ContentTypes) -> str:
-    """Validate that the integration fromversion is sufficient according to it's type.
+    """Validate that the integration fromversion is sufficient according to its type.
 
     Args:
         content_item (ContentTypes): the integration to check wether it's fromversion is sufficient.

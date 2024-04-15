@@ -16,7 +16,7 @@ REQUIRED_GROUP_VALUE = 0
 
 class IsValidGroupFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IF104"
-    description = f"Checks if group field is set to {REQUIRED_GROUP_VALUE}."
+    description = f"Check if group field is set to {REQUIRED_GROUP_VALUE}."
     rationale = "Required by the platform."
     error_message = "The `group` key must be set to 0 for Incident Field"
     fix_message = f"`group` field is set to {REQUIRED_GROUP_VALUE}."

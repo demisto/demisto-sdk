@@ -15,7 +15,7 @@ ContentTypes = Integration
 class IsValidContextPathValidator(BaseValidator[ContentTypes]):
     error_code = "IN115"
     description = (
-        "Validate that the contextPath field of each output is in the right format."
+        "Validate that the contextPath field of each output is in the correct format."
     )
     rationale = (
         "The 'contextPath' in an integration's output must follow the correct format to ensure data can be used in subsequent playbook steps. "

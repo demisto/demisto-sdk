@@ -23,7 +23,7 @@ ContentTypes = Integration
 class IsValidFetchValidator(BaseValidator[ContentTypes]):
     error_code = "IN121"
     description = (
-        "Validate that fetch integration has the required params in the right format."
+        "Validate that fetch integration has the required parameters in the right format."
     )
     rationale = (
         "Malformed or missing parameters can lead to errors or incomplete data. "

@@ -17,7 +17,7 @@ ContentTypes = Integration
 
 class IsAPITokenInCredentialTypeValidator(BaseValidator[ContentTypes]):
     error_code = "IN145"
-    description = "Validate that xsoar supported integrations don't have a non-hidden type 4 params."
+    description = "Validate that XSOAR supported integrations do not have non-hidden type 4 parameters."
     rationale = (
         "Parameters that contain API tokens or credentials should be of type 'Credentials' (type 9) instead of 'Encrypted' (type 4) to allow fetching credentials from an external vault. "
         "This ensures secure and efficient handling of sensitive data. Using the 'Encrypted' type could prevent the integration from fetching the credentials from an external vault, "

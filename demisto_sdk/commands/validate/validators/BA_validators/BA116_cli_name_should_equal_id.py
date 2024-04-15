@@ -16,9 +16,9 @@ ContentTypes = Union[IncidentField, IndicatorField]
 class CliNameMatchIdValidator(BaseValidator[ContentTypes]):
     error_code = "BA116"
     description = (
-        "validate that the CLI name and the id match for incident and indicators field"
+        "Validate that the CLI name and the ID match for incident and indicator field."
     )
-    rationale = "Consistency between the CLI name (used by the platform) and the id."
+    rationale = "Consistency between the CLI name (used by the platform) and the ID."
     error_message = (
         "The cli name {0} doesn't match the standards. the cliName should be: {1}."
     )

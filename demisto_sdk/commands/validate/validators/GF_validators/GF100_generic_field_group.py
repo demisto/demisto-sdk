@@ -16,7 +16,7 @@ ContentTypes = GenericField
 class GenericFieldGroupValidator(BaseValidator[ContentTypes]):
     error_code = "GF100"
     rationale = "Required by the platform."
-    description = f"Checks if group field is set to {REQUIRED_GROUP_VALUE}."
+    description = f"Check if group field is set to {REQUIRED_GROUP_VALUE}."
     error_message = f"The `group` key must be set to {REQUIRED_GROUP_VALUE}"
     fix_message = f"set the `group` field to {REQUIRED_GROUP_VALUE}."
     related_field = "group"

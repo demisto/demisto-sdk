@@ -19,7 +19,7 @@ ContentTypes = Integration
 class ShouldHaveDisplayFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IN117"
     description = (
-        "Validate that type 17 configuration params doesn't include the display field."
+        "Validate that type 17 configuration parameters do not include the display field."
     )
     rationale = "The display name is handle by the platform."
     error_message = "The following params are expiration fields and therefore can't have a 'display' field. Make sure to remove the field for the following: {0}."

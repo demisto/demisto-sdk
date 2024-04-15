@@ -15,7 +15,7 @@ ContentTypes = Pack
 
 class IsValidUseOfUsecaseTagValidator(BaseValidator[ContentTypes]):
     error_code = "PA123"
-    description = "Validate that the pack has at least one of PB, incidents Types or Layouts if the tags section contains the 'Use Case' tag."
+    description = "Validate that the pack has at least one of the following: playbook, incident type, or layout if the tags section contains the 'Use Case' tag."
     rationale = "Correct categorization helps users find packs that suit their needs."
     error_message = "Tags section contain the 'Use Case' tag, without having any PB, incidents Types or Layouts as part of the pack."
     fix_message = "Removed the 'Use Case' tag from the tags list."

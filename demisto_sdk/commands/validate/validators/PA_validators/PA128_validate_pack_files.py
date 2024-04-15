@@ -19,7 +19,7 @@ ContentTypes = Pack
 
 class PackFilesValidator(BaseValidator[ContentTypes]):
     error_code = "PA128"
-    description = "Checks for required pack files"
+    description = "Check for required pack files."
     rationale = "These files are standard in the demisto/content repo."
     error_message = "Packs require a .secrets_ignore, .pack-ignore and README"
     fix_message = "Created required files, empty."

@@ -16,7 +16,7 @@ ContentTypes = Union[Integration, Script]
 
 class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
     error_code = "BA119"
-    description = "Validate that the python file doesn't have a copyright section with the words - BSD, MIT, Copyright, proprietary."
+    description = "Validate that the Python file doesn't have a copyright section with the words - BSD, MIT, Copyright, proprietary."
     rationale = "Content in the Cortex marketplace is licensed under the MIT license."
     error_message = "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\n{0}"
     related_field = "Python code file, Python test code file."

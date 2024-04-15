@@ -15,7 +15,7 @@ ContentTypes = Pack
 
 class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
     error_code = "PA119"
-    description = "Validate that the metadata's usecases field include valid usecases."
+    description = "Validate that the metadata's use cases field include valid use cases."
     rationale = (
         "See the list of allowed `useCases` in the platform: "
         "https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"

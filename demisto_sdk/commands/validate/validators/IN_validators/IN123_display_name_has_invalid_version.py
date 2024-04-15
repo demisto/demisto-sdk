@@ -17,7 +17,7 @@ VERSION_NAME_REGEX = re.compile(r"V([0-9]+)$", re.IGNORECASE)
 
 class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     error_code = "IN123"
-    description = "Checks if integration display name is versioned correctly, e.g.: ends with v<number>."
+    description = "Check if integration display name is versioned correctly, e.g.: ends with v<number>."
     rationale = "Integration display names should end with 'v<number>' for version clarity and consistency. "
     error_message = (
         "The display {0} for the integration is incorrect, it should be {1}."

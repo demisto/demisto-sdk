@@ -14,8 +14,8 @@ ContentTypes = Integration
 
 class IsValidParamDisplayValidator(BaseValidator[ContentTypes]):
     error_code = "IN135"
-    description = "Validate that the parameter display name starts with a capital letter and doesn't contain '_'."
-    rationale = "Parameter display names should start with a capital letter and not contain underscores for consistency and readability."
+    description = "Validate that the parameter display name starts with a capital letter and doesn't contain an underscore '_'."
+    rationale = "For consistency and readability, parameter display names should start with a capital letter and not contain underscores."
     error_message = "The following params are invalid. Integration parameters display field must start with capital letters and can't contain underscores ('_'): {0}."
     fix_message = "The following param displays has been modified: {0}."
     related_field = "display"

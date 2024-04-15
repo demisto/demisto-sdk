@@ -20,12 +20,12 @@ class IsScriptArgumentsContainIncidentWordValidatorCorePacks(
 ):
     error_code = "SC105"
     description = (
-        "Checks that script arguments do not container the word incident in core packs"
+        "Check that script arguments do not container the word incident in core packs."
     )
     rationale = (
-        "Server has a feature where the word 'incident' in the system can be replaced by any other keyword of the user's choice. "
-        "To ensure compatibility with this feature, we should make sure that command names, command arguments, "
-        "and script arguments in core pack integrations and scripts do not use the word 'incident'. "
+        "Cortex XSOAR 6.x has a feature where the word 'incident' in the system can be replaced by any other keyword of the user's choice. "
+        "To ensure compatibility with this feature, command names, command arguments, "
+        "and script arguments in core pack integrations and scripts should not use the word 'incident'. "
         "This helps maintain the flexibility of the system and prevents potential issues caused by keyword replacement."
     )
     error_message = "The following arguments {} contain the word incident, remove it"

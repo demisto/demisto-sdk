@@ -1597,24 +1597,30 @@ def get_dict_from_file(
     try:
         if path:
             if path.endswith(".yml"):
+                logger.info("path.endswith('.yml')")
                 return (
                     get_yaml(path, cache_clear=clear_cache, keep_order=keep_order),
                     "yml",
                 )
             elif path.endswith(".json"):
+                logger.info("path.endswith('.json')")
                 res = get_json(path, cache_clear=clear_cache)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
+                    logger.info(f"path.endswith('.json') - {res[0]=}")
                     return res[0], "json"
                 else:
+                    logger.info(f"path.endswith('.json') - {res=}")
                     return res, "json"
             elif path.endswith(".py"):
+                logger.info("path.endswith('.py')")
                 return {}, "py"
             elif path.endswith(".xif"):
+                logger.info("path.endswith('.xif')")
                 return {}, "xif"
     except FileNotFoundError:
         if raises_error:
             raise
-
+    logger.info("not matched for all extension above")
     return {}, None
 
 
@@ -1840,11 +1846,13 @@ def find_type(
     )
     from demisto_sdk.commands.content_graph.objects import List as List_obj
 
+    logger.info(f"{path=}, {_dict=}, {file_type=}")
     type_by_path = find_type_by_path(path)
     if type_by_path:
         return type_by_path
     try:
         if not _dict and not file_type:
+            logger.info("not _dict and not file_type")
             _dict, file_type = get_dict_from_file(
                 path, clear_cache=clear_cache, keep_order=False
             )

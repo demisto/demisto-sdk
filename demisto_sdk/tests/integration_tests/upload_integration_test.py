@@ -18,19 +18,18 @@ from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.upload.tests.uploader_test import (
     API_CLIENT,
     mock_upload_method,
 )
 from demisto_sdk.commands.upload.uploader import (
-    ERROR_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from TestSuite.test_tools import ChangeCWD, flatten_call_args, str_in_call_args_list
 
 UPLOAD_CMD = "upload"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
-
 
 yaml = YAML_Handler()
 
@@ -78,6 +77,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
         mock_upload_method(mocker, content_class)
 
     runner = CliRunner(mix_stderr=False)
+    mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     result = runner.invoke(
         main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--no-zip"]
     )
@@ -87,19 +87,80 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     assert logged[0] == "\n".join(
         (
             "[green]SUCCESSFUL UPLOADS:",
-            "╒════════════════════════════════╤═══════════════╤═══════════════╤════════════════╕",
-            "│ NAME                           │ TYPE          │ PACK NAME     │ PACK VERSION   │",
-            "╞════════════════════════════════╪═══════════════╪═══════════════╪════════════════╡",
-            "│ incidentfield-city.json        │ IncidentField │ AzureSentinel │ 1.0.0          │",
-            "├────────────────────────────────┼───────────────┼───────────────┼────────────────┤",
-            "│ FeedAzure.yml                  │ Integration   │ AzureSentinel │ 1.0.0          │",
-            "├────────────────────────────────┼───────────────┼───────────────┼────────────────┤",
-            "│ FeedAzure_test.yml             │ Playbook      │ AzureSentinel │ 1.0.0          │",
-            "├────────────────────────────────┼───────────────┼───────────────┼────────────────┤",
-            "│ just_a_test_script.yml         │ Script        │ AzureSentinel │ 1.0.0          │",
-            "├────────────────────────────────┼───────────────┼───────────────┼────────────────┤",
-            "│ script-prefixed_automation.yml │ Script        │ AzureSentinel │ 1.0.0          │",
-            "╘════════════════════════════════╧═══════════════╧═══════════════╧════════════════╛",
+            "╒═════════════════════════╤═══════════════╤═══════════════╤════════════════╕",
+            "│ NAME                    │ TYPE          │ PACK NAME     │ PACK VERSION   │",
+            "╞═════════════════════════╪═══════════════╪═══════════════╪════════════════╡",
+            "│ incidentfield-city.json │ IncidentField │ AzureSentinel │ 1.0.0          │",
+            "├─────────────────────────┼───────────────┼───────────────┼────────────────┤",
+            "│ FeedAzure.yml           │ Integration   │ AzureSentinel │ 1.0.0          │",
+            "├─────────────────────────┼───────────────┼───────────────┼────────────────┤",
+            "│ FeedAzure_test.yml      │ Playbook      │ AzureSentinel │ 1.0.0          │",
+            "╘═════════════════════════╧═══════════════╧═══════════════╧════════════════╛",
+            "[/green]",
+        )
+    )
+
+
+def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, mocker):
+    """
+    Given
+    - Content pack named ExmaplePack to upload.
+
+    When
+    - Uploading the pack.
+
+    Then
+    - Ensure upload runs successfully.
+    - Ensure success upload message is printed.
+    - Ensure Skipped message is printed.
+    """
+    import demisto_sdk.commands.content_graph.objects.content_item as content_item
+
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    pack_path = Path(
+        DEMISTO_SDK_PATH,
+        "tests/test_files/content_repo_example/Packs/ExamplePack/Integrations",
+    )
+    mocker.patch.object(
+        content_item,
+        "CONTENT_PATH",
+        Path(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example"),
+    )
+
+    for content_class in (
+        IncidentField,
+        Integration,
+        Playbook,
+        Script,
+    ):
+        mock_upload_method(mocker, content_class)
+
+    runner = CliRunner(mix_stderr=False)
+    mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
+    result = runner.invoke(
+        main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--marketplace", "xsoar"]
+    )
+    assert result.exit_code == 0
+    logged = flatten_call_args(logger_info.call_args_list)
+    assert logged[-1] == "\n".join(
+        (
+            "[yellow]SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:",
+            "╒════════════════════════════════════════╤═════════════╤═══════════════╤═════════════════════╕",
+            "│ NAME                                   │ TYPE        │ MARKETPLACE   │ FILE_MARKETPLACES   │",
+            "╞════════════════════════════════════════╪═════════════╪═══════════════╪═════════════════════╡",
+            "│ integration-sample_event_collector.yml │ Integration │ xsoar         │ ['marketplacev2']   │",
+            "╘════════════════════════════════════════╧═════════════╧═══════════════╧═════════════════════╛",
+            "[/yellow]",
+        )
+    )
+    assert logged[-2] == "\n".join(
+        (
+            "[green]SUCCESSFUL UPLOADS:",
+            "╒══════════════════════════════╤═════════════╤═════════════╤════════════════╕",
+            "│ NAME                         │ TYPE        │ PACK NAME   │ PACK VERSION   │",
+            "╞══════════════════════════════╪═════════════╪═════════════╪════════════════╡",
+            "│ integration-sample_packs.yml │ Integration │ ExamplePack │ 3.0.0          │",
+            "╘══════════════════════════════╧═════════════╧═════════════╧════════════════╛",
             "[/green]",
         )
     )
@@ -297,31 +358,6 @@ def test_integration_upload_path_does_not_exist(demisto_client_mock):
         f"Invalid value for '-i' / '--input': Path '{invalid_dir_path}' does not exist"
         in result.stderr
     )
-
-
-def test_integration_upload_script_invalid_path(demisto_client_mock, tmp_path, mocker):
-    """
-    Given
-    - Directory with invalid path - "Script" instead of "Scripts".
-
-    When
-    - Uploading the script.
-
-    Then
-    - Ensure upload fails due to invalid path.
-    - Ensure failure upload message is printed.
-    """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    path = tmp_path / "Script" / "InvalidScript"
-    path.mkdir(parents=True)
-    runner = CliRunner(mix_stderr=False)
-
-    result = runner.invoke(main, [UPLOAD_CMD, "-i", str(path), "--insecure"])
-    logged_errors = flatten_call_args(logger_error.call_args_list)
-
-    assert result.exit_code == ERROR_RETURN_CODE
-    assert str(path) in logged_errors[0]
-    assert "Nothing to upload: the" in logged_errors[1]
 
 
 def test_integration_upload_pack_invalid_connection_params(mocker):

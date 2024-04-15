@@ -11,8 +11,10 @@ yaml = YAML_Handler()
 
 class Script(Integration):
     # Im here just to have one!!!
-    def __init__(self, tmpdir: Path, name, repo, create_unified=False):
-        super().__init__(tmpdir, name, repo, create_unified)
+    def __init__(
+        self, tmpdir: Path, name, repo, create_unified=False, _type: str = "python"
+    ):
+        super().__init__(tmpdir, name, repo, create_unified, _type)
         self.prefix = "script"
 
     def create_default_script(self, name: str = "sample_script"):
@@ -59,8 +61,12 @@ class Script(Integration):
         description: Optional[str] = None,
         changelog: Optional[str] = None,
         image: Optional[bytes] = None,
+        commands_txt: Optional[str] = None,
+        test: Optional[str] = None,
     ):
-        super().build(code, yml, readme, description, changelog, image)
+        super().build(
+            code, yml, readme, description, changelog, image, commands_txt, test
+        )
         if self.create_unified:
             script_yml_path = Path(self.path).with_name(
                 Path(self.path).name.replace("integration-", "script-")

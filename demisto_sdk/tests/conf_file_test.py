@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
@@ -31,9 +31,11 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
 
     mocker.patch.object(tools, "is_external_repository", return_value=True)
     mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(Content, "git_util", return_value=GitUtil())
-    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(
+        OldValidateManager, "setup_prev_ver", return_value="origin/master"
+    )
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
     pack = repo.create_pack("tempPack")
     integration = pack.create_integration("myInt")
@@ -45,7 +47,10 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         # pre-conf file - see validate fail on docker related issue
-        runner.invoke(main, f"validate -i {integration.yml.path}")
+        runner.invoke(
+            main,
+            f"validate -i {integration.yml.path} --run-old-validate --skip-new-validate",
+        )
         assert all(
             [
                 str_in_call_args_list(
@@ -63,7 +68,10 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         # post-conf file - see validate not fail on docker related issue as we are skipping
-        runner.invoke(main, f"validate -i {integration.yml.path}")
+        runner.invoke(
+            main,
+            f"validate -i {integration.yml.path} --run-old-validate --skip-new-validate",
+        )
         assert all(
             [
                 str_in_call_args_list(

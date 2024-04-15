@@ -32,6 +32,7 @@ class CoverageReport:
             str
         ] = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json",
     ):
+        Path(report_dir).mkdir(parents=True, exist_ok=True)
         self.report_dir = report_dir
         self._cov: Optional[coverage.Coverage] = None
         self._report_str: Optional[str] = None
@@ -105,6 +106,7 @@ class CoverageReport:
             logger.debug(
                 f"coverage report {self.cov.config.data_file} file not found. "
             )
+            raise FileNotFoundError("The coverage file does not exist.")
 
         logger.info(f"\n{self.report_str}")
 
@@ -134,8 +136,8 @@ class CoverageReport:
             min_cov = self.file_min_coverage(file_name)
             if min_cov > cov_precents:
                 logger.error(
-                    f"[red]Unit-tests for '{file_name}' must reach a coverage of at least {min_cov}% "
-                    f"(currently: {cov_precents}%).[/red]"
+                    f"[red]Unit-tests for '{file_name}' must reach a coverage of at least {min_cov} percent "
+                    f"(currently: {cov_precents} percent).[/red]"
                 )
                 coverage_ok = False
         return coverage_ok

@@ -1,9 +1,11 @@
 import shutil
 import time
+from functools import lru_cache
 from multiprocessing.pool import Pool
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
+import tqdm
 from pydantic import BaseModel, DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -16,18 +18,39 @@ from demisto_sdk.commands.content_graph.parsers.repository import RepositoryPars
 USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
-def all_content_repo():
+@lru_cache
+def from_path(path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = None):
     """
     Returns a ContentDTO object with all the packs of the content repository.
+
+    This function is outside of the class for better caching.
+    The class function uses this function so the behavior is the same.
     """
-    repo_parser = RepositoryParser(CONTENT_PATH)
-    repo_parser.parse()
+    repo_parser = RepositoryParser(path)
+    packs = tuple(repo_parser.iter_packs(packs_to_parse))
+    with tqdm.tqdm(
+        total=len(packs),
+        unit="packs",
+        desc="Parsing packs",
+        position=0,
+        leave=True,
+    ) as progress_bar:
+        repo_parser.parse(packs_to_parse=packs, progress_bar=progress_bar)
     return ContentDTO.from_orm(repo_parser)
 
 
 class ContentDTO(BaseModel):
     path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
     packs: List[Pack]
+
+    @staticmethod
+    def from_path(
+        path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str, ...]] = None
+    ):
+        """
+        Returns a ContentDTO object with all the packs of the content repository.
+        """
+        return from_path(path, packs_to_parse)
 
     def dump(
         self,

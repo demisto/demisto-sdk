@@ -1,6 +1,6 @@
 name: My Rule
 id: _parsing_rule_id
-fromversion: 6.8.0
+fromversion: 6.10.0
 tags: a
 rules: >-
   [RULE:extract_hipmatch_only_fields]

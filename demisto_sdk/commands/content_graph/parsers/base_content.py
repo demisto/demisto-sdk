@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
+from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
@@ -22,6 +24,10 @@ class BaseContentParser(ABC):
     def __init__(self, path: Path) -> None:
         self.path: Path = path
 
+    @cached_property
+    def field_mapping(self):
+        return {}
+
     @property
     @abstractmethod
     def object_id(self) -> Optional[str]:
@@ -34,3 +40,14 @@ class BaseContentParser(ABC):
     @property
     def source_repo(self) -> Optional[str]:
         return CONTENT_PATH.name
+
+    @staticmethod
+    def update_marketplaces_set_with_xsoar_values(marketplaces_set: set) -> set:
+        if MarketplaceVersions.XSOAR in marketplaces_set:
+            marketplaces_set.add(MarketplaceVersions.XSOAR_SAAS)
+
+        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_set:
+            marketplaces_set.add(MarketplaceVersions.XSOAR)
+            marketplaces_set.remove(MarketplaceVersions.XSOAR_ON_PREM)
+
+        return marketplaces_set

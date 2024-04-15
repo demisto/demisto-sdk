@@ -97,6 +97,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "xdrctemplate": BaseUpdateJSON,
     "xdrctemplateyml": BaseUpdateYML,
     "layoutrule": BaseUpdateJSON,
+    "assetsmodelingrule": BaseUpdateYML,
+    "assetsmodelingruleschema": BaseUpdateJSON,
 }
 
 UNFORMATTED_FILES = [

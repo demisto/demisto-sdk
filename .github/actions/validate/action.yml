@@ -1,0 +1,54 @@
+name: 'Run The Validate Command'
+description: 'Run the validate -a command on content master'
+author: 'Demisto-SDK'
+
+inputs:
+  artifacts-path-dir:
+    required: true
+    type: string
+    description: "The path to the artifacts dir"
+
+  artifact-name:
+    required: false
+    type: string
+    description: "The name of of the artifact to upload"
+
+  validate-arguments:
+    required: false
+    type: string
+    description: "The validate command arguments to run."
+
+
+runs:
+  using: 'composite'
+  steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_test_environment
+        with:
+          python-version: '3.10'
+
+      - name: Checkout content
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: demisto/content
+          path: content
+
+      - name: Run Validate All
+        run: |
+          source $(poetry env info --path)/bin/activate
+          cp demisto_sdk/commands/validate/sdk_validation_config.toml content/
+          cd content
+          mkdir -p ${{ inputs.artifacts-path-dir }}
+          demisto-sdk validate ${{inputs.validate-arguments}}
+        shell: bash
+
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: content/${{ inputs.artifacts-path-dir }}
+          artifact-name: ${{ inputs.artifact-name }}

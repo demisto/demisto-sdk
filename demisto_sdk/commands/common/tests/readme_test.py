@@ -44,10 +44,16 @@ def test_is_file_valid(mocker, current, answer):
         "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
         return_value="PackName",
     )
+    integration_yml = f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
+        return_value=([integration_yml], integration_yml),
+    )
+
     mocker.patch.object(Path, "is_file", return_value=answer)
     mocker.patch.object(os.path, "isfile", return_value=answer)
-
     readme_validator = ReadMeValidator(current)
+    integration_yml = f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
     valid = ReadMeValidator.are_modules_installed_for_verify(
         readme_validator.content_path
     )
@@ -85,6 +91,12 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
         "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
         return_value="PackName",
     )
+    integration_yml = f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
+        return_value=([integration_yml], integration_yml),
+    )
+    mocker.patch("demisto_sdk.commands.common.tools.sleep")
     mocker.patch.object(Path, "is_file", return_value=answer)
     mocker.patch.object(os.path, "isfile", return_value=answer)
 
@@ -440,6 +452,33 @@ def test_readme_ignore(integration, readme_fake_path, readme_text):
     assert result
 
 
+@pytest.mark.parametrize(
+    "error_code_to_ignore, expected_result",
+    [({"README.md": "RM100"}, True), ({}, False)],
+)
+def test_readme_verify_no_default_ignore_test(
+    error_code_to_ignore, expected_result, integration
+):
+    """
+    Given:
+        - A readme that violates a validation and the ignore error code for the validation.
+        - A readme that violates a validation without the ignore error code for the validation.
+
+    When:
+        - When running the validate command on a readme file.
+
+    Then:
+        - Validate that when the error code is ignored, the validation passes.
+        - Validate that when the error code is not ignored, the validation fails.
+    """
+    readme_text = "This is a test readme running on version xx"
+    readme_path = "fake_path"
+    integration.readme.write(readme_text)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path, ignored_errors=error_code_to_ignore)
+    assert readme_validator.verify_no_default_sections_left() == expected_result
+
+
 @pytest.mark.parametrize("errors_found, errors_ignore, expected", ERROR_FOUND_CASES)
 def test_context_only_runs_once_when_error_exist(
     mocker, integration, errors_found, errors_ignore, expected
@@ -663,6 +702,7 @@ def test_verify_readme_image_paths(mocker):
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
     )
+    mocker.patch("demisto_sdk.commands.common.tools.sleep")
 
     with requests_mock.Mocker() as m:
         # Mock get requests

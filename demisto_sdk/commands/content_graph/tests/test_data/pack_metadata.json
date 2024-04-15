@@ -13,7 +13,9 @@
     ],
     "tags": ["TIM"],
     "useCases": ["Identity and Access Management"],
-    "keywords": [],
+    "keywords": [
+        "common"
+    ],
     "dependencies": {
         "CommonScripts": {
             "mandatory": true,
@@ -26,6 +28,7 @@
     },
     "marketplaces": [
         "xsoar",
-        "marketplacev2"
+        "marketplacev2",
+        "xsoar_on_prem"
     ]
 }

@@ -1,9 +1,12 @@
+import functools
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
+from demisto_sdk.commands.common.constants import NATIVE_IMAGE_DOCKER_NAME
 from demisto_sdk.commands.common.content_constant_paths import NATIVE_IMAGE_PATH
+from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import PydanticSingleton
 from demisto_sdk.commands.common.tools import extract_docker_image_from_text
@@ -22,6 +25,36 @@ class IgnoredContentItem(BaseModel):
 
 def _extract_native_image_version_for_server(native_image: str) -> str:
     return native_image.replace("native:", "")
+
+
+@functools.lru_cache
+def get_dev_native_image() -> Optional[str]:
+    """
+    Gets the development (dev) native image, which is the latest tag of the native image from Docker Hub.
+    Args:
+    Returns: The reference of the dev native image.
+    """
+    log_prompt = "Get Dev Native Image"
+    logger.info(f"{log_prompt} - Started")
+
+    # Get the latest tag of the native image from Docker Hub
+    latest_native_image_tag = DockerImageValidator.get_docker_image_latest_tag_request(
+        NATIVE_IMAGE_DOCKER_NAME
+    )
+
+    if latest_native_image_tag:
+        dev_native_image_full_name = (
+            f"{NATIVE_IMAGE_DOCKER_NAME}:{latest_native_image_tag}"
+        )
+        return dev_native_image_full_name
+
+    else:  # latest tag not found
+        err_msg = (
+            f"{log_prompt} - Error: Failed getting the native image latest tag from"
+            f" Docker Hub."
+        )
+        logger.error(err_msg)
+        raise RuntimeError(err_msg)
 
 
 class NativeImageConfig(PydanticSingleton, BaseModel):
@@ -66,15 +99,20 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
                     supported_docker_image
                 ].append(native_image_name)
 
-    def get_native_image_reference(self, native_image) -> Optional[str]:
+    def get_native_image_reference(
+        self, native_image, include_dev=False
+    ) -> Optional[str]:
         """
         Gets the docker reference of the given native image
 
         Args:
             native_image (str): native image (for example: 'native:8.1')
+            include_dev (bool): whether to get the image reference for native:dev when provided
 
         Returns: The docker ref
         """
+        if include_dev and native_image == "native:dev":
+            return get_dev_native_image()
         if native_image_obj := self.native_images.get(native_image):
             return native_image_obj.docker_ref
 
@@ -82,7 +120,6 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
 
 
 class ScriptIntegrationSupportedNativeImages:
-
     """
     Class that defines which native images should be supported in a script/integration by the following criteria(s):
 
@@ -96,6 +133,7 @@ class ScriptIntegrationSupportedNativeImages:
 
     NATIVE_DEV = "native:dev"
     NATIVE_CANDIDATE = "native:candidate"
+    ALL = "all"
 
     def __init__(
         self,
@@ -121,6 +159,38 @@ class ScriptIntegrationSupportedNativeImages:
             )
             or []
         )
+
+    def get_supported_native_docker_tags(
+        self, native_image_tags: set, include_candidate=False
+    ) -> set:
+        """
+
+        Args:
+            native_image_tags: a set of tags, eg. native:ga, native:maintenance, native:dev
+            include_candidate: whether to handle native:candidate as an argument
+
+        Returns:
+
+        """
+        tags = self.get_supported_native_image_versions(only_production_tags=False)
+
+        tags_to_return = {
+            final_tag
+            for named_tag, final_tag in self.native_image_config.flags_versions_mapping.items()
+            if (self.tag_in_cli_arg(named_tag, native_image_tags))
+            and (
+                named_tag != self.NATIVE_CANDIDATE or include_candidate
+            )  # exclude candidate
+            and final_tag in tags
+        }
+        native_references = {
+            self.native_image_config.get_native_image_reference(tag, include_dev=True)
+            for tag in tags_to_return
+        }
+        return {i for i in native_references if i}
+
+    def tag_in_cli_arg(self, named_tag, native_image_tags):
+        return named_tag in native_image_tags or self.ALL in native_image_tags
 
     def __get_ignored_native_images(self):
         """

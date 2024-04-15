@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from pydantic import Field
@@ -23,3 +24,12 @@ class IncidentField(IndicatorIncidentField, content_type=ContentType.INCIDENT_FI
         summary = super().summary(marketplace, incident_to_alert)
         summary["id"] = f"incident_{self.object_id}"
         return summary
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "id" in _dict:
+            if isinstance(_dict["id"], str):
+                _id = _dict["id"].lower()
+                if _id.startswith("incident"):
+                    return True
+        return False

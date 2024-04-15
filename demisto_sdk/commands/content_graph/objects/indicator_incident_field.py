@@ -1,5 +1,5 @@
 from tempfile import NamedTemporaryFile
-from typing import Set
+from typing import Optional, Set
 
 import demisto_client
 from pydantic import Field
@@ -11,7 +11,12 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class IndicatorIncidentField(ContentItem):
     cli_name: str = Field(alias="cliName")
+    object_id: str = Field(alias="id")
     field_type: str = Field(alias="type")
+    content: bool = Field(None, exclude=True)
+    system: bool = Field(None, exclude=True)
+    group: int = Field(None, exclude=True)
+    version: Optional[int] = 0
 
     def _upload(
         self,

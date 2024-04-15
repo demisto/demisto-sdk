@@ -9,10 +9,13 @@ from demisto_sdk.commands.common.logger import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-JIRA_HOST_FOR_REGEX = r"https:\/\/jira-hq.paloaltonetworks.local\/browse\/"
-JIRA_KEY_REGEX = r"([A-Z][A-Z0-9]+-[0-9]+))\s?"
-JIRA_FIXED_ISSUE_REGEX = rf"[fF]ixes:\s?.*({JIRA_HOST_FOR_REGEX}{JIRA_KEY_REGEX}"
-JIRA_RELATED_ISSUE_REGEX = rf"[rR]elates:\s?.*({JIRA_HOST_FOR_REGEX}{JIRA_KEY_REGEX}"
+JIRA_KEY_REGEX = r"[A-Z]+-\d+"  # Matches Jira issue key format, e.g. PROJECT-123
+JIRA_DOMAINS = r"https:\/\/jira-dc\.paloaltonetworks\.com|https:\/\/jira-hq\.paloaltonetworks\.local"
+
+JIRA_HOST_FOR_REGEX = rf"({JIRA_DOMAINS})\/browse\/({JIRA_KEY_REGEX})"
+
+JIRA_FIXED_ISSUE_REGEX = rf"fixe[ds]:\s?.*({JIRA_HOST_FOR_REGEX})"
+JIRA_RELATED_ISSUE_REGEX = rf"relate[ds]:\s?.*({JIRA_HOST_FOR_REGEX})"
 GENERIC_WEBHOOK_NAME = "GenericWebhook_link_pr_to_jira"
 
 
@@ -46,8 +49,8 @@ def find_fixed_issue_in_body(body_text, is_merged):
     Getting the issues url in the PR's body as part of `fixing: <issue>` format.
     Return list of issues found: [{"link": link, "id": issue_id}]
     """
-    fixed_jira_issues = re.findall(JIRA_FIXED_ISSUE_REGEX, body_text)
-    related_jira_issue = re.findall(JIRA_RELATED_ISSUE_REGEX, body_text)
+    fixed_jira_issues = re.findall(JIRA_FIXED_ISSUE_REGEX, body_text, re.IGNORECASE)
+    related_jira_issue = re.findall(JIRA_RELATED_ISSUE_REGEX, body_text, re.IGNORECASE)
     logger.info(f"Detected {related_jira_issue=}")
 
     # If a PR is not merged, we just add the pr link to all the linked issues using Gold.
@@ -55,7 +58,7 @@ def find_fixed_issue_in_body(body_text, is_merged):
     # Assuming If the PR was merged, all the related links were fetched when the PR last edited.
     fixed_issue = [
         {"link": link, "id": issue_id, "action": "fixes"}
-        for link, issue_id in fixed_jira_issues
+        for link, _, issue_id in fixed_jira_issues
     ]
     related_issue = []
 
@@ -63,7 +66,7 @@ def find_fixed_issue_in_body(body_text, is_merged):
         logger.info("Not merging, getting related issues.")
         related_issue = [
             {"link": link, "id": issue_id, "action": "relates"}
-            for link, issue_id in related_jira_issue
+            for link, _, issue_id in related_jira_issue
         ]
 
     return fixed_issue + related_issue

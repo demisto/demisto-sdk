@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Set
 
 import pytest
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -18,10 +19,17 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
+from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser,
+    InvalidContentItemException,
     NotAContentItemException,
 )
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_pack_object,
+)
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
 
@@ -252,6 +260,11 @@ class PackModelVerifier:
         }
         assert content_items == expected_content_items
 
+        for content_item in model.content_items:
+            assert content_item.in_pack == model
+            if content_item.content_type == ContentType.CLASSIFIER:
+                assert content_item.ignored_errors == ["SC100"]
+
 
 class PackRelationshipsVerifier:
     @staticmethod
@@ -315,9 +328,9 @@ class TestParsersAndModels:
             dependency_ids={
                 "Github": ContentType.INCIDENT_TYPE,
                 "DevSecOps New Git PR": ContentType.INCIDENT_TYPE,
-                "isEqualString": ContentType.SCRIPT,
-                "isNotEmpty": ContentType.SCRIPT,
-                "getField": ContentType.SCRIPT,
+                "isEqualString": ContentType.BASE_SCRIPT,
+                "isNotEmpty": ContentType.BASE_SCRIPT,
+                "getField": ContentType.BASE_SCRIPT,
             },
         )
         model = Classifier.from_orm(parser)
@@ -390,8 +403,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DetectionsCount": ContentType.SCRIPT,
-                "DetectionsData": ContentType.SCRIPT,
+                "DetectionsCount": ContentType.BASE_SCRIPT,
+                "DetectionsData": ContentType.BASE_SCRIPT,
             },
         )
         model = Dashboard.from_orm(parser)
@@ -552,7 +565,7 @@ class TestParsersAndModels:
             expected_name="CVE",
             expected_path=incident_field_path,
             expected_content_type=ContentType.INCIDENT_FIELD,
-            expected_fromversion="5.0.0",
+            expected_fromversion="5.5.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
         assert model.cli_name == "cve"
@@ -586,7 +599,7 @@ class TestParsersAndModels:
             parser.relationships,
             dependency_ids={
                 "Traps": ContentType.LAYOUT,
-                "Palo Alto Networks - Endpoint Malware Investigation": ContentType.PLAYBOOK,
+                "Palo Alto Networks - Endpoint Malware Investigation": ContentType.BASE_PLAYBOOK,
             },
         )
         model = IncidentType.from_orm(parser)
@@ -674,7 +687,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "URLReputation": ContentType.SCRIPT,
+                "URLReputation": ContentType.BASE_SCRIPT,
                 "url": ContentType.COMMAND,
                 "urlRep": ContentType.LAYOUT,
             },
@@ -775,7 +788,8 @@ class TestParsersAndModels:
         assert model.docker_image == "demisto/bs4:1.0.0.7863"
         assert not model.is_fetch
         assert not model.is_feed
-        assert model.type == "python2"
+        assert model.type == "python"
+        assert model.subtype == "python2"
 
     def test_job_parser(self, pack: Pack):
         """
@@ -797,7 +811,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "job-TestJob_playbook": ContentType.PLAYBOOK,
+                "job-TestJob_playbook": ContentType.BASE_PLAYBOOK,
             },
         )
         model = Job.from_orm(parser)
@@ -822,12 +836,23 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
+        from demisto_sdk.commands.content_graph.objects import Layout
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 
         layout = pack.create_layout("TestLayout")
         layout_path = Path(layout.path)
-        with pytest.raises(NotAContentItemException):
-            LayoutParser(layout_path, list(MarketplaceVersions))
+        parser = LayoutParser(layout_path, list(MarketplaceVersions))
+        model = Layout.from_orm(parser)
+
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="TestLayout",
+            expected_name="TestLayout",
+            expected_path=layout_path,
+            expected_content_type=ContentType.LAYOUT,
+            expected_fromversion="6.8.0",
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
 
     def test_layoutscontainer_parser(self, pack: Pack):
         """
@@ -968,7 +993,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "substringTo": ContentType.SCRIPT,
+                "substringTo": ContentType.BASE_SCRIPT,
             },
             dependency_names={
                 "DevSecOps New Git PR": ContentType.INCIDENT_TYPE,
@@ -1013,7 +1038,7 @@ class TestParsersAndModels:
             dependency_ids={
                 "description": ContentType.INCIDENT_FIELD,
                 "azuredevopsprojectname": ContentType.INCIDENT_FIELD,
-                "MapValuesTransformer": ContentType.SCRIPT,
+                "MapValuesTransformer": ContentType.BASE_SCRIPT,
             },
             dependency_names={
                 "Azure DevOps": ContentType.INCIDENT_TYPE,
@@ -1062,6 +1087,40 @@ class TestParsersAndModels:
             expected_id="duo_modeling_rule",
             expected_name="Duo Modeling Rule",
             expected_content_type=ContentType.MODELING_RULE,
+            expected_fromversion="6.10.0",
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
+
+    def test_assets_modeling_rule_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with an assets modeling rule.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify no relationships were collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
+            AssetsModelingRule,
+        )
+        from demisto_sdk.commands.content_graph.parsers.assets_modeling_rule import (
+            AssetsModelingRuleParser,
+        )
+
+        assets_modeling_rule = pack.create_assets_modeling_rule(
+            "TestAssetsModelingRule"
+        )
+        modeling_rule_path = Path(assets_modeling_rule.path)
+        parser = AssetsModelingRuleParser(modeling_rule_path, list(MarketplaceVersions))
+        assert not parser.relationships
+        model = AssetsModelingRule.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="assets-modeling-rule",
+            expected_name="Assets Modeling Rule",
+            expected_content_type=ContentType.ASSETS_MODELING_RULE,
             expected_fromversion="6.8.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -1094,7 +1153,7 @@ class TestParsersAndModels:
             expected_id="_parsing_rule_id",
             expected_name="My Rule",
             expected_content_type=ContentType.PARSING_RULE,
-            expected_fromversion="6.8.0",
+            expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
@@ -1121,7 +1180,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DeleteContext": ContentType.SCRIPT,
+                "DeleteContext": ContentType.BASE_SCRIPT,
             },
         )
         model = Playbook.from_orm(parser)
@@ -1156,8 +1215,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "ProofpointTAPMostAttackedUsers": ContentType.SCRIPT,
-                "ProofpointTapTopClickers": ContentType.SCRIPT,
+                "ProofpointTAPMostAttackedUsers": ContentType.BASE_SCRIPT,
+                "ProofpointTapTopClickers": ContentType.BASE_SCRIPT,
             },
         )
         model = Report.from_orm(parser)
@@ -1203,11 +1262,37 @@ class TestParsersAndModels:
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
-        assert model.type == "python3"
+        assert model.type == "python"
+        assert model.subtype == "python3"
+        assert model.auto_update_docker_image
         assert model.docker_image == "demisto/python3:3.8.3.8715"
         assert model.tags == ["transformer"]
         assert not model.is_test
         assert not model.skip_prepare
+
+    @pytest.mark.parametrize(
+        "raw_value, expected_value",
+        [("false", False), ("true", True), ("tRue", True), ("something", True)],
+    )
+    def test_script_parser_set_autoupdate(self, raw_value, expected_value, pack: Pack):
+        """
+        Given:
+            - A pack with a script.
+        When:
+            - setting autoUpdateDockerImage
+        Then:
+            - Verify the field is parsed correctly
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update({"autoUpdateDockerImage": raw_value})
+        script_path = Path(script.path)
+        parser = ScriptParser(script_path, list(MarketplaceVersions))
+        model = Script.from_orm(parser)
+        assert model.auto_update_docker_image is expected_value
 
     def test_test_playbook_parser(self, pack: Pack):
         """
@@ -1234,7 +1319,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DeleteContext": ContentType.SCRIPT,
+                "DeleteContext": ContentType.BASE_SCRIPT,
             },
         )
         model = TestPlaybook.from_orm(parser)
@@ -1268,7 +1353,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "NGFW Scan": ContentType.PLAYBOOK,
+                "NGFW Scan": ContentType.BASE_PLAYBOOK,
             },
         )
         model = Trigger.from_orm(parser)
@@ -1278,7 +1363,7 @@ class TestParsersAndModels:
             expected_name="NGFW Scanning Alerts",
             expected_path=trigger_path,
             expected_content_type=ContentType.TRIGGER,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
@@ -1337,7 +1422,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "FeedIntegrationErrorWidget": ContentType.SCRIPT,
+                "FeedIntegrationErrorWidget": ContentType.BASE_SCRIPT,
             },
         )
         model = Widget.from_orm(parser)
@@ -1433,7 +1518,7 @@ class TestParsersAndModels:
         ContentItemModelVerifier.run(
             model,
             expected_id="ce27311ce69c41b1b4a84c7888b34852",
-            expected_name="New Import test ",
+            expected_name="New Import test",
             expected_path=xsiam_dashboard_path,
             expected_content_type=ContentType.XSIAM_DASHBOARD,
             expected_fromversion="8.1.0",
@@ -1483,7 +1568,7 @@ class TestParsersAndModels:
         assert pre_process_rule.name == "Drop"
         assert pre_process_rule.object_id == "preprocessrule-Drop-id"
 
-    def test_pack_parser(self, repo: Repo):
+    def test_pack_parser(self, mocker, repo: Repo):
         """
         Given:
             - A pack with several content items.
@@ -1495,15 +1580,20 @@ class TestParsersAndModels:
             - Verify the pack is modeled correctly.
         """
         from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
-        from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+
+        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
 
         pack = repo.create_pack("HelloWorld")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
-        pack.create_classifier("sample", load_json("classifier.json"))
         pack.create_incident_field("sample", load_json("incident_field.json"))
         pack.create_incident_type("sample", load_json("incident_type.json"))
         pack.create_indicator_field("sample", load_json("indicator_field.json"))
         pack.create_indicator_type("sample", load_json("indicator_type.json"))
+
+        pack.create_classifier("sample", load_json("classifier.json"))
+        with open(f"{pack.path}/.pack-ignore", "w") as f:
+            f.write("[file:classifier-sample.json]\nignore=SC100")
+
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
         expected_content_items = {
@@ -1537,7 +1627,7 @@ class TestParsersAndModels:
             expected_tags=["TIM"],
             expected_categories=["Utilities"],
             expected_use_cases=["Identity And Access Management"],
-            expected_keywords=[],
+            expected_keywords=["common"],
             expected_marketplaces=[
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.XSOAR,
@@ -1547,7 +1637,7 @@ class TestParsersAndModels:
             expected_deprecated=False,
         )
 
-    def test_repo_parser(self, repo: Repo):
+    def test_repo_parser(self, mocker, repo: Repo):
         """
         Given:
             - A repository with two packs.
@@ -1565,6 +1655,7 @@ class TestParsersAndModels:
         pack1.pack_metadata.write_json(load_json("pack_metadata.json"))
         pack2 = repo.create_pack("sample2")
         pack2.pack_metadata.write_json(load_json("pack_metadata.json"))
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
         parser = RepositoryParser(Path(repo.path))
         parser.parse()
         model = ContentDTO.from_orm(parser)
@@ -1614,6 +1705,1054 @@ class TestParsersAndModels:
         assert model.python_version == expected_python_version
         # make sure that only after we called directly to the lazy property of the model, its loaded into the model
         assert "python_version" in str(model)
+
+
+class TestFindContentType:
+    def test_integration_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An integration YAML file outside the content repository path.
+        When:
+            - Running from_path() on the integration YAML file.
+        Then:
+            - Verify that the returned Parser is IntegrationParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import IntegrationParser
+
+        integration_python_str = "integration.py"
+        integration_yaml_str = "integration.yml"
+        integration_yaml_path = git_repo.path / Path(integration_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/integration.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=integration_yaml_str, file_content=content)
+        git_repo.make_file(file_name=integration_python_str, file_content="Test")
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(integration_yaml_path)), IntegrationParser
+        )
+
+    def test_integration_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An integration YAML file outside the content repository path.
+        When:
+            - Running by_schema() on the integration YAML file path, mocking the integration match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import Integration
+
+        integration_python_str = "integration.py"
+        integration_yaml_str = "integration.yml"
+        integration_yaml_path = git_repo.path / Path(integration_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/integration.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=integration_yaml_str, file_content=content)
+        git_repo.make_file(file_name=integration_python_str, file_content="Test")
+        mocker.patch.object(Integration, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(integration_yaml_path))
+
+    def test_integration_outside_content_path_on_python_path(self, git_repo):
+        """
+        Given:
+            - An integration Python and YAML files outside the content repository path.
+        When:
+            - Running from_path() on the integration Python file.
+        Then:
+            - Ensure InvaliadContentItemException is raised.
+        """
+        integration_python_str = "integration.py"
+        integration_yaml_str = "integration.yml"
+        integration_python_path = git_repo.path / Path(integration_python_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/integration.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=integration_yaml_str, file_content=content)
+        git_repo.make_file(file_name=integration_python_str, file_content="Test")
+        with pytest.raises(InvalidContentItemException):
+            ContentItemParser.from_path(Path(integration_python_path))
+
+    def test_integration_outside_content_path_missing_python_file(self, git_repo):
+        """
+        Given:
+            - An integration YAML file outside the content repository path.
+        When:
+            - Running from_path() on the integration YAML file without existing Python file.
+        Then:
+            - Ensure InvaliadContentItemException is raised.
+        """
+        integration_yaml_str = "integration.yml"
+        integration_yaml_path = git_repo.path / Path(integration_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/integration.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=integration_yaml_str, file_content=content)
+        with pytest.raises(InvalidContentItemException):
+            ContentItemParser.from_path(Path(integration_yaml_path))
+
+    def test_script_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An script YAML file outside the content repository path.
+        When:
+            - Running from_path() on the script YAML file.
+        Then:
+            - Verify that the returned Parser is ScriptParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import ScriptParser
+
+        script_python_str = "script.py"
+        script_yaml_str = "script.yml"
+        script_yaml_path = git_repo.path / Path(script_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/script.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=script_yaml_str, file_content=content)
+        git_repo.make_file(file_name=script_python_str, file_content="Test")
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(script_yaml_path)), ScriptParser
+        )
+
+    def test_script_outside_content_path_on_python_path(self, git_repo):
+        """
+        Given:
+            - An script Python and YAML files outside the content repository path.
+        When:
+            - Running from_path() on the script Python file.
+        Then:
+            - Ensure InvaliadContentItemException is raised.
+        """
+        script_python_str = "script.py"
+        script_yaml_str = "script.yml"
+        script_python_path = git_repo.path / Path(script_python_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/script.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=script_yaml_str, file_content=content)
+        git_repo.make_file(file_name=script_python_str, file_content="Test")
+        with pytest.raises(InvalidContentItemException):
+            ContentItemParser.from_path(Path(script_python_path))
+
+    def test_script_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An script YAML file outside the content repository path.
+        When:
+            - Running by_schema() on the script YAML file path, mocking the script match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import Script
+
+        script_python_str = "script.py"
+        script_yaml_str = "script.yml"
+        script_yaml_path = git_repo.path / Path(script_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/script.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=script_yaml_str, file_content=content)
+        git_repo.make_file(file_name=script_python_str, file_content="Test")
+        mocker.patch.object(Script, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(script_yaml_path))
+
+    def test_script_outside_content_path_missing_python_file(self, git_repo):
+        """
+        Given:
+            - An script YAML file outside the content repository path.
+        When:
+            - Running from_path() on the script YAML file without existing Python file.
+        Then:
+            - Ensure InvaliadContentItemException is raised.
+        """
+        script_yaml_str = "script.yml"
+        script_yaml_path = git_repo.path / Path(script_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/script.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=script_yaml_str, file_content=content)
+        with pytest.raises(InvalidContentItemException):
+            ContentItemParser.from_path(Path(script_yaml_path))
+
+    def test_playbook_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An playbook YAML file outside the content repository path.
+        When:
+            - Running from_path() on the playbook YAML file.
+        Then:
+            - Verify that the returned Parser is PlaybookParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import PlaybookParser
+
+        playbook_yaml_str = "playbook.yml"
+        playbook_yaml_path = git_repo.path / Path(playbook_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/playbook.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=playbook_yaml_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(playbook_yaml_path)), PlaybookParser
+        )
+
+    def test_playbook_outside_content_path_on_read_me_path(self, git_repo):
+        """
+        Given:
+            - An playbook ReadMe and YAML file outside the content repository path.
+        When:
+            - Running from_path() on the playbook ReadMe file.
+        Then:
+            - Ensure InvaliadContentItemException is raised.
+        """
+        playbook_read_me_str = "playbook.py"
+        playbook_yaml_str = "playbook.yml"
+        playbook_read_me_path = git_repo.path / Path(playbook_read_me_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/playbook.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=playbook_yaml_str, file_content=content)
+        git_repo.make_file(file_name=playbook_read_me_str, file_content="Test")
+        with pytest.raises(InvalidContentItemException):
+            ContentItemParser.from_path(Path(playbook_read_me_path))
+
+    def test_playbook_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An playbook YAML file outside the content repository path.
+        When:
+            - Running by_schema() on the playbook YAML file path, mocking the playbook match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import Playbook
+
+        playbook_read_me_str = "playbook.py"
+        playbook_yaml_str = "playbook.yml"
+        playbook_yaml_path = git_repo.path / Path(playbook_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/playbook.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=playbook_yaml_str, file_content=content)
+        git_repo.make_file(file_name=playbook_read_me_str, file_content="Test")
+        mocker.patch.object(Playbook, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(playbook_yaml_path))
+
+    def test_correlation_rule_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An correlation rule YAML file outside the content repository path.
+        When:
+            - Running from_path() on the correlation rule YAML file.
+        Then:
+            - Verify that the returned Parser is CorrelationRuleParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import CorrelationRuleParser
+
+        correlationrule_yml_str = "correlation_rule.yml"
+        correlationrule_yml_path = git_repo.path / Path(correlationrule_yml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/correlation_rule.yml",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=correlationrule_yml_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(correlationrule_yml_path)),
+            CorrelationRuleParser,
+        )
+
+    def test_correlation_rule_match_fails_on_other_content_types(
+        self, mocker, git_repo
+    ):
+        """
+        Given:
+            - An correlation rule YAML file outside the content repository path.
+        When:
+            - Running by_schema() on the correlation rule YAML file path, mocking the correlation rule match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import CorrelationRule
+
+        correlationrule_yml_str = "correlation_rule.yml"
+        correlationrule_yml_path = git_repo.path / Path(correlationrule_yml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/correlation_rule.yml",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=correlationrule_yml_str, file_content=content)
+        mocker.patch.object(CorrelationRule, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(correlationrule_yml_path))
+
+    def test_classifier_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An classifier JSON file outside the content repository path.
+        When:
+            - Running from_path() on the classifier JSON file.
+        Then:
+            - Verify that the returned Parser is ClassifierParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import ClassifierParser
+
+        classifier_json_str = "classifier.json"
+        classifier_json_path = git_repo.path / Path(classifier_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/classifier.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=classifier_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(classifier_json_path)), ClassifierParser
+        )
+
+    def test_classifier_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An classifier JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the classifier JSON file path, mocking the classifier match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import Classifier
+
+        classifier_json_str = "classifier.json"
+        classifier_json_path = git_repo.path / Path(classifier_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/classifier.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=classifier_json_str, file_content=content)
+
+        mocker.patch.object(Classifier, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(classifier_json_path))
+
+    def test_dashboard_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An dashboard JSON file outside the content repository path.
+        When:
+            - Running from_path() on the dashboard JSON file.
+        Then:
+            - Verify that the returned Parser is DashboardParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import DashboardParser
+
+        dashboard_json_str = "dashboard.json"
+        dashboard_json_path = git_repo.path / Path(dashboard_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/dashboard.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=dashboard_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(dashboard_json_path)), DashboardParser
+        )
+
+    def test_dashboard_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An dashboard JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the dashboard JSON file path, mocking the dashboard match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import Dashboard
+
+        dashboard_json_str = "dashboard.json"
+        dashboard_json_path = git_repo.path / Path(dashboard_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/dashboard.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=dashboard_json_str, file_content=content)
+
+        mocker.patch.object(Dashboard, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(dashboard_json_path))
+
+    def test_generic_definition_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An generic definition JSON file outside the content repository path.
+        When:
+            - Running from_path() on the generic definition JSON file.
+        Then:
+            - Verify that the returned Parser is GenericDefinitionParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import GenericDefinitionParser
+
+        generic_definition_json_str = "generic_definition.json"
+        generic_definition_json_path = git_repo.path / Path(generic_definition_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/generic_definition.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=generic_definition_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(generic_definition_json_path)),
+            GenericDefinitionParser,
+        )
+
+    def test_generic_definition_match_fails_on_other_content_types(
+        self, mocker, git_repo
+    ):
+        """
+        Given:
+            - An generic definition JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the generic definition JSON file path, mocking the generic definition match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import GenericDefinition
+
+        generic_definition_json_str = "generic_definition.json"
+        generic_definition_json_path = git_repo.path / Path(generic_definition_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/generic_definition.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=generic_definition_json_str, file_content=content)
+
+        mocker.patch.object(GenericDefinition, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(generic_definition_json_path))
+
+    def test_generic_field_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An generic field JSON file outside the content repository path.
+        When:
+            - Running from_path() on the generic field JSON file.
+        Then:
+            - Verify that the returned Parser is GenericFieldParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import GenericFieldParser
+
+        generic_field_json_str = "generic_field.json"
+        generic_field_json_path = git_repo.path / Path(generic_field_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/generic_field.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=generic_field_json_path, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(generic_field_json_path)),
+            GenericFieldParser,
+        )
+
+    def test_generic_field_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An generic field JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the generic field JSON file path, mocking the generic field match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import GenericField
+
+        generic_field_json_str = "generic_field.json"
+        generic_field_json_path = git_repo.path / Path(generic_field_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/generic_field.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=generic_field_json_str, file_content=content)
+
+        mocker.patch.object(GenericField, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(generic_field_json_path))
+
+    def test_generic_module_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An generic module JSON file outside the content repository path.
+        When:
+            - Running from_path() on the generic module JSON file.
+        Then:
+            - Verify that the returned Parser is GenericModuleParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import GenericModuleParser
+
+        generic_module_json_str = "generic_module.json"
+        generic_module_json_path = git_repo.path / Path(generic_module_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/generic_module.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=generic_module_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(generic_module_json_path)),
+            GenericModuleParser,
+        )
+
+    def test_generic_module_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An generic module JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the generic module JSON file path, mocking the generic module match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import GenericModule
+
+        generic_module_json_str = "generic_module.json"
+        generic_module_json_path = git_repo.path / Path(generic_module_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/generic_module.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=generic_module_json_str, file_content=content)
+
+        mocker.patch.object(GenericModule, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(generic_module_json_path))
+
+    def test_generic_type_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An generic type JSON file outside the content repository path.
+        When:
+            - Running from_path() on the generic type JSON file.
+        Then:
+            - Verify that the returned Parser is GenericModuleParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import GenericTypeParser
+
+        generic_type_json_str = "generic_type.json"
+        generic_type_json_path = git_repo.path / Path(generic_type_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/generic_type.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=generic_type_json_path, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(generic_type_json_path)),
+            GenericTypeParser,
+        )
+
+    def test_generic_type_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An generic type JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the generic type JSON file path, mocking the generic type match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import GenericType
+
+        generic_type_json_str = "generic_type.json"
+        generic_type_json_path = git_repo.path / Path(generic_type_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/generic_type.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=generic_type_json_path, file_content=content)
+
+        mocker.patch.object(GenericType, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(generic_type_json_path))
+
+    def test_incident_field_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An incident field JSON file outside the content repository path.
+        When:
+            - Running from_path() on the incident field JSON file.
+        Then:
+            - Verify that the returned Parser is IncidentFieldParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import IncidentFieldParser
+
+        incident_field_json_str = "incident_field.json"
+        incident_field_json_path = git_repo.path / Path(incident_field_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/incident_field.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=incident_field_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(incident_field_json_path)),
+            IncidentFieldParser,
+        )
+
+    def test_incident_field_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An incident field JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the incident field JSON file path, mocking the incident field match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import IncidentField
+
+        incident_field_json_str = "incident_field.json"
+        incident_field_json_path = git_repo.path / Path(incident_field_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/incident_field.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=incident_field_json_str, file_content=content)
+
+        mocker.patch.object(IncidentField, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(incident_field_json_path))
+
+    def test_incident_type_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An incident type JSON file outside the content repository path.
+        When:
+            - Running from_path() on the incident type JSON file.
+        Then:
+            - Verify that the returned Parser is IncidentTypeParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import IncidentTypeParser
+
+        incident_type_json_str = "incident_type.json"
+        incident_type_json_path = git_repo.path / Path(incident_type_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/incident_type.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=incident_type_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(incident_type_json_path)),
+            IncidentTypeParser,
+        )
+
+    def test_incident_type_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An incident type JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the incident type JSON file path, mocking the incident type match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import IncidentType
+
+        incident_type_json_str = "incident_type.json"
+        incident_type_json_path = git_repo.path / Path(incident_type_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/incident_type.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=incident_type_json_str, file_content=content)
+
+        mocker.patch.object(IncidentType, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(incident_type_json_path))
+
+    def test_indicator_field_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An indicator field JSON file outside the content repository path.
+        When:
+            - Running from_path() on the indicator field JSON file.
+        Then:
+            - Verify that the returned Parser is IndicatorFieldParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import IndicatorFieldParser
+
+        indicator_field_json_str = "indicator_field.json"
+        indicator_field_json_path = git_repo.path / Path(indicator_field_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/indicator_field.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=indicator_field_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(indicator_field_json_path)),
+            IndicatorFieldParser,
+        )
+
+    def test_indicator_field_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An indicator field JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the indicator field JSON file path, mocking the indicator field match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import IndicatorField
+
+        indicator_field_json_str = "indicator_field.json"
+        indicator_field_json_path = git_repo.path / Path(indicator_field_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/indicator_field.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=indicator_field_json_str, file_content=content)
+
+        mocker.patch.object(IndicatorField, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(indicator_field_json_path))
+
+    def test_indicator_type_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An indicator type JSON file outside the content repository path.
+        When:
+            - Running from_path() on the indicator type JSON file.
+        Then:
+            - Verify that the returned Parser is IndicatorTypeParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import IndicatorTypeParser
+
+        indicator_type_json_str = "indicator_type.json"
+        indicator_type_json_path = git_repo.path / Path(indicator_type_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/indicator_type.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=indicator_type_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(indicator_type_json_path)),
+            IndicatorTypeParser,
+        )
+
+    def test_indicator_type_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An indicator type JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the indicator type JSON file path, mocking the indicator type match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import IndicatorType
+
+        indicator_type_json_str = "indicator_type.json"
+        indicator_type_json_path = git_repo.path / Path(indicator_type_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/indicator_type.json",
+            "r",
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=indicator_type_json_str, file_content=content)
+
+        mocker.patch.object(IndicatorType, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(indicator_type_json_path))
+
+    def test_layout_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An layout JSON file outside the content repository path.
+        When:
+            - Running from_path() on the layout JSON file.
+        Then:
+            - Verify that the returned Parser is LayoutParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import LayoutParser
+
+        layout_json_str = "layout.json"
+        layout_json_path = git_repo.path / Path(layout_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/layout.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=layout_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(layout_json_path)), LayoutParser
+        )
+
+    def test_layout_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An layout JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the layout JSON file path, mocking the layout match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import Layout
+
+        layout_json_str = "layout.json"
+        layout_json_path = git_repo.path / Path(layout_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/layout.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=layout_json_str, file_content=content)
+
+        mocker.patch.object(Layout, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(layout_json_path))
+
+    def test_layout_rule_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An layout rule JSON file outside the content repository path.
+        When:
+            - Running from_path() on the layout rule JSON file.
+        Then:
+            - Verify that the returned Parser is LayoutRuleParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import LayoutRuleParser
+
+        layout_rule_json_str = "layout_rule.json"
+        layout_rule_json_path = git_repo.path / Path(layout_rule_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/layout_rule.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=layout_rule_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(layout_rule_json_path)), LayoutRuleParser
+        )
+
+    def test_layout_rule_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An layout rule JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the layout rule JSON file path, mocking the layout rule match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import LayoutRule
+
+        layout_rule_json_str = "layout_rule.json"
+        layout_rule_json_path = git_repo.path / Path(layout_rule_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/layout_rule.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=layout_rule_json_str, file_content=content)
+
+        mocker.patch.object(LayoutRule, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(layout_rule_json_path))
+
+    def test_mapper_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An mapper JSON file outside the content repository path.
+        When:
+            - Running from_path() on the mapper rule JSON file.
+        Then:
+            - Verify that the returned Parser is MapperParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import MapperParser
+
+        mapper_json_str = "mapper.json"
+        mapper_json_path = git_repo.path / Path(mapper_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/mapper.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=mapper_json_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(mapper_json_path)), MapperParser
+        )
+
+    def test_mapper_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An mapper JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the mapper JSON file path, mocking the mapper match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import Mapper
+
+        mapper_json_str = "mapper.json"
+        mapper_json_path = git_repo.path / Path(mapper_json_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/mapper.json", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=mapper_json_str, file_content=content)
+
+        mocker.patch.object(Mapper, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(mapper_json_path))
+
+    def test_modeling_rule_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An modeling rule YAML file outside the content repository path.
+        When:
+            - Running from_path() on the modeling rule YAML file.
+        Then:
+            - Verify that the returned Parser is ModelingRuleParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import ModelingRuleParser
+
+        modeling_rule_yaml_str = "modeling_rule.yml"
+        modeling_rule_yaml_path = git_repo.path / Path(modeling_rule_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/modeling_rule.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=modeling_rule_yaml_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(modeling_rule_yaml_path)),
+            ModelingRuleParser,
+        )
+
+    def test_modeling_rule_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An modeling rule JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the modeling rule JSON file path, mocking the modeling rule match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import ModelingRule
+
+        modeling_rule_yaml_str = "modeling_rule.yml"
+        modeling_rule_yaml_path = git_repo.path / Path(modeling_rule_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/modeling_rule.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=modeling_rule_yaml_str, file_content=content)
+
+        mocker.patch.object(ModelingRule, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(modeling_rule_yaml_path))
+
+    def test_parsing_rule_outside_content_path(self, git_repo):
+        """
+        Given:
+            - An parsing rule YAML file outside the content repository path.
+        When:
+            - Running from_path() on the parsing rule YAML file.
+        Then:
+            - Verify that the returned Parser is ParsingRuleParser.
+        """
+        from demisto_sdk.commands.content_graph.parsers import ParsingRuleParser
+
+        parsing_rule_yaml_str = "parsing_rule.yml"
+        parsing_rule_yaml_path = git_repo.path / Path(parsing_rule_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/parsing_rule.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=parsing_rule_yaml_str, file_content=content)
+
+        assert isinstance(
+            ContentItemParser.from_path(Path(parsing_rule_yaml_path)), ParsingRuleParser
+        )
+
+    def test_parsing_rule_match_fails_on_other_content_types(self, mocker, git_repo):
+        """
+        Given:
+            - An parsing rule JSON file outside the content repository path.
+        When:
+            - Running by_schema() on the parsing rule JSON file path, mocking the parsing rule match method to False.
+        Then:
+            - Ensure other match() content types methods return False.
+            - Ensure ValueError is raised.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects import ParsingRule
+
+        parsing_rule_yaml_str = "parsing_rule.yml"
+        parsing_rule_yaml_path = git_repo.path / Path(parsing_rule_yaml_str)
+        with open(
+            "demisto_sdk/commands/content_graph/tests/test_data/parsing_rule.yml", "r"
+        ) as f:
+            content = f.read()
+        git_repo.make_file(file_name=parsing_rule_yaml_str, file_content=content)
+        mocker.patch.object(ParsingRule, "match", return_value=False)
+        with pytest.raises(ValueError):
+            ContentType.by_schema(Path(parsing_rule_yaml_path))
 
 
 @pytest.mark.parametrize(
@@ -1666,16 +2805,19 @@ def test_fix_layout_incident_to_alert(
             {MarketplaceVersions.XSOAR},
             {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_SAAS},
         ),
+        (
+            {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_ON_PREM},
+            {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_SAAS},
+        ),
         ({MarketplaceVersions.MarketplaceV2}, {MarketplaceVersions.MarketplaceV2}),
         ({MarketplaceVersions.XPANSE}, {MarketplaceVersions.XPANSE}),
         (
             {MarketplaceVersions.XSOAR_ON_PREM},
-            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR},
+            {MarketplaceVersions.XSOAR},
         ),
         (
             {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR_SAAS},
             {
-                MarketplaceVersions.XSOAR_ON_PREM,
                 MarketplaceVersions.XSOAR_SAAS,
                 MarketplaceVersions.XSOAR,
             },
@@ -1683,7 +2825,6 @@ def test_fix_layout_incident_to_alert(
         (
             {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.MarketplaceV2},
             {
-                MarketplaceVersions.XSOAR_ON_PREM,
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.XSOAR,
             },
@@ -1713,11 +2854,46 @@ def test_updated_marketplaces_set(marketplace, expected_market_place_set):
         - remains empty
 
     """
-    from demisto_sdk.commands.content_graph.parsers.content_item import (
-        ContentItemParser,
-    )
-
     assert (
         expected_market_place_set
-        == ContentItemParser.update_marketplaces_set_with_xsoar_values(marketplace)
+        == BaseContentParser.update_marketplaces_set_with_xsoar_values(marketplace)
     )
+
+
+def test_argument_object__default_description():
+    # validate that the 'description' attribute of the Argument object is set to an empty string by default
+    from demisto_sdk.commands.content_graph.objects.integration_script import Argument
+
+    arg = Argument(name="test")
+    assert arg.description == ""
+
+
+def test_output_object__default_description():
+    # validate that the 'description' attribute of the Output object is set to an empty string by default
+    from demisto_sdk.commands.content_graph.objects.integration import Output
+
+    output = Output()
+    assert output.description == ""
+
+
+def test_parameter_object__default_type():
+    # validate that the 'type' attribute of the Parameter object is set to 0 by default
+    from demisto_sdk.commands.content_graph.objects.integration import Parameter
+
+    param = Parameter(name="test")
+    assert param.type == 0
+
+
+def test_get_related_text_file():
+    """
+    Given
+    - a pack content object with a readme file.
+
+    When
+    - calling the readme attribute.
+
+    Then
+    - Ensure that the readme content was returned.
+    """
+    pack = create_pack_object(readme_text="This is a test")
+    assert pack.readme.file_content == "This is a test"

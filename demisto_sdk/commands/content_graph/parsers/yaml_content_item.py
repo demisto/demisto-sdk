@@ -1,13 +1,14 @@
 import re
+from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
+from demisto_sdk.commands.common.tools import get_value, get_yaml
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
@@ -18,10 +19,19 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 class YAMLContentItemParser(ContentItemParser):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
-        self.yml_data: Dict[str, Any] = self.get_yaml()
+        super().__init__(path, pack_marketplaces, git_sha)
+        self.path = (
+            self.get_path_with_suffix(".yml")
+            if not git_sha
+            else self.path / f"{self.path.name}.yml"
+            if not self.path.suffix == ".yml"
+            else self.path
+        )  # If git_sha is given then we know we're running on the old_content_object copy and we can assume that the file_path is either the actual item path or the path to the item's dir.
 
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(
@@ -31,9 +41,27 @@ class YAMLContentItemParser(ContentItemParser):
         if self.should_skip_parsing():
             raise NotAContentItemException
 
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {
+                "name": "name",
+                "deprecated": "deprecated",
+                "description": "description",
+                "fromversion": "fromversion",
+                "toversion": "toversion",
+                "version": "version",
+            }
+        )
+        return super().field_mapping
+
+    @property
+    def object_id(self) -> Optional[str]:
+        return get_value(self.yml_data, self.field_mapping.get("object_id", ""))
+
     @property
     def name(self) -> Optional[str]:
-        return self.yml_data.get("name")
+        return get_value(self.yml_data, self.field_mapping.get("name", ""))
 
     @property
     def display_name(self) -> Optional[str]:
@@ -41,11 +69,13 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def deprecated(self) -> bool:
-        return self.yml_data.get("deprecated", False)
+        return get_value(self.yml_data, self.field_mapping.get("deprecated", ""), False)
 
     @property
     def description(self) -> Optional[str]:
-        description = self.yml_data.get("description") or ""
+        description = get_value(
+            self.yml_data, self.field_mapping.get("description", ""), ""
+        )
         description = description.replace("\\ ", " ")  # removes unwanted backslashes
         description = description.replace("\\\n", " ")  # removes unwanted backslashes
         description = re.sub(
@@ -55,11 +85,21 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def fromversion(self) -> str:
-        return self.yml_data.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION
+        return get_value(
+            self.yml_data,
+            self.field_mapping.get("fromversion", ""),
+            DEFAULT_CONTENT_ITEM_FROM_VERSION,
+        )
 
     @property
     def toversion(self) -> str:
-        return self.yml_data.get("toversion") or DEFAULT_CONTENT_ITEM_TO_VERSION
+        return (
+            get_value(
+                self.yml_data,
+                self.field_mapping.get("toversion", ""),
+            )
+            or DEFAULT_CONTENT_ITEM_TO_VERSION
+        )
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
@@ -78,13 +118,10 @@ class YAMLContentItemParser(ContentItemParser):
                     target_type=ContentType.TEST_PLAYBOOK,
                 )
 
-    def get_yaml(self) -> Dict[str, Union[str, List[str]]]:
-        if not self.path.is_dir():
-            yaml_path = self.path.as_posix()
-        else:
-            _, yaml_path = get_yml_paths_in_dir(self.path.as_posix())
-        if not yaml_path:
-            raise NotAContentItemException
+    @cached_property
+    def yml_data(self) -> dict:
+        return get_yaml(str(self.path), git_sha=self.git_sha)
 
-        self.path = Path(yaml_path)
-        return get_yaml(self.path.as_posix(), keep_order=False)
+    @property
+    def version(self) -> int:
+        return get_value(self.yml_data, self.field_mapping.get("version", ""), 0)

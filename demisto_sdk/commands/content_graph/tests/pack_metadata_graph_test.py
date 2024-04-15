@@ -24,14 +24,15 @@ from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.fixture(autouse=True)
-def setup_method(mocker, repo: Repo):
+def setup_method(mocker, tmp_path_factory, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
     bc.CONTENT_PATH = Path(repo.path)
+    mocker.patch.object(
+        neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
+    )
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
-    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -47,7 +48,7 @@ def repository(mocker):
     return repository
 
 
-def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
+def test_pack_metadata_xsoar(git_repo: Repo, tmp_path: Path, mocker):
     """
     Given:
         - A repository with a pack TestPack, containing multiple content items.
@@ -64,7 +65,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     )
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", return_value=set())
 
-    pack = repo.create_pack("TestPack")
+    pack = git_repo.create_pack("TestPack")
     pack.pack_metadata.write_json(load_json("pack_metadata.json"))
 
     integration = pack.create_integration()
@@ -104,12 +105,11 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     test_playbook = pack.create_test_playbook()
     test_playbook.create_default_test_playbook(name="TestTestPlaybook")
     test_playbook.yml.update({"fromversion": "6.2.0"})
+    with ChangeCWD(git_repo.path):
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, output_path=tmp_path)
+            content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
 
-    with ContentGraphInterface() as interface:
-        create_content_graph(interface, output_path=tmp_path)
-        content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
-
-    with ChangeCWD(repo.path):
         content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
 
     assert (tmp_path / "TestPack" / "metadata.json").exists()
@@ -117,6 +117,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
 
     assert metadata.get("id") == "TestPack"
     assert metadata.get("name") == "HelloWorld"
+    assert metadata.get("display_name") == "HelloWorld"
     assert (
         metadata.get("description")
         == "This is the Hello World integration for getting started."
@@ -146,7 +147,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     )
     assert metadata.get("categories") == ["Utilities"]
     assert metadata.get("useCases") == ["Identity And Access Management"]
-    assert metadata.get("keywords") == []
+    assert metadata.get("keywords") == ["common"]
     assert metadata.get("searchRank") == 0
     assert metadata.get("excludedDependencies") == []
     assert metadata.get("videos") == []
@@ -175,7 +176,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     assert metadata_playbook.get("name") == "MyPlaybook"
 
 
-def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
+def test_pack_metadata_marketplacev2(git_repo: Repo, tmp_path: Path, mocker):
     """
     Given:
         - A repository with a pack TestPack, containing multiple content items.
@@ -191,7 +192,7 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
     )
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", return_value=set())
 
-    pack = repo.create_pack("TestPack")
+    pack = git_repo.create_pack("TestPack")
     pack.pack_metadata.write_json(load_json("pack_metadata2.json"))
 
     integration = pack.create_integration()
@@ -234,12 +235,12 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
             "fromversion": "6.10.0",
         },
     )
+    with ChangeCWD(git_repo.path):
 
-    with ContentGraphInterface() as interface:
-        create_content_graph(interface, output_path=tmp_path)
-        content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, output_path=tmp_path)
+            content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
 
-    with ChangeCWD(repo.path):
         content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
 
     assert (tmp_path / "TestPack" / "metadata.json").exists()
@@ -247,6 +248,7 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
 
     assert metadata.get("id") == "TestPack"
     assert metadata.get("name") == "HelloWorld2"
+    assert metadata.get("display_name") == "HelloWorld2"
     assert (
         metadata.get("description")
         == "This is the Hello World 2 integration for getting started."

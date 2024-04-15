@@ -1,8 +1,9 @@
 import shutil
 from collections import defaultdict
+from functools import cached_property
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -13,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
     ImagesFolderNames,
     MarketplaceVersions,
@@ -21,6 +23,8 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
+    get_file,
+    get_relative_path,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -45,6 +49,13 @@ from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
 )
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    AuthorImageRelatedFile,
+    PackIgnoreRelatedFile,
+    ReadmeRelatedFile,
+    RNRelatedFile,
+    SecretsIgnoreRelatedFile,
+)
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
     replace_markdown_urls_and_upload_to_artifacts,
 )
@@ -113,9 +124,20 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
+    ignored_errors_dict: dict = Field({}, exclude=True)
+    pack_readme: str = Field("", exclude=True)
+    latest_rn_version: str = Field("", exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
+    pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
+
+    @classmethod
+    def from_orm(cls, obj) -> "Pack":
+        pack = super().from_orm(obj)
+        for content_item in pack.content_items:
+            content_item.pack = pack
+        return pack
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -134,12 +156,43 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.object_id
 
     @property
+    def ignored_errors(self) -> List[str]:
+        if ignored_errors := self.get_ignored_errors(PACK_METADATA_FILENAME):
+            return ignored_errors
+        file_path = get_relative_path(self.path, CONTENT_PATH)
+        return self.get_ignored_errors(file_path / PACK_METADATA_FILENAME)
+
+    def ignored_errors_related_files(self, file_path: Path) -> List[str]:
+        if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
+            return ignored_errors
+        file_path = get_relative_path(file_path, CONTENT_PATH)
+        return self.get_ignored_errors(file_path)
+
+    def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
+        try:
+            return (
+                list(
+                    self.ignored_errors_dict.get(  # type: ignore
+                        f"file:{path}", []
+                    ).items()
+                )[0][1].split(",")
+                or []
+            )
+        except:  # noqa: E722
+            logger.debug(f"Failed to extract ignored errors list from path {path}")
+            return []
+
+    @property
     def pack_name(self) -> str:
         return self.name
 
     @property
     def pack_version(self) -> Optional[Version]:
         return Version(self.current_version) if self.current_version else None
+
+    @property
+    def support_level(self):
+        return self.support
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
@@ -151,11 +204,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             List[RelationshipData]:
                 RelationshipData:
                     relationship_type: RelationshipType
-                    source: BaseContent
-                    target: BaseContent
+                    source: BaseNode
+                    target: BaseNode
 
                     # this is the attribute we're interested in when querying
-                    content_item: BaseContent
+                    content_item: BaseNode
 
                     # Whether the relationship between items is direct or not
                     is_direct: bool
@@ -336,7 +389,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
         destination_zip_dir: Optional[Path] = None,
-        zip: bool = False,
+        zip: bool = True,
         **kwargs,
     ):
         if destination_zip_dir is None:
@@ -496,4 +549,31 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return Nodes(
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
+        )
+
+    def save(self):
+        file_path = self.path / PACK_METADATA_FILENAME
+        data = get_file(file_path)
+        super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
+
+    @cached_property
+    def readme(self) -> ReadmeRelatedFile:
+        return ReadmeRelatedFile(self.path, is_pack_readme=True, git_sha=self.git_sha)
+
+    @cached_property
+    def author_image_file(self) -> AuthorImageRelatedFile:
+        return AuthorImageRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def pack_ignore(self) -> PackIgnoreRelatedFile:
+        return PackIgnoreRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def secrets_ignore(self) -> SecretsIgnoreRelatedFile:
+        return SecretsIgnoreRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def release_note(self) -> RNRelatedFile:
+        return RNRelatedFile(
+            self.path, git_sha=self.git_sha, latest_rn=self.latest_rn_version
         )

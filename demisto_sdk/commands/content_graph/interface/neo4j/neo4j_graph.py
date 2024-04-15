@@ -55,6 +55,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
     create_relationships,
+    delete_all_graph_relationships,
     get_sources_by_path,
     get_targets_by_path,
 )
@@ -663,6 +664,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def clean_graph(self):
         with self.driver.session() as session:
+            session.execute_write(delete_all_graph_relationships)
             session.execute_write(delete_all_graph_nodes)
         self._id_to_obj = {}
 

@@ -42,7 +42,7 @@ USER_DEMITSO = "demisto"
 
 def with_native_tags(
     tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]],
-    docker_image_flag: str,
+    docker_flags: Set[str],
     docker_image: Optional[str],
 ) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
     """
@@ -54,38 +54,26 @@ def with_native_tags(
     Returns: The updated dict with the native images.
 
     """
-    docker_flags = set(docker_image_flag.split(","))
-    is_target = False
-    if docker_flags == DockerImageFlagOption.NATIVE_TARGET:
-        # we need to set to native dev since we want to filter by integrations/scripts supports the native dev
-        docker_flags = {DockerImageFlagOption.NATIVE_DEV.value}
-        is_target = True
 
     all_tags_to_files = defaultdict(list)
     native_image_config = NativeImageConfig.get_instance()
 
     for image, scripts in tags_to_files.items():
         for file, obj in scripts:
-
             supported_native_images = ScriptIntegrationSupportedNativeImages(
                 _id=obj.object_id,
                 native_image_config=native_image_config,
-                docker_image=image,
+                docker_image=docker_image or image,
             ).get_supported_native_docker_tags(docker_flags)
-            if is_target:
-                assert (
-                    docker_image
-                ), "The `native:target` option has to be used with `docker_image`"
-                all_tags_to_files[docker_image].append((file, obj))
-                continue
 
             for native_image in supported_native_images:
-                all_tags_to_files[native_image].append((file, obj))
+                all_tags_to_files[docker_image or native_image].append((file, obj))
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,
             } & docker_flags:
-                all_tags_to_files[image].append((file, obj))
+                all_tags_to_files[docker_image or image].append((file, obj))
+
     return all_tags_to_files
 
 
@@ -103,17 +91,15 @@ def docker_tag_to_runfiles(
     Returns: A dict of image to List of files(Tuple[path, obj]) including native images
 
     """
+    docker_flags = set(docker_image_flag.split(","))
     tags_to_files = defaultdict(list)
     for file, obj in files_to_run:
-        if not obj or docker_image_flag == DockerImageFlagOption.NATIVE_TARGET:
-            # if we use the `native:target` flag, we want to test only native integrations/scripts
+        if not obj:
             continue
-        if docker_image:
-            tags_to_files[docker_image].append((file, obj))
         else:
             for docker_image in obj.docker_images:
                 tags_to_files[docker_image].append((file, obj))
-    return with_native_tags(tags_to_files, docker_image_flag, docker_image)
+    return with_native_tags(tags_to_files, docker_flags, docker_image)
 
 
 @lru_cache()
@@ -287,6 +273,7 @@ class DockerHook(Hook):
         tag_to_files_objs = docker_tag_to_runfiles(
             filtered_files_with_objects,
             self.context.docker_flag or self._get_property("docker_image", "from-yml"),
+            self.context.docker_image,
         )
         end_time = time.time()
         logger.debug(
@@ -306,7 +293,9 @@ class DockerHook(Hook):
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
-        logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
+        logger.debug(
+            f'collected images: {" ".join(filter(None, tag_to_files_objs.keys()))}'
+        )
         docker_hook_ids = []
         with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
             results = []

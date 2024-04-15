@@ -255,9 +255,12 @@ def get_list_properties(tx: Transaction) -> List[str]:
 
 
 def delete_all_graph_nodes(tx: Transaction) -> None:
-    query = """// Deletes all graph nodes and relationships
-MATCH (n)
-DETACH DELETE n"""
+    query = """// Deletes all graph nodes
+        MATCH (n)
+        CALL { WITH n
+        DETACH DELETE n
+        };
+    """
     run_query(tx, query)
 
 

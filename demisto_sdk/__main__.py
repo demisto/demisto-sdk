@@ -3690,6 +3690,9 @@ def pre_commit(
     docker_image: Optional[str] = typer.Option(
         None, "--docker-image", help="The docker image to run docker hooks with."
     ),
+    docker_flag: Optional[str] = typer.Option(
+        None, "--docker-flag", help="The docker flag to run docker hooks with."
+    ),
     run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
     console_log_threshold: str = typer.Option(
         "INFO",
@@ -3737,6 +3740,7 @@ def pre_commit(
         show_diff_on_failure,
         run_docker_hooks=docker,
         docker_image=docker_image,
+        docker_flag=docker_flag,
         dry_run=dry_run,
         run_hook=run_hook,
         pre_commit_template_path=pre_commit_template_path,

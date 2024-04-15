@@ -82,8 +82,8 @@ def create_hook(
             all_files,
             mode,
             {},
-            docker_image=docker_image,
-            docker_flag=docker_flag,
+            image_ref=docker_image,
+            docker_image=docker_flag,
         ),
     }
     repo_and_hook["hook"] = repo_and_hook["repo"]["hooks"][0]

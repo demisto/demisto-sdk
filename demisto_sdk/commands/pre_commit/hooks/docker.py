@@ -272,8 +272,8 @@ class DockerHook(Hook):
         }
         tag_to_files_objs = docker_tag_to_runfiles(
             filtered_files_with_objects,
-            self.context.docker_flag or self._get_property("docker_image", "from-yml"),
-            self.context.docker_image,
+            self.context.docker_image or self._get_property("docker_image", "from-yml"),
+            self.context.image_ref,
         )
         end_time = time.time()
         logger.debug(

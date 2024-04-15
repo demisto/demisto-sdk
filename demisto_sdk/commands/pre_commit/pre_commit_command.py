@@ -475,8 +475,8 @@ def pre_commit_manager(
     show_diff_on_failure: bool = False,
     dry_run: bool = False,
     run_docker_hooks: bool = True,
+    image_ref: Optional[str] = None,
     docker_image: Optional[str] = None,
-    docker_flag: Optional[str] = None,
     run_hook: Optional[str] = None,
     pre_commit_template_path: Optional[Path] = None,
 ) -> int:
@@ -495,6 +495,8 @@ def pre_commit_manager(
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
         dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
         run_docker_hooks (bool, optional): Whether to run docker based hooks or not.
+        image_ref: (str, optional): Override the image from YAML / native config file with this image reference.
+        docker_image: (str, optional): Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.
         pre_commit_template_path (Path, optional): Path to the template pre-commit file.
 
     Returns:
@@ -541,8 +543,8 @@ def pre_commit_manager(
         run_hook,
         skipped_hooks,
         run_docker_hooks,
+        image_ref,
         docker_image,
-        docker_flag,
         pre_commit_template_path=pre_commit_template_path or PRECOMMIT_TEMPLATE_PATH,
     )
     return PreCommitRunner.prepare_and_run(

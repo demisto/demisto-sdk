@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where tests were not collected in VSCode after **setup-env**
-  type: fix
-pr_number: 4219

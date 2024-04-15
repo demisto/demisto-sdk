@@ -1,4 +1,0 @@
-changes:
-- description: Added a default `.pre-commit-config_template.yaml` file that will be used by **pre-commit** command in case such does not exist in the target repository.
-  type: fix
-pr_number: 4194

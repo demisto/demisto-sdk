@@ -50,7 +50,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_context import (
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
-INTEGRATIONS_BATCH = 300
+INTEGRATIONS_BATCH = 100
 
 
 class PreCommitRunner:

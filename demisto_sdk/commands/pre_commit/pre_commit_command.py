@@ -42,6 +42,7 @@ from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
 from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_context import (
+    DEFAULT_PRE_COMMIT_TEMPLATE_PATH,
     PRECOMMIT_CONFIG_MAIN_PATH,
     PRECOMMIT_TEMPLATE_PATH,
     PreCommitContext,
@@ -50,7 +51,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_context import (
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
-INTEGRATIONS_BATCH = 300
+INTEGRATIONS_BATCH = 100
 
 
 class PreCommitRunner:
@@ -475,6 +476,8 @@ def pre_commit_manager(
     show_diff_on_failure: bool = False,
     dry_run: bool = False,
     run_docker_hooks: bool = True,
+    image_ref: Optional[str] = None,
+    docker_image: Optional[str] = None,
     run_hook: Optional[str] = None,
     pre_commit_template_path: Optional[Path] = None,
 ) -> int:
@@ -493,6 +496,8 @@ def pre_commit_manager(
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
         dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
         run_docker_hooks (bool, optional): Whether to run docker based hooks or not.
+        image_ref: (str, optional): Override the image from YAML / native config file with this image reference.
+        docker_image: (str, optional): Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.
         pre_commit_template_path (Path, optional): Path to the template pre-commit file.
 
     Returns:
@@ -531,6 +536,20 @@ def pre_commit_manager(
     if secrets and "secrets" in skipped_hooks:
         skipped_hooks.remove("secrets")
 
+    if not pre_commit_template_path:
+        if PRECOMMIT_TEMPLATE_PATH.exists():
+            pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
+        else:
+            pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
+
+    if pre_commit_template_path and not pre_commit_template_path.exists():
+        logger.error(
+            f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
+        )
+        return 1
+
+    logger.info(f"Running pre-commit using template {pre_commit_template_path}")
+
     pre_commit_context = PreCommitContext(
         list(input_files) if input_files else None,
         all_files,
@@ -539,7 +558,9 @@ def pre_commit_manager(
         run_hook,
         skipped_hooks,
         run_docker_hooks,
-        pre_commit_template_path=pre_commit_template_path or PRECOMMIT_TEMPLATE_PATH,
+        image_ref,
+        docker_image,
+        pre_commit_template_path=pre_commit_template_path,
     )
     return PreCommitRunner.prepare_and_run(
         pre_commit_context,

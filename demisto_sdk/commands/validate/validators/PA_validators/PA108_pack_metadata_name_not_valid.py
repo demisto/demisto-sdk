@@ -11,9 +11,7 @@ ContentTypes = Pack
 
 class PackMetadataNameValidator(BaseValidator[ContentTypes]):
     error_code = "PA108"
-    description = (
-        "Validate that the pack name field exists and is different from the default name."
-    )
+    description = "Validate that the pack name field exists and is different from the default name."
     rationale = "A unique and meaningful pack name is crucial for identifying the pack and its contents."
     error_message = "Pack metadata name field is either missing or invalid. Please fill valid pack name."
     related_field = "pack name"

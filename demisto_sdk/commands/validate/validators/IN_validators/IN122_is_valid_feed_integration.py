@@ -18,9 +18,7 @@ ContentTypes = Integration
 
 class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN122"
-    description = (
-        "Validate that all existing parameters are in the correct format for feed parameters."
-    )
+    description = "Validate that all existing parameters are in the correct format for feed parameters."
     rationale = (
         "Malformed or missing parameters can lead to errors or incomplete data. "
         "For more details, see https://xsoar.pan.dev/docs/integrations/feeds"

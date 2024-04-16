@@ -17,9 +17,7 @@ ContentTypes = Integration
 
 class IsValidUrlDefaultValueValidator(BaseValidator[ContentTypes]):
     error_code = "IN153"
-    description = (
-        "Validate that that the URL default parameter starts with https rather than http."
-    )
+    description = "Validate that that the URL default parameter starts with https rather than http."
     rationale = "URL parameters should default to 'https' for secure communication, as 'http' could expose sensitive data."
     error_message = "The following params have an invalid default value. If possible, replace the http prefix with https: {0}."
     fix_message = (

@@ -1,4 +1,0 @@
-changes:
-- description: Removed the `update-additional-dependencies` script and pre-commit hook.
-  type: internal
-pr_number: 4225

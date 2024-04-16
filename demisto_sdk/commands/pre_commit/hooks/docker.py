@@ -40,6 +40,8 @@ from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 NO_SPLIT = None
 USER_DEMITSO = "demisto"
 
+IMAGES_BATCH = 100
+
 
 @lru_cache()
 def get_docker_python_path() -> str:
@@ -299,7 +301,9 @@ class DockerHook(Hook):
         docker_hook_ids = []
         with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
             results: List[List[Dict]] = []
-            for chunk in more_itertools.chunked(sorted(tag_to_files_objs.items()), 10):
+            for chunk in more_itertools.chunked(
+                sorted(tag_to_files_objs.items()), IMAGES_BATCH
+            ):
                 results.extend(
                     executor.map(
                         lambda item: self.process_image(

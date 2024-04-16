@@ -370,7 +370,7 @@ def group_by_language(
 
     language_to_files: Dict[str, Set] = defaultdict(set)
     integrations_scripts: Set[IntegrationScript] = set()
-    logger.debug("Pre-Commit: Starting parsing all integrations and scripts")
+    logger.debug("Pre-Commit: Starting to parse all integrations and scripts")
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
@@ -390,7 +390,7 @@ def group_by_language(
             continue
 
     if api_modules:
-        logger.debug("Pre-Commit: Starting handling API Modules")
+        logger.debug("Pre-Commit: Starting to handle API Modules")
         with ContentGraphInterface() as graph:
             update_content_graph(graph)
             api_modules: List[Script] = graph.search(  # type: ignore[no-redef]

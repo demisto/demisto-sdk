@@ -44,6 +44,7 @@ from demisto_sdk.commands.common.logger import (
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import (
+    convert_path_to_str,
     find_type,
     get_last_remote_release_version,
     get_release_note_entries,
@@ -3686,6 +3687,16 @@ def pre_commit(
     docker: bool = typer.Option(
         True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
     ),
+    image_ref: Optional[str] = typer.Option(
+        None,
+        "--image-ref",
+        help="The docker image reference to run docker hooks with. Overrides the docker image from YAML or native image config.",
+    ),
+    docker_image: Optional[str] = typer.Option(
+        None,
+        "--docker-image",
+        help="Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.",
+    ),
     run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
     console_log_threshold: str = typer.Option(
         "INFO",
@@ -3732,6 +3743,8 @@ def pre_commit(
         verbose,
         show_diff_on_failure,
         run_docker_hooks=docker,
+        image_ref=image_ref,
+        docker_image=docker_image,
         dry_run=dry_run,
         run_hook=run_hook,
         pre_commit_template_path=pre_commit_template_path,
@@ -3807,6 +3820,50 @@ def xsoar_linter(
 
 
 main.add_command(typer.main.get_command(xsoar_linter_app), "xsoar-lint")
+
+
+# ====================== export ====================== #
+
+export_app = typer.Typer(name="dump-api")
+
+
+@export_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def dump_api(
+    ctx: typer.Context,
+    output_path: Path = typer.Option(
+        CONTENT_PATH,
+        "-o",
+        "--output",
+        help="The output directory or JSON file to save the demisto-sdk api.",
+    ),
+):
+    """
+    This commands dumps the `demisto-sdk` API to a file.
+    It is used to view the help of all commands in one file.
+
+    Args:
+        ctx (typer.Context):
+        output_path (Path, optional): The output directory or JSON file to save the demisto-sdk api.
+    """
+    output_json: dict = {}
+    for command_name, command in main.commands.items():
+        if isinstance(command, click.Group):
+            output_json[command_name] = {}
+            for sub_command_name, sub_command in command.commands.items():
+                output_json[command_name][sub_command_name] = sub_command.to_info_dict(
+                    ctx
+                )
+        else:
+            output_json[command_name] = command.to_info_dict(ctx)
+    convert_path_to_str(output_json)
+    if output_path.is_dir():
+        output_path = output_path / "demisto-sdk-api.json"
+    output_path.write_text(json.dumps(output_json, indent=4))
+
+
+main.add_command(typer.main.get_command(export_app), "dump-api")
 
 
 if __name__ == "__main__":

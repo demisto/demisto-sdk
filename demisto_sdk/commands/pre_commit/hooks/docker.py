@@ -10,6 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import more_itertools
 from docker.errors import DockerException
 from packaging.version import Version
 
@@ -297,21 +298,17 @@ class DockerHook(Hook):
         )
         docker_hook_ids = []
         with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-            results = []
-            for image, files_objs in sorted(
-                tag_to_files_objs.items(), key=lambda item: item[0]
-            ):
-                results.append(
-                    executor.submit(
-                        self.process_image,
-                        image,
-                        files_objs,
-                        config_arg,
-                        run_isolated,
+            results: List[List[Dict]] = []
+            for chunk in more_itertools.chunked(sorted(tag_to_files_objs.items()), 10):
+                results.extend(
+                    executor.map(
+                        lambda image, files_with_obj: self.process_image(
+                            image, files_with_obj, config_arg, run_isolated
+                        ),
+                        chunk,
                     )
                 )
-        for result in results:
-            hooks = result.result()
+        for hooks in results:
             self.hooks.extend(hooks)
             docker_hook_ids.extend([hook["id"] for hook in hooks])
 

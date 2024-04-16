@@ -1,4 +1,8 @@
 # Changelog
+## 1.29.2
+* Added the `--docker_image` and `--image_ref` flags to **pre-commit* to override values from configuration files. [#4223](https://github.com/demisto/demisto-sdk/pull/4223)
+* Removed the `update-additional-dependencies` script and pre-commit hook. [#4225](https://github.com/demisto/demisto-sdk/pull/4225)
+
 ## 1.29.1
 * Fix metadata (i.e. description) for XSOAR6 marketplace. [#4208](https://github.com/demisto/demisto-sdk/pull/4208)
 * Fixed an issue where `xsoar_on_prem` tag, was not removed as part of the parsing process. [#4218](https://github.com/demisto/demisto-sdk/pull/4218)

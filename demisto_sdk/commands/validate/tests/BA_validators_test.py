@@ -1234,45 +1234,45 @@ def test_IsEntityNameContainExcludedWordValidator(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_error_message",
     [
-        pytest.param([create_integration_object()], 0, "", id="valid"),
+        pytest.param([create_integration_object()], 0, "", id="valid: integration"),
         pytest.param(
             [create_integration_object(readme_content="test-module")],
             1,
             "Found internal terms in a customer-facing documentation file: test-module",
-            id="invalid: 'test-module'"
+            id="invalid: integration readme"
         ),
         pytest.param(
             [create_integration_object(description_content="test-module")],
             1,
             "Found internal terms in a customer-facing documentation file: test-module",
-            id="invalid content items"
+            id="invalid: integration description"
         ),
-        pytest.param([create_script_object()], 0, "", id="valid content items"),
+        pytest.param([create_script_object()], 0, "", id="valid: script"),
         pytest.param(
             [create_script_object(readme_content='test-module ')],
             1,
             "Found internal terms in a customer-facing documentation file: test-module",
-            id="invalid content items",
+            id="invalid: script readme",
         ),
-        pytest.param([create_playbook_object()], 0, "", id="valid content items"),
+        pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
         pytest.param(
             [create_playbook_object(readme_content='test-module ')],
             1,
             "Found internal terms in a customer-facing documentation file: test-module",
-            id="invalid content items",
+            id="invalid: playbook readme",
         ),
-        pytest.param([create_pack_object()], 0, "", id="valid content items"),
+        pytest.param([create_pack_object()], 0, "", id="valid: pack"),
         pytest.param(
             [create_pack_object(readme_text='test-module ')],
             1,
             "Found internal terms in a customer-facing documentation file: test-module",
-            id="invalid content items",
+            id="invalid: pack readme",
         ),
         pytest.param(
-            [create_pack_object(release_note_content='test-module')],
+            [create_pack_object(['version'],['1.0.1'],release_note_content='test-module')],
             1,
             "Found internal terms in a customer-facing documentation file: test-module",
-            id="invalid content items",
+            id="invalid: pack release note",
         ),
     ]
 )

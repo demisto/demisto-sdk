@@ -59,7 +59,7 @@ class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
         if isinstance(content_item, Integration):
             return [content_item.readme, content_item.description_file]
         elif isinstance(content_item, Pack):
-            return [content_item.release_note, content_item.readme]
+            return [content_item.readme, content_item.release_note]
         elif isinstance(content_item, (Playbook, Script)):
             return [content_item.readme,]
         raise ValueError(f"unexpected content item type {content_item.content_type}")

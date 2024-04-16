@@ -250,7 +250,6 @@ def build_pylint_command(
     command = "pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
-    # Prints only errors
     # disable xsoar linter messages
     disable = ["bad-option-value"]
 

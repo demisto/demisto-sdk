@@ -233,7 +233,6 @@ jobs:
       - name: Checkout content
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           repository: demisto/content
           path: content
 
@@ -470,7 +469,6 @@ jobs:
         with:
           repository: demisto/content
           path: content
-          fetch-depth: 0
 
       - name: Run lint on python and powershell files
         run: |

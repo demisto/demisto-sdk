@@ -57,9 +57,6 @@ class RelationshipType(StrEnum):
     USES_COMMAND_OR_SCRIPT = "USES_COMMAND_OR_SCRIPT"
     USES_PLAYBOOK = "USES_PLAYBOOK"
 
-    def __str__(self) -> str:
-        return self.value
-
 
 class ContentType(StrEnum):
     BASE_CONTENT = "BaseContent"
@@ -102,9 +99,6 @@ class ContentType(StrEnum):
     XDRC_TEMPLATE = "XDRCTemplate"
     LAYOUT_RULE = "LayoutRule"
     ASSETS_MODELING_RULE = "AssetsModelingRule"
-
-    def __str__(self) -> str:
-        return self.value
 
     @property
     def labels(self) -> List[str]:

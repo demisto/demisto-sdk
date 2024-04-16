@@ -302,8 +302,8 @@ class DockerHook(Hook):
             for chunk in more_itertools.chunked(sorted(tag_to_files_objs.items()), 10):
                 results.extend(
                     executor.map(
-                        lambda image, files_with_obj: self.process_image(
-                            image, files_with_obj, config_arg, run_isolated
+                        lambda item: self.process_image(
+                            item[0], item[1], config_arg, run_isolated
                         ),
                         chunk,
                     )

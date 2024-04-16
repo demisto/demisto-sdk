@@ -558,6 +558,28 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
     )
 
 
+def test_are_fromversion_valid(mocker):
+    """
+    Given
+    - A content repo
+    When
+    - running the vaidation "are_fromversion_relationships_paths_valid"
+    Then
+    - Validate the existance of invalid from_version relationships
+    """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    with GraphValidator(update_graph=False) as graph_validator:
+        create_content_graph(graph_validator.graph)
+        is_valid = graph_validator.validate_fromversion_fields()
+
+    assert not is_valid
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "Content item 'SamplePlaybook' whose from_version is '6.5.0' uses the content"
+        " items: 'SamplePlaybook2' whose from_version is higher",
+    )
+
+
 @pytest.mark.parametrize(
     "include_optional, is_valid",
     [

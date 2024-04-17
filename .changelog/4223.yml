@@ -1,4 +1,0 @@
-changes:
-- description: Added the `--docker_image` and `--image_ref` flags to **pre-commit* to override values from configuration files.
-  type: feature
-pr_number: 4223

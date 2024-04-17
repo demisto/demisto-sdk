@@ -4089,7 +4089,7 @@ def find_correct_key(data: dict, keys: List[str]) -> str:
 
 def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
     """Updating a data object with given value in the given key.
-    If a list of keys is given, will find the right path to update based on which path acctually has a value.
+    If a list of keys is given, will find the right path to update based on which path actually has a value.
     Args:
         data (dict): the data object to update.
         keys (Union[str,List[str]]): the path or list of possible paths to update.

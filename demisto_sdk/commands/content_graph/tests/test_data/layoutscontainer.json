@@ -178,7 +178,7 @@
                         "name": "Linked Incidents",
                         "readOnly": true,
                         "static": false,
-                        "type": "linkedIncidents",
+                        "type": "dynamic",
                         "w": 1,
                         "x": 1,
                         "y": 4
@@ -200,7 +200,7 @@
                         "name": "Child Incidents",
                         "readOnly": true,
                         "static": false,
-                        "type": "childInv",
+                        "type": "dynamic",
                         "w": 1,
                         "x": 0,
                         "y": 4
@@ -289,17 +289,17 @@
             {
                 "id": "evidenceBoard",
                 "name": "Evidence Board",
-                "type": "evidenceBoard"
+                "type": "dynamic"
             },
             {
                 "id": "relatedIncidents",
                 "name": "Related Incidents",
-                "type": "relatedIncidents"
+                "type": "dynamic"
             },
             {
                 "id": "canvas",
                 "name": "Canvas",
-                "type": "canvas"
+                "type": "dynamic"
             }
         ]
     },

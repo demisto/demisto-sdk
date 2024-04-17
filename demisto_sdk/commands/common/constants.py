@@ -107,6 +107,8 @@ WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
 LAYOUT_RULES_DIR = "LayoutRules"
 ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
+CASE_LAYOUT_RULES_DIR = "CaseLayoutRules"
+CASE_FIELDS_DIR = "CaseFields"
 
 # NAMES OF ENTITIES
 
@@ -155,6 +157,8 @@ LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 EVENT_COLLECTOR = "EventCollector"
 ASSETS_MODELING_RULE = "assetsmodelingrule"
+CASE_LAYOUT_RULE = "caselayoutrule"
+CASE_FIELD = "casefield"
 
 # Marketplaces
 
@@ -246,6 +250,8 @@ class FileType(str, Enum):
     ASSETS_MODELING_RULE_SCHEMA = "assetsmodelingruleschema"
     ASSETS_MODELING_RULE = "assetsmodelingrule"
     ASSETS_MODELING_RULE_XIF = "assetsmodelingrulexif"
+    CASE_LAYOUT_RULE = "caselayoutrule"
+    CASE_FIELD = "xsiamncidentfield"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -284,6 +290,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.XDRC_TEMPLATE: "XDRC Templates",
     FileType.LAYOUT_RULE: "Layout Rules",
     FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
+    FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
+    FileType.CASE_FIELD: "Case Fields",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -326,6 +334,9 @@ ENTITY_TYPE_TO_DIR = {
     FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
     FileType.ASSETS_MODELING_RULE.value: ASSETS_MODELING_RULES_DIR,
+    FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR,
+    FileType.CASE_FIELD.value: CASE_FIELDS_DIR,
+
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -338,6 +349,10 @@ SIEM_ONLY_ENTITIES = [
     FileType.XDRC_TEMPLATE.value,
     FileType.LAYOUT_RULE.value,
     FileType.ASSETS_MODELING_RULE,
+    FileType.CASE_LAYOUT_RULE.value,
+    FileType.CASE_FIELD.value,
+
+
 ]
 
 CONTENT_FILE_ENDINGS = ["py", "yml", "png", "json", "md"]
@@ -384,6 +399,8 @@ CONTENT_ENTITIES_DIRS = [
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
     ASSETS_MODELING_RULES_DIR,
+    CASE_LAYOUT_RULES_DIR,
+    CASE_FIELDS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -914,6 +931,8 @@ ASSETS_MODELING_RULE_NAME_SUFFIX = "Asset Collection"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
 ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
+# TODO
+
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
@@ -1400,6 +1419,7 @@ SCHEMA_TO_REGEX = {
     "trigger": [TRIGGER_JSON_REGEX],
     "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
     LAYOUT_RULE: JSON_ALL_LAYOUT_RULES_REGEXES,
+
 }
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
 
@@ -1573,6 +1593,8 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.LAYOUT_RULE: "6.10.0",
     FileType.XSIAM_DASHBOARD: "6.10.0",
     FileType.ASSETS_MODELING_RULE: "6.2.1",
+    FileType.CASE_LAYOUT_RULE: "8.7.0",
+    FileType.CASE_FIELD: "8.7.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1862,6 +1884,9 @@ class ContentItems(Enum):
     XDRC_TEMPLATE = "xdrctemplate"
     LAYOUT_RULES = "layoutrule"
     ASSETS_MODELING_RULES = "assetsmodelingrule"
+    CASE_LAYOUT_RULES = "caselayoutrule"
+    CASE_FIELDS = "casefield"
+
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1890,6 +1915,8 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     XDRC_TEMPLATE_DIR,
     LAYOUT_RULES_DIR,
     ASSETS_MODELING_RULES_DIR,
+    CASE_LAYOUT_RULES_DIR,
+    CASE_FIELDS_DIR,
 }
 
 

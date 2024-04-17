@@ -39,11 +39,15 @@ from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
+from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
+from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
 
 class PackContentItems(BaseModel):
     # The alias is for marshalling purposes
+    case_field: List[CaseField] = Field([], alias=ContentType.CASE_FIELD.value)
+    case_layout_rule: List[CaseLayoutRule] = Field([], alias=ContentType.CASE_LAYOUT_RULE.value)
     classifier: List[Classifier] = Field([], alias=ContentType.CLASSIFIER.value)
     correlation_rule: List[CorrelationRule] = Field(
         [], alias=ContentType.CORRELATION_RULE.value

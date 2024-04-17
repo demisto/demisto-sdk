@@ -1,0 +1,180 @@
+type: map
+mapping:
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
+  id:
+    type: str
+    required: true
+  version:
+    type: number
+  modified:
+    type: str
+  name:
+    type: str
+    required: true
+  name_x2:
+    type: str
+  prettyName:
+    type: str
+    required: false
+  ownerOnly:
+    type: bool
+  placeholder:
+    type: str
+  description:
+    type: str
+  fieldCalcScript:
+    type: str
+  cliName:
+    type: str
+    required: true
+  cliName_x2:
+    type: str
+  type:
+    type: str
+    required: true
+  closeForm:
+    type: bool
+  editForm:
+    type: bool
+  required:
+    type: bool
+  script:
+    type: str
+  neverSetAsRequired:
+    type: bool
+  isReadOnly:
+    type: bool
+  selectValues:
+    type: any
+  validationRegex:
+    type: str
+  useAsKpi:
+    type: bool
+  locked:
+    type: bool
+  system:
+    type: bool
+  runScriptAfterIncUpdate:
+    type: bool
+  group:
+    type: number
+  hidden:
+    type: bool
+  columns:
+    type: any
+  defaultRows:
+    type: any
+  threshold:
+    type: number
+  sla:
+    type: number
+  caseInsensitive:
+    type: bool
+  breachScript:
+    type: str
+  associatedTypes:
+    type: any
+  systemAssociatedTypes:
+    type: any
+  associatedToAll:
+    type: bool
+  unmapped:
+    type: bool
+  content:
+    type: bool
+  unsearchable:
+    type: bool
+  extractIndicatorTypesIDs:
+    type: any
+  isExtractingSpecificIndicatorTypes:
+    type: bool
+  itemVersion:
+    type: str
+  propagationLabels:
+    type: any
+  toServerVersion:
+    type: str
+  openEnded:
+    type: bool
+  template:
+    type: str
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+  Aliases:
+    type: seq
+    sequence:
+    - include: aliases_schema
+  x2_fields:
+    type: str
+  aliasTo:
+    type: str
+
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
+  required:xsoar:
+    type: bool
+  required:marketplacev2:
+    type: bool
+  required:xpanse:
+    type: bool
+  required:xsoar_saas:
+    type: bool
+  required:xsoar_on_prem:
+    type: bool
+  id:xsoar:
+    type: str
+  id:marketplacev2:
+    type: str
+  id:xpanse:
+    type: str
+  id:xsoar_saas:
+    type: str
+  id:xsoar_on_prem:
+    type: str
+schema;aliases_schema:
+  type: map
+  mapping:
+    cliName:
+      type: str
+      required: true
+    name:
+      type: str
+      required: true
+    type:
+      type: str
+      required: true
+      enum: ['shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number', 'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html']
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str

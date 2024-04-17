@@ -13,7 +13,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_incident_field import 
 json = JSON_Handler()
 
 
-class CaseField(IndicatorIncidentField, content_type=ContentType.INCIDENT_FIELD):  # type: ignore[call-arg]
+class CaseField(IndicatorIncidentField, content_type=ContentType.CASE_FIELD):  # type: ignore[call-arg]
     associated_to_all: bool = Field(False, alias="associatedToAll")
     def summary(
         self,

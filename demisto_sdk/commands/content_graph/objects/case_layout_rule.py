@@ -7,7 +7,7 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 )
 
 
-class CaseLayoutRule(ContentItemXSIAM, content_type=ContentType.XSIAM_INCIDENT_LAYOUT_RULE):  # type: ignore[call-arg]
+class CaseLayoutRule(ContentItemXSIAM, content_type=ContentType.CASE_LAYOUT_RULE):  # type: ignore[call-arg]
     layout_id: str
 
     def metadata_fields(self) -> Set[str]:

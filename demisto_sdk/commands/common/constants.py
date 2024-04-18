@@ -251,7 +251,7 @@ class FileType(str, Enum):
     ASSETS_MODELING_RULE = "assetsmodelingrule"
     ASSETS_MODELING_RULE_XIF = "assetsmodelingrulexif"
     CASE_LAYOUT_RULE = "caselayoutrule"
-    CASE_FIELD = "xsiamncidentfield"
+    CASE_FIELD = "casefield"
 
 
 RN_HEADER_BY_FILE_TYPE = {

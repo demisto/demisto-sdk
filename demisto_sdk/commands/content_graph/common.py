@@ -100,7 +100,7 @@ class ContentType(str, enum.Enum):
     LAYOUT_RULE = "LayoutRule"
     ASSETS_MODELING_RULE = "AssetsModelingRule"
     CASE_LAYOUT_RULE = "CaseLayoutRule"
-    CASE_FIELD = "CaseIncidentField"
+    CASE_FIELD = "CaseField"
 
     @property
     def labels(self) -> List[str]:

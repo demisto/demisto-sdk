@@ -44,6 +44,8 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        if self.group == "case":
+            return {MarketplaceVersions.MarketplaceV2}
         return {
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.MarketplaceV2,

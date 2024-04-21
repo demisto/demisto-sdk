@@ -13,12 +13,12 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[Pack, Integration]
 
 
-class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
+class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
     error_code = "PA131"
     description = "Validate that the pack_metadata contains a default datasource if there are more than one datasource."
     rationale = "Wizards and other tools rely on the default datasource to be set."
-    error_message = "Pack metadata does not contain a default datasource. Please fill in a default datasource."
-    related_field = "defaultDatasource"
+    error_message = "Pack metadata does not contain a 'defaultDataSourceName'. Please fill in a default datasource name."
+    related_field = "defaultDataSourceName"
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -43,6 +43,6 @@ class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
                 message=self.error_message,
                 content_object=content_item,
             )
-            if datasource_count > 1 and not content_item.default_data_source  # type: ignore
+            if datasource_count > 1 and not content_item.default_data_source_name  # type: ignore
             else None
         ]

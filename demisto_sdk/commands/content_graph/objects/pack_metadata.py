@@ -57,7 +57,7 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source: Optional[str] = Field(None, alias="defaultDataSource")
+    default_data_source_name: Optional[str] = Field(None, alias="defaultDataSourceName")
 
     # For private packs
     premium: Optional[bool]
@@ -116,6 +116,7 @@ class PackMetadata(BaseModel):
         """
         _metadata: dict = {}
 
+        self._set_default_data_source(content_items)
         (
             collected_content_items,
             content_displays,
@@ -127,7 +128,7 @@ class PackMetadata(BaseModel):
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
-                "defaultDataSource": self._get_default_data_source(content_items),
+                "defaultDataSourceName": self.default_data_source_name,
             }
         )
 
@@ -177,7 +178,12 @@ class PackMetadata(BaseModel):
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
-
+        if self.default_data_source_name and collected_content_items:
+            # order collected_content_items so that the defaultDataSourceName will be first
+            content_item_metadata_object = self._search_content_item_metadata_object(
+                collected_content_items=collected_content_items,
+                item_name=self.default_data_source_name,
+                item_type_key=ContentType.INTEGRATION)
         return collected_content_items, content_displays
 
     def _enhance_dependencies(
@@ -320,7 +326,9 @@ class PackMetadata(BaseModel):
         return tags
 
     def _is_data_source(self, content_items: PackContentItems) -> bool:
-        """Returns a boolean result on whether the pack should considered as a "Data Source" pack."""
+        """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
+        if self.default_data_source_name:
+            return True
         return (
             len(
                 [
@@ -332,7 +340,7 @@ class PackMetadata(BaseModel):
             == 1
         )
 
-    def _get_default_data_source(
+    def _set_default_data_source(
         self, content_items: PackContentItems
     ) -> Optional[str]:
         """If there is more than one data source in the pack, return the default data source."""
@@ -342,11 +350,18 @@ class PackMetadata(BaseModel):
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
             and (integration.is_fetch or integration.is_fetch_events)
         ]
+
+        if self.default_data_source_name and self.default_data_source_name in data_sources:
+            # the provided defaultDataSourceName is a valid integration, keep it
+            return
+
         if len(data_sources) > 1:
             logger.debug(
-                f"{self.name} has multiple datasources. Setting a default value."
+                f"{self.name} has multiple data sources. Setting a default value."
             )
-        return data_sources[0] if len(data_sources) > 1 else None
+
+        # setting a value to the defaultDataSourceName in case there is a data source
+        self.default_data_source_name = data_sources[0] if data_sources else None
 
     def _get_tags_from_landing_page(self, pack_id: str) -> set:
         """
@@ -509,7 +524,7 @@ class PackMetadata(BaseModel):
         item_type_key: Optional[str],
     ) -> Optional[dict]:
         """
-        Search an content item object in the content items metadata list by its ID and name.
+        Search a content item object in the content items metadata list by its ID and name.
 
         Args:
             collected_content_items (dict): The content items metadata list that were already collected.

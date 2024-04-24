@@ -299,12 +299,13 @@ class DockerHook(Hook):
             f'collected images: {" ".join(filter(None, tag_to_files_objs.keys()))}'
         )
         docker_hook_ids = []
-        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-            # process images in batches to avoid memory issues
-            results: List[List[Dict]] = []
-            for chunk in more_itertools.chunked(
-                sorted(tag_to_files_objs.items()), IMAGES_BATCH
-            ):
+        results: List[List[Dict]] = []
+
+        for chunk in more_itertools.chunked(
+            sorted(tag_to_files_objs.items()), IMAGES_BATCH
+        ):
+            with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+                # process images in batches to avoid memory issues
                 results.extend(
                     executor.map(
                         lambda item: self.process_image(

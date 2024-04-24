@@ -107,9 +107,13 @@ class DockerHubClient:
             )
             if (
                 _error.response
-                and _error.response.status_code == requests.codes.unauthorized
+                and (
+                    _error.response.status_code
+                    in (requests.codes.unauthorized, requests.codes.too_many_requests)
+                )
                 and self.auth
             ):
+                # in case of rate-limits with a username:password, retrieve the token without username:password
                 logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(

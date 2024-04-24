@@ -1,0 +1,4 @@
+changes:
+- description: Content item of type Trigger should not have a from_version, remove it from from_version validation.
+  type: fix
+pr_number: 4235

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, Set
 
 import demisto_client
 from pydantic import Field
@@ -59,9 +59,21 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
                     isinstance(_dict["id"], str)
                     and not _dict["id"].startswith("incident")
                     and not _dict["id"].startswith("indicator")
+                    and not _dict["id"].startswith("case")
                 ):
                     return True
         return False
+
+    def metadata_fields(self) -> Set[str]:
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "group",
+                }
+            )
+        )
 
 
 def replace_layout_incident_alert(data: dict) -> dict:

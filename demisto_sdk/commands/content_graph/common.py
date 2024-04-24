@@ -128,6 +128,8 @@ class ContentType(str, enum.Enum):
             return "reputation"
         elif self == ContentType.INDICATOR_FIELD:
             return "incidentfield-indicatorfield"
+        elif self == ContentType.CASE_FIELD:
+            return "casefield"
         elif self == ContentType.LAYOUT:
             return "layoutscontainer"
         elif self == ContentType.PREPROCESS_RULE:

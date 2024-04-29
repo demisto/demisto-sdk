@@ -1,3 +1,4 @@
+import re
 from abc import ABC
 from pathlib import Path
 from typing import ClassVar, List, Sequence
@@ -14,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DOC_FILES_DIR,
+    DOCS_DIRECTORIES,
     GENERIC_DEFINITIONS_DIR,
     GENERIC_MODULES_DIR,
     GENERIC_TYPES_DIR,
@@ -40,7 +42,7 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_DIR,
     REPORTS_DIR,
     TEST_PLAYBOOKS_DIR,
-    TESTS_AND_DOC_DIRECTORIES,
+    TESTS_DIRECTORIES,
     TRIGGER_DIR,
     WIDGETS_DIR,
     WIZARDS_DIR,
@@ -63,7 +65,10 @@ ZERO_DEPTH_FILES = frozenset(
 )
 
 DEPTH_ONE_FOLDERS = (
-    set(ContentType.folders()) | set(TESTS_AND_DOC_DIRECTORIES) | {RELEASE_NOTES_DIR}
+    set(ContentType.folders())
+    | set(TESTS_DIRECTORIES)
+    | set(DOCS_DIRECTORIES)
+    | {RELEASE_NOTES_DIR}
 ).difference(
     (
         "Packs",
@@ -107,7 +112,8 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         WIDGETS_DIR,
         WIZARDS_DIR,
         LAYOUT_RULES_DIR,
-        *TESTS_AND_DOC_DIRECTORIES,
+        *TESTS_DIRECTORIES,
+        *DOCS_DIRECTORIES,
     )
 )
 
@@ -176,6 +182,14 @@ class InvalidXSIAMReportFileName(InvalidPathException):
     message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
 
 
+class InvalidImageFileName(InvalidPathException):
+    message = """Name of image file contains invalid characters. Should contain only:
+                  ALphabetic characters (a-z, A-Z)
+                  Numbers (0-9)
+                  Underscore "_"
+                  Hyphen "-" """
+
+
 class InvalidSuffix(InvalidPathException):
     message = "This file's suffix is not allowed."
 
@@ -208,8 +222,8 @@ class PathIsUnified(ExemptedPath):
     message = "Paths of unified content items are not validated."
 
 
-class PathIsTestOrDocData(ExemptedPath):
-    message = "Paths under test_data or doc_files are not validated."
+class PathIsTestData(ExemptedPath):
+    message = "Paths under test_data are not validated."
 
 
 def _validate(path: Path) -> None:
@@ -237,8 +251,8 @@ def _validate(path: Path) -> None:
         """
         raise PathUnderDeprecatedContent
 
-    if set(path.parts).intersection(TESTS_AND_DOC_DIRECTORIES):
-        raise PathIsTestOrDocData
+    if set(path.parts).intersection(TESTS_DIRECTORIES):
+        raise PathIsTestData
 
     parts_inside_pack = parts_after_packs[1:]  # everything after Packs/<pack name>
     depth = len(parts_inside_pack) - 1
@@ -283,6 +297,9 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidXSIAMReportFileName
 
+        if first_level_folder == DOC_FILES_DIR:
+            _validate_image_file_name(path.stem)
+
     if depth == 2:
         if first_level_folder in {
             ContentType.INTEGRATION.as_folder,
@@ -293,6 +310,12 @@ def _validate(path: Path) -> None:
             path.stem == path.parent.name and path.suffix in {".json", ".yml"}
         ):
             raise InvalidXDRCTemplatesFileName
+
+
+def _validate_image_file_name(image_name: str):
+    pattern = r"^[a-zA-Z0-9_-]+$"
+    if not re.match(pattern, image_name):
+        raise InvalidImageFileName
 
 
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):

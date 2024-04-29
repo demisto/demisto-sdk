@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
+    DOCS_DIRECTORIES,
     JOB,
-    TESTS_AND_DOC_DIRECTORIES,
+    TESTS_DIRECTORIES,
     FileType,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -178,7 +179,9 @@ def format_manager(
                 get_files_in_dir(
                     project_dir=i,
                     file_endings=supported_file_types,
-                    exclude_list=SKIP_FORMATTING_DIRS + TESTS_AND_DOC_DIRECTORIES,
+                    exclude_list=SKIP_FORMATTING_DIRS
+                    + TESTS_DIRECTORIES
+                    + DOCS_DIRECTORIES,
                 )
             )
 

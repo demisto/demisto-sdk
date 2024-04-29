@@ -7,9 +7,10 @@ from typing import Callable, List
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
+    DOCS_DIRECTORIES,
     KNOWN_FILE_STATUSES,
     PACKS_PACK_META_FILE_NAME,
-    TESTS_AND_DOC_DIRECTORIES,
+    TESTS_DIRECTORIES,
     FileType,
 )
 from demisto_sdk.commands.common.errors import Errors
@@ -346,7 +347,10 @@ def filter_changed_files(
                 continue
 
             # ignore changes in TESTS_DIRECTORIES files.
-            elif any(test_dir in file_path for test_dir in TESTS_AND_DOC_DIRECTORIES):
+            elif any(
+                test_dir in file_path
+                for test_dir in (TESTS_DIRECTORIES + DOCS_DIRECTORIES)
+            ):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:

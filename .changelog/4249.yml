@@ -1,0 +1,4 @@
+changes:
+- description: Added validation for image files in doc_files folder.
+  type: feature
+pr_number: 4249

@@ -878,11 +878,11 @@ class GitUtil:
 
         if staged:
             click.echo(f"######## - {status} staged:")
-            click.echo(",".join(sort_paths(staged)))
+            click.echo(", ".join(sort_paths(staged)))
             click.echo("\n")
         if committed:
             click.echo(f"######## - {status} committed:")
-            click.echo(",".join(sort_paths(committed)))
+            click.echo(", ".join(sort_paths(committed)))
             click.echo("\n")
 
     def handle_wrong_renamed_status(

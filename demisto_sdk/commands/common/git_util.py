@@ -872,10 +872,10 @@ class GitUtil:
     ) -> None:
         if not debug:
             return
-        
+
         def sort_paths(paths: Set) -> Sequence:
             return sorted((str(path) for path in paths))
-        
+
         if staged:
             click.echo(f"######## - {status} staged:")
             click.echo(",".join(sort_paths(staged)))

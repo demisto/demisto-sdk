@@ -404,6 +404,7 @@ def test_classifier_mapper_file_invalid(file_name: str):
         "image_file.png",
         "image.png",
         "image1.png",
+        "image-1-1.png",
     ),
 )
 def test_doc_file_valid(file_name: str):

@@ -313,7 +313,7 @@ def _validate(path: Path) -> None:
 
 
 def _validate_image_file_name(image_name: str):
-    pattern = r"\W+"
+    pattern = r"[\W&&[^-]]+"
     if re.findall(pattern, image_name):
         raise InvalidImageFileName
 

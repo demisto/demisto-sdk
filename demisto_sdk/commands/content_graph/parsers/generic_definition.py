@@ -25,4 +25,5 @@ class GenericDefinitionParser(
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.MarketplaceV2,
         }

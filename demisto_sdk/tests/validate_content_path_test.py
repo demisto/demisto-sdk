@@ -415,6 +415,7 @@ def test_doc_file_valid(file_name: str):
     (
         "Mitre&Attc.png",
         "image(1).png",
+        "image_%.png",
     ),
 )
 def test_doc_file_invalid(file_name: str):

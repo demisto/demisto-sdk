@@ -106,7 +106,7 @@ class DockerHubClient:
                 f"Error when trying to get dockerhub token, error\n:{_error}"
             )
             if (
-                _error.response
+                _error.response is not None
                 and (
                     _error.response.status_code
                     in (requests.codes.unauthorized, requests.codes.too_many_requests)

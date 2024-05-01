@@ -214,7 +214,6 @@ def create_script_object(
         additional_params["readme"] = readme_content
 
     script = pack.create_script(yml=yml_content, **additional_params )
-    script.code.write("from MicrosoftApiModule import *")
     code = code or "from MicrosoftApiModule import *"
     script.code.write(code)
     if test_code:

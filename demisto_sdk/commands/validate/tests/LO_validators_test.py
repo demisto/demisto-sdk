@@ -47,7 +47,7 @@ def test_IsValidTypeValidator_is_valid_failure(
     Then
         it should return a list of results with one failure message that matches the expected error message.
     Note
-        The create_layout_object() function returns an invalid layout object by default.
+        The create_layout_object() function returns an invalid layout object by default when the layout is for marketplaceV2.
         Therefore, we manually change the values to only check the values that came from the parametrize.
     """
     # Extend the paths and values to make the layout object valid for some values
@@ -87,7 +87,8 @@ def test_IsValidTypeValidator_is_valid_success():
     Then
         it should return no failures, indicating that the layout object is valid.
     Note
-        The create_layout_object() function is used to create a layout object with valid types.
+        The create_layout_object() function is used to create a layout object.
+        the layout object is invalid by default when the layout is for marketplaceV2
     """
     valid_layout_object = create_layout_object(  # Create a valid layout object
         paths=[
@@ -113,6 +114,9 @@ def test_IsValidTypeValidator_returns_no_failures_after_removal_of_MarketplaceV2
     Then
         the IsValidTypeValidator's is_valid method should initially return failures,
         but after the removal of MarketplaceV2, it should return no failures, indicating that the layout object is now valid.
+    Note
+        The create_layout_object() function is used to create a layout object.
+        the layout object is invalid by default when the layout is for marketplaceV2
     """
     layout_object = create_layout_object()
 

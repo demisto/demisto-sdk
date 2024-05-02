@@ -51,7 +51,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_context import (
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
-INTEGRATIONS_BATCH = 100
+INTEGRATIONS_BATCH = 300
 
 
 class PreCommitRunner:
@@ -370,6 +370,7 @@ def group_by_language(
 
     language_to_files: Dict[str, Set] = defaultdict(set)
     integrations_scripts: Set[IntegrationScript] = set()
+    logger.debug("Pre-Commit: Starting to parse all integrations and scripts")
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
@@ -380,13 +381,16 @@ def group_by_language(
                     continue
                 # content-item is a script/integration
                 integrations_scripts.add(content_item)
+    logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
         if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
             # add api modules to the api_modules list, we will handle them later
             api_modules.append(integration_script)
             continue
+
     if api_modules:
+        logger.debug("Pre-Commit: Starting to handle API Modules")
         with ContentGraphInterface() as graph:
             update_content_graph(graph)
             api_modules: List[Script] = graph.search(  # type: ignore[no-redef]
@@ -409,7 +413,7 @@ def group_by_language(
                         else imported_by.path.relative_to(CONTENT_PATH)
                     )
                 )
-
+        logger.debug("Pre-Commit: Finished handling API Modules")
     for integration_script in integrations_scripts:
         if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
             # we dont need to lint them individually, they will be run with the integrations that uses them

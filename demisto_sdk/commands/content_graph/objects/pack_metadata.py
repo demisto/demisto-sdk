@@ -398,13 +398,7 @@ class PackMetadata(BaseModel):
         self, content_items: PackContentItems
     ) -> Optional[str]:
         """If there is more than one data source in the pack, return the default data source."""
-        data_sources = [
-            integration.name
-            for integration in content_items.integration
-            if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-            and (integration.is_fetch or integration.is_fetch_events)
-        ]
-        # todo deside if to split and choose from the is_fetch_events list, also check if to add other fields too
+        data_sources = self.get_valid_data_source_integrations(content_items)
 
         if (
             self.default_data_source_name
@@ -424,6 +418,19 @@ class PackMetadata(BaseModel):
 
         # setting a value to the defaultDataSourceName in case there is a data source
         return data_sources[0] if data_sources else None
+
+    @staticmethod
+    def get_valid_data_source_integrations(content_items: PackContentItems):
+        data_sources = [
+            integration.name
+            for integration in content_items.integration
+            if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+            and (integration.is_fetch or integration.is_fetch_events)
+        ]
+
+        # todo deside if to split and choose from the is_fetch_events list,
+        # todo check if to add other fields too - and use this method in _is_data_source
+        return data_sources
 
     def _get_tags_from_landing_page(self, pack_id: str) -> set:
         """

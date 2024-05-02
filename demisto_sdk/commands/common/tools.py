@@ -66,7 +66,6 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
     DOC_FILES_DIR,
-    DOCS_DIRECTORIES,
     ENV_DEMISTO_SDK_MARKETPLACE,
     ENV_SDK_WORKING_OFFLINE,
     GENERIC_FIELDS_DIR,
@@ -111,7 +110,7 @@ from demisto_sdk.commands.common.constants import (
     STRING_TO_BOOL_MAP,
     TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
-    TESTS_DIRECTORIES,
+    TESTS_AND_DOC_DIRECTORIES,
     TRIGGER_DIR,
     TYPE_PWSH,
     UNRELEASE_HEADER,
@@ -313,8 +312,7 @@ def get_files_in_dir(
     excludes = []
     exclude_all_list = exclude_list.copy() if exclude_list else []
     if ignore_test_files:
-        exclude_all_list.extend(TESTS_DIRECTORIES)
-        exclude_all_list.extend(DOCS_DIRECTORIES)
+        exclude_all_list.extend(TESTS_AND_DOC_DIRECTORIES)
 
     project_path = Path(project_dir)
     glob_function = project_path.rglob if recursive else project_path.glob

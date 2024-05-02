@@ -306,7 +306,7 @@ class PackMetadata(BaseModel):
         )
         tags |= (
             {PackTags.DATA_SOURCE}
-            if self._is_data_source(content_items)
+            if self.is_data_source(content_items)
             and marketplace == MarketplaceVersions.MarketplaceV2
             else set()
         )
@@ -340,7 +340,7 @@ class PackMetadata(BaseModel):
 
         return tags
 
-    def _is_data_source(self, content_items: PackContentItems) -> bool:
+    def is_data_source(self, content_items: PackContentItems) -> bool:
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
         if self.default_data_source_name:
             return True
@@ -358,7 +358,7 @@ class PackMetadata(BaseModel):
             and (
                 integration.is_fetch
                 or integration.is_fetch_events
-                or integration.has_fetch_command
+                or integration.has_fetch_command()
                 or integration.is_mappable
                 or integration.is_fetch_events_and_assets
             )
@@ -370,7 +370,7 @@ class PackMetadata(BaseModel):
                 for integration in content_items.integration
                 if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
                 and (
-                    integration.has_fetch_command
+                    integration.has_fetch_command()
                     or integration.is_mappable
                     or integration.is_fetch_events_and_assets
                 )

@@ -30,7 +30,8 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
             and (
-                content_item._is_data_source
+                content_item.is_data_source(content_item.content_items)
                 and not content_item.default_data_source_name
+                and len(content_item.get_valid_data_source_integrations(content_item.content_items)) > 1
             )
         ]

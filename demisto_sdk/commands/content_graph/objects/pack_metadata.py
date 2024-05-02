@@ -85,6 +85,7 @@ class PackMetadata(BaseModel):
             pack_id (str): The pack ID.
             content_items (PackContentItems): The pack content items object.
         """
+        self.default_data_source_name = self._get_default_data_source(content_items)
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = self._get_author(self.author, marketplace)
         # We want to add the pipeline_id only if this is called within our repo.
@@ -116,7 +117,6 @@ class PackMetadata(BaseModel):
         """
         _metadata: dict = {}
 
-        self._set_default_data_source(content_items)
         (
             collected_content_items,
             content_displays,
@@ -133,6 +133,19 @@ class PackMetadata(BaseModel):
         )
 
         return _metadata
+
+    @staticmethod
+    def _place_data_source_integration_first(integration_list, data_source_name):
+        integration_metadata_object = [
+            integration
+            for integration in integration_list
+            if integration.get("name") == data_source_name
+        ]
+        if not integration_metadata_object:
+            logger.debug(f"Integration metadata object was not found for {data_source_name=} in {integration_list=}.")
+            return
+        integration_list.remove(integration_metadata_object[0])
+        integration_list.insert(0, integration_metadata_object[0])
 
     def _get_content_items_and_displays_metadata(
         self, marketplace: MarketplaceVersions, content_items: PackContentItems
@@ -179,11 +192,9 @@ class PackMetadata(BaseModel):
             for content_type, content_type_display in content_displays.items()
         }
         if self.default_data_source_name and collected_content_items:
-            # order collected_content_items so that the defaultDataSourceName will be first
-            content_item_metadata_object = self._search_content_item_metadata_object(
-                collected_content_items=collected_content_items,
-                item_name=self.default_data_source_name,
-                item_type_key=ContentType.INTEGRATION)
+            # order collected_content_items integration list so that the defaultDataSourceName will be first
+            self._place_data_source_integration_first(collected_content_items[ContentType.INTEGRATION.metadata_name],
+                                                      self.default_data_source_name)
         return collected_content_items, content_displays
 
     def _enhance_dependencies(
@@ -329,18 +340,43 @@ class PackMetadata(BaseModel):
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
         if self.default_data_source_name:
             return True
+        a = [
+                MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+                and (integration.is_fetch or integration.is_fetch_events
+                     # or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
+                     )
+                for integration in content_items.integration
+            ]
+        b = [
+                MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+                and (integration.is_fetch or integration.is_fetch_events
+                     or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
+                     )
+                for integration in content_items.integration
+            ]
+        if a != b:
+            names = [
+                integration.name
+                for integration in content_items.integration
+                if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+                   and (integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets)
+            ]
+            logger.info(f'there are differences between the new and old check, different integrations are: {names}')
+        logger.info(f'In _is_data_source for {self.name}, value to check is: (values are the same? {a==b})\n'
+                    f'Before new addition: {a}.\nAfter new addition: {b}')
         return (
-            len(
+            any(
                 [
                     MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-                    and (integration.is_fetch or integration.is_fetch_events)
+                    and (integration.is_fetch or integration.is_fetch_events
+                         # or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
+                         )
                     for integration in content_items.integration
                 ]
             )
-            == 1
         )
 
-    def _set_default_data_source(
+    def _get_default_data_source(
         self, content_items: PackContentItems
     ) -> Optional[str]:
         """If there is more than one data source in the pack, return the default data source."""
@@ -350,18 +386,21 @@ class PackMetadata(BaseModel):
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
             and (integration.is_fetch or integration.is_fetch_events)
         ]
+        # todo deside if to split and choose from the is_fetch_events list, also check if to add other fields too
 
         if self.default_data_source_name and self.default_data_source_name in data_sources:
             # the provided defaultDataSourceName is a valid integration, keep it
-            return
+            return self.default_data_source_name
 
+        logger.debug(f'No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,'
+                     f' choosing default')
         if len(data_sources) > 1:
             logger.debug(
                 f"{self.name} has multiple data sources. Setting a default value."
             )
 
         # setting a value to the defaultDataSourceName in case there is a data source
-        self.default_data_source_name = data_sources[0] if data_sources else None
+        return data_sources[0] if data_sources else None
 
     def _get_tags_from_landing_page(self, pack_id: str) -> set:
         """

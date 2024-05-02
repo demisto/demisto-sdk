@@ -218,3 +218,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     @cached_property
     def image(self) -> ImageRelatedFile:
         return ImageRelatedFile(self.path, git_sha=self.git_sha)
+
+    def has_fetch_command(self) -> bool:
+        for command in self.commands:
+            if command.name == "fetch-incidents":
+                return True
+        return False

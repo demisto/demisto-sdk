@@ -142,7 +142,9 @@ class PackMetadata(BaseModel):
             if integration.get("name") == data_source_name
         ]
         if not integration_metadata_object:
-            logger.debug(f"Integration metadata object was not found for {data_source_name=} in {integration_list=}.")
+            logger.debug(
+                f"Integration metadata object was not found for {data_source_name=} in {integration_list=}."
+            )
             return
         integration_list.remove(integration_metadata_object[0])
         integration_list.insert(0, integration_metadata_object[0])
@@ -193,8 +195,10 @@ class PackMetadata(BaseModel):
         }
         if self.default_data_source_name and collected_content_items:
             # order collected_content_items integration list so that the defaultDataSourceName will be first
-            self._place_data_source_integration_first(collected_content_items[ContentType.INTEGRATION.metadata_name],
-                                                      self.default_data_source_name)
+            self._place_data_source_integration_first(
+                collected_content_items[ContentType.INTEGRATION.metadata_name],
+                self.default_data_source_name,
+            )
         return collected_content_items, content_displays
 
     def _enhance_dependencies(
@@ -341,39 +345,53 @@ class PackMetadata(BaseModel):
         if self.default_data_source_name:
             return True
         a = [
-                MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-                and (integration.is_fetch or integration.is_fetch_events
-                     # or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
-                     )
-                for integration in content_items.integration
-            ]
+            MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+            and (
+                integration.is_fetch
+                or integration.is_fetch_events
+                # or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
+            )
+            for integration in content_items.integration
+        ]
         b = [
-                MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-                and (integration.is_fetch or integration.is_fetch_events
-                     or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
-                     )
-                for integration in content_items.integration
-            ]
+            MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+            and (
+                integration.is_fetch
+                or integration.is_fetch_events
+                or integration.has_fetch_command
+                or integration.is_mappable
+                or integration.is_fetch_events_and_assets
+            )
+            for integration in content_items.integration
+        ]
         if a != b:
             names = [
                 integration.name
                 for integration in content_items.integration
                 if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-                   and (integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets)
+                and (
+                    integration.has_fetch_command
+                    or integration.is_mappable
+                    or integration.is_fetch_events_and_assets
+                )
             ]
-            logger.info(f'there are differences between the new and old check, different integrations are: {names}')
-        logger.info(f'In _is_data_source for {self.name}, value to check is: (values are the same? {a==b})\n'
-                    f'Before new addition: {a}.\nAfter new addition: {b}')
-        return (
-            any(
-                [
-                    MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-                    and (integration.is_fetch or integration.is_fetch_events
-                         # or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
-                         )
-                    for integration in content_items.integration
-                ]
+            logger.info(
+                f"there are differences between the new and old check, different integrations are: {names}"
             )
+        logger.info(
+            f"In _is_data_source for {self.name}, value to check is: (values are the same? {a==b})\n"
+            f"Before new addition: {a}.\nAfter new addition: {b}"
+        )
+        return any(
+            [
+                MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+                and (
+                    integration.is_fetch
+                    or integration.is_fetch_events
+                    # or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
+                )
+                for integration in content_items.integration
+            ]
         )
 
     def _get_default_data_source(
@@ -388,12 +406,17 @@ class PackMetadata(BaseModel):
         ]
         # todo deside if to split and choose from the is_fetch_events list, also check if to add other fields too
 
-        if self.default_data_source_name and self.default_data_source_name in data_sources:
+        if (
+            self.default_data_source_name
+            and self.default_data_source_name in data_sources
+        ):
             # the provided defaultDataSourceName is a valid integration, keep it
             return self.default_data_source_name
 
-        logger.debug(f'No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,'
-                     f' choosing default')
+        logger.debug(
+            f"No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,"
+            f" choosing default"
+        )
         if len(data_sources) > 1:
             logger.debug(
                 f"{self.name} has multiple data sources. Setting a default value."

@@ -344,54 +344,8 @@ class PackMetadata(BaseModel):
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
         if self.default_data_source_name:
             return True
-        a = [
-            MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-            and (
-                integration.is_fetch
-                or integration.is_fetch_events
-                # or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
-            )
-            for integration in content_items.integration
-        ]
-        b = [
-            MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-            and (
-                integration.is_fetch
-                or integration.is_fetch_events
-                or integration.has_fetch_command()
-                or integration.is_mappable
-                or integration.is_fetch_events_and_assets
-            )
-            for integration in content_items.integration
-        ]
-        if a != b:
-            names = [
-                integration.name
-                for integration in content_items.integration
-                if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-                and (
-                    integration.has_fetch_command()
-                    or integration.is_mappable
-                    or integration.is_fetch_events_and_assets
-                )
-            ]
-            logger.info(
-                f"there are differences between the new and old check, different integrations are: {names}"
-            )
-        logger.info(
-            f"In _is_data_source for {self.name}, value to check is: (values are the same? {a==b})\n"
-            f"Before new addition: {a}.\nAfter new addition: {b}"
-        )
         return any(
-            [
-                MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-                and (
-                    integration.is_fetch
-                    or integration.is_fetch_events
-                    # or integration.has_fetch_command or integration.is_mappable or integration.is_fetch_events_and_assets
-                )
-                for integration in content_items.integration
-            ]
+                self.get_valid_data_source_integrations(content_items)
         )
 
     def _get_default_data_source(
@@ -421,16 +375,18 @@ class PackMetadata(BaseModel):
 
     @staticmethod
     def get_valid_data_source_integrations(content_items: PackContentItems):
-        data_sources = [
+        return [
             integration.name
             for integration in content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-            and (integration.is_fetch or integration.is_fetch_events)
+            and (integration.is_fetch
+                 or integration.is_fetch_events
+                 # or integration.has_fetch_command()  # doesn't happen in repo
+                 # or integration.is_mappable  # todo decide if to add
+                 # or integration.is_fetch_events_and_assets  # doesn't happen in repo
+                 )
+            and not integration.deprecated
         ]
-
-        # todo deside if to split and choose from the is_fetch_events list,
-        # todo check if to add other fields too - and use this method in _is_data_source
-        return data_sources
 
     def _get_tags_from_landing_page(self, pack_id: str) -> set:
         """

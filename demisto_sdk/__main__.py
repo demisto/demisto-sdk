@@ -1472,6 +1472,8 @@ def format(
         logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)
 
+    check_configuration_file("format", kwargs)
+
     if file_paths and not input:
         input = ",".join(file_paths)
 

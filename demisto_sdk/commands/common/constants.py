@@ -2096,10 +2096,12 @@ STRING_TO_BOOL_MAP = {
     "1": True,
     "yes": True,
     "true": True,
+    "True": True,
     "n": False,
     "0": False,
     "no": False,
     "false": False,
+    "False": False,
     "t": True,
     "f": False,
 }

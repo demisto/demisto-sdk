@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import string_to_bool
 
 ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
 
@@ -34,7 +35,6 @@ def get_containing_pack(content_entity: ContentEntity) -> Pack:
 
 def check_configuration_file(command, args):
     config_file_path = ".demisto-sdk-conf"
-    true_synonyms = ["true", "True", "t", "1"]
     if Path(config_file_path).is_file():
         try:
             config = ConfigParser(allow_no_value=True)
@@ -47,23 +47,17 @@ def check_configuration_file(command, args):
             )
             if command in config.sections():
                 for key in config[command]:
-                    if key in args:
-                        # if the key exists in the args we will run it over if it is either:
-                        # a - a flag currently not set and is defined in the conf file
-                        # b - not a flag but an arg that is currently None and there is a value for it in the conf file
-                        if args[key] is False and config[command][key] in true_synonyms:
-                            args[key] = True
+                    value = config[command][key]
+                    try:
+                        boolean_value = string_to_bool(value)
+                    except ValueError:
+                        boolean_value = None
 
-                        elif args[key] is None and config[command][key] is not None:
-                            args[key] = config[command][key]
-
-                    # if the key does not exist in the current args, add it
+                    if boolean_value is True:
+                        args[key] = True
+                    elif boolean_value is False:
+                        args[key] = False
                     else:
-                        if config[command][key] in true_synonyms:
-                            args[key] = True
-
-                        else:
-                            args[key] = config[command][key]
-
+                        args[key] = value
         except MissingSectionHeaderError:
             pass

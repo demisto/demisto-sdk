@@ -180,11 +180,7 @@ class InvalidXSIAMReportFileName(InvalidPathException):
 
 
 class InvalidImageFileName(InvalidPathException):
-    message = """Name of image file contains invalid characters. Should contain only:
-                  ALphabetic characters (a-z, A-Z)
-                  Numbers (0-9)
-                  Underscore "_"
-                  Hyphen "-" """
+    message = "Name of image files may only contain only latin letters, digits, underscores or hyphens."
 
 
 class InvalidSuffix(InvalidPathException):

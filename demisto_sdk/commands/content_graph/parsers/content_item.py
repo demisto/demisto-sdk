@@ -180,27 +180,19 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             MarketplaceVersions(mp) for mp in data.get("marketplaces", [])
         ]:
             marketplaces = file_marketplaces
+            marketplaces = list(
+                ContentItemParser.update_marketplaces_set_with_xsoar_values(
+                    set(marketplaces)
+                )
+            )
         else:
+            # update_marketplaces_set_with_xsoar_values is already handeled as part of pack parser.
             marketplaces = self.pack_marketplaces
 
-        marketplaces_set = set(marketplaces).intersection(self.supported_marketplaces)
-        marketplaces_set = self.update_marketplaces_set_with_xsoar_values(
-            marketplaces_set
+        marketplaces_intersection = set(marketplaces).intersection(
+            self.supported_marketplaces
         )
-        return sorted(marketplaces_set)
-
-    @staticmethod
-    def update_marketplaces_set_with_xsoar_values(marketplaces_set: set) -> set:
-        if (
-            MarketplaceVersions.XSOAR in marketplaces_set
-            and MarketplaceVersions.XSOAR_ON_PREM not in marketplaces_set
-        ):
-            marketplaces_set.add(MarketplaceVersions.XSOAR_SAAS)
-
-        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_set:
-            marketplaces_set.add(MarketplaceVersions.XSOAR)
-
-        return marketplaces_set
+        return sorted(marketplaces_intersection)
 
     @property
     @abstractmethod

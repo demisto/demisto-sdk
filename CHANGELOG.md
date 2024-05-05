@@ -1,4 +1,18 @@
 # Changelog
+## 1.29.2
+* Added the `--docker_image` and `--image_ref` flags to **pre-commit* to override values from configuration files. [#4223](https://github.com/demisto/demisto-sdk/pull/4223)
+* Removed the `update-additional-dependencies` script and pre-commit hook. [#4225](https://github.com/demisto/demisto-sdk/pull/4225)
+
+## 1.29.1
+* Fix metadata (i.e. description) for XSOAR6 marketplace. [#4208](https://github.com/demisto/demisto-sdk/pull/4208)
+* Fixed an issue where `xsoar_on_prem` tag, was not removed as part of the parsing process. [#4218](https://github.com/demisto/demisto-sdk/pull/4218)
+* Added support to delete packs in **graph update** [#4205](https://github.com/demisto/demisto-sdk/pull/4205)
+* Added a default `.pre-commit-config_template.yaml` file that will be used by **pre-commit** command in case such does not exist in the target repository. [#4194](https://github.com/demisto/demisto-sdk/pull/4194)
+* Fixed an issue where the graph was not fully cleaned before import in **graph update** [#4215](https://github.com/demisto/demisto-sdk/pull/4215)
+* Fixed an issue where tests were not collected in VSCode after **setup-env** [#4219](https://github.com/demisto/demisto-sdk/pull/4219)
+* Fixed an issue where validate spammed logs when running. [#4203](https://github.com/demisto/demisto-sdk/pull/4203)
+* Added the **dump-api** command to dump the demisto-sdk API to a JSON file. [#4214](https://github.com/demisto/demisto-sdk/pull/4214)
+
 ## 1.29.0
 * The new validate flow is enabled by default while the old one is disabled. If you want to change this behavior, use the **--run-old-validate** and **--skip-new-validate** flags or the **RUN_OLD_VALIDATE** and **SKIP_NEW_VALIDATE** environment variables. [#4114](https://github.com/demisto/demisto-sdk/pull/4114)
 * A new version of validate is available. For more information, refer to the readme. (a docs web page with further information about each validation will be added soon). Note that the old validate flow is beginning to go under a deprecation process and will eventually be removed. [#4114](https://github.com/demisto/demisto-sdk/pull/4114)

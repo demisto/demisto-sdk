@@ -344,9 +344,7 @@ class PackMetadata(BaseModel):
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
         if self.default_data_source_name:
             return True
-        return any(
-                self.get_valid_data_source_integrations(content_items)
-        )
+        return any(self.get_valid_data_source_integrations(content_items))
 
     def _get_default_data_source(
         self, content_items: PackContentItems
@@ -379,12 +377,13 @@ class PackMetadata(BaseModel):
             integration.name
             for integration in content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-            and (integration.is_fetch
-                 or integration.is_fetch_events
-                 # or integration.has_fetch_command()  # doesn't happen in repo
-                 # or integration.is_mappable  # todo decide if to add
-                 # or integration.is_fetch_events_and_assets  # doesn't happen in repo
-                 )
+            and (
+                integration.is_fetch
+                or integration.is_fetch_events
+                # or integration.has_fetch_command()  # doesn't happen in repo
+                # or integration.is_mappable  # todo decide if to add
+                # or integration.is_fetch_events_and_assets  # doesn't happen in repo
+            )
             and not integration.deprecated
         ]
 

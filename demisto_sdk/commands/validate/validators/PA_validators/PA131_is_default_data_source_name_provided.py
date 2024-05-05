@@ -17,7 +17,10 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
     error_code = "PA131"
     description = "Validate that the pack_metadata contains a default datasource, if there are more than one datasource."
     rationale = "Wizards and other tools rely on the default datasource to be set."
-    error_message = "Pack metadata does not contain a 'defaultDataSourceName'. Please fill in a default datasource name."
+    error_message = (
+        "Pack metadata does not contain a 'defaultDataSourceName'. "
+        "Please fill in a default datasource name from these options: {0}."
+    )
     fix_message = "Set the 'defaultDataSourceName' for '{0}' pack to the '{1}' integration because it is an event collector."
     related_field = "defaultDataSourceName"
     is_auto_fixable = True
@@ -26,7 +29,11 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(
+                    content_item.get_valid_data_source_integrations(
+                        content_item.content_items
+                    )
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
@@ -34,7 +41,12 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
             and (
                 content_item.is_data_source(content_item.content_items)
                 and not content_item.default_data_source_name
-                and len(content_item.get_valid_data_source_integrations(content_item.content_items)) > 1
+                and len(
+                    content_item.get_valid_data_source_integrations(
+                        content_item.content_items
+                    )
+                )
+                > 1
             )
         ]
 
@@ -50,7 +62,10 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
             content_item.default_data_source_name = data_sources_fetch_events[0]
             return FixResult(
                 validator=self,
-                message=self.fix_message.format(content_item.name, data_sources_fetch_events[0]),
+                message=self.fix_message.format(
+                    content_item.name, data_sources_fetch_events[0]
+                ),
                 content_object=content_item,
             )
 
+        raise Exception("Cannot determine which integration to set as default.")

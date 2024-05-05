@@ -70,7 +70,7 @@ def test_IsValidTypeValidator_is_valid_failure(
         ]
     )
     content_items = create_layout_object(paths=paths, values=values)
-    results = IsValidTypeValidator().is_valid([content_items])  # type: ignore[reportArgumentType]
+    results = IsValidTypeValidator().is_valid([content_items])
     assert len(results) == 1  # one failure
     assert (
         results[0].message
@@ -100,9 +100,7 @@ def test_IsValidTypeValidator_is_valid_success():
         ],
         values=["dynamic", "dynamic", "dynamic", "dynamic", "dynamic"],
     )
-    assert not IsValidTypeValidator().is_valid(
-        [valid_layout_object]  # type: ignore[reportArgumentType]
-    )  # no failures
+    assert not IsValidTypeValidator().is_valid([valid_layout_object])  # no failures
 
 
 def test_IsValidTypeValidator_returns_no_failures_after_removal_of_MarketplaceV2():
@@ -121,11 +119,11 @@ def test_IsValidTypeValidator_returns_no_failures_after_removal_of_MarketplaceV2
     layout_object = create_layout_object()
 
     assert IsValidTypeValidator().is_valid(
-        [layout_object]  # type: ignore[reportArgumentType]
+        [layout_object]
     ), "Expected initial validation to fail due to presence of MarketplaceV2"
 
-    layout_object.marketplaces.remove(MarketplaceVersions.MarketplaceV2)  # type: ignore
+    layout_object.marketplaces.remove(MarketplaceVersions.MarketplaceV2)
 
     assert not IsValidTypeValidator().is_valid(
-        [layout_object]  # type: ignore[reportArgumentType]
+        [layout_object]
     ), "Expected validation to pass after removal of MarketplaceV2"

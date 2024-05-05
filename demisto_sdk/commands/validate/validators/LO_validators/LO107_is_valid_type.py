@@ -29,7 +29,7 @@ INVALID_TABS: List = ["canvas", "evidenceBoard", "relatedIncidents"]
 class IsValidTypeValidator(BaseValidator[ContentTypes]):
     error_code = "LO107"
     description = "Ensures that only supported types are used in the layout for XSIAM compatibility."
-    rationale = "Prevents usage of unsupported layout types in XSIAM, avoiding potential errors or unexpected behavior."
+    rationale = "Limited by the platform."
     error_message = "The following invalid types were found in the layout: {0}. Those types are not supported in XSIAM, remove them or change the layout to be XSOAR only."
     related_field = "tabs.sections.type, tabs.type"
     related_file_type = [RelatedFileType.JSON]
@@ -51,10 +51,9 @@ class IsValidTypeValidator(BaseValidator[ContentTypes]):
                 )
         return validator_results
 
-    def get_invalid_layout_type(self, content_item: ContentTypes) -> List:
+    def get_invalid_layout_type(self, content_item: ContentTypes) -> List[str]:
         invalid_types_contained = []
-        tabs: List[Dict] = content_item.data.get("detailsV2", {}).get("tabs") or [{}]
-        for tab in tabs:
+        for tab in content_item.tabs:
             if (tab_type := tab.get("type")) in INVALID_TABS:
                 invalid_types_contained.append(tab_type)
             sections: List[Dict] = tab.get("sections", [{}])

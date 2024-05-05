@@ -346,7 +346,7 @@ def filter_changed_files(
                 continue
 
             # ignore changes in TESTS_DIRECTORIES files.
-            elif any(test_dir in file_path for test_dir in (TESTS_AND_DOC_DIRECTORIES)):
+            elif any(test_dir in file_path for test_dir in TESTS_AND_DOC_DIRECTORIES):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:

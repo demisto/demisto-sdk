@@ -402,8 +402,8 @@ def test_classifier_mapper_file_invalid(file_name: str):
     "file_name",
     (
         "image_file.png",
-        "image.png",
-        "image1.png",
+        "image.svg",
+        "image1.svg",
         "image-1-1.png",
     ),
 )
@@ -416,7 +416,7 @@ def test_doc_file_valid(file_name: str):
     (
         "Mitre&Attc.png",
         "image(1).png",
-        "image_%.png",
+        "image_%.svg",
     ),
 )
 def test_doc_file_invalid(file_name: str):

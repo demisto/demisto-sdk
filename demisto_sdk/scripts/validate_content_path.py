@@ -129,7 +129,8 @@ ALLOWED_SUFFIXES = frozenset(
     )
 )
 DIRS_ALLOWING_SPACE_IN_FILENAMES = (TEST_PLAYBOOKS_DIR,)
-IMAGE_NAME_REGEX = re.compile(r"[^0-9a-zA-Z-_]+")
+INVALID_CHARS_IN_IMAGES_REGEX = re.compile(r"[^0-9a-zA-Z-_]+")
+SUPPORTED_IMAGE_FORMATS = (".png", "svg")
 app = typer.Typer()
 
 
@@ -290,7 +291,10 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidXSIAMReportFileName
 
-        if first_level_folder == DOC_FILES_DIR:
+        if (
+            first_level_folder == DOC_FILES_DIR
+            and path.suffix in SUPPORTED_IMAGE_FORMATS
+        ):
             _validate_image_file_name(path.stem)
 
     if depth == 2:
@@ -306,7 +310,7 @@ def _validate(path: Path) -> None:
 
 
 def _validate_image_file_name(image_name: str):
-    if IMAGE_NAME_REGEX.findall(image_name):
+    if INVALID_CHARS_IN_IMAGES_REGEX.findall(image_name):
         raise InvalidImageFileName
 
 

@@ -142,10 +142,11 @@ class PackMetadata(BaseModel):
             if integration.get("name") == data_source_name
         ]
         if not integration_metadata_object:
-            logger.debug(
+            logger.info(
                 f"Integration metadata object was not found for {data_source_name=} in {integration_list=}."
             )
             return
+        logger.info(f"Placing {data_source_name=} first in the integration_list.")
         integration_list.remove(integration_metadata_object[0])
         integration_list.insert(0, integration_metadata_object[0])
 
@@ -359,12 +360,12 @@ class PackMetadata(BaseModel):
             # the provided defaultDataSourceName is a valid integration, keep it
             return self.default_data_source_name
 
-        logger.debug(
+        logger.info(
             f"No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,"
             f" choosing default"
         )
         if len(data_sources) > 1:
-            logger.debug(
+            logger.info(
                 f"{self.name} has multiple data sources. Setting a default value."
             )
 

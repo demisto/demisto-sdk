@@ -381,7 +381,7 @@ class PackMetadata(BaseModel):
                 integration.is_fetch
                 or integration.is_fetch_events
                 # or integration.has_fetch_command()  # doesn't happen in repo
-                # or integration.is_mappable  # todo decide if to add
+                or integration.is_mappable
                 # or integration.is_fetch_events_and_assets  # doesn't happen in repo
             )
             and not integration.deprecated

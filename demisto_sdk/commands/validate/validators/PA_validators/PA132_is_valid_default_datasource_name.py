@@ -38,7 +38,7 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
             if (
                 content_item.default_data_source_name
                 and content_item.default_data_source_name
-                in content_item.get_valid_data_source_integrations(
+                not in content_item.get_valid_data_source_integrations(
                     content_item.content_items
                 )
             )

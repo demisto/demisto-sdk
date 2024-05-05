@@ -19,7 +19,7 @@ import functools
 import logging
 import os
 from pathlib import Path
-from typing import IO, Any, Dict, List, Optional, Tuple, Union
+from typing import IO, Any, Dict, List, Optional
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
@@ -1445,23 +1445,7 @@ def coverage_analyze(ctx, **kwargs):
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
 @logging_setup_decorator
-def format(
-    ctx,
-    input: str,
-    output: Path,
-    from_version: str,
-    no_validate: bool,
-    update_docker: bool,
-    assume_yes: Union[None, bool],
-    deprecate: bool,
-    use_git: bool,
-    prev_ver: str,
-    include_untracked: bool,
-    add_tests: bool,
-    id_set_path: str,
-    file_paths: Tuple[str, ...],
-    **kwargs,
-):
+def format(ctx, **kwargs):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
     genericmodule/genericdefinition.
@@ -1473,24 +1457,27 @@ def format(
         sys.exit(1)
 
     update_command_args_from_config_file("format", kwargs)
+    _input = kwargs.get("input")
+    file_paths = kwargs.get("file_paths") or []
+    output = kwargs.get("output")
 
-    if file_paths and not input:
-        input = ",".join(file_paths)
+    if file_paths and not _input:
+        _input = ",".join(file_paths)
 
     with ReadMeValidator.start_mdx_server():
         return format_manager(
-            str(input) if input else None,
+            str(_input) if _input else None,
             str(output) if output else None,
-            from_version=from_version,
-            no_validate=no_validate,
-            update_docker=update_docker,
-            assume_answer=assume_yes,
-            deprecate=deprecate,
-            use_git=use_git,
-            prev_ver=prev_ver,
-            include_untracked=include_untracked,
-            add_tests=add_tests,
-            id_set_path=id_set_path,
+            from_version=kwargs.get("from_version", ""),
+            no_validate=kwargs.get("no_validate", False),
+            update_docker=kwargs.get("update_docker", False),
+            assume_answer=kwargs.get("assume_answer"),
+            deprecate=kwargs.get("deprecate", False),
+            use_git=kwargs.get("use_git", False),
+            prev_ver=kwargs.get("prev_ver"),
+            include_untracked=kwargs.get("include_untracked", False),
+            add_tests=kwargs.get("add_tests", False),
+            id_set_path=kwargs.get("id_set_path"),
             use_graph=kwargs.get("graph", True),
         )
 

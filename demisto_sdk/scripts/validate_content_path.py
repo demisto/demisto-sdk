@@ -129,6 +129,7 @@ ALLOWED_SUFFIXES = frozenset(
     )
 )
 DIRS_ALLOWING_SPACE_IN_FILENAMES = (TEST_PLAYBOOKS_DIR,)
+IMAGE_NAME_REGEX = re.compile(r"[^0-9a-zA-Z-_]+")
 app = typer.Typer()
 
 
@@ -309,8 +310,7 @@ def _validate(path: Path) -> None:
 
 
 def _validate_image_file_name(image_name: str):
-    pattern = r"[^0-9a-zA-Z-_]+"
-    if re.findall(pattern, image_name):
+    if IMAGE_NAME_REGEX.findall(image_name):
         raise InvalidImageFileName
 
 

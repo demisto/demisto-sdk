@@ -1,6 +1,6 @@
 changes:
 - description: Fixed an issue where `.demisto-sdk-conf` did not take into consideration command arguments setting to `false`.
   type: fix
-- description: Fixed an issue where **format** did not take `.demisto-sdk-conf` into consideration..
+- description: Fixed an issue where **format** did not take `.demisto-sdk-conf` into consideration.
   type: fix
 pr_number: 4253

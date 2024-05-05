@@ -1471,7 +1471,7 @@ def format(ctx, **kwargs):
             from_version=kwargs.get("from_version", ""),
             no_validate=kwargs.get("no_validate", False),
             update_docker=kwargs.get("update_docker", False),
-            assume_answer=kwargs.get("assume_answer"),
+            assume_answer=kwargs.get("assume_yes"),
             deprecate=kwargs.get("deprecate", False),
             use_git=kwargs.get("use_git", False),
             prev_ver=kwargs.get("prev_ver"),

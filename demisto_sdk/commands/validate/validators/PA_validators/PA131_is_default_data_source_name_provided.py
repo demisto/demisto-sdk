@@ -52,9 +52,10 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         data_sources_fetch_events = [
-            integration.name
+            integration.display_name
             for integration in content_item.content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+            and not integration.deprecated
             and integration.is_fetch_events
         ]
 

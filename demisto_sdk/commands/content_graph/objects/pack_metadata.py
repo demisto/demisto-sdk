@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from packaging.version import Version, parse
 from pydantic import BaseModel, Field
@@ -85,7 +85,7 @@ class PackMetadata(BaseModel):
             pack_id (str): The pack ID.
             content_items (PackContentItems): The pack content items object.
         """
-        self.default_data_source_name = self._get_default_data_source(content_items)
+        self._set_default_data_source(content_items)
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = self._get_author(self.author, marketplace)
         # We want to add the pipeline_id only if this is called within our repo.
@@ -135,18 +135,18 @@ class PackMetadata(BaseModel):
         return _metadata
 
     @staticmethod
-    def _place_data_source_integration_first(integration_list, data_source_name):
+    def _place_data_source_integration_first(integration_list, data_source_id):
         integration_metadata_object = [
             integration
             for integration in integration_list
-            if integration.get("name") == data_source_name
+            if integration.get("id") == data_source_id
         ]
         if not integration_metadata_object:
             logger.info(
-                f"Integration metadata object was not found for {data_source_name=} in {integration_list=}."
+                f"Integration metadata object was not found for {data_source_id=} in {integration_list=}."
             )
             return
-        logger.info(f"Placing {data_source_name=} first in the integration_list.")
+        logger.info(f"Placing {data_source_id=} first in the integration_list.")
         integration_list.remove(integration_metadata_object[0])
         integration_list.insert(0, integration_metadata_object[0])
 
@@ -198,7 +198,7 @@ class PackMetadata(BaseModel):
             # order collected_content_items integration list so that the defaultDataSourceName will be first
             self._place_data_source_integration_first(
                 collected_content_items[ContentType.INTEGRATION.metadata_name],
-                self.default_data_source_name,
+                self.default_data_source_id,
             )
         return collected_content_items, content_displays
 
@@ -347,18 +347,18 @@ class PackMetadata(BaseModel):
             return True
         return any(self.get_valid_data_source_integrations(content_items))
 
-    def _get_default_data_source(
+    def _set_default_data_source(
         self, content_items: PackContentItems
-    ) -> Optional[str]:
+    ) -> None:
         """If there is more than one data source in the pack, return the default data source."""
-        data_sources = self.get_valid_data_source_integrations(content_items)
+        data_sources: List[Tuple[str, str]] = self.get_valid_data_source_integrations(content_items, include_id=True)
 
         if (
             self.default_data_source_name
-            and self.default_data_source_name in data_sources
+            and self.default_data_source_name in [t[0] for t in data_sources]
         ):
             # the provided defaultDataSourceName is a valid integration, keep it
-            return self.default_data_source_name
+            self.default_data_source_id = [t[1] for t in data_sources if t[0] == self.default_data_source_name][0]
 
         logger.info(
             f"No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,"
@@ -370,14 +370,16 @@ class PackMetadata(BaseModel):
             )
 
         # setting a value to the defaultDataSourceName in case there is a data source
-        return data_sources[0] if data_sources else None
+        self.default_data_source_name = data_sources[0][0] if data_sources else None
+        self.default_data_source_id = data_sources[0][1] if data_sources else None
 
     @staticmethod
-    def get_valid_data_source_integrations(content_items: PackContentItems):
+    def get_valid_data_source_integrations(content_items: PackContentItems, include_id: bool = False) -> Union[List[Tuple[str, str]], List[str]]:
         return [
-            integration.name
+            (integration.display_name, integration.object_id) if include_id else integration.display_name
             for integration in content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+            and not integration.deprecated
             and (
                 integration.is_fetch
                 or integration.is_fetch_events
@@ -385,7 +387,6 @@ class PackMetadata(BaseModel):
                 or integration.is_mappable
                 # or integration.is_fetch_events_and_assets  # doesn't happen in repo
             )
-            and not integration.deprecated
         ]
 
     def _get_tags_from_landing_page(self, pack_id: str) -> set:

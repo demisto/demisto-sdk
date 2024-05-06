@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where requests to dockerhub failed on rate-limits when authenticating with username and password.
-  type: fix
-pr_number: 4227

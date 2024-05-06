@@ -1,4 +1,0 @@
-changes:
-- description: Improved printing of file paths in the internal gitutil.
-  type: internal
-pr_number: 4251

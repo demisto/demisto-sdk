@@ -130,7 +130,7 @@ ALLOWED_SUFFIXES = frozenset(
 )
 DIRS_ALLOWING_SPACE_IN_FILENAMES = (TEST_PLAYBOOKS_DIR,)
 INVALID_CHARS_IN_IMAGES_REGEX = re.compile(r"[^0-9a-zA-Z-_]+")
-SUPPORTED_IMAGE_FORMATS = (".png", "svg")
+SUPPORTED_IMAGE_FORMATS = (".png", ".svg")
 app = typer.Typer()
 
 

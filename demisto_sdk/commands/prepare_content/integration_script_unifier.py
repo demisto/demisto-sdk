@@ -607,13 +607,9 @@ class IntegrationScriptUnifier(Unifier):
         if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
             contributor_type = support_level_header
 
-        if (
-            " Contribution)" not in unified_yml["display"]
-            and contributor_type != "xsoar"
-        ):
-            unified_yml["display"] += CONTRIBUTOR_DISPLAY_NAME.format(
-                contributor_type.capitalize()
-            )
+        unified_yml["display"] = IntegrationScriptUnifier.get_display_name(
+            unified_yml["display"], contributor_type
+        )
         existing_detailed_description = unified_yml.get("detaileddescription", "")
 
         if contributor_type == COMMUNITY_SUPPORT:
@@ -646,6 +642,18 @@ class IntegrationScriptUnifier(Unifier):
             )
 
         return unified_yml
+
+    @staticmethod
+    def get_display_name(display_name, contributor_type):
+        if (
+            display_name
+            and " Contribution)" not in display_name
+            and contributor_type != "xsoar"
+        ):
+            display_name += CONTRIBUTOR_DISPLAY_NAME.format(
+                contributor_type.capitalize()
+            )
+        return display_name
 
     @staticmethod
     def get_integration_doc_link(package_path: Path, unified_yml: Dict) -> str:

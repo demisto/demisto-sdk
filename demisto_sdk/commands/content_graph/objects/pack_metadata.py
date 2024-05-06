@@ -19,6 +19,9 @@ from demisto_sdk.commands.content_graph.common import ContentType, PackTags
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
@@ -135,18 +138,22 @@ class PackMetadata(BaseModel):
         return _metadata
 
     @staticmethod
-    def _place_data_source_integration_first(integration_list, data_source_id):
+    def _place_data_source_integration_first(
+        integration_list, data_source_display_name
+    ):
         integration_metadata_object = [
             integration
             for integration in integration_list
-            if integration.get("id") == data_source_id
+            if integration.get("name") == data_source_display_name
         ]
         if not integration_metadata_object:
             logger.info(
-                f"Integration metadata object was not found for {data_source_id=} in {integration_list=}."
+                f"Integration metadata object was not found for {data_source_display_name=} in {integration_list=}."
             )
             return
-        logger.info(f"Placing {data_source_id=} first in the integration_list.")
+        logger.info(
+            f"Placing {data_source_display_name=} first in the integration_list."
+        )
         integration_list.remove(integration_metadata_object[0])
         integration_list.insert(0, integration_metadata_object[0])
 
@@ -198,7 +205,9 @@ class PackMetadata(BaseModel):
             # order collected_content_items integration list so that the defaultDataSourceName will be first
             self._place_data_source_integration_first(
                 collected_content_items[ContentType.INTEGRATION.metadata_name],
-                self.default_data_source_id,
+                IntegrationScriptUnifier.get_display_name(
+                    self.default_data_source_name, self.support
+                ),
             )
         return collected_content_items, content_displays
 
@@ -349,17 +358,17 @@ class PackMetadata(BaseModel):
 
     def _set_default_data_source(self, content_items: PackContentItems) -> None:
         """If there is more than one data source in the pack, return the default data source."""
-        data_sources: List[Tuple[str, str]] = self.get_valid_data_source_integrations(
-            content_items, include_id=True
-        )
+        data_sources: List[str] = self.get_valid_data_source_integrations(content_items)
 
-        if self.default_data_source_name and self.default_data_source_name in [
-            t[0] for t in data_sources
-        ]:
+        display_name = IntegrationScriptUnifier.get_display_name(
+            self.default_data_source_name, self.support
+        )
+        if self.default_data_source_name and display_name in data_sources:
             # the provided defaultDataSourceName is a valid integration, keep it
-            self.default_data_source_id = [
-                t[1] for t in data_sources if t[0] == self.default_data_source_name
-            ][0]
+            logger.info(
+                f"Keeping the provided {self.default_data_source_name=} with {display_name=}"
+            )
+            return
 
         logger.info(
             f"No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,"
@@ -370,19 +379,17 @@ class PackMetadata(BaseModel):
                 f"{self.name} has multiple data sources. Setting a default value."
             )
 
+        # todo handle with the case where a contribution doesn't have a default value, this should not hold the suffix
         # setting a value to the defaultDataSourceName in case there is a data source
-        self.default_data_source_name = data_sources[0][0] if data_sources else None
-        self.default_data_source_id = data_sources[0][1] if data_sources else None
+        self.default_data_source_name = data_sources[0] if data_sources else None
 
     @staticmethod
     def get_valid_data_source_integrations(
-        content_items: PackContentItems, include_id: bool = False
-    ) -> Union[List[Tuple[str, str]], List[str]]:
+        content_items: PackContentItems,
+    ) -> List[str]:
+        """Find fetching integrations in XSIAM, not deprecated."""
         return [
-            (integration.display_name, integration.object_id)
-            if include_id
-            else integration.display_name
-            # find fetching integrations in XSIAM, not deprecated
+            integration.display_name
             for integration in content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
             and not integration.deprecated

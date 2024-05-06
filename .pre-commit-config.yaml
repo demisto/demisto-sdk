@@ -12,15 +12,8 @@ repos:
   rev: 1.8.2
   hooks:
   - id: poetry-check
-  - id: poetry-lock
     args:
-    - --check
-    files: ^pyproject.toml$
-  - id: poetry-export
-    args:
-    - --without-hashes
-    - -o
-    - requirements.txt
+    - --lock
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v0.982
   hooks:

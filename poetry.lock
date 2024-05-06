@@ -202,7 +202,11 @@ name = "async-timeout"
 version = "4.0.3"
 description = "Timeout context manager for asyncio programs"
 optional = true
+<<<<<<< HEAD
 python-versions = ">=3.7"
+=======
+python-versions = ">=3.6"
+>>>>>>> 13619f9f29c7fe84c04476fea3025ef47aed64b7
 files = [
     {file = "async-timeout-4.0.3.tar.gz", hash = "sha256:4640d96be84d82d02ed59ea2b7105a0f7b33abe8703703cd0ab0bf87c427522f"},
     {file = "async_timeout-4.0.3-py3-none-any.whl", hash = "sha256:7405140ff1230c310e51dc27b3145b9092d659ce68ff733fb0cefe3ee42be028"},
@@ -1230,7 +1234,11 @@ name = "frozenlist"
 version = "1.4.1"
 description = "A list-like structure which implements collections.abc.MutableSequence"
 optional = true
+<<<<<<< HEAD
 python-versions = ">=3.8"
+=======
+python-versions = ">=3.7"
+>>>>>>> 13619f9f29c7fe84c04476fea3025ef47aed64b7
 files = [
     {file = "frozenlist-1.4.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:f9aa1878d1083b276b0196f2dfbe00c9b7e752475ed3b682025ff20c1c1f51ac"},
     {file = "frozenlist-1.4.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:29acab3f66f0f24674b7dc4736477bcd4bc3ad4b896f5f45379a67bce8b96868"},
@@ -4941,6 +4949,7 @@ files = [
 urllib3 = ">=2"
 
 [[package]]
+<<<<<<< HEAD
 name = "types-setuptools"
 version = "69.5.0.20240415"
 description = "Typing stubs for setuptools"
@@ -4949,6 +4958,16 @@ python-versions = ">=3.8"
 files = [
     {file = "types-setuptools-69.5.0.20240415.tar.gz", hash = "sha256:ea64af0a96a674f8c40ba34c09c254f3c70bc3f218c6bffa1d0912bd91584a2f"},
     {file = "types_setuptools-69.5.0.20240415-py3-none-any.whl", hash = "sha256:637cdb24a0d48a6ab362c09cfe3b89ecaa1c10666a8ba9452924e9a0ae00fa4a"},
+=======
+name = "types-six"
+version = "1.16.21.8"
+description = "Typing stubs for six"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-six-1.16.21.8.tar.gz", hash = "sha256:02a892ff8f423c4c5d15de7c6f4d433e643c863bcbefabd19251b478cbb284ab"},
+    {file = "types_six-1.16.21.8-py3-none-any.whl", hash = "sha256:e118ebebb4944af96b4c022b15c0769c065af09126eb148b7797023e905e0652"},
+>>>>>>> 13619f9f29c7fe84c04476fea3025ef47aed64b7
 ]
 
 [[package]]
@@ -5553,5 +5572,10 @@ generate-unit-tests = ["klara"]
 
 [metadata]
 lock-version = "2.0"
+<<<<<<< HEAD
 python-versions = "^3.8,<3.12"
 content-hash = "924321f945a67af239a680ebac382537b57bb3b5af71f0b0a1dd2717b9dae9b0"
+=======
+python-versions = ">=3.8,<3.11"
+content-hash = "607aa70a4746214fcff02a451ad356b25520a17c7a87008aadb79616c08f98df"
+>>>>>>> 13619f9f29c7fe84c04476fea3025ef47aed64b7

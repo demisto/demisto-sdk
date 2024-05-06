@@ -1,4 +1,4 @@
 changes:
-- description: fixed an issue where reading **pre-commit** config templates would not handle cases with key=false and key:mode=true.
+- description: Fixed an issue where reading **pre-commit** config templates would not handle cases with key=false and key:mode=true.
   type: fix
 pr_number: 4238

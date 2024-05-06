@@ -138,6 +138,7 @@ CANVAS = "canvas"
 OLD_REPUTATION = "reputations.json"
 PACK_VERIFY_KEY = "content.pack.verify"
 XSOAR_CONFIG_FILE = "xsoar_config.json"
+DEMISTO_SDK_CONFIG_FILE = ".demisto-sdk-conf"
 GENERIC_FIELD = "genericfield"
 GENERIC_TYPE = "generictype"
 GENERIC_MODULE = "genericmodule"
@@ -2096,10 +2097,12 @@ STRING_TO_BOOL_MAP = {
     "1": True,
     "yes": True,
     "true": True,
+    "True": True,
     "n": False,
     "0": False,
     "no": False,
     "false": False,
+    "False": False,
     "t": True,
     "f": False,
 }

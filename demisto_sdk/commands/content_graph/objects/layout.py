@@ -14,7 +14,7 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     tabs: List[Dict]
     definition_id: Optional[str] = Field(alias="definitionId")
     group: str
-    edit: bool
+    edit: Dict
     indicators_details: bool
     indicators_quick_view: bool
     quick_view: bool

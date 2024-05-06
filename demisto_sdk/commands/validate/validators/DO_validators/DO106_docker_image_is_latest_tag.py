@@ -24,7 +24,7 @@ ContentTypes = Union[Integration, Script]
 
 class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
     error_code = "DO106"
-    description = "Validate that the given content-item's docker image isn't outdated."
+    description = "Validate that the given content-item's docker image isn't outdated TEST."
     rationale = "Updated Docker images ensure that the code doesn't use outdated dependencies, including bug fixes and fixed vulnerabilities."
     error_message = "docker image {0}'s tag {1} is outdated. The latest tag is {2}"
 

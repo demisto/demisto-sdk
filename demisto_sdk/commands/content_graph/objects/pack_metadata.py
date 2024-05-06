@@ -347,18 +347,19 @@ class PackMetadata(BaseModel):
             return True
         return any(self.get_valid_data_source_integrations(content_items))
 
-    def _set_default_data_source(
-        self, content_items: PackContentItems
-    ) -> None:
+    def _set_default_data_source(self, content_items: PackContentItems) -> None:
         """If there is more than one data source in the pack, return the default data source."""
-        data_sources: List[Tuple[str, str]] = self.get_valid_data_source_integrations(content_items, include_id=True)
+        data_sources: List[Tuple[str, str]] = self.get_valid_data_source_integrations(
+            content_items, include_id=True
+        )
 
-        if (
-            self.default_data_source_name
-            and self.default_data_source_name in [t[0] for t in data_sources]
-        ):
+        if self.default_data_source_name and self.default_data_source_name in [
+            t[0] for t in data_sources
+        ]:
             # the provided defaultDataSourceName is a valid integration, keep it
-            self.default_data_source_id = [t[1] for t in data_sources if t[0] == self.default_data_source_name][0]
+            self.default_data_source_id = [
+                t[1] for t in data_sources if t[0] == self.default_data_source_name
+            ][0]
 
         logger.info(
             f"No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,"
@@ -374,9 +375,14 @@ class PackMetadata(BaseModel):
         self.default_data_source_id = data_sources[0][1] if data_sources else None
 
     @staticmethod
-    def get_valid_data_source_integrations(content_items: PackContentItems, include_id: bool = False) -> Union[List[Tuple[str, str]], List[str]]:
+    def get_valid_data_source_integrations(
+        content_items: PackContentItems, include_id: bool = False
+    ) -> Union[List[Tuple[str, str]], List[str]]:
         return [
-            (integration.display_name, integration.object_id) if include_id else integration.display_name
+            (integration.display_name, integration.object_id)
+            if include_id
+            else integration.display_name
+            # find fetching integrations in XSIAM, not deprecated
             for integration in content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
             and not integration.deprecated

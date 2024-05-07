@@ -1838,7 +1838,7 @@ def find_type(
         XSIAMDashboard,
         XSIAMReport,
     )
-    from demisto_sdk.commands.content_graph.objects import List as List_obj
+    from demisto_sdk.commands.content_graph.objects import List as ListObject
 
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1981,7 +1981,7 @@ def find_type(
     if LayoutRule.match(_dict, Path(path)):
         return FileType.LAYOUT_RULE
 
-    if List_obj.match(_dict, Path(path)):
+    if ListObject.match(_dict, Path(path)):
         return FileType.LISTS
 
     # When using it for all files validation- sometimes 'id' can be integer

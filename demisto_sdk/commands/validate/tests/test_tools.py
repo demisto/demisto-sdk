@@ -31,7 +31,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorT
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
-from demisto_sdk.commands.content_graph.objects.list import List as LIST
+from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
@@ -317,7 +317,7 @@ def create_classifier_object(
 
 def create_list_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-) -> LIST:
+) -> ListObject:
     """Creating an list object with altered fields from a default list json structure.
 
     Args:
@@ -331,7 +331,7 @@ def create_list_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_list(name="list", content=json_content)
-    return cast(LIST, BaseContent.from_path(Path(pack.lists[0].path)))
+    return cast(ListObject, BaseContent.from_path(Path(pack.lists[0].path)))
 
 
 def create_job_object(

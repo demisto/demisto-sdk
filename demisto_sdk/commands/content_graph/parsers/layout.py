@@ -26,7 +26,7 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
 
         self.kind = self.json_data.get("kind")
         self.details_v2: Dict[str, List[Dict]] = self.json_data.get("detailsV2", {})
-        self.tabs: List[Dict] = self.details_v2.get("tabs", [{}])
+        self.tabs: List[Dict] = self.details_v2.get("tabs", [])
         self.definition_id = self.json_data.get("definitionId")
         self.group = self.json_data.get("group")
 

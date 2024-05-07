@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call-arg]
     kind: Optional[str]
-    tabs: List[Dict]
+    tabs: Optional[List[Dict]]
     definition_id: Optional[str] = Field(alias="definitionId")
     group: str
     edit: Dict

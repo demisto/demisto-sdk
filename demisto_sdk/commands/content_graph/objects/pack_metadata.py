@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 from packaging.version import Version, parse
 from pydantic import BaseModel, Field
@@ -139,7 +139,7 @@ class PackMetadata(BaseModel):
 
     @staticmethod
     def _place_data_source_integration_first(
-        integration_list, data_source_display_name
+        integration_list: List[Dict], data_source_display_name: str
     ):
         integration_metadata_object = [
             integration
@@ -358,16 +358,16 @@ class PackMetadata(BaseModel):
 
     def _set_default_data_source(self, content_items: PackContentItems) -> None:
         """If there is more than one data source in the pack, return the default data source."""
-        data_sources: List[str] = self.get_valid_data_source_integrations(content_items)
-
-        display_name = IntegrationScriptUnifier.get_display_name(
-            self.default_data_source_name, self.support
+        data_sources: List[str] = self.get_valid_data_source_integrations(
+            content_items, self.support
         )
-        if self.default_data_source_name and display_name in data_sources:
+
+        if (
+            self.default_data_source_name
+            and self.default_data_source_name in data_sources
+        ):
             # the provided defaultDataSourceName is a valid integration, keep it
-            logger.info(
-                f"Keeping the provided {self.default_data_source_name=} with {display_name=}"
-            )
+            logger.info(f"Keeping the provided {self.default_data_source_name=}")
             return
 
         logger.info(
@@ -379,17 +379,21 @@ class PackMetadata(BaseModel):
                 f"{self.name} has multiple data sources. Setting a default value."
             )
 
-        # todo handle with the case where a contribution doesn't have a default value, this should not hold the suffix
         # setting a value to the defaultDataSourceName in case there is a data source
         self.default_data_source_name = data_sources[0] if data_sources else None
 
     @staticmethod
     def get_valid_data_source_integrations(
-        content_items: PackContentItems,
+        content_items: PackContentItems, support_level: str = None
     ) -> List[str]:
-        """Find fetching integrations in XSIAM, not deprecated."""
+        """
+        Find fetching integrations in XSIAM, not deprecated.
+        When a support level is provided, the returned display names are without the contribution suffix.
+        """
         return [
-            integration.display_name
+            IntegrationScriptUnifier.remove_support_from_display_name(
+                integration.display_name, support_level
+            )
             for integration in content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
             and not integration.deprecated

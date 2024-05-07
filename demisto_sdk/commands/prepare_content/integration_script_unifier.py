@@ -644,14 +644,28 @@ class IntegrationScriptUnifier(Unifier):
         return unified_yml
 
     @staticmethod
-    def get_display_name(display_name, contributor_type):
+    def get_display_name(display_name: str, contributor_type: str):
         if (
             display_name
+            and contributor_type
             and " Contribution)" not in display_name
             and contributor_type != "xsoar"
         ):
             display_name += CONTRIBUTOR_DISPLAY_NAME.format(
                 contributor_type.capitalize()
+            )
+        return display_name
+
+    @staticmethod
+    def remove_support_from_display_name(display_name: str, contributor_type: str):
+        if (
+            display_name
+            and contributor_type
+            and " Contribution)" in display_name
+            and contributor_type != "xsoar"
+        ):
+            display_name = display_name.removesuffix(
+                CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
             )
         return display_name
 

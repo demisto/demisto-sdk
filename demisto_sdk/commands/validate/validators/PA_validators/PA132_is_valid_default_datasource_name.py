@@ -29,7 +29,7 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     content_item.default_data_source_name,
                     content_item.get_valid_data_source_integrations(
-                        content_item.content_items
+                        content_item.content_items, content_item.support
                     ),
                 ),
                 content_object=content_item,
@@ -39,7 +39,7 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
                 content_item.default_data_source_name
                 and content_item.default_data_source_name
                 not in content_item.get_valid_data_source_integrations(
-                    content_item.content_items
+                    content_item.content_items, content_item.support
                 )
             )
         ]

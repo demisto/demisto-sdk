@@ -4,6 +4,9 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -31,7 +34,7 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     content_item.get_valid_data_source_integrations(
-                        content_item.content_items
+                        content_item.content_items, content_item.support
                     )
                 ),
                 content_object=content_item,
@@ -52,7 +55,9 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         data_sources_fetch_events = [
-            integration.display_name
+            IntegrationScriptUnifier.remove_support_from_display_name(
+                integration.display_name, content_item.support
+            )
             for integration in content_item.content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
             and not integration.deprecated

@@ -19,14 +19,33 @@ def test_IsDashboardContainForbiddenFieldsValidator_is_valid():
         - Ensure that no ValidationResult returned
           when `system` field does not exist
     """
-    dashboard = create_dashboard_object(paths=["system"], values=["foo"])
+    dashboard = create_dashboard_object(
+        paths=["system", "layout"],
+        values=[
+            "foo",
+            [
+                {
+                    "id": "layout test",
+                    "widget": {"owner": "owner test", "id": "widget test"},
+                }
+            ],
+        ],
+    )
 
     # not valid
     results = IsDashboardContainForbiddenFieldsValidator().is_valid([dashboard])
-    assert results[0].message == "the following fields need to be removed: system."
+    assert (
+        "the 'system' fields need to be removed from Confluera Dashboard."
+        in results[0].message
+    )
+    assert (
+        "the 'owner' fields need to be removed from widget test Widget in Confluera Dashboard."
+        in results[0].message
+    )
 
     # valid
     dashboard.data["system"] = None
+    dashboard.data["layout"][0]["widget"]["owner"] = None
     assert not IsDashboardContainForbiddenFieldsValidator().is_valid([dashboard])
 
 
@@ -52,22 +71,3 @@ def test_IsDashboardContainNecessaryFieldsValidator_is_valid():
         result[0].message
         == "the following fields are missing and need to be added: fromDate."
     )
-
-
-def test_IsDashboardContainForbiddenFieldsValidator_fix():
-    """
-    Given:
-        - invalid dashboard that has 'system' field
-    When:
-        - run fix method
-    Then:
-        - Ensure the fix message as expected
-        - Ensure the field `system` has the value None
-    """
-    dashboard = create_dashboard_object(paths=["system"], values=["foo"])
-    IsDashboardContainForbiddenFieldsValidator().invalid_fields[
-        "Confluera Dashboard"
-    ] = ["system"]
-    result = IsDashboardContainForbiddenFieldsValidator().fix(dashboard)
-    assert result.message == "removed the following fields system."
-    assert not dashboard.data.get("system")

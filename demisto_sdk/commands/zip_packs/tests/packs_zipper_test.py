@@ -3,15 +3,10 @@ from pathlib import Path
 from shutil import rmtree, unpack_archive
 
 import click
-import demisto_client
 import pytest
-from demisto_client.demisto_api import DefaultApi
-from packaging.version import parse
 
 from demisto_sdk.__main__ import zip_packs
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.upload import uploader
-from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.tests.constants_test import PACK_TARGET
 
 UNIT_TEST_DATA = src_root() / "commands" / "zip_packs" / "tests" / "data"

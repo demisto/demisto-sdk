@@ -32,15 +32,13 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
     )
     related_field = ""
     is_auto_fixable = False
-    # is_auto_fixable = True
-    # fix_message = "removed the following fields {0}."
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results = []
         error_messages = []
         for content_item in content_items:
             invalid_dashboard_fields = self.dashboard_contains_forbidden_fields(
-                content_item.name, content_item.data
+                content_item.data
             )
             invalid_widgets_fields = self.widgets_contain_forbidden_fields(
                 content_item.data
@@ -73,7 +71,7 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
                 )
         return results
 
-    def dashboard_contains_forbidden_fields(self, name, dashboard) -> List[str]:
+    def dashboard_contains_forbidden_fields(self, dashboard) -> List[str]:
 
         invalid_fields = [
             field for field in FIELDS_TO_EXCLUDE if dashboard.get(field) is not None

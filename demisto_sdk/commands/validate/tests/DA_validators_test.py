@@ -66,8 +66,14 @@ def test_IsDashboardContainNecessaryFieldsValidator_is_valid():
 
     # not valid
     dashboard.data["fromDate"] = None
+    dashboard.data["layout"][0]["widget"]["toDate"] = None
     result = IsDashboardContainNecessaryFieldsValidator().is_valid([dashboard])
+
     assert (
-        result[0].message
-        == "the following fields are missing and need to be added: fromDate."
+        "the 'fromDate' fields are missing from Confluera Dashboard and need to be added."
+        in result[0].message
+    )
+    assert (
+        "the 'toDate' fields are missing from detcount Widget in Confluera Dashboard and need to be added."
+        in result[0].message
     )

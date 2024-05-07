@@ -23,7 +23,7 @@ from demisto_sdk.commands.content_graph.objects.incident_type import IncidentTyp
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
-from demisto_sdk.commands.content_graph.objects.list import List as LIST
+from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -48,7 +48,7 @@ ContentTypes = Union[
     GenericField,
     GenericModule,
     GenericType,
-    LIST,
+    ListObject,
     Mapper,
     Classifier,
     Widget,

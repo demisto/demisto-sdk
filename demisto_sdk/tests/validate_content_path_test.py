@@ -5,6 +5,7 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
+    DOC_FILES_DIR,
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
     PACKS_FOLDER,
@@ -22,6 +23,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidDepthOneFile,
     InvalidDepthOneFolder,
     InvalidDepthZeroFile,
+    InvalidImageFileName,
     InvalidIntegrationScriptFileName,
     InvalidIntegrationScriptFileType,
     InvalidLayoutFileName,
@@ -29,7 +31,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidXDRCTemplatesFileName,
     InvalidXSIAMReportFileName,
     PathIsFolder,
-    PathIsTestOrDocData,
+    PathIsTestData,
     PathIsUnified,
     PathUnderDeprecatedContent,
     SpacesInFileName,
@@ -164,7 +166,7 @@ def test_depth_one_pass(folder: str):
     try:
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "file"))
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
-    except PathIsTestOrDocData:
+    except PathIsTestData:
         pass
     except (
         InvalidIntegrationScriptFileType,
@@ -394,3 +396,29 @@ def test_classifier_mapper_file_valid(file_name: str):
 def test_classifier_mapper_file_invalid(file_name: str):
     with pytest.raises(InvalidClassifier):
         _validate(DUMMY_PACK_PATH / CLASSIFIERS_DIR / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "image_file.png",
+        "image.svg",
+        "image1.svg",
+        "image-1-1.png",
+    ),
+)
+def test_doc_file_valid(file_name: str):
+    _validate(DUMMY_PACK_PATH / DOC_FILES_DIR / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "Mitre&Attc.png",
+        "image(1).png",
+        "image_%.svg",
+    ),
+)
+def test_doc_file_invalid(file_name: str):
+    with pytest.raises(InvalidImageFileName):
+        _validate(DUMMY_PACK_PATH / DOC_FILES_DIR / file_name)

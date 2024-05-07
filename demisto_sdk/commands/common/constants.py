@@ -1236,15 +1236,20 @@ TYPE_TO_EXTENSION = {
     TYPE_PWSH: ".ps1",
 }
 
-TESTS_AND_DOC_DIRECTORIES = [
+TESTS_DIRECTORIES = [
     "testdata",
     "test_data",
     "data_test",
     "tests_data",
-    "doc_files",
-    "doc_imgs",
     "TestData",
 ]
+
+DOCS_DIRECTORIES = [
+    "doc_files",
+    "doc_imgs",
+]
+
+TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",

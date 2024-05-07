@@ -57,8 +57,6 @@ jobs:
 
       - name: Cache pre-commit
         uses: actions/cache@v4
-      - name: Cache pre-commit
-        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-3|3.12|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}

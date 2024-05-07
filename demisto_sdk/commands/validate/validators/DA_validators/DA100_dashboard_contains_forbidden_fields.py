@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import ClassVar, Dict, Iterable, List
+from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -31,9 +31,9 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
         "the '{0}' fields need to be removed from {1} Widget in {2}."
     )
     related_field = ""
+    is_auto_fixable = False
     # is_auto_fixable = True
     # fix_message = "removed the following fields {0}."
-    invalid_fields: ClassVar[Dict[str, list]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results = []
@@ -78,7 +78,6 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
         invalid_fields = [
             field for field in FIELDS_TO_EXCLUDE if dashboard.get(field) is not None
         ]
-        self.invalid_fields[name] = invalid_fields
         return invalid_fields
 
     def widgets_contain_forbidden_fields(self, dashboard) -> dict:

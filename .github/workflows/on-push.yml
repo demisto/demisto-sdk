@@ -65,11 +65,6 @@ jobs:
 
       - name: Run pre-commit
         run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files
-          path: ~/.cache/pre-commit
-          key: pre-commit-3|3.11|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}
-
-      - name: Run pre-commit
-        run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files
 
       - name: Run Pytest collection
         run: poetry run pytest --collect-only .

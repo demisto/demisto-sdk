@@ -1,5 +1,4 @@
 import os
-from enum import Enum
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
 
@@ -15,6 +14,7 @@ from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_pack_name,
     is_external_repository,
@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.tools import (
 )
 
 
-class ListData(str, Enum):
+class ListData(StrEnum):
     """
     A closed list of types of list (content-item) that the server accepts
     """

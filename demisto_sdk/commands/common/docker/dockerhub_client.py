@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timedelta
-from enum import Enum
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
@@ -11,6 +10,7 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
 
 DOCKERHUB_USER = "DOCKERHUB_USER"
@@ -18,7 +18,7 @@ DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
 DEFAULT_REPOSITORY = "demisto"
 
 
-class DockerHubAuthScope(str, Enum):
+class DockerHubAuthScope(StrEnum):
     PULL = "pull"  # Grants read-only access to the repository, allowing you to pull images.
     PUSH = "push"  # Grants write access to the repository, allowing you to push images.
     DELETE = "delete"  # Grants permission to delete images from the repository.
@@ -106,8 +106,11 @@ class DockerHubClient:
                 f"Error when trying to get dockerhub token, error\n:{_error}"
             )
             if (
-                _error.response.status_code
-                in (requests.codes.unauthorized, requests.codes.too_many_requests)
+                _error.response is not None
+                and (
+                    _error.response.status_code
+                    in (requests.codes.unauthorized, requests.codes.too_many_requests)
+                )
                 and self.auth
             ):
                 # in case of rate-limits with a username:password, retrieve the token without username:password
@@ -387,7 +390,10 @@ class DockerHubClient:
             self.get_image_tag_metadata(docker_image, tag=tag)
             return True
         except DockerHubRequestException as error:
-            if error.exception.response.status_code == requests.codes.not_found:
+            if (
+                error.exception.response
+                and error.exception.response.status_code == requests.codes.not_found
+            ):
                 logger.debug(
                     f"docker-image {docker_image}:{tag} does not exist in dockerhub"
                 )

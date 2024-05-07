@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
@@ -25,19 +25,19 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             raise NotAContentItemException
 
         self.kind = self.json_data.get("kind")
-        self.details_v2: Dict[str, List[Dict]] = self.json_data.get("detailsV2", {})
-        self.tabs: List[Dict] = self.details_v2.get("tabs", [])
+        self.tabs = self.json_data.get("tabs")
         self.definition_id = self.json_data.get("definitionId")
         self.group = self.json_data.get("group")
 
-        self.edit: Dict = self.json_data.get("edit", {})
+        self.edit: bool = bool(self.json_data.get("edit"))
         self.indicators_details: bool = bool(self.json_data.get("indicatorsDetails"))
         self.indicators_quick_view: bool = bool(
             self.json_data.get("indicatorsQuickView")
         )
         self.quick_view: bool = bool(self.json_data.get("quickView"))
         self.close: bool = bool(self.json_data.get("close"))
-        self.details: Dict = self.json_data.get("details", {})
+        self.details: bool = bool(self.json_data.get("details"))
+        self.details_v2: bool = bool(self.json_data.get("detailsV2"))
         self.mobile: bool = bool(self.json_data.get("mobile"))
 
         self.connect_to_dependencies()

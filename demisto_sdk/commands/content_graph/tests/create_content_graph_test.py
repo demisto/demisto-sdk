@@ -319,13 +319,13 @@ def mock_layout(path: str, name: str = "SampleLayout", data: Dict = {}):
         is_test=False,
         data=data,
         group="incident",
-        edit={},
+        edit=False,
         indicators_details=False,
         indicators_quick_view=False,
         quick_view=False,
         close=False,
-        details={},
-        details_v2={},
+        details=False,
+        details_v2=True,
         mobile=False,
     )
 

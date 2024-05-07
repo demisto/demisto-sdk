@@ -53,7 +53,8 @@ class IsValidTypeValidator(BaseValidator[ContentTypes]):
 
     def get_invalid_layout_type(self, content_item: ContentTypes) -> List[str]:
         invalid_types_contained: List = []
-        for tab in content_item.tabs or []:
+        tabs: List[Dict] = content_item.data.get("detailsV2", {}).get("tabs") or [{}]
+        for tab in tabs:
             if (tab_type := tab.get("type")) in INVALID_TABS:
                 invalid_types_contained.append(tab_type)
             sections: List[Dict] = tab.get("sections", [{}])

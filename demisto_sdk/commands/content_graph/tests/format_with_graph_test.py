@@ -4,7 +4,6 @@ from typing import List
 
 import pytest
 from click.testing import CliRunner
-from pytest_mock import MockerFixture
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import (
@@ -306,7 +305,7 @@ def repository(mocker, repo) -> ContentDTO:
 
 
 def test_format_mapper_with_graph_remove_unknown_content(
-    mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch, repository, repo
+    mocker, monkeypatch, repository, repo
 ):
     """
     Given

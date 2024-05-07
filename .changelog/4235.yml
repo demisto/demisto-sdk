@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where **validate** ran from-version validation on `trigger` content items which do not have *from_version* field.
+  type: fix
+pr_number: 4235

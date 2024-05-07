@@ -16,7 +16,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_field import Indicator
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.layout import Layout
-from demisto_sdk.commands.content_graph.objects.list import List as List_Obj
+from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -45,7 +45,7 @@ ContentTypes = Union[
     GenericField,
     GenericModule,
     GenericType,
-    List_Obj,
+    ListObject,
     Widget,
 ]
 

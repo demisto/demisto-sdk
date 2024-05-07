@@ -140,6 +140,7 @@ CANVAS = "canvas"
 OLD_REPUTATION = "reputations.json"
 PACK_VERIFY_KEY = "content.pack.verify"
 XSOAR_CONFIG_FILE = "xsoar_config.json"
+DEMISTO_SDK_CONFIG_FILE = ".demisto-sdk-conf"
 GENERIC_FIELD = "genericfield"
 GENERIC_TYPE = "generictype"
 GENERIC_MODULE = "genericmodule"
@@ -1235,15 +1236,20 @@ TYPE_TO_EXTENSION = {
     TYPE_PWSH: ".ps1",
 }
 
-TESTS_AND_DOC_DIRECTORIES = [
+TESTS_DIRECTORIES = [
     "testdata",
     "test_data",
     "data_test",
     "tests_data",
-    "doc_files",
-    "doc_imgs",
     "TestData",
 ]
+
+DOCS_DIRECTORIES = [
+    "doc_files",
+    "doc_imgs",
+]
+
+TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",
@@ -2056,6 +2062,8 @@ TABLE_INCIDENT_TO_ALERT = {
 FORMATTING_SCRIPT = "indicator-format"
 
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
+DOCKERFILES_REPO = "demisto/dockerfiles"
+CONTENT_REPO = "demisto/content"
 
 TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
 
@@ -2096,10 +2104,12 @@ STRING_TO_BOOL_MAP = {
     "1": True,
     "yes": True,
     "true": True,
+    "True": True,
     "n": False,
     "0": False,
     "no": False,
     "false": False,
+    "False": False,
     "t": True,
     "f": False,
 }

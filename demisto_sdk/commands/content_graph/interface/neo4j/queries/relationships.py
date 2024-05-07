@@ -421,3 +421,13 @@ RETURN
     minDepth
 ORDER BY content_type, object_id"""
     return run_query(tx, query).data()
+
+
+def delete_all_graph_relationships(tx: Transaction) -> None:
+    query = """// Deletes all graph relationships
+        MATCH ()-[r]->()
+        CALL { WITH r
+        DELETE r
+        };
+    """
+    run_query(tx, query)

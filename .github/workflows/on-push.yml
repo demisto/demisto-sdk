@@ -57,7 +57,14 @@ jobs:
 
       - name: Cache pre-commit
         uses: actions/cache@v4
+      - name: Cache pre-commit
+        uses: actions/cache@v4
         with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-3|3.12|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}
+
+      - name: Run pre-commit
+        run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files
           path: ~/.cache/pre-commit
           key: pre-commit-3|3.11|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}
 
@@ -196,11 +203,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Download all artifacts # TODO - download only the relevant artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
         run: |
@@ -210,9 +217,11 @@ jobs:
           coverage xml
       - name: Coveralls-Action
         uses: coverallsapp/github-action@v2
+        continue-on-error: true
       - name: Coveralls-Comment
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        continue-on-error: true
         run: |
           if [ -n "$COVERALLS_REPO_TOKEN" ]; then
             pip install coveralls
@@ -316,11 +325,18 @@ jobs:
 
       - name: run pre-commit on input files
         timeout-minutes: 60
-        continue-on-error: true # TODO - fail if there is an error here
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
+
+      - name: run pre-commit with default pre-commit config shipped with the SDK
+        timeout-minutes: 60
+        run: |
+          source $(poetry env info --path)/bin/activate
+          cd content
+          rm -rf .pre-commit-config_template.yaml
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
 
       - name: Upload artifacts
         if: always()
@@ -559,3 +575,23 @@ jobs:
       - name: Output to GitHub Action Summary
         if: steps.changed-files.outputs.any_changed == 'true'
         run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY
+
+  verify-pip-installation:
+    name: Verify SDK Pip Installation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: pip intsall current project
+        run: pip install .
+
+      - name: Verify Installation
+        run: demisto-sdk --version

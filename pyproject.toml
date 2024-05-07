@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.29.0"
+version = "1.29.2"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -16,11 +16,10 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: Implementation :: CPython',
 ]
-exclude = ["TestSuite/**", "*/tests/*", "tests"]
+exclude = ["TestSuite/**", "tests_end_to_end/**", "demisto_sdk/tests/**", "demisto_sdk/**/tests/**", "demisto_sdk/**/test_data/**", "demisto_sdk/**/test_files/**"]
 
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
-update-additional-dependencies = "demisto_sdk.scripts.update_additional_dependencies:main"
 sdk-changelog = "demisto_sdk.scripts.changelog.changelog:main"
 merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
 merge-pytest-reports = "demisto_sdk.scripts.merge_pytest_reports:main"
@@ -30,7 +29,7 @@ init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.13"
+python = ">=3.8,<3.13"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"

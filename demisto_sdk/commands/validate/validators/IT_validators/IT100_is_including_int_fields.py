@@ -30,7 +30,7 @@ class IncidentTypeIncludesIntFieldValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(invalid_fields),
+                message=self.error_message.format(", ".join(invalid_fields)),
                 content_object=content_item,
             )
             for content_item in content_items

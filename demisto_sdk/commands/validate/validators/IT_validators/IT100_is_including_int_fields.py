@@ -4,7 +4,10 @@ from typing import Iterable, List
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    GitStatuses,
+)
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -16,6 +19,7 @@ ContentTypes = IncidentType
 
 
 class IncidentTypeIncludesIntFieldValidator(BaseValidator[ContentTypes]):
+    expected_git_statuses = [GitStatuses.ADDED]
     error_code = "IT100"
     rationale = "Fields that have to be included, cannot be of type integer."
     description = "Checks if the included fields have a positive integer value."

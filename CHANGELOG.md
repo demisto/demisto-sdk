@@ -1,4 +1,10 @@
 # Changelog
+## 1.29.3
+* Fixed an issue where **validate** ran from-version validation on `trigger` content items which do not have *from_version* field. [#4235](https://github.com/demisto/demisto-sdk/pull/4235)
+* Fixed an issue where requests to dockerhub failed on rate-limits when authenticating with username and password. [#4227](https://github.com/demisto/demisto-sdk/pull/4227)
+* Fixed an issue where reading **pre-commit** config templates would not handle cases with key=false and key:mode=true. [#4238](https://github.com/demisto/demisto-sdk/pull/4238)
+* Improved printing of file paths in the internal gitutil. [#4251](https://github.com/demisto/demisto-sdk/pull/4251)
+
 ## 1.29.2
 * Added the `--docker_image` and `--image_ref` flags to **pre-commit* to override values from configuration files. [#4223](https://github.com/demisto/demisto-sdk/pull/4223)
 * Removed the `update-additional-dependencies` script and pre-commit hook. [#4225](https://github.com/demisto/demisto-sdk/pull/4225)

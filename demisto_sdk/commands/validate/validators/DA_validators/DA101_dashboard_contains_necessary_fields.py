@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -14,6 +15,7 @@ FIELDS_TO_INCLUDE = ["fromDate", "toDate", "fromDateLicense"]
 
 
 class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
+    expected_git_statuses = [GitStatuses.ADDED]
     error_code = "DA101"
     description = "Validate that the dashboard includes all the necessary fields."
     rationale = "The Dashboard should contains the required 'fromDate', 'toDate', 'fromDateLicense' fields."

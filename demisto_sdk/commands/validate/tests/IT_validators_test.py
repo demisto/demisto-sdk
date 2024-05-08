@@ -5,6 +5,9 @@ from demisto_sdk.commands.validate.validators.IT_validators.IT100_is_including_i
 from demisto_sdk.commands.validate.validators.IT_validators.IT101_is_valid_playbook_id import (
     IncidentTypValidPlaybookIdValidator,
 )
+from demisto_sdk.commands.validate.validators.IT_validators.IT102_is_auto_extract_fields_valid import (
+    IncidentTypeValidAutoExtractFieldsValidator,
+)
 
 
 def test_IncidentTypeIncludesIntFieldValidator_is_valid():
@@ -57,6 +60,36 @@ def test_IncidentTypValidPlaybookIdValidator_is_valid():
         results[0].message
         == "The 'playbookId' field is not valid - please enter a non-UUID playbook ID."
     )
+
+
+def test_IncidentTypeValidAutoExtractFieldsValidator_is_valid():
+    """
+    Given:
+        - Incident Type content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+          when all required fields has positive int values.
+        - Ensure that the ValidationResult returned
+          for the Incident Type who has a field with non integer value
+    """
+    incident_type = create_incident_type_object()
+
+    # valid
+    assert not IncidentTypeValidAutoExtractFieldsValidator().is_valid([incident_type])
+
+    # not valid
+    incident_type.data["extractSettings"] = {
+        "fieldCliNameToExtractSettings": {
+            "incident field": {
+                "isExtractingAllIndicatorTypes": True,
+                "extractAsIsIndicatorTypeId": "doo",
+                "extractIndicatorTypesIDs": "boo",
+            }
+        }
+    }
+    assert IncidentTypeValidAutoExtractFieldsValidator().is_valid([incident_type])
 
 
 # @pytest.mark.parametrize("unsearchable", (False, None))

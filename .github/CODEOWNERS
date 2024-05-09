@@ -3,8 +3,8 @@ demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk @YuvHa
 demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun
 
 # VS Code plugin
-.vscode/ @ilaner
-.devcontainer/ @ilaner
+.vscode/ @anas-yousef
+.devcontainer/ @anas-yousef
 
 # Github Actions
 .github/workflows @GuyAfik @samuelFain
@@ -17,7 +17,7 @@ pyproject.toml @GuyAfik @samuelFain
 pytest.ini @GuyAfik @samuelFain
 
 # Content graph
-demisto_sdk/commands/content_graph/** @dantavori @ilaner
+demisto_sdk/commands/content_graph/** @dantavori @RosenbergYehuda
 
 # Modeling rules
 demisto_sdk/commands/test_content/test_modeling_rule/ @AradCarmi

@@ -36,6 +36,7 @@ __all__ = [
     "AssetsModelingRuleParser",
     "CaseLayoutRuleParser",
     "CaseFieldParser",
+    "CaseLayoutParser"
 ]
 
 from demisto_sdk.commands.content_graph.parsers.assets_modeling_rule import (
@@ -45,6 +46,7 @@ from demisto_sdk.commands.content_graph.parsers.base_playbook import BasePlayboo
 from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
 from demisto_sdk.commands.content_graph.parsers.case_field import CaseFieldParser
 from demisto_sdk.commands.content_graph.parsers.case_layout_rule import CaseLayoutRuleParser
+from demisto_sdk.commands.content_graph.parsers.case_layout import CaseLayoutParser
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
 from demisto_sdk.commands.content_graph.parsers.correlation_rule import (
     CorrelationRuleParser,

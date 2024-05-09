@@ -20,7 +20,7 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
     description = "Validate that the dashboard includes all the necessary fields."
     rationale = "The Dashboard should contains the required 'fromDate', 'toDate', 'fromDateLicense' fields."
     dashboard_error_message = (
-        "the '{0}' fields are missing from {1} and need to be added."
+        "The '{0}' fields are missing from {1} and need to be added."
     )
     widget_error_message = (
         "the '{0}' fields are missing from {1} Widget in {2} and need to be added."

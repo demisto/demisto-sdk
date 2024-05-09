@@ -3449,8 +3449,8 @@ class Errors:
     def invalid_readme_image_absolute_path_error(path):
         return (
             f"The following image link seems to be broken, please repair it:\n{path}."
-            "Are you changing an image name or location? first merge the new image to master,"
-            "and make a 2nd PR linking to the new image in master."
+            "If you are changing an image name or location? first, merge the new image to master, "
+            "then make a 2nd PR linking to the new image in master."
         )
 
     @staticmethod

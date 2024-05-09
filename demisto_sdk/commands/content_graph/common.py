@@ -101,6 +101,7 @@ class ContentType(str, enum.Enum):
     ASSETS_MODELING_RULE = "AssetsModelingRule"
     CASE_LAYOUT_RULE = "CaseLayoutRule"
     CASE_FIELD = "CaseField"
+    CASE_LAYOUT = "CaseLayout"
 
     @property
     def labels(self) -> List[str]:
@@ -130,7 +131,7 @@ class ContentType(str, enum.Enum):
             return "incidentfield-indicatorfield"
         elif self == ContentType.CASE_FIELD:
             return "casefield"
-        elif self == ContentType.LAYOUT:
+        elif self == ContentType.LAYOUT or self == ContentType.CASE_LAYOUT:
             return "layoutscontainer"
         elif self == ContentType.PREPROCESS_RULE:
             return "preprocessrule"
@@ -149,7 +150,7 @@ class ContentType(str, enum.Enum):
             return "automation"
         elif self == ContentType.INDICATOR_TYPE:
             return "reputation"
-        elif self == ContentType.LAYOUT:
+        elif self == ContentType.LAYOUT or self == ContentType.CASE_LAYOUT:
             return "layoutscontainer"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
@@ -165,7 +166,7 @@ class ContentType(str, enum.Enum):
             return "Reputation"
         elif self == ContentType.MAPPER:
             return "Classifier"
-        elif self == ContentType.LAYOUT:
+        elif self == ContentType.LAYOUT or self == ContentType.CASE_LAYOUT:
             return "Layouts Container"
         else:
             return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)
@@ -205,6 +206,8 @@ class ContentType(str, enum.Enum):
     def as_folder(self) -> str:
         if self == ContentType.MAPPER:
             return f"{ContentType.CLASSIFIER}s"
+        elif self == ContentType.CASE_LAYOUT:
+            return f"{ContentType.LAYOUT}s"
         return f"{self.value}s"
 
     @staticmethod

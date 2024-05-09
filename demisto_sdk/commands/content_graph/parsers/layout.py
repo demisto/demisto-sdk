@@ -44,8 +44,6 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        if self.group == "case":
-            return {MarketplaceVersions.MarketplaceV2}
         return {
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.MarketplaceV2,
@@ -90,7 +88,9 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
                 for key, value in current_object.items():
                     if key == "fieldId" and isinstance(value, str):
                         values.add(
-                            value.replace("incident_", "").replace("indicator_", "")
+                            value.replace("incident_", "").
+                            replace("indicator_", "").
+                            replace("case_", "")
                         )
                     else:
                         get_values(value)

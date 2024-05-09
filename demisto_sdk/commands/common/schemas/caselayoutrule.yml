@@ -15,7 +15,7 @@ mapping:
   description:
     type: str
     required: false
-  alerts_filter:
+  incidents_filter:
     type: map
     mapping:
       filter:

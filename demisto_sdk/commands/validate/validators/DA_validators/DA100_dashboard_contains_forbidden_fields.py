@@ -28,9 +28,9 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
     error_code = "DA100"
     description = "Validate that the dashboard excludes all the unnecessary fields."
     rationale = "The Dashboard should contains only the required fields."
-    dashboard_error_message = "the '{0}' fields need to be removed from {1}."
+    dashboard_error_message = "The '{0}' fields need to be removed from {1}."
     widgets_error_message = (
-        "the '{0}' fields need to be removed from {1} Widget in {2}."
+        "The '{0}' fields need to be removed from {1} Widget in {2}."
     )
     related_field = ""
     is_auto_fixable = False

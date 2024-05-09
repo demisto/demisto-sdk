@@ -532,30 +532,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-
-      - name: Check whether validate files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v44
-        with:
-          files: |
-            demisto_sdk/commands/validate/**
-            demisto_sdk/commands/content_graph/objects/**
-            demisto_sdk/commands/content_graph/parsers/**
-            demisto_sdk/commands/common/**
+          fetch-depth: 1
 
       - name: Setup Environment
-        if: steps.changed-files.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
         with:
           python-version: "3.11"
 
       - name: Generate Docs
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
 
       - name: Upload artifacts
-        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           path: validation_docs.md
@@ -563,7 +550,6 @@ jobs:
           name: validation_docs
 
       - name: Output to GitHub Action Summary
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY
 
   verify-pip-installation:

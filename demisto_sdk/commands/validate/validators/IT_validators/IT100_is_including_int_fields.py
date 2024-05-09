@@ -45,7 +45,7 @@ class IncidentTypeIncludesIntFieldValidator(BaseValidator[ContentTypes]):
         )
         if Version(from_version) >= Version("5.0.0"):
             for field in FIELDS_TO_INCLUDE:
-                int_field = incident_type.data.get(field, -1)
+                int_field = incident_type.data_dict.get(field, -1)
                 if not isinstance(int_field, int) or int_field < 0:
                     fields.append(field)
         return fields

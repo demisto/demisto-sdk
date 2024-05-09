@@ -16,6 +16,7 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
     hours: int
     days: int
     weeks: int
+    data_dict: dict
     closure_script: Optional[str] = Field("", alias="closureScript")
     version: Optional[int] = 0
 

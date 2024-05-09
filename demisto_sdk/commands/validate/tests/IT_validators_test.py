@@ -8,6 +8,9 @@ from demisto_sdk.commands.validate.validators.IT_validators.IT101_is_valid_playb
 from demisto_sdk.commands.validate.validators.IT_validators.IT102_is_auto_extract_fields_valid import (
     IncidentTypeValidAutoExtractFieldsValidator,
 )
+from demisto_sdk.commands.validate.validators.IT_validators.IT103_is_auto_extract_mode_valid import (
+    IncidentTypeValidAutoExtractModeValidator,
+)
 
 
 def test_IncidentTypeIncludesIntFieldValidator_is_valid():
@@ -28,8 +31,8 @@ def test_IncidentTypeIncludesIntFieldValidator_is_valid():
     assert not IncidentTypeIncludesIntFieldValidator().is_valid([incident_type])
 
     # not valid
-    incident_type.data["days"] = None
-    incident_type.data["daysR"] = "day"
+    incident_type.data_dict["days"] = None
+    incident_type.data_dict["daysR"] = "day"
     results = IncidentTypeIncludesIntFieldValidator().is_valid([incident_type])
     assert (
         results[0].message
@@ -54,7 +57,7 @@ def test_IncidentTypValidPlaybookIdValidator_is_valid():
     assert not IncidentTypValidPlaybookIdValidator().is_valid([incident_type])
 
     # not valid
-    incident_type.data["playbookId"] = "abbababb-aaaa-bbbb-cccc-abcdabcdabcd"
+    incident_type.data_dict["playbookId"] = "abbababb-aaaa-bbbb-cccc-abcdabcdabcd"
     results = IncidentTypValidPlaybookIdValidator().is_valid([incident_type])
     assert (
         results[0].message
@@ -80,7 +83,7 @@ def test_IncidentTypeValidAutoExtractFieldsValidator_is_valid():
     assert not IncidentTypeValidAutoExtractFieldsValidator().is_valid([incident_type])
 
     # not valid
-    incident_type.data["extractSettings"] = {
+    incident_type.data_dict["extractSettings"] = {
         "fieldCliNameToExtractSettings": {
             "incident field": {
                 "isExtractingAllIndicatorTypes": True,
@@ -92,7 +95,7 @@ def test_IncidentTypeValidAutoExtractFieldsValidator_is_valid():
     assert IncidentTypeValidAutoExtractFieldsValidator().is_valid([incident_type])
 
 
-def test_IncidentTypeValidAutoExtractModeValidato_is_valid():
+def test_IncidentTypeValidAutoExtractModeValidator_is_valid():
     """
     Given:
         - Incident Type content items
@@ -107,8 +110,8 @@ def test_IncidentTypeValidAutoExtractModeValidato_is_valid():
     incident_type = create_incident_type_object()
 
     # valid
-    assert not IncidentTypeValidAutoExtractFieldsValidator().is_valid([incident_type])
+    assert not IncidentTypeValidAutoExtractModeValidator().is_valid([incident_type])
 
     # not valid
-    incident_type.data["extractSettings"] = {"mode": "foo"}
-    assert IncidentTypeValidAutoExtractFieldsValidator().is_valid([incident_type])
+    incident_type.data_dict["extractSettings"] = {"mode": "foo"}
+    assert IncidentTypeValidAutoExtractModeValidator().is_valid([incident_type])

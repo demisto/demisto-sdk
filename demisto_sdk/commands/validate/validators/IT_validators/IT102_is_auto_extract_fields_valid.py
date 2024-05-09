@@ -54,7 +54,7 @@ class IncidentTypeValidAutoExtractFieldsValidator(BaseValidator[ContentTypes]):
     @staticmethod
     def invalid_auto_extract_fields(incident_type: ContentTypes):
         invalid_incident_fields: list = []
-        auto_extract_data = incident_type.data.get("extractSettings", {})
+        auto_extract_data = incident_type.data_dict.get("extractSettings", {})
 
         if not auto_extract_data:
             return invalid_incident_fields

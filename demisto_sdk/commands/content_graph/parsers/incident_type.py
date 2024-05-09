@@ -20,6 +20,7 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
         self.hours = self.json_data.get("hours")
         self.days = self.json_data.get("days")
         self.weeks = self.json_data.get("weeks")
+        self.data_dict = self.json_data
         self.closure_script = self.json_data.get("closureScript", "")
 
         self.connect_to_dependencies()

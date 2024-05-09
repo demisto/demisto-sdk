@@ -39,7 +39,7 @@ class IncidentTypValidPlaybookIdValidator(BaseValidator[ContentTypes]):
             if (
                 content_item.data.get("playbookId")
                 and re.search(
-                    INVALID_PLAYBOOK_ID, content_item.data.get("playbookId", "")
+                    INVALID_PLAYBOOK_ID, content_item.data_dict.get("playbookId", "")
                 )
             )
         ]

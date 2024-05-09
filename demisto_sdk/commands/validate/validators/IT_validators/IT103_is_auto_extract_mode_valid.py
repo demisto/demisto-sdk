@@ -39,7 +39,8 @@ class IncidentTypeValidAutoExtractModeValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                content_item.data.get("extractSettings", {}).get("mode")
+                content_item.data_dict.get("extractSettings", {}).get("mode")
+                and content_item.data_dict.get("extractSettings", {}).get("mode")
                 not in ["All", "Specific"]
             )
         ]

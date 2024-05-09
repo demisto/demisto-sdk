@@ -28,9 +28,7 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
         "Hiding these parameters can lead to confusion and may prevent the integration from working as expected. "
         f"Only the following parameters may be hidden: {ALLOWED_HIDDEN_PARAMS}"
     )
-    error_message = (
-        "The following fields are hidden and cannot be hidden, please unhide them: {0}."
-    )
+    error_message = "The following fields are hidden and cannot be hidden: {0}."
     fix_message = "Unhiddened the following params {0}."
     related_field = "configuration, hidden"
     is_auto_fixable = True

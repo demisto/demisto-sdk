@@ -15,8 +15,8 @@ ContentTypes = Script
 class IsBreakingContextOutputBackwardsValidator(BaseValidator[ContentTypes]):
     error_code = "BC101"
     description = "Validate that no context output keys were removed from the script's output section."
-    rationale = "To ensure we don't break bc."
-    error_message = "The following output keys: {0}. Has been removed, please undo."
+    rationale = "Preserving backwards compatability."
+    error_message = "Output keys cannot be removed. Re-add {0}."
     related_field = "outputs"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]

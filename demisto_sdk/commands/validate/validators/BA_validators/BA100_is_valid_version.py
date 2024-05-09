@@ -56,9 +56,7 @@ class IsValidVersionValidator(BaseValidator[ContentTypes]):
     rationale = (
         "The version for system content items should always be -1 as per the standard."
     )
-    error_message = (
-        "The version for our files should always be -1, please update the file."
-    )
+    error_message = "The version for our files should always be -1"
     fix_message = "Updated the content item version to -1."
     related_field = "version, commonfields.version"
     is_auto_fixable = True

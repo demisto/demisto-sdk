@@ -14,8 +14,10 @@ ContentTypes = Playbook
 class IsNoRolenameValidator(BaseValidator[ContentTypes]):
     error_code = "PB100"
     description = "Validate whether the playbook has a rolename. If the Playbook has a rolename it is not valid."
-    rationale = "We shouldn't ship playbooks with a role set as this is customisable by the customer."
-    error_message = "The playbook '{playbook_name}' can not have a rolename, please remove the field."
+    rationale = "The rolename is customisable by users, and should not be pre-set in the marketplace."
+    error_message = (
+        "The playbook '{playbook_name}' can not have the rolename field, remove it."
+    )
     related_field = "rolename"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

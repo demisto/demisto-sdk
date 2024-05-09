@@ -33,10 +33,10 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
         error_messages = []
         for content_item in content_items:
             dashboard_missing_fields = self.dashboard_missing_necessary_fields(
-                content_item.data
+                content_item.data_dict
             )
             widget_missing_fields = self.widget_missing_necessary_fields(
-                content_item.data
+                content_item.data_dict
             )
 
             if dashboard_missing_fields:

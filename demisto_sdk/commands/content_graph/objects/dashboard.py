@@ -28,3 +28,7 @@ class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignor
         ):
             return True
         return False
+
+    @property
+    def data_dict(self) -> dict:
+        return self.data

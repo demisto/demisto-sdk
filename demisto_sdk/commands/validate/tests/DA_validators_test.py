@@ -44,8 +44,8 @@ def test_IsDashboardContainForbiddenFieldsValidator_is_valid():
     )
 
     # valid
-    dashboard.data["system"] = None
-    dashboard.data["layout"][0]["widget"]["owner"] = None
+    dashboard.data_dict["system"] = None
+    dashboard.data_dict["layout"][0]["widget"]["owner"] = None
     assert not IsDashboardContainForbiddenFieldsValidator().is_valid([dashboard])
 
 
@@ -65,8 +65,8 @@ def test_IsDashboardContainNecessaryFieldsValidator_is_valid():
     assert not IsDashboardContainNecessaryFieldsValidator().is_valid([dashboard])
 
     # not valid
-    dashboard.data["fromDate"] = None
-    dashboard.data["layout"][0]["widget"]["toDate"] = None
+    dashboard.data_dict["fromDate"] = None
+    dashboard.data_dict["layout"][0]["widget"]["toDate"] = None
     result = IsDashboardContainNecessaryFieldsValidator().is_valid([dashboard])
 
     assert (

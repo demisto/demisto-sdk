@@ -23,7 +23,7 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
         "The '{0}' fields are missing from {1} and need to be added."
     )
     widget_error_message = (
-        "the '{0}' fields are missing from {1} Widget in {2} and need to be added."
+        "The '{0}' fields are missing from {1} Widget in {2} and need to be added."
     )
     related_field = ""
     is_auto_fixable = False

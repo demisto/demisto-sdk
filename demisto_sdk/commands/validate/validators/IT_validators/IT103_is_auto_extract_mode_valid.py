@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import (
-    GitStatuses,
-)
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -15,7 +12,6 @@ ContentTypes = IncidentType
 
 
 class IncidentTypeValidAutoExtractModeValidator(BaseValidator[ContentTypes]):
-    expected_git_statuses = [GitStatuses.ADDED]
     error_code = "IT103"
     rationale = (
         "auto extract mode is supposed to be:"

@@ -57,7 +57,7 @@ def test_IncidentTypValidPlaybookIdValidator_is_valid():
     assert not IncidentTypValidPlaybookIdValidator().is_valid([incident_type])
 
     # not valid
-    incident_type.data_dict["playbookId"] = "abbababb-aaaa-bbbb-cccc-abcdabcdabcd"
+    incident_type.playbook = "abbababb-aaaa-bbbb-cccc-abcdabcdabcd"
     results = IncidentTypValidPlaybookIdValidator().is_valid([incident_type])
     assert (
         results[0].message
@@ -113,5 +113,5 @@ def test_IncidentTypeValidAutoExtractModeValidator_is_valid():
     assert not IncidentTypeValidAutoExtractModeValidator().is_valid([incident_type])
 
     # not valid
-    incident_type.data_dict["extractSettings"] = {"mode": "foo"}
+    incident_type.extract_settings = {"mode": "foo"}
     assert IncidentTypeValidAutoExtractModeValidator().is_valid([incident_type])

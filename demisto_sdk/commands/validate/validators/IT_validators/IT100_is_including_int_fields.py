@@ -23,7 +23,10 @@ class IncidentTypeIncludesIntFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IT100"
     rationale = "Fields that have to be included, cannot be of type integer."
     description = "Checks if the included fields have a positive integer value."
-    error_message = "The '{0}' fields need to be included with a positive integer. Please add them with positive integer value."
+    error_message = (
+        "The '{0}' fields need to be included with a positive integer. "
+        "Please add them with positive integer value."
+    )
     related_field = ""
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -40,9 +43,8 @@ class IncidentTypeIncludesIntFieldValidator(BaseValidator[ContentTypes]):
     @staticmethod
     def fields_to_include(incident_type: ContentTypes):
         fields = []
-        from_version = incident_type.data.get(
-            "fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION
-        )
+        from_version = incident_type.fromversion or DEFAULT_CONTENT_ITEM_FROM_VERSION
+
         if Version(from_version) >= Version("5.0.0"):
             for field in FIELDS_TO_INCLUDE:
                 int_field = incident_type.data_dict.get(field, -1)

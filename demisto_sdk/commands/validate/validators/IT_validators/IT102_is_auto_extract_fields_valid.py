@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import (
-    GitStatuses,
-)
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -16,7 +13,6 @@ ContentTypes = IncidentType
 
 
 class IncidentTypeValidAutoExtractFieldsValidator(BaseValidator[ContentTypes]):
-    expected_git_statuses = [GitStatuses.ADDED]
     error_code = "IT102"
     rationale = "extractSettings field is supposed to be in the correct format"
     description = "Check if extractSettings field is valid"
@@ -54,7 +50,7 @@ class IncidentTypeValidAutoExtractFieldsValidator(BaseValidator[ContentTypes]):
     @staticmethod
     def invalid_auto_extract_fields(incident_type: ContentTypes):
         invalid_incident_fields: list = []
-        auto_extract_data = incident_type.data_dict.get("extractSettings", {})
+        auto_extract_data = incident_type.extract_settings
 
         if not auto_extract_data:
             return invalid_incident_fields

@@ -16,7 +16,6 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
     hours: int
     days: int
     weeks: int
-    data_dict: dict
     closure_script: Optional[str] = Field("", alias="closureScript")
     version: Optional[int] = 0
 
@@ -57,3 +56,11 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
             ):
                 return True
         return False
+
+    @property
+    def data_dict(self) -> dict:
+        return self.data
+
+    @property
+    def extract_settings(self) -> dict:
+        return self.data.get("extractSettings", {})

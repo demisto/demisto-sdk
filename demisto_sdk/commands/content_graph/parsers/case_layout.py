@@ -8,7 +8,7 @@ from demisto_sdk.commands.content_graph.parsers.layout import (
 )
 
 
-class LayoutCaseParser(LayoutParser, content_type=ContentType.CASE_LAYOUT):
+class CaseLayoutParser(LayoutParser, content_type=ContentType.CASE_LAYOUT):
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {MarketplaceVersions.MarketplaceV2}

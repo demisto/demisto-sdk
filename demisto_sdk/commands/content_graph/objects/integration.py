@@ -102,8 +102,10 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = Field(False, alias="isfetchassets")
     is_fetch_events_and_assets: bool = False
+    is_fetch_samples: bool = False
     is_feed: bool = False
     is_beta: bool = False
+    is_remote_sync_in: bool = False
     is_mappable: bool = False
     long_running: bool = False
     category: str
@@ -218,9 +220,3 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     @cached_property
     def image(self) -> ImageRelatedFile:
         return ImageRelatedFile(self.path, git_sha=self.git_sha)
-
-    def has_fetch_command(self) -> bool:
-        for command in self.commands:
-            if command.name == "fetch-incidents":
-                return True
-        return False

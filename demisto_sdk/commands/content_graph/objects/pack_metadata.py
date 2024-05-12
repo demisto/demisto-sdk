@@ -354,6 +354,8 @@ class PackMetadata(BaseModel):
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
         if self.default_data_source_name:
             return True
+        # todo if changing logic to not select a default one for when there is more then one, change here too
+        #  (and make validation ignorable)
         return any(self.get_valid_data_source_integrations(content_items))
 
     def _set_default_data_source(self, content_items: PackContentItems) -> None:
@@ -361,6 +363,11 @@ class PackMetadata(BaseModel):
         data_sources: List[str] = self.get_valid_data_source_integrations(
             content_items, self.support
         )
+        data_sources_enhanced: List[tuple] = self.get_valid_data_source_integrations_enhanced(content_items)
+
+        logger.info(f'For pack {self.name}:'
+                    f'\n\tWhen using display_name: {data_sources}'
+                    f'\n\tWhen using (name, display_name, object_id, node_id): {data_sources_enhanced}')
 
         if (
             self.default_data_source_name
@@ -372,9 +379,10 @@ class PackMetadata(BaseModel):
 
         logger.info(
             f"No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,"
-            f" choosing default"
+            f" choosing default from {data_sources=}"
         )
         if len(data_sources) > 1:
+            # todo maybe return?
             logger.info(
                 f"{self.name} has multiple data sources. Setting a default value."
             )
@@ -397,12 +405,36 @@ class PackMetadata(BaseModel):
             for integration in content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
             and not integration.deprecated
+            and not integration.is_feed
             and (
                 integration.is_fetch
                 or integration.is_fetch_events
-                # or integration.has_fetch_command()  # doesn't happen in repo
-                or integration.is_mappable
-                # or integration.is_fetch_events_and_assets  # doesn't happen in repo
+                or integration.is_remote_sync_in
+                or integration.is_fetch_events_and_assets
+                or integration.is_fetch_samples
+            )
+        ]
+
+    @staticmethod
+    def get_valid_data_source_integrations_enhanced(
+        content_items: PackContentItems, support_level: str = None
+    ) -> List[Tuple]:
+        """
+        Find fetching integrations in XSIAM, not deprecated.
+        When a support level is provided, the returned display names are without the contribution suffix.
+        """
+        return [
+            (integration.name, integration.display_name, integration.object_id, integration.node_id)
+            for integration in content_items.integration
+            if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+            and not integration.deprecated
+            and not integration.is_feed
+            and (
+                integration.is_fetch
+                or integration.is_fetch_events
+                or integration.is_remote_sync_in
+                or integration.is_fetch_events_and_assets
+                or integration.is_fetch_samples
             )
         ]
 

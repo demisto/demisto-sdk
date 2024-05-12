@@ -35,9 +35,7 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
             dashboard_missing_fields = self.dashboard_missing_necessary_fields(
                 content_item.data_dict
             )
-            widget_missing_fields = self.widget_missing_necessary_fields(
-                content_item.data_dict
-            )
+            widget_missing_fields = self.widget_missing_necessary_fields(content_item)
 
             if dashboard_missing_fields:
                 error_messages.append(
@@ -68,7 +66,7 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
     def dashboard_missing_necessary_fields(self, dashboard):
         return [field for field in FIELDS_TO_INCLUDE if dashboard.get(field) is None]
 
-    def widget_missing_necessary_fields(self, dashboard):
+    def widget_missing_necessary_fields(self, dashboard: ContentTypes):
         widgets = self.get_widgets_from_dashboard(dashboard)
         missing_fields = dict()
         for widget in widgets:
@@ -78,8 +76,8 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
         return missing_fields
 
     @staticmethod
-    def get_widgets_from_dashboard(dashboard) -> list:
-        layout_of_dashboard: list = dashboard.get("layout", [])
+    def get_widgets_from_dashboard(dashboard: ContentTypes) -> list:
+        layout_of_dashboard: list = dashboard.layout
         widgets = []
         if layout_of_dashboard:
             widgets = [item.get("widget") for item in layout_of_dashboard]

@@ -42,9 +42,7 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
             invalid_dashboard_fields = self.dashboard_contains_forbidden_fields(
                 content_item.data_dict
             )
-            invalid_widgets_fields = self.widgets_contain_forbidden_fields(
-                content_item.data_dict
-            )
+            invalid_widgets_fields = self.widgets_contain_forbidden_fields(content_item)
 
             if invalid_dashboard_fields:
                 error_messages.append(
@@ -73,7 +71,8 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
                 )
         return results
 
-    def dashboard_contains_forbidden_fields(self, dashboard) -> List[str]:
+    @staticmethod
+    def dashboard_contains_forbidden_fields(dashboard) -> List[str]:
 
         invalid_fields = [
             field for field in FIELDS_TO_EXCLUDE if dashboard.get(field) is not None
@@ -92,8 +91,8 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
         return invalid_fields
 
     @staticmethod
-    def get_widgets_from_dashboard(dashboard) -> list:
-        layout_of_dashboard: list = dashboard.get("layout", [])
+    def get_widgets_from_dashboard(dashboard: ContentTypes) -> list:
+        layout_of_dashboard: list = dashboard.layout
         widgets = []
         if layout_of_dashboard:
             widgets = [item.get("widget") for item in layout_of_dashboard]

@@ -18,6 +18,8 @@ class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD)
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
 
         self.connect_to_dependencies()
+        self.data_dict = self.json_data
+        self.layout = self.json_data.get("layout")
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

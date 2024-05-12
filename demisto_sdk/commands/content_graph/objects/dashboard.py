@@ -9,6 +9,8 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignore[call-arg]
     version: Optional[int] = 0
+    data_dict: dict
+    layout: list
 
     def metadata_fields(self) -> Set[str]:
         return {"object_id", "name", "fromversion", "toversion", "deprecated"}
@@ -28,7 +30,3 @@ class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignor
         ):
             return True
         return False
-
-    @property
-    def data_dict(self) -> dict:
-        return self.data

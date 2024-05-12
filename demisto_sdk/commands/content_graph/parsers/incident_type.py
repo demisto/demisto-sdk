@@ -46,5 +46,9 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
             self.add_dependency_by_id(layout, ContentType.LAYOUT, is_mandatory=False)
 
     @property
+    def data_dict(self) -> dict:
+        return self.json_data
+
+    @property
     def extract_settings(self) -> dict:
         return self.json_data.get("extractSettings", {})

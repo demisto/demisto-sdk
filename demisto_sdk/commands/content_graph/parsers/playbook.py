@@ -37,3 +37,7 @@ class PlaybookParser(BasePlaybookParser, content_type=ContentType.PLAYBOOK):
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @property
+    def tasks(self):
+        return self.yml_data.get("tasks", {})

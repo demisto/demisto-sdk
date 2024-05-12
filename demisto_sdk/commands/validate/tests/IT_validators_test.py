@@ -83,7 +83,7 @@ def test_IncidentTypeValidAutoExtractFieldsValidator_is_valid():
     assert not IncidentTypeValidAutoExtractFieldsValidator().is_valid([incident_type])
 
     # not valid
-    incident_type.data_dict["extractSettings"] = {
+    incident_type.extract_settings = {
         "fieldCliNameToExtractSettings": {
             "incident field": {
                 "isExtractingAllIndicatorTypes": True,

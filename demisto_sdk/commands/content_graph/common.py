@@ -206,8 +206,6 @@ class ContentType(StrEnum):
     def as_folder(self) -> str:
         if self == ContentType.MAPPER:
             return f"{ContentType.CLASSIFIER}s"
-        elif self == ContentType.CASE_LAYOUT:
-            return f"{ContentType.LAYOUT}s"
         return f"{self.value}s"
 
     @staticmethod

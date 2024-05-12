@@ -16,8 +16,9 @@ class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD)
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
-        self.data_dict = self.json_data
+
         self.connect_to_dependencies()
+        self.data_dict = self.json_data
         self.layout = self.json_data.get("layout")
 
     @property

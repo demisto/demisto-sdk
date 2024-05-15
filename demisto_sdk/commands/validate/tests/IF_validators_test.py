@@ -373,18 +373,3 @@ def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_invalid
     results = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().is_valid(content_items)
     assert results
     assert results[0].message == "multiSelect types cannot contain empty values in the selectValues field."
-
-
-def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
-    """
-    Given:
-        - invalid IncidentField of type multySelect with empty strings in selectValues key.
-    When:
-        - run the fix method.
-    Then:
-        - Ensure that the fix and the fix message works as expected.
-    """
-    incident_field = create_incident_field_object(["type", "selectValues"], ["multiSelect", ["", "test"]])
-    result = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().fix(incident_field)
-    assert result.message == "Removed all empty values in the selectValues field."
-    assert result.content_object.data["selectValues"] == ["test"]

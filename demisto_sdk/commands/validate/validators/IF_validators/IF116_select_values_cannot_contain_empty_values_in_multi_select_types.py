@@ -43,11 +43,3 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(BaseValida
                 not select_values_do_not_contain_empty_values_in_multi_select_types(content_item)
             )
         ]
-
-    def fix(self, content_item: ContentTypes) -> FixResult:
-        content_item.data["selectValues"] = list(filter(None, content_item.data["selectValues"]))
-        return FixResult(
-            validator=self,
-            message=self.fix_message,
-            content_object=content_item,
-        )

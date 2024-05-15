@@ -246,11 +246,6 @@ class ContentItem(BaseContent):
         if not self.path.exists():
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
-        # # Explicitly add fromversion
-        # if self.path.suffix == ".yml":
-        #     data["fromversion"] = self.fromversion
-        # else:  # json
-        #     data["fromVersion"] = self.fromversion
         logger.debug(f"preparing {self.path}")
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 

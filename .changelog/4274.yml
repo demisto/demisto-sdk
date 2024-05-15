@@ -1,4 +1,4 @@
 changes:
 - description: Refactored validation DS100, check whether a description file exists for a beta integration.
   type: feature
-pr_number: 4269
+pr_number: 4274

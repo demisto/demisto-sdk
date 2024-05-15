@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import glob
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     GitStatuses,
 )
-from demisto_sdk.commands.common.tools import os
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -37,7 +35,5 @@ class DescriptionMissingInBetaIntegrationValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if glob.glob(
-                os.path.join(os.path.dirname(content_item.path), "*_description.md")
-            )
+            if content_item.description_file.exist
         ]

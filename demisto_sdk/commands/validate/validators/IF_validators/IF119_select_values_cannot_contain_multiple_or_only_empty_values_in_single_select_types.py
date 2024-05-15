@@ -23,7 +23,7 @@ def select_values_do_not_contain_multiple_or_only_empty_values_in_single_select_
     return True
 
 
-class SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator(BaseValidator[ContentTypes]):
+class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator(BaseValidator[ContentTypes]):
     error_code = "IF119"
     description = "We do not allow for incidentFields with singleSelect types to have in the selectValues more than one or only emtpy option"
     rationale = "Due to UI issues, we cannot allow more than one or only empty values for selectValues field"

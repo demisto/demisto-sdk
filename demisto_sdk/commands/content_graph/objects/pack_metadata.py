@@ -363,11 +363,15 @@ class PackMetadata(BaseModel):
         data_sources: List[str] = self.get_valid_data_source_integrations(
             content_items, self.support
         )
-        data_sources_enhanced: List[tuple] = self.get_valid_data_source_integrations_enhanced(content_items)
+        data_sources_enhanced: List[
+            tuple
+        ] = self.get_valid_data_source_integrations_enhanced(content_items)
 
-        logger.info(f'For pack {self.name}:'
-                    f'\n\tWhen using display_name: {data_sources}'
-                    f'\n\tWhen using (name, display_name, object_id, node_id): {data_sources_enhanced}')
+        logger.info(
+            f"For pack {self.name}:"
+            f"\n\tWhen using display_name and removing support: {data_sources}"
+            f"\n\tWhen using (name, display_name, object_id, node_id): {data_sources_enhanced}"
+        )
 
         if (
             self.default_data_source_name
@@ -403,16 +407,7 @@ class PackMetadata(BaseModel):
                 integration.display_name, support_level
             )
             for integration in content_items.integration
-            if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-            and not integration.deprecated
-            and not integration.is_feed
-            and (
-                integration.is_fetch
-                or integration.is_fetch_events
-                or integration.is_remote_sync_in
-                or integration.is_fetch_events_and_assets
-                or integration.is_fetch_samples
-            )
+            if integration.is_data_source()
         ]
 
     @staticmethod
@@ -424,18 +419,14 @@ class PackMetadata(BaseModel):
         When a support level is provided, the returned display names are without the contribution suffix.
         """
         return [
-            (integration.name, integration.display_name, integration.object_id, integration.node_id)
-            for integration in content_items.integration
-            if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-            and not integration.deprecated
-            and not integration.is_feed
-            and (
-                integration.is_fetch
-                or integration.is_fetch_events
-                or integration.is_remote_sync_in
-                or integration.is_fetch_events_and_assets
-                or integration.is_fetch_samples
+            (
+                integration.name,
+                integration.display_name,
+                integration.object_id,
+                integration.node_id,
             )
+            for integration in content_items.integration
+            if integration.is_data_source()
         ]
 
     def _get_tags_from_landing_page(self, pack_id: str) -> set:

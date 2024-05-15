@@ -220,3 +220,17 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     @cached_property
     def image(self) -> ImageRelatedFile:
         return ImageRelatedFile(self.path, git_sha=self.git_sha)
+
+    def is_data_source(self):
+        return (
+            MarketplaceVersions.MarketplaceV2 in self.marketplaces
+            and not self.deprecated
+            and not self.is_feed
+            and (
+                self.is_fetch
+                or self.is_fetch_events
+                or self.is_remote_sync_in
+                or self.is_fetch_events_and_assets
+                or self.is_fetch_samples
+            )
+        )

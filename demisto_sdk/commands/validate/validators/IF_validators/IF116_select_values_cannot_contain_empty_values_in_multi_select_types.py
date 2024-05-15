@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    FixResult,
     ValidationResult,
 )
 
@@ -28,7 +29,7 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(BaseValida
     error_message = "multiSelect types cannot contain empty values in the selectValues field."
     fix_message = "Removed all empty values in the selectValues field."
     related_field = "multiSelect, selectValues"
-    is_auto_fixable = False
+    is_auto_fixable = True
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -43,3 +44,17 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(BaseValida
                 not select_values_do_not_contain_empty_values_in_multi_select_types(content_item)
             )
         ]
+
+    def fix(self, content_item: ContentTypes) -> FixResult:
+        select_values = content_item.data.get("selectValues")
+
+        if all(select_value == "" for select_value in select_values):
+            raise Exception
+
+        content_item.data["selectValues"] = list(filter(lambda select_value: select_value != "", select_values))
+
+        return FixResult(
+            validator=self,
+            message=self.fix_message,
+            content_object=content_item,
+        )

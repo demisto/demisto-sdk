@@ -28,7 +28,7 @@ class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValid
     description = "We do not allow for incidentFields with singleSelect types to have in the selectValues more than one or only emtpy option"
     rationale = "Due to UI issues, we cannot allow more than one or only empty values for selectValues field"
     error_message = "singleSelect types cannot contain more than one or only empty values in the selectValues field."
-    fix_message = "Removed all redundant empty values from selectValues field."
+    fix_message = "Removed all redundant empty values in the selectValues field."
     related_field = "singleSelect, selectValues"
     is_auto_fixable = True
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]

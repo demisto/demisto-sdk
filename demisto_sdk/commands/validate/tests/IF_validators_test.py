@@ -420,5 +420,5 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
     """
     incident_field = create_incident_field_object(["type", "selectValues"], ["singleSelect", ["", "", "test"]])
     result = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().fix(incident_field)
-    assert result.message == "Removed all redundant empty values from selectValues field."
+    assert result.message == "Removed all redundant empty values in the selectValues field."
     assert result.content_object.data['selectValues'] == ['test', '']

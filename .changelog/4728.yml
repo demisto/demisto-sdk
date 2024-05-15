@@ -1,0 +1,4 @@
+changes:
+- description: Refactored validation IF116, Check whether a selectValue key in an incidentField of type multiSelect contains empty options.
+  type: feature
+pr_number: 4728

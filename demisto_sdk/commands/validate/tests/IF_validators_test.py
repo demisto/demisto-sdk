@@ -28,6 +28,8 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     INCIDENT_PROHIBITED_CLI_NAMES,
     IsCliNameReservedWordValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import \
+    SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator
 
 
 @pytest.mark.parametrize(
@@ -338,3 +340,20 @@ def test_IsValidGroupFieldValidator_fix():
     result = IsValidGroupFieldValidator().fix(incident_field)
     assert result.message == f"`group` field is set to {REQUIRED_GROUP_VALUE}."
     assert incident_field.group == REQUIRED_GROUP_VALUE
+
+
+def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_invalid():
+    """
+    Given:
+        - invalid IncidentField of type multySelect with empty strings in selectValues key.
+    When:
+        - run is_valid method.
+    Then:
+        - Ensure that no ValidationResult returned as expected.
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["type", "selectValues"], ["multiSelect", ["", "test"]])
+    ]
+    results = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().is_valid(content_items)
+    assert results
+    assert results[0].message == "multiSelect types cannot contain empty values in the selectValues field."

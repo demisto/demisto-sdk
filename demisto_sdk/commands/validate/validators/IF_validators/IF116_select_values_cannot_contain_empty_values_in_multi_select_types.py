@@ -23,10 +23,10 @@ def select_values_do_not_contain_empty_values_in_multi_select_types(content_item
 
 class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(BaseValidator[ContentTypes]):
     error_code = "IF116"
-    description = ""
-    rationale = ""
-    error_message = ""
-    related_field = ""
+    description = "We do not allow for incidentFields with multySelect types to have in the selectValues emtpy options"
+    rationale = "Due to UI issues, we cannot allow empty values for selectValues field"
+    error_message = "multiSelect types cannot contain empty values in the selectValues field."
+    related_field = "multiSelect, selectValues"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
@@ -40,7 +40,7 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(BaseValida
             )
             for content_item in content_items
             if (
-                select_values_do_not_contain_empty_values_in_multi_select_types(content_item)
+                not select_values_do_not_contain_empty_values_in_multi_select_types(content_item)
             )
         ]
     

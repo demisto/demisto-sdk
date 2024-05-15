@@ -162,6 +162,7 @@ EVENT_COLLECTOR = "EventCollector"
 ASSETS_MODELING_RULE = "assetsmodelingrule"
 CASE_LAYOUT_RULE = "caselayoutrule"
 CASE_FIELD = "casefield"
+CASE_LAYOUT = "caselayout"
 
 # Marketplaces
 
@@ -255,6 +256,7 @@ class FileType(StrEnum):
     ASSETS_MODELING_RULE_XIF = "assetsmodelingrulexif"
     CASE_LAYOUT_RULE = "caselayoutrule"
     CASE_FIELD = "casefield"
+    CASE_LAYOUT = "caselayout"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -295,6 +297,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
     FileType.CASE_FIELD: "Case Fields",
+    FileType.CASE_LAYOUT: "Case Layouts"
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -337,8 +340,6 @@ ENTITY_TYPE_TO_DIR = {
     FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
     FileType.ASSETS_MODELING_RULE.value: ASSETS_MODELING_RULES_DIR,
-    FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR,
-    FileType.CASE_FIELD.value: CASE_FIELDS_DIR,
 
 }
 

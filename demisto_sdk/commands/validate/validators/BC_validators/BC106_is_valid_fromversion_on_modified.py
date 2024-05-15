@@ -4,6 +4,7 @@ from typing import Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -12,7 +13,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Script, Mapper, IncidentType]
+ContentTypes = Union[Integration, Script, Mapper, IncidentType, IncidentField]
 
 
 class IsValidFromversionOnModifiedValidator(BaseValidator[ContentTypes]):

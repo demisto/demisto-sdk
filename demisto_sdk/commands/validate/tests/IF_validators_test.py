@@ -28,6 +28,8 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     INCIDENT_PROHIBITED_CLI_NAMES,
     IsCliNameReservedWordValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF119_select_values_cannot_contain_empty_values_in_multi_select_types import \
+    SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator
 
 
 @pytest.mark.parametrize(
@@ -338,3 +340,53 @@ def test_IsValidGroupFieldValidator_fix():
     result = IsValidGroupFieldValidator().fix(incident_field)
     assert result.message == f"`group` field is set to {REQUIRED_GROUP_VALUE}."
     assert incident_field.group == REQUIRED_GROUP_VALUE
+
+
+def test_SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator_multiple_empty_values_invalid():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with multiple emtpy values in the selectValues filed.
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that ValidationResult runs as expected
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["type", "selectValues"], ["singleSelect", ["", "", "test"]])
+    ]
+    results = SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator().is_valid(content_items)
+    assert results
+    assert results[0].message == "singleSelect types cannot contain more than one or only empty values in the selectValues field."
+
+
+def test_SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator_only_empty_values_invalid():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with only one emtpy value in the selectValues filed.
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that ValidationResult runs as expected
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["type", "selectValues"], ["singleSelect", [""]])
+    ]
+    results = SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator().is_valid(content_items)
+    assert results
+    assert results[0].message == "singleSelect types cannot contain more than one or only empty values in the selectValues field."
+
+
+def test_SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator_only_one_empty_value_valid():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with one emtpy value in the selectValues filed.
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that ValidationResult runs as expected
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["type", "selectValues"], ["singleSelect", ["", "test"]])
+    ]
+    results = SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator().is_valid(content_items)
+    assert not results

@@ -53,7 +53,7 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        select_values = content_item.data.get("selectValues")
+        select_values = content_item.data.get("selectValues") or []
 
         if all(select_value == "" for select_value in select_values):
             raise Exception

@@ -19,7 +19,7 @@ class DescriptionMissingInBetaIntegrationValidator(BaseValidator[ContentTypes]):
     description = "Check whether a description file exists for a beta integration."
     rationale = "Need a disclaimer for beta integrations."
     error_message = "Beta integration needs a description."
-    related_field = ""
+    related_field = "beta"
     is_auto_fixable = False
     expected_git_statuses = [
         GitStatuses.RENAMED,

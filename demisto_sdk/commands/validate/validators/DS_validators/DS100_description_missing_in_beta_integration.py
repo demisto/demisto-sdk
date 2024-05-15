@@ -18,7 +18,7 @@ class DescriptionMissingInBetaIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "DS100"
     description = "Check whether a description file exists for a beta integration."
     rationale = "Need a disclaimer for beta integrations."
-    error_message = "Beta integration needs a description"
+    error_message = "Beta integration needs a description."
     related_field = ""
     is_auto_fixable = False
     expected_git_statuses = [

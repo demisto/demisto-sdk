@@ -28,8 +28,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     INCIDENT_PROHIBITED_CLI_NAMES,
     IsCliNameReservedWordValidator,
 )
-from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import \
-    SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator
+from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import (
+    SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -352,9 +353,15 @@ def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_valid()
         - Ensure that ValidationResult returned as expected.
     """
     content_items: List[IncidentField] = [
-        create_incident_field_object(["type", "selectValues"], ["multiSelect", ["blabla", "test"]])
+        create_incident_field_object(
+            ["type", "selectValues"], ["multiSelect", ["blabla", "test"]]
+        )
     ]
-    results = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().is_valid(content_items)
+    results = (
+        SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().is_valid(
+            content_items
+        )
+    )
     assert not results
 
 
@@ -368,11 +375,20 @@ def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_invalid
         - Ensure that ValidationResult returned as expected.
     """
     content_items: List[IncidentField] = [
-        create_incident_field_object(["type", "selectValues"], ["multiSelect", ["", "test"]])
+        create_incident_field_object(
+            ["type", "selectValues"], ["multiSelect", ["", "test"]]
+        )
     ]
-    results = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().is_valid(content_items)
+    results = (
+        SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().is_valid(
+            content_items
+        )
+    )
     assert results
-    assert results[0].message == "multiSelect types cannot contain empty values in the selectValues field."
+    assert (
+        results[0].message
+        == "multiSelect types cannot contain empty values in the selectValues field."
+    )
 
 
 def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
@@ -385,7 +401,11 @@ def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
         - Ensure the fix message is as expected.
         - Ensure there is there is no emtpy values in the selectValues field.
     """
-    incident_field = create_incident_field_object(["type", "selectValues"], ["singleSelect", ["", "", "test"]])
-    result = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().fix(incident_field)
+    incident_field = create_incident_field_object(
+        ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
+    )
+    result = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().fix(
+        incident_field
+    )
     assert result.message == "Removed all empty values in the selectValues field."
-    assert result.content_object.data['selectValues'] == ['test']
+    assert result.content_object.data["selectValues"] == ["test"]

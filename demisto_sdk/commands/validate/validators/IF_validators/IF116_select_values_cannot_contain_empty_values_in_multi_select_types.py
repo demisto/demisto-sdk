@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -14,7 +13,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = IncidentField
 
 
-def select_values_do_not_contain_empty_values_in_multi_select_types(content_item: ContentTypes) -> bool:
+def select_values_do_not_contain_empty_values_in_multi_select_types(
+    content_item: ContentTypes,
+) -> bool:
     if content_item.data.get("type") == "multiSelect":
         select_values = content_item.data.get("selectValues") or []
         if "" in select_values:
@@ -22,11 +23,15 @@ def select_values_do_not_contain_empty_values_in_multi_select_types(content_item
     return True
 
 
-class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(BaseValidator[ContentTypes]):
+class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(
+    BaseValidator[ContentTypes]
+):
     error_code = "IF116"
     description = "We do not allow for incidentFields with multySelect types to have in the selectValues emtpy options"
     rationale = "Due to UI issues, we cannot allow empty values for selectValues field"
-    error_message = "multiSelect types cannot contain empty values in the selectValues field."
+    error_message = (
+        "multiSelect types cannot contain empty values in the selectValues field."
+    )
     fix_message = "Removed all empty values in the selectValues field."
     related_field = "multiSelect, selectValues"
     is_auto_fixable = True
@@ -41,7 +46,9 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(BaseValida
             )
             for content_item in content_items
             if (
-                not select_values_do_not_contain_empty_values_in_multi_select_types(content_item)
+                not select_values_do_not_contain_empty_values_in_multi_select_types(
+                    content_item
+                )
             )
         ]
 
@@ -51,7 +58,9 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(BaseValida
         if all(select_value == "" for select_value in select_values):
             raise Exception
 
-        content_item.data["selectValues"] = list(filter(lambda select_value: select_value != "", select_values))
+        content_item.data["selectValues"] = list(
+            filter(lambda select_value: select_value != "", select_values)
+        )
 
         return FixResult(
             validator=self,

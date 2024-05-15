@@ -35,5 +35,5 @@ class DescriptionMissingInBetaIntegrationValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.description_file.exist
+            if content_item.is_beta and not content_item.description_file.exist
         ]

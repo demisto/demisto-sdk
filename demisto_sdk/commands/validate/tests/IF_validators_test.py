@@ -29,7 +29,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     IsCliNameReservedWordValidator,
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF119_select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types import (
-    SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator
+    SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator,
 )
 
 
@@ -353,11 +353,18 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
         - Ensure that ValidationResult runs as expected
     """
     content_items: List[IncidentField] = [
-        create_incident_field_object(["type", "selectValues"], ["singleSelect", ["", "", "test"]])
+        create_incident_field_object(
+            ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
+        )
     ]
-    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().is_valid(content_items)
+    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().is_valid(
+        content_items
+    )
     assert results
-    assert results[0].message == "singleSelect types cannot contain more than one or only empty values in the selectValues field."
+    assert (
+        results[0].message
+        == "singleSelect types cannot contain more than one or only empty values in the selectValues field."
+    )
 
 
 def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_only_empty_values_invalid():
@@ -372,9 +379,14 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
     content_items: List[IncidentField] = [
         create_incident_field_object(["type", "selectValues"], ["singleSelect", [""]])
     ]
-    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().is_valid(content_items)
+    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().is_valid(
+        content_items
+    )
     assert results
-    assert results[0].message == "singleSelect types cannot contain more than one or only empty values in the selectValues field."
+    assert (
+        results[0].message
+        == "singleSelect types cannot contain more than one or only empty values in the selectValues field."
+    )
 
 
 def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_only_one_empty_value_valid():
@@ -387,9 +399,13 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
         - Ensure that ValidationResult runs as expected
     """
     content_items: List[IncidentField] = [
-        create_incident_field_object(["type", "selectValues"], ["singleSelect", ["", "test"]])
+        create_incident_field_object(
+            ["type", "selectValues"], ["singleSelect", ["", "test"]]
+        )
     ]
-    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().is_valid(content_items)
+    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().is_valid(
+        content_items
+    )
     assert not results
 
 
@@ -402,9 +418,13 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
     Then:
         - Ensure the fix returns an exception.
     """
-    incident_field = create_incident_field_object(["type", "selectValues"], ["singleSelect", [""]])
+    incident_field = create_incident_field_object(
+        ["type", "selectValues"], ["singleSelect", [""]]
+    )
     with pytest.raises(Exception) as exc_info:
-        SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().fix(incident_field)
+        SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().fix(
+            incident_field
+        )
         assert exc_info
 
 
@@ -418,7 +438,14 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
         - Ensure the fix message as expected
         - Ensure there is only one emtpy value in the selectValues field.
     """
-    incident_field = create_incident_field_object(["type", "selectValues"], ["singleSelect", ["", "", "test"]])
-    result = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().fix(incident_field)
-    assert result.message == "Removed all redundant empty values in the selectValues field."
-    assert result.content_object.data['selectValues'] == ['test', '']
+    incident_field = create_incident_field_object(
+        ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
+    )
+    result = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().fix(
+        incident_field
+    )
+    assert (
+        result.message
+        == "Removed all redundant empty values in the selectValues field."
+    )
+    assert result.content_object.data["selectValues"] == ["test", ""]

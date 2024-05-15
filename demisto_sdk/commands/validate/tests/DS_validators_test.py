@@ -38,14 +38,18 @@ def test_DescriptionMissingInBetaIntegrationValidator_is_valid(
     """
     Given
     content_items iterables.
+            - Case 1: Not a beta integration, and no description file.
+            - Case 2: Not a beta integration, with a description file.
+            - Case 3: A beta integration, and no description file.
+            - Case 4: A beta integration, with a description file.
     When
     - Calling the DescriptionMissingInBetaIntegrationValidator is valid function.
     Then
         - Make sure that the validation is implemented correctly for beta integrations.
-        - Case 1: Not a beta integration, and no description file.
-        - Case 1: Not a beta integration, with a description file.
-        - Case 1: A beta integration, and no description file.
-        - Case 1: A beta integration, with a description file.
+        - Case 1: Shouldn't fail.
+        - Case 2: Shouldn't fail.
+        - Case 3: Should fail.
+        - Case 4: Shouldn't fail.
     """
     from demisto_sdk.commands.validate.validators.DS_validators.DS100_description_missing_in_beta_integration import (
         DescriptionMissingInBetaIntegrationValidator,

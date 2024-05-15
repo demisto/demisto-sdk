@@ -28,7 +28,7 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(BaseValida
     error_message = "multiSelect types cannot contain empty values in the selectValues field."
     fix_message = "Removed all empty values in the selectValues field."
     related_field = "multiSelect, selectValues"
-    is_auto_fixable = True
+    is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

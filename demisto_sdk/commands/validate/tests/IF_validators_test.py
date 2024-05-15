@@ -1,6 +1,7 @@
 from typing import List
 
 import pytest
+from pydantic.error_wrappers import ValidationError
 
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.tests.test_tools import create_incident_field_object
@@ -390,3 +391,34 @@ def test_SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesV
     ]
     results = SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator().is_valid(content_items)
     assert not results
+
+
+def test_SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator_fix_only_empty_value():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with only emtpy value in the selectValues filed.
+    When:
+        - run fix method.
+    Then:
+        - Ensure the fix returns an exception.
+    """
+    incident_field = create_incident_field_object(["type", "selectValues"], ["singleSelect", [""]])
+    with pytest.raises(Exception) as exc_info:
+        SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator().fix(incident_field)
+        assert exc_info
+
+
+def test_SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator_fix_multiple_empty_values():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with multiple emtpy values in the selectValues filed.
+    When:
+        - run fix method.
+    Then:
+        - Ensure the fix message as expected
+        - Ensure there is only one emtpy value in the selectValues field.
+    """
+    incident_field = create_incident_field_object(["type", "selectValues"], ["singleSelect", ["", "", "test"]])
+    result = SelectValuesCannotContainMoreThanOneOrOnlyOneValuesInSingleSelectTypesValidator().fix(incident_field)
+    assert result.message == "Removed all redundant empty values from selectValues field."
+    assert result.content_object.data['selectValues'] == ['test', '']

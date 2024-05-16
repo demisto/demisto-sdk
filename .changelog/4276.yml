@@ -1,0 +1,4 @@
+changes:
+- description: Updated validation BC106, Verify that the fromVersion key in an incident field has not been changed.
+  type: feature
+pr_number: 4276

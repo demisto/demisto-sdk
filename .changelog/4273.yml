@@ -1,0 +1,4 @@
+changes:
+- description: Added support for PB valildations in the new validation command.
+  type: feature
+pr_number: 4273

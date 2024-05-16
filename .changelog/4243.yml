@@ -1,0 +1,4 @@
+changes:
+- description: Change the default `fromversion` of XSIAM content items to 8.0.0
+  type: fix
+pr_number: 4243

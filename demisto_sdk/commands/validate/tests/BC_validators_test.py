@@ -1324,29 +1324,3 @@ def test_NewRequiredArgumentScriptValidator__passes(new_args):
 
     create_old_file_pointers([new_content_item], [old_content_item])
     assert not NewRequiredArgumentScriptValidator().is_valid([new_content_item])
-
-
-def test_NewRequiredArgumentScriptValidator__passes(new_args):
-    """
-    Given:
-        - An older version of a script that has two arguments: one required and one not required.
-        - A newer version of the same script in two cases:
-            Case 1: Both arguments are not required.
-            Case 2: Both arguments are required, but the second one has a default value.
-    When:
-        - The NewRequiredArgumentScriptValidator is invoked to validate the changes in the script.
-    Then:
-        - The validation should pass in both cases:
-            Case 1: The first argument was changed to be not required, which is allowed.
-            Case 2: The first argument did not change, and the second argument was changed to be required but has a default value, which is allowed.
-    """
-    new_content_item = create_script_object(
-        paths=["args"],
-        values=[new_args],
-    )
-    old_content_item = create_script_object(
-        paths=["args"], values=[[{"name": "arg1", "required": True}, {"name": "arg2"}]]
-    )
-
-    create_old_file_pointers([new_content_item], [old_content_item])
-    assert not NewRequiredArgumentScriptValidator().is_valid([new_content_item])

@@ -14,8 +14,8 @@ ContentTypes = IncidentType
 
 class IncidentTypeValidAutoExtractFieldsValidator(BaseValidator[ContentTypes]):
     error_code = "IT102"
-    rationale = "extractSettings field is supposed to be in the correct format"
-    description = "Check if extractSettings field is valid"
+    rationale = "extractSettings field is supposed to be in the correct format."
+    description = "Check if extractSettings field is valid."
     error_message = (
         "The following incident fields are not formatted correctly under"
         "`fieldCliNameToExtractSettings`: {0}\n"

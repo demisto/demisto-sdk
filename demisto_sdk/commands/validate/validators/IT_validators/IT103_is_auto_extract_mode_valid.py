@@ -18,7 +18,7 @@ class IncidentTypeValidAutoExtractModeValidator(BaseValidator[ContentTypes]):
         " 'All' To extract all indicator types regardless of auto-extraction settings."
         "'Specific' - To extract only the specific indicator types set in the auto-extraction settings."
     )
-    description = "Check if auto extract mode valid"
+    description = "Check if auto extract mode valid."
     error_message = (
         "The `mode` field under `extractSettings` should be one of the following:\n"
         ' - "All" - To extract all indicator types regardless of auto-extraction settings.\n'
@@ -35,7 +35,7 @@ class IncidentTypeValidAutoExtractModeValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                content_item.extract_settings.get("mode")
-                and content_item.extract_settings.get("mode") not in ["All", "Specific"]
+                (mode := content_item.extract_settings.get("mode"))
+                and mode not in ["All", "Specific"]
             )
         ]

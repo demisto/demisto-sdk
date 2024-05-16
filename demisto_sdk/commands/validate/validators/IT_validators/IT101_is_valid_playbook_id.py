@@ -4,6 +4,7 @@ import re
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
+    INVALID_PLAYBOOK_ID,
     GitStatuses,
 )
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
@@ -13,9 +14,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = IncidentType
-
-# Checks if playbookID is a UUID format
-INVALID_PLAYBOOK_ID = r"[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}"
 
 
 class IncidentTypValidPlaybookIdValidator(BaseValidator[ContentTypes]):

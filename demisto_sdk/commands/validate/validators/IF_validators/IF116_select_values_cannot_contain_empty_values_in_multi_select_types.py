@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import GitStatuses, IncidentFieldType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -16,7 +16,7 @@ ContentTypes = IncidentField
 def select_values_do_not_contain_empty_values_in_multi_select_types(
     content_item: ContentTypes,
 ) -> bool:
-    if content_item.data.get("type") == "multiSelect":
+    if content_item.data.get("type") == IncidentFieldType.MULTI_SELECT:
         select_values = content_item.data.get("selectValues") or []
         if "" in select_values:
             return False

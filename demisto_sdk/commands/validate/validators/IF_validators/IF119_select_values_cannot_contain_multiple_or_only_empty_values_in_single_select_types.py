@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import GitStatuses, IncidentFieldType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -16,7 +16,7 @@ ContentTypes = IncidentField
 def select_values_do_not_contain_multiple_or_only_empty_values_in_single_select_types(
     content_item: ContentTypes,
 ) -> bool:
-    if content_item.data.get("type") == "singleSelect":
+    if content_item.data.get("type") == IncidentFieldType.SINGLE_SELECT:
         select_values = content_item.data.get("selectValues") or []
         empty_string_count = sum(select_value == "" for select_value in select_values)
         if empty_string_count > 1 or (

@@ -77,8 +77,4 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
 
     @staticmethod
     def get_widgets_from_dashboard(dashboard: ContentTypes) -> list:
-        layout_of_dashboard: list = dashboard.layout
-        widgets = []
-        if layout_of_dashboard:
-            widgets = [item.get("widget") for item in layout_of_dashboard]
-        return widgets
+        return [item.get("widget") for item in dashboard.layout]

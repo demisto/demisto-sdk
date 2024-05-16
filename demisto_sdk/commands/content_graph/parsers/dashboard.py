@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -36,6 +37,15 @@ class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD)
                     self.add_dependency_by_id(
                         script_name, ContentType.SCRIPT, is_mandatory=False
                     )
+
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {
+                "layout": "layout",
+            }
+        )
+        return super().field_mapping
 
     @property
     def data_dict(self):

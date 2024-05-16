@@ -9,13 +9,13 @@ from demisto_sdk.commands.content_graph.objects.integration import Command, Outp
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_incident_field_object,
     create_incident_type_object,
     create_incoming_mapper_object,
     create_integration_object,
     create_old_file_pointers,
     create_pack_object,
     create_script_object,
-    create_incident_field_object,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,

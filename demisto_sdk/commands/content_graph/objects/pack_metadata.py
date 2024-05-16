@@ -359,8 +359,6 @@ class PackMetadata(BaseModel):
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
         if self.default_data_source_name:
             return True
-        # todo if changing logic to not select a default one for when there is more then one, change here too
-        #  (and make validation ignorable)
         return any(self.get_valid_data_source_integrations(content_items))
 
     def _set_default_data_source(self, content_items: PackContentItems) -> None:
@@ -391,7 +389,7 @@ class PackMetadata(BaseModel):
             f" choosing default from {data_sources=}"
         )
         if len(data_sources) > 1:
-            # todo maybe return?
+            # should not happen because of validation PA131
             logger.info(
                 f"{self.name} has multiple data sources. Setting a default value."
             )

@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -44,6 +45,11 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
 
         if layout := self.json_data.get("layout"):
             self.add_dependency_by_id(layout, ContentType.LAYOUT, is_mandatory=False)
+
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update({"extractSettings": "extractSettings"})
+        return super().field_mapping
 
     @property
     def data_dict(self) -> dict:

@@ -1,15 +1,14 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
 
 import imagesize
 
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 IMAGE_WIDTH = 120
@@ -41,6 +40,3 @@ class InvalidImageDimensionsValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if not is_image_dimensions_valid(content_item)
         ]
-
-
-

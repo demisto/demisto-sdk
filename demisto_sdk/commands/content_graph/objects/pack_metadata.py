@@ -139,16 +139,22 @@ class PackMetadata(BaseModel):
 
     @staticmethod
     def _place_data_source_integration_first(
-        integration_list: List[Dict], data_source_display_name: str
+        integration_list: List[Dict],
+        data_source_name: str,
+        support: Optional[str] = None,
     ):
+        data_source_display_name = IntegrationScriptUnifier.get_display_name(
+            data_source_name, support
+        )
         integration_metadata_object = [
             integration
             for integration in integration_list
-            if integration.get("name") == data_source_display_name
+            if integration.get("name") in [data_source_display_name, data_source_name]
         ]
         if not integration_metadata_object:
             logger.info(
-                f"Integration metadata object was not found for {data_source_display_name=} in {integration_list=}."
+                f"Integration metadata object was not found for {data_source_display_name=} and {data_source_name=} "
+                f"in {integration_list=}."
             )
             return
         logger.info(
@@ -205,9 +211,8 @@ class PackMetadata(BaseModel):
             # order collected_content_items integration list so that the defaultDataSourceName will be first
             self._place_data_source_integration_first(
                 collected_content_items[ContentType.INTEGRATION.metadata_name],
-                IntegrationScriptUnifier.get_display_name(
-                    self.default_data_source_name, self.support
-                ),
+                self.default_data_source_name,
+                self.support,
             )
         return collected_content_items, content_displays
 
@@ -364,13 +369,13 @@ class PackMetadata(BaseModel):
             content_items, self.support
         )
         data_sources_enhanced: List[
-            tuple
+            str
         ] = self.get_valid_data_source_integrations_enhanced(content_items)
 
         logger.info(
-            f"For pack {self.name}:"
+            f"For pack {self.name}: (same? {set(data_sources) == set(data_sources_enhanced)})"
             f"\n\tWhen using display_name and removing support: {data_sources}"
-            f"\n\tWhen using (name, display_name, object_id, node_id): {data_sources_enhanced}"
+            f"\n\tWhen using display_name and not removing support: {data_sources_enhanced}"
         )
 
         if (
@@ -413,18 +418,13 @@ class PackMetadata(BaseModel):
     @staticmethod
     def get_valid_data_source_integrations_enhanced(
         content_items: PackContentItems, support_level: str = None
-    ) -> List[Tuple]:
+    ) -> List[str]:
         """
         Find fetching integrations in XSIAM, not deprecated.
         When a support level is provided, the returned display names are without the contribution suffix.
         """
         return [
-            (
-                integration.name,
-                integration.display_name,
-                integration.object_id,
-                integration.node_id,
-            )
+            integration.display_name
             for integration in content_items.integration
             if integration.is_data_source()
         ]

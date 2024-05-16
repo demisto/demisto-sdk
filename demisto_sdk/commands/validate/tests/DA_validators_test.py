@@ -39,7 +39,7 @@ def test_IsDashboardContainForbiddenFieldsValidator_is_valid():
         in results[0].message
     )
     assert (
-        "The 'owner' fields need to be removed from widget test Widget in Confluera Dashboard."
+        "The 'owner' fields need to be removed from widget test Widget listed under Confluera Dashboard."
         in results[0].message
     )
 
@@ -74,6 +74,6 @@ def test_IsDashboardContainNecessaryFieldsValidator_is_valid():
         in result[0].message
     )
     assert (
-        "The 'toDate' fields are missing from detcount Widget in Confluera Dashboard and need to be added."
+        "The 'toDate' fields are missing from detcount Widget listed under Confluera Dashboard and need to be added."
         in result[0].message
     )

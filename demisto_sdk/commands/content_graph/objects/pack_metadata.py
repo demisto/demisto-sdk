@@ -366,15 +366,6 @@ class PackMetadata(BaseModel):
         data_sources: List[str] = self.get_valid_data_source_integrations(
             content_items, self.support
         )
-        data_sources_enhanced: List[
-            str
-        ] = self.get_valid_data_source_integrations_enhanced(content_items)
-
-        logger.info(
-            f"For pack {self.name}: (same? {set(data_sources) == set(data_sources_enhanced)})"
-            f"\n\tWhen using display_name and removing support: {data_sources}"
-            f"\n\tWhen using display_name and not removing support: {data_sources_enhanced}"
-        )
 
         if (
             self.default_data_source_name
@@ -384,15 +375,16 @@ class PackMetadata(BaseModel):
             logger.info(f"Keeping the provided {self.default_data_source_name=}")
             return
 
+        if not data_sources:
+            return
+
         logger.info(
             f"No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,"
             f" choosing default from {data_sources=}"
         )
         if len(data_sources) > 1:
             # should not happen because of validation PA131
-            logger.info(
-                f"{self.name} has multiple data sources. Setting a default value."
-            )
+            logger.info(f"{self.name} has multiple data sources. Setting a default value.")
 
         # setting a value to the defaultDataSourceName in case there is a data source
         self.default_data_source_name = data_sources[0] if data_sources else None
@@ -409,20 +401,6 @@ class PackMetadata(BaseModel):
             IntegrationScriptUnifier.remove_support_from_display_name(
                 integration.display_name, support_level
             )
-            for integration in content_items.integration
-            if integration.is_data_source()
-        ]
-
-    @staticmethod
-    def get_valid_data_source_integrations_enhanced(
-        content_items: PackContentItems, support_level: str = None
-    ) -> List[str]:
-        """
-        Find fetching integrations in XSIAM, not deprecated.
-        When a support level is provided, the returned display names are without the contribution suffix.
-        """
-        return [
-            integration.display_name
             for integration in content_items.integration
             if integration.is_data_source()
         ]

@@ -22,10 +22,8 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
     dashboard_error_message = (
         "The '{0}' fields are missing from {1} and need to be added."
     )
-    widget_error_message = (
-        "The '{0}' fields are missing from {1} Widget in {2} and need to be added."
-    )
-    related_field = ""
+    widget_error_message = "The '{0}' fields are missing from {1} Widget listed under {2} and need to be added."
+    related_field = "layout"
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

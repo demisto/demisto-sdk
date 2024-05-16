@@ -30,9 +30,9 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
     rationale = "The Dashboard should contains only the required fields."
     dashboard_error_message = "The '{0}' fields need to be removed from {1}."
     widgets_error_message = (
-        "The '{0}' fields need to be removed from {1} Widget in {2}."
+        "The '{0}' fields need to be removed from {1} Widget listed under {2}."
     )
-    related_field = ""
+    related_field = "layout"
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -92,8 +92,4 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
 
     @staticmethod
     def get_widgets_from_dashboard(dashboard: ContentTypes) -> list:
-        layout_of_dashboard: list = dashboard.layout
-        widgets = []
-        if layout_of_dashboard:
-            widgets = [item.get("widget") for item in layout_of_dashboard]
-        return widgets
+        return [item.get("widget") for item in dashboard.layout]

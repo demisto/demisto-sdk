@@ -2041,6 +2041,24 @@ class ParameterType(Enum):
     DAY_DROPDOWN = 21
 
 
+class IncidentFieldType:  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
+    SHORT_TEXT = "shortText"
+    LONG_TEXT = "longText"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    SINGLE_SELECT = "singleSelect"
+    MULTI_SELECT = "multiSelect"
+    DATE = "date"
+    MARKDOWN = "markdown"
+    HTML = "html"
+    URL = "url"
+    USER = "user"
+    ROLE = "role"
+    ATTACHMENTS = "attachments"
+    SLA = "sla"
+    GRID = "grid"
+
+
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"

@@ -2539,6 +2539,7 @@ class OldValidateManager:
             - true if the file type is supported OR file type is not supported, but should be ignored, false otherwise
         """
         irrelevant_file_output = "", "", True
+        logger.info(f"{file_path=}\n{old_path=}\n{old_format_files=}\n{check_metadata_files=}")
         if file_path.split(os.path.sep)[0] in (
             ".gitlab",
             ".circleci",

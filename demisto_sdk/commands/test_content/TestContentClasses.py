@@ -24,6 +24,8 @@ from junitparser.junitparser import Failure, Result, Skipped
 from packaging.version import Version
 from slack_sdk import WebClient as SlackClient
 from urllib3.exceptions import ReadTimeoutError
+from google.cloud import storage  # type: ignore[attr-defined]
+
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -73,6 +75,8 @@ MARKETPLACE_VERSIONS_TO_SERVER_TYPE = {
     MarketplaceVersions.XSOAR_SAAS: {XSOAR_SAAS_SERVER_TYPE},
     MarketplaceVersions.XSOAR_ON_PREM: {XSOAR_SERVER_TYPE},
 }
+
+ARTIFACTS_BUCKET = "xsoar-ci-artifacts"
 
 __all__ = [
     "BuildContext",
@@ -856,7 +860,7 @@ class BuildContext:
         self.instances_ips = self._get_instances_ips()
         self.filtered_tests = self._extract_filtered_tests()
         self.tests_data_keeper = TestResults(
-            self.conf.unmockable_integrations, kwargs["artifacts_path"]
+            self.conf.unmockable_integrations, kwargs["artifacts_path"], kwargs["service_account"]
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()
@@ -1192,7 +1196,7 @@ class BuildContext:
 
 
 class TestResults:
-    def __init__(self, unmockable_integrations, artifacts_path: str):
+    def __init__(self, unmockable_integrations, artifacts_path: str, service_account: str = None):
         self.succeeded_playbooks: List[str] = []
         self.failed_playbooks: Set[str] = set()
         self.playbook_report: Dict[str, List[Dict[Any, Any]]] = {}
@@ -1204,6 +1208,7 @@ class TestResults:
         self.unmockable_integrations = unmockable_integrations
         self.playbook_skipped_integration: Set[str] = set()
         self.artifacts_path = Path(artifacts_path)
+        self.service_account = service_account
 
     def add_proxy_related_test_data(self, proxy):
         # Using multiple appends and not extend since append is guaranteed to be thread safe
@@ -1342,6 +1347,52 @@ class TestResults:
             row = [index, record, table_data[record]]
             table.add_row(row)
         logging_method(f"{table_name}:\n{table}", real_time=True)
+
+    import json
+
+    def upload_artifact_json_to_bucket(self, repository_name: str):
+        """Uploads a JSON object to a specified path in the GCP bucket.
+
+        Args:
+          json_object: The Python dictionary containing the JSON data.
+          repository_name: The name of the repository within the bucket.
+          file_name: The desired filename for the uploaded JSON data.
+        """
+        storage_client = storage.Client.from_service_account_json(options.service_account)
+        storage_bucket = storage_client.bucket(ARTIFACTS_BUCKET)
+        blob = storage_bucket.blob(f'{repository_name}/{file_name}')
+
+        # Convert the Python dictionary to a JSON string
+        json_data = json.dumps(self.playbook_report)
+
+        # Upload the JSON string to the blob
+        blob.upload_from_string(json_data)
+
+    @staticmethod
+    def delete_oldest_file(repository_name: str):
+        """Deletes the oldest file from the specified directory in a GCP bucket.
+
+        Args:
+          repository_name: The path of the directory within the bucket (e.g., "path/to/directory/").
+        """
+        client = storage.Client()
+        bucket = client.get_bucket(ARTIFACTS_BUCKET)
+
+        # List all objects with the directory path as prefix
+        blobs = bucket.list_blobs(prefix=repository_name)
+
+        # No files found, exit
+        if not blobs:
+            print(f"No files found in directory: {repository_name}")
+            return
+
+        # Sort blobs by creation time (oldest first)
+        sorted_blobs = sorted(blobs, key=lambda blob: blob.creation_time)
+
+        # Delete the oldest file
+        oldest_blob = sorted_blobs[0]
+        oldest_blob.delete()
+        logging_module.info(f"Deleted oldest file: {oldest_blob.name}")
 
 
 class Integration:

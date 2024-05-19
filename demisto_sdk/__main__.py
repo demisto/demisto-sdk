@@ -2993,6 +2993,7 @@ def openapi_codegen(ctx, **kwargs):
 @click.option("-c", "--conf", help="Path to content conf.json file", required=True)
 @click.option("-e", "--secret", help="Path to content-test-conf conf.json file")
 @click.option("-n", "--nightly", type=bool, help="Run nightly tests")
+@click.option("-rn", "--repo-name", help="Name of the bucket repo to store playbook report.")
 @click.option("-t", "--slack", help="The token for slack", required=True)
 @click.option("-a", "--circleci", help="The token for circleci", required=True)
 @click.option("-b", "--build-number", help="The build number", required=True)

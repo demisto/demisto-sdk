@@ -126,6 +126,12 @@ def execute_test_content(**kwargs):
         build_context.isAMI, logging_manager
     )
     build_context.tests_data_keeper.create_result_files()
+
+    if kwargs["nightly"]:
+        build_number = kwargs["build-number"]
+        build_context.tests_data_keeper.delete_oldest_file(kwargs["repo_name"])
+        build_context.tests_data_keeper.upload_artifact_json_to_bucket(kwargs["repo_name"],
+                                                                       f'playbook_report_{build_number}')
     if build_context.tests_data_keeper.failed_playbooks:
         logging_manager.critical(
             "Some tests have failed. Not destroying instances.", real_time=True

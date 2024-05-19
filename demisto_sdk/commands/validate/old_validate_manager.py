@@ -2050,6 +2050,9 @@ class OldValidateManager:
                 deleted_file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH
             )  # for detecting deleted files
             if deleted_file_type := find_type(deleted_file_path, deleted_file_dict):
+                logger.info(f"{deleted_file_type=}")
+                if not isinstance(deleted_file_dict, dict):
+                    return False
                 deleted_file_id = _get_file_id(
                     deleted_file_type.value, deleted_file_dict
                 )

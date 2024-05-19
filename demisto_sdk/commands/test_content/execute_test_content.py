@@ -130,7 +130,7 @@ def execute_test_content(**kwargs):
     if kwargs["nightly"]:
         build_number = kwargs["build-number"]
         build_context.tests_data_keeper.delete_oldest_file(kwargs["repo_name"])
-        build_context.tests_data_keeper.upload_artifact_json_to_bucket(kwargs["repo_name"],
+        build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(kwargs["repo_name"],
                                                                        f'playbook_report_{build_number}')
     if build_context.tests_data_keeper.failed_playbooks:
         logging_manager.critical(

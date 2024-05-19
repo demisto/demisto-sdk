@@ -1350,7 +1350,7 @@ class TestResults:
 
     import json
 
-    def upload_artifact_json_to_bucket(self, repository_name: str):
+    def upload_playbook_result_json_to_bucket(self, repository_name: str):
         """Uploads a JSON object to a specified path in the GCP bucket.
 
         Args:
@@ -1383,16 +1383,20 @@ class TestResults:
 
         # No files found, exit
         if not blobs:
-            print(f"No files found in directory: {repository_name}")
+            logging_module.info(f"No files found in directory: {repository_name}")
             return
 
         # Sort blobs by creation time (oldest first)
         sorted_blobs = sorted(blobs, key=lambda blob: blob.creation_time)
 
-        # Delete the oldest file
-        oldest_blob = sorted_blobs[0]
-        oldest_blob.delete()
-        logging_module.info(f"Deleted oldest file: {oldest_blob.name}")
+        if len(sorted_blobs) > 10:
+            # Delete the oldest file
+            oldest_blob = sorted_blobs[0]
+            oldest_blob.delete()
+            logging_module.info(f"Deleted oldest file: {oldest_blob.name}")
+        else:
+            logging_module.info("Number of files is lower than 10, skiping")
+
 
 
 class Integration:

@@ -1868,6 +1868,7 @@ def find_type(
         (file_type == "yml" or path.lower().endswith(".yml"))
         and not _dict
     ):
+        logger.info(f"{path=}")
         return None
     if (
         (file_type == "yml" or path.lower().endswith(".yml"))

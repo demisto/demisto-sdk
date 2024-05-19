@@ -487,12 +487,12 @@ def repository(mocker) -> ContentDTO:
     return repository
 
 
-def test_MarketplaceFieldsValidator_is_valid(repository: ContentDTO, mocker):
+def test_MarketplacesFieldValidator_is_valid(repository: ContentDTO):
     """
     Given
     - A content repo
     When
-    - running MarketplaceFieldsValidator is_valid function.
+    - running MarketplacesFieldValidator is_valid function.
     Then
     - Validate the existence of invalid marketplaces usages.
     """

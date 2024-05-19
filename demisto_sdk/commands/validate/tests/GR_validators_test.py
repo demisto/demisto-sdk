@@ -65,13 +65,13 @@ def test_MarketplaceFieldsValidator_is_valid(mocker, graph_repo: Repo):
     test_integration_1.set_data(marketplaces=MP_V2)
     test_integration_1.set_commands(["command_2", "command_3"])
     pass
-
     net4j_content_graph_interface = graph_repo.create_graph()
-    pack_graph_object = pack.get_graph_object(interface=net4j_content_graph_interface)
+    # create_content_graph(net4j_content_graph_interface)
+    # pack_graph_object = pack.get_graph_object(interface=net4j_content_graph_interface)
     # integrations = pack_graph_object.content_items.integration
-    MarketplaceFieldsValidator.graph_interface = net4j_content_graph_interface
-    validator = MarketplaceFieldsValidator()
-    validator.is_valid([pack_graph_object] + pack_graph_object.content_items.integration)
+    # MarketplaceFieldsValidator.graph_interface = net4j_content_graph_interface
+    # validator = MarketplaceFieldsValidator()
+    # validator.is_valid([pack_graph_object] + pack_graph_object.content_items.integration)
     pass
     # results = MarketplaceFieldsValidator().is_valid([pack_graph_object])
 

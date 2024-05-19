@@ -16,7 +16,7 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.validate.validators.GR_validators import GR100_uses_items_not_in_market_place
 
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place import \
-    MarketplaceFieldsValidator
+    MarketplacesFieldValidator
 
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
@@ -499,60 +499,13 @@ def test_MarketplaceFieldsValidator_is_valid(repository: ContentDTO, mocker):
 
     graph_interface = ContentGraphInterface()
     create_content_graph(graph_interface)
-    MarketplaceFieldsValidator()
-    pass
-    #
-    #
-    # # pack2 = graph_repo.create_pack()
-    # # pack2.set_data(marketplaces=MP_XSOAR)
-    #
-    # pack = graph_repo.create_pack()
-    # pack.set_data(marketplaces=MP_V2)
-    #
-    # test_integration_0 = pack.create_integration("test_integration_0")
-    # test_integration_0.set_data(marketplaces=MP_XSOAR)
-    # test_integration_0.set_commands(["command_1"])
-    #
-    # test_integration_1 = pack.create_integration("test_integration_1")
-    # test_integration_1.set_data(marketplaces=MP_V2)
-    # test_integration_1.set_commands(["command_2", "command_3"])
-    # pass
-    # net4j_content_graph_interface = graph_repo.create_graph()
-    # create_content_graph(net4j_content_graph_interface)
-    # pack_graph_object = pack.get_graph_object(interface=net4j_content_graph_interface)
-    # integrations = pack_graph_object.content_items.integration
-    # MarketplaceFieldsValidator.graph_interface = net4j_content_graph_interface
-    # validator = MarketplaceFieldsValidator()
-    # validator.is_valid([pack_graph_object] + pack_graph_object.content_items.integration)
-    pass
-    # results = MarketplaceFieldsValidator().is_valid([pack_graph_object])
+    MarketplacesFieldValidator.graph_interface = graph_interface
+    validation_results = MarketplacesFieldValidator().is_valid(repository.packs)
+    validation_results_messages = {validation_result.message for validation_result in validation_results}
+    assert validation_results_messages == {
+        "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces, however it uses content items: "
+        "'SamplePlaybook2' which are not supported in all of the marketplaces of 'SamplePlaybook'.",
 
-    # command_1 = test_integration
-    # command_1.set_data(marketplaces=MP_V2)
-
-    # MarketplaceFieldsValidator.graph_interface = graph_repo.create_graph()
-    # pack.create_script("script_1").
-    # pack.create_integration("test_integration_1").set_data(marketplaces=MP_V2)
-    # pack.create_integration("test_integration_2/").set_data(marketplaces=MP_XSOAR_AND_V2)
-
-    # graph.create_relationships()
-    pass
-    # pack.set_data()
-    # logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    #
-    # validator = MarketplaceFieldsValidator()
-    # create_content_graph(validator.graph)
-    # pass
-    # # MarketplaceFieldsValidator().is_valid()
-    # #
-    # # with GraphValidator(update_graph=False) as graph_validator:
-    # #     create_content_graph(graph_validator.graph)
-    # #     is_valid = graph_validator.validate_marketplaces_fields()
-    # #ss
-    # # assert not is_valid
-    # # assert str_in_call_args_list(
-    # #     logger_error.call_args_list,
-    # #     "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
-    # #     ", however it uses content items: 'SamplePlaybook2' which are not supported in"
-    # #     " all of the marketplaces of 'SamplePlaybook'",
-    # # )
+        "Content item 'SampleIntegration' can be used in the 'xsoar, marketplacev2' marketplaces, however it uses "
+        "content items: 'SampleClassifier2' which are not supported in all of the marketplaces of 'SampleIntegration'."
+        }

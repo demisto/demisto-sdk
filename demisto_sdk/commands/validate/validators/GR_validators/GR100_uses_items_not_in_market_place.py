@@ -12,7 +12,7 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.job import Job
-from demisto_sdk.commands.content_graph.objects.layout import Layout
+from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
@@ -42,13 +42,13 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[Integration, Script, Playbook, Pack, Dashboard, Classifier, Job, Layout, Mapper, Wizard, CorrelationRule, IncidentField, IncidentType, IndicatorField, IndicatorType, LayoutRule, Layout, ModelingRule, ParsingRule, Report, TestPlaybook, Trigger, Widget, GenericDefinition, GenericField, GenericModule, GenericType, XSIAMDashboard, XSIAMReport]
 
 
-class MarketplaceFieldsValidator(BaseValidator[ContentTypes]):
+class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
     error_code = "GR100"
     description = ("Content item attempts to use other content items which are not supported in all of the "
                    "marketplaces of the content item.")
     rationale = "Content graph proper construction."
     error_message = ""
-    related_field = ""
+    related_field = "marketplaces"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.ADDED, GitStatuses.MODIFIED]
 
@@ -58,10 +58,14 @@ class MarketplaceFieldsValidator(BaseValidator[ContentTypes]):
         for content_item in self.graph.find_uses_paths_with_invalid_marketplaces([
                 item.pack_id for item in content_items]):
 
-            used_content_items = [relationship.content_item_to.object_id for relationship in content_item.uses]
-            error_message = Errors.uses_items_not_in_marketplaces(
+            used_content_items = [
+                item.content_item_to.object_id for item in content_item.relationships_data.get(RelationshipType.USES)
+            ]
+
+            error_message, _ = Errors.uses_items_not_in_marketplaces(
                 content_item.name, content_item.marketplaces, used_content_items
             )
+
             validation_results.append(
                 ValidationResult(
                     validator=self,

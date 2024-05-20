@@ -1,7 +1,7 @@
 ### Lint
 
   Deprecated, use demisto-sdk pre-commit instead.
-  
+
   Lint command will perform:
 
   1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -68,7 +68,7 @@ Options:
     The docker image to lint native supported content with. Should only be used with
     --docker-image native:target. An error will be raised otherwise.
 * **-sdm, --skip-deprecation-message**
-    Whether to skip the deprecation notice or not (skipping/not skipping this message doesn't affect the performance.)
+    Whether to skip the deprecation notice or not. Alteratively, you can configure the SKIP_DEPRECATION_MESSAGE env variable. (skipping/not skipping this message doesn't affect the performance.) (skipping/not skipping this message doesn't affect the performance.)
 
 
 **Examples**:

@@ -86,7 +86,7 @@ class LintManager:
         prev_ver: str,
         json_file_path: str = "",
         check_dependent_api_module: bool = False,
-        show_deprecation_message: bool = True
+        show_deprecation_message: bool = True,
     ):
 
         # Gather facts for manager
@@ -725,10 +725,12 @@ class LintManager:
                 return_exit_code = SUCCESS
             else:
                 return_exit_code = FAIL
-        
+
         if self.show_deprecation_message:
-            logger.error("This command is deprecated and will be removed soon. Alternatively, you should use the `demisto-sdk pre-commit` command.")
-    
+            logger.error(
+                "This command is deprecated and will be removed soon. Alternatively, you should use the `demisto-sdk pre-commit` command."
+            )
+
         return return_exit_code
 
     def _report_results(

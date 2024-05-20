@@ -1,5 +1,7 @@
 ### Lint
 
+  Deprecated, use demisto-sdk pre-commit instead.
+  
   Lint command will perform:
 
   1. Package in host checks - flake8, bandit, mypy, vulture.

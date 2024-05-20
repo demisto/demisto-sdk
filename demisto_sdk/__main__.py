@@ -1227,7 +1227,8 @@ def secrets(ctx, config, file_paths: str, **kwargs):
 @click.pass_context
 @logging_setup_decorator
 def lint(ctx, **kwargs):
-    """Lint command will perform:
+    """Deprecated, use demisto-sdk pre-commit instead.
+    Lint command will perform:
     1. Package in host checks - flake8, bandit, mypy, vulture.
     2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
     Meant to be used with integrations/scripts that use the folder (package) structure.

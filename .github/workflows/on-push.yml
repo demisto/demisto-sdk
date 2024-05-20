@@ -449,52 +449,6 @@ jobs:
           artifact-name: test-new-validate-command-artifacts
           validate-arguments: "-a --prev-ver origin/master --config-path sdk_validation_config.toml"
 
-  test-lint:
-    runs-on: ubuntu-latest
-    name: Test Lint Command
-    timeout-minutes: 60
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python Environment
-        uses: ./.github/actions/setup_environment
-        with:
-          python-version: "3.11"
-
-      - name: Checkout content
-        uses: actions/checkout@v4
-        with:
-          repository: demisto/content
-          path: content
-
-      - name: Run lint on python and powershell files
-        run: |
-          source $(poetry env info --path)/bin/activate
-
-          cd content
-          mkdir -p test-lint
-
-          # python file (CommonServerPython lint is running over python 3 and 2)
-          demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython --coverage-report test-lint/coverage-report
-          if [[ -f test-lint/coverage-report/html/index.html && -f test-lint/coverage-report/coverage.xml ]]
-            then
-              echo "coverage files found."
-            else
-              echo "coverage files not found."
-              exit 1
-          fi
-          # ps file
-          demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
-
-      - name: Upload artifacts
-        if: always()
-        uses: ./.github/actions/upload_artifacts
-        with:
-          artifacts-path-dir: content/test-lint
-          artifact-name: test-lint-artifacts
-
   slack-notify-master-failure:
     needs:
       [

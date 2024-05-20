@@ -1358,6 +1358,8 @@ class TestResults:
           repository_name: The name of the repository within the bucket.
           file_name: The desired filename for the uploaded JSON data.
         """
+        logging_module.info("Starting to upload")
+
         storage_client = storage.Client.from_service_account_json(options.service_account)
         storage_bucket = storage_client.bucket(ARTIFACTS_BUCKET)
         blob = storage_bucket.blob(f'{repository_name}/{file_name}')
@@ -1375,6 +1377,7 @@ class TestResults:
         Args:
           repository_name: The path of the directory within the bucket (e.g., "path/to/directory/").
         """
+        logging_module.info("Starting to delete")
         client = storage.Client()
         bucket = client.get_bucket(ARTIFACTS_BUCKET)
 

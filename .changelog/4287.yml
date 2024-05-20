@@ -1,0 +1,4 @@
+changes:
+- description: Added a fix where the `auto_update_docker_image` field was not updated correctly in the the content-graph.
+  type: fix
+pr_number: 4287

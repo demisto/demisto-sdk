@@ -461,7 +461,6 @@ jobs:
         test-graph-commands,
         validate-files-old-validate,
         validate-files-new-validate,
-        test-lint,
       ]
     if: failure() && github.ref_name == 'master'
     runs-on: ubuntu-latest

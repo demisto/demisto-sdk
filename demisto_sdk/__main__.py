@@ -3654,13 +3654,13 @@ def pre_commit(
         None, "--skip", help="A list of precommit hooks to skip."
     ),
     validate: bool = typer.Option(
-        True, "--no-validate", help="Whether to run without demisto-sdk validate."
+        True, "--validate/--no-validate", help="Whether to run demisto-sdk validate or not."
     ),
     format: bool = typer.Option(
-        False, "--format/--no-format", help="Whether to run demisto-sdk format."
+        False, "--format/--no-format", help="Whether to run demisto-sdk format or not."
     ),
     secrets: bool = typer.Option(
-        True, "--no-secrets", help="Whether to run demisto-sdk secrets."
+        True, "--secrets/--no-secrets", help="Whether to run demisto-sdk secrets or not."
     ),
     verbose: bool = typer.Option(
         False, "-v", "--verbose", help="Verbose output of pre-commit."

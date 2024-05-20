@@ -35,12 +35,12 @@ Whether to run on all files.
 Special mode to run the pre-commit with.
 * **--skip**
 A list of precommit hooks to skip.
-* **--no-validate**
-Whether to run without demisto-sdk validate.
+* **--validate/--no-validate**
+Whether to run demisto-sdk validate or not.
 * **--format/--no-format**
-Whether to run demisto-sdk format.
-* **--no-secrets**
-Whether to run demisto-sdk secrets.
+Whether to run demisto-sdk format or not.
+* **--secrets/--no-secrets**
+Whether to run demisto-sdk secrets or not.
 * **-v, --verbose**
 Verbose output of pre-commit.
 * **--show-diff-on-failure**

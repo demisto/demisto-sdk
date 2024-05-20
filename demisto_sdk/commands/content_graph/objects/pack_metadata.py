@@ -60,8 +60,8 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source_id: Optional[str] = Field("")
-    default_data_source: Optional[Dict[str, str]] = Field({}, alias="defaultDataSource")
+    default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
+    default_data_source_name: Optional[str] = Field("")
 
     # For private packs
     premium: Optional[bool]
@@ -134,10 +134,13 @@ class PackMetadata(BaseModel):
                 "supportDetails": self._get_support_details(),
             }
         )
-        if self.default_data_source:
+        if self.default_data_source_name:
             _metadata.update(
                 {
-                    "defaultDataSource": self.default_data_source,
+                    "defaultDataSource": {
+                        "name": self.default_data_source_name,
+                        "id": self.default_data_source_id,
+                    },
                 }
             )
 
@@ -210,11 +213,11 @@ class PackMetadata(BaseModel):
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
-        if self.default_data_source and collected_content_items:
+        if self.default_data_source_id and collected_content_items:
             # order collected_content_items integration list so that the defaultDataSource will be first
             self._place_data_source_integration_first(
                 collected_content_items[ContentType.INTEGRATION.metadata_name],
-                self.default_data_source.get("id"),
+                self.default_data_source_id,
             )
         return collected_content_items, content_displays
 
@@ -359,7 +362,7 @@ class PackMetadata(BaseModel):
 
     def is_data_source(self, content_items: PackContentItems) -> bool:
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
-        if self.default_data_source:
+        if self.default_data_source_name:
             return True
         return any(self.get_valid_data_source_integrations(content_items))
 
@@ -373,12 +376,14 @@ class PackMetadata(BaseModel):
             data_source.get("id") for data_source in data_sources
         ]:
             # the provided default_data_source_id is of a valid integration, keep it
-            self.default_data_source = [
+            self.default_data_source_name = [
                 data_source
                 for data_source in data_sources
                 if data_source.get("id") == self.default_data_source_id
-            ][0]
-            logger.info(f"Keeping the provided {self.default_data_source=}")
+            ][0].get("name")
+            logger.info(
+                f"Keeping the provided {self.default_data_source_id=} and {self.default_data_source_name=}"
+            )
             return
 
         if not data_sources:
@@ -395,7 +400,12 @@ class PackMetadata(BaseModel):
             )
 
         # setting a value to the defaultDataSource in case there is a data source
-        self.default_data_source = data_sources[0] if data_sources else None
+        self.default_data_source_name = (
+            data_sources[0].get("name") if data_sources else None
+        )
+        self.default_data_source_id = (
+            data_sources[0].get("id") if data_sources else None
+        )
 
     @staticmethod
     def get_valid_data_source_integrations(

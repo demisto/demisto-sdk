@@ -76,7 +76,7 @@ ContentTypes = Union[
 class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
     error_code = "GR100"
     description = (
-        "Content item attempts to use other content items which are not supported in all of the "
+        "Detect content items that attempt to use other content items which are not supported in all of the "
         "marketplaces of the content item."
     )
     rationale = "Content graph proper construction."

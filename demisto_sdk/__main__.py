@@ -166,7 +166,6 @@ def logging_setup_decorator(func, *args, **kwargs):
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option("--log-file-path", help="Path to save log files onto.")
-    @click.option("-sdm", "--skip-deprecation-message", is_flag=True, help="Whether to skip the deprecation notice or not (skipping/not skipping this message doesn't affect the performance.)")
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
@@ -1224,6 +1223,8 @@ def secrets(ctx, config, file_paths: str, **kwargs):
     help="Specify directory for the time measurements report file",
     type=PathsParamType(),
 )
+@click.option("-sdm", "--skip-deprecation-message", is_flag=True,
+              help="Whether to skip the deprecation notice or not (skipping/not skipping this message doesn't affect the performance.)")
 @click.pass_context
 @logging_setup_decorator
 def lint(ctx, **kwargs):

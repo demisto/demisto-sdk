@@ -1243,8 +1243,10 @@ def lint(ctx, **kwargs):
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
     show_deprecation_message = any(
-        os.getenv("SKIP_DEPRECATION_MESSAGE"),
-        not kwargs.get("skip_deprecation_message"),
+        [
+            not os.getenv("SKIP_DEPRECATION_MESSAGE"),
+            not kwargs.get("skip_deprecation_message"),
+        ]
     )
     update_command_args_from_config_file("lint", kwargs)
     lint_manager = LintManager(

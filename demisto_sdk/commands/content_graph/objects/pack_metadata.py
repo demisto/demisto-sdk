@@ -60,8 +60,8 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
-    default_data_source_name: Optional[str] = Field("")
+    default_data_source_id: Optional[str] = ""
+    default_data_source_name: Optional[str] = ""
 
     # For private packs
     premium: Optional[bool]
@@ -382,7 +382,7 @@ class PackMetadata(BaseModel):
                 if data_source.get("id") == self.default_data_source_id
             ][0].get("name")
             logger.info(
-                f"Keeping the provided {self.default_data_source_id=} and {self.default_data_source_name=}"
+                f"Keeping the provided {self.default_data_source_id=} with {self.default_data_source_name=}"
             )
             return
 
@@ -390,7 +390,7 @@ class PackMetadata(BaseModel):
             return
 
         logger.info(
-            f"No defaultDataSource provided ({self.default_data_source_id=}) or it is not a valid data source,"
+            f"No defaultDataSource provided ({self.default_data_source_id}) or it is not a valid data source,"
             f" choosing default from {data_sources=}"
         )
         if len(data_sources) > 1:

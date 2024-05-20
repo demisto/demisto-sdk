@@ -26,15 +26,9 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_test_playbook,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place import (
-    MarketplacesFieldValidator,
+    MarketplacesFieldValidator, BaseValidator
 )
 
-MP_XSOAR = [MarketplaceVersions.XSOAR.value]
-MP_V2 = [MarketplaceVersions.MarketplaceV2.value]
-MP_XSOAR_AND_V2 = [
-    MarketplaceVersions.XSOAR.value,
-    MarketplaceVersions.MarketplaceV2.value,
-]
 
 GIT_PATH = Path(git_path())
 
@@ -486,23 +480,28 @@ def repository(mocker) -> ContentDTO:
 def test_MarketplacesFieldValidator_is_valid(repository: ContentDTO):
     """
     Given
-    - A content repo
+    - A content repo.
     When
-    - running MarketplacesFieldValidator is_valid function.
+    - Running MarketplacesFieldValidator is_valid() function.
     Then
     - Validate the existence of invalid marketplaces usages.
+    - Two invalid content items shall be found, with expected error messages listed in
+        `expected_validation_results_messages`.
     """
 
     graph_interface = ContentGraphInterface()
     create_content_graph(graph_interface)
-    MarketplacesFieldValidator.graph_interface = graph_interface
-    validation_results = MarketplacesFieldValidator().is_valid(repository.packs)
-    validation_results_messages = {
-        validation_result.message for validation_result in validation_results
-    }
-    assert validation_results_messages == {
+    BaseValidator.graph_interface = graph_interface
+
+    expected_validation_results_messages = {
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces, however it uses content items: "
         "'SamplePlaybook2' which are not supported in all of the marketplaces of 'SamplePlaybook'.",
+
         "Content item 'SampleIntegration' can be used in the 'xsoar, marketplacev2' marketplaces, however it uses "
         "content items: 'SampleClassifier2' which are not supported in all of the marketplaces of 'SampleIntegration'.",
     }
+    validation_results = MarketplacesFieldValidator().is_valid(repository.packs)
+    assert len(validation_results) == len(expected_validation_results_messages)
+    for validation_result in validation_results:
+        assert validation_result.message in expected_validation_results_messages
+

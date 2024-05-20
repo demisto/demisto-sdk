@@ -1,4 +1,4 @@
 changes:
-- description: Added the `defaultDataSourceName` field to the pack metadata.
+- description: Added the `defaultDataSource` field to the pack metadata.
   type: feature
 pr_number: 4139

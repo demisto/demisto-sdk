@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from packaging.version import Version, parse
 from pydantic import BaseModel, Field
@@ -60,7 +60,8 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source_name: Optional[str] = Field(None, alias="defaultDataSourceName")
+    default_data_source_id: Optional[str] = Field("")
+    default_data_source: Optional[Dict[str, str]] = Field({}, alias="defaultDataSource")
 
     # For private packs
     premium: Optional[bool]
@@ -131,35 +132,37 @@ class PackMetadata(BaseModel):
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
-                "defaultDataSourceName": self.default_data_source_name,
             }
         )
+        if self.default_data_source:
+            _metadata.update(
+                {
+                    "defaultDataSource": self.default_data_source,
+                }
+            )
 
         return _metadata
 
     @staticmethod
     def _place_data_source_integration_first(
         integration_list: List[Dict],
-        data_source_name: str,
-        support: Optional[str] = None,
+        data_source_id: Optional[str],
     ):
-        data_source_display_name = IntegrationScriptUnifier.get_display_name(
-            data_source_name, support
+        integration_metadata_object = (
+            [
+                integration
+                for integration in integration_list
+                if integration.get("id") == data_source_id
+            ]
+            if data_source_id
+            else []
         )
-        integration_metadata_object = [
-            integration
-            for integration in integration_list
-            if integration.get("name") in [data_source_display_name, data_source_name]
-        ]
         if not integration_metadata_object:
             logger.info(
-                f"Integration metadata object was not found for {data_source_display_name=} and {data_source_name=} "
-                f"in {integration_list=}."
+                f"Integration metadata object was not found for {data_source_id=} in {integration_list=}."
             )
             return
-        logger.info(
-            f"Placing {data_source_display_name=} first in the integration_list."
-        )
+        logger.info(f"Placing {data_source_id=} first in the integration_list.")
         integration_list.remove(integration_metadata_object[0])
         integration_list.insert(0, integration_metadata_object[0])
 
@@ -207,12 +210,11 @@ class PackMetadata(BaseModel):
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
-        if self.default_data_source_name and collected_content_items:
-            # order collected_content_items integration list so that the defaultDataSourceName will be first
+        if self.default_data_source and collected_content_items:
+            # order collected_content_items integration list so that the defaultDataSource will be first
             self._place_data_source_integration_first(
                 collected_content_items[ContentType.INTEGRATION.metadata_name],
-                self.default_data_source_name,
-                self.support,
+                self.default_data_source.get("id"),
             )
         return collected_content_items, content_displays
 
@@ -357,50 +359,63 @@ class PackMetadata(BaseModel):
 
     def is_data_source(self, content_items: PackContentItems) -> bool:
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
-        if self.default_data_source_name:
+        if self.default_data_source:
             return True
         return any(self.get_valid_data_source_integrations(content_items))
 
     def _set_default_data_source(self, content_items: PackContentItems) -> None:
         """If there is more than one data source in the pack, return the default data source."""
-        data_sources: List[str] = self.get_valid_data_source_integrations(
-            content_items, self.support
+        data_sources: List[Dict[str, str]] = self.get_valid_data_source_integrations(
+            content_items, self.support, include_name=True
         )
 
-        if (
-            self.default_data_source_name
-            and self.default_data_source_name in data_sources
-        ):
-            # the provided defaultDataSourceName is a valid integration, keep it
-            logger.info(f"Keeping the provided {self.default_data_source_name=}")
+        if self.default_data_source_id and self.default_data_source_id in [
+            data_source.get("id") for data_source in data_sources
+        ]:
+            # the provided default_data_source_id is of a valid integration, keep it
+            self.default_data_source = [
+                data_source
+                for data_source in data_sources
+                if data_source.get("id") == self.default_data_source_id
+            ][0]
+            logger.info(f"Keeping the provided {self.default_data_source=}")
             return
 
         if not data_sources:
             return
 
         logger.info(
-            f"No default_data_source_name provided ({self.default_data_source_name=}) or it is not a valid data source,"
+            f"No defaultDataSource provided ({self.default_data_source_id=}) or it is not a valid data source,"
             f" choosing default from {data_sources=}"
         )
         if len(data_sources) > 1:
             # should not happen because of validation PA131
-            logger.info(f"{self.name} has multiple data sources. Setting a default value.")
+            logger.info(
+                f"{self.name} has multiple data sources. Setting a default value."
+            )
 
-        # setting a value to the defaultDataSourceName in case there is a data source
-        self.default_data_source_name = data_sources[0] if data_sources else None
+        # setting a value to the defaultDataSource in case there is a data source
+        self.default_data_source = data_sources[0] if data_sources else None
 
     @staticmethod
     def get_valid_data_source_integrations(
-        content_items: PackContentItems, support_level: str = None
-    ) -> List[str]:
+        content_items: PackContentItems,
+        support_level: str = None,
+        include_name: bool = False,
+    ) -> List[Union[Dict[str, str], str]]:
         """
         Find fetching integrations in XSIAM, not deprecated.
         When a support level is provided, the returned display names are without the contribution suffix.
         """
         return [
-            IntegrationScriptUnifier.remove_support_from_display_name(
-                integration.display_name, support_level
-            )
+            {
+                "name": IntegrationScriptUnifier.remove_support_from_display_name(
+                    integration.display_name, support_level
+                ),
+                "id": integration.object_id,  # same as integration.name
+            }
+            if include_name
+            else integration.object_id
             for integration in content_items.integration
             if integration.is_data_source()
         ]

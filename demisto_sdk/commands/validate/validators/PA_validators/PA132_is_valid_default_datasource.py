@@ -5,6 +5,7 @@ from typing import Iterable, List
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    FixResult,
     ValidationResult,
 )
 
@@ -16,18 +17,19 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
     description = "Validate that the pack_metadata contains a valid default datasource, when provided."
     rationale = "Wizards and other tools rely on the default datasource to be set."
     error_message = (
-        "Pack metadata contains an invalid 'defaultDataSourceName': {0}. "
+        "Pack metadata contains an invalid 'defaultDataSource': {0}. "
         "Please fill in a valid datasource integration, one of these options: {1}."
     )
-    related_field = "defaultDataSourceName"
-    is_auto_fixable = False
+    fix_message = "Set the 'defaultDataSource' for '{0}' pack to the '{1}' integration (changed from display name to id)."
+    related_field = "defaultDataSource"
+    is_auto_fixable = True
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.default_data_source_name,
+                    content_item.default_data_source_id,
                     content_item.get_valid_data_source_integrations(
                         content_item.content_items, content_item.support
                     ),
@@ -36,10 +38,33 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                content_item.default_data_source_name
-                and content_item.default_data_source_name
+                content_item.default_data_source_id
+                and content_item.default_data_source_id
                 not in content_item.get_valid_data_source_integrations(
                     content_item.content_items, content_item.support
                 )
             )
         ]
+
+    def fix(self, content_item: ContentTypes) -> FixResult:
+        data_sources = content_item.get_valid_data_source_integrations(
+            content_item.content_items, content_item.support, include_name=True
+        )
+
+        default_data_source = [
+            data_source
+            for data_source in data_sources
+            if data_source.get("name") == content_item.default_data_source_id
+        ][0]
+
+        if default_data_source:
+            content_item.default_data_source_id = default_data_source.get("id")
+            return FixResult(
+                validator=self,
+                message=self.fix_message.format(
+                    content_item.name, default_data_source.get("id")
+                ),
+                content_object=content_item,
+            )
+
+        raise Exception("Cannot determine which integration to set as default.")

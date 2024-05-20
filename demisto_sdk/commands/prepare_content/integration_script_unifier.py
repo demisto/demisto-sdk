@@ -5,7 +5,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
@@ -657,7 +657,9 @@ class IntegrationScriptUnifier(Unifier):
         return display_name
 
     @staticmethod
-    def remove_support_from_display_name(display_name: str, contributor_type: str):
+    def remove_support_from_display_name(
+        display_name: str, contributor_type: Optional[str]
+    ):
         if (
             display_name
             and contributor_type

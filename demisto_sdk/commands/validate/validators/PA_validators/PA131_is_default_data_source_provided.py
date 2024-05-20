@@ -4,9 +4,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.prepare_content.integration_script_unifier import (
-    IntegrationScriptUnifier,
-)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -16,16 +13,16 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Pack
 
 
-class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
+class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
     error_code = "PA131"
     description = "Validate that the pack_metadata contains a default datasource, if there are more than one datasource."
     rationale = "Wizards and other tools rely on the default datasource to be set."
     error_message = (
-        "Pack metadata does not contain a 'defaultDataSourceName'. "
+        "Pack metadata does not contain a 'defaultDataSource'. "
         "Please fill in a default datasource name from these options: {0}."
     )
-    fix_message = "Set the 'defaultDataSourceName' for '{0}' pack to the '{1}' integration because it is an event collector."
-    related_field = "defaultDataSourceName"
+    fix_message = "Set the 'defaultDataSource' for '{0}' pack to the '{1}' integration because it is an event collector."
+    related_field = "defaultDataSource"
     is_auto_fixable = True
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -43,7 +40,7 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
             if MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
             and (
                 content_item.is_data_source(content_item.content_items)
-                and not content_item.default_data_source_name
+                and not content_item.default_data_source_id
                 and len(
                     content_item.get_valid_data_source_integrations(
                         content_item.content_items
@@ -55,9 +52,7 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         data_sources_fetch_events = [
-            IntegrationScriptUnifier.remove_support_from_display_name(
-                integration.display_name, content_item.support
-            )
+            integration.object_id
             for integration in content_item.content_items.integration
             if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
             and not integration.deprecated
@@ -65,7 +60,7 @@ class IsDefaultDataSourceNameProvidedValidator(BaseValidator[ContentTypes]):
         ]
 
         if len(data_sources_fetch_events) == 1:
-            content_item.default_data_source_name = data_sources_fetch_events[0]
+            content_item.default_data_source_id = data_sources_fetch_events[0]
             return FixResult(
                 validator=self,
                 message=self.fix_message.format(

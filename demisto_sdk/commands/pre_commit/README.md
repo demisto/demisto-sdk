@@ -18,6 +18,65 @@ It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) infrastru
 ### Automatically, as a git hook
 * Create a [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) that calls `demisto-sdk pre-commit`.
 
+**Arguments**:
+* **-i, --input, --files**
+The paths to run pre-commit on. May pass multiple paths.
+* **--staged-only**
+Whether to run only on staged files.
+* **--commited-only**
+Whether to run on committed files only.
+* **-g, --git-diff**
+Whether to use git to determine which files to run on.
+* **--prev-ver**
+The previous version to compare against. If not provided, the previous version will be determined using git.
+* **-a, --all-files**
+Whether to run on all files.
+* **--mode**
+Special mode to run the pre-commit with.
+* **--skip**
+A list of precommit hooks to skip.
+* **--no-validate**
+Whether to run without demisto-sdk validate.
+* **--format/--no-format**
+Whether to run demisto-sdk format.
+* **--no-secrets**
+Whether to run demisto-sdk secrets.
+* **-v, --verbose**
+Verbose output of pre-commit.
+* **--show-diff-on-failure**
+Show diff on failure.
+* **--dry-run**
+Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
+* **--docker/--no-docker**
+Whether to run docker based hooks or not.
+* **--image-ref**
+The docker image reference to run docker hooks with. Overrides the docker image from YAML or native image config.
+* **--docker-image**
+Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.
+* **--console-log-threshold**
+Minimum logging threshold for the console logger.
+* **--file-log-threshold**
+Minimum logging threshold for the file logger.
+* **--log-file-path**
+Path to save log files onto.
+* **--template-path**
+A custom path for pre-defined pre-commit template, if not provided will use the default template.
+
+## Examples:
+
+`demisto-sdk --pre-commit`
+Will run pre-commit on all files collected by git.
+
+`demisto-sdk --pre-commit -i Packs/hello_world`
+Will run pre-commit on all files in pack hello_world.
+
+
+`demisto-sdk --pre-commit --no-validate`
+Will run pre-commit without the validate step.
+
+`demisto-sdk --pre-commit --show-diff-on-failure`
+Will run pre-commit and show differences when failing.
+
 ## Modes
 When different args set for the different modes are needed, for example, some rules should be excluded in the nightly build.
 Any key can be set this way.

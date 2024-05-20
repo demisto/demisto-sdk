@@ -3627,16 +3627,16 @@ def pre_commit(
         help="The paths to run pre-commit on. May pass multiple paths.",
     ),
     staged_only: bool = typer.Option(
-        False, "--staged-only", help="Whether to run only on staged files"
+        False, "--staged-only", help="Whether to run only on staged files."
     ),
     commited_only: bool = typer.Option(
-        False, "--commited-only", help="Whether to run on commited files only"
+        False, "--commited-only", help="Whether to run on committed files only."
     ),
     git_diff: bool = typer.Option(
         False,
         "--git-diff",
         "-g",
-        help="Whether to use git to determine which files to run on",
+        help="Whether to use git to determine which files to run on.",
     ),
     prev_version: Optional[str] = typer.Option(
         None,
@@ -3645,33 +3645,33 @@ def pre_commit(
         "If not provided, the previous version will be determined using git.",
     ),
     all_files: bool = typer.Option(
-        False, "--all-files", "-a", help="Whether to run on all files"
+        False, "--all-files", "-a", help="Whether to run on all files."
     ),
     mode: str = typer.Option(
-        "", "--mode", help="Special mode to run the pre-commit with"
+        "", "--mode", help="Special mode to run the pre-commit with."
     ),
     skip: Optional[List[str]] = typer.Option(
-        None, "--skip", help="A list of precommit hooks to skip"
+        None, "--skip", help="A list of precommit hooks to skip."
     ),
     validate: bool = typer.Option(
-        True, "--validate/--no-validate", help="Whether to run demisto-sdk validate"
+        True, "--no-validate", help="Whether to run without demisto-sdk validate."
     ),
     format: bool = typer.Option(
-        False, "--format/--no-format", help="Whether to run demisto-sdk format"
+        False, "--format/--no-format", help="Whether to run demisto-sdk format."
     ),
     secrets: bool = typer.Option(
-        True, "--secrets/--no-secrets", help="Whether to run demisto-sdk secrets"
+        True, "--no-secrets", help="Whether to run demisto-sdk secrets."
     ),
     verbose: bool = typer.Option(
-        False, "-v", "--verbose", help="Verbose output of pre-commit"
+        False, "-v", "--verbose", help="Verbose output of pre-commit."
     ),
     show_diff_on_failure: bool = typer.Option(
-        False, "--show-diff-on-failure", help="Show diff on failure"
+        False, "--show-diff-on-failure", help="Show diff on failure."
     ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
-        help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
+        help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.",
     ),
     docker: bool = typer.Option(
         True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
@@ -3706,7 +3706,7 @@ def pre_commit(
         None,
         "--template-path",
         envvar="PRE_COMMIT_TEMPLATE_PATH",
-        help="A custom path for pre-defined pre-commit template, if not provided will use the default template",
+        help="A custom path for pre-defined pre-commit template, if not provided will use the default template.",
     ),
 ):
     logging_setup(

@@ -75,6 +75,7 @@ class LintManager:
         id_set_path(str): Path to an existing id_set.json.
         check_dependent_api_module(bool): Whether to run lint also on the packs dependent on the modified api modules
         files.
+        show_deprecation_message (bool): Whether to show deprecation alert or not.
     """
 
     def __init__(
@@ -85,6 +86,7 @@ class LintManager:
         prev_ver: str,
         json_file_path: str = "",
         check_dependent_api_module: bool = False,
+        show_deprecation_message: bool = True
     ):
 
         # Gather facts for manager
@@ -102,6 +104,7 @@ class LintManager:
             all_packs=all_packs,
             base_branch=self._prev_ver,
         )
+        self.show_deprecation_message = show_deprecation_message
 
         if check_dependent_api_module:
             dependent_on_api_module = self._get_api_module_dependent_items()
@@ -722,6 +725,10 @@ class LintManager:
                 return_exit_code = SUCCESS
             else:
                 return_exit_code = FAIL
+        
+        if self.show_deprecation_message:
+            logger.error("This command is deprecated and will be removed soon. Alternatively, you should use the `demisto-sdk pre-commit` command.")
+    
         return return_exit_code
 
     def _report_results(

@@ -166,6 +166,7 @@ def logging_setup_decorator(func, *args, **kwargs):
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option("--log-file-path", help="Path to save log files onto.")
+    @click.option("-sdm", "--skip-deprecation-message", is_flag=True, help="Whether to skip the deprecation notice or not (skipping/not skipping this message doesn't affect the performance.)")
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
@@ -1243,6 +1244,7 @@ def lint(ctx, **kwargs):
         prev_ver=kwargs.get("prev_ver"),  # type: ignore[arg-type]
         json_file_path=kwargs.get("json_file"),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get("check_dependent_api_module"),  # type: ignore[arg-type]
+        show_deprecation_message=(not kwargs.get("skip_deprecation_message")),
     )
     return lint_manager.run(
         parallel=kwargs.get("parallel"),  # type: ignore[arg-type]

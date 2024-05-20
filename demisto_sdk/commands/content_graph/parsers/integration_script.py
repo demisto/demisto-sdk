@@ -91,4 +91,4 @@ class IntegrationScriptParser(YAMLContentItemParser):
     def auto_update_docker_image(self):
         return (
             get_value(self.yml_data, "autoUpdateDockerImage", "")
-        ).lower() != "false"
+        ).lower() not in ("false", False)

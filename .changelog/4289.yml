@@ -1,0 +1,4 @@
+changes:
+- description: Refactored validation DS101, Check if beta disclaimer exists in detailed description.
+  type: feature
+pr_number: 4289

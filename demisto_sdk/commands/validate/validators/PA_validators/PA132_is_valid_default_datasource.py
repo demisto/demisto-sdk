@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Dict, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -47,7 +47,8 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        data_sources = content_item.get_valid_data_source_integrations(
+        # The fix applies when the defaultDataSource value is the display name instead of the id of the selected integration
+        data_sources: List[Dict[str, str]] = content_item.get_valid_data_source_integrations(  # type: ignore[assignment]
             content_item.content_items, content_item.support, include_name=True
         )
 

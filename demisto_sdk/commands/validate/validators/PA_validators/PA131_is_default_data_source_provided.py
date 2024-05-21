@@ -51,6 +51,7 @@ class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
+        # The fix applies when there is one event collector, which is preferred over fetching integrations
         data_sources_fetch_events = [
             integration.object_id
             for integration in content_item.content_items.integration

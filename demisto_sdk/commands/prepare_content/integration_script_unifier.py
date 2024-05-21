@@ -666,7 +666,7 @@ class IntegrationScriptUnifier(Unifier):
             and " Contribution)" in display_name
             and contributor_type != "xsoar"
         ):
-            display_name = display_name.removesuffix(
+            display_name = display_name.removesuffix(  # type: ignore[attr-defined]
                 CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
             )
         return display_name

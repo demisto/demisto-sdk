@@ -60,8 +60,8 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source_id: Optional[str] = ""
-    default_data_source_name: Optional[str] = ""
+    default_data_source_id: Optional[str] = Field("", exclude=True)
+    default_data_source_name: Optional[str] = Field("", exclude=True)
 
     # For private packs
     premium: Optional[bool]
@@ -132,17 +132,12 @@ class PackMetadata(BaseModel):
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
+                "defaultDataSource": {
+                    "name": self.default_data_source_name,
+                    "id": self.default_data_source_id,
+                },
             }
         )
-        if self.default_data_source_name:
-            _metadata.update(
-                {
-                    "defaultDataSource": {
-                        "name": self.default_data_source_name,
-                        "id": self.default_data_source_id,
-                    },
-                }
-            )
 
         return _metadata
 
@@ -368,7 +363,7 @@ class PackMetadata(BaseModel):
 
     def _set_default_data_source(self, content_items: PackContentItems) -> None:
         """If there is more than one data source in the pack, return the default data source."""
-        data_sources: List[Dict[str, str]] = self.get_valid_data_source_integrations(
+        data_sources: List[Dict[str, str]] = self.get_valid_data_source_integrations(  # type: ignore[assignment]
             content_items, self.support, include_name=True
         )
 
@@ -377,10 +372,10 @@ class PackMetadata(BaseModel):
         ]:
             # the provided default_data_source_id is of a valid integration, keep it
             self.default_data_source_name = [
-                data_source
+                data_source.get("name")
                 for data_source in data_sources
                 if data_source.get("id") == self.default_data_source_id
-            ][0].get("name")
+            ][0]
             logger.info(
                 f"Keeping the provided {self.default_data_source_id=} with {self.default_data_source_name=}"
             )

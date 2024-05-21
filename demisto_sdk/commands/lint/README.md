@@ -1,5 +1,7 @@
 ### Lint
 
+  Deprecated, use demisto-sdk pre-commit instead.
+
   Lint command will perform:
 
   1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -18,53 +20,55 @@ Options:
   Minimum logging threshold for the file logger. [default: DEBUG]
 * **-lp, --log_file_path**
   Path to the log file. Default: ./demisto_sdk_debug.log. [default: ./demisto_sdk_debug.log]
-*  **-i, --input PATH**
+* **-i, --input PATH**
     Specify directory(s) of integration/script
-*  **-g, --git**
+* **-g, --git**
     Will run only on changed packages
-*  **-a, --all-packs**
+* **-a, --all-packs**
     Run lint on all directories in content repo
-*  **-p, --parallel INTEGER RANGE**
+* **-p, --parallel INTEGER RANGE**
     Run tests in parallel  [default: 1]
-*  **--no-flake8**
+* **--no-flake8**
     Do NOT run flake8 linter
-*  **--no-bandit**
+* **--no-bandit**
     Do NOT run bandit linter
-*  **--no-xsoar-linter**
+* **--no-xsoar-linter**
     Do NOT run XSOAR linter
-*  **--no-mypy**
+* **--no-mypy**
     Do NOT run mypy static type checking
-*  **--no-vulture**
+* **--no-vulture**
     Do NOT run vulture linter
-*  **--no-pylint**
+* **--no-pylint**
     Do NOT run pylint linter
-*  **--no-test**
+* **--no-test**
     Do NOT test (skip pytest)
-*  **--no-pwsh-analyze**
+* **--no-pwsh-analyze**
     Do NOT run powershell analyze
-*  **--no-pwsh-test**
+* **--no-pwsh-test**
     Do NOT run powershell test
-*  **-kc, --keep-container**
+* **-kc, --keep-container**
     Keep the test container
-*  **--prev-ver**
+* **--prev-ver**
     Previous branch or SHA1 commit to run checks against
-*  **--test-xml PATH**
+* **--test-xml PATH**
     Path to store pytest xml results
-*  **--failure-report PATH**
+* **--failure-report PATH**
     Path to store failed packs report
 * **-j, --json-file**
     The JSON file path to which to output the command results
-*  **--no-coverage**
+* **--no-coverage**
     Do NOT report coverage
-*  **--coverage-report**
+* **--coverage-report**
     Specify directory for the coverage report files
-*  **-dt, --docker-timeout**
+* **-dt, --docker-timeout**
     The timeout (in seconds) for requests done by the docker client
-*  **-di, --docker-image**
+* **-di, --docker-image**
     The docker image to check package on. Can be a comma separated list of Possible values: 'native:maintenance', 'native:ga', 'native:dev', 'native:target', 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default 'from-yml'.
-*  **-dit --docker-image-target**
+* **-dit, --docker-image-target**
     The docker image to lint native supported content with. Should only be used with
     --docker-image native:target. An error will be raised otherwise.
+* **-sdm, --skip-deprecation-message**
+    Whether to skip the deprecation notice or not. Alteratively, you can configure the SKIP_DEPRECATION_MESSAGE env variable. (skipping/not skipping this message doesn't affect the performance.) (skipping/not skipping this message doesn't affect the performance.)
 
 
 **Examples**:

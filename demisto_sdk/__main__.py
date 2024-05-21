@@ -1223,10 +1223,17 @@ def secrets(ctx, config, file_paths: str, **kwargs):
     help="Specify directory for the time measurements report file",
     type=PathsParamType(),
 )
+@click.option(
+    "-sdm",
+    "--skip-deprecation-message",
+    is_flag=True,
+    help="Whether to skip the deprecation notice or not. Alteratively, you can configure the SKIP_DEPRECATION_MESSAGE env variable. (skipping/not skipping this message doesn't affect the performance.)",
+)
 @click.pass_context
 @logging_setup_decorator
 def lint(ctx, **kwargs):
-    """Lint command will perform:
+    """Deprecated, use demisto-sdk pre-commit instead.
+    Lint command will perform:
     1. Package in host checks - flake8, bandit, mypy, vulture.
     2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
     Meant to be used with integrations/scripts that use the folder (package) structure.
@@ -1235,6 +1242,12 @@ def lint(ctx, **kwargs):
     """
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
+    show_deprecation_message = any(
+        [
+            not os.getenv("SKIP_DEPRECATION_MESSAGE"),
+            not kwargs.get("skip_deprecation_message"),
+        ]
+    )
     update_command_args_from_config_file("lint", kwargs)
     lint_manager = LintManager(
         input=kwargs.get("input"),  # type: ignore[arg-type]
@@ -1243,6 +1256,7 @@ def lint(ctx, **kwargs):
         prev_ver=kwargs.get("prev_ver"),  # type: ignore[arg-type]
         json_file_path=kwargs.get("json_file"),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get("check_dependent_api_module"),  # type: ignore[arg-type]
+        show_deprecation_message=show_deprecation_message,
     )
     return lint_manager.run(
         parallel=kwargs.get("parallel"),  # type: ignore[arg-type]

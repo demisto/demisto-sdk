@@ -80,6 +80,10 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="missing-arg-type-annoation",
                 node=node_b,
+                line=7,
+                col_offset=0,
+                end_line=7,
+                end_col_offset=13,
             ),
         ):
             self.checker.visit_functiondef(node_a)
@@ -110,10 +114,18 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="missing-arg-type-annoation",
                 node=node_a,
+                line=2,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=13,
             ),
             pylint.testutils.MessageTest(
                 msg_id="missing-arg-type-annoation",
                 node=node_b,
+                line=7,
+                col_offset=0,
+                end_line=7,
+                end_col_offset=13,
             ),
         ):
             self.checker.visit_functiondef(node_a)
@@ -144,6 +156,10 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="not-implemented-error-doesnt-exist",
                 node=node,
+                line=2,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=8,
             ),
         ):
             self.checker.visit_functiondef(node)
@@ -349,7 +365,12 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="direct-access-args-params-dict-exist",
                 node=node_b,
+                line=3,
+                col_offset=4,
+                end_line=3,
+                end_col_offset=17,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_subscript(node_b)
 
@@ -364,7 +385,12 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="direct-access-args-params-dict-exist",
                 node=node_b,
+                line=2,
+                col_offset=4,
+                end_line=2,
+                end_col_offset=27,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_subscript(node_b)
 
@@ -380,6 +406,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
                 msg_id="direct-access-args-params-dict-exist",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_subscript(node_b)
 
@@ -395,5 +422,6 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
                 msg_id="direct-access-args-params-dict-exist",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_subscript(node_b)

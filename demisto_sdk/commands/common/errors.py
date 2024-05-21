@@ -2942,6 +2942,7 @@ class Errors:
             "when the upload command is performed.\nDelete any details related to contribution/partner "
         )
 
+    f"No detailed description file (<integration_name>_description.md) was found in the package. Please add one, and make sure it includes the beta disclaimer note. Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
     @staticmethod
     @error_code_decorator
     def invalid_description_name():

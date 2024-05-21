@@ -7,14 +7,14 @@ demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun
 .devcontainer/ @anas-yousef
 
 # Github Actions
-.github/workflows @GuyAfik @samuelFain
+.github/workflows @samuelFain
 
 # Dependencies
-Pipfile* @GuyAfik @samuelFain
-pyproject.toml @GuyAfik @samuelFain
+Pipfile* @samuelFain
+pyproject.toml @samuelFain
 
 # Pytest.ini
-pytest.ini @GuyAfik @samuelFain
+pytest.ini @samuelFain
 
 # Content graph
 demisto_sdk/commands/content_graph/** @dantavori @RosenbergYehuda
@@ -23,4 +23,4 @@ demisto_sdk/commands/content_graph/** @dantavori @RosenbergYehuda
 demisto_sdk/commands/test_content/test_modeling_rule/ @AradCarmi
 
 # Misc
-demisto_sdk/__main__.py @GuyAfik @samuelFain
+demisto_sdk/__main__.py @samuelFain

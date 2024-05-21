@@ -26,9 +26,9 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_test_playbook,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place import (
-    MarketplacesFieldValidator, BaseValidator
+    BaseValidator,
+    MarketplacesFieldValidator,
 )
-
 
 GIT_PATH = Path(git_path())
 
@@ -504,4 +504,3 @@ def test_MarketplacesFieldValidator_is_valid(repository: ContentDTO):
     assert len(validation_results) == len(expected_validation_results_messages)
     for validation_result in validation_results:
         assert validation_result.message in expected_validation_results_messages
-

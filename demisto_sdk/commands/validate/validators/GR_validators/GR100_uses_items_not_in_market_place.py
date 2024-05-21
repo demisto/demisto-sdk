@@ -3,13 +3,36 @@ from __future__ import annotations
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
-from demisto_sdk.commands.content_graph.objects import (Classifier, CorrelationRule, Dashboard, GenericDefinition,
-                                                        GenericField, GenericModule, GenericType, IncidentField,
-                                                        IncidentType, IndicatorField, IndicatorType, Integration, Job,
-                                                        Layout, LayoutRule, Mapper, ModelingRule, Pack, ParsingRule,
-                                                        Playbook, Report, Script, TestPlaybook, Trigger, Widget, Wizard,
-                                                        XSIAMDashboard, XSIAMReport
-                                                        )
+from demisto_sdk.commands.content_graph.objects import (
+    Classifier,
+    CorrelationRule,
+    Dashboard,
+    GenericDefinition,
+    GenericField,
+    GenericModule,
+    GenericType,
+    IncidentField,
+    IncidentType,
+    IndicatorField,
+    IndicatorType,
+    Integration,
+    Job,
+    Layout,
+    LayoutRule,
+    Mapper,
+    ModelingRule,
+    Pack,
+    ParsingRule,
+    Playbook,
+    Report,
+    Script,
+    TestPlaybook,
+    Trigger,
+    Widget,
+    Wizard,
+    XSIAMDashboard,
+    XSIAMReport,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -68,7 +91,7 @@ class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
         validation_results = []
 
         for content_item in self.graph.find_uses_paths_with_invalid_marketplaces(
-                [item.pack_id for item in content_items]
+            [item.pack_id for item in content_items]
         ):
             used_content_items = [
                 item.content_item_to.object_id

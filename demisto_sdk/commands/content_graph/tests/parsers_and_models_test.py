@@ -5,8 +5,8 @@ import pytest
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -379,7 +379,7 @@ class TestParsersAndModels:
             expected_name="correlation_rule_name",
             expected_path=colrrelation_rule_path,
             expected_content_type=ContentType.CORRELATION_RULE,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            expected_fromversion=MINIMUM_XSOAR_SAAS_VERSION,
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 

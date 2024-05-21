@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Command, Outp
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_incident_field_object,
     create_incident_type_object,
     create_incoming_mapper_object,
     create_integration_object,
@@ -849,6 +850,17 @@ def test_IsBreakingContextOutputBackwardsValidator_is_valid(
                 create_incoming_mapper_object(paths=["fromVersion"], values=["5.0.0"]),
             ],
             id="Case 4: mapper - fromversion changed",
+        ),
+        pytest.param(
+            [
+                create_incident_field_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incident_field_object(paths=["fromVersion"], values=["6.0.0"]),
+            ],
+            [
+                create_incident_field_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incident_field_object(paths=["fromVersion"], values=["5.0.0"]),
+            ],
+            id="Case 5: incident field - fromversion changed",
         ),
     ],
 )

@@ -592,6 +592,8 @@ PNG_IMAGE_REGEX = r".*\.png$"
 SVG_IMAGE_REGEX = r".*\.svg$"
 DESCRIPTION_REGEX = r".*\.md"
 SCHEMA_REGEX = "Tests/schemas/.*.yml"
+# Checks if playbookID is a UUID format
+INVALID_PLAYBOOK_ID = r"[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}"
 
 # regex pattern used to convert incident/indicator fields to their CLI names
 NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r"[^a-zA-Z0-9]")
@@ -2037,6 +2039,24 @@ class ParameterType(Enum):
     INTERVAL = 19
     BOLD_TITLE = 20
     DAY_DROPDOWN = 21
+
+
+class IncidentFieldType:  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
+    SHORT_TEXT = "shortText"
+    LONG_TEXT = "longText"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    SINGLE_SELECT = "singleSelect"
+    MULTI_SELECT = "multiSelect"
+    DATE = "date"
+    MARKDOWN = "markdown"
+    HTML = "html"
+    URL = "url"
+    USER = "user"
+    ROLE = "role"
+    ATTACHMENTS = "attachments"
+    SLA = "sla"
+    GRID = "grid"
 
 
 NO_TESTS_DEPRECATED = "No tests (deprecated)"

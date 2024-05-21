@@ -496,7 +496,6 @@ def test_MarketplacesFieldValidator_is_valid(repository: ContentDTO):
     expected_validation_results_messages = {
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces, however it uses content items: "
         "'SamplePlaybook2' which are not supported in all of the marketplaces of 'SamplePlaybook'.",
-
         "Content item 'SampleIntegration' can be used in the 'xsoar, marketplacev2' marketplaces, however it uses "
         "content items: 'SampleClassifier2' which are not supported in all of the marketplaces of 'SampleIntegration'.",
     }

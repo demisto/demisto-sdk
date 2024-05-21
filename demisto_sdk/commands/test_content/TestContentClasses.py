@@ -1350,7 +1350,9 @@ class TestResults:
 
     import json
 
-    def upload_playbook_result_json_to_bucket(self, repository_name: str):
+    def upload_playbook_result_json_to_bucket(self,
+                                              repository_name: str,
+                                              logging_module: Union[Any, ParallelLoggingManager] = logging):
         """Uploads a JSON object to a specified path in the GCP bucket.
 
         Args:
@@ -1371,7 +1373,8 @@ class TestResults:
         blob.upload_from_string(json_data)
 
     @staticmethod
-    def delete_oldest_file(repository_name: str):
+    def delete_oldest_file(repository_name: str,
+                           logging_module: Union[Any, ParallelLoggingManager] = logging):
         """Deletes the oldest file from the specified directory in a GCP bucket.
 
         Args:

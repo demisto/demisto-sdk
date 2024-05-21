@@ -67,7 +67,7 @@ class PreCommitRunner:
             The hooks execution will be ordered according to their order definition at the template file.
 
         Args:
-            pre_commit_context: pre-commit context object
+            pre_commit_context: pre-commit context object.
         """
         hooks = pre_commit_context.hooks
 
@@ -198,6 +198,17 @@ class PreCommitRunner:
         verbose: bool,
         show_diff_on_failure: bool,
     ) -> int:
+        """Execute the pre-commit hooks on the files.
+
+        Args:
+            pre_commit_context (PreCommitContext): The precommit context object (This data is shared between all hooks).
+            precommit_env (dict): The environment variables dict.
+            verbose (bool):  Whether run pre-commit in verbose mode.
+            show_diff_on_failure (bool): Whether to show diff when a hook fail or not.
+
+        Returns:
+            int: The exit code - 0 if everything is valid.
+        """
         if pre_commit_context.mode:
             logger.info(
                 f"[yellow]Running pre-commit hooks in `{pre_commit_context.mode}` mode.[/yellow]"
@@ -275,6 +286,18 @@ class PreCommitRunner:
         exclude_files: Optional[Set[Path]] = None,
         dry_run: bool = False,
     ) -> int:
+        """Trigger the relevant hooks.
+
+        Args:
+            pre_commit_context (PreCommitContext): The precommit context object (This data is shared between all hooks).
+            verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
+            show_diff_on_failure (bool, optional): Whether to show diff when a hook fail or not. Defaults to False.
+            exclude_files (Optional[Set[Path]], optional): Files to exclude when running. Defaults to None.
+            dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode. Defaults to False.
+
+        Returns:
+            int: The exit code, 0 if nothing failed.
+        """
 
         ret_val = 0
         pre_commit_context.dry_run = dry_run
@@ -340,7 +363,9 @@ def group_by_language(
         Exception: If invalid files were given.
 
     Returns:
-        Dict[str, set]: The files grouped by their python version, and a set of excluded paths
+        Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
+        The files grouped by their python version, and a set of excluded paths,
+        The excluded files (due to deprecation).
     """
     integrations_scripts_mapping = defaultdict(set)
     infra_files = []
@@ -610,6 +635,22 @@ def preprocess_files(
     all_files: bool = False,
     prev_version: Optional[str] = None,
 ) -> Set[Path]:
+    """Collect the list of files to run pre-commit on.
+
+    Args:
+        input_files (Optional[Iterable[Path]], optional): List of specific files. Defaults to None.
+        staged_only (bool, optional): Whether to run only on staged files. Defaults to False.
+        commited_only (bool, optional): Whether to run only on commited files. Defaults to False.
+        use_git (bool, optional): Whether to only collect files using git. Defaults to False.
+        all_files (bool, optional): Whether to collect all files. Defaults to False.
+        prev_version (Optional[str], optional): The previous version to use as a delta when using git. Defaults to None.
+
+    Raises:
+        ValueError: If no input was given.
+
+    Returns:
+        Set[Path]: The set of files to run pre-commit on.
+    """
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files().union(staged_files)

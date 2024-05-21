@@ -1,7 +1,6 @@
-import re
-
 from __future__ import annotations
 
+import re
 from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType

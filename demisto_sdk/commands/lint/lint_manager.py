@@ -728,7 +728,7 @@ class LintManager:
 
         if self.show_deprecation_message:
             logger.error(
-                "This command is deprecated and will be removed soon. Alternatively, you should use the `demisto-sdk pre-commit` command."
+                "This command is deprecated and will be removed soon. Use the `demisto-sdk pre-commit` command instead."
             )
 
         return return_exit_code

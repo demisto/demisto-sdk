@@ -60,8 +60,8 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source_id: Optional[str] = ""
-    default_data_source_name: Optional[str] = ""
+    default_data_source_id: Optional[str] = Field("", exclude=True)
+    default_data_source_name: Optional[str] = Field("", exclude=True)
 
     # For private packs
     premium: Optional[bool]
@@ -377,10 +377,10 @@ class PackMetadata(BaseModel):
         ]:
             # the provided default_data_source_id is of a valid integration, keep it
             self.default_data_source_name = [
-                data_source
+                data_source.get("name")
                 for data_source in data_sources
                 if data_source.get("id") == self.default_data_source_id
-            ][0].get("name")
+            ][0]
             logger.info(
                 f"Keeping the provided {self.default_data_source_id=} with {self.default_data_source_name=}"
             )

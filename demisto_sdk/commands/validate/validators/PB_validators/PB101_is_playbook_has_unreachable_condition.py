@@ -10,6 +10,13 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Playbook
 
+MAPPER_DICT = {
+    "YES": ["YES", "TRUE POSITIVE"],
+    "TRUE POSITIVE": ["YES", "TRUE POSITIVE"],
+    "NO": ["NO", "FALSE POSITIVE"],
+    "FALSE POSITIVE": ["NO", "FALSE POSITIVE"],
+}
+
 
 class IsAskConditionHasUnreachableConditionValidator(BaseValidator[ContentTypes]):
     error_code = "PB101"
@@ -54,28 +61,21 @@ class IsAskConditionHasUnreachableConditionValidator(BaseValidator[ContentTypes]
         tasks = playbook.tasks
         for task in tasks.values():
             if task.get("type") == "condition" and task.get("message"):
+
                 next_tasks: dict = task.get("nexttasks", {})
+                # Rename the keys in dictionary to upper case
+                next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
 
                 # ADD all replyOptions to unhandled_reply_options (UPPER)
                 unhandled_reply_options = set(
                     map(str.upper, task.get("message", {}).get("replyOptions", []))
                 )
 
-                # Rename the keys in dictionary to upper case
-                next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
-
-                mapper_dict = {
-                    "YES": ["YES", "TRUE POSITIVE"],
-                    "TRUE POSITIVE": ["YES", "TRUE POSITIVE"],
-                    "NO": ["NO", "FALSE POSITIVE"],
-                    "FALSE POSITIVE": ["NO", "FALSE POSITIVE"],
-                }
-
                 # Remove all nexttasks from unhandled_reply_options (UPPER)
                 for next_task_branch, next_task_id in next_tasks_upper.items():
                     key_to_remove = None
                     if next_task_id and next_task_branch != "#DEFAULT#":
-                        for mapping in mapper_dict.get(
+                        for mapping in MAPPER_DICT.get(
                             next_task_branch, [next_task_branch]
                         ):
                             if mapping in unhandled_reply_options:

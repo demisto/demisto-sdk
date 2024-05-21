@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses, BETA_INTEGRATION_DISCLAIMER
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_DISCLAIMER,
+)
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -17,10 +18,12 @@ class IsValidBetaDescriptionValidator(BaseValidator[ContentTypes]):
     error_code = "DS101"
     description = "Check if beta disclaimer exists in detailed description"
     rationale = "Need a disclaimer for beta integrations."
-    error_message = (f"No beta disclaimer note was found. "
-                     f"Please make sure the description file (<integration_name>_description.md)"
-                     f" includes the beta disclaimer note. "
-                     f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}")
+    error_message = (
+        f"No beta disclaimer note was found. "
+        f"Please make sure the description file (<integration_name>_description.md)"
+        f" includes the beta disclaimer note. "
+        f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
+    )
     related_field = "beta"
     is_auto_fixable = False
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
@@ -34,5 +37,7 @@ class IsValidBetaDescriptionValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.is_beta and BETA_INTEGRATION_DISCLAIMER not in content_item.description_file.file_content_str
+            if content_item.is_beta
+            and BETA_INTEGRATION_DISCLAIMER
+            not in content_item.description_file.file_content
         ]

@@ -1,9 +1,9 @@
 import pytest
 
+from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
 )
-from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
 
 
 @pytest.mark.parametrize(
@@ -69,12 +69,12 @@ def test_DescriptionMissingInBetaIntegrationValidator_is_valid(
     [
         (
             False,
-            '',
+            "",
             0,
         ),
         (
             True,
-            '',
+            "",
             1,
         ),
         (
@@ -100,9 +100,8 @@ def test_IsValidBetaDescriptionValidator_is_valid(
     Then
         - Make sure that the validation is implemented correctly for beta integrations.
         - Case 1: Shouldn't fail.
-        - Case 2: Shouldn't fail.
-        - Case 3: Should fail.
-        - Case 4: Shouldn't fail.
+        - Case 2: Should fail.
+        - Case 3: Shouldn't fail.
     """
     from demisto_sdk.commands.validate.validators.DS_validators.DS101_is_valid_beta_description import (
         IsValidBetaDescriptionValidator,

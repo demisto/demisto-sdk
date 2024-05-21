@@ -123,8 +123,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @cached_property
     def yml_data(self) -> dict:
-        d = get_yaml(str(self.path), git_sha=self.git_sha)
-        return d
+        return get_yaml(str(self.path), git_sha=self.git_sha)
 
     @property
     def version(self) -> int:

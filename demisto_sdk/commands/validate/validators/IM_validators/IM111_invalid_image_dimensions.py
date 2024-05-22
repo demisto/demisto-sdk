@@ -17,8 +17,9 @@ ContentTypes = Integration
 
 
 def is_image_dimensions_valid(content_item: ContentTypes) -> bool:
-    width, height = imagesize.get(content_item.image.file_path)
-    return (width, height) == (IMAGE_WIDTH, IMAGE_HEIGHT)
+    if content_item.image.file_path:
+        return (IMAGE_WIDTH, IMAGE_HEIGHT) == imagesize.get(content_item.image.file_path)
+    return True
 
 
 class InvalidImageDimensionsValidator(BaseValidator[ContentTypes]):
@@ -38,5 +39,5 @@ class InvalidImageDimensionsValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not is_image_dimensions_valid(content_item)
+            if is_image_dimensions_valid(content_item)
         ]

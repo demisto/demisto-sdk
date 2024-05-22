@@ -20,7 +20,10 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
         "Pack metadata contains an invalid 'defaultDataSource': {0}. "
         "Please fill in a valid datasource integration, one of these options: {1}."
     )
-    fix_message = "Set the 'defaultDataSource' for '{0}' pack to the '{1}' integration (changed from display name to id)."
+    fix_message = (
+        "Updated the 'defaultDataSource' for the '{0}' pack to use the '{1}' "
+        "integration ID instead of the display name that was previously used."
+    )
     related_field = "defaultDataSource"
     is_auto_fixable = True
 
@@ -68,4 +71,6 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
 
-        raise Exception("Cannot determine which integration to set as default.")
+        raise Exception(
+            "Unable to determine which integration should be set as default."
+        )

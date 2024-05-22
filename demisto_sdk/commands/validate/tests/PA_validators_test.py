@@ -801,8 +801,8 @@ def test_IsDefaultDataSourceProvidedValidator_is_valid(
         [
             (
                 result.message
-                == "Pack metadata does not contain a 'defaultDataSource'. "
-                "Please fill in a default datasource name from these options: ['TestIntegration', 'TestIntegration']."
+                == "The pack metadata does not contain the 'defaultDataSource' field. "
+                "Please specify a defaultDataSource from the following options: ['TestIntegration', 'TestIntegration']."
             )
             for result in results
         ]
@@ -833,7 +833,7 @@ def test_IsDefaultDataSourceProvidedValidator_fix():
     validator = IsDefaultDataSourceProvidedValidator()
     assert validator.fix(content_item).message == (
         "Set the 'defaultDataSource' for 'HelloWorld' pack to the "
-        "'defaultDataSourceValue' integration because it is an event collector."
+        "'defaultDataSourceValue' integration, as it is an event collector."
     )
     assert content_item.default_data_source_id == "defaultDataSourceValue"
 
@@ -929,8 +929,8 @@ def test_IsValidDefaultDataSourceNameValidator_fix():
     assert content_item.default_data_source_id == "Default Data Source Value"
     validator = IsValidDefaultDataSourceNameValidator()
     assert validator.fix(content_item).message == (
-        "Set the 'defaultDataSource' for 'HelloWorld' pack to the 'defaultDataSourceValue' integration "
-        "(changed from display name to id)."
+        "Updated the 'defaultDataSource' for the 'HelloWorld' pack to use the 'defaultDataSourceValue' "
+        "integration ID instead of the display name that was previously used."
     )
     assert content_item.default_data_source_id == "defaultDataSourceValue"
 

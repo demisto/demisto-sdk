@@ -135,7 +135,7 @@ class PackMetadata(BaseModel):
             }
         )
 
-        if self.default_data_source_name:
+        if self.default_data_source_name and self.default_data_source_id:
             # in order to show only for XSIAM packs
             _metadata.update(
                 {
@@ -364,7 +364,7 @@ class PackMetadata(BaseModel):
 
     def is_data_source(self, content_items: PackContentItems) -> bool:
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
-        if self.default_data_source_name:
+        if self.default_data_source_id and self.default_data_source_name:
             return True
         return any(self.get_valid_data_source_integrations(content_items))
 

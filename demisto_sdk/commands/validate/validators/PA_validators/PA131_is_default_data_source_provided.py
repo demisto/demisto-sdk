@@ -18,10 +18,10 @@ class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
     description = "Validate that the pack_metadata contains a default datasource, if there are more than one datasource."
     rationale = "Wizards and other tools rely on the default datasource to be set."
     error_message = (
-        "Pack metadata does not contain a 'defaultDataSource'. "
-        "Please fill in a default datasource name from these options: {0}."
+        "The pack metadata does not contain the 'defaultDataSource' field. "
+        "Please specify a defaultDataSource from the following options: {0}."
     )
-    fix_message = "Set the 'defaultDataSource' for '{0}' pack to the '{1}' integration because it is an event collector."
+    fix_message = "Set the 'defaultDataSource' for '{0}' pack to the '{1}' integration, as it is an event collector."
     related_field = "defaultDataSource"
     is_auto_fixable = True
 
@@ -70,4 +70,6 @@ class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
 
-        raise Exception("Cannot determine which integration to set as default.")
+        raise Exception(
+            "Unable to determine which integration should be set as default."
+        )

@@ -110,18 +110,14 @@ def test_ImageTooLargeValidator_is_valid(
 @pytest.mark.parametrize(
     "image_resolution, expected_message",
     [
-        ((120, 50), []),
+        ((120, 50), ""),
         (
             (1, 5),
-            [
-                "The image dimensions do not match the requirements. A resolution of 120x50 pixels is required."
-            ],
+            "The image dimensions do not match the requirements. A resolution of 120x50 pixels is required.",
         ),
         (
             (1200, 500),
-            [
-                "The image dimensions do not match the requirements. A resolution of 120x50 pixels is required."
-            ],
+            "The image dimensions do not match the requirements. A resolution of 120x50 pixels is required.",
         ),
     ],
 )
@@ -138,12 +134,8 @@ def test_InvalidImageDimensionsValidator_is_valid(
 
     results = InvalidImageDimensionsValidator().is_valid(content_items)
 
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_message)
-        ]
-    )
+    if len(results) > 0:
+        assert results[0].message == expected_message
 
 
 def test_AuthorImageExistsValidator_is_valid_image_path():

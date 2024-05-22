@@ -2,7 +2,7 @@ import os
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Optional, Set, Tuple, Union
+from typing import List, Optional, Sequence, Set, Tuple, Union
 
 import click
 import gitdb
@@ -870,12 +870,19 @@ class GitUtil:
     def debug_print(
         self, debug: bool, status: str, staged: Set, committed: Set
     ) -> None:
-        if debug:
+        if not debug:
+            return
+
+        def sort_paths(paths: Set) -> Sequence:
+            return sorted((str(path) for path in paths))
+
+        if staged:
             click.echo(f"######## - {status} staged:")
-            click.echo(staged)
+            click.echo(", ".join(sort_paths(staged)))
             click.echo("\n")
+        if committed:
             click.echo(f"######## - {status} committed:")
-            click.echo(committed)
+            click.echo(", ".join(sort_paths(committed)))
             click.echo("\n")
 
     def handle_wrong_renamed_status(

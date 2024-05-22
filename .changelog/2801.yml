@@ -1,0 +1,4 @@
+changes:
+- description: Added support for Python 3.11
+  type: feature
+pr_number: 2801

@@ -6,6 +6,7 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_value, get_yaml
@@ -88,7 +89,9 @@ class YAMLContentItemParser(ContentItemParser):
         return get_value(
             self.yml_data,
             self.field_mapping.get("fromversion", ""),
-            DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            DEFAULT_CONTENT_ITEM_FROM_VERSION
+            if MarketplaceVersions.XSOAR_ON_PREM in self.supported_marketplaces
+            else MINIMUM_XSOAR_SAAS_VERSION,
         )
 
     @property

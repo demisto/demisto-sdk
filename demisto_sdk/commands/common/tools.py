@@ -1838,7 +1838,7 @@ def find_type(
         XSIAMDashboard,
         XSIAMReport,
     )
-    from demisto_sdk.commands.content_graph.objects import List as List_obj
+    from demisto_sdk.commands.content_graph.objects import List as ListObject
 
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1981,7 +1981,7 @@ def find_type(
     if LayoutRule.match(_dict, Path(path)):
         return FileType.LAYOUT_RULE
 
-    if List_obj.match(_dict, Path(path)):
+    if ListObject.match(_dict, Path(path)):
         return FileType.LISTS
 
     # When using it for all files validation- sometimes 'id' can be integer
@@ -4089,7 +4089,7 @@ def find_correct_key(data: dict, keys: List[str]) -> str:
 
 def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
     """Updating a data object with given value in the given key.
-    If a list of keys is given, will find the right path to update based on which path acctually has a value.
+    If a list of keys is given, will find the right path to update based on which path actually has a value.
     Args:
         data (dict): the data object to update.
         keys (Union[str,List[str]]): the path or list of possible paths to update.
@@ -4490,3 +4490,23 @@ def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
     if file_path.is_absolute():
         file_path = file_path.relative_to(relative_to)
     return file_path
+
+
+def convert_path_to_str(data: Union[dict, list]):
+    """This converts recursively all Path objects to strings in the given data.
+
+    Args:
+        data (Union[dict, list]): The data to convert.
+    """
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, (dict, list)):
+                convert_path_to_str(value)
+            elif isinstance(value, Path):
+                data[key] = str(value)
+    elif isinstance(data, list):
+        for index, item in enumerate(data):
+            if isinstance(item, (dict, list)):
+                convert_path_to_str(item)
+            elif isinstance(item, Path):
+                data[index] = str(item)

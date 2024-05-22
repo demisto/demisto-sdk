@@ -10,6 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import more_itertools
 from docker.errors import DockerException
 from packaging.version import Version
 
@@ -39,6 +40,8 @@ from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 NO_SPLIT = None
 USER_DEMITSO = "demisto"
 
+IMAGES_BATCH = 50
+
 
 @lru_cache()
 def get_docker_python_path() -> str:
@@ -56,7 +59,8 @@ def get_docker_python_path() -> str:
 
 def with_native_tags(
     tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]],
-    docker_image_flag: str,
+    docker_flags: Set[str],
+    docker_image: Optional[str],
 ) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
     """
     Adds the native image images into the dict with the files that should be run on them
@@ -67,30 +71,33 @@ def with_native_tags(
     Returns: The updated dict with the native images.
 
     """
-    docker_flags = set(docker_image_flag.split(","))
+
     all_tags_to_files = defaultdict(list)
     native_image_config = NativeImageConfig.get_instance()
 
     for image, scripts in tags_to_files.items():
         for file, obj in scripts:
-
             supported_native_images = ScriptIntegrationSupportedNativeImages(
                 _id=obj.object_id,
                 native_image_config=native_image_config,
                 docker_image=image,
-            ).get_supported_native_docker_tags(docker_flags)
+            ).get_supported_native_docker_tags(docker_flags, include_candidate=True)
+
             for native_image in supported_native_images:
-                all_tags_to_files[native_image].append((file, obj))
+                all_tags_to_files[docker_image or native_image].append((file, obj))
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,
             } & docker_flags:
-                all_tags_to_files[image].append((file, obj))
+                all_tags_to_files[docker_image or image].append((file, obj))
+
     return all_tags_to_files
 
 
 def docker_tag_to_runfiles(
-    files_to_run: Iterable[Tuple[Path, Optional[IntegrationScript]]], docker_image_flag
+    files_to_run: Iterable[Tuple[Path, Optional[IntegrationScript]]],
+    docker_image_flag: str,
+    docker_image: Optional[str] = None,
 ) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
     """
     Iterates over all files snf groups the files by the dockerimages
@@ -101,13 +108,14 @@ def docker_tag_to_runfiles(
     Returns: A dict of image to List of files(Tuple[path, obj]) including native images
 
     """
+    docker_flags = set(docker_image_flag.split(","))
     tags_to_files = defaultdict(list)
     for file, obj in files_to_run:
-        if not obj:
-            continue
-        for docker_image in obj.docker_images:
-            tags_to_files[docker_image].append((file, obj))
-    return with_native_tags(tags_to_files, docker_image_flag)
+        if obj:
+            for image in obj.docker_images:
+                tags_to_files[image].append((file, obj))
+
+    return with_native_tags(tags_to_files, docker_flags, docker_image)
 
 
 @functools.lru_cache(maxsize=512)
@@ -266,7 +274,8 @@ class DockerHook(Hook):
         }
         tag_to_files_objs = docker_tag_to_runfiles(
             filtered_files_with_objects,
-            self._get_property("docker_image", "from-yml"),
+            self.context.docker_image or self._get_property("docker_image", "from-yml"),
+            self.context.image_ref,
         )
         end_time = time.time()
         logger.debug(
@@ -286,24 +295,26 @@ class DockerHook(Hook):
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
-        logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
+        logger.debug(
+            f'collected images: {" ".join(filter(None, tag_to_files_objs.keys()))}'
+        )
         docker_hook_ids = []
-        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-            results = []
-            for image, files_objs in sorted(
-                tag_to_files_objs.items(), key=lambda item: item[0]
-            ):
-                results.append(
-                    executor.submit(
-                        self.process_image,
-                        image,
-                        files_objs,
-                        config_arg,
-                        run_isolated,
+        results: List[List[Dict]] = []
+
+        for chunk in more_itertools.chunked(
+            sorted(tag_to_files_objs.items()), IMAGES_BATCH
+        ):
+            with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+                # process images in batches to avoid memory issues
+                results.extend(
+                    executor.map(
+                        lambda item: self.process_image(
+                            item[0], item[1], config_arg, run_isolated
+                        ),
+                        chunk,
                     )
                 )
-        for result in results:
-            hooks = result.result()
+        for hooks in results:
             self.hooks.extend(hooks)
             docker_hook_ids.extend([hook["id"] for hook in hooks])
 

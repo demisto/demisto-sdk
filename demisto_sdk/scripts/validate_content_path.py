@@ -1,3 +1,4 @@
+import re
 from abc import ABC
 from pathlib import Path
 from typing import ClassVar, List, Sequence
@@ -41,6 +42,7 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
+    TESTS_DIRECTORIES,
     TRIGGER_DIR,
     WIDGETS_DIR,
     WIZARDS_DIR,
@@ -127,6 +129,8 @@ ALLOWED_SUFFIXES = frozenset(
     )
 )
 DIRS_ALLOWING_SPACE_IN_FILENAMES = (TEST_PLAYBOOKS_DIR,)
+INVALID_CHARS_IN_IMAGES_REGEX = re.compile(r"[^0-9a-zA-Z-_]+")
+SUPPORTED_IMAGE_FORMATS = (".png", ".svg")
 app = typer.Typer()
 
 
@@ -172,12 +176,24 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
     )
 
 
+class InvalidXSIAMReportFileName(InvalidPathException):
+    message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
+
+
+class InvalidImageFileName(InvalidPathException):
+    message = "Name of image files may only contain only latin letters, digits, underscores or hyphens."
+
+
 class InvalidSuffix(InvalidPathException):
     message = "This file's suffix is not allowed."
 
 
 class InvalidCommandExampleFile(InvalidPathException):
     message = "This file's name must be command_examples"
+
+
+class InvalidXDRCTemplatesFileName(InvalidPathException):
+    message = "Name of XDRC template files must match the directory containing them, e.g. `{parent folder}.json`, or `{parent folder}.yml`"
 
 
 class ExemptedPath(Exception, ABC):
@@ -200,8 +216,8 @@ class PathIsUnified(ExemptedPath):
     message = "Paths of unified content items are not validated."
 
 
-class PathIsTestOrDocData(ExemptedPath):
-    message = "Paths under test_data or doc_files are not validated."
+class PathIsTestData(ExemptedPath):
+    message = "Paths under test_data are not validated."
 
 
 def _validate(path: Path) -> None:
@@ -229,8 +245,8 @@ def _validate(path: Path) -> None:
         """
         raise PathUnderDeprecatedContent
 
-    if set(path.parts).intersection(TESTS_AND_DOC_DIRECTORIES):
-        raise PathIsTestOrDocData
+    if set(path.parts).intersection(TESTS_DIRECTORIES):
+        raise PathIsTestData
 
     parts_inside_pack = parts_after_packs[1:]  # everything after Packs/<pack name>
     depth = len(parts_inside_pack) - 1
@@ -270,11 +286,32 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidClassifier
 
-    if depth == 2 and first_level_folder in {
-        ContentType.INTEGRATION.as_folder,
-        ContentType.SCRIPT.as_folder,
-    }:
-        _validate_integration_script_file(path, parts_after_packs)
+        if first_level_folder == XSIAM_REPORTS_DIR and not (
+            path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix == ".json"
+        ):
+            raise InvalidXSIAMReportFileName
+
+        if (
+            first_level_folder == DOC_FILES_DIR
+            and path.suffix in SUPPORTED_IMAGE_FORMATS
+        ):
+            _validate_image_file_name(path.stem)
+
+    if depth == 2:
+        if first_level_folder in {
+            ContentType.INTEGRATION.as_folder,
+            ContentType.SCRIPT.as_folder,
+        }:
+            _validate_integration_script_file(path, parts_after_packs)
+        elif first_level_folder == ContentType.XDRC_TEMPLATE.as_folder and not (
+            path.stem == path.parent.name and path.suffix in {".json", ".yml"}
+        ):
+            raise InvalidXDRCTemplatesFileName
+
+
+def _validate_image_file_name(image_name: str):
+    if INVALID_CHARS_IN_IMAGES_REGEX.findall(image_name):
+        raise InvalidImageFileName
 
 
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):

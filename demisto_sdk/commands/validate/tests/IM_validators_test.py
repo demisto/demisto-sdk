@@ -12,6 +12,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IM_validators.IM100_image_exists_validation import (
     ImageExistsValidator,
 )
+from demisto_sdk.commands.validate.validators.IM_validators.IM101_image_too_large import (
+    ImageTooLargeValidator,
+)
 from demisto_sdk.commands.validate.validators.IM_validators.IM106_default_image_validator import (
     DefaultImageValidator,
 )
@@ -46,6 +49,58 @@ def test_ImageExistsValidator_is_valid_image_path():
         "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at TestIntegration_image.png."
         in result.message
         for result in results
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["image"], values=["data:image/png;base64,short image"]
+                )
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["image"],
+                    values=["data:image/png;base64," + ("A very big image" * 1000)],
+                )
+            ],
+            1,
+            [
+                "You've created/modified a yml or package with a large sized image. Please make sure to change the image dimensions at: TestIntegration_image.png."
+            ],
+        ),
+    ],
+)
+def test_ImageTooLargeValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given:
+    content_items:
+        - Case 1: Integration with an image that is not in a valid size.
+        - Case 2: Integration with an image that is in a valid size.
+
+    When:
+        - Calling the ImageTooLargeValidator is_valid function.
+
+    Then:
+        - Make sure the right amount of integration image path failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
+    """
+    results = ImageTooLargeValidator().is_valid(content_items)
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
     )
 
 

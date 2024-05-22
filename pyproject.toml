@@ -1,24 +1,24 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.29.0"
+version = "1.29.3"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
 readme = "README.md"
-classifiers=[
+classifiers = [
     'Intended Audience :: Developers',
     'Natural Language :: English',
     'License :: OSI Approved :: MIT License',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
-    'Programming Language :: Python :: Implementation :: CPython'
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: Implementation :: CPython',
 ]
-exclude = ["TestSuite/**", "*/tests/*", "tests"]
+exclude = ["TestSuite/**", "tests_end_to_end/**", "demisto_sdk/tests/**", "demisto_sdk/**/tests/**", "demisto_sdk/**/test_data/**", "demisto_sdk/**/test_files/**"]
 
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
-update-additional-dependencies = "demisto_sdk.scripts.update_additional_dependencies:main"
 sdk-changelog = "demisto_sdk.scripts.changelog.changelog:main"
 merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
 merge-pytest-reports = "demisto_sdk.scripts.merge_pytest_reports:main"
@@ -28,22 +28,22 @@ init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
-autopep8 = "^1.6.0"
+python = "^3.8,<3.12"
+autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"
-pylint = "2.12.2"
+pylint = "^2.17.0,<2.18"
 vulture = "^2.3"
 beautifulsoup4 = "^4.11.1"
 chardet = ">=4,<6"
 click = "^8.0.0"
 coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
-coverage = "^7.2.1"
+coverage = "^7.2.1,<7.4"  # in 7.4 we get empty results
 decorator = "^5.1.1"
 demisto-py = "^3.2.10"
 dictor = "^0.1.9"
-docker = "^5.0.3"
+docker = "^6.0.0"
 flatten-dict = "^0.4.2"
 gitdb = "^4.0.9"
 google-cloud-storage = "^2.13.0"
@@ -62,7 +62,7 @@ slack-sdk = "^3.17.0"
 tenacity = "^8.2.3"
 tabulate = ">=0.8.9,<0.10.0"
 ujson = "^5.1.0"
-urllib3 = "^1.26.9"
+urllib3 = "^2.2.1"
 wcmatch = "^8.3"
 yamlordereddictloader = "^0.4.0"
 GitPython = "^3.1.37"
@@ -75,53 +75,42 @@ importlib-resources = "^5.6.0"
 dictdiffer = "^0.9.0"
 imagesize = "^1.3.0"
 dateparser = "^1.1.1"
-typed-ast = "^1.5.2"
-types-dateparser = "^1.1.0"
-types-PyYAML = "^6.0.5"
-types-requests = "2.28.11"
-types-pytz = ">=2021.3.6,<2023.0.0"
-types-python-dateutil = "^2.8.10"
-types-pyvmomi = ">=7.0.6,<9.0.0"
-types-tabulate = ">=0.8.6,<0.10.0"
-types-paramiko = "^2.8.17"
-types-emoji = ">=1.2.7,<3.0.0"
-types-ipaddress = "^1.0.8"
-types-chardet = ">=4.0.3,<6.0.0"
-types-six = "^1.16.12"
-types-PyMySQL = "^1.0.15"
-typing-extensions = "^4.1.1"
-gsutil = {version = "5.17", optional = true}
+gsutil = { version = "5.17", optional = true }
 ordered-set = "^4.1.0"
-types-filelock = "^3.2.5"
-types-Markdown = "^3.3.21"
-types-futures = "^3.3.8"
 paramiko = "^2.11.0"
 neo4j = "^5.14.0"
 pydantic = "^1.10"
-types-decorator = "^5.1.8"
-types-mock = "^4.0.15"
-types-setuptools = ">=65.6.0.1,<68.0.0.0"
-types-ujson = "^5.6.0.0"
-typer = {extras = ["all"], version = "^0.9.0"}
-types-pkg-resources = "^0.1.3"
-types-toml = "^0.10.8.7"
-packaging = "^23.1"
+typer = { extras = ["all"], version = "^0.9.0" }
+packaging = "^24.0"
 orjson = "^3.8.3"
 more-itertools = "^9.0.0"
 junitparser = "^3.1.0"
-google-cloud-secret-manager = "^2.16.2"
+google-cloud-secret-manager = "^2.18.3"
 json5 = "^0.9.14"
-types-protobuf = "^4.24.0.4"
 klara = { version = "^0.6.3", optional = true }
-
-
-
+typing-extensions = "^4.1.1"                     # not a mypy types- dependency
 pre-commit = "^3.5.0"
 lxml = "^5.0.0"
 uv = "^0.1.5"
+toml = "^0.10.2"
+werkzeug = "^2.2.0"                              # Added as mitmproxy8 -> flask<2.1
+
+
+[tool.poetry.group.types.dependencies]
+types-requests = "^2.31.0.20240311"
+types-mock = "^4.0.15"
+types-setuptools = "^69.2.0.20240317"
+types-ujson = "^5.6.0.0"
+types-decorator = "^5.1.8"
+types-pkg-resources = "^0.1.3"
+types-toml = "^0.10.8.7"
+types-tabulate = "^0.9.0.20240106"
+types-pytz = "^2024.1.0.20240203"
+types-dateparser = "^1.1.4.20240106"
+types-python-dateutil = "^2.9.0.20240316"
 
 [tool.poetry.group.dev.dependencies]
-mitmproxy = "^8.0.0"
+mitmproxy = "^8.0.0"                               # if installing zstandard fails, make sure you have python3.x-dev installed.
 mock = "^4.0.3"
 pytest = "^7.1.1"
 pytest-cov = "^4.0.0"
@@ -165,7 +154,7 @@ ignore = [
     "F403",
     "F405",
     "E501",
-    "W293",  # handled by Black
+    "W293", # handled by Black
 ]
 
 
@@ -173,7 +162,7 @@ exclude = [
     "demisto_sdk/tests/test_files/",
     "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
     "demisto_sdk/commands/init/templates",
-    "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
+    "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py",
 ]
 
 select = [
@@ -209,3 +198,4 @@ max-complexity = 30
 "distutils.version".msg = "Use packaging.version.Version instead"
 "packaging.version.LooseVersion".msg = "Use packaging.version.Version instead"
 "git.Repo".msg = "Use GitUtil instead"
+"str.StrEnum".msg = "Import from demisto_sdk.commands.common.StrEnum for <3.11 compatability"

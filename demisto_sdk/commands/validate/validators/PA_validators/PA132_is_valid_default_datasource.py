@@ -56,14 +56,14 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
             data_source
             for data_source in data_sources
             if data_source.get("name") == content_item.default_data_source_id
-        ][0]
+        ]
 
         if default_data_source:
-            content_item.default_data_source_id = default_data_source.get("id")
+            content_item.default_data_source_id = default_data_source[0].get("id")
             return FixResult(
                 validator=self,
                 message=self.fix_message.format(
-                    content_item.name, default_data_source.get("id")
+                    content_item.name, default_data_source[0].get("id")
                 ),
                 content_object=content_item,
             )

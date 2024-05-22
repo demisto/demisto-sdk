@@ -132,12 +132,19 @@ class PackMetadata(BaseModel):
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
-                "defaultDataSource": {
-                    "name": self.default_data_source_name,
-                    "id": self.default_data_source_id,
-                },
             }
         )
+
+        if self.default_data_source_name:
+            # in order to show only for XSIAM packs
+            _metadata.update(
+                {
+                    "defaultDataSource": {
+                        "name": self.default_data_source_name,
+                        "id": self.default_data_source_id,
+                    },
+                }
+            )
 
         return _metadata
 

@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFile
 from demisto_sdk.commands.validate.tests.test_tools import (
@@ -84,6 +85,12 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA128_validate_pack_
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA130_is_current_version_correct_format import (
     IsCurrentVersionCorrectFormatValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA131_is_default_data_source_provided import (
+    IsDefaultDataSourceProvidedValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA132_is_valid_default_datasource import (
+    IsValidDefaultDataSourceNameValidator,
 )
 
 
@@ -724,6 +731,208 @@ def test_IsValidDescriptionFieldValidator_is_valid(
             for result in results
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "pack, integrations, expected_number_of_failures",
+    [
+        (
+            create_pack_object(),
+            [
+                create_integration_object(
+                    ["script.isfetch", "name"], ["true", "TestIntegration1"]
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            1,
+        ),
+        (
+            create_pack_object(["defaultDataSource"], ["defaultDataSourceValue"]),
+            [
+                create_integration_object(
+                    ["script.isfetch", "name"], ["true", "defaultDataSourceValue"]
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            0,
+        ),
+        (
+            create_pack_object(),
+            [create_integration_object(["script.isfetch"], ["true"])],
+            0,
+        ),
+        (
+            create_pack_object(["marketplaces"], [[MarketplaceVersions.XSOAR]]),
+            [
+                create_integration_object(
+                    ["script.isfetch", "name"], ["true", "TestIntegration1"]
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            0,
+        ),
+    ],
+)
+def test_IsDefaultDataSourceProvidedValidator_is_valid(
+    pack, integrations, expected_number_of_failures
+):
+    """
+    Given
+    content_items.
+        - Case 1: One XSIAM pack_metadata with 2 integrations and no defaultDataSource.
+        - Case 2: One XSIAM pack_metadata with 2 integrations and a defaultDataSource.
+        - Case 3: One XSIAM pack_metadata with one integration and no defaultDataSource.
+        - Case 4: One non XSIAM pack_metadata with 2 integrations.
+
+    When
+        - Calling the IsDefaultDataSourceProvidedValidator is_valid function.
+
+    Then
+        - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
+        - Case 3: Shouldn't fail.
+        - Case 4: Shouldn't fail.
+    """
+    pack.content_items.integration.extend(integrations)
+    results = IsDefaultDataSourceProvidedValidator().is_valid([pack])
+    assert len(results) == expected_number_of_failures
+    assert not results or all(
+        [
+            (
+                result.message
+                == "Pack metadata does not contain a 'defaultDataSource'. "
+                "Please fill in a default datasource name from these options: ['TestIntegration', 'TestIntegration']."
+            )
+            for result in results
+        ]
+    )
+
+
+def test_IsDefaultDataSourceProvidedValidator_fix():
+    """
+    Given
+        - A pack_metadata with no defaultDataSource, for a pack with one event collector
+
+    When
+        - Calling the IsDefaultDataSourceProvidedValidator fix function.
+
+    Then
+        - Make sure that the defaultDataSource is set to the event collector integration id
+    """
+    content_item = create_pack_object()
+    integrations = [
+        create_integration_object(
+            ["script.isfetchevents", "commonfields.id"],
+            ["true", "defaultDataSourceValue"],
+        ),
+        create_integration_object(["script.isfetch"], ["true"]),
+    ]
+    content_item.content_items.integration.extend(integrations)
+    assert not content_item.default_data_source_id
+    validator = IsDefaultDataSourceProvidedValidator()
+    assert validator.fix(content_item).message == (
+        "Set the 'defaultDataSource' for 'HelloWorld' pack to the "
+        "'defaultDataSourceValue' integration because it is an event collector."
+    )
+    assert content_item.default_data_source_id == "defaultDataSourceValue"
+
+
+@pytest.mark.parametrize(
+    "pack, integrations, expected_number_of_failures",
+    [
+        (
+            create_pack_object(
+                ["defaultDataSource"], ["InvalidDefaultDataSourceValue"]
+            ),
+            [
+                create_integration_object(
+                    ["script.isfetch", "commonfields.id"], ["true", "TestIntegration1"]
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            1,
+        ),
+        (
+            create_pack_object(["defaultDataSource"], ["defaultDataSourceValue"]),
+            [
+                create_integration_object(
+                    ["script.isfetch", "commonfields.id"],
+                    ["true", "defaultDataSourceValue"],
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            0,
+        ),
+        (
+            create_pack_object(),
+            [create_integration_object(["script.isfetch"], ["true"])],
+            0,
+        ),
+    ],
+)
+def test_IsValidDefaultDataSourceNameValidator_is_valid(
+    pack, integrations, expected_number_of_failures
+):
+    """
+    Given
+        - Case 1: One XSIAM pack_metadata with 2 integrations and a defaultDataSource that is not one of the pack integrations.
+        - Case 2: One XSIAM pack_metadata with 2 integrations and a defaultDataSource that is one of the pack integrations.
+        - Case 3: One XSIAM pack_metadata with one integration and no defaultDataSource.
+
+    When
+        - Calling the IsValidDefaultDataSourceNameValidator is_valid function.
+
+    Then
+        - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
+        - Case 3: Shouldn't fail.
+    """
+    pack.content_items.integration.extend(integrations)
+    results = IsValidDefaultDataSourceNameValidator().is_valid([pack])
+    assert len(results) == expected_number_of_failures
+    assert not results or all(
+        [
+            (
+                result.message
+                == "Pack metadata contains an invalid 'defaultDataSource': InvalidDefaultDataSourceValue. "
+                "Please fill in a valid datasource integration, one of these options: ['TestIntegration1', 'TestIntegration']."
+            )
+            for result in results
+        ]
+    )
+
+
+def test_IsValidDefaultDataSourceNameValidator_fix():
+    """
+    Given
+        - A pack_metadata with a defaultDataSource value that holds the integration display name instead of integration id
+
+    When
+        - Calling the IsValidDefaultDataSourceNameValidator fix function.
+
+    Then
+        - Make sure that the defaultDataSource is set to the integration id
+    """
+    content_item = create_pack_object(
+        ["defaultDataSource"], ["Default Data Source Value"]
+    )
+    integrations = [
+        create_integration_object(
+            ["script.isfetch", "commonfields.id", "display"],
+            ["true", "defaultDataSourceValue", "Default Data Source Value"],
+        ),
+        create_integration_object(["script.isfetch"], ["true"]),
+    ]
+    content_item.content_items.integration.extend(integrations)
+    assert content_item.default_data_source_id == "Default Data Source Value"
+    validator = IsValidDefaultDataSourceNameValidator()
+    assert validator.fix(content_item).message == (
+        "Set the 'defaultDataSource' for 'HelloWorld' pack to the 'defaultDataSourceValue' integration "
+        "(changed from display name to id)."
+    )
+    assert content_item.default_data_source_id == "defaultDataSourceValue"
 
 
 @pytest.mark.parametrize(

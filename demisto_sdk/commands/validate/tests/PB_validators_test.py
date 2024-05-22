@@ -4,11 +4,17 @@ from demisto_sdk.commands.validate.tests.test_tools import create_playbook_objec
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
     IsNoRolenameValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB101_is_playbook_has_unreachable_condition import (
+    IsAskConditionHasUnreachableConditionValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
+    IsAskConditionHasUnhandledReplyOptionsValidator,
 )
 
 
@@ -179,3 +185,33 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
         if isinstance(expected_result, list)
         else result[0].message == expected_result
     )
+
+
+def test_IsAskConditionHasUnreachableConditionValidator():
+
+    playbook = create_playbook_object()
+    assert not IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
+    playbook.tasks = {
+        "0": {
+            "id": "test task",
+            "type": "condition",
+            "message": {"replyOptions": ["yes"]},
+            "nexttasks": {"no": ["1"], "yes": ["2"]},
+        }
+    }
+    assert IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
+
+
+def test_IsAskConditionHasUnhandledReplyOptionsValidator():
+
+    playbook = create_playbook_object()
+    assert not IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+    playbook.tasks = {
+        "0": {
+            "id": "test task",
+            "type": "condition",
+            "message": {"replyOptions": ["yes"]},
+            "nexttasks": {"no": ["1"]},
+        }
+    }
+    assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])

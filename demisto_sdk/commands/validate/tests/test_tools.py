@@ -219,12 +219,8 @@ def create_script_object(
     pack_info: Optional[Dict[str, Any]] = None,
     code: Optional[str] = None,
     test_code: Optional[str] = None,
-<<<<<<< HEAD
     name: Optional[str] = None,
-):
-=======
 ) -> Script:
->>>>>>> 2e70fc381c2290da1f5e02b2a31c2bd08312dd32
     """Creating an script object with altered fields from a default script yml structure.
 
     Args:

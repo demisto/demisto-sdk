@@ -1381,8 +1381,8 @@ class TestResults:
           repository_name: The path of the directory within the bucket (e.g., "path/to/directory/").
         """
         logging_module.info("Starting to delete")
-        client = storage.Client()
-        bucket = client.get_bucket(ARTIFACTS_BUCKET)
+        storage_client = storage.Client.from_service_account_json(options.service_account)
+        bucket = storage_client.get_bucket(ARTIFACTS_BUCKET)
 
         # List all objects with the directory path as prefix
         blobs = bucket.list_blobs(prefix=repository_name)

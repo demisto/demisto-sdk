@@ -128,7 +128,7 @@ def execute_test_content(**kwargs):
     build_context.tests_data_keeper.create_result_files()
 
     build_number = kwargs["build_number"]
-    build_context.tests_data_keeper.delete_oldest_file(kwargs["repo_name"], logging_manager)
+    # build_context.tests_data_keeper.delete_oldest_file(kwargs["repo_name"], logging_manager)
     build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(kwargs["repo_name"],
                                                                           f'playbook_report_{build_number}',
                                                                           logging_manager)

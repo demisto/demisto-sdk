@@ -41,7 +41,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         )
         self.is_mappable = self.script_info.get("ismappable", False)
         self.is_feed = self.script_info.get("feed", False)
-        self.is_beta = self.script_info.get("beta", False)
+        self.is_beta = self.yml_data.get("beta", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.is_long_running = self.script_info.get("longRunning", False)
         self.commands: List[CommandParser] = []

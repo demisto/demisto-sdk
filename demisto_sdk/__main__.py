@@ -19,7 +19,7 @@ import functools
 import logging
 import os
 from pathlib import Path
-from typing import IO, Any, Dict, List, Optional, Tuple, Union
+from typing import IO, Any, Dict, List, Optional
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
@@ -44,6 +44,7 @@ from demisto_sdk.commands.common.logger import (
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import (
+    convert_path_to_str,
     find_type,
     get_last_remote_release_version,
     get_release_note_entries,
@@ -71,7 +72,7 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
     test_modeling_rule,
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity
-from demisto_sdk.utils.utils import check_configuration_file
+from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 SDK_OFFLINE_ERROR_MESSAGE = (
     "[red]An internet connection is required for this command. If connected to the "
@@ -308,7 +309,7 @@ def split(ctx, config, **kwargs):
     """
     from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 
-    check_configuration_file("split", kwargs)
+    update_command_args_from_config_file("split", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [
         FileType.INTEGRATION,
@@ -374,7 +375,7 @@ def extract_code(ctx, config, **kwargs):
     """Extract code from a Demisto integration or script yaml file."""
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
-    check_configuration_file("extract-code", kwargs)
+    update_command_args_from_config_file("extract-code", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         logger.info("[red]File is not an Integration or Script.[/red]")
@@ -487,7 +488,7 @@ def prepare_content(ctx, **kwargs):
         if click.get_current_context().info_name == "unify":
             kwargs["unify_only"] = True
 
-        check_configuration_file("unify", kwargs)
+        update_command_args_from_config_file("unify", kwargs)
         # Input is of type Path.
         kwargs["input"] = str(input_content)
         file_type = find_type(kwargs["input"])
@@ -560,7 +561,7 @@ def zip_packs(ctx, **kwargs) -> int:
         PacksZipper,
     )
 
-    check_configuration_file("zip-packs", kwargs)
+    update_command_args_from_config_file("zip-packs", kwargs)
 
     # if upload is true - all zip packs will be compressed to one zip file
     should_upload = kwargs.pop("upload", False)
@@ -807,7 +808,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
         # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
         kwargs["input"] = ",".join(file_paths)
     run_with_mp = not kwargs.pop("no_multiprocessing")
-    check_configuration_file("validate", kwargs)
+    update_command_args_from_config_file("validate", kwargs)
     sys.path.append(config.configuration.env_dir)
 
     file_path = kwargs["input"]
@@ -1054,7 +1055,7 @@ def create_content_artifacts(ctx, **kwargs) -> int:
         ArtifactsManager,
     )
 
-    check_configuration_file("create-content-artifacts", kwargs)
+    update_command_args_from_config_file("create-content-artifacts", kwargs)
     if marketplace := kwargs.get("marketplace"):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
     artifacts_conf = ArtifactsManager(**kwargs)
@@ -1107,7 +1108,7 @@ def secrets(ctx, config, file_paths: str, **kwargs):
 
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
-    check_configuration_file("secrets", kwargs)
+    update_command_args_from_config_file("secrets", kwargs)
     sys.path.append(config.configuration.env_dir)
     secrets_validator = SecretsValidator(
         configuration=config.configuration,
@@ -1222,10 +1223,17 @@ def secrets(ctx, config, file_paths: str, **kwargs):
     help="Specify directory for the time measurements report file",
     type=PathsParamType(),
 )
+@click.option(
+    "-sdm",
+    "--skip-deprecation-message",
+    is_flag=True,
+    help="Whether to skip the deprecation notice or not. Alteratively, you can configure the SKIP_DEPRECATION_MESSAGE env variable. (skipping/not skipping this message doesn't affect the performance.)",
+)
 @click.pass_context
 @logging_setup_decorator
 def lint(ctx, **kwargs):
-    """Lint command will perform:
+    """Deprecated, use demisto-sdk pre-commit instead.
+    Lint command will perform:
     1. Package in host checks - flake8, bandit, mypy, vulture.
     2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
     Meant to be used with integrations/scripts that use the folder (package) structure.
@@ -1234,7 +1242,13 @@ def lint(ctx, **kwargs):
     """
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
-    check_configuration_file("lint", kwargs)
+    show_deprecation_message = any(
+        [
+            not os.getenv("SKIP_DEPRECATION_MESSAGE"),
+            not kwargs.get("skip_deprecation_message"),
+        ]
+    )
+    update_command_args_from_config_file("lint", kwargs)
     lint_manager = LintManager(
         input=kwargs.get("input"),  # type: ignore[arg-type]
         git=kwargs.get("git"),  # type: ignore[arg-type]
@@ -1242,6 +1256,7 @@ def lint(ctx, **kwargs):
         prev_ver=kwargs.get("prev_ver"),  # type: ignore[arg-type]
         json_file_path=kwargs.get("json_file"),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get("check_dependent_api_module"),  # type: ignore[arg-type]
+        show_deprecation_message=show_deprecation_message,
     )
     return lint_manager.run(
         parallel=kwargs.get("parallel"),  # type: ignore[arg-type]
@@ -1444,23 +1459,7 @@ def coverage_analyze(ctx, **kwargs):
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
 @logging_setup_decorator
-def format(
-    ctx,
-    input: str,
-    output: Path,
-    from_version: str,
-    no_validate: bool,
-    update_docker: bool,
-    assume_yes: Union[None, bool],
-    deprecate: bool,
-    use_git: bool,
-    prev_ver: str,
-    include_untracked: bool,
-    add_tests: bool,
-    id_set_path: str,
-    file_paths: Tuple[str, ...],
-    **kwargs,
-):
+def format(ctx, **kwargs):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
     genericmodule/genericdefinition.
@@ -1471,23 +1470,28 @@ def format(
         logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)
 
-    if file_paths and not input:
-        input = ",".join(file_paths)
+    update_command_args_from_config_file("format", kwargs)
+    _input = kwargs.get("input")
+    file_paths = kwargs.get("file_paths") or []
+    output = kwargs.get("output")
+
+    if file_paths and not _input:
+        _input = ",".join(file_paths)
 
     with ReadMeValidator.start_mdx_server():
         return format_manager(
-            str(input) if input else None,
+            str(_input) if _input else None,
             str(output) if output else None,
-            from_version=from_version,
-            no_validate=no_validate,
-            update_docker=update_docker,
-            assume_answer=assume_yes,
-            deprecate=deprecate,
-            use_git=use_git,
-            prev_ver=prev_ver,
-            include_untracked=include_untracked,
-            add_tests=add_tests,
-            id_set_path=id_set_path,
+            from_version=kwargs.get("from_version", ""),
+            no_validate=kwargs.get("no_validate", False),
+            update_docker=kwargs.get("update_docker", False),
+            assume_answer=kwargs.get("assume_yes"),
+            deprecate=kwargs.get("deprecate", False),
+            use_git=kwargs.get("use_git", False),
+            prev_ver=kwargs.get("prev_ver"),
+            include_untracked=kwargs.get("include_untracked", False),
+            add_tests=kwargs.get("add_tests", False),
+            id_set_path=kwargs.get("id_set_path"),
             use_graph=kwargs.get("graph", True),
         )
 
@@ -1676,7 +1680,7 @@ def download(ctx, **kwargs):
     """
     from demisto_sdk.commands.download.downloader import Downloader
 
-    check_configuration_file("download", kwargs)
+    update_command_args_from_config_file("download", kwargs)
     return Downloader(**kwargs).download()
 
 
@@ -1799,7 +1803,7 @@ def run(ctx, **kwargs):
     """
     from demisto_sdk.commands.run_cmd.runner import Runner
 
-    check_configuration_file("run", kwargs)
+    update_command_args_from_config_file("run", kwargs)
     runner = Runner(**kwargs)
     return runner.run()
 
@@ -1842,7 +1846,7 @@ def run_playbook(ctx, **kwargs):
     """
     from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 
-    check_configuration_file("run-playbook", kwargs)
+    update_command_args_from_config_file("run-playbook", kwargs)
     playbook_runner = PlaybookRunner(
         playbook_id=kwargs.get("playbook_id", ""),
         url=kwargs.get("url", ""),
@@ -1894,7 +1898,7 @@ def run_test_playbook(ctx, **kwargs):
         TestPlaybookRunner,
     )
 
-    check_configuration_file("run-test-playbook", kwargs)
+    update_command_args_from_config_file("run-test-playbook", kwargs)
     test_playbook_runner = TestPlaybookRunner(**kwargs)
     return test_playbook_runner.manage_and_run_test_playbooks()
 
@@ -1972,7 +1976,7 @@ def generate_outputs(ctx, **kwargs):
         run_generate_outputs,
     )
 
-    check_configuration_file("generate-outputs", kwargs)
+    update_command_args_from_config_file("generate-outputs", kwargs)
     return run_generate_outputs(**kwargs)
 
 
@@ -2049,7 +2053,7 @@ def generate_test_playbook(ctx, **kwargs):
         PlaybookTestsGenerator,
     )
 
-    check_configuration_file("generate-test-playbook", kwargs)
+    update_command_args_from_config_file("generate-test-playbook", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         logger.info(
@@ -2133,7 +2137,7 @@ def init(ctx, **kwargs):
     """
     from demisto_sdk.commands.init.initiator import Initiator
 
-    check_configuration_file("init", kwargs)
+    update_command_args_from_config_file("init", kwargs)
     marketplace = parse_marketplace_kwargs(kwargs)
     initiator = Initiator(marketplace=marketplace, **kwargs)
     initiator.init()
@@ -2232,7 +2236,7 @@ def init(ctx, **kwargs):
 def generate_docs(ctx, **kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
     try:
-        check_configuration_file("generate-docs", kwargs)
+        update_command_args_from_config_file("generate-docs", kwargs)
         input_path_str: str = kwargs.get("input", "")
         if not (input_path := Path(input_path_str)).exists():
             raise Exception(f"[red]input {input_path_str} does not exist[/red]")
@@ -2426,7 +2430,7 @@ def create_id_set(ctx, **kwargs):
         remove_dependencies_from_id_set,
     )
 
-    check_configuration_file("create-id-set", kwargs)
+    update_command_args_from_config_file("create-id-set", kwargs)
     id_set_creator = IDSetCreator(**kwargs)
     (
         id_set,
@@ -2462,7 +2466,7 @@ def merge_id_sets(ctx, **kwargs):
     """Merge two id_sets"""
     from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 
-    check_configuration_file("merge-id-sets", kwargs)
+    update_command_args_from_config_file("merge-id-sets", kwargs)
     first = kwargs["id_set1"]
     second = kwargs["id_set2"]
     output = kwargs["output"]
@@ -2550,7 +2554,7 @@ def update_release_notes(ctx, **kwargs):
         logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)
 
-    check_configuration_file("update-release-notes", kwargs)
+    update_command_args_from_config_file("update-release-notes", kwargs)
     if kwargs.get("force") and not kwargs.get("input"):
         logger.info(
             "[red]Please add a specific pack in order to force a release notes update."
@@ -2658,7 +2662,7 @@ def find_dependencies(ctx, **kwargs):
         PackDependencies,
     )
 
-    check_configuration_file("find-dependencies", kwargs)
+    update_command_args_from_config_file("find-dependencies", kwargs)
     update_pack_metadata = not kwargs.get("no_update")
     input_paths = kwargs.get("input")  # since it can be multiple, received as a tuple
     id_set_path = kwargs.get("id_set_path", "")
@@ -2882,7 +2886,7 @@ def openapi_codegen(ctx, **kwargs):
     """
     from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
-    check_configuration_file("openapi-codegen", kwargs)
+    update_command_args_from_config_file("openapi-codegen", kwargs)
     if not kwargs.get("output_dir"):
         output_dir = os.getcwd()
     else:
@@ -3062,7 +3066,7 @@ def test_content(ctx, **kwargs):
         execute_test_content,
     )
 
-    check_configuration_file("test-content", kwargs)
+    update_command_args_from_config_file("test-content", kwargs)
     execute_test_content(**kwargs)
 
 
@@ -3278,7 +3282,7 @@ def convert(ctx, config, **kwargs):
     """
     from demisto_sdk.commands.convert.convert_manager import ConvertManager
 
-    check_configuration_file("convert", kwargs)
+    update_command_args_from_config_file("convert", kwargs)
     sys.path.append(config.configuration.env_dir)
 
     input_path = kwargs["input"]
@@ -3372,7 +3376,7 @@ def error_code(ctx, config, **kwargs):
         generate_error_code_information,
     )
 
-    check_configuration_file("error-code-info", kwargs)
+    update_command_args_from_config_file("error-code-info", kwargs)
     sys.path.append(config.configuration.env_dir)
 
     result = generate_error_code_information(kwargs.get("input"))
@@ -3637,16 +3641,16 @@ def pre_commit(
         help="The paths to run pre-commit on. May pass multiple paths.",
     ),
     staged_only: bool = typer.Option(
-        False, "--staged-only", help="Whether to run only on staged files"
+        False, "--staged-only", help="Whether to run only on staged files."
     ),
     commited_only: bool = typer.Option(
-        False, "--commited-only", help="Whether to run on commited files only"
+        False, "--commited-only", help="Whether to run on committed files only."
     ),
     git_diff: bool = typer.Option(
         False,
         "--git-diff",
         "-g",
-        help="Whether to use git to determine which files to run on",
+        help="Whether to use git to determine which files to run on.",
     ),
     prev_version: Optional[str] = typer.Option(
         None,
@@ -3655,36 +3659,50 @@ def pre_commit(
         "If not provided, the previous version will be determined using git.",
     ),
     all_files: bool = typer.Option(
-        False, "--all-files", "-a", help="Whether to run on all files"
+        False, "--all-files", "-a", help="Whether to run on all files."
     ),
     mode: str = typer.Option(
-        "", "--mode", help="Special mode to run the pre-commit with"
+        "", "--mode", help="Special mode to run the pre-commit with."
     ),
     skip: Optional[List[str]] = typer.Option(
-        None, "--skip", help="A list of precommit hooks to skip"
+        None, "--skip", help="A list of precommit hooks to skip."
     ),
     validate: bool = typer.Option(
-        True, "--validate/--no-validate", help="Whether to run demisto-sdk validate"
+        True,
+        "--validate/--no-validate",
+        help="Whether to run demisto-sdk validate or not.",
     ),
     format: bool = typer.Option(
-        False, "--format/--no-format", help="Whether to run demisto-sdk format"
+        False, "--format/--no-format", help="Whether to run demisto-sdk format or not."
     ),
     secrets: bool = typer.Option(
-        True, "--secrets/--no-secrets", help="Whether to run demisto-sdk secrets"
+        True,
+        "--secrets/--no-secrets",
+        help="Whether to run demisto-sdk secrets or not.",
     ),
     verbose: bool = typer.Option(
-        False, "-v", "--verbose", help="Verbose output of pre-commit"
+        False, "-v", "--verbose", help="Verbose output of pre-commit."
     ),
     show_diff_on_failure: bool = typer.Option(
-        False, "--show-diff-on-failure", help="Show diff on failure"
+        False, "--show-diff-on-failure", help="Show diff on failure."
     ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
-        help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
+        help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.",
     ),
     docker: bool = typer.Option(
         True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
+    ),
+    image_ref: Optional[str] = typer.Option(
+        None,
+        "--image-ref",
+        help="The docker image reference to run docker hooks with. Overrides the docker image from YAML or native image config.",
+    ),
+    docker_image: Optional[str] = typer.Option(
+        None,
+        "--docker-image",
+        help="Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.",
     ),
     run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
     console_log_threshold: str = typer.Option(
@@ -3706,7 +3724,7 @@ def pre_commit(
         None,
         "--template-path",
         envvar="PRE_COMMIT_TEMPLATE_PATH",
-        help="A custom path for pre-defined pre-commit template, if not provided will use the default template",
+        help="A custom path for pre-defined pre-commit template, if not provided will use the default template.",
     ),
 ):
     logging_setup(
@@ -3732,6 +3750,8 @@ def pre_commit(
         verbose,
         show_diff_on_failure,
         run_docker_hooks=docker,
+        image_ref=image_ref,
+        docker_image=docker_image,
         dry_run=dry_run,
         run_hook=run_hook,
         pre_commit_template_path=pre_commit_template_path,
@@ -3807,6 +3827,50 @@ def xsoar_linter(
 
 
 main.add_command(typer.main.get_command(xsoar_linter_app), "xsoar-lint")
+
+
+# ====================== export ====================== #
+
+export_app = typer.Typer(name="dump-api")
+
+
+@export_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def dump_api(
+    ctx: typer.Context,
+    output_path: Path = typer.Option(
+        CONTENT_PATH,
+        "-o",
+        "--output",
+        help="The output directory or JSON file to save the demisto-sdk api.",
+    ),
+):
+    """
+    This commands dumps the `demisto-sdk` API to a file.
+    It is used to view the help of all commands in one file.
+
+    Args:
+        ctx (typer.Context):
+        output_path (Path, optional): The output directory or JSON file to save the demisto-sdk api.
+    """
+    output_json: dict = {}
+    for command_name, command in main.commands.items():
+        if isinstance(command, click.Group):
+            output_json[command_name] = {}
+            for sub_command_name, sub_command in command.commands.items():
+                output_json[command_name][sub_command_name] = sub_command.to_info_dict(
+                    ctx
+                )
+        else:
+            output_json[command_name] = command.to_info_dict(ctx)
+    convert_path_to_str(output_json)
+    if output_path.is_dir():
+        output_path = output_path / "demisto-sdk-api.json"
+    output_path.write_text(json.dumps(output_json, indent=4))
+
+
+main.add_command(typer.main.get_command(export_app), "dump-api")
 
 
 if __name__ == "__main__":

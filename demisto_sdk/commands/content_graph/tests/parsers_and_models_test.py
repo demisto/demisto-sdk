@@ -5,8 +5,8 @@ import pytest
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -19,6 +19,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
+from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -378,7 +379,7 @@ class TestParsersAndModels:
             expected_name="correlation_rule_name",
             expected_path=colrrelation_rule_path,
             expected_content_type=ContentType.CORRELATION_RULE,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            expected_fromversion=MINIMUM_XSOAR_SAAS_VERSION,
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
@@ -2804,16 +2805,19 @@ def test_fix_layout_incident_to_alert(
             {MarketplaceVersions.XSOAR},
             {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_SAAS},
         ),
+        (
+            {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_ON_PREM},
+            {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_SAAS},
+        ),
         ({MarketplaceVersions.MarketplaceV2}, {MarketplaceVersions.MarketplaceV2}),
         ({MarketplaceVersions.XPANSE}, {MarketplaceVersions.XPANSE}),
         (
             {MarketplaceVersions.XSOAR_ON_PREM},
-            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR},
+            {MarketplaceVersions.XSOAR},
         ),
         (
             {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR_SAAS},
             {
-                MarketplaceVersions.XSOAR_ON_PREM,
                 MarketplaceVersions.XSOAR_SAAS,
                 MarketplaceVersions.XSOAR,
             },
@@ -2821,7 +2825,6 @@ def test_fix_layout_incident_to_alert(
         (
             {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.MarketplaceV2},
             {
-                MarketplaceVersions.XSOAR_ON_PREM,
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.XSOAR,
             },
@@ -2851,13 +2854,9 @@ def test_updated_marketplaces_set(marketplace, expected_market_place_set):
         - remains empty
 
     """
-    from demisto_sdk.commands.content_graph.parsers.content_item import (
-        ContentItemParser,
-    )
-
     assert (
         expected_market_place_set
-        == ContentItemParser.update_marketplaces_set_with_xsoar_values(marketplace)
+        == BaseContentParser.update_marketplaces_set_with_xsoar_values(marketplace)
     )
 
 

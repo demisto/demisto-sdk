@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Dict, Optional, Union
 
 from packaging.version import Version
@@ -12,9 +11,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.files.errors import FileReadError
 from demisto_sdk.commands.common.files.json_file import JsonFile
-from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import PydanticSingleton
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import NoInternetConnectionException
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
@@ -27,7 +26,7 @@ class DockerImageTagMetadata(BaseModel):
 class DockerImagesMetadata(PydanticSingleton, BaseModel):
     docker_images: Dict[str, Dict[str, DockerImageTagMetadata]]
 
-    class MetadataValues(str, Enum):
+    class MetadataValues(StrEnum):
         PYTHON_VERSION = "python_version"
 
     @classmethod
@@ -54,8 +53,8 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         try:
             dockerfiles_metadata = JsonFile.read_from_github_api(
                 file_name,
+                repo=DOCKERFILES_INFO_REPO,
                 tag=tag,
-                git_content_config=GitContentConfig(repo_name=DOCKERFILES_INFO_REPO),
                 verify_ssl=False,
                 encoding="utf-8-sig",
             )

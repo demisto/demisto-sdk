@@ -1,4 +1,5 @@
 import inspect
+import os
 import shutil
 import urllib.parse
 from abc import ABC, abstractmethod
@@ -13,6 +14,7 @@ from git import InvalidGitRepositoryError
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.constants import (
+    CONTENT_REPO,
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
     urljoin,
@@ -26,7 +28,10 @@ from demisto_sdk.commands.common.files.errors import (
     MemoryFileReadError,
     UnknownFileError,
 )
-from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.git_content_config import (
+    GitContentConfig,
+    GitCredentials,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -317,7 +322,7 @@ class File(ABC):
     def read_from_github_api(
         cls,
         path: str,
-        git_content_config: Optional[GitContentConfig] = None,
+        repo: str = CONTENT_REPO,
         encoding: Optional[str] = None,
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         handler: Optional[XSOAR_Handler] = None,
@@ -328,8 +333,8 @@ class File(ABC):
         Reads a file from Github api.
 
         Args:
-            path: the path to the file in github
-            git_content_config: git content config object
+            path: the path to the file in Github from the repo's root
+            repo: the repository name, e.g.: demisto/content
             encoding: any custom encoding if needed
             tag: the branch/sha to take the file from within Github
             handler: whether a custom handler is required, if not takes the default.
@@ -339,17 +344,16 @@ class File(ABC):
         Returns:
             Any: the file content in the desired format
         """
-        if not git_content_config:
-            git_content_config = GitContentConfig()
-
-        git_path_url = urljoin(git_content_config.base_api, tag, path)
-        github_token = git_content_config.CREDENTIALS.github_token
+        if not path.startswith("/"):
+            path = f"/{path}"
+        url = f"https://raw.githubusercontent.com/{repo}/{tag}{path}"
+        github_token = os.getenv(GitCredentials.ENV_GITHUB_TOKEN_NAME, "")
 
         timeout = 10
 
         try:
             return cls.read_from_http_request(
-                git_path_url,
+                url,
                 headers=frozenset(
                     {
                         "Authorization": f"Bearer {github_token}"
@@ -366,17 +370,17 @@ class File(ABC):
             )
         except FileReadError as e:
             logger.warning(
-                f"Received error {e} when trying to retrieve {git_path_url} content from Github, retrying"
+                f"Received error {e} when trying to retrieve {url} content from Github, retrying"
             )
             try:
                 return cls.read_from_http_request(
-                    git_path_url,
+                    url,
                     params=frozenset({"token": github_token}.items()),
                     timeout=timeout,
                 )
             except FileReadError:
                 logger.error(
-                    f"Could not retrieve the content of {git_path_url} file from Github"
+                    f"Could not retrieve the content of {url} file from Github"
                 )
                 raise
 

@@ -332,8 +332,10 @@ class GitContentConfig:
 
         """
         print("in gitlab search repo")
+
         if (
             not gitlab_hostname
+            or "github" in gitlab_hostname
             or gitlab_hostname == GitContentConfig.GITHUB_USER_CONTENT
             or gitlab_hostname == GitContentConfig.GITHUB
         ):

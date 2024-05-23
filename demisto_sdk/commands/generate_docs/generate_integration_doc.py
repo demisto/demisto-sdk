@@ -562,8 +562,8 @@ def generate_integration_doc(
                     [
                         "<~XSIAM>",
                         "This is the default integration for this content pack when configured by the Data Onboarder.",
-                        "",
                         "</~XSIAM>",
+                        "",
                     ]
                 )
             # Checks if the integration is a new version

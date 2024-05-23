@@ -1352,6 +1352,7 @@ class TestResults:
 
     def upload_playbook_result_json_to_bucket(self,
                                               repository_name: str,
+                                              file_name,
                                               logging_module: Union[Any, ParallelLoggingManager] = logging):
         """Uploads a JSON object to a specified path in the GCP bucket.
 

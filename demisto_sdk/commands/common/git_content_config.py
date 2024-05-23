@@ -150,6 +150,7 @@ class GitContentConfig:
                 ),
                 self.current_repository,
             )
+            print(f"self.base_api: {self.base_api}")
         else:  # gitlab
             self.base_api = GitContentConfig.BASE_RAW_GITLAB_LINK.format(
                 GITLAB_HOST=self.repo_hostname, GITLAB_ID=self.project_id
@@ -222,13 +223,19 @@ class GitContentConfig:
                 if organization and repo_name
                 else self.current_repository
             )
+            print(f"current repo: {current_repo}")
+            print(f"hostname is: {hostname}")
+            print(f"self.current_Repo: {self.current_repository}")
+            print(f"hostname: {hostname}")
             github_hostname, github_repo = (
                 self._search_github_repo(hostname, self.current_repository)
                 or self._search_github_repo(self.repo_hostname, current_repo)
                 or (None, None)
             )
             self.git_provider = GitProvider.GitHub
+            print(f"after github search, github_hostname: {github_hostname}, github_repo: {github_repo}")
             if not github_hostname or not github_repo:  # github was not found.
+                print("github was not found")
                 self._print_private_repo_warning_if_needed()
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
@@ -267,6 +274,7 @@ class GitContentConfig:
             If found -  a tuple of the github hostname and the repo name that was found.
             If not found - 'None`
         """
+        print("in search github repo")
         if not github_hostname or not repo_name:
             return None
         api_host = GitContentConfig.USERCONTENT_TO_GITHUB.get(
@@ -275,9 +283,15 @@ class GitContentConfig:
         github_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(
             github_hostname, github_hostname
         )
+
+        print(f"api_host: {api_host}")
+        print(f"github_hostname: {github_hostname}")
         if (api_host, repo_name) in GitContentConfig.ALLOWED_REPOS:
             return github_hostname, repo_name
         github_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(api_host, api_host)
+        print(f"github_hostname for request: {github_hostname}")
+        if GitContentConfig.CREDENTIALS.github_token:
+            print("got github token")
         try:
             r = requests.get(
                 f"https://api.{api_host}/repos/{repo_name}",
@@ -292,6 +306,7 @@ class GitContentConfig:
             )
             if r.ok:
                 return github_hostname, repo_name
+            print("second request")
             r = requests.get(
                 f"https://api.{api_host}/repos/{repo_name}",
                 verify=False,

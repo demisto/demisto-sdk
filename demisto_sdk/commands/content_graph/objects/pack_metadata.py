@@ -61,7 +61,7 @@ class PackMetadata(BaseModel):
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
     default_data_source_id: Optional[str]
-    default_data_source_name: Optional[str]
+    default_data_source_name: Optional[str] = Field("", exclude=True)
 
     # For private packs
     premium: Optional[bool]

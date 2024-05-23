@@ -60,8 +60,8 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source_id: Optional[str] = Field("", exclude=True, alias="defaultDataSource")
-    default_data_source_name: Optional[str] = Field("", exclude=True)
+    default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
+    default_data_source_name: Optional[str] = Field("")
 
     # For private packs
     premium: Optional[bool]

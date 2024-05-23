@@ -1549,6 +1549,7 @@ class TestIntegrationValidation:
         )
         assert result.exit_code == 1
 
+    @pytest.mark.skip(reason="This will only be validated with the new validate due to logic fix.")
     def test_negative__non_latest_docker_image(self, mocker):
         """
         Given

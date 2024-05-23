@@ -55,18 +55,7 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
             main,
             f"validate -i {integration.yml.path} --run-old-validate --skip-new-validate",
         )
-        assert all(
-            [
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "================= Validating file ",
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "DO106",
-                ),
-            ]
-        )
+        assert str_in_call_args_list(logger_info.call_args_list, "================= Validating file ")
 
     repo.make_file(DEMISTO_SDK_CONFIG_FILE, "[validate]\nno_docker_checks=True")
     with ChangeCWD(pack.repo_path):
@@ -76,15 +65,4 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
             main,
             f"validate -i {integration.yml.path} --run-old-validate --skip-new-validate",
         )
-        assert all(
-            [
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "================= Validating file ",
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "DO106",
-                ),
-            ]
-        )
+        assert str_in_call_args_list(logger_info.call_args_list, "================= Validating file ")

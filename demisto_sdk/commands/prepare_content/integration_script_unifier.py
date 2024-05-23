@@ -668,7 +668,7 @@ class IntegrationScriptUnifier(Unifier):
         ):
             suffix = CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
             if display_name.endswith(suffix):
-                display_name = display_name[:-len(suffix)]
+                display_name = display_name[: -len(suffix)]
         return display_name
 
     @staticmethod

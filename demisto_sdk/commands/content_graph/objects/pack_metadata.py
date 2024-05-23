@@ -19,6 +19,9 @@ from demisto_sdk.commands.content_graph.common import ContentType, PackTags
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    InvalidContentItemException,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -151,22 +154,18 @@ class PackMetadata(BaseModel):
     @staticmethod
     def _place_data_source_integration_first(
         integration_list: List[Dict],
-        data_source_id: Optional[str],
+        data_source_id: str,
     ):
-        integration_metadata_object = (
-            [
-                integration
-                for integration in integration_list
-                if integration.get("id") == data_source_id
-            ]
-            if data_source_id
-            else []
-        )
+        integration_metadata_object = [
+            integration
+            for integration in integration_list
+            if integration.get("id") == data_source_id
+        ]
+
         if not integration_metadata_object:
-            logger.info(
+            raise InvalidContentItemException(
                 f"Integration metadata object was not found for {data_source_id=} in {integration_list=}."
             )
-            return
         logger.info(f"Placing {data_source_id=} first in the integration_list.")
         integration_list.remove(integration_metadata_object[0])
         integration_list.insert(0, integration_metadata_object[0])

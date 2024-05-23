@@ -163,7 +163,7 @@ class PackMetadata(BaseModel):
         ]
 
         if not integration_metadata_object:
-            raise InvalidContentItemException(
+            logger.error(
                 f"Integration metadata object was not found for {data_source_id=} in {integration_list=}."
             )
         logger.info(f"Placing {data_source_id=} first in the integration_list.")
@@ -214,7 +214,7 @@ class PackMetadata(BaseModel):
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
-        if self.default_data_source_id and collected_content_items:
+        if self.default_data_source_id and self.default_data_source_name and collected_content_items:
             # order collected_content_items integration list so that the defaultDataSource will be first
             self._place_data_source_integration_first(
                 collected_content_items[ContentType.INTEGRATION.metadata_name],

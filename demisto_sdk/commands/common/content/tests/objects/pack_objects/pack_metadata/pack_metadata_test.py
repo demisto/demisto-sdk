@@ -786,8 +786,8 @@ def test_set_default_data_source(
     )
 
     my_instance._set_default_data_source(content_items)
-    assert my_instance.default_data_source_id == expected_default_data_source.get("id")
-    assert my_instance.default_data_source_name == expected_default_data_source.get(
+    assert my_instance._default_data_source_id == expected_default_data_source.get("id")
+    assert my_instance._default_data_source_name == expected_default_data_source.get(
         "name"
     )
 

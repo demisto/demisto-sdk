@@ -32,7 +32,7 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.default_data_source_id,
+                    content_item._default_data_source_id,
                     content_item.get_valid_data_source_integrations(
                         content_item.content_items, content_item.support
                     ),
@@ -41,8 +41,8 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                content_item.default_data_source_id
-                and content_item.default_data_source_id
+                content_item._default_data_source_id
+                and content_item._default_data_source_id
                 not in content_item.get_valid_data_source_integrations(
                     content_item.content_items, content_item.support
                 )
@@ -58,11 +58,11 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
         default_data_source = [
             data_source
             for data_source in data_sources
-            if data_source.get("name") == content_item.default_data_source_id
+            if data_source.get("name") == content_item._default_data_source_id
         ]
 
         if default_data_source:
-            content_item.default_data_source_id = default_data_source[0].get("id")
+            content_item._default_data_source_id = default_data_source[0].get("id")
             return FixResult(
                 validator=self,
                 message=self.fix_message.format(

@@ -829,13 +829,13 @@ def test_IsDefaultDataSourceProvidedValidator_fix():
         create_integration_object(["script.isfetch"], ["true"]),
     ]
     content_item.content_items.integration.extend(integrations)
-    assert not content_item.default_data_source_id
+    assert not content_item._default_data_source_id
     validator = IsDefaultDataSourceProvidedValidator()
     assert validator.fix(content_item).message == (
         "Set the 'defaultDataSource' for 'HelloWorld' pack to the "
         "'defaultDataSourceValue' integration, as it is an event collector."
     )
-    assert content_item.default_data_source_id == "defaultDataSourceValue"
+    assert content_item._default_data_source_id == "defaultDataSourceValue"
 
 
 @pytest.mark.parametrize(
@@ -926,13 +926,13 @@ def test_IsValidDefaultDataSourceNameValidator_fix():
         create_integration_object(["script.isfetch"], ["true"]),
     ]
     content_item.content_items.integration.extend(integrations)
-    assert content_item.default_data_source_id == "Default Data Source Value"
+    assert content_item._default_data_source_id == "Default Data Source Value"
     validator = IsValidDefaultDataSourceNameValidator()
     assert validator.fix(content_item).message == (
         "Updated the 'defaultDataSource' for the 'HelloWorld' pack to use the 'defaultDataSourceValue' "
         "integration ID instead of the display name that was previously used."
     )
-    assert content_item.default_data_source_id == "defaultDataSourceValue"
+    assert content_item._default_data_source_id == "defaultDataSourceValue"
 
 
 @pytest.mark.parametrize(

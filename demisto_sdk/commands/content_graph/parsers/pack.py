@@ -149,7 +149,7 @@ class PackMetadataParser:
             self.commit = ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
-        self.default_data_source_id: str = metadata.get("defaultDataSource") or ""
+        self._default_data_source_id: str = metadata.get("defaultDataSource") or ""
         self.keywords: List[str] = metadata.get("keywords", [])
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
@@ -372,5 +372,5 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "modules": "modules",
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
-            "default_data_source_id": "defaultDataSource",
+            "_default_data_source_id": "defaultDataSource",
         }

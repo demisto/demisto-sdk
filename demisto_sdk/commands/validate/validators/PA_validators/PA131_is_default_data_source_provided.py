@@ -40,7 +40,7 @@ class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
             if MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
             and (
                 content_item.is_data_source(content_item.content_items)
-                and not content_item.default_data_source_id
+                and not content_item._default_data_source_id
                 and len(
                     content_item.get_valid_data_source_integrations(
                         content_item.content_items
@@ -61,7 +61,7 @@ class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
         ]
 
         if len(data_sources_fetch_events) == 1:
-            content_item.default_data_source_id = data_sources_fetch_events[0]
+            content_item._default_data_source_id = data_sources_fetch_events[0]
             return FixResult(
                 validator=self,
                 message=self.fix_message.format(

@@ -301,7 +301,9 @@ class TestDockerImage:
         assert docker_image_validator.is_docker_image_valid() is True
 
     # disable-secrets-detection-end
-    @pytest.mark.skip(reason="This will only be validated with the new validate due to logic fix.")
+    @pytest.mark.skip(
+        reason="This will only be validated with the new validate due to logic fix."
+    )
     @pytest.mark.parametrize(
         "return_value, expected_latest_tag_value, expected_function_results",
         [
@@ -352,7 +354,9 @@ class TestDockerImage:
         assert docker_image_validator.is_latest_tag is expected_latest_tag_value
         assert True
 
-    @pytest.mark.skip(reason="This will only be validated with the new validate due to logic fix.")
+    @pytest.mark.skip(
+        reason="This will only be validated with the new validate due to logic fix."
+    )
     def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated(self):
         """
         Given

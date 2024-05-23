@@ -432,15 +432,21 @@ class DockerHubClient:
             )
 
         version_tags = []
+        build_tags_to_versions = {}
         for tag in raw_image_tags:
             try:
-                version_tags.append(Version(tag))
+                version_tag = Version(tag)
+                version_tags.append(version_tag)
+                # the version_tag.release returns a tuple from the version numbers '1.2.3.45' -> (1, 2, 3, 45)
+                # The last place is always a build number, therefore always increasing.
+                build_tags_to_versions.update({version_tag.release[-1]: version_tag})
             except InvalidVersion:
                 logger.debug(
                     f"The tag {tag} has invalid version for docker-image {docker_image}, skipping it"
                 )
 
-        return max(version_tags)
+        # Return the version corresponding to the maximum build tag.
+        return build_tags_to_versions[max(build_tags_to_versions.keys())]
 
     def get_latest_docker_image(self, docker_image: str) -> str:
         """

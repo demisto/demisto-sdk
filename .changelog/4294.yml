@@ -1,0 +1,4 @@
+changes:
+- description: Fixed the logic for getting the latest docker image tag.
+  type: breaking
+pr_number: 4294

@@ -1,0 +1,4 @@
+changes:
+- description: Verify the integration README doesn't contains the word 'demisto'.
+  type: feature
+pr_number: 4295

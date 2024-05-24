@@ -372,7 +372,7 @@ class ContentEntityValidator(BaseValidator):
             return json.load(data_file)
 
     @error_codes("CJ104,CJ102")
-    def are_tests_registered_in_conf_json_file_or_yml_file(
+    def integration_missing_tests(
         self, test_playbooks: list
     ) -> bool:
         """

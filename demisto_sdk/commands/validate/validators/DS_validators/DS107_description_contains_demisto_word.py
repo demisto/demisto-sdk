@@ -1,17 +1,16 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Union[Integration, Script, Playbook, Pack]
@@ -31,7 +30,6 @@ class DescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
     ]
     related_file_type = [RelatedFileType.YML]
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -44,6 +42,3 @@ class DescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
                 # Add your validation right here
             )
         ]
-    
-
-    

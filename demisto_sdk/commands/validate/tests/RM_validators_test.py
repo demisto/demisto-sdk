@@ -15,6 +15,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme i
 from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme_not_equal_pack_description import (
     IsPackReadmeNotEqualPackDescriptionValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
+    IsContainDemistoWordValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
 )
@@ -24,11 +27,6 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_cop
 from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
     IsImageExistsInReadmeValidator,
 )
-
-from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
-    IsContainDemistoWordValidator,
-)
-
 from TestSuite.repo import ChangeCWD
 
 
@@ -321,7 +319,6 @@ def test_IsReadmeExistsValidator_is_valid(
     )
 
 
-
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
@@ -334,7 +331,11 @@ def test_IsReadmeExistsValidator_is_valid(
             [],
         ),
         (
-            [create_pack_object(readme_text="Invalid readme contains the word demisto\n demisto\n demisto")],
+            [
+                create_pack_object(
+                    readme_text="Invalid readme contains the word demisto\n demisto\n demisto"
+                )
+            ],
             1,
             [
                 "Invalid keyword 'demisto' was found in lines: 1, 2, 3. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."

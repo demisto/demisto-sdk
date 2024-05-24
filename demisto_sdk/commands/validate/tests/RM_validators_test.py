@@ -24,6 +24,11 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_cop
 from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
     IsImageExistsInReadmeValidator,
 )
+
+from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
+    IsContainDemistoWordValidator,
+)
+
 from TestSuite.repo import ChangeCWD
 
 
@@ -307,6 +312,56 @@ def test_IsReadmeExistsValidator_is_valid(
     """
     content_items[1].readme.exist = False
     results = IsReadmeExistsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_pack_object(readme_text="This is a valid readme."),
+                create_pack_object(readme_text=""),
+            ],
+            0,
+            [],
+        ),
+        (
+            [create_pack_object(readme_text="Invalid readme contains the word demisto\n demisto\n demisto")],
+            1,
+            [
+                "Invalid keyword 'demisto' was found in lines: 1, 2, 3. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
+            ],
+        ),
+    ],
+)
+def test_IsContainDemistoWordValidator_is_valid(
+    content_items,
+    expected_number_of_failures,
+    expected_msgs,
+):
+    """
+    Given
+    content_items.
+        - Case 1: Two valid pack_metadatas:
+            - 1 pack with valid readme text.
+            - 1 pack with an empty readme.
+        - Case 2: One invalid pack_metadata e that contains the word 'demisto'.
+    When
+    - Calling the IsContainDemistoWordValidator is_valid function.
+    Then
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 3: Should fail.
+    """
+    results = IsContainDemistoWordValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [

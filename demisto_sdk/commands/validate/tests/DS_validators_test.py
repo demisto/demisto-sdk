@@ -61,3 +61,48 @@ def test_DescriptionMissingInBetaIntegrationValidator_is_valid(
 
     is_valid = DescriptionMissingInBetaIntegrationValidator().is_valid([integration])
     assert result_len == len(is_valid)
+
+
+@pytest.mark.parametrize(
+    "file_content, expected_number_of_failures, expected_msgs",
+    [
+        (
+
+        ),
+        (
+
+        ),
+        (
+
+        ),
+    ],
+)
+def test_IsDescriptionContainsDemistoWordValidator_is_valid(
+        file_content,
+        expected_number_of_failures,
+        expected_msgs,
+):
+    """
+    Given
+    content_items.
+        - Case 1: Two valid description
+        - Case 2: One valid empty description.
+        - Case 3: One invalid description that contains the word 'demisto'
+    When
+    - Calling the IsContainDemistoWordValidator is_valid function.
+    Then
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Case 1: Should pass.
+        - Case 2: Should pass.
+        - Case 2: Should fail.
+    """
+    from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_descrription_contains_demisto_word import (
+        IsDescriptionContainsDemistoWordValidator,
+    )
+
+    integration = create_integration_object()
+    integration.description_file
+    integration.description_file.file_content = file_content
+
+    is_valid = IsDescriptionContainsDemistoWordValidator().is_valid([integration])
+    assert result_len == len(is_valid)

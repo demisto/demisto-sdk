@@ -354,13 +354,13 @@ def test_IsContainDemistoWordValidator_is_valid(
         - Case 1: Two valid pack_metadatas:
             - 1 pack with valid readme text.
             - 1 pack with an empty readme.
-        - Case 2: One invalid pack_metadata e that contains the word 'demisto'.
+        - Case 2: One invalid pack_metadata with a readme that contains the word 'demisto'.
     When
     - Calling the IsContainDemistoWordValidator is_valid function.
     Then
-        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Make sure the right amount of pack failed, and that the right error message is returned.
         - Case 1: Should pass all.
-        - Case 3: Should fail.
+        - Case 2: Should fail.
     """
     results = IsContainDemistoWordValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures

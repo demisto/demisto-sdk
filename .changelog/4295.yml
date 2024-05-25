@@ -1,4 +1,4 @@
 changes:
-- description: Verify the integration README doesn't contains the word 'demisto'.
+- description: converted the RM106 validation to the new format. The validation verify the integration README doesn't contains the word 'demisto'.
   type: feature
 pr_number: 4295

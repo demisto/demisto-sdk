@@ -18,7 +18,7 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that none of the readme lines contains the the word 'demisto'."
     )
-    rationale = "Ensure that the content item contains correct name."
+    rationale = "Ensure that the current name of the product is used"
     error_message = "Invalid keyword 'demisto' was found in lines: {0}. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
     related_field = "readme"
     is_auto_fixable = False

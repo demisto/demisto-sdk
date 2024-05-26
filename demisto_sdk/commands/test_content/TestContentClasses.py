@@ -1363,15 +1363,12 @@ class TestResults:
         """
         logging_module.info("Starting to upload")
 
-        storage_client = storage.Client.from_service_account_json(self.test_results_xml_file)
+        storage_client = storage.Client.from_service_account_json(self.service_account)
         storage_bucket = storage_client.bucket(ARTIFACTS_BUCKET)
         blob = storage_bucket.blob(f'content-playbook-reports/{repository_name}/{file_name}')
 
-        # Convert the Python dictionary to a JSON string
-        json_data = json.dumps(self.playbook_report)
-
         # Upload the JSON string to the blob
-        blob.upload_from_string(json_data)
+        blob.upload_from_string(self.test_results_xml_file, content_type="application/xml")
 
     @staticmethod
     def delete_oldest_file(repository_name: str,

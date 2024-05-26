@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -28,11 +27,11 @@ class IsDescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.DESCRIPTION_File]
-    
+
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
-                validator=self, 
+                validator=self,
                 message=self.error_message.format(", ".join(lines_contain_demsito)),
                 content_object=content_item,
             )
@@ -45,6 +44,3 @@ class IsDescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
                 )
             )
         ]
-    
-
-    

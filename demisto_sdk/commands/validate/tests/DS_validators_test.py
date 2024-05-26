@@ -77,10 +77,9 @@ def test_IsDescriptionContainsDemistoWordValidator_is_valid():
     from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
         IsDescriptionContainsDemistoWordValidator,
     )
+
     content_items = [
-        create_integration_object(
-            paths=["description"], values=["valid description"]
-        )
+        create_integration_object(paths=["description"], values=["valid description"])
     ]
     is_valid = IsDescriptionContainsDemistoWordValidator().is_valid(content_items)
     assert len(is_valid) == 0
@@ -99,10 +98,12 @@ def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
     from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
         IsDescriptionContainsDemistoWordValidator,
     )
+
     content_items = [
-        create_integration_object(
-            paths=["description"], values=["demisto"]
-        )
+        create_integration_object(paths=["description"], values=["demisto"])
     ]
     is_valid = IsDescriptionContainsDemistoWordValidator().is_valid(content_items)
-    assert is_valid[0].message == "Invalid keyword 'demisto' was found in lines: 1. For more information about the description file See: https://xsoar.pan.dev/docs/documentation/integration-description."
+    assert (
+        is_valid[0].message
+        == "Invalid keyword 'demisto' was found in lines: 1. For more information about the description file See: https://xsoar.pan.dev/docs/documentation/integration-description."
+    )

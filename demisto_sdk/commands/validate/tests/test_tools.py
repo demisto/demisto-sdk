@@ -61,7 +61,6 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
-    description_content: Optional[str] = None,
     name: Optional[str] = None,
     code: Optional[str] = None,
 ) -> Integration:
@@ -84,9 +83,6 @@ def create_integration_object(
 
     if readme_content is not None:
         additional_params["readme"] = readme_content
-
-    if description_content is not None:
-        additional_params["description"] = description_content
 
     if name is not None:
         additional_params["name"] = name

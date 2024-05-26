@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -40,7 +41,10 @@ class IsDescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
                 lines_contain_demsito := check_text_content_contain_sub_text(
                     sub_text_list=["demisto"],
                     is_lower=True,
-                    text=content_item.description,
+                    text=content_item.description_file.file_content,
                 )
             )
         ]
+
+
+

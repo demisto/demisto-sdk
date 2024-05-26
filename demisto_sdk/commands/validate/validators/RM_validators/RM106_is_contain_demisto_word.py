@@ -18,7 +18,7 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that none of the readme lines contains the the word 'demisto'."
     )
-    rationale = "Ensure that the current name of the product is used"
+    rationale = "Ensure that the current name of the product is used rather than the old one."
     error_message = "Invalid keyword 'demisto' was found in lines: {0}. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
     related_field = "readme"
     is_auto_fixable = False
@@ -34,8 +34,8 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 lines_contain_demsito := check_text_content_contain_sub_text(
-                    sub_text_list=["demisto"],
-                    to_split=True,
+                    sub_text_list=["demisto ", " demisto"],
+                    is_lower=True,
                     text=content_item.readme.file_content,
                 )
             )

@@ -361,7 +361,7 @@ def test_IsContainDemistoWordValidator_is_invalid():
     """
     content_items = [
         create_pack_object(
-            readme_text="Invalid readme contains the word demisto\n demisto\n demisto"
+            readme_text="Invalid readme contains the word demisto\ndemisto\ndemisto"
         )
     ]
     expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."

@@ -72,7 +72,7 @@ warning = ["IN101"]
 
 
 [Custom_Categories]
-select = [""]
+select = []
 warning = []
 
 

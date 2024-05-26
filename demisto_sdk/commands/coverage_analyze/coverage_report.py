@@ -80,7 +80,8 @@ class CoverageReport:
         files_dict = {}
         # See in demisto_sdk/commands/coverage_analyze/tests/data/coverage.txt how the report look like.
         report_lines = self.report_str.strip().split("\n")[2:-2]
-        logger.info(f"{report_lines=}")
+        logger.info("aaaa")
+        logger.info(report_lines)
         for line in map(lambda x: x.split(), report_lines):
             files_dict[os.path.relpath(line[0])] = percent_to_float(line[-1])
 
@@ -134,7 +135,8 @@ class CoverageReport:
     def coverage_diff_report(self) -> bool:
         coverage_ok = True
         for file_name, cov_precents in self.files.items():
-            logger.info(f"{cov_precents=}")
+            logger.info("bbbbb")
+            logger.info(cov_precents)
             min_cov = self.file_min_coverage(file_name)
             if min_cov > cov_precents:
                 logger.error(

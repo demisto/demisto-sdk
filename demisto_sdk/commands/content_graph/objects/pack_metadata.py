@@ -126,25 +126,24 @@ class PackMetadata(BaseModel):
             content_displays,
         ) = self._get_content_items_and_displays_metadata(marketplace, content_items)
 
+        default_data_source_value = (
+            {
+                "name": self.default_data_source_name,
+                "id": self.default_data_source_id,
+            }
+            if self.default_data_source_name and self.default_data_source_id  # in order to show only for XSIAM packs
+            else None  # for XSOAR, if the pack is multiple marketplace, override the initially set str default_data_source_id
+        )
+
         _metadata.update(
             {
                 "contentItems": collected_content_items,
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
+                "defaultDataSource": default_data_source_value,
             }
         )
-
-        if self.default_data_source_name and self.default_data_source_id:
-            # in order to show only for XSIAM packs
-            _metadata.update(
-                {
-                    "defaultDataSource": {
-                        "name": self.default_data_source_name,
-                        "id": self.default_data_source_id,
-                    },
-                }
-            )
 
         return _metadata
 
@@ -211,7 +210,11 @@ class PackMetadata(BaseModel):
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
-        if self.default_data_source_id and self.default_data_source_name and collected_content_items:
+        if (
+            self.default_data_source_id
+            and self.default_data_source_name
+            and collected_content_items
+        ):
             # order collected_content_items integration list so that the defaultDataSource will be first
             self._place_data_source_integration_first(
                 collected_content_items[ContentType.INTEGRATION.metadata_name],

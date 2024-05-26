@@ -554,10 +554,8 @@ def generate_integration_doc(
                 )
             # Checks if this integration is the default data source
             pack_metadata = get_pack_metadata(input_path)
-            default_data_source_id = pack_metadata.get("defaultDataSource", {}).get(
-                "id"
-            )
-            if yml_data.get("id") == default_data_source_id:
+            default_data_source_id = pack_metadata.get("defaultDataSource")
+            if yml_data.get("commonfields", {}).get("id") == default_data_source_id:
                 docs.extend(
                     [
                         "<~XSIAM>",

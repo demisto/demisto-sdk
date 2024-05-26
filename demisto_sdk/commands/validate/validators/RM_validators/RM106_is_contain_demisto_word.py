@@ -4,9 +4,9 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import check_text_content_contain_sub_text
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -21,7 +21,9 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that none of the readme lines contains the the word 'demisto'."
     )
-    rationale = "Ensure that the current name of the product is used rather than the old one."
+    rationale = (
+        "Ensure that the current name of the product is used rather than the old one."
+    )
     error_message = "Invalid keyword 'demisto' was found in lines: {0}. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
     related_field = "readme"
     is_auto_fixable = False

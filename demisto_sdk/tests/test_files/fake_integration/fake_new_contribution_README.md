@@ -1,8 +1,4 @@
 Use the Zoom integration manage your Zoom users and meetings
-<~XSIAM>
-This is the default integration for this content pack when configured by the Data Onboarder.
-</~XSIAM>
-
 ## Configure Zoom on Cortex XSOAR
 
 1. Navigate to **Settings** > **Integrations** > **Servers & Services**.

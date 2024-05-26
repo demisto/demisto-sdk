@@ -95,8 +95,11 @@ def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
     from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
         IsDescriptionContainsDemistoWordValidator,
     )
+
     integration = create_integration_object()
-    integration.description_file.file_content_str = " demisto.\n demisto \n valid description\ndemisto"
+    integration.description_file.file_content_str = (
+        " demisto.\n demisto \n valid description\ndemisto"
+    )
     is_valid = IsDescriptionContainsDemistoWordValidator().is_valid([integration])
     assert (
         is_valid[0].message

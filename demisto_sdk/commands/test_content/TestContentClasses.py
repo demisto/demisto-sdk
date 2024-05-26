@@ -1363,7 +1363,7 @@ class TestResults:
         """
         logging_module.info("Starting to upload")
 
-        storage_client = storage.Client.from_service_account_json(self.service_account)
+        storage_client = storage.Client.from_service_account_json(self.test_results_xml_file)
         storage_bucket = storage_client.bucket(ARTIFACTS_BUCKET)
         blob = storage_bucket.blob(f'content-playbook-reports/{repository_name}/{file_name}')
 

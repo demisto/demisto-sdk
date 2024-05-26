@@ -18,7 +18,7 @@ ContentTypes = Integration
 class IsDescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
     error_code = "DS107"
     description = (
-        "Validate that none of the readme lines contains the the word 'demisto'."
+        "Validate that none of the description lines contains the the word 'demisto'."
     )
     rationale = (
         "Ensure that the current name of the product is used rather than the old one."

@@ -66,8 +66,7 @@ def test_DescriptionMissingInBetaIntegrationValidator_is_valid(
 def test_IsDescriptionContainsDemistoWordValidator_is_valid():
     """
     Given
-    content_items.
-    - Two valid descriptionץ
+    - Integration with a valid description.
     When
     - Calling the IsContainDemistoWordValidator is_valid function.
     Then
@@ -87,12 +86,11 @@ def test_IsDescriptionContainsDemistoWordValidator_is_valid():
 def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
     """
     Given
-    content_items.
-    - invalid description that contains the word 'demisto'
+    - Integration with invalid description that contains the word 'demisto'.
     When
     - Calling the IsContainDemistoWordValidator is_valid function.
     Then
-    - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+    - Make that the right error message is returned.
     """
     from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
         IsDescriptionContainsDemistoWordValidator,

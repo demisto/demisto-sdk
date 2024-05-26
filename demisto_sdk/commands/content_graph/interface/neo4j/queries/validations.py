@@ -64,10 +64,9 @@ def validate_unknown_content(
 def validate_fromversion(
     tx: Transaction, file_paths: List[str], for_supported_versions: bool
 ):
-    excluded_from_version = [ContentType.TRIGGER]
     op = ">=" if for_supported_versions else "<"
     query = f"""// Returning all the USES relationships with where the target's fromversion is higher than the source's
-MATCH (content_item_from:{ContentType.BASE_CONTENT}&!{"&!".join(excluded_from_version)} {{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
+MATCH (content_item_from{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
 WHERE {versioned('content_item_from.fromversion')} < {versioned('n.fromversion')}
 AND {versioned('n.fromversion')} {op} {versioned(GENERAL_DEFAULT_FROMVERSION)}
 AND n.fromversion <> "{DEFAULT_CONTENT_ITEM_FROM_VERSION}"  // skips types with no "fromversion"

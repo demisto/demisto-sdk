@@ -57,6 +57,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA108_is_folder_name_has_separators import (
+    IsFolderNameHasSeparatorsValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
     IsEntityTypeInEntityNameValidator,
 )
@@ -1867,3 +1870,51 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         results.message
         == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {VALUE_WITH_TRAILING_SPACE.rstrip()}"
     )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msg",
+    [
+        pytest.param(
+            [
+                create_integration_object(name="invalid_integration_name"),
+            ],
+            1,
+            "The folder name 'invalid_integration_name' should not contain any of the following separators: '_', '-'",
+            id="an invalid integration name",
+        ),
+        pytest.param(
+            [
+                create_integration_object(name="invalidIntegrationName"),
+            ],
+            0,
+            "",
+            id="a valid integration name.",
+        ),
+        pytest.param(
+            [
+                create_script_object(name="invalid-script-name"),
+            ],
+            1,
+            "The folder name 'invalid-script-name' should not contain any of the following separators: '_', '-'",
+            id="an invalid script name",
+        ),
+        pytest.param(
+            [
+                create_script_object(name="invalidScriptName"),
+            ],
+            0,
+            "",
+            id="a valid script name",
+        ),
+    ],
+)
+def test_IsFolderNameHasSeparatorsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msg
+):
+    result = IsFolderNameHasSeparatorsValidator().is_valid(content_items)
+
+    assert len(result) == expected_number_of_failures
+
+    if result:
+        assert result[0].message == expected_msg

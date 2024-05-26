@@ -131,8 +131,10 @@ class PackMetadata(BaseModel):
                 "name": self.default_data_source_name,
                 "id": self.default_data_source_id,
             }
-            if self.default_data_source_name and self.default_data_source_id  # in order to show only for XSIAM packs
-            else None  # for XSOAR, if the pack is multiple marketplace, override the initially set str default_data_source_id
+            if self.default_data_source_name
+            and self.default_data_source_id
+            and marketplace == MarketplaceVersions.MarketplaceV2
+            else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
         )
 
         _metadata.update(
@@ -214,6 +216,7 @@ class PackMetadata(BaseModel):
             self.default_data_source_id
             and self.default_data_source_name
             and collected_content_items
+            and marketplace == MarketplaceVersions.MarketplaceV2
         ):
             # order collected_content_items integration list so that the defaultDataSource will be first
             self._place_data_source_integration_first(

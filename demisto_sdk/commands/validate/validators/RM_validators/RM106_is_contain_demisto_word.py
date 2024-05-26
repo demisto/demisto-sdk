@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.tools import check_text_content_contain_sub_text
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -28,6 +29,7 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
     related_field = "readme"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

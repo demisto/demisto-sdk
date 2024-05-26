@@ -67,26 +67,42 @@ def test_IsDescriptionContainsDemistoWordValidator_is_valid():
     """
     Given
     content_items.
-        - Case 1: Two valid description
-        - Case 2: One valid empty description.
-        - Case 3: One invalid description that contains the word 'demisto'
+    - Two valid descriptionץ
     When
     - Calling the IsContainDemistoWordValidator is_valid function.
     Then
-        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
-        - Case 1: Should pass.
-        - Case 2: Should pass.
-        - Case 2: Should fail.
+    - Should pass.
+
     """
-    from demisto_sdk.commands.validate.validators.DS_validators. DS107_is_descrription_contains_demisto_word import (
+    from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
         IsDescriptionContainsDemistoWordValidator,
     )
-    integration = create_integration_object(
-                    description_content="This is a valid description.",
-                    pack_info={"name": "test1"},
-                )
-    integration.description_file
-    integration.description_file.file_content = file_content
+    content_items = [
+        create_integration_object(
+            paths=["description"], values=["valid description"]
+        )
+    ]
+    is_valid = IsDescriptionContainsDemistoWordValidator().is_valid(content_items)
+    assert len(is_valid) == 0
 
-    is_valid = IsDescriptionContainsDemistoWordValidator().is_valid([integration])
-    assert result_len == len(is_valid)
+
+def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
+    """
+    Given
+    content_items.
+    - invalid description that contains the word 'demisto'
+    When
+    - Calling the IsContainDemistoWordValidator is_valid function.
+    Then
+    - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+    """
+    from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
+        IsDescriptionContainsDemistoWordValidator,
+    )
+    content_items = [
+        create_integration_object(
+            paths=["description"], values=["demisto"]
+        )
+    ]
+    is_valid = IsDescriptionContainsDemistoWordValidator().is_valid(content_items)
+    assert is_valid[0].message == "Invalid keyword 'demisto' was found in lines: 1. For more information about the description file See: https://xsoar.pan.dev/docs/documentation/integration-description."

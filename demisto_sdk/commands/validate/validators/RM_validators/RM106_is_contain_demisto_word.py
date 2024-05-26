@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import check_text_content_contain_sub_text
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -10,7 +13,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Pack
+ContentTypes = Union[Pack, Integration, Script, Playbook]
 
 
 class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
@@ -34,7 +37,7 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 lines_contain_demsito := check_text_content_contain_sub_text(
-                    sub_text_list=["demisto ", " demisto"],
+                    sub_text_list=["demisto"],
                     is_lower=True,
                     text=content_item.readme.file_content,
                 )

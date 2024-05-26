@@ -323,16 +323,13 @@ def test_IsContainDemistoWordValidator_is_valid():
     """
     Given
     content_items.
-        - Case 1: Two valid pack_metadatas:
+        - Two valid pack_metadatas:
             - 1 pack with valid readme text.
-            - 1 pack with an empty readme.
-        - Case 2: One invalid pack_metadata with a readme that contains the word 'demisto'.
-    When
+            - 1 pack with an empty readme.    When
     - Calling the IsContainDemistoWordValidator is_valid function.
     Then
-        - Make sure the right amount of pack failed, and that the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail.
+        - Make sure that the pack isn't failing.
+        - Should pass all.
     """
     content_items = [
         create_pack_object(readme_text="This is a valid readme."),
@@ -361,10 +358,10 @@ def test_IsContainDemistoWordValidator_is_invalid():
     """
     content_items = [
         create_pack_object(
-            readme_text="Invalid readme contains the word demisto\ndemisto\ndemisto"
+            readme_text="Invalid readme contains the word demistomock\ndemisto \ndemisto \ndemisto.\n mockdemisto."
         )
     ]
-    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
+    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
     results = IsContainDemistoWordValidator().is_valid(content_items)
     assert len(results) == 1
     assert results[0].message == expected_msg

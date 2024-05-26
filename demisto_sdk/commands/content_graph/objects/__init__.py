@@ -37,7 +37,7 @@ __all__ = [
     "PreProcessRule",
     "AssetsModelingRule",
     "CaseField",
-    "CaseLayout"
+    "CaseLayout",
     "CaseLayoutRule",
 ]
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (

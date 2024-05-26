@@ -3373,13 +3373,13 @@ def generate_unit_tests(
 @logging_setup_decorator
 def error_code(ctx, config, **kwargs):
     from demisto_sdk.commands.error_code_info.error_code_info import (
-        generate_error_code_information,
+        generate_legacy_error_code_information,
     )
 
     update_command_args_from_config_file("error-code-info", kwargs)
     sys.path.append(config.configuration.env_dir)
 
-    result = generate_error_code_information(kwargs.get("input"))
+    result = generate_legacy_error_code_information(kwargs.get("input"))
 
     sys.exit(result)
 

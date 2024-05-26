@@ -1369,7 +1369,7 @@ class TestResults:
         storage_bucket = storage_client.bucket(ARTIFACTS_BUCKET)
         blob = storage_bucket.blob(f'content-playbook-reports/{repository_name}/{file_name}')
 
-        data_to_load = (ET.tostring(self.test_results_xml_file, encoding='UTF-8',xml_declaration=True, method='xml').
+        data_to_load = (ET.tostring(self.test_results_xml_file.__dict__, encoding='UTF-8',xml_declaration=True, method='xml').
                         decode('UTF-8'))
         # Upload the JSON string to the blob
         blob.upload_from_string(data_to_load, content_type="application/xml")

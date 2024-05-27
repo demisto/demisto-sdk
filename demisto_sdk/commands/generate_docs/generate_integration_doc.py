@@ -1304,3 +1304,45 @@ def get_integration_commands(yaml_data: dict[str, Any]) -> list[dict[str, Any]]:
     return filter(
         lambda cmd: not cmd.get("deprecated", False), yaml_data[SCRIPT]["commands"]
     )
+
+
+def get_commands_sections(doc_text: str) -> dict[str, tuple]:
+    """
+    Helper function that takes the integration README text
+    and returns a map of the commands and the start, end lines.
+
+    Args:
+    - `doc_text` (``str``): The integration README.
+
+    Returns:
+    - `dict[str, tuple]` with the name of the command and the 
+    start and end line of the command section within the README.
+    """
+
+    command_start_section_pattern = r"^### (.*)"
+
+    out = {}
+
+    # Here we iterate over the README line by line
+    # and find what lines the command sections are defined
+    for line_nr, line_text in enumerate(doc_text.splitlines()):
+        cmd_search = re.search(command_start_section_pattern, line_text)
+
+        if cmd_search:
+            out[cmd_search.group(1)] = (line_nr)
+
+    # We then transform the structure
+    # to include the end line as well
+    keys = list(out.keys())
+    values = list(out.values())
+
+    transformed = {}
+
+    # Iterate over the keys and values
+    for i in range(len(keys)):
+        if i < len(keys) - 1:
+            transformed[keys[i]] = (values[i], values[i + 1])
+        else:
+            transformed[keys[i]] = (values[i], len(doc_text.splitlines()))
+
+    return transformed

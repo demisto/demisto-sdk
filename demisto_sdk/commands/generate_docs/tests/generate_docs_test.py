@@ -29,6 +29,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_setup_section,
     generate_single_command_section,
     get_command_examples,
+    get_commands_sections,
     get_integration_commands,
 )
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
@@ -1809,6 +1810,34 @@ def test_get_integration_commands_slack():
     ]
 
     assert actual_cmd_names == expected
+
+
+def test_get_commands_sections():
+    """
+    Test get_commands_sections method output.
+
+    Given:
+    - The AHA integration README.
+
+    When:
+    - The README includes 4 commands.
+
+    Then:
+    - The output has the expected start/end line per each command in the README.
+    """
+
+    md_path = Path(__file__).parent / "test_files" / "test_added_commands" / INTEGRATIONS_README_FILE_NAME
+
+    actual = get_commands_sections(md_path.read_text())
+    expected = {
+        "aha-get-features": (24, 54),
+        "aha-edit-feature": (54, 81),
+        "aha-get-ideas": (81, 111),
+        "aha-edit-idea": (111, len(md_path.read_text().splitlines()))
+    }
+
+    assert actual == expected
+
 
 class TestIntegrationDocUpdate:
 

@@ -104,11 +104,11 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return get_args(args)
 
     def should_run(
-            self,
-            content_item: ContentTypes,
-            ignorable_errors: list,
-            support_level_dict: dict,
-            validate_all: bool
+        self,
+        content_item: ContentTypes,
+        ignorable_errors: list,
+        support_level_dict: dict,
+        validate_all: bool
     ) -> bool:
         """check whether to run validation on the given content item or not.
 
@@ -117,12 +117,13 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             ignorable_errors (list): The list of the errors that can be ignored.
             support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
             validate_all: (bool)
+
         Returns:
             bool: True if the validation should run. Otherwise, return False.
         """
         return all(
             [
-                # isinstance(content_item, self.get_content_types()),
+                isinstance(content_item, self.get_content_types()),
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
                 should_run_on_all_files(self.run_on_all_files, validate_all),
                 should_run_according_to_status(

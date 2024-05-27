@@ -29,6 +29,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_setup_section,
     generate_single_command_section,
     get_command_examples,
+    get_integration_commands,
 )
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
@@ -1744,6 +1745,70 @@ def test_missing_data_sections_when_generating_table_section(
     section = generate_table_section(script_info, "Script data")
     assert section == expected_result
 
+
+def test_get_integration_commands_aha():
+    """
+    Test to check that the AHA integration
+    has 4 commands. No deprecated commands exist.
+
+    Given:
+    - An integration YAML.
+
+    When:
+    - The integration YAML has 4 commands (none deprecated).
+
+    Then:
+    - get_integration_commands returns 4 commands. 
+    """
+
+    yml_path = Path(__file__).parent / "test_files" / "test_added_commands" / "AHA.yml"
+    with yml_path.open("r") as stream:
+        input = yaml.load(stream)
+
+    actual = get_integration_commands(input)
+    actual_cmd_names = [cmd["name"] for cmd in actual]
+
+    expected = ["aha-get-features", "aha-edit-feature", "aha-get-ideas", "aha-edit-idea"]
+
+    assert actual_cmd_names == expected
+
+
+def test_get_integration_commands_slack():
+    """
+    Test to check that the AHA integration
+    has 13 commands. 3 of which are deprecated commands.
+
+    Given:
+    - An integration YAML.
+
+    When:
+    - The integration YAML has 13 commands (3 deprecated).
+
+    Then:
+    - get_integration_commands returns 10 commands.
+    """
+
+    yml_path = Path(__file__).parent.parent.parent.parent / "tests" / "test_files" / "update-docker" / "Slack.yml"
+    with yml_path.open("r") as stream:
+        input = yaml.load(stream)
+
+    actual = get_integration_commands(input)
+    actual_cmd_names = [cmd["name"] for cmd in actual]
+
+    expected = [
+        "mirror-investigation",
+        "send-notification",
+        "close-channel",
+        "slack-send-file",
+        "slack-set-channel-topic",
+        "slack-create-channel",
+        "slack-invite-to-channel",
+        "slack-kick-from-channel",
+        "slack-rename-channel",
+        "slack-get-user-details"
+    ]
+
+    assert actual_cmd_names == expected
 
 class TestIntegrationDocUpdate:
 

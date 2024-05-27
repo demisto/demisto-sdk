@@ -838,9 +838,7 @@ def generate_commands_section(
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
         "",
     ]
-    commands = filter(
-        lambda cmd: not cmd.get("deprecated", False), yaml_data["script"]["commands"]
-    )
+    commands = get_integration_commands(yaml_data)
     command_sections: list = []
     if command:
         # for specific command, return it only.
@@ -1284,4 +1282,22 @@ def add_access_data_of_type_credentials(
             else string_escape_md(credentials_conf.get("additionalinfo", "")),
             "Required": credentials_conf.get("required", ""),
         }
+    )
+
+
+def get_integration_commands(yaml_data: dict[str, Any]) -> list[dict[str, Any]]:
+    """
+    Helper function to return a list of integration commands.
+    Integration commands that are marked as deprecated will not be
+    returned.
+
+    Args:
+    - `yml_data` (``dict[str, Any]``): The integration YAML as a dictionary.
+
+    Returns:
+    - `list[dict[str, Any]]` of integration commands.
+    """
+
+    return filter(
+        lambda cmd: not cmd.get("deprecated", False), yaml_data["script"]["commands"]
     )

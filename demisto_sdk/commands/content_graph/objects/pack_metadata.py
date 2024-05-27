@@ -89,7 +89,8 @@ class PackMetadata(BaseModel):
             pack_id (str): The pack ID.
             content_items (PackContentItems): The pack content items object.
         """
-        self._set_default_data_source(content_items)
+        if not self.hybrid:
+            self._set_default_data_source(content_items)
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = self._get_author(self.author, marketplace)
         # We want to add the pipeline_id only if this is called within our repo.
@@ -134,6 +135,7 @@ class PackMetadata(BaseModel):
             if self.default_data_source_name
             and self.default_data_source_id
             and marketplace == MarketplaceVersions.MarketplaceV2
+            and not self.hybrid
             else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
         )
 
@@ -217,6 +219,7 @@ class PackMetadata(BaseModel):
             and self.default_data_source_name
             and collected_content_items
             and marketplace == MarketplaceVersions.MarketplaceV2
+            and not self.hybrid
         ):
             # order collected_content_items integration list so that the defaultDataSource will be first
             self._place_data_source_integration_first(
@@ -332,6 +335,7 @@ class PackMetadata(BaseModel):
             {PackTags.DATA_SOURCE}
             if self.is_data_source(content_items)
             and marketplace == MarketplaceVersions.MarketplaceV2
+            and not self.hybrid
             else set()
         )
 
@@ -366,6 +370,9 @@ class PackMetadata(BaseModel):
 
     def is_data_source(self, content_items: PackContentItems) -> bool:
         """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
+        if self.hybrid:
+            # hybrid packs have a builtin data source
+            return False
         if self.default_data_source_id and self.default_data_source_name:
             return True
         return any(self.get_valid_data_source_integrations(content_items))

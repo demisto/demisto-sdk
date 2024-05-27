@@ -36,6 +36,9 @@ from demisto_sdk.commands.generate_docs.common import (
     save_output,
     string_escape_md,
 )
+from demisto_sdk.commands.common.constants import (
+    SCRIPT
+)
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
@@ -1299,5 +1302,5 @@ def get_integration_commands(yaml_data: dict[str, Any]) -> list[dict[str, Any]]:
     """
 
     return filter(
-        lambda cmd: not cmd.get("deprecated", False), yaml_data["script"]["commands"]
+        lambda cmd: not cmd.get("deprecated", False), yaml_data[SCRIPT]["commands"]
     )

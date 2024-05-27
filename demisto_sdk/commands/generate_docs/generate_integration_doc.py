@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     DOCS_COMMAND_SECTION_REGEX,
     INTEGRATIONS_DIR,
     INTEGRATIONS_README_FILE_NAME,
+    SCRIPT,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -35,9 +36,6 @@ from demisto_sdk.commands.generate_docs.common import (
     generate_table_section,
     save_output,
     string_escape_md,
-)
-from demisto_sdk.commands.common.constants import (
-    SCRIPT
 )
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
@@ -1315,7 +1313,7 @@ def get_commands_sections(doc_text: str) -> dict[str, tuple]:
     - `doc_text` (``str``): The integration README.
 
     Returns:
-    - `dict[str, tuple]` with the name of the command and the 
+    - `dict[str, tuple]` with the name of the command and the
     start and end line of the command section within the README.
     """
 
@@ -1329,7 +1327,7 @@ def get_commands_sections(doc_text: str) -> dict[str, tuple]:
         cmd_search = re.search(command_start_section_pattern, line_text)
 
         if cmd_search:
-            out[cmd_search.group(1)] = (line_nr)
+            out[cmd_search.group(1)] = line_nr
 
     # We then transform the structure
     # to include the end line as well

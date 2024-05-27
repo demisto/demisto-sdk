@@ -1759,7 +1759,7 @@ def test_get_integration_commands_aha():
     - The integration YAML has 4 commands (none deprecated).
 
     Then:
-    - get_integration_commands returns 4 commands. 
+    - get_integration_commands returns 4 commands.
     """
 
     yml_path = Path(__file__).parent / "test_files" / "test_added_commands" / "AHA.yml"
@@ -1769,7 +1769,12 @@ def test_get_integration_commands_aha():
     actual = get_integration_commands(input)
     actual_cmd_names = [cmd["name"] for cmd in actual]
 
-    expected = ["aha-get-features", "aha-edit-feature", "aha-get-ideas", "aha-edit-idea"]
+    expected = [
+        "aha-get-features",
+        "aha-edit-feature",
+        "aha-get-ideas",
+        "aha-edit-idea",
+    ]
 
     assert actual_cmd_names == expected
 
@@ -1789,7 +1794,13 @@ def test_get_integration_commands_slack():
     - get_integration_commands returns 10 commands.
     """
 
-    yml_path = Path(__file__).parent.parent.parent.parent / "tests" / "test_files" / "update-docker" / "Slack.yml"
+    yml_path = (
+        Path(__file__).parent.parent.parent.parent
+        / "tests"
+        / "test_files"
+        / "update-docker"
+        / "Slack.yml"
+    )
     with yml_path.open("r") as stream:
         input = yaml.load(stream)
 
@@ -1806,7 +1817,7 @@ def test_get_integration_commands_slack():
         "slack-invite-to-channel",
         "slack-kick-from-channel",
         "slack-rename-channel",
-        "slack-get-user-details"
+        "slack-get-user-details",
     ]
 
     assert actual_cmd_names == expected
@@ -1826,14 +1837,19 @@ def test_get_commands_sections():
     - The output has the expected start/end line per each command in the README.
     """
 
-    md_path = Path(__file__).parent / "test_files" / "test_added_commands" / INTEGRATIONS_README_FILE_NAME
+    md_path = (
+        Path(__file__).parent
+        / "test_files"
+        / "test_added_commands"
+        / INTEGRATIONS_README_FILE_NAME
+    )
 
     actual = get_commands_sections(md_path.read_text())
     expected = {
         "aha-get-features": (24, 54),
         "aha-edit-feature": (54, 81),
         "aha-get-ideas": (81, 111),
-        "aha-edit-idea": (111, len(md_path.read_text().splitlines()))
+        "aha-edit-idea": (111, len(md_path.read_text().splitlines())),
     }
 
     assert actual == expected

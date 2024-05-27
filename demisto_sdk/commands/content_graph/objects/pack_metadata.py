@@ -335,7 +335,6 @@ class PackMetadata(BaseModel):
             {PackTags.DATA_SOURCE}
             if self.is_data_source(content_items)
             and marketplace == MarketplaceVersions.MarketplaceV2
-            and not self.hybrid
             else set()
         )
 

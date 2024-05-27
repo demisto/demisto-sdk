@@ -1,4 +1,4 @@
 changes:
-- description: Removed support for hybrid packs for the `defaultDataSource` field in the pack metadata.
+- description: Removed support for the `defaultDataSource` field in the pack metadata for hybrid packs.
   type: feature
 pr_number: 4139

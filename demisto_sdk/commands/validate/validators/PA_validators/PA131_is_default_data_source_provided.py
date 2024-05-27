@@ -38,7 +38,6 @@ class IsDefaultDataSourceProvidedValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
-            and not content_item.hybrid
             and (
                 content_item.is_data_source(content_item.content_items)
                 and not content_item.default_data_source_id

@@ -95,6 +95,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
+    run_on_all_files: ClassVar[bool] = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -103,10 +104,11 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return get_args(args)
 
     def should_run(
-        self,
-        content_item: ContentTypes,
-        ignorable_errors: list,
-        support_level_dict: dict,
+            self,
+            content_item: ContentTypes,
+            ignorable_errors: list,
+            support_level_dict: dict,
+            validate_all: bool
     ) -> bool:
         """check whether to run validation on the given content item or not.
 
@@ -114,14 +116,15 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             content_item (BaseContent): The content item to run the validation on.
             ignorable_errors (list): The list of the errors that can be ignored.
             support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
-
+            validate_all: (bool)
         Returns:
             bool: True if the validation should run. Otherwise, return False.
         """
         return all(
             [
-                isinstance(content_item, self.get_content_types()),
+                # isinstance(content_item, self.get_content_types()),
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
+                should_run_on_all_files(self.run_on_all_files, validate_all),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),
@@ -325,3 +328,9 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     if content_item.deprecated and not run_on_deprecated:
         return False
     return True
+
+
+def should_run_on_all_files(run_on_all_files, validate_all):
+    if run_on_all_files is None or run_on_all_files == validate_all:
+        return True
+    return False

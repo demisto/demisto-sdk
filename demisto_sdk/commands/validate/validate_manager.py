@@ -70,6 +70,7 @@ class ValidateManager:
                         content_object,
                         self.configured_validations.ignorable_errors,
                         self.configured_validations.support_level_dict,
+                        self.validate_all,
                     ),
                     self.objects_to_run,
                 )

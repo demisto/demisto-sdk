@@ -216,9 +216,6 @@ class IntegrationDocUpdateManager:
 
             doc_text_lines = self.output_doc.splitlines()
 
-            # We take the first and the second-to-last index of the old section
-            # and use the section range to replace it with the new section.
-            # Second-to-last index because the last element is an empty string
             old_config_start_line = doc_text_lines.index(
                 CONFIGURATION_SECTION_STEPS.STEP_1.value
             )
@@ -244,16 +241,12 @@ class IntegrationDocUpdateManager:
         README.
         """
 
-        for i, modified_command in enumerate(
-            self.integration_diff.get_modified_commands()
-        ):
+        command_sections = get_commands_sections(self.output_doc)
+
+        for modified_command in self.integration_diff.get_modified_commands():
             try:
-                old_command_section, _ = generate_commands_section(
-                    self.integration_diff.old_yaml_data,
-                    {},
-                    {},
-                    modified_command,
-                )
+
+                start_line, end_line = command_sections[modified_command]
 
                 (
                     new_command_section,
@@ -280,30 +273,7 @@ class IntegrationDocUpdateManager:
 
                 doc_text_lines = self.output_doc.splitlines()
 
-                # We take the first and the second-to-last index of the old section
-                # and use the section range to replace it with the new section.
-                # Second-to-last index because the last element is an empty string
-                old_cmd_start_line = doc_text_lines.index(old_command_section[0])
-
-                # In cases when there are multiple identical context outputs
-                # in the second-to-last line, we need to find the relevant
-                # second-to-last line for the specific command we're replacing.
-                indices = [
-                    i
-                    for i, doc_line in enumerate(doc_text_lines)
-                    if doc_line == old_command_section[-2]
-                ]
-
-                if indices and len(indices) > 1:
-                    old_cmd_end_line = doc_text_lines.index(
-                        old_command_section[-2], indices[i]
-                    )
-                else:
-                    old_cmd_end_line = doc_text_lines.index(old_command_section[-2])
-
-                doc_text_lines[
-                    old_cmd_start_line : old_cmd_end_line + 1
-                ] = new_command_section
+                doc_text_lines[start_line:end_line] = new_command_section
 
                 self.output_doc = "\n".join(doc_text_lines)
             except (ValueError, IndexError) as e:
@@ -317,11 +287,6 @@ class IntegrationDocUpdateManager:
             self.integration_diff.get_modified_commands(),
             self.integration_diff.get_added_commands(),
         )
-
-    def _get_resource_path(self) -> str:
-        """
-        Helper function to resolve the resource path.
-        """
 
     def _write_resource_to_tmp(self, resource_path: Path, content: str) -> Path:
         """
@@ -1317,7 +1282,7 @@ def get_commands_sections(doc_text: str) -> dict[str, tuple]:
     start and end line of the command section within the README.
     """
 
-    command_start_section_pattern = r"^### (.*)"
+    command_start_section_pattern = r"^###\s+([a-z]+(-[a-z]+)*$)"
 
     out = {}
 

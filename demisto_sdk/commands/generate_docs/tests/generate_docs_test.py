@@ -2156,13 +2156,14 @@ class TestIntegrationDocUpdate:
         generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
         actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
-        actual[61] == "    | Debug logging enabled |  | False |"
-        actual[
-            804
-        ] == "| limit | Maximum number of records to return. Default is 100. | Optional |"
-        actual[805] == "| new_arg | New argument for testing. | Optional | "
-        actual[812] == "| Splunk.Test | String | Test output for Splunk | "
-        assert actual[1149:1171] == [
+        assert actual[61] == "    | Debug logging enabled |  | False |"
+        assert (
+            actual[806]
+            == "| limit | Maximum number of records to return. Default is 100. | Optional | "
+        )
+        assert actual[807] == "| new_arg | New argument for testing. | Optional | "
+        assert actual[814] == "| Splunk.Test | String | Test output for Splunk | "
+        assert actual[1081:1102] == [
             "### splunk-test-cmd",
             "",
             "***",
@@ -2184,7 +2185,6 @@ class TestIntegrationDocUpdate:
             "| --- | --- | --- |",
             "| Splunk.Test.Output | String | Some sample test output | ",
             "| Splunk.Test.Date | Date | Some sample test output date | ",
-            "",
         ]
 
     def test_added_conf_cmd_modified_cmd_with_examples(

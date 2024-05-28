@@ -48,6 +48,8 @@ Whether to use the content graph or not.
   * mirror_direction
   * close_incident
   * close_out - (opposite to close_incident)
+* If the Integration/Script/Playbook exists in version control, the version
+from the main branch (e.g. `master`) will be used to only render the modified sections (e.g. configuration, command).
 
 ### Examples
 

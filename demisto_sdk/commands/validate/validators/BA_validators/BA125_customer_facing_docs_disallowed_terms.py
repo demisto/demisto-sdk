@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List, Union
@@ -16,40 +15,49 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Union[Integration, Script, Playbook, Pack]
 
-disallowed_terms = (
-        [  # These terms are checked regardless for case (case-insensitive)
-            "test-module",
-            "test module",
-            "long-running-execution",
-        ]
-    )
+disallowed_terms = [  # These terms are checked regardless for case (case-insensitive)
+    "test-module",
+    "test module",
+    "long-running-execution",
+]
 
 
 class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
     error_code = "BA125"
     description = "Validate that customer facing docs and fields don't contain any internal terms that aren't clear for customers."
     rationale = "Ensure customer-facing docs avoid internal terms for clarity."
-    error_message = "Found internal terms in a customer-facing documentation: found {terms}"
+    error_message = (
+        "Found internal terms in a customer-facing documentation: found {terms}"
+    )
     related_field = ""
     is_auto_fixable = False
-    related_file_type = [RelatedFileType.README, RelatedFileType.DESCRIPTION_File, RelatedFileType.RELEASE_NOTE]
+    related_file_type = [
+        RelatedFileType.README,
+        RelatedFileType.DESCRIPTION_File,
+        RelatedFileType.RELEASE_NOTE,
+    ]
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
-    
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         found_terms = {}
         return [
             ValidationResult(
                 validator=self,
-                message = self.error_message.format(terms=self.format_error_message(found_terms)),
+                message=self.error_message.format(
+                    terms=self.format_error_message(found_terms)
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
-            if self.find_disallowed_terms(self.get_related_files(content_item), found_terms)
+            if self.find_disallowed_terms(
+                self.get_related_files(content_item), found_terms
+            )
         ]
 
     def format_error_message(self, found_terms):
-        return ', '.join(f"{', '.join(found_terms[file])} in {file}" for file in found_terms)
+        return ", ".join(
+            f"{', '.join(found_terms[file])} in {file}" for file in found_terms
+        )
 
     def find_disallowed_terms(self, related_files, found_terms):
         for file in related_files:
@@ -57,7 +65,9 @@ class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
             terms = [term for term in disallowed_terms if term in file_content]
             if terms:
                 # Extract the filename from the file path
-                filename = '/'.join(file.file_path.parts[file.file_path.parts.index('Packs'):])
+                filename = "/".join(
+                    file.file_path.parts[file.file_path.parts.index("Packs") :]
+                )
                 found_terms[f"{filename}"] = terms
         return found_terms
 
@@ -67,5 +77,7 @@ class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
         elif isinstance(content_item, Pack):
             return [content_item.readme, content_item.release_note]
         elif isinstance(content_item, (Playbook, Script)):
-            return [content_item.readme,]
+            return [
+                content_item.readme,
+            ]
         raise ValueError(f"unexpected content item type {content_item.content_type}")

@@ -421,6 +421,7 @@ def generate_integration_doc(
     old_version: str = "",
     skip_breaking_changes: bool = False,
     is_contribution: bool = False,
+    force: bool = False,
 ):
     """
     Generate integration documentation.
@@ -502,7 +503,7 @@ def generate_integration_doc(
         # in source control:
         # - An integration YAML.
         # - An integration README.
-        elif update_mgr.can_update_docs():
+        elif not force and update_mgr.can_update_docs():
             logger.info("Found existing integration, updating documentation...")
             doc_text, update_errors = update_mgr.update_docs()
 

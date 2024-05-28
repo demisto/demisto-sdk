@@ -26,7 +26,7 @@ from demisto_sdk.commands.upload.uploader import (
     ERROR_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
-from demisto_sdk.utils.utils import check_configuration_file
+from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 def upload_content_entity(**kwargs):
@@ -59,7 +59,7 @@ def upload_content_entity(**kwargs):
                 [Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)]
             )
 
-    check_configuration_file("upload", kwargs)
+    update_command_args_from_config_file("upload", kwargs)
 
     if not inputs:
         logger.error("[red]No input provided for uploading[/red]")

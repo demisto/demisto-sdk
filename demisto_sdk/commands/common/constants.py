@@ -7,6 +7,8 @@ from typing import Dict, List
 
 from packaging.version import Version
 
+from demisto_sdk.commands.common.StrEnum import StrEnum
+
 # Note: Do NOT add imports of internal modules here, as it may cause circular imports.
 
 
@@ -138,6 +140,7 @@ CANVAS = "canvas"
 OLD_REPUTATION = "reputations.json"
 PACK_VERIFY_KEY = "content.pack.verify"
 XSOAR_CONFIG_FILE = "xsoar_config.json"
+DEMISTO_SDK_CONFIG_FILE = ".demisto-sdk-conf"
 GENERIC_FIELD = "genericfield"
 GENERIC_TYPE = "generictype"
 GENERIC_MODULE = "genericmodule"
@@ -165,7 +168,7 @@ DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
 
-class FileType(str, Enum):
+class FileType(StrEnum):
     INTEGRATION = "integration"
     SCRIPT = "script"
     TEST_SCRIPT = "testscript"
@@ -589,6 +592,8 @@ PNG_IMAGE_REGEX = r".*\.png$"
 SVG_IMAGE_REGEX = r".*\.svg$"
 DESCRIPTION_REGEX = r".*\.md"
 SCHEMA_REGEX = "Tests/schemas/.*.yml"
+# Checks if playbookID is a UUID format
+INVALID_PLAYBOOK_ID = r"[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}"
 
 # regex pattern used to convert incident/indicator fields to their CLI names
 NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r"[^a-zA-Z0-9]")
@@ -1233,15 +1238,20 @@ TYPE_TO_EXTENSION = {
     TYPE_PWSH: ".ps1",
 }
 
-TESTS_AND_DOC_DIRECTORIES = [
+TESTS_DIRECTORIES = [
     "testdata",
     "test_data",
     "data_test",
     "tests_data",
-    "doc_files",
-    "doc_imgs",
     "TestData",
 ]
+
+DOCS_DIRECTORIES = [
+    "doc_files",
+    "doc_imgs",
+]
+
+TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",
@@ -1258,7 +1268,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
 )
 
 
-class GitStatuses(str, Enum):
+class GitStatuses(StrEnum):
     RENAMED = "R"
     MODIFIED = "M"
     ADDED = "A"
@@ -1827,7 +1837,7 @@ BUILD_IN_COMMANDS = [
 ]
 
 
-class Auto(str, Enum):
+class Auto(StrEnum):
     PREDEFINED = "PREDEFINED"
 
 
@@ -1912,7 +1922,7 @@ class IronBankDockers:
     API_LINK = "https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F"
 
 
-class MarketplaceVersions(str, Enum):
+class MarketplaceVersions(StrEnum):
     XSOAR = "xsoar"
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
@@ -2031,6 +2041,24 @@ class ParameterType(Enum):
     DAY_DROPDOWN = 21
 
 
+class IncidentFieldType:  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
+    SHORT_TEXT = "shortText"
+    LONG_TEXT = "longText"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    SINGLE_SELECT = "singleSelect"
+    MULTI_SELECT = "multiSelect"
+    DATE = "date"
+    MARKDOWN = "markdown"
+    HTML = "html"
+    URL = "url"
+    USER = "user"
+    ROLE = "role"
+    ATTACHMENTS = "attachments"
+    SLA = "sla"
+    GRID = "grid"
+
+
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
@@ -2096,10 +2124,12 @@ STRING_TO_BOOL_MAP = {
     "1": True,
     "yes": True,
     "true": True,
+    "True": True,
     "n": False,
     "0": False,
     "no": False,
     "false": False,
+    "False": False,
     "t": True,
     "f": False,
 }
@@ -2109,12 +2139,12 @@ STRING_TO_BOOL_MAP = {
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
-class ImagesFolderNames(str, Enum):
+class ImagesFolderNames(StrEnum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
 
 
-class InvestigationPlaybookState(str, Enum):
+class InvestigationPlaybookState(StrEnum):
     NEW = "new"  # indicates that playbook not executed yet
     IN_PROGRESS = "inprogress"  # indicates that playbook in progress
     PAUSED = "paused"  # indicates that playbook paused
@@ -2123,11 +2153,11 @@ class InvestigationPlaybookState(str, Enum):
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
-class IncidentState(str, Enum):
-    NEW = 0  # the incident is new
-    IN_PROGRESS = 1  # the incident is in progress
-    CLOSED = 2  # the incident is closed
-    ACKNOWLEDGED = 3  # the incident is archived
+class IncidentState(StrEnum):
+    NEW = "NEW"
+    IN_PROGRESS = "IN_PROGRESS"
+    CLOSED = "CLOSED"
+    ACKNOWLEDGED = "ACKNOWLEDGED"
 
 
 # Used to format the writing of the yml/json file

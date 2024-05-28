@@ -35,6 +35,10 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="print-exists",
                 node=node_b,
+                line=3,
+                col_offset=4,
+                end_line=3,
+                end_col_offset=29,
             ),
         ):
             self.checker.visit_call(node_b)
@@ -75,7 +79,7 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
                 return True
         """
         )
-        assert node_a is None
+        assert not node_a
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
 
@@ -98,15 +102,23 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
                 return True
         """
         )
-        assert node_a is not None and node_b is not None
+        assert node_a and node_b
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="print-exists",
                 node=node_b,
+                col_offset=8,
+                end_line=6,
+                end_col_offset=23,
+                line=6,
             ),
             pylint.testutils.MessageTest(
                 msg_id="print-exists",
                 node=node_a,
+                col_offset=4,
+                end_line=3,
+                end_col_offset=18,
+                line=3,
             ),
         ):
             self.checker.visit_call(node_b)
@@ -154,6 +166,7 @@ class TestSleepChecker(pylint.testutils.CheckerTestCase):
                 msg_id="sleep-exists",
                 node=node_c,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
@@ -215,6 +228,7 @@ class TestExitChecker(pylint.testutils.CheckerTestCase):
                 msg_id="exit-exists",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
@@ -268,7 +282,8 @@ class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="demisto-log-exists",
                 node=node_a,
-            )
+            ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_a)
 
@@ -281,14 +296,15 @@ class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b, _ = astroid.extract_node(
+        node_a, node_b = astroid.extract_node(
             """
             def test_function(): #@
                 # demisto.log("Some log message") #@
                 return True #@
         """
         )
-        assert node_a is not None and node_b is None
+        assert node_a
+        assert node_b
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
@@ -323,6 +339,7 @@ class TestQuithecker(pylint.testutils.CheckerTestCase):
                 msg_id="quit-exists",
                 node=node_a,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_a)
 
@@ -335,18 +352,18 @@ class TestQuithecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b, node_c = astroid.extract_node(
+        def_node, return_node = astroid.extract_node(
             """
             def test_function(): #@
                 return True #@
                 # quit() #@
         """
         )
-        assert node_a is not None and node_b is not None
+        assert def_node
+        assert return_node
         with self.assertNoMessages():
-            self.checker.visit_call(node_a)
-            self.checker.visit_call(node_b)
-            self.checker.visit_call(node_c)
+            self.checker.visit_call(def_node)
+            self.checker.visit_call(return_node)
 
 
 class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
@@ -392,6 +409,7 @@ class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
                 msg_id="invalid-import-common-server-python",
                 node=node_a,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_importfrom(node_a)
             self.checker.visit_importfrom(node_a)
@@ -432,6 +450,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
             ),
+            ignore_position=True,
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -455,6 +474,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
             ),
+            ignore_position=True,
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -511,6 +531,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
             ),
+            ignore_position=True,
         ):
             self.checker.visit_dict(node_a)
             self.checker.visit_call(node_a)
@@ -537,7 +558,8 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
-            )
+            ),
+            ignore_position=True,
         ):
             self.checker.leave_module(node_a)
 
@@ -571,6 +593,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
             ),
+            ignore_position=True,
         ):
             self.checker.visit_if(node_a)
             self.checker.visit_if(node_b)
@@ -598,7 +621,8 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
-            )
+            ),
+            ignore_position=True,
         ):
             self.checker.leave_module(node_a)
 
@@ -632,6 +656,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
             ),
+            ignore_position=True,
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -658,7 +683,8 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
-            )
+            ),
+            ignore_position=True,
         ):
             self.checker.leave_module(node_a)
 
@@ -692,6 +718,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
             ),
+            ignore_position=True,
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -718,7 +745,8 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
-            )
+            ),
+            ignore_position=True,
         ):
             self.checker.leave_module(node_a)
 
@@ -745,7 +773,8 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
-            )
+            ),
+            ignore_position=True,
         ):
             self.checker.leave_module(node_a)
 
@@ -771,7 +800,8 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a
-            )
+            ),
+            ignore_position=True,
         ):
             self.checker.leave_module(node_a)
 
@@ -823,6 +853,7 @@ class TestCommandResultsIndicatorsChecker(pylint.testutils.CheckerTestCase):
                 msg_id="commandresults-indicators-exists",
                 node=node_a,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_a)
 

@@ -1248,7 +1248,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             [create_integration_object(description_content="test-module")],
             1,
             "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_172/Integrations/integration_0/integration_0_description.md",
-            id="invalid: integration description"
+            id="invalid: integration description",
         ),
         pytest.param([create_script_object()], 0, "", id="valid: script"),
         pytest.param(
@@ -1274,14 +1274,14 @@ def test_IsEntityNameContainExcludedWordValidator(
         pytest.param(
             [
                 create_pack_object(
-                    ["version"],["1.0.1"],release_note_content="test-module"
+                    ["version"], ["1.0.1"], release_note_content="test-module"
                 )
             ],
             1,
             "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_179/ReleaseNotes/1_0_1.md",
             id="invalid: pack release note",
         ),
-    ]
+    ],
 )
 def test_CustomerFacingDocsDisallowedTermsValidator(
     content_items, expected_number_of_failures, expected_error_message

@@ -408,17 +408,6 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     WIZARDS_DIR,
 ]
 
-RN_CONTENT_ENTITY_WITH_STARS = [
-    FileType.CONNECTION,
-    FileType.REPUTATION,
-    FileType.INDICATOR_FIELD,
-    FileType.TRIGGER,
-    FileType.GENERIC_DEFINITION,
-    FileType.GENERIC_MODULE,
-    FileType.GENERIC_TYPE,
-    FileType.GENERIC_FIELD,
-]
-
 DEFAULT_IMAGE = "demisto_sdk/tests/test_files/default_image.png"
 
 DEFAULT_IMAGE_PREFIX = "data:image/png;base64,"

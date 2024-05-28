@@ -15,8 +15,6 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
     RELIABILITY_PARAMETER_NAMES,
-    RN_CONTENT_ENTITY_WITH_STARS,
-    RN_HEADER_BY_FILE_TYPE,
     SUPPORT_LEVEL_HEADER,
     XSOAR_CONTEXT_AND_OUTPUTS_URL,
     XSOAR_SUPPORT,
@@ -2730,19 +2728,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_invalid_header_format(content_type: str, pack_name: str):
-        contents_with_stars = [
-            RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS
-        ]
         error = (
             f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n'
-            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+            "For more information, refer to the following documentation: "
+            "https://xsoar.pan.dev/docs/documentation/release-notes"
         )
-
-        if content_type in contents_with_stars:
-            error = f'Did not find content items headers under "{content_type}" - might be duo to missing "**" symbols in the header.\n{error}'
-        else:
-            error = f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
-        return error
+        return f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
 
     @staticmethod
     @error_code_decorator

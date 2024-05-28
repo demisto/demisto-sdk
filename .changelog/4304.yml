@@ -1,4 +1,4 @@
 changes:
-- description: update-release-notes command now support the right template for incident fields, incident types, and layouts.
-  type: feature
+- description: Fixed the **update-release-notes** command to support the right template for incident fields, incident types, and layouts.
+  type: fix
 pr_number: 4304

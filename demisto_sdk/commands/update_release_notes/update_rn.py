@@ -773,7 +773,7 @@ class UpdateRN:
                         not pack_marketplaces
                         or MarketplaceVersions.XSOAR.value in pack_marketplaces
                     ):
-                        rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>\n"
+                        rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"

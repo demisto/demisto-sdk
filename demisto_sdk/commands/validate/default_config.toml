@@ -74,5 +74,5 @@ warning = []
 
 
 [Custom_Categories]
-select = []
+select = ["RM100"]
 warning = []

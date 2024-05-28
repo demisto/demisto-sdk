@@ -1,0 +1,88 @@
+
+
+from __future__ import annotations
+
+import re
+from typing import Iterable, List, Union, Optional
+
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    ValidationResult,
+)
+
+ContentTypes = Union[Integration, Script, Playbook, Pack]
+
+USER_FILL_SECTIONS = [
+    "FILL IN REQUIRED PERMISSIONS HERE",
+    "version xx",
+    "%%UPDATE%%",
+]
+PACKS_TO_IGNORE = ["HelloWorld", "HelloWorldPremium"]
+DEFAULT_SENTENCES = ["getting started and learn how to build an integration"]
+
+class NoDefaultSectionsLeftReadmeValidator(BaseValidator[ContentTypes]):
+    error_code = "RM115"
+    description = (
+        "Validate that no default section were left in the readme"
+    )
+    error_message = "Replace {0} with a suitable info."
+    related_field = "readme"
+    rationale = """Check that there are no default leftovers such as:
+            1. 'FILL IN REQUIRED PERMISSIONS HERE'.
+            2. unexplicit version number - such as "version xx of".
+            3. Default description belonging to one of the examples integrations
+            """
+    is_auto_fixable = False
+    related_file_type = [RelatedFileType.README]
+    sections: List[str] = []
+
+    def verify_no_default_sections_left(self, content_item: ContentTypes) -> bool:
+        """Check that there are no default leftovers"""
+        self.sections = []
+        self.sections =  self._find_section_in_text(content_item, USER_FILL_SECTIONS) + \
+            self._find_section_in_text(content_item, DEFAULT_SENTENCES, PACKS_TO_IGNORE)
+        if self.sections:
+            return False
+        return True
+    
+    def _find_section_in_text(
+        self, content_item: ContentTypes, sections_list: List[str], ignore_packs: Optional[List[str]] = None, 
+    ) -> list:
+        """
+        Find if sections from the sections list appear in the readme content and returns an error message.
+        Arguments:
+            sections_list (List[str]) - list of strings, each string is a section to find in the text
+            ignore_packs (List[str]) - List of packs and integration names to be ignored
+        Returns:
+            An error message with the relevant sections.
+        """
+        sections = []
+
+        current_pack_name = content_ite
+        if ignore_packs and current_pack_name in ignore_packs:
+            return sections
+
+        for section in sections_list:
+            required_section = re.findall(
+                rf"{section}", content_item.readme.file_content, re.IGNORECASE
+            )
+            if required_section:
+                self.sections.append(section)
+        
+        return sections
+
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(', '.join(self.sections)),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (self.verify_no_default_sections_left(content_item))
+        ]

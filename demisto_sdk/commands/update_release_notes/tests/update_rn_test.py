@@ -78,7 +78,7 @@ class TestRNUpdate:
         """
         expected_result = (
             "\n#### Classifiers\n\n##### Hello World Classifier\n\n- %%UPDATE_RN%%\n"
-            "\n#### Connections\n\n##### Hello World Connections\n\n- %%UPDATE_RN%%\n"
+            "\n#### Connections\n\n##### Hello World Connection\n\n- %%UPDATE_RN%%\n"
             "\n#### Dashboards\n\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%\n"
             "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- %%UPDATE_RN%%\n"
             "\n#### Incident Types\n\n##### Hello World Incident Type\n\n- %%UPDATE_RN%%\n"
@@ -91,7 +91,6 @@ class TestRNUpdate:
             "##### Second Hello World Layout\n\n- %%UPDATE_RN%%\n"
             "\n#### Modules\n\n##### Hello World Generic Module\n\n- %%UPDATE_RN%%\n"
             "\n#### Objects\n\n##### Hello World Generic Definition\n\n- %%UPDATE_RN%%\n"
-            "\n#### Indicator Fields\n\n##### Hello World Indicator Field\n\n- %%UPDATE_RN%%\n"
             "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n"
             "\n#### Reports\n\n##### Hello World Report\n\n- %%UPDATE_RN%%\n"
             "\n#### Scripts\n\n##### Hello World Script\n\n- %%UPDATE_RN%%\n"
@@ -203,8 +202,8 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Objects Fields\n\n##### Sample Generic Field\n\n- %%UPDATE_RN%%\n"
-            "\n#### Objects Types\n\n##### Sample Generic Type\n\n- %%UPDATE_RN%%\n"
+            "\n#### Object Fields\n\n##### Sample Generic Field\n\n- %%UPDATE_RN%%\n"
+            "\n#### Object Types\n\n##### Sample Generic Type\n\n- %%UPDATE_RN%%\n"
         )
 
         pack_path = TestRNUpdate.FILES_PATH + "/generic_testing"
@@ -1560,7 +1559,6 @@ class TestRNUpdateUnit:
 ##### Sample GenericField
 
 - %%UPDATE_RN%%
-
 """
     CHANGED_FILES = {
         ("Cortex XDR Incident", FileType.INCIDENT_TYPE): {

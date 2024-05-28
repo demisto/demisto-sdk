@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_content_path,
+    get_pack_metadata,
     get_yaml,
 )
 from demisto_sdk.commands.generate_docs.common import (
@@ -514,6 +515,18 @@ def generate_integration_doc(
                 docs.extend(
                     [
                         f"This integration was integrated and tested with version xx of {yml_data['name']}.",
+                        "",
+                    ]
+                )
+            # Checks if this integration is the default data source
+            pack_metadata = get_pack_metadata(input_path)
+            default_data_source_id = pack_metadata.get("defaultDataSource")
+            if yml_data.get("commonfields", {}).get("id") == default_data_source_id:
+                docs.extend(
+                    [
+                        "<~XSIAM>",
+                        "This is the default integration for this content pack when configured by the Data Onboarder.",
+                        "</~XSIAM>",
                         "",
                     ]
                 )

@@ -1242,39 +1242,43 @@ def test_IsEntityNameContainExcludedWordValidator(
             [create_integration_object(readme_content="test-module")],
             1,
             "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_171/Integrations/integration_0/README.md",
-            id="invalid: integration readme"
+            id="invalid: integration readme",
         ),
         pytest.param(
             [create_integration_object(description_content="test-module")],
             1,
-            'Found internal terms in a customer-facing documentation: found test-module in Packs/pack_172/Integrations/integration_0/integration_0_description.md',
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_172/Integrations/integration_0/integration_0_description.md",
             id="invalid: integration description"
         ),
         pytest.param([create_script_object()], 0, "", id="valid: script"),
         pytest.param(
-            [create_script_object(readme_content='test-module ')],
+            [create_script_object(readme_content="test-module ")],
             1,
-            'Found internal terms in a customer-facing documentation: found test-module in Packs/pack_174/Scripts/script0/README.md',
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_174/Scripts/script0/README.md",
             id="invalid: script readme",
         ),
         pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
         pytest.param(
-            [create_playbook_object(readme_content='test-module ')],
+            [create_playbook_object(readme_content="test-module ")],
             1,
-            'Found internal terms in a customer-facing documentation: found test-module in Packs/pack_176/Playbooks/playbook-0_README.md',
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_176/Playbooks/playbook-0_README.md",
             id="invalid: playbook readme",
         ),
         pytest.param([create_pack_object()], 0, "", id="valid: pack"),
         pytest.param(
-            [create_pack_object(readme_text='test-module ')],
+            [create_pack_object(readme_text="test-module ")],
             1,
-            'Found internal terms in a customer-facing documentation: found test-module in Packs/pack_178/README.md',
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_178/README.md",
             id="invalid: pack readme",
         ),
         pytest.param(
-            [create_pack_object(['version'],['1.0.1'],release_note_content='test-module')],
+            [
+                create_pack_object(
+                    ["version"],["1.0.1"],release_note_content="test-module"
+                )
+            ],
             1,
-            'Found internal terms in a customer-facing documentation: found test-module in Packs/pack_179/ReleaseNotes/1_0_1.md',
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_179/ReleaseNotes/1_0_1.md",
             id="invalid: pack release note",
         ),
     ]

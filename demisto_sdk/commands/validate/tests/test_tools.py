@@ -244,7 +244,6 @@ def create_script_object(
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
-    additional_params = {}
     if pack_info:
         pack.set_data(**pack_info)
     if readme_content is not None:

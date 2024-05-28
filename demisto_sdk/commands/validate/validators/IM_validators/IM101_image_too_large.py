@@ -18,7 +18,7 @@ ContentTypes = Integration
 
 class ImageTooLargeValidator(BaseValidator[ContentTypes]):
     error_code = "IM101"
-    description = "Checks that the image file dimensions are matching the requirements."
+    description = "Checks that the image file size are matching the requirements."
     rationale = "Image needs to fit its place in the UI. For more information see: https://xsoar.pan.dev/docs/integrations/integration-logo"
     error_message = "You've created/modified a yml or package with a large sized image. Please make sure to change the image dimensions at: {0}."
     related_field = "image"

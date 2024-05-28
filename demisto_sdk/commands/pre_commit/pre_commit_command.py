@@ -141,10 +141,14 @@ class PreCommitRunner:
             command=["run", "-a", hook_id],
         )
 
-        if process.stdout:
-            logger.info("%s", process.stdout)
-        if process.stderr:
-            logger.error("%s", process.stderr)
+        if stdout_text := process.stdout:
+            if isinstance(process.stdout, tuple):
+                stdout_text = "\n".join(process.stdout)
+            logger.info("%s", stdout_text)
+        if stderr_text := process.stderr:
+            if isinstance(process.stderr, tuple):
+                stdout_text = "\n".join(process.stderr)
+            logger.error("%s", stderr_text)
         return process.returncode
 
     @staticmethod

@@ -558,9 +558,7 @@ def generate_integration_doc(
             if yml_data.get("commonfields", {}).get("id") == default_data_source_id:
                 docs.extend(
                     [
-                        "<~XSIAM>",
-                        "This is the default integration for this content pack when configured by the Data Onboarder.",
-                        "</~XSIAM>",
+                        "This is the default integration for this content pack when configured by the Data Onboarder in Cortex XSIAM.",
                         "",
                     ]
                 )

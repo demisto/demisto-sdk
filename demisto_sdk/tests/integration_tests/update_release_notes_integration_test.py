@@ -380,6 +380,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
         + "#### Incident Fields\n\n"
         + "##### City\n\n"
         + "- %%UPDATE_RN%%\n"
+        + "\n"
     )
 
     input_rn = (

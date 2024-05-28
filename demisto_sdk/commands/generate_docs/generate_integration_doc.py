@@ -1264,25 +1264,27 @@ def add_access_data_of_type_credentials(
     )
 
 
-def get_integration_commands(yaml_data: dict[str, Any]) -> list[dict[str, Any]]:
+def get_integration_commands(yaml_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
     Helper function to return a list of integration commands.
     Integration commands that are marked as deprecated will not be
     returned.
 
     Args:
-    - `yml_data` (``dict[str, Any]``): The integration YAML as a dictionary.
+    - `yml_data` (``Dict[str, Any]``): The integration YAML as a dictionary.
 
     Returns:
-    - `list[dict[str, Any]]` of integration commands.
+    - `List[Dict[str, Any]]` of integration commands.
     """
 
-    return filter(
-        lambda cmd: not cmd.get("deprecated", False), yaml_data[SCRIPT]["commands"]
+    return list(
+        filter(
+            lambda cmd: not cmd.get("deprecated", False), yaml_data[SCRIPT]["commands"]
+        )
     )
 
 
-def get_commands_sections(doc_text: str) -> dict[str, tuple]:
+def get_commands_sections(doc_text: str) -> Dict[str, Tuple[int, int]]:
     """
     Helper function that takes the integration README text
     and returns a map of the commands and the start, end lines.

@@ -173,6 +173,9 @@ SKIPPED_FILES = [
     "DemistoClassApiModule.py",
 ]
 
+SKIPPED_PATHS = [
+    "Packs/myPack", "myPack"
+]
 
 class OldValidateManager:
     def __init__(
@@ -2493,6 +2496,8 @@ class OldValidateManager:
         old_format_files: set = set()
         valid_types: set = set()
         for path in file_set:
+            if self.include_untracked and any(skipped_path in str(path) for skipped_path in SKIPPED_PATHS):
+                continue
             old_path = None
             if isinstance(path, tuple):
                 file_path = str(path[1])

@@ -1538,11 +1538,15 @@ class TestRNUpdateUnit:
     CURRENT_RN = """
 #### Incident Types
 
-- **Cortex XDR Incident**
+##### Cortex XDR Incident
+
+- %%UPDATE_RN%%
 
 #### Incident Fields
 
-- **XDR Alerts**
+##### XDR Alerts
+
+- %%UPDATE_RN%%
 
 #### Object Types
 

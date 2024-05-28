@@ -63,7 +63,6 @@ def create_integration_object(
     readme_content: Optional[str] = None,
     name: Optional[str] = None,
     code: Optional[str] = None,
-    name: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -221,7 +220,6 @@ def create_script_object(
     name: Optional[str] = None,
     code: Optional[str] = None,
     test_code: Optional[str] = None,
-    name: Optional[str] = None,
 ) -> Script:
     """Creating an script object with altered fields from a default script yml structure.
 

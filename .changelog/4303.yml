@@ -1,0 +1,4 @@
+changes:
+- description: Improved implementation of finding the commands' sections within the integration README.md
+  type: fix
+pr_number: 4303

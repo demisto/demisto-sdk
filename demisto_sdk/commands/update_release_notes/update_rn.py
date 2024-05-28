@@ -758,22 +758,22 @@ class UpdateRN:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
-                    rn_desc += f"- {desc}"
+                    rn_desc += f"- New: {desc}"
                 if _type in SIEM_ONLY_ENTITIES or content_name.replace(
                     " ", ""
                 ).lower().endswith(EVENT_COLLECTOR.lower()):
-                    rn_desc += " <~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>"
+                    rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>"
                 elif from_version and _type not in SIEM_ONLY_ENTITIES:
                     pack_marketplaces = self.get_pack_metadata().get(
                         "marketplaces", [MarketplaceVersions.XSOAR.value]
                     )
                     if MarketplaceVersions.MarketplaceV2.value in pack_marketplaces:
-                        rn_desc += " <~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
+                        rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
                     if (
                         not pack_marketplaces
                         or MarketplaceVersions.XSOAR.value in pack_marketplaces
                     ):
-                        rn_desc += f" <~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>\n"
+                        rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>\n"
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"

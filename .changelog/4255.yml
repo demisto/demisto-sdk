@@ -1,0 +1,4 @@
+changes:
+- description: Refactored validation IM111, Verify the integration image is within the allowed dimensions.
+  type: feature
+pr_number: 4255

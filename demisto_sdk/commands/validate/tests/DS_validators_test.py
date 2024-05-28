@@ -61,3 +61,47 @@ def test_DescriptionMissingInBetaIntegrationValidator_is_valid(
 
     is_valid = DescriptionMissingInBetaIntegrationValidator().is_valid([integration])
     assert result_len == len(is_valid)
+
+
+def test_IsDescriptionContainsDemistoWordValidator_is_valid():
+    """
+    Given
+    - Integration with a valid description.
+    When
+    - Calling the IsContainDemistoWordValidator is_valid function.
+    Then
+    - Should pass.
+
+    """
+    from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
+        IsDescriptionContainsDemistoWordValidator,
+    )
+
+    integration = create_integration_object()
+    integration.description_file.file_content_str = "valid description\n"
+    is_valid = IsDescriptionContainsDemistoWordValidator().is_valid([integration])
+    assert len(is_valid) == 0
+
+
+def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
+    """
+    Given
+    - Integration with invalid description that contains the word 'demisto'.
+    When
+    - Calling the IsContainDemistoWordValidator is_valid function.
+    Then
+    - Make that the right error message is returned.
+    """
+    from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
+        IsDescriptionContainsDemistoWordValidator,
+    )
+
+    integration = create_integration_object()
+    integration.description_file.file_content_str = (
+        " demisto.\n demisto \n valid description\ndemisto"
+    )
+    is_valid = IsDescriptionContainsDemistoWordValidator().is_valid([integration])
+    assert (
+        is_valid[0].message
+        == "Invalid keyword 'demisto' was found in lines: 1, 2, 4. For more information about the description file See: https://xsoar.pan.dev/docs/documentation/integration-description."
+    )

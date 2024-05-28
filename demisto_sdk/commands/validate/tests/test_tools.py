@@ -61,6 +61,7 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    name: Optional[str] = None,
     code: Optional[str] = None,
     name: Optional[str] = None,
 ) -> Integration:
@@ -217,6 +218,7 @@ def create_script_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
+    name: Optional[str] = None,
     code: Optional[str] = None,
     test_code: Optional[str] = None,
     name: Optional[str] = None,

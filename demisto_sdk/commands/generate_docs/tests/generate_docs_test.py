@@ -971,6 +971,9 @@ class TestGenerateIntegrationDoc:
     def teardown_class(cls):
         cls.rm_readme()
 
+    def _get_function_name(self) -> str:
+        return inspect.currentframe().f_back.f_code.co_name
+
     def test_generate_integration_doc(self, mocker: MockerFixture, tmp_path: Path):
         """
         Given
@@ -1108,6 +1111,126 @@ class TestGenerateIntegrationDoc:
                     "| API Token | The API key to use for the connection. | False |"
                     in readme_data
                 )
+
+    def test_add_integration_arg(
+        self, mocker: MockerFixture, git_repo: Repo, tmp_path: Path
+    ):
+        """
+        Test addition of a command argument to an already existing
+        integration.
+
+        Given:
+        - A version-controlled content repo.
+        - An integration README.md with command example output.
+
+        When:
+        - Passing the force flag.
+        - No command examples are supplied to generate_integration_doc.
+
+        Then:
+        - The resulting README doesn't have the command examples sections.
+        """
+
+        pack_name = integration_name = "Akamai_WAF"
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+
+        yml_code_path = Path(
+            TEST_FILES,
+            "test_force_existing_integration_no_input_cmd_examples",
+            f"{integration_name}.yml",
+        )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(
+            TEST_FILES,
+            "test_force_existing_integration_no_input_cmd_examples",
+            INTEGRATIONS_README_FILE_NAME,
+        )
+
+        # Create Pack and add/commit to git
+        git_repo.create_pack(pack_name).create_integration(
+            name=integration_name, readme=readme_path.read_text(), yml=yml_code
+        )
+        git_repo.git_util.repo.index.add(git_repo.packs[0].path)
+        git_repo.git_util.repo.index.commit(f"Added {pack_name}")
+
+        # Create a new branch and make changes to YML
+        contrib_branch = git_repo.git_util.repo.create_head(self._get_function_name())
+        git_repo.git_util.repo.head.reference = contrib_branch
+        updated_yml_code_path = Path(
+            TEST_FILES,
+            "test_force_existing_integration_no_input_cmd_examples",
+            f"{integration_name}_updated.yml",
+        )
+        shutil.copyfile(
+            src=updated_yml_code_path, dst=git_repo.packs[0].integrations[0].yml.path
+        )
+
+        generate_integration_doc(git_repo.packs[0].integrations[0].yml.path)
+
+        actual_doc = git_repo.packs[0].integrations[0].readme.read().splitlines()
+        assert "#### Command example" in actual_doc
+        assert "#### Context Example" in actual_doc
+        assert (
+            actual_doc[1078]
+            == "| allowed_input_type_param | Enum Found as the last part of Change.allowedInput[].update hypermedia URL.supported values include:change-management-ack,lets-encrypt-challenges-completed,post-verification-warnings-ack,pre-verification-warnings-ack. Possible values are: change-management-ack, lets-encrypt-challenges-completed, post-verification-warnings-ack, pre-verification-warnings-ack. Default is post-verification-warnings-ack. | Optional | "
+        )
+
+    def test_force_existing_integration_no_input_cmd_examples(
+        self, mocker: MockerFixture, git_repo: Repo
+    ):
+        """
+        Test the --force flag with an already existing integration
+        README that has command examples output in it.
+
+        Given:
+        - A version-controlled content repo.
+        - An integration README.md with command example output.
+
+        When:
+        - Passing the force flag.
+        - No command examples are supplied to generate_integration_doc.
+
+        Then:
+        - The resulting README doesn't have the command examples sections.
+        """
+
+        pack_name = integration_name = "Akamai_WAF"
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+
+        yml_code_path = Path(
+            TEST_FILES, self._get_function_name(), f"{integration_name}.yml"
+        )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(
+            TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
+        )
+
+        # Create Pack and add/commit to git
+        git_repo.create_pack(pack_name).create_integration(
+            name=integration_name, readme=readme_path.read_text(), yml=yml_code
+        )
+        git_repo.git_util.repo.index.add(git_repo.packs[0].path)
+        git_repo.git_util.repo.index.commit(f"Added {pack_name}")
+
+        # Create a new branch and make changes to YML
+        contrib_branch = git_repo.git_util.repo.create_head(self._get_function_name())
+        git_repo.git_util.repo.head.reference = contrib_branch
+        updated_yml_code_path = Path(
+            TEST_FILES, self._get_function_name(), f"{integration_name}_updated.yml"
+        )
+        shutil.copyfile(
+            src=updated_yml_code_path, dst=git_repo.packs[0].integrations[0].yml.path
+        )
+
+        generate_integration_doc(git_repo.packs[0].integrations[0].yml.path, force=True)
+
+        actual_doc = git_repo.packs[0].integrations[0].readme.read().splitlines()
+        assert "#### Command example" not in actual_doc
+        assert "#### Context Example" not in actual_doc
 
 
 class TestGetCommandExamples:

@@ -83,7 +83,7 @@ def create_integration_object(
 
     additional_params = {}
 
-    if description_content is not None:
+    if description_content:
         additional_params["description"] = description_content
 
     if readme_content is not None:

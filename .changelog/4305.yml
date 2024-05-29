@@ -1,4 +1,0 @@
-changes:
-- description: Added XSIAM prefix for the `defaultDataSource` integration README.
-  type: feature
-pr_number: 4305

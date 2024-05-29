@@ -55,7 +55,7 @@ class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
         ]
 
     def format_error_message(self, found_terms):
-        return ", ".join(
+        return "\n".join(
             f"{', '.join(found_terms[file])} in {file}" for file in found_terms
         )
 

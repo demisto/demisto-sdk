@@ -39,7 +39,7 @@ class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        found_terms = {}
+        found_terms: dict[str, str] = {}
         return [
             ValidationResult(
                 validator=self,

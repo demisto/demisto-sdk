@@ -72,12 +72,9 @@ class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
         return found_terms
 
     def get_related_files(self, content_item):
+        related_files = [content_item.readme]
         if isinstance(content_item, Integration):
-            return [content_item.readme, content_item.description_file]
+            related_files.append(content_item.description_file)
         elif isinstance(content_item, Pack):
-            return [content_item.readme, content_item.release_note]
-        elif isinstance(content_item, (Playbook, Script)):
-            return [
-                content_item.readme,
-            ]
-        raise ValueError(f"unexpected content item type {content_item.content_type}")
+            related_files.append(content_item.release_note)
+        return related_files

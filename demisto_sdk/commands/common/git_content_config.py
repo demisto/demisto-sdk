@@ -229,7 +229,7 @@ class GitContentConfig:
         """
         if not GitContentConfig.NOTIFIED_PRIVATE_REPO:
             provider = "github" if self.git_provider == GitProvider.GitHub else "gitlab"
-            token = (
+            token_name = (
                 GitCredentials.ENV_GITHUB_TOKEN_NAME
                 if provider == "github"
                 else GitCredentials.ENV_GITLAB_TOKEN_NAME
@@ -240,7 +240,7 @@ class GitContentConfig:
             logger.info(
                 f"[yellow]If you are using a private gitlab repo, "
                 f"configure one of the following environment variables: "
-                f"`{token}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`[/yellow] "
+                f"`{token_name}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`[/yellow] "
             )
             GitContentConfig.NOTIFIED_PRIVATE_REPO = True
 

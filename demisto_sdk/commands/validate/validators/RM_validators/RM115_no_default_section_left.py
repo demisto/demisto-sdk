@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Union, Optional
+from typing import Iterable, List, Optional, Union
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -51,7 +51,7 @@ class NoDefaultSectionsLeftReadmeValidator(BaseValidator[ContentTypes]):
         return True
     
     def _find_section_in_text(
-        self, content_item: ContentTypes, sections_list: List[str], ignore_packs: Optional[List[str]] = None, 
+        self, content_item: ContentTypes, sections_list: List[str], ignore_packs: Optional[List[str]] = None,
     ) -> list:
         """
         Find if sections from the sections list appear in the readme content and returns an error message.

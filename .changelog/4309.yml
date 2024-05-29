@@ -1,0 +1,4 @@
+changes:
+- description: Added exclusion for certain file paths when using `validate` with a `--include-untracked` flag.
+  type: feature
+pr_number: 4309

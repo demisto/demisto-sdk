@@ -109,6 +109,7 @@ class GitContentConfig:
                 else GitContentConfig.GITLAB
             )
         self.repo_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(self.repo_hostname, self.repo_hostname)  # type: ignore[arg-type]
+
         parsed_git = GitContentConfig._get_repository_properties()
 
         if parsed_git is None:
@@ -190,6 +191,7 @@ class GitContentConfig:
             or (self._search_gitlab_repo(self.repo_hostname, repo_name=repo_name))
             or (None, None)
         )
+
         if self.git_provider == GitProvider.GitLab and gitlab_id is None:
             self._print_private_repo_warning_if_needed()
             self.git_provider = GitProvider.GitHub
@@ -207,7 +209,6 @@ class GitContentConfig:
                 if organization and repo_name
                 else self.current_repository
             )
-
             github_hostname, github_repo = (
                 self._search_github_repo(hostname, self.current_repository)
                 or self._search_github_repo(self.repo_hostname, current_repo)
@@ -323,7 +324,6 @@ class GitContentConfig:
             If not found - `None`.
 
         """
-
         if (
             not gitlab_hostname
             or "github" in gitlab_hostname

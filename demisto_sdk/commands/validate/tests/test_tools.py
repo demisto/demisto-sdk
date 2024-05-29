@@ -76,13 +76,13 @@ def create_integration_object(
     """
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
-    
+
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
 
     additional_params = {}
-    
+
     if description_content is not None:
         additional_params["description"] = description_content
 

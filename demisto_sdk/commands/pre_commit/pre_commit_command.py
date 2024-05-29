@@ -147,7 +147,7 @@ class PreCommitRunner:
             logger.info("%s", stdout_text)
         if stderr_text := process.stderr:
             if isinstance(process.stderr, tuple):
-                stdout_text = "\n".join(process.stderr)
+                stderr_text = "\n".join(process.stderr)
             logger.error("%s", stderr_text)
         return process.returncode
 

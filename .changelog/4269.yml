@@ -1,4 +1,4 @@
 changes:
-- description: More detailed error message with action items for validation RM108.
+- description: detailed the error message of RM108 (legacy validate), adding action items.
   type: internal
 pr_number: 4269

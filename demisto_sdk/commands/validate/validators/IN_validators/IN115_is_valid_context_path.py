@@ -22,7 +22,9 @@ class IsValidContextPathValidator(BaseValidator[ContentTypes]):
         "Incorrect 'contextPath' formats can lead to errors or unexpected behavior. "
         "For more details, see https://xsoar.pan.dev/docs/integrations/context-and-outputs"
     )
-    error_message = "The following commands include outputs with missing contextPath, please make sure to add: {0}."
+    error_message = (
+        "Every integration output requires a contextPath field. It's missing from {0}."
+    )
     related_field = "contextPath"
     is_auto_fixable = False
     expected_git_statuses = [

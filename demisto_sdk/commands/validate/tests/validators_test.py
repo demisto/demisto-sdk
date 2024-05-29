@@ -655,3 +655,14 @@ def test_description():
     assert not [
         validator for validator in get_all_validators() if not validator.description
     ]
+
+
+def test_wording():
+    """
+    Tests that validation errors do not include invalid words
+    """
+    assert not [
+        validator.error_code
+        for validator in get_all_validators()
+        if "please" in validator.error_message
+    ], "Do not use the word `please` in error messages"

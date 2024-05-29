@@ -3448,9 +3448,9 @@ class Errors:
     @staticmethod
     def invalid_readme_image_absolute_path_error(path):
         return (
-            f"The following image link seems to be broken, please repair it:\n{path}."
-            "If you are changing an image name or location? first, merge the new image to master, "
-            "then make a 2nd PR linking to the new image in master."
+            f"The following link is broken:\n{path}."
+            "If changing an image in the demisto/content repository: "
+            "merge the image change to master, and in a succeeding PR, change the markdown."
         )
 
     @staticmethod

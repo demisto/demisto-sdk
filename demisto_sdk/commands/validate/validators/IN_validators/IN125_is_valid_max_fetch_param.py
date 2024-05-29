@@ -21,9 +21,9 @@ class IsValidMaxFetchParamValidator(BaseValidator[ContentTypes]):
         "To maintain optimal load in the platform, the maximal number of incidents per fetch is limited. "
         "For more details, see https://xsoar.pan.dev/docs/integrations/fetching-incidents#fetch-limit"
     )
-    error_message = "The integration is a fetch integration with max_fetch param, please make sure the max_fetch param has a default value."
+    error_message = "The max_fetch parameter must have a default value."
     fix_message = (
-        f"Added a 'defaultvalue = {DEFAULT_MAX_FETCH}' to the max_fetch param."
+        f"Added 'defaultvalue = {DEFAULT_MAX_FETCH}' to the max_fetch parameter."
     )
     related_field = "defaultvalue"
     is_auto_fixable = True

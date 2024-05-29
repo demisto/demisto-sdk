@@ -19,9 +19,9 @@ ContentTypes = Integration
 
 class DefaultImageValidator(BaseValidator[ContentTypes]):
     error_code = "IM106"
-    description = "Checks if the integration has an image other than the default ones."
-    rationale = "If an image is provided, it must not be the default ones."
-    error_message = "The integration is using the default image at {0}, please change to the integration image."
+    description = "Checks if the integration has an image other than the default."
+    rationale = "Images make it easier for users to find integrations."
+    error_message = "The integration is using the default image at {0}. Change it to one that represents the integration."
     related_field = "image"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.IMAGE]
@@ -30,17 +30,12 @@ class DefaultImageValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(
-                    DEFAULT_IMAGE,
-                ),
+                message=self.error_message.format(DEFAULT_IMAGE),
                 content_object=content_item,
             )
             for content_item in content_items
             if (
                 content_item.image.load_image()
-                in [
-                    DEFAULT_IMAGE_BASE64,
-                    DEFAULT_DBOT_IMAGE_BASE64,
-                ]
+                in [DEFAULT_IMAGE_BASE64, DEFAULT_DBOT_IMAGE_BASE64]
             )
         ]

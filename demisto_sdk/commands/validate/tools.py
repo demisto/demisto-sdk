@@ -92,7 +92,9 @@ def extract_non_approved_tags(
     return non_approved_tags
 
 
-def validate_categories_approved(categories: list, approved_list: list):
+def validate_categories_approved(
+    categories: List[str], approved_list: List[str]
+) -> bool:
     """
     Check that the pack categories contain only approved categories.
 
@@ -103,10 +105,7 @@ def validate_categories_approved(categories: list, approved_list: list):
     Returns:
         bool: True if all the pack categories is from the approved list. Otherwise, return False.
     """
-    for category in categories:
-        if category not in approved_list:
-            return False
-    return True
+    return set(categories).issubset(approved_list)
 
 
 def get_default_output_description():

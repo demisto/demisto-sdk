@@ -21,7 +21,7 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
         "Changing 'subtype' can break backward compatibility. "
         "For 'subtype' info, see: https://xsoar.pan.dev/docs/integrations/yaml-file#script"
     )
-    error_message = "Possible backwards compatibility break, You've changed the {0} subtype from {1} to {2}, please undo."
+    error_message = "Possible backwards compatibility break, the {0} subtype was changed from {1} to {2}."
     related_field = "subtype"
     fix_message = "Changing subtype back to ({0})."
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]

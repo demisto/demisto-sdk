@@ -1,4 +1,0 @@
-changes:
-- description: ֹConverted the DS107 validation to the new format. The validation verifies the integration description doesn't contain the word 'demisto'.
-  type: feature
-pr_number: 4296

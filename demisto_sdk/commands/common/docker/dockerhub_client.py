@@ -431,7 +431,7 @@ class DockerHubClient:
                 f"The docker image {docker_image} does not have any tags"
             )
 
-        max_version_tag = Version('0.0.0')
+        max_version_tag = Version("0.0.0")
         for tag in raw_image_tags:
             try:
                 version_tag = Version(tag)

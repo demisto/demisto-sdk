@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
 )
-from demisto_sdk.commands.common.tools import logger
+from demisto_sdk.commands.common.tools import is_external_repository, logger
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -114,8 +114,10 @@ def docker_tag_to_runfiles(
         if obj:
             for image in obj.docker_images:
                 tags_to_files[image].append((file, obj))
-
-    return with_native_tags(tags_to_files, docker_flags, docker_image)
+    if is_external_repository():
+        return tags_to_files
+    else:
+        return with_native_tags(tags_to_files, docker_flags, docker_image)
 
 
 @functools.lru_cache(maxsize=512)

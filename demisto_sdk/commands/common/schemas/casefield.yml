@@ -14,24 +14,16 @@ mapping:
   name:
     type: str
     required: true
-  name_x2:
-    type: str
   prettyName:
     type: str
     required: false
   ownerOnly:
     type: bool
-  placeholder:
-    type: str
   description:
-    type: str
-  fieldCalcScript:
     type: str
   cliName:
     type: str
     required: true
-  cliName_x2:
-    type: str
   type:
     type: str
     required: true
@@ -86,10 +78,6 @@ mapping:
   content:
     type: bool
   unsearchable:
-    type: bool
-  extractIndicatorTypesIDs:
-    type: any
-  isExtractingSpecificIndicatorTypes:
     type: bool
   itemVersion:
     type: str

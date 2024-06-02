@@ -1614,7 +1614,6 @@ class TestIntegrationValidation:
         - Ensure failure message on hidden params.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(
             IntegrationValidator,
             "has_no_fromlicense_key_in_contributions_integration",

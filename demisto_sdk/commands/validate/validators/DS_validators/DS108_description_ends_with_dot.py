@@ -1,0 +1,137 @@
+
+from __future__ import annotations
+
+from typing import ClassVar, Dict, Iterable, List, Union
+
+from demisto_sdk.commands.common.constants import VALID_SENTENCE_SUFFIX, GitStatuses
+from demisto_sdk.commands.common.tools import is_string_ends_with_url
+from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.validate.validators.base_validator import (
+        BaseValidator,
+        FixResult,
+        ValidationResult,
+)
+
+ContentTypes = Union[Integration, Script]
+
+
+class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
+    error_code = "DS108"
+    description = "Ensure that all yml's description fields ends with a dot."
+    rationale = "To ensure high documentation standards."
+    error_message = ""
+    fix_message = 'Description must end with a period ("."), fix the following:\n{0}'
+    related_field = "description, comment"
+    is_auto_fixable = True
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
+    lines_without_dots: ClassVar[Dict[str, dict]] = {}
+
+    
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        results: List[ValidationResult] = []
+        for content_item in content_items:
+            lines_with_missing_dot: str = ""
+            if (stripped_description := strip_description(content_item.description or "")) and is_invalid_description_sentence(stripped_description):
+                self.lines_without_dots[content_item.name]["description"] = f"{stripped_description}."
+                lines_with_missing_dot = f"{lines_with_missing_dot}The file's description field is missing a '.' in the end of the sentence."
+            if isinstance(content_item, Script):
+                lines_with_missing_dot_dict = {}
+                if args_and_context_lines_with_missing_dot := is_line_ends_with_dot(content_item, lines_with_missing_dot_dict):
+                    lines_with_missing_dot = f"{lines_with_missing_dot}\n{args_and_context_lines_with_missing_dot}"
+                    self.lines_without_dots[content_item.name] = lines_with_missing_dot_dict
+            else:
+                for command in content_item.commands:
+                    lines_with_missing_dot_dict = {}
+                    if current_command := is_line_ends_with_dot(command, lines_with_missing_dot_dict):
+                        lines_with_missing_dot += (
+                            f"- In command {command.name}:\n{current_command}"
+                        )
+                        self.lines_without_dots[content_item.name][command.name] = lines_with_missing_dot_dict
+        if lines_with_missing_dot:
+            results.append(ValidationResult(
+                validator=self,
+                message=self.error_message.format(lines_with_missing_dot),
+                content_object=content_item,
+            ))
+        return results
+    
+
+    def fix(self, content_item: ContentTypes) -> FixResult:
+        content_item_malformed_lines = self.lines_without_dots[content_item.name]
+        if "description" in content_item_malformed_lines:
+            content_item.description = f"{content_item.description}."
+        if isinstance(content_item, Script):
+            if malformed_args := content_item_malformed_lines.get("args", []):
+                for arg in content_item.args:
+                    if arg.name in malformed_args:
+                        arg.description = f"{arg.description}."
+                lines_with_missing_dot_dict = {}
+                if args_and_context_lines_with_missing_dot := is_line_ends_with_dot(content_item, lines_with_missing_dot_dict):
+                    lines_with_missing_dot = f"{lines_with_missing_dot}\n{args_and_context_lines_with_missing_dot}"
+                    self.lines_without_dots[content_item.name] = lines_with_missing_dot_dict
+            else:
+        return FixResult(
+            validator=self,
+            message=self.fix_message,
+            content_object=content_item,
+        )
+            
+
+
+def strip_description(description: str):
+    """
+    Args:
+        description: a description string.
+    Returns: the description stripped from quotes mark if they appear both in the beginning and in the end of the string.
+    """
+    description = description.strip()
+    return (
+        description.strip('"')
+        if description.startswith('"') and description.endswith('"')
+        else description.strip("'")
+        if description.startswith("'") and description.endswith("'")
+        else description
+    )
+    
+def is_invalid_description_sentence(stripped_description: str) -> bool:
+        """
+        Args:
+            stripped_description: (str) a description or comment section from script / integration yml.
+        Return True (the description string is invalid) if all of the following conditions are met:
+        - The description string exist and not empty.
+        - The description string doesn't end with a dot, question mark or exclamation mark.
+        - The description string doesn't end with an URL.
+        - The description string doesn't end with a dot inside brackets or quote.
+        """
+        return all(
+            [
+                stripped_description,
+                not any(
+                    [
+                        stripped_description.endswith(suffix)
+                        for suffix in VALID_SENTENCE_SUFFIX
+                    ]
+                ),
+                not is_string_ends_with_url(stripped_description),
+            ]
+        )
+
+def is_line_ends_with_dot(obj_to_test: Command | Script, lines_with_missing_dot_dict: dict):
+        line_with_missing_dot = ""
+        args_with_missing_dots = []
+        context_path_with_missing_dots = []
+        for arg in obj_to_test.args:
+            stripped_description = strip_description(arg.description)
+            if is_invalid_description_sentence(stripped_description):
+                line_with_missing_dot += f"The argument {arg.name} description should end with a period.\n"
+                args_with_missing_dots.append(arg.name)
+        for output in obj_to_test.outputs:
+            stripped_description = strip_description(output.description or "")
+            if is_invalid_description_sentence(stripped_description):
+                line_with_missing_dot += f"The context path {output.contextPath} description should end with a period.\n"
+                context_path_with_missing_dots.append(output.contextPath)
+        lines_with_missing_dot_dict["args"] = args_with_missing_dots
+        lines_with_missing_dot_dict["contextPath"] = context_path_with_missing_dots
+        
+        return line_with_missing_dot

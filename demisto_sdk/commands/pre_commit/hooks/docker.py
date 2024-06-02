@@ -115,7 +115,10 @@ def docker_tag_to_runfiles(
                 tags_to_files[image].append((file, obj))
 
     docker_flags = set(docker_image_flag.split(","))
-    is_native_image = any(DockerImageFlagOption.NATIVE in docker_flag for docker_flag in docker_flags)
+    is_native_image = any(
+        DockerImageFlagOption.NATIVE.value in docker_flag
+        for docker_flag in docker_flags
+    )
     if is_native_image:
         return with_native_tags(tags_to_files, docker_flags, docker_image)
     else:

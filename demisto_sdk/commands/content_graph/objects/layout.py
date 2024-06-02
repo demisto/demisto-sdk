@@ -60,7 +60,8 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
                     and not _dict["id"].startswith("incident")
                     and not _dict["id"].startswith("indicator")
                 ):
-                    return True
+                    if _dict["group"] in ("incident", "indicator"):
+                        return True
         return False
 
     def metadata_fields(self) -> Set[str]:

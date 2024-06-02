@@ -2663,7 +2663,6 @@ class TestFindContentType:
         git_repo.make_file(file_name=layout_json_str, file_content=content)
 
         mocker.patch.object(Layout, "match", return_value=False)
-        mocker.patch.object(CaseLayout, "match", return_value=False)
         with pytest.raises(ValueError):
             ContentType.by_schema(Path(layout_json_path))
 
@@ -2701,10 +2700,7 @@ class TestFindContentType:
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
-        from demisto_sdk.commands.content_graph.objects import (
-            CaseLayoutRule,
-            LayoutRule,
-        )
+        from demisto_sdk.commands.content_graph.objects import LayoutRule
 
         layout_rule_json_str = "layout_rule.json"
         layout_rule_json_path = git_repo.path / Path(layout_rule_json_str)
@@ -2715,7 +2711,6 @@ class TestFindContentType:
         git_repo.make_file(file_name=layout_rule_json_str, file_content=content)
 
         mocker.patch.object(LayoutRule, "match", return_value=False)
-        mocker.patch.object(CaseLayoutRule, "match", return_value=False)
         with pytest.raises(ValueError):
             ContentType.by_schema(Path(layout_rule_json_path))
 

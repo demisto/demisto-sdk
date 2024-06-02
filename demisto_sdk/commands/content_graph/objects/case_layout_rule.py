@@ -25,5 +25,6 @@ class CaseLayoutRule(ContentItemXSIAM, content_type=ContentType.CASE_LAYOUT_RULE
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         if "rule_id" in _dict and path.suffix == ".json":
-            return True
+            if "incidents_filter" in _dict:
+                return True
         return False

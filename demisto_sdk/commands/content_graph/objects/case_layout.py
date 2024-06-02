@@ -10,7 +10,10 @@ class CaseLayout(Layout, content_type=ContentType.CASE_LAYOUT):  # type: ignore[
         if "group" in _dict and Path(path).suffix == ".json":
             if "cliName" not in _dict:
                 if "id" not in _dict or (
-                    isinstance(_dict["id"], str) and not _dict["id"].startswith("case")
+                        isinstance(_dict["id"], str)
+                        and not _dict["id"].startswith("incident")
+                        and not _dict["id"].startswith("indicator")
                 ):
-                    return True
+                    if _dict["group"] == "case":
+                        return True
         return False

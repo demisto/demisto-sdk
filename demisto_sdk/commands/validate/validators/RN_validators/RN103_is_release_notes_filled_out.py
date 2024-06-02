@@ -17,9 +17,9 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
     error_code = "RN103"
     description = "Validate that the pack contains a full release note file."
     rationale = "Meaningful, complete documentations make it easier for users to use the content."
-    error_message = "Please finish filling out the release notes. For common troubleshooting steps, please "\
-                    "review the documentation found here: "\
-                    "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
+    error_message = ("Please complete the release notes and ensure all placeholders are filled in."
+                     "For common troubleshooting steps, please review the documentation found here: "
+                     "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips")
     related_field = "release_note"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]

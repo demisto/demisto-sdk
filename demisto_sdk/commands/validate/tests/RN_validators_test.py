@@ -35,8 +35,8 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_not
                 ),  # shouldn't pass as it has an invalid release note
             ],
             3,
-            ["Please finish filling out the release notes. For common troubleshooting steps, please "
-             "review the documentation found here: "
+            ["Please complete the release notes and ensure all placeholders are filled in."
+             "For common troubleshooting steps, please review the documentation found here: "
              "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"],
         ),
     ],

@@ -1987,8 +1987,8 @@ def test_FileNameHasSeparatorsValidator_is_valid(
 
     if ValidationResultList:
         assert ValidationResultList[0].message == expected_messages
-        
-        
+
+
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msg",
     [

@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
 )
-from demisto_sdk.commands.common.tools import is_external_repository, logger
+from demisto_sdk.commands.common.tools import logger
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )

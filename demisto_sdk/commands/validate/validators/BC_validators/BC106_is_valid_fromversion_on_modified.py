@@ -14,7 +14,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Script, Mapper, IncidentType, IncidentField, CaseField]
+ContentTypes = Union[
+    Integration, Script, Mapper, IncidentType, IncidentField, CaseField
+]
 
 
 class IsValidFromversionOnModifiedValidator(BaseValidator[ContentTypes]):

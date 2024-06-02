@@ -2652,7 +2652,7 @@ class TestFindContentType:
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
-        from demisto_sdk.commands.content_graph.objects import CaseLayout, Layout
+        from demisto_sdk.commands.content_graph.objects import Layout
 
         layout_json_str = "layout.json"
         layout_json_path = git_repo.path / Path(layout_json_str)

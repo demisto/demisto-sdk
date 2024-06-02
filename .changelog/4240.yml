@@ -1,0 +1,4 @@
+changes:
+- description: Added support for new XSIAM content items.
+  type: feature
+pr_number: 4240

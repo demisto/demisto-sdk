@@ -1514,6 +1514,7 @@ ALLOWED_IGNORE_ERRORS = (
         "IN109",
         "IN110",
         "IN122",
+        "IN124",
         "IN126",
         "IN128",
         "IN135",

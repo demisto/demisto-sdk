@@ -3,6 +3,9 @@ from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (
     ASSETS_MODELING_RULES_DIR,
+    CASE_FIELDS_DIR,
+    CASE_LAYOUT_RULES_DIR,
+    CASE_LAYOUTS_DIR,
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
     LAYOUT_RULES_DIR,
@@ -11,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     TRIGGER_DIR,
     XDRC_TEMPLATE_DIR,
     XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, CASE_LAYOUT_RULES_DIR, CASE_LAYOUTS_DIR, CASE_FIELDS_DIR,
+    XSIAM_REPORTS_DIR,
 )
 from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
@@ -779,7 +782,9 @@ class Pack(TestSuiteBase):
         self.layout_rules.append(layout_rule)
         return layout_rule
 
-    def create_case_layout_rule(self, name: str = None, content: dict = None) -> CaseLayoutRule:
+    def create_case_layout_rule(
+        self, name: str = None, content: dict = None
+    ) -> CaseLayoutRule:
         if not name:
             name = f"case_layout_rule{len(self.case_layout_rules)}"
         case_layout_rule = CaseLayoutRule(name, self._case_layout_rules_path, content)
@@ -793,9 +798,7 @@ class Pack(TestSuiteBase):
         self.case_layouts.append(case_layout)
         return case_layout
 
-    def create_case_field(
-        self, name: str = None, content: dict = None
-    ) -> CaseField:
+    def create_case_field(self, name: str = None, content: dict = None) -> CaseField:
         if not name:
             name = f"casefield{len(self.incident_fields)}"
         case_field = CaseField(name, self._case_fields_path, content)

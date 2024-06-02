@@ -4,7 +4,9 @@ from TestSuite.json_based import JSONBased
 
 
 class CaseLayout(JSONBased):
-    def __init__(self, name: str, case_layout_dir_path: Path, json_content: dict = None):
+    def __init__(
+        self, name: str, case_layout_dir_path: Path, json_content: dict = None
+    ):
         self.case_layout_tmp_path = case_layout_dir_path / f"{name}.json"
         super().__init__(
             dir_path=case_layout_dir_path,
@@ -18,26 +20,18 @@ class CaseLayout(JSONBased):
             {
                 "detailsV2": {
                     "tabs": [
-                        {
-                            "id": "overview",
-                            "name": "Overview",
-                            "type": "overview"
-                        },
+                        {"id": "overview", "name": "Overview", "type": "overview"},
                         {
                             "id": "alerts_and_insights",
                             "name": "Alerts \u0026 Insights",
-                            "type": "alertInsights"
+                            "type": "alertInsights",
                         },
-                        {
-                            "id": "timeline",
-                            "name": "Timeline",
-                            "type": "timeline"
-                        },
+                        {"id": "timeline", "name": "Timeline", "type": "timeline"},
                         {
                             "id": "executions",
                             "name": "Executions",
-                            "type": "executions"
-                        }
+                            "type": "executions",
+                        },
                     ]
                 },
                 "group": "case",
@@ -46,7 +40,6 @@ class CaseLayout(JSONBased):
                 "system": False,
                 "version": -1,
                 "fromVersion": "8.7.0",
-                "description": ""
+                "description": "",
             }
-
         )

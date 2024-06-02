@@ -49,7 +49,9 @@ class PackContentItems(BaseModel):
     # The alias is for marshalling purposes
     case_field: List[CaseField] = Field([], alias=ContentType.CASE_FIELD.value)
     case_layout: List[CaseLayout] = Field([], alias=ContentType.CASE_LAYOUT.value)
-    case_layout_rule: List[CaseLayoutRule] = Field([], alias=ContentType.CASE_LAYOUT_RULE.value)
+    case_layout_rule: List[CaseLayoutRule] = Field(
+        [], alias=ContentType.CASE_LAYOUT_RULE.value
+    )
     classifier: List[Classifier] = Field([], alias=ContentType.CLASSIFIER.value)
     correlation_rule: List[CorrelationRule] = Field(
         [], alias=ContentType.CORRELATION_RULE.value

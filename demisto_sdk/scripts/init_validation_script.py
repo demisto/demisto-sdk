@@ -159,7 +159,7 @@ CONTENT_TYPES_DICT = {
     "32": {
         "import": "from demisto_sdk.commands.content_graph.objects.case_layout_rule",
         "content_type": "CaseLayoutRule",
-    }
+    },
 }
 
 VALIDATION_TEMPLATE = """
@@ -295,7 +295,7 @@ class ValidationInitializer:
             )
         )
         while not validator_class_name or not bool(
-                re.match(pascal_case_pattern, validator_class_name)
+            re.match(pascal_case_pattern, validator_class_name)
         ):
             validator_class_name = str(
                 input(
@@ -319,7 +319,7 @@ class ValidationInitializer:
             )
         )
         while self.git_statuses_str and not set(
-                self.git_statuses_str.split(",")
+            self.git_statuses_str.split(",")
         ).issubset({"A", "R", "M", "D"}):
             self.git_statuses_str = str(
                 input(

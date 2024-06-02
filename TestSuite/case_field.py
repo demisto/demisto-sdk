@@ -4,9 +4,7 @@ from TestSuite.json_based import JSONBased
 
 
 class CaseField(JSONBased):
-    def __init__(
-        self, name: str, case_field_dir_path: Path, json_content: dict = None
-    ):
+    def __init__(self, name: str, case_field_dir_path: Path, json_content: dict = None):
         self.case_field_file_path = case_field_dir_path / f"{name}.json"
         super().__init__(
             dir_path=case_field_dir_path,

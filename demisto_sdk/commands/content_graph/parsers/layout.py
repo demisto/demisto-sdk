@@ -88,9 +88,9 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
                 for key, value in current_object.items():
                     if key == "fieldId" and isinstance(value, str):
                         values.add(
-                            value.replace("incident_", "").
-                            replace("indicator_", "").
-                            replace("case_", "")
+                            value.replace("incident_", "")
+                            .replace("indicator_", "")
+                            .replace("case_", "")
                         )
                     else:
                         get_values(value)

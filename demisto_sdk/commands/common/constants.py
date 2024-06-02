@@ -298,7 +298,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
     FileType.CASE_FIELD: "Case Fields",
-    FileType.CASE_LAYOUT: "Case Layouts"
+    FileType.CASE_LAYOUT: "Case Layouts",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -343,7 +343,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.ASSETS_MODELING_RULE.value: ASSETS_MODELING_RULES_DIR,
     FileType.CASE_FIELD.value: CASE_FIELDS_DIR,
     FileType.CASE_LAYOUT.value: CASE_LAYOUTS_DIR,
-    FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR
+    FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -1433,7 +1433,6 @@ SCHEMA_TO_REGEX = {
     "trigger": [TRIGGER_JSON_REGEX],
     "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
     LAYOUT_RULE: JSON_ALL_LAYOUT_RULES_REGEXES,
-
 }
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
 

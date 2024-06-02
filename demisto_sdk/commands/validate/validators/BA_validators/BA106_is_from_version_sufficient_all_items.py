@@ -74,7 +74,6 @@ ContentTypes = Union[
     CaseField,
     CaseLayout,
     CaseLayoutRule,
-
 ]
 
 FROM_VERSION_DICT: Dict[ContentType, str] = {
@@ -105,7 +104,7 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.INCIDENT_TYPE: "5.0.0",
     ContentType.CASE_FIELD: "8.7.0",
     ContentType.CASE_LAYOUT: "8.7.0",
-    ContentType.CASE_LAYOUT_RULE: "8.7.0"
+    ContentType.CASE_LAYOUT_RULE: "8.7.0",
 }
 
 

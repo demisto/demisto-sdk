@@ -1996,7 +1996,6 @@ def find_type(
     if ListObject.match(_dict, Path(path)):
         return FileType.LISTS
 
-
     # When using it for all files validation- sometimes 'id' can be integer
     if GenericField.match(_dict, Path(path)):
         return FileType.GENERIC_FIELD

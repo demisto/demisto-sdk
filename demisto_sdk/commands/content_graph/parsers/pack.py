@@ -46,7 +46,9 @@ class PackContentItems:
     def __init__(self) -> None:
         self.case_field = ContentItemsList(content_type=ContentType.CASE_FIELD)
         self.case_layout = ContentItemsList(content_type=ContentType.CASE_LAYOUT)
-        self.case_layout_rule = ContentItemsList(content_type=ContentType.CASE_LAYOUT_RULE)
+        self.case_layout_rule = ContentItemsList(
+            content_type=ContentType.CASE_LAYOUT_RULE
+        )
         self.classifier = ContentItemsList(content_type=ContentType.CLASSIFIER)
         self.correlation_rule = ContentItemsList(
             content_type=ContentType.CORRELATION_RULE

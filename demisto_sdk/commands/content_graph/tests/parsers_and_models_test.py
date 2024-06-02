@@ -1413,7 +1413,9 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
+        from demisto_sdk.commands.content_graph.objects.case_layout_rule import (
+            CaseLayoutRule,
+        )
         from demisto_sdk.commands.content_graph.parsers.case_layout_rule import (
             CaseLayoutRuleParser,
         )
@@ -1449,7 +1451,9 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects import CaseLayout
-        from demisto_sdk.commands.content_graph.parsers.case_layout import CaseLayoutParser
+        from demisto_sdk.commands.content_graph.parsers.case_layout import (
+            CaseLayoutParser,
+        )
 
         case_layout = pack.create_case_layout("TestCaseLayout")
         case_layout_path = Path(case_layout.path)
@@ -1496,7 +1500,7 @@ class TestParsersAndModels:
             expected_name="Test case Field",
             expected_path=case_field_path,
             expected_content_type=ContentType.CASE_FIELD,
-            expected_fromversion="8.7.0"
+            expected_fromversion="8.7.0",
         )
         assert model.cli_name == "testcasefield"
         assert model.field_type == "html"

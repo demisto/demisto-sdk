@@ -17,9 +17,9 @@ class CaseField(IndicatorIncidentField, content_type=ContentType.CASE_FIELD):  #
     associated_to_all: bool = Field(False, alias="associatedToAll")
 
     def summary(
-            self,
-            marketplace: Optional[MarketplaceVersions] = None,
-            incident_to_alert: bool = False,
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
         summary["id"] = f"case_{self.object_id}"

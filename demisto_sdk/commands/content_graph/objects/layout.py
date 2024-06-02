@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, List, Optional, Union, Set
+from typing import Callable, List, Optional, Set, Union
 
 import demisto_client
 from pydantic import Field

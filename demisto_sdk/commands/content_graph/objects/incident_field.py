@@ -29,7 +29,7 @@ class IncidentField(IndicatorIncidentField, content_type=ContentType.INCIDENT_FI
     def match(_dict: dict, path: Path) -> bool:
         if "id" in _dict:
             if isinstance(_dict["id"], str):
-                _id = _dict["id"].lower()
+                _id = str(_dict["id"]).lower()
                 if _id.startswith("incident"):
                     return True
         return False

@@ -15,7 +15,7 @@ ContentTypes = Pack
 
 class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
     error_code = "RN103"
-    description = "Validate that the pack contains a full release note file. "
+    description = "Validate that the pack contains a full release note file."
     rationale = "Meaningful, complete documentations make it easier for users to use the content."
     error_message = "Please finish filling out the release notes. For common troubleshooting steps, please "\
                     "review the documentation found here: "\
@@ -42,9 +42,9 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not self.strip_exclusion_tag(content_item.release_note.file_content)
+            if not (rn_stripped_content := self.strip_exclusion_tag(content_item.release_note.file_content))
                or any(
-                note in self.strip_exclusion_tag(content_item.release_note.file_content)
+                note in rn_stripped_content
                 for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
             )
         ]

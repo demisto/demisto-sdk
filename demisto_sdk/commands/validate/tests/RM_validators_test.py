@@ -15,6 +15,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme i
 from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme_not_equal_pack_description import (
     IsPackReadmeNotEqualPackDescriptionValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
+    IsContainDemistoWordValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
 )
@@ -314,3 +317,51 @@ def test_IsReadmeExistsValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IsContainDemistoWordValidator_is_valid():
+    """
+    Given
+    content_items.
+        - Two valid pack_metadatas:
+            - 1 pack with valid readme text.
+            - 1 pack with an empty readme.    When
+    - Calling the IsContainDemistoWordValidator is_valid function.
+    Then
+        - Make sure that the pack isn't failing.
+        - Should pass all.
+    """
+    content_items = [
+        create_pack_object(readme_text="This is a valid readme."),
+        create_pack_object(readme_text=""),
+    ]
+    results = IsContainDemistoWordValidator().is_valid(content_items)
+    expected_msg = []
+    assert len(results) == 0
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msg)
+        ]
+    )
+
+
+def test_IsContainDemistoWordValidator_is_invalid():
+    """
+    Given
+    content_items.
+        - One invalid pack_metadata with a readme that contains the word 'demisto'.
+    When
+    - Calling the IsContainDemistoWordValidator is_valid function.
+    Then
+    - Make sure the right amount of pack failed, and that the right error message is returned.
+    """
+    content_items = [
+        create_pack_object(
+            readme_text="Invalid readme contains the word demistomock\ndemisto \ndemisto \ndemisto.\n mockdemisto."
+        )
+    ]
+    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
+    results = IsContainDemistoWordValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert results[0].message == expected_msg

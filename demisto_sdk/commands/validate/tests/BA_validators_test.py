@@ -85,6 +85,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA119_is_py_file_contain_copy_right_section import (
     IsPyFileContainCopyRightSectionValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA125_customer_facing_docs_disallowed_terms import (
+    CustomerFacingDocsDisallowedTermsValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
 )
@@ -1571,6 +1574,76 @@ def test_ValidPackNameValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_error_message",
+    [
+        pytest.param([create_integration_object()], 0, "", id="valid: integration"),
+        pytest.param(
+            [create_integration_object(readme_content="test-module")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_233/Integrations/integration_0/README.md",
+            id="invalid: integration readme",
+        ),
+        pytest.param(
+            [create_integration_object(description_content="test-module")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_234/Integrations/integration_0/integration_0_description.md",
+            id="invalid: integration description",
+        ),
+        pytest.param([create_script_object()], 0, "", id="valid: script"),
+        pytest.param(
+            [create_script_object(readme_content="test-module ")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_236/Scripts/script0/README.md",
+            id="invalid: script readme",
+        ),
+        pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
+        pytest.param(
+            [create_playbook_object(readme_content="test-module ")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_238/Playbooks/playbook-0_README.md",
+            id="invalid: playbook readme",
+        ),
+        pytest.param([create_pack_object()], 0, "", id="valid: pack"),
+        pytest.param(
+            [create_pack_object(readme_text="test-module ")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_240/README.md",
+            id="invalid: pack readme",
+        ),
+        pytest.param(
+            [
+                create_pack_object(
+                    ["version"], ["1.0.1"], release_note_content="test-module"
+                )
+            ],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_241/ReleaseNotes/1_0_1.md",
+            id="invalid: pack release note",
+        ),
+    ],
+)
+def test_CustomerFacingDocsDisallowedTermsValidator(
+    content_items, expected_number_of_failures, expected_error_message
+):
+    """
+    Given
+    - Case 1: Content items containing disallowed terms in their related files.
+    - Case 2: Content items containing only valid terms in their related files.
+    When
+    - Running the CustomerFacingDocsDisallowedTermsValidator validation.
+    Then
+    - Case 1: Fail the validation with a relevant message containing the found disallowed terms.
+    - Case 2: Don't fail the validation.
+    """
+    results = CustomerFacingDocsDisallowedTermsValidator().is_valid(
+        content_items=content_items
+    )
+    assert len(results) == expected_number_of_failures
+    if results:
+        assert results[0].message == expected_error_message
 
 
 @pytest.mark.parametrize(

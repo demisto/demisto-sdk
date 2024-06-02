@@ -1,4 +1,0 @@
-changes:
-- description: When updating an existing graph, the list of updated packs is now sorted.
-  type: feature
-pr_number: 4261

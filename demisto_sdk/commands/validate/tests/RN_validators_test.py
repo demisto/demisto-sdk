@@ -3,8 +3,9 @@ import pytest
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_pack_object,
 )
-from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import \
-    IsReleaseNotesFilledOutValidator
+from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
+    IsReleaseNotesFilledOutValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -16,7 +17,6 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_not
                     paths=["version"],
                     values=["2.0.5"],
                     release_note_content="This is a valid rn.",
-
                 ),  # valid release_note
                 create_pack_object(
                     paths=["version"],
@@ -35,9 +35,11 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_not
                 ),  # shouldn't pass as it has an invalid release note
             ],
             3,
-            ["Please complete the release notes and ensure all placeholders are filled in."
-             "For common troubleshooting steps, please review the documentation found here: "
-             "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"],
+            [
+                "Please complete the release notes and ensure all placeholders are filled in."
+                "For common troubleshooting steps, please review the documentation found here: "
+                "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
+            ],
         ),
     ],
 )

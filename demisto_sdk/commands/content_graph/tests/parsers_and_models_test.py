@@ -1402,6 +1402,106 @@ class TestParsersAndModels:
             expected_fromversion="6.10.0",
         )
 
+    def test_case_layout_rule_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with a case layout rule.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify all relationships of the content item are collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
+        from demisto_sdk.commands.content_graph.parsers.case_layout_rule import (
+            CaseLayoutRuleParser,
+        )
+
+        rule = pack.create_case_layout_rule("case_rule_test")
+        rule_path = Path(rule.path)
+        parser = CaseLayoutRuleParser(rule_path, list(MarketplaceVersions))
+        RelationshipsVerifier.run(
+            parser.relationships,
+            dependency_ids={
+                "test_layout": ContentType.CASE_LAYOUT,
+            },
+        )
+        model = CaseLayoutRule.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="case_rule_test",
+            expected_name="case_rule_test",
+            expected_path=rule_path,
+            expected_content_type=ContentType.CASE_LAYOUT_RULE,
+            expected_fromversion="8.7.0",
+        )
+
+    def test_case_layout_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with a case layout.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify all relationships of the content item are collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects import CaseLayout
+        from demisto_sdk.commands.content_graph.parsers.case_layout import CaseLayoutParser
+
+        case_layout = pack.create_case_layout("TestCaseLayout")
+        case_layout_path = Path(case_layout.path)
+        parser = CaseLayoutParser(case_layout_path, list(MarketplaceVersions))
+        model = CaseLayout.from_orm(parser)
+
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="TestCaseLayout",
+            expected_name="TestCaseLayout",
+            expected_path=case_layout_path,
+            expected_content_type=ContentType.CASE_LAYOUT,
+            expected_fromversion="8.7.0",
+        )
+        assert model.group == "case"
+
+    def test_case_field_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with a case field.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify all relationships of the content item are collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects.case_field import (
+            CaseField,
+        )
+        from demisto_sdk.commands.content_graph.parsers.case_field import (
+            CaseFieldParser,
+        )
+
+        case_field = pack.create_case_field(
+            "TestCaseField", load_json("case_field.json")
+        )
+        case_field_path = Path(case_field.path)
+        parser = CaseFieldParser(case_field_path, list(MarketplaceVersions))
+        model = CaseField.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="testcasefield",
+            expected_name="Test case Field",
+            expected_path=case_field_path,
+            expected_content_type=ContentType.CASE_FIELD,
+            expected_fromversion="8.7.0"
+        )
+        assert model.cli_name == "testcasefield"
+        assert model.field_type == "html"
+        assert not model.associated_to_all
+
     def test_widget_parser(self, pack: Pack):
         """
         Given:

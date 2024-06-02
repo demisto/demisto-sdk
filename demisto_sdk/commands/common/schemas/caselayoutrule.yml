@@ -36,17 +36,6 @@ mapping:
             - include: or_schema
             - include: and_schema
 
-
-  description:xsoar:
-    type: str
-  description:marketplacev2:
-    type: str
-  description:xpanse:
-    type: str
-  description:xsoar_saas:
-    type: str
-  description:xsoar_on_prem:
-    type: str
 schema;filter_schema:
   type: map
   mapping:

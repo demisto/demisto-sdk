@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
+    ExecutionMode
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -820,8 +821,13 @@ def validate(ctx, config, file_paths: str, **kwargs):
         sys.exit(1)
     try:
         is_external_repo = is_external_repository()
-        # default validate to -g --post-commit
-        if not kwargs.get("validate_all") and not kwargs["use_git"] and not file_path:
+        if kwargs.get("validate_all"):
+            execution_mode = ExecutionMode.ALL_FILES
+        elif file_path:
+            execution_mode = ExecutionMode.SPECIFIC_FILES
+        else:
+            execution_mode = ExecutionMode.USE_GIT
+            # default validate to -g --post-commit
             kwargs["use_git"] = True
             kwargs["post_commit"] = True
         exit_code = 0
@@ -919,6 +925,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 prev_ver=kwargs["prev_ver"],
                 file_path=file_path,
                 all_files=kwargs.get("validate_all"),
+                execution_mode=execution_mode,
             )
             validator_v2 = ValidateManager(
                 file_path=file_path,

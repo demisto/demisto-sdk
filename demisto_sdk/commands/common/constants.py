@@ -1275,6 +1275,12 @@ class GitStatuses(StrEnum):
     DELETED = "D"
 
 
+class ExecutionMode(StrEnum):
+    ALL_FILES = "-a"
+    USE_GIT = "-g"
+    SPECIFIC_FILES = "-i"
+
+
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
 
 # python subtypes

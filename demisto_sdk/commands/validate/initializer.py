@@ -56,6 +56,7 @@ class Initializer:
         prev_ver=None,
         file_path=None,
         all_files=False,
+        execution_mode=None,
     ):
         self.staged = staged
         self.use_git = use_git
@@ -63,6 +64,7 @@ class Initializer:
         self.all_files = all_files
         self.committed_only = committed_only
         self.prev_ver = prev_ver
+        self.execution_mode = execution_mode
 
     def validate_git_installed(self):
         """Initialize git util."""

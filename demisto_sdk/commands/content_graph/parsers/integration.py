@@ -40,6 +40,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             "isfetcheventsandassets", False
         )
         self.is_mappable = self.script_info.get("ismappable", False)
+        self.is_remote_sync_in = self.script_info.get("isremotesyncin", False)
+        self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
         self.is_feed = self.script_info.get("feed", False)
         self.is_beta = self.script_info.get("beta", False)
         self.long_running = self.script_info.get("longRunning", False)

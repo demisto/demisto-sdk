@@ -142,7 +142,12 @@ class TestDockerImage:
     # disable-secrets-detection-end
 
     def test_lexical_find_latest_tag(self):
-        tag_list = ["2.0.2000", "2.1.2700", "2.1.373", "latest"]
+        """
+        Given: A list of docker image tags.
+        When: Looking for the latest numbered docker image tag.
+        Then: Ensure the right tag (the one with the largest build num, i.e 1.2.34 -> 34) is returned.
+        """
+        tag_list = ["2.0.2000", "2.1.2700", "2.1.373", "2.2.1500", "latest"]
         tag = DockerImageValidator.lexical_find_latest_tag(tag_list)
         assert tag == "2.1.2700"
 

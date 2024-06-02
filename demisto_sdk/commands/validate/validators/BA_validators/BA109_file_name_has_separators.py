@@ -24,8 +24,6 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     error_message = "The {0} files {1} should be named {2}, respectively, without any separators in the base name."
     related_field = "file path"
     is_auto_fixable = False
-    invalid_files: List[str] = []
-    valid_files: List[str] = []
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -33,16 +31,16 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     content_item.content_type,
-                    " and ".join([f"'{word}'" for word in self.invalid_files]),
-                    " and ".join([f"'{word}'" for word in self.valid_files]),
+                    " and ".join([f"'{word}'" for word in files_name[0]]),
+                    " and ".join([f"'{word}'" for word in files_name[1]]),
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (self.check_separators_in_files(content_item))
+            if bool(files_name:= self.check_separators_in_files(content_item))
         ]
 
-    def check_separators_in_files(self, content_item: ContentTypes) -> bool:
+    def check_separators_in_files(self, content_item: ContentTypes) -> tuple:
         """
         Check if there are separators in the file names of the content item.
 
@@ -84,11 +82,9 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
                 valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
 
         if invalid_files:
-            self.invalid_files = invalid_files
-            self.valid_files = valid_files
-            return True
+            return (invalid_files, valid_files)
 
-        return False
+        return ()
 
     def remove_separators_from_name(self, base_name: str) -> str:
         """

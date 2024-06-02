@@ -283,7 +283,7 @@ class PackMetadata(BaseModel):
         tags |= (
             {PackTags.DATA_SOURCE}
             if self._is_data_source(content_items)
-            #and marketplace == MarketplaceVersions.MarketplaceV2
+            and marketplace == MarketplaceVersions.MarketplaceV2
             else set()
         )
 

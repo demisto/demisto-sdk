@@ -64,6 +64,8 @@ class ValidateManager:
         logger.info("Starting validate items.")
         for validator in self.validators:
             logger.debug(f"Starting execution for {validator.error_code} validator.")
+            if self.validate_all:
+                validator.running_on_all_files_mode = True
             if filtered_content_objects_for_validator := list(
                 filter(
                     lambda content_object: validator.should_run(

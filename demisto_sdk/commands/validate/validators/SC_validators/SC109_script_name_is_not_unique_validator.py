@@ -28,12 +28,44 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
     )
     related_field = "name"
     is_auto_fixable = False
+    running_on_all_files_mode = False
+
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         """
         Validate that there are no duplicate names of scripts
         when the script name included `alert`.
         """
+        if self.running_on_all_files_mode:
+            return self.is_valid_all_files()
+        else:
+            return self.is_valid_list_files(content_items)
+
+    def is_valid_all_files(self) -> List[ValidationResult]:
+        """
+        Validate that there are no duplicate names of scripts
+        when the script name included `alert`.
+        """
+        print('all')
+        query_results = self.graph.get_duplicate_script_name_included_incident()
+
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    replace_incident_to_alert(script_name), script_name
+                ),
+                content_object=file_path,
+            )
+            for script_name, file_path in query_results.items()
+        ]
+
+    def is_valid_list_files(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        """
+        Validate that there are no duplicate names of scripts
+        when the script name included `alert`.
+        """
+        print('list')
         file_paths_to_objects = {
             str(content_item.path.relative_to(CONTENT_PATH)): content_item
             for content_item in content_items

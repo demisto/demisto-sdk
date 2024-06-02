@@ -57,11 +57,11 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA109_file_name_has_separators import (
-    FileNameHasSeparatorsValidator,
-)
 from demisto_sdk.commands.validate.validators.BA_validators.BA108_is_folder_name_has_separators import (
     IsFolderNameHasSeparatorsValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA109_file_name_has_separators import (
+    FileNameHasSeparatorsValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
     IsEntityTypeInEntityNameValidator,

@@ -6,7 +6,6 @@ from typing import Dict, Optional
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
-    ALLOWED_HIDDEN_PARAMS,
     BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES,
     DBOT_SCORES_DICT,
@@ -68,7 +67,6 @@ from demisto_sdk.commands.common.tools import (
     is_iron_bank_pack,
     is_str_bool,
     server_version_compare,
-    string_to_bool,
     strip_description,
 )
 from demisto_sdk.commands.validate.tools import (

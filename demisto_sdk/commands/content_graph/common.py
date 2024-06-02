@@ -131,7 +131,7 @@ class ContentType(StrEnum):
             return "incidentfield-indicatorfield"
         elif self == ContentType.CASE_FIELD:
             return "casefield"
-        elif self == ContentType.LAYOUT or self == ContentType.CASE_LAYOUT:
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "layoutscontainer"
         elif self == ContentType.PREPROCESS_RULE:
             return "preprocessrule"
@@ -150,7 +150,7 @@ class ContentType(StrEnum):
             return "automation"
         elif self == ContentType.INDICATOR_TYPE:
             return "reputation"
-        elif self == ContentType.LAYOUT or self == ContentType.CASE_LAYOUT:
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "layoutscontainer"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
@@ -166,7 +166,7 @@ class ContentType(StrEnum):
             return "Reputation"
         elif self == ContentType.MAPPER:
             return "Classifier"
-        elif self == ContentType.LAYOUT or self == ContentType.CASE_LAYOUT:
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "Layouts Container"
         else:
             return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)

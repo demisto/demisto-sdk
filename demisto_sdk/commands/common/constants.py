@@ -926,8 +926,6 @@ ASSETS_MODELING_RULE_NAME_SUFFIX = "Asset Collection"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
 ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
-# TODO
-
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"

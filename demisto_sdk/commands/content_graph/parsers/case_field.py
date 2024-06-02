@@ -12,10 +12,10 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 class CaseFieldParser(JSONContentItemParser, content_type=ContentType.CASE_FIELD):
     def __init__(
-        self,
-        path: Path,
-        pack_marketplaces: List[MarketplaceVersions],
-        git_sha: Optional[str] = None,
+            self,
+            path: Path,
+            pack_marketplaces: List[MarketplaceVersions],
+            git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.field_type = self.json_data.get("type")
@@ -38,14 +38,10 @@ class CaseFieldParser(JSONContentItemParser, content_type=ContentType.CASE_FIELD
     @property
     def object_id(self) -> Optional[str]:
         id = get_value(self.json_data, self.field_mapping.get("object_id", ""))
-        return (id.lower().replace("_", "").replace("-", ""))[len("case") :]
+        return (id.lower().replace("_", "").replace("-", ""))[len("case"):]
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {
             MarketplaceVersions.MarketplaceV2,
         }
-
-    def connect_to_dependencies(self) -> None:
-        """TBD in case we add case types"""
-        pass

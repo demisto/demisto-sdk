@@ -1648,10 +1648,6 @@ class TestIntegrationValidation:
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {integration_path} as integration"
         )
-        assert str_in_call_args_list(
-            logger_error.call_args_list,
-            '[IN124] - Parameter: "credentials" can\'t be hidden in all marketplaces',
-        )
 
     def test_positive_hidden_param(self, mocker):
         """

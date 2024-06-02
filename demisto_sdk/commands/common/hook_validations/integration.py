@@ -1534,7 +1534,7 @@ class IntegrationValidator(ContentEntityValidator):
                 return True
         return False
 
-    @error_codes("IN124,IN156")
+    @error_codes("IN156")
     def is_valid_hidden_params(self) -> bool:
         """
         Verify there are no non-allowed hidden integration parameters.
@@ -1550,8 +1550,6 @@ class IntegrationValidator(ContentEntityValidator):
 
         for param in self.current_file.get("configuration", ()):
             name = param.get("name", "")
-            display_name = param.get("display", "")
-            type_ = param.get("type")
             hidden = param.get("hidden")
 
             invalid_type = not isinstance(hidden, (type(None), bool, list, str))
@@ -1562,24 +1560,7 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(message, code, self.file_path):
                     valid = False
 
-            is_true = (hidden is True) or (
-                is_str_bool(hidden) and string_to_bool(hidden)
-            )
-            invalid_bool = is_true and name not in ALLOWED_HIDDEN_PARAMS
-            hidden_in_all_marketplaces = isinstance(hidden, list) and set(
-                hidden
-            ) == set(MarketplaceVersions)
-
-            if invalid_bool or hidden_in_all_marketplaces:
-                if type_ in (0, 4, 12, 14) and self._is_replaced_by_type9(display_name):
-                    continue
-                error_message, error_code = Errors.param_not_allowed_to_hide(name)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    valid = False
-
-            elif isinstance(hidden, list) and (
+            if isinstance(hidden, list) and (
                 invalid := set(hidden).difference(MarketplaceVersions)
             ):
                 # if the value is a list, all its values must be marketplace names

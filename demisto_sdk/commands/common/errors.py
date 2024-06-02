@@ -570,10 +570,6 @@ ERROR_CODE: Dict = {
         "code": "IN123",
         "related_field": "display",
     },
-    "param_not_allowed_to_hide": {
-        "code": "IN124",
-        "related_field": "<parameter-name>.hidden",
-    },
     "no_default_value_in_parameter": {
         "code": "IN125",
         "related_field": "<parameter-name>.default",
@@ -1518,7 +1514,6 @@ ALLOWED_IGNORE_ERRORS = (
         "IN109",
         "IN110",
         "IN122",
-        "IN124",
         "IN126",
         "IN128",
         "IN135",

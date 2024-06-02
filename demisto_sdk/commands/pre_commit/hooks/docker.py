@@ -73,18 +73,23 @@ def with_native_tags(
     """
 
     all_tags_to_files = defaultdict(list)
-    native_image_config = NativeImageConfig.get_instance()
+    is_native_image = any(
+        DockerImageFlagOption.NATIVE.value in docker_flag
+        for docker_flag in docker_flags
+    )
 
     for image, scripts in tags_to_files.items():
         for file, obj in scripts:
-            supported_native_images = ScriptIntegrationSupportedNativeImages(
-                _id=obj.object_id,
-                native_image_config=native_image_config,
-                docker_image=image,
-            ).get_supported_native_docker_tags(docker_flags, include_candidate=True)
+            if is_native_image:
+                native_image_config = NativeImageConfig.get_instance()
+                supported_native_images = ScriptIntegrationSupportedNativeImages(
+                    _id=obj.object_id,
+                    native_image_config=native_image_config,
+                    docker_image=image,
+                ).get_supported_native_docker_tags(docker_flags, include_candidate=True)
 
-            for native_image in supported_native_images:
-                all_tags_to_files[docker_image or native_image].append((file, obj))
+                for native_image in supported_native_images:
+                    all_tags_to_files[docker_image or native_image].append((file, obj))
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,
@@ -108,21 +113,14 @@ def docker_tag_to_runfiles(
     Returns: A dict of image to List of files(Tuple[path, obj]) including native images
 
     """
+    docker_flags = set(docker_image_flag.split(","))
     tags_to_files = defaultdict(list)
     for file, obj in files_to_run:
         if obj:
             for image in obj.docker_images:
                 tags_to_files[image].append((file, obj))
 
-    docker_flags = set(docker_image_flag.split(","))
-    is_native_image = any(
-        DockerImageFlagOption.NATIVE.value in docker_flag
-        for docker_flag in docker_flags
-    )
-    if is_native_image:
-        return with_native_tags(tags_to_files, docker_flags, docker_image)
-    else:
-        return tags_to_files
+    return with_native_tags(tags_to_files, docker_flags, docker_image)
 
 
 @functools.lru_cache(maxsize=512)

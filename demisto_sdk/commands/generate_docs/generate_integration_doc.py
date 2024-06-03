@@ -936,7 +936,7 @@ def generate_single_command_section(
             ]
         )
         for arg in arguments:
-            description = arg.get("description")
+            description = arg.get("description", "")
             if not description:
                 errors.append(
                     "Error! You are missing description in input {} of command {}".format(

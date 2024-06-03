@@ -17,7 +17,6 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Un
 import demisto_client
 import prettytable
 import requests
-import xml.etree.ElementTree as ET
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
 from junitparser import JUnitXml, TestCase, TestSuite

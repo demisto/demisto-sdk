@@ -25,7 +25,6 @@ class DuplicatedScriptNameValidatorFileList(DuplicatedScriptNameValidator, BaseV
         Validate that there are no duplicate names of scripts
         when the script name included `alert`.
         """
-        print('list')
         file_paths_to_objects = {
             str(content_item.path.relative_to(CONTENT_PATH)): content_item
             for content_item in content_items

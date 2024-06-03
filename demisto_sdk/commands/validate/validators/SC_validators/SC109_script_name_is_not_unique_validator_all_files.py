@@ -23,7 +23,6 @@ class DuplicatedScriptNameValidatorAllFiles(DuplicatedScriptNameValidator, BaseV
         Validate that there are no duplicate names of scripts
         when the script name included `alert`.
         """
-        print('all')
         query_results = self.graph.get_duplicate_script_name_included_incident([])
 
         return [

@@ -35,7 +35,7 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
                 "definitionId" in _dict
                 and _dict["definitionId"]
                 and _dict["definitionId"].lower()
-                not in ["incident", "indicator", "case"]
+                not in ("incident", "indicator", "case")
                 and path.suffix == ".json"
             ):
                 # we don't want to match the generic type

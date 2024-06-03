@@ -85,15 +85,10 @@ def execute_test_content(**kwargs):
         f'Starting to run tests on Server version:{kwargs["server_version"]} Server Type:{kwargs["server_type"]}'
     )
     build_context = BuildContext(kwargs, logging_manager)
-    use_retries_mechanism = kwargs.get("use_retries", False)
+
     threads_list = []
-    for server_ip in build_context.instances_ips:
-        tests_execution_instance = ServerContext(
-            build_context,
-            server_private_ip=server_ip,
-            use_retries_mechanism=use_retries_mechanism,
-        )
-        threads_list.append(Thread(target=tests_execution_instance.execute_tests))
+    for server in build_context.servers:
+        threads_list.append(Thread(target=build_context.servers.get(server).execute_tests))
 
     logging_manager.info("Finished creating configurations, starting to run tests.")
     for thread in threads_list:

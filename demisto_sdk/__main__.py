@@ -3047,7 +3047,7 @@ def openapi_codegen(ctx, **kwargs):
     default="XSOAR",
 )
 @click.option(
-    "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."
+    "-x", "--xsiam-machines", help="XSIAM machine to use, if it is XSIAM build."
 )
 @click.option("--xsiam-servers-path", help="Path to secret xsiam server metadata file.")
 @click.option(

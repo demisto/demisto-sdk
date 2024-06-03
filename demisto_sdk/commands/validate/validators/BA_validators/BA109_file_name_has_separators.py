@@ -37,7 +37,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if bool(files_name:= self.check_separators_in_files(content_item))
+            if bool(files_name := self.check_separators_in_files(content_item))
         ]
 
     def check_separators_in_files(self, content_item: ContentTypes) -> tuple:

@@ -95,7 +95,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
-    expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
+    expected_execution_mode: Optional[List[ExecutionMode]] = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -332,6 +332,14 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
 
 
 def should_run_on_execution_mode(expected_execution_mode, execution_mode):
+    """
+    Check if the execution_mode is in the expected_execution_mode of validation.
+    Args:
+        execution_mode (ExecutionMode): The running execution_mode.
+        expected_execution_mode (Optional[list[ExecutionMode]]): The validation's expected execution_mode, if None then validation should run on all execution modes.
+    Returns:
+        bool: True if the given validation should run on the execution_mode. Otherwise, return False.
+    """
     if not expected_execution_mode or execution_mode in expected_execution_mode:
         return True
     return False

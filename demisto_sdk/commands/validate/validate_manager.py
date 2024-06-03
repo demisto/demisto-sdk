@@ -26,13 +26,11 @@ class ValidateManager:
         validation_results: ResultWriter,
         config_reader: ConfigReader,
         initializer: Initializer,
-        validate_all=False,
         file_path=None,
         allow_autofix=False,
         ignore_support_level=False,
     ):
         self.ignore_support_level = ignore_support_level
-        self.validate_all = validate_all
         self.file_path = file_path
         self.allow_autofix = allow_autofix
         self.validation_results = validation_results
@@ -44,11 +42,10 @@ class ValidateManager:
             self.objects_to_run,
             self.invalid_items,
         ) = self.initializer.gather_objects_to_run_on()
-        self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
             self.config_reader.gather_validations_to_run(
-                use_git=self.use_git, ignore_support_level=self.ignore_support_level
+                self.initializer.execution_mode, ignore_support_level=self.ignore_support_level
             )
         )
         self.validators = self.filter_validators()

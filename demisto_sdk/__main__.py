@@ -823,6 +823,8 @@ def validate(ctx, config, file_paths: str, **kwargs):
         is_external_repo = is_external_repository()
         if kwargs.get("validate_all"):
             execution_mode = ExecutionMode.ALL_FILES
+        elif kwargs.get("use_git"):
+            execution_mode = ExecutionMode.USE_GIT
         elif file_path:
             execution_mode = ExecutionMode.SPECIFIC_FILES
         else:
@@ -919,17 +921,14 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 category_to_run=kwargs.get("category_to_run"),
             )
             initializer = Initializer(
-                use_git=kwargs["use_git"],
                 staged=kwargs["staged"],
                 committed_only=kwargs["post_commit"],
                 prev_ver=kwargs["prev_ver"],
                 file_path=file_path,
-                all_files=kwargs.get("validate_all"),
                 execution_mode=execution_mode,
             )
             validator_v2 = ValidateManager(
                 file_path=file_path,
-                validate_all=kwargs.get("validate_all"),
                 initializer=initializer,
                 validation_results=validation_results,
                 config_reader=config_reader,

@@ -1137,10 +1137,22 @@ class TestGenerateIntegrationDoc:
         actual_text = (
             (tmp_path / INTEGRATIONS_README_FILE_NAME).read_text().splitlines()
         )
-        assert actual_text[54] == "| entry_id |  | Required | "
-        assert actual_text[55] == "| target |  | Required | "
-        assert actual_text[73] == "| file_path |  | Required | "
-        assert actual_text[74] == "| file_name |  | Required | "
+        assert (
+            actual_text[54]
+            == f"| entry_id | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+        assert (
+            actual_text[55]
+            == f"| target | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+        assert (
+            actual_text[73]
+            == f"| file_path | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+        assert (
+            actual_text[74]
+            == f"| file_name | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
 
 
 class TestGetCommandExamples:

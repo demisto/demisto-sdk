@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.generate_docs.common import (
     CONFIGURATION_SECTION_STEPS,
+    HEADER_TYPE,
     add_lines,
     build_example_dict,
     generate_numbered_section,
@@ -872,7 +873,7 @@ def generate_single_command_section(
         cmd_permission_example = []
 
     section = [
-        "### {}".format(cmd["name"]),
+        f"{HEADER_TYPE.H3} {cmd['name']}",
         "",
         "***",
     ]
@@ -1299,7 +1300,7 @@ def get_commands_sections(doc_text: str) -> Dict[str, Tuple[int, int]]:
     start and end line of the command section within the README.
     """
 
-    command_start_section_pattern = r"^###\s+([a-z]+(-[a-z]+)*$)"
+    command_start_section_pattern = rf"^{HEADER_TYPE.H3}\s+([a-z]+(-[a-z]+)*$)"
 
     out = {}
 

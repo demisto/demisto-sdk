@@ -1107,6 +1107,53 @@ class TestGenerateIntegrationDoc:
                     in readme_data
                 )
 
+    def test_missing_cmd_description(self, tmp_path: Path):
+        """
+        Test generation of an integration README when one of the
+        command arguments is missing a description field.
+
+        Given:
+        - An integration YML.
+
+        When:
+        - The integration YML has a command that is missing
+        an argument description.
+
+        Then:
+        - The integration README is generated.
+        """
+
+        yml_path = (
+            Path(__file__).parent
+            / "test_files"
+            / "test_missing_cmd_description"
+            / "FTP.yml"
+        )
+
+        generate_integration_doc(str(yml_path), output=str(tmp_path))
+
+        assert (tmp_path / INTEGRATIONS_README_FILE_NAME).exists()
+
+        actual_text = (
+            (tmp_path / INTEGRATIONS_README_FILE_NAME).read_text().splitlines()
+        )
+        assert (
+            actual_text[54]
+            == f"| entry_id | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+        assert (
+            actual_text[55]
+            == f"| target | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+        assert (
+            actual_text[73]
+            == f"| file_path | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+        assert (
+            actual_text[74]
+            == f"| file_name | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+
 
 class TestGetCommandExamples:
     @staticmethod

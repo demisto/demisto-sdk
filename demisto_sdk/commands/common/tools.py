@@ -4510,3 +4510,21 @@ def convert_path_to_str(data: Union[dict, list]):
                 convert_path_to_str(item)
             elif isinstance(item, Path):
                 data[index] = str(item)
+
+
+def find_regex_on_data(data: str, regex: str):
+    """
+    Finds all matches of a given regex pattern in the provided data.
+
+    Args:
+        data (str): The string data to search within.
+        regex (str): The regex pattern to use for finding matches.
+
+    Returns:
+        List[str]: A list of all matches found in the data. If no matches are found, returns an empty list.
+    """
+    return re.findall(
+        regex,
+        data,
+        re.IGNORECASE,
+    )

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import re
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import INVALID_IMAGE_PATH_REGEX, GitStatuses
+from demisto_sdk.commands.common.tools import find_regex_on_data
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -20,9 +20,9 @@ ContentTypes = Union[Integration, Script, Playbook, Pack]
 class IsImagePathValidValidator(BaseValidator[ContentTypes]):
     error_code = "RM101"
     description = "Validate images absolute paths, and prints the suggested path if it's not valid."
-    rationale = ""
+    rationale = "In official marketplace content, ensures that the images can be used in the upload flow properly."
     error_message = "In {filename} detected the following images URLs which are not raw links: {params}"
-    related_field = ""
+    related_field = "readme"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.README]
@@ -39,7 +39,9 @@ class IsImagePathValidValidator(BaseValidator[ContentTypes]):
         ]
 
     def is_image_path_valid(self, content_item):
-        if invalid_paths := find_invalid_paths(content_item.readme.file_content):
+        if invalid_paths := find_regex_on_data(
+            content_item.readme.file_content, INVALID_IMAGE_PATH_REGEX
+        ):
             handled_errors = []
             for path in invalid_paths:
                 path = path[2]
@@ -58,11 +60,3 @@ class IsImagePathValidValidator(BaseValidator[ContentTypes]):
             ]
         )
         return (filename, urls)
-
-
-def find_invalid_paths(readme_content):
-    return re.findall(
-        r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")",
-        readme_content,
-        re.IGNORECASE,
-    )

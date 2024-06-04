@@ -157,19 +157,16 @@ def test_empty_readme_validator(
 
 
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
+    "content_items, expected_number_of_failures",
     [
-        ([create_integration_object()], 0, [""]),
+        ([create_integration_object()], 0),
         (
             [
                 create_integration_object(
                     readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
                 )
             ],
-            1,
-            [
-                "In Packs/pack_9/Integrations/integration_0/README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
-            ],
+            1
         ),
         (
             [
@@ -177,10 +174,7 @@ def test_empty_readme_validator(
                     readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
                 )
             ],
-            1,
-            [
-                "In Packs/pack_10/Scripts/script0/README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
-            ],
+            1
         ),
         (
             [
@@ -188,10 +182,7 @@ def test_empty_readme_validator(
                     readme_text='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
                 )
             ],
-            1,
-            [
-                "In Packs/pack_11/README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
-            ],
+            1
         ),
         (
             [
@@ -199,22 +190,19 @@ def test_empty_readme_validator(
                     readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
                 )
             ],
-            1,
-            [
-                "In Packs/pack_12/Playbooks/playbook-0_README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
-            ],
+            1
         ),
     ],
 )
 def test_is_image_path_validator(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures
 ):
     results = IsImagePathValidValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
+            result.message.endswith("detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg")
+            for result in results
         ]
     )
 

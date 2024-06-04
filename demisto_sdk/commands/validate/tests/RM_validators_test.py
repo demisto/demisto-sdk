@@ -195,6 +195,15 @@ def test_empty_readme_validator(
     ],
 )
 def test_is_image_path_validator(content_items, expected_number_of_failures):
+    """
+    Given:
+        - A list of content items with their respective readme contents.
+    When:
+        - The IsImagePathValidValidator is run on the provided content items.
+    Then:
+        - Validate that the number of detected invalid image paths matches the expected number of failures.
+        - Ensure that each failure message correctly identifies the non-raw GitHub image URL and suggests the proper raw URL format.
+    """
     results = IsImagePathValidValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(

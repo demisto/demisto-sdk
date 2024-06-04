@@ -3,6 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.constants import (
+    GitStatuses,
+)
 from demisto_sdk.commands.common.tools import get_files_in_dir
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -24,6 +27,10 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
     error_message = "The {item_type} files should be named without any separators in the base name:\n{params}"
     related_field = "file path"
     is_auto_fixable = False
+    expected_git_statuses = [
+        GitStatuses.RENAMED,
+        GitStatuses.ADDED,
+    ]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

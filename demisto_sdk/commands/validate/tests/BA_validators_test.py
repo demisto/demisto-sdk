@@ -1980,6 +1980,19 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
 def test_FileNameHasSeparatorsValidator_is_valid(
     content_item, expected_number_of_failures, expected_messages
 ):
+    """
+    Test validate BA109 FileNameHasSeparatorsValidator - File names with separators
+    
+    Given:
+        A content item with a name that contains separators (e.g., hyphens) or not.
+        
+    When:
+        The FileNameHasSeparatorsValidator's is_valid method is called.
+        
+    Then:
+        The method should return the expected number of validation failures and messages.
+        Failure with an appropriate message if the name contains separators.
+    """
     validator = FileNameHasSeparatorsValidator()
     ValidationResultList = validator.is_valid([content_item])
 

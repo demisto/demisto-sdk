@@ -168,7 +168,7 @@ def test_empty_readme_validator(
             ],
             1,
             [
-                "In Packs/pack_8/Integrations/integration_0/README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
+                "In Packs/pack_9/Integrations/integration_0/README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
             ],
         ),
         (
@@ -179,7 +179,7 @@ def test_empty_readme_validator(
             ],
             1,
             [
-                "In Packs/pack_8/Scripts/script0/README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
+                "In Packs/pack_10/Scripts/script0/README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
             ],
         ),
         (
@@ -190,7 +190,7 @@ def test_empty_readme_validator(
             ],
             1,
             [
-                "In Packs/pack_8/README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
+                "In Packs/pack_11/README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
             ],
         ),
         (
@@ -201,7 +201,7 @@ def test_empty_readme_validator(
             ],
             1,
             [
-                "In Packs/pack_8/Playbooks/playbook-0_README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
+                "In Packs/pack_12/Playbooks/playbook-0_README.md detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
             ],
         ),
     ],

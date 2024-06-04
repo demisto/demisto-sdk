@@ -166,7 +166,7 @@ def test_empty_readme_validator(
                     readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
                 )
             ],
-            1
+            1,
         ),
         (
             [
@@ -174,7 +174,7 @@ def test_empty_readme_validator(
                     readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
                 )
             ],
-            1
+            1,
         ),
         (
             [
@@ -182,7 +182,7 @@ def test_empty_readme_validator(
                     readme_text='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
                 )
             ],
-            1
+            1,
         ),
         (
             [
@@ -190,18 +190,18 @@ def test_empty_readme_validator(
                     readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
                 )
             ],
-            1
+            1,
         ),
     ],
 )
-def test_is_image_path_validator(
-    content_items, expected_number_of_failures
-):
+def test_is_image_path_validator(content_items, expected_number_of_failures):
     results = IsImagePathValidValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
-            result.message.endswith("detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg")
+            result.message.endswith(
+                "detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
+            )
             for result in results
         ]
     )

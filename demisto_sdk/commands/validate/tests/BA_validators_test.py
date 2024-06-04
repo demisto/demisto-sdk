@@ -1954,7 +1954,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         pytest.param(
             create_integration_object(name="Test-Integration"),
             1,
-            "The Integration files 'Test-Integration.py' and 'Test-Integration.yml' and 'Test-Integration_description.md' and 'Test-Integration_image.png' and 'Test-Integration_test.py' should be named 'TestIntegration.py' and 'TestIntegration.yml' and 'TestIntegration_description.md' and 'TestIntegration_image.png' and 'TestIntegration_test.py', respectively, without any separators in the base name.",
+            "The Integration files should be named without any separators in the base name:\n'Test-Integration.py' should be named 'TestIntegration.py'\n'Test-Integration.yml' should be named 'TestIntegration.yml'\n'Test-Integration_description.md' should be named 'TestIntegration_description.md'\n'Test-Integration_image.png' should be named 'TestIntegration_image.png'\n'Test-Integration_test.py' should be named 'TestIntegration_test.py'",
             id="invalid integration",
         ),
         pytest.param(
@@ -1966,7 +1966,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         pytest.param(
             create_script_object(name="Test-Script"),
             1,
-            "The Script files 'Test-Script.py' and 'Test-Script.yml' and 'Test-Script_description.md' and 'Test-Script_image.png' and 'Test-Script_test.py' should be named 'TestScript.py' and 'TestScript.yml' and 'TestScript_description.md' and 'TestScript_image.png' and 'TestScript_test.py', respectively, without any separators in the base name.",
+            "The Script files should be named without any separators in the base name:\n'Test-Script.py' should be named 'TestScript.py'\n'Test-Script.yml' should be named 'TestScript.yml'\n'Test-Script_description.md' should be named 'TestScript_description.md'\n'Test-Script_image.png' should be named 'TestScript_image.png'\n'Test-Script_test.py' should be named 'TestScript_test.py'",
             id="invalid script",
         ),
         pytest.param(

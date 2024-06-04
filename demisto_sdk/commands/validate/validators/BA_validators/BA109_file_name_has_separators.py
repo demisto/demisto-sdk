@@ -21,7 +21,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         "Check if there are separators in the script or integration files names."
     )
     rationale = "Filenames for scripts and integrations should not contain separators to maintain consistency and readability."
-    error_message = "The {0} files {1} should be named {2}, respectively, without any separators in the base name."
+    error_message = "The {item_type} files should be named without any separators in the base name:\n{params}"
     related_field = "file path"
     is_auto_fixable = False
 
@@ -30,17 +30,21 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.content_type,
-                    " and ".join([f"'{word}'" for word in files_name[0]]),
-                    " and ".join([f"'{word}'" for word in files_name[1]]),
+                    item_type=content_item.content_type,
+                    params="\n".join(
+                        [
+                            f"'{file_name[0]}' should be named '{file_name[1]}'"
+                            for file_name in invalid_files
+                        ]
+                    ),
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
-            if bool(files_name := self.check_separators_in_files(content_item))
+            if bool(invalid_files := self.check_separators_in_files(content_item))
         ]
 
-    def check_separators_in_files(self, content_item: ContentTypes) -> tuple:
+    def check_separators_in_files(self, content_item: ContentTypes) -> list[tuple]:
         """
         Check if there are separators in the file names of the content item.
 
@@ -50,8 +54,7 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
         Returns:
             bool: True if there are invalid file names, False otherwise.
         """
-        invalid_files: List[str] = []
-        valid_files: List[str] = []
+        invalid_files: List[tuple] = []
 
         files_to_check = get_files_in_dir(
             str(content_item.path.parent), ["yml", "py", "md", "png"], False
@@ -78,13 +81,14 @@ class FileNameHasSeparatorsValidator(BaseValidator[ContentTypes]):
             valid_base_name = self.remove_separators_from_name(base_name)
 
             if valid_base_name != base_name:
-                invalid_files.append(file_name)
-                valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
+                invalid_files.append(
+                    (file_name, valid_base_name.join(file_name.rsplit(base_name, 1)))
+                )
 
         if invalid_files:
-            return (invalid_files, valid_files)
+            return invalid_files
 
-        return ()
+        return []
 
     def remove_separators_from_name(self, base_name: str) -> str:
         """

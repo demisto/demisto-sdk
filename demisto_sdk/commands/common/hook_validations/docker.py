@@ -295,7 +295,9 @@ class DockerImageValidator(BaseValidator):
         max_tag = only_numbered_tags[0]
 
         for num_tag in only_numbered_tags:
-            if parse_version(max_tag) < parse_version(num_tag):
+            # the version_tag.release returns a tuple from the version numbers '1.2.3.45' -> (1, 2, 3, 45)
+            # The last place is always a build number, therefore always increasing.
+            if parse_version(max_tag).release[-1] < parse_version(num_tag).release[-1]:
                 max_tag = num_tag
 
         return max_tag

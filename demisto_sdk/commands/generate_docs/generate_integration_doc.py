@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.generate_docs.common import (
     CONFIGURATION_SECTION_STEPS,
+    DEFAULT_ARG_DESCRIPTION,
     HEADER_TYPE,
     add_lines,
     build_example_dict,
@@ -527,9 +528,8 @@ def generate_integration_doc(
             if yml_data.get("commonfields", {}).get("id") == default_data_source_id:
                 docs.extend(
                     [
-                        "<~XSIAM>",
-                        "This is the default integration for this content pack when configured by the Data Onboarder.",
-                        "</~XSIAM>",
+                        "This is the default integration for this content pack when configured by the Data Onboarder "
+                        "in Cortex XSIAM.",
                         "",
                     ]
                 )
@@ -904,7 +904,7 @@ def generate_single_command_section(
             ]
         )
         for arg in arguments:
-            description = arg.get("description")
+            description = arg.get("description", DEFAULT_ARG_DESCRIPTION)
             if not description:
                 errors.append(
                     "Error! You are missing description in input {} of command {}".format(

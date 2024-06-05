@@ -36,9 +36,6 @@ class ReadmeDescriptionImageValidator(BaseValidator[ContentTypes]):
         "{}. See https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on"
         " how to add images to pack markdown files."
     )
-    related_field = "readme, description"
-    is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.README, RelatedFileType.DESCRIPTION_File]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -62,7 +59,15 @@ class ReadmeDescriptionImageValidator(BaseValidator[ContentTypes]):
         ]
 
     def verify_absolute_images_not_exist(self, content_item) -> str:
-        """Check for existing absolute image paths."""
+        """Check if the content item contains exists image paths.
+
+
+        Arguments:
+            content_item {ContentTypes} -- The content item to check.
+
+        Returns:
+            str -- The error message if the content item contains absolute paths.
+        """
         matches = re.findall(
             URL_IMAGE_LINK_REGEX + r"|" + HTML_IMAGE_LINK_REGEX,
             content_item,
@@ -76,7 +81,15 @@ class ReadmeDescriptionImageValidator(BaseValidator[ContentTypes]):
         return ""
 
     def verify_relative_saved_in_doc_files(self, content_item) -> str:
-        """Check for relative image paths not saved in the pack's doc_files folder."""
+        """Check if the content item contains exists image paths.
+
+        Arguments:
+            content_item {ContentTypes} -- The content item to check.
+
+        Returns:
+            str -- The error message if the content item contains relative images that are not saved in the
+             pack's doc_files folder.
+        """
         relative_images = re.findall(
             r"(\!\[.*?\])\(((?!http).*?)\)$"
             + r"|"

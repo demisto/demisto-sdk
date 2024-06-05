@@ -28,11 +28,13 @@ from demisto_sdk.commands.common.constants import (
 ContentTypes = Union[Integration, Script, Playbook, Pack]
 
 
-class CheckReadmeImageValidator(BaseValidator[ContentTypes]):
+class ReadmeDescriptionImageValidator(BaseValidator[ContentTypes]):
     error_code = "RM108"
     description = "This validation checks that the image in the readme file is relative."
-    rationale = "Using relative references to files in the repo folder enhances security by reducing reliance on external links, minimizing the risk of link manipulation or redirection attacks. "
-    error_message = "{}. See https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to add images to pack markdown files."
+    rationale = ("Using relative references to files in the repo folder enhances security by reducing reliance"
+                 " on external links, minimizing the risk of link manipulation or redirection attacks. ")
+    error_message = ("{}. See https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on"
+                     " how to add images to pack markdown files.")
     related_field = "readme, description"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
@@ -43,15 +45,16 @@ class CheckReadmeImageValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(", ".join(error_message)),
+                message=self.error_message.format(error_message),
                 content_object=content_item,
             )
             for content_item in content_items
             if (
-                error_message := self.verify_absolute_images_not_exist(content_item.description_file) +
-                                 self.verify_relative_saved_in_doc_files(content_item.description_file) +
-                                 self.verify_absolute_images_not_exist(content_item.readme.file_content) +
-                                 self.verify_relative_saved_in_doc_files(content_item.readme.file_content)
+                error_message := self.verify_absolute_images_not_exist(content_item.readme.file_content) +
+                                 self.verify_relative_saved_in_doc_files(content_item.readme.file_content) +
+                                 self.verify_absolute_images_not_exist(content_item.description) +
+                                 self.verify_relative_saved_in_doc_files(content_item.description)
+
             )
         ]
 
@@ -59,9 +62,12 @@ class CheckReadmeImageValidator(BaseValidator[ContentTypes]):
     def verify_absolute_images_not_exist(self, content_item: str) -> str:
         """Check for existing absolute image paths."""
         error_message = ""
-        absolute_links = re.findall(URL_IMAGE_LINK_REGEX + r'|' + HTML_IMAGE_LINK_REGEX, content_item, re.IGNORECASE | re.MULTILINE)
-        if absolute_links:
-            error_message = f"Invalid image path(s): {absolute_links}. Use relative paths instead.\n"
+        matches = re.findall(URL_IMAGE_LINK_REGEX + r'|' + HTML_IMAGE_LINK_REGEX, content_item,
+                             re.IGNORECASE | re.MULTILINE)
+        if matches:
+            absolute_links = ' \n'.join([match[1] if match[0] else match[2] for match in matches])
+            error_message = (f"Invalid image path(s), use relative paths instead in the following links"
+                             f":\n {absolute_links}.\n ")
         return error_message
         
         
@@ -74,7 +80,11 @@ class CheckReadmeImageValidator(BaseValidator[ContentTypes]):
                                     r'|' + r'(<img.*?src\s*=\s*"((?!http).*?)")',
                                     content_item,
                                     re.IGNORECASE | re.MULTILINE)
+        relative_images = [match[1] if match[0] else match[2] for match in relative_images]
         invalid_links = [rel_img for rel_img in relative_images if not re.match(DOC_FILE_IMAGE_REGEX, rel_img)]
+
         if invalid_links:
-            error_message += f"Relative image paths not in pack's doc_files:{invalid_links}. Move them to the folder."
+            error_message += (f"Relative image paths found not in pack's doc_files. Please move the following to"
+                              f" doc_file:\n") + ' \n'.join(invalid_links)
         return error_message
+

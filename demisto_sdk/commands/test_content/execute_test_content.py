@@ -127,11 +127,11 @@ def execute_test_content(**kwargs):
     )
     build_context.tests_data_keeper.create_result_files()
 
-    if kwargs["nightly"]:
-        build_number = kwargs["build_number"]
-        build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(
-            kwargs["server_type"], f"playbook_report_{build_number}", logging_manager
-        )
+    # if kwargs["nightly"]:
+    build_number = kwargs["build_number"]
+    build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(
+        kwargs["server_type"], f"playbook_report_{build_number}", logging_manager
+    )
     if build_context.tests_data_keeper.failed_playbooks:
         logging_manager.critical(
             "Some tests have failed. Not destroying instances.", real_time=True

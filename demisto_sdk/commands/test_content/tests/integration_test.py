@@ -111,7 +111,7 @@ def test_create_module(mocker, playbook, incident_configuration, expected):
         "server_version": "",
         "artifacts_path": ".",
         "service_account": "",
-        "artifacts_bucket": ""
+        "artifacts_bucket": "",
     }
     mocker.patch.object(
         BuildContext, "_load_conf_files", return_value=(Dummyconf(), "")

@@ -58,33 +58,23 @@ class ReadmeDescriptionImageValidator(BaseValidator[ContentTypes]):
             )
         ]
 
-
     def verify_absolute_images_not_exist(self, content_item: str) -> str:
         """Check for existing absolute image paths."""
-        error_message = ""
         matches = re.findall(URL_IMAGE_LINK_REGEX + r'|' + HTML_IMAGE_LINK_REGEX, content_item,
                              re.IGNORECASE | re.MULTILINE)
         if matches:
-            absolute_links = ' \n'.join([match[1] if match[0] else match[2] for match in matches])
-            error_message = (f"Invalid image path(s), use relative paths instead in the following links"
-                             f":\n {absolute_links}.\n ")
-        return error_message
-        
-        
+            absolute_links = ' \n'.join(match[1] if match[0] else match[2] for match in matches)
+            return f"Invalid image path(s), use relative paths instead in the following links:\n{absolute_links}.\n"
+        return ""
+
     def verify_relative_saved_in_doc_files(self, content_item: str) -> str:
         """Check for relative image paths not saved in the pack's doc_files folder."""
-        if not content_item:
-            return ""
-        error_message = ""
-        relative_images = re.findall(r"(\!\[.*?\])\(((?!http).*?)\)$" +
-                                    r'|' + r'(<img.*?src\s*=\s*"((?!http).*?)")',
-                                    content_item,
-                                    re.IGNORECASE | re.MULTILINE)
+        relative_images = re.findall(r"(\!\[.*?\])\(((?!http).*?)\)$" + r'|' + r'(<img.*?src\s*=\s*"((?!http).*?)")',
+                                     content_item, re.IGNORECASE | re.MULTILINE)
         relative_images = [match[1] if match[0] else match[2] for match in relative_images]
         invalid_links = [rel_img for rel_img in relative_images if not re.match(DOC_FILE_IMAGE_REGEX, rel_img)]
-
         if invalid_links:
-            error_message += (f"Relative image paths found not in pack's doc_files. Please move the following to"
-                              f" doc_file:\n") + ' \n'.join(invalid_links)
-        return error_message
+            return f"Relative image paths found not in pack's doc_files. Please move the following to doc_file:\n" + '\n'.join(
+                invalid_links)
+        return ""
 

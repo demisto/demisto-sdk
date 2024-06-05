@@ -413,12 +413,11 @@ def test_ReadmeDescriptionImageValidator_invalid():
             values=["valid description ![Example Image](../../content/image.jpg)"],
         ),
     ]
-    expected = ("Invalid image path(s), use relative paths instead in the following links"
-                ":\n https://www.example.com/images/example_image.jpg."
-                "\n Relative image paths found not in pack's doc_files. Please move the following to doc_file:\n"
-                "../../content/image.jpg."
-                " See https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to add"
-                " images to pack markdown files.")
+    expected = ("Invalid image path(s), use relative paths instead in the following links:\n"
+                "https://www.example.com/images/example_image.jpg.\nRelative image paths found not in pack's doc_files."
+                " Please move the following to doc_file:\n../../content/image.jpg. See"
+                " https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+                " for further info on how to add images to pack markdown files.")
 
     result = ReadmeDescriptionImageValidator().is_valid(content_items)
     assert result[0].message == expected

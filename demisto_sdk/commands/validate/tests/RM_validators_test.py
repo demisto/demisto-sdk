@@ -18,6 +18,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme
 from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
     IsContainDemistoWordValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_check_readme_image import (
+    ReadmeDescriptionImageValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
 )
@@ -27,10 +30,6 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_cop
 from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
     IsImageExistsInReadmeValidator,
 )
-from demisto_sdk.commands.validate.validators.RM_validators.RM108_check_readme_image import (
-    ReadmeDescriptionImageValidator,
-)
-
 from TestSuite.repo import ChangeCWD
 
 
@@ -393,31 +392,33 @@ def test_ReadmeDescriptionImageValidator_is_valid():
 
 def test_ReadmeDescriptionImageValidator_invalid():
     """
-    Given
-    content_items.
-    - Pack with:
-        1. invalid readme that contains absolute path.
-        2. description contains relative path that saved not under dec_files.
-demisto_sdk/commands/validate/sdk_validation_config.toml
+        Given
+        content_items.
+        - Pack with:
+            1. invalid readme that contains absolute path.
+            2. description contains relative path that saved not under dec_files.
+    demisto_sdk/commands/validate/sdk_validation_config.toml
 
-    When
-    - Calling the ReadmeDescriptionImageValidator is_valid function.
-    Then
-    - Make sure that the pack isn't failing.
+        When
+        - Calling the ReadmeDescriptionImageValidator is_valid function.
+        Then
+        - Make sure that the pack isn't failing.
     """
     content_items = [
         create_pack_object(
             readme_text=" Readme contains absolute path:\n 'Here is an image:\n"
-                        " ![Example Image](https://www.example.com/images/example_image.jpg)",
+            " ![Example Image](https://www.example.com/images/example_image.jpg)",
             paths=["description"],
             values=["valid description ![Example Image](../../content/image.jpg)"],
         ),
     ]
-    expected = ("Invalid image path(s), use relative paths instead in the following links:\n"
-                "https://www.example.com/images/example_image.jpg.\nRelative image paths found not in pack's doc_files."
-                " Please move the following to doc_file:\n../../content/image.jpg. See"
-                " https://xsoar.pan.dev/docs/integrations/integration-docs#images"
-                " for further info on how to add images to pack markdown files.")
+    expected = (
+        "Invalid image path(s), use relative paths instead in the following links:\n"
+        "https://www.example.com/images/example_image.jpg.\nRelative image paths found not in pack's doc_files."
+        " Please move the following to doc_file:\n../../content/image.jpg. See"
+        " https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+        " for further info on how to add images to pack markdown files."
+    )
 
     result = ReadmeDescriptionImageValidator().is_valid(content_items)
     assert result[0].message == expected

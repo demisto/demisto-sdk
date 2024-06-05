@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, Optional
 
 from demisto_sdk.commands.common.constants import (
     DOC_FILE_IMAGE_REGEX,
@@ -61,7 +61,7 @@ class ReadmeDescriptionImageValidator(BaseValidator[ContentTypes]):
             )
         ]
 
-    def verify_absolute_images_not_exist(self, content_item: str) -> str:
+    def verify_absolute_images_not_exist(self, content_item: Optional[str]) -> str:
         """Check for existing absolute image paths."""
         matches = re.findall(
             URL_IMAGE_LINK_REGEX + r"|" + HTML_IMAGE_LINK_REGEX,
@@ -75,7 +75,7 @@ class ReadmeDescriptionImageValidator(BaseValidator[ContentTypes]):
             return f"Invalid image path(s), use relative paths instead in the following links:\n{absolute_links}.\n"
         return ""
 
-    def verify_relative_saved_in_doc_files(self, content_item: str) -> str:
+    def verify_relative_saved_in_doc_files(self, content_item: Optional[str]) -> str:
         """Check for relative image paths not saved in the pack's doc_files folder."""
         relative_images = re.findall(
             r"(\!\[.*?\])\(((?!http).*?)\)$"

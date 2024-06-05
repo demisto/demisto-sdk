@@ -353,6 +353,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 ):
                     folder = ContentType.TEST_PLAYBOOK.as_folder
 
+                # The content structure is different from the server
+                if folder == "CaseLayouts":
+                    folder = "Layouts"
+
                 content_item.dump(
                     dir=path / folder,
                     marketplace=marketplace,

@@ -75,8 +75,6 @@ MARKETPLACE_VERSIONS_TO_SERVER_TYPE = {
     MarketplaceVersions.XSOAR_ON_PREM: {XSOAR_SERVER_TYPE},
 }
 
-ARTIFACTS_BUCKET = "xsoar-ci-artifacts"
-
 __all__ = [
     "BuildContext",
     "Conf",
@@ -859,7 +857,10 @@ class BuildContext:
         self.instances_ips = self._get_instances_ips()
         self.filtered_tests = self._extract_filtered_tests()
         self.tests_data_keeper = TestResults(
-            self.conf.unmockable_integrations, kwargs["artifacts_path"], kwargs["service_account"]
+            self.conf.unmockable_integrations,
+            kwargs["artifacts_path"],
+            kwargs["service_account"],
+            kwargs["artifacts_bucket"]
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()
@@ -1195,7 +1196,8 @@ class BuildContext:
 
 
 class TestResults:
-    def __init__(self, unmockable_integrations, artifacts_path: str, service_account: str = None):
+    def __init__(self, unmockable_integrations, artifacts_path: str, service_account: str = None,
+                 artifacts_bucket: str = None):
         self.succeeded_playbooks: List[str] = []
         self.failed_playbooks: Set[str] = set()
         self.playbook_report: Dict[str, List[Dict[Any, Any]]] = {}
@@ -1208,6 +1210,8 @@ class TestResults:
         self.playbook_skipped_integration: Set[str] = set()
         self.artifacts_path = Path(artifacts_path)
         self.service_account = service_account
+        self.artifacts_bucket = artifacts_bucket
+
 
     def add_proxy_related_test_data(self, proxy):
         # Using multiple appends and not extend since append is guaranteed to be thread safe
@@ -1361,7 +1365,7 @@ class TestResults:
         logging_module.info("Start uploading playbook results file to bucket")
 
         storage_client = storage.Client.from_service_account_json(self.service_account)
-        storage_bucket = storage_client.bucket(ARTIFACTS_BUCKET)
+        storage_bucket = storage_client.bucket(self.artifacts_bucket)
 
         blob = storage_bucket.blob(f'content-playbook-reports/{repository_name}/{file_name}')
         blob.upload_from_filename(self.artifacts_path / "test_playbooks_report.xml", content_type='application/xml')

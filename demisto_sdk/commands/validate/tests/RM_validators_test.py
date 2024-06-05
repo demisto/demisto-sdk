@@ -18,8 +18,11 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme
 from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
     IsContainDemistoWordValidator,
 )
-from demisto_sdk.commands.validate.validators.RM_validators.RM108_check_readme_image import (
-    ReadmeDescriptionImageValidator,
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_check_image_path_integration import (
+    ImagePathIntegrationValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_check_image_path_only_readme import (
+    ImagePathOnlyReadMeValidator
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
@@ -370,27 +373,26 @@ def test_IsContainDemistoWordValidator_is_invalid():
     assert results[0].message == expected_msg
 
 
-def test_ReadmeDescriptionImageValidator_is_valid():
+def test_ImagePathIntegrationValidator_is_valid():
     """
     Given
     content_items.
     - Pack with valid readme and valid description contain only relative paths.
     When
-    - Calling the ReadmeDescriptionImageValidator is_valid function.
+    - Calling the ImagePathIntegrationValidator is_valid function.
     Then
     - Make sure that the pack isn't failing.
     """
     content_items = [
-        create_pack_object(
-            readme_text="valid reademe ../../doc_files/image.jng",
-            paths=["description"],
-            values=["valid description ../../doc_files/image.jng"],
+        create_integration_object(
+            readme_content="![Example Image](../doc_files/image.png)",
+            description_content="valid description ![Example Image](../doc_files/image.png)",
         ),
     ]
-    assert not ReadmeDescriptionImageValidator().is_valid(content_items)
+    assert not ImagePathIntegrationValidator().is_valid(content_items)
 
 
-def test_ReadmeDescriptionImageValidator_invalid():
+def test_ImagePathIntegrationValidatorinvalid():
     """
         Given
         content_items.
@@ -400,25 +402,70 @@ def test_ReadmeDescriptionImageValidator_invalid():
     demisto_sdk/commands/validate/sdk_validation_config.toml
 
         When
-        - Calling the ReadmeDescriptionImageValidator is_valid function.
+        - Calling the ImagePathIntegrationValidator is_valid function.
         Then
-        - Make sure that the pack isn't failing.
+        - Make sure that the pack is failing.
     """
     content_items = [
-        create_pack_object(
-            readme_text=" Readme contains absolute path:\n 'Here is an image:\n"
+        create_integration_object(
+            readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
             " ![Example Image](https://www.example.com/images/example_image.jpg)",
-            paths=["description"],
-            values=["valid description ![Example Image](../../content/image.jpg)"],
+            description_content="valid description ![Example Image](../../content/image.jpg)",
         ),
     ]
-    expected = (
-        "Invalid image path(s), use relative paths instead in the following links:\n"
-        "https://www.example.com/images/example_image.jpg.\nRelative image paths found not in pack's doc_files."
-        " Please move the following to doc_file:\n../../content/image.jpg. See"
-        " https://xsoar.pan.dev/docs/integrations/integration-docs#images"
-        " for further info on how to add images to pack markdown files."
-    )
+    expected = ("Invalid image path(s) detected. Please use relative paths instead in the following links:"
+                "\nhttps://www.example.com/images/example_image.jpgRelative image paths found outside the pack's "
+                "doc_files directory. Please move the following images to the doc_files directory:"
+                "\n../../content/image.jpg. See https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+                " for further info on how to add images to pack markdown files.")
+    result = ImagePathIntegrationValidator().is_valid(content_items)
+    assert result[0].message == expected
 
-    result = ReadmeDescriptionImageValidator().is_valid(content_items)
+
+def test_ImagePathOnlyReadMeValidator_is_valid():
+    """
+    Given
+    content_items.
+    - Pack with valid readme contains only relative paths.
+    When
+    - Calling the ImagePathIntegrationValidator is_valid function.
+    Then
+    - Make sure that the pack isn't failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="![Example Image](../doc_files/image.png)",
+        ),
+    ]
+    assert not ImagePathOnlyReadMeValidator().is_valid(content_items)
+
+
+def test_ImagePathOnlyReadMeValidator_invalid():
+    """
+        Given
+        content_items.
+        - Pack with:
+            1. invalid readme that contains absolute path and contains
+             relative path that saved not under dec_files.
+
+        When
+        - Calling the ImagePathOnlyReadMeValidator is_valid function.
+
+        Then
+        - Make sure that the pack is failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
+                           " ![Example Image](https://www.example.com/images/example_image.jpg)"
+                           " ![Example Image](../../content/image.jpg)",
+        ),
+    ]
+    expected = ("Invalid image path(s) detected. Please use relative paths instead in the following links:"
+                "\nhttps://www.example.com/images/example_image.jpgRelative image paths found outside the pack's"
+                " doc_files directory. Please move the following images to the doc_files"
+                " directory:\n../../content/image.jpg."
+                " See https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on"
+                " how to add images to pack markdown files.")
+    result = ImagePathOnlyReadMeValidator().is_valid(content_items)
     assert result[0].message == expected

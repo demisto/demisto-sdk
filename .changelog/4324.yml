@@ -1,0 +1,5 @@
+changes:
+- description: Converted the RM108 validation to the new format. This validation verifies that images in the readme
+               and description files are relative and stored in doc_files.
+  type: internal
+pr_number: 4275

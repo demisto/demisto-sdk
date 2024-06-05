@@ -398,7 +398,7 @@ def test_ReadmeDescriptionImageValidator_invalid():
     - Pack with:
         1. invalid readme that contains absolute path.
         2. description contains relative path that saved not under dec_files.
-
+demisto_sdk/commands/validate/sdk_validation_config.toml
 
     When
     - Calling the ReadmeDescriptionImageValidator is_valid function.

@@ -30,7 +30,8 @@ ContentTypes = Union[Integration, Script, Playbook, Pack]
 
 class ReadmeDescriptionImageValidator(BaseValidator[ContentTypes]):
     error_code = "RM108"
-    description = "This validation checks that the image in the readme file is relative."
+    description = ("This validation verifies that images in the readme and description files are"
+                   " relative and stored in doc_files.")
     rationale = ("Using relative references to files in the repo folder enhances security by reducing reliance"
                  " on external links, minimizing the risk of link manipulation or redirection attacks. ")
     error_message = ("{}. See https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on"

@@ -6,7 +6,7 @@ mapping:
   group:
     type: str
     required: true
-    enum: ['incident', 'indicator', 'case']
+    enum: ['case']
   definitionId:
     type: str
   version:
@@ -28,7 +28,7 @@ mapping:
     type: seq
     sequence:
     - type: str
-      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+      enum: ['marketplacev2']
   edit:
     type: map
     mapping:
@@ -118,36 +118,6 @@ mapping:
         sequence:
         - include: section_schema
 
-  name:xsoar:
-    type: str
-  name:marketplacev2:
-    type: str
-  name:xpanse:
-    type: str
-  name:xsoar_saas:
-    type: str
-  name:xsoar_on_prem:
-    type: str
-  description:xsoar:
-    type: str
-  description:marketplacev2:
-    type: str
-  description:xpanse:
-    type: str
-  description:xsoar_saas:
-    type: str
-  description:xsoar_on_prem:
-    type: str
-  id:xsoar:
-    type: str
-  id:marketplacev2:
-    type: str
-  id:xpanse:
-    type: str
-  id:xsoar_saas:
-    type: str
-  id:xsoar_on_prem:
-    type: str
 schema;tabs_schema:
   type: any
 
@@ -181,36 +151,6 @@ schema;section_schema:
       sequence:
       - include: field_schema
 
-    name:xsoar:
-      type: str
-    name:marketplacev2:
-      type: str
-    name:xpanse:
-      type: str
-    name:xsoar_saas:
-      type: str
-    name:xsoar_on_prem:
-      type: str
-    description:xsoar:
-      type: str
-    description:marketplacev2:
-      type: str
-    description:xpanse:
-      type: str
-    description:xsoar_saas:
-      type: str
-    description:xsoar_on_prem:
-      type: str
-    id:xsoar:
-      type: str
-    id:marketplacev2:
-      type: str
-    id:xpanse:
-      type: str
-    id:xsoar_saas:
-      type: str
-    id:xsoar_on_prem:
-      type: str
 schema;field_schema:
   type: map
   mapping:
@@ -231,16 +171,6 @@ schema;field_schema:
       sequence:
       - include: arg_filters_schema
 
-    id:xsoar:
-      type: str
-    id:marketplacev2:
-      type: str
-    id:xpanse:
-      type: str
-    id:xsoar_saas:
-      type: str
-    id:xsoar_on_prem:
-      type: str
 schema;arg_filters_schema:
   type: seq
   sequence:

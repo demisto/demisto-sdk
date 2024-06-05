@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Union, Optional
+from typing import Iterable, List, Optional, Union
 
 from demisto_sdk.commands.common.constants import (
     DOC_FILE_IMAGE_REGEX,

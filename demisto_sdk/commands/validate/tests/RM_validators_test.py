@@ -200,6 +200,12 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
         - A list of content items with their respective readme contents.
     When:
         - The IsImagePathValidValidator is run on the provided content items.
+            - A content item with no images (expected failures: 0).
+            - A content item with a non-raw image URL in the readme (expected failures: 1).
+            - A script object with a non-raw image URL in the readme (expected failures: 1).
+            - A pack object with a non-raw image URL in the readme (expected failures: 1).
+            - A playbook object with a non-raw image URL in the readme (expected failures: 1).
+
     Then:
         - Validate that the number of detected invalid image paths matches the expected number of failures.
         - Ensure that each failure message correctly identifies the non-raw GitHub image URL and suggests the proper raw URL format.

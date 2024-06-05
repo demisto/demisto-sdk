@@ -283,6 +283,7 @@ jobs:
           source $(poetry env info --path)/bin/activate
           cd content
           rm -rf .pre-commit-config_template.yaml
+          rm -f Tests/docker_native_image_config.json
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
 
       - name: Upload artifacts

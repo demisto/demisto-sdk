@@ -7,7 +7,7 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 )
 
 
-class LayoutRule(ContentItemXSIAM, content_type=ContentType.LAYOUT_RULE):  # type: ignore[call-arg]
+class CaseLayoutRule(ContentItemXSIAM, content_type=ContentType.CASE_LAYOUT_RULE):  # type: ignore[call-arg]
     layout_id: str
 
     def metadata_fields(self) -> Set[str]:
@@ -25,6 +25,6 @@ class LayoutRule(ContentItemXSIAM, content_type=ContentType.LAYOUT_RULE):  # typ
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         if "rule_id" in _dict and path.suffix == ".json":
-            if "alerts_filter" in _dict:
+            if "incidents_filter" in _dict:
                 return True
         return False

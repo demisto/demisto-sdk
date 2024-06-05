@@ -1807,6 +1807,9 @@ def find_type(
         FileType | None: Enum representation of the content file type, None otherwise.
     """
     from demisto_sdk.commands.content_graph.objects import (
+        CaseField,
+        CaseLayout,
+        CaseLayoutRule,
         Classifier,
         CorrelationRule,
         Dashboard,
@@ -1980,6 +1983,15 @@ def find_type(
 
     if LayoutRule.match(_dict, Path(path)):
         return FileType.LAYOUT_RULE
+
+    if CaseField.match(_dict, Path(path)):
+        return FileType.CASE_FIELD
+
+    if CaseLayout.match(_dict, Path(path)):
+        return FileType.CASE_LAYOUT
+
+    if CaseLayoutRule.match(_dict, Path(path)):
+        return FileType.CASE_LAYOUT_RULE
 
     if ListObject.match(_dict, Path(path)):
         return FileType.LISTS

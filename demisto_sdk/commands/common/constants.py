@@ -2068,6 +2068,7 @@ TABLE_INCIDENT_TO_ALERT = {
 FORMATTING_SCRIPT = "indicator-format"
 
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
+DOCKERFILES_INFO_REPO_PRIMARY_BRANCH = "master"
 DOCKERFILES_REPO = "demisto/dockerfiles"
 CONTENT_REPO = "demisto/content"
 

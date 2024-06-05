@@ -7,7 +7,6 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILE_IMAGE_REGEX,
     HTML_IMAGE_LINK_REGEX,
     URL_IMAGE_LINK_REGEX,
-    GitStatuses,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -53,8 +52,12 @@ class ReadmeDescriptionImageValidator(BaseValidator[ContentTypes]):
                 + self.verify_relative_saved_in_doc_files(
                     content_item.readme.file_content
                 )
-                + self.verify_absolute_images_not_exist(content_item.description_file.file_content)
-                + self.verify_relative_saved_in_doc_files(content_item.description_file.file_content)
+                + self.verify_absolute_images_not_exist(
+                    content_item.description_file.file_content
+                )
+                + self.verify_relative_saved_in_doc_files(
+                    content_item.description_file.file_content
+                )
             )
         ]
 

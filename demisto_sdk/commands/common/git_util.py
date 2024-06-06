@@ -39,7 +39,7 @@ class GitFileNotFoundError(FileNotFoundError):
         if from_remote:
             commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
         super().__init__(
-            f"file {path} could not be found in commit/branch {commit_or_branch}"
+            f"file {path} could not be  found in commit/branch {commit_or_branch}"
         )
 
 

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import re
+from abc import ABC
 
 from demisto_sdk.commands.common.constants import (
     DOC_FILE_IMAGE_REGEX,
     HTML_IMAGE_LINK_REGEX,
     URL_IMAGE_LINK_REGEX,
 )
-from abc import ABC
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -45,11 +45,15 @@ class ImagePathValidator(BaseValidator, ABC):
             re.IGNORECASE | re.MULTILINE,
         )
         if absolute_links:
-            absolute_links = [absolute_link[1] if absolute_link[0] else absolute_link[2]
-                              for absolute_link in absolute_links]
+            absolute_links = [
+                absolute_link[1] if absolute_link[0] else absolute_link[2]
+                for absolute_link in absolute_links
+            ]
 
-            return ("Invalid image path(s) detected. Please use relative paths instead in the following links:\n" +
-                    "\n".join(absolute_links))
+            return (
+                "Invalid image path(s) detected. Please use relative paths instead in the following links:\n"
+                + "\n".join(absolute_links)
+            )
         return ""
 
     def verify_relative_saved_in_doc_files(self, content_item) -> str:
@@ -73,7 +77,9 @@ class ImagePathValidator(BaseValidator, ABC):
             match[1] if match[0] else match[2] for match in relative_images
         ]
         invalid_links = [
-            rel_img for rel_img in relative_images if not re.match(DOC_FILE_IMAGE_REGEX, rel_img)
+            rel_img
+            for rel_img in relative_images
+            if not re.match(DOC_FILE_IMAGE_REGEX, rel_img)
         ]
         if invalid_links:
             return (

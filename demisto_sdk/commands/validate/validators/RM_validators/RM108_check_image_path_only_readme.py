@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -12,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM108_check_image_path import (
-    ImagePathValidator
+    ImagePathValidator,
 )
 
 ContentTypes = Union[Script, Playbook, Pack]

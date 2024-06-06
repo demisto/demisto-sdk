@@ -4,13 +4,12 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.validators.RM_validators.RM108_check_image_path import (
-    ImagePathValidator
-)
-
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_check_image_path import (
+    ImagePathValidator,
 )
 
 ContentTypes = Integration
@@ -32,7 +31,7 @@ class ImagePathIntegrationValidator(ImagePathValidator, BaseValidator[ContentTyp
                     content_item.readme.file_content
                 )
                 + self.verify_relative_saved_in_doc_files(
-                     content_item.readme.file_content
+                    content_item.readme.file_content
                 )
                 + self.verify_absolute_images_not_exist(
                     content_item.description_file.file_content

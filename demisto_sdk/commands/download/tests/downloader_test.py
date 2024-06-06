@@ -711,7 +711,9 @@ class TestDownloadExistingFile:
         env.SCRIPT_CUSTOM_CONTENT_OBJECT["data"] = script_data
 
         assert downloader.write_files_into_output_path(
-            downloaded_content_objects={script_file_name: env.SCRIPT_CUSTOM_CONTENT_OBJECT},
+            downloaded_content_objects={
+                script_file_name: env.SCRIPT_CUSTOM_CONTENT_OBJECT
+            },
             existing_pack_structure=env.PACK_CONTENT,
             output_path=env.PACK_INSTANCE_PATH,
         )

@@ -442,7 +442,7 @@ def test_IsContainDemistoWordValidator_is_invalid():
     assert results[0].message == expected_msg
 
 
-def test_ImagePathIntegrationValidator_is_valid():
+def test_ImagePathIntegrationValidator_is_valid_valid_case():
     """
     Given
     content_items.
@@ -461,7 +461,7 @@ def test_ImagePathIntegrationValidator_is_valid():
     assert not ImagePathIntegrationValidator().is_valid(content_items)
 
 
-def test_ImagePathIntegrationValidatorinvalid():
+def test_ImagePathIntegrationValidator_is_valid_invalid_case():
     """
         Given
         content_items.
@@ -493,7 +493,7 @@ def test_ImagePathIntegrationValidatorinvalid():
     assert result[0].message == expected
 
 
-def test_ImagePathOnlyReadMeValidator_is_valid():
+def test_ImagePathOnlyReadMeValidator_is_valid_valid_case():
     """
     Given
     content_items.
@@ -511,7 +511,7 @@ def test_ImagePathOnlyReadMeValidator_is_valid():
     assert not ImagePathOnlyReadMeValidator().is_valid(content_items)
 
 
-def test_ImagePathOnlyReadMeValidator_invalid():
+def test_ImagePathOnlyReadMeValidator_is_valid_invalid_case():
     """
     Given
     content_items.

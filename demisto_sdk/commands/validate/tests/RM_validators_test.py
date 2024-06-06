@@ -9,11 +9,17 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_valid import (
+    IsImagePathValidValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme_not_equal_pack_description import (
     IsPackReadmeNotEqualPackDescriptionValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
+    IsContainDemistoWordValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
@@ -146,6 +152,72 @@ def test_empty_readme_validator(
         [
             result.message == expected_msg
             for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        ([create_integration_object()], 0),
+        (
+            [
+                create_integration_object(
+                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+        (
+            [
+                create_script_object(
+                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+        (
+            [
+                create_playbook_object(
+                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+    ],
+)
+def test_is_image_path_validator(content_items, expected_number_of_failures):
+    """
+    Given:
+        - A list of content items with their respective readme contents.
+    When:
+        - The IsImagePathValidValidator is run on the provided content items.
+            - A content item with no images (expected failures: 0).
+            - A content item with a non-raw image URL in the readme (expected failures: 1).
+            - A script object with a non-raw image URL in the readme (expected failures: 1).
+            - A pack object with a non-raw image URL in the readme (expected failures: 1).
+            - A playbook object with a non-raw image URL in the readme (expected failures: 1).
+
+    Then:
+        - Validate that the number of detected invalid image paths matches the expected number of failures.
+        - Ensure that each failure message correctly identifies the non-raw GitHub image URL and suggests the proper raw URL format.
+    """
+    results = IsImagePathValidValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message.endswith(
+                "detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
+            )
+            for result in results
         ]
     )
 
@@ -314,3 +386,51 @@ def test_IsReadmeExistsValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IsContainDemistoWordValidator_is_valid():
+    """
+    Given
+    content_items.
+        - Two valid pack_metadatas:
+            - 1 pack with valid readme text.
+            - 1 pack with an empty readme.    When
+    - Calling the IsContainDemistoWordValidator is_valid function.
+    Then
+        - Make sure that the pack isn't failing.
+        - Should pass all.
+    """
+    content_items = [
+        create_pack_object(readme_text="This is a valid readme."),
+        create_pack_object(readme_text=""),
+    ]
+    results = IsContainDemistoWordValidator().is_valid(content_items)
+    expected_msg = []
+    assert len(results) == 0
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msg)
+        ]
+    )
+
+
+def test_IsContainDemistoWordValidator_is_invalid():
+    """
+    Given
+    content_items.
+        - One invalid pack_metadata with a readme that contains the word 'demisto'.
+    When
+    - Calling the IsContainDemistoWordValidator is_valid function.
+    Then
+    - Make sure the right amount of pack failed, and that the right error message is returned.
+    """
+    content_items = [
+        create_pack_object(
+            readme_text="Invalid readme contains the word demistomock\ndemisto \ndemisto \ndemisto.\n mockdemisto."
+        )
+    ]
+    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
+    results = IsContainDemistoWordValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert results[0].message == expected_msg

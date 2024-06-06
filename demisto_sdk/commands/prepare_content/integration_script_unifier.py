@@ -5,7 +5,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
@@ -607,13 +607,9 @@ class IntegrationScriptUnifier(Unifier):
         if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
             contributor_type = support_level_header
 
-        if (
-            " Contribution)" not in unified_yml["display"]
-            and contributor_type != "xsoar"
-        ):
-            unified_yml["display"] += CONTRIBUTOR_DISPLAY_NAME.format(
-                contributor_type.capitalize()
-            )
+        unified_yml["display"] = IntegrationScriptUnifier.get_display_name(
+            unified_yml["display"], contributor_type
+        )
         existing_detailed_description = unified_yml.get("detaileddescription", "")
 
         if contributor_type == COMMUNITY_SUPPORT:
@@ -646,6 +642,34 @@ class IntegrationScriptUnifier(Unifier):
             )
 
         return unified_yml
+
+    @staticmethod
+    def get_display_name(display_name: str, contributor_type: str):
+        if (
+            display_name
+            and contributor_type
+            and " Contribution)" not in display_name
+            and contributor_type != "xsoar"
+        ):
+            display_name += CONTRIBUTOR_DISPLAY_NAME.format(
+                contributor_type.capitalize()
+            )
+        return display_name
+
+    @staticmethod
+    def remove_support_from_display_name(
+        display_name: str, contributor_type: Optional[str]
+    ):
+        if (
+            display_name
+            and contributor_type
+            and " Contribution)" in display_name
+            and contributor_type != "xsoar"
+        ):
+            suffix = CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
+            if display_name.endswith(suffix):
+                display_name = display_name[: -len(suffix)]
+        return display_name
 
     @staticmethod
     def get_integration_doc_link(package_path: Path, unified_yml: Dict) -> str:

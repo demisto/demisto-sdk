@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from abc import ABC
+from typing import Iterable,List
 
 from demisto_sdk.commands.common.constants import (
     DOC_FILE_IMAGE_REGEX,
@@ -11,8 +12,11 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    ValidationResult
 )
 
+
+ContentTypes = ""
 
 class ImagePathValidator(BaseValidator, ABC):
     error_code = "RM108"
@@ -29,6 +33,9 @@ class ImagePathValidator(BaseValidator, ABC):
         " how to add images to pack markdown files."
     )
     related_file_type = [RelatedFileType.README, RelatedFileType.DESCRIPTION_File]
+    
+    def is_valid(self, content_item: Iterable[ContentTypes]) -> List[ValidationResult]:
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def verify_absolute_images_not_exist(self, content_item) -> str:
         """Check if the content item contains exists image paths.

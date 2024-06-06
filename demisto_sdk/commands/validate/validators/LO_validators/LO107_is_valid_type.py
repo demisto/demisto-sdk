@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Union
 
 from ordered_set import OrderedSet
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -12,7 +13,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Layout
+ContentTypes = Union[Layout, CaseLayout]
 
 INVALID_SECTIONS: List = [
     "evidence",

@@ -78,7 +78,7 @@ class ImagePathValidator(BaseValidator, ABC):
             ]
 
             return (
-                "Invalid image path(s) detected. Please use relative paths instead in the following links:\n"
+                " Invalid image path(s) detected. Please use relative paths instead in the following links:\n"
                 + "\n".join(absolute_links)
             )
         return ""
@@ -110,7 +110,7 @@ class ImagePathValidator(BaseValidator, ABC):
         ]
         if invalid_links:
             return (
-                "Relative image paths found outside the pack's doc_files directory."
+                " Relative image paths found outside the pack's doc_files directory."
                 " Please move the following images to the doc_files directory:\n"
                 + "\n".join(invalid_links)
             )

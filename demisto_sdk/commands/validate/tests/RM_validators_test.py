@@ -483,8 +483,8 @@ def test_ImagePathIntegrationValidator_is_valid_invalid_case():
         ),
     ]
     expected = (
-        "Invalid image path(s) detected. Please use relative paths instead in the following links:"
-        "\nhttps://www.example.com/images/example_image.jpgRelative image paths found outside the pack's "
+        " Invalid image path(s) detected. Please use relative paths instead in the following links:"
+        "\nhttps://www.example.com/images/example_image.jpg Relative image paths found outside the pack's "
         "doc_files directory. Please move the following images to the doc_files directory:"
         "\n../../content/image.jpg. See https://xsoar.pan.dev/docs/integrations/integration-docs#images"
         " for further info on how to add images to pack markdown files."
@@ -533,8 +533,8 @@ def test_ImagePathOnlyReadMeValidator_is_valid_invalid_case():
         ),
     ]
     expected = (
-        "Invalid image path(s) detected. Please use relative paths instead in the following links:"
-        "\nhttps://www.example.com/images/example_image.jpgRelative image paths found outside the pack's"
+        " Invalid image path(s) detected. Please use relative paths instead in the following links:"
+        "\nhttps://www.example.com/images/example_image.jpg Relative image paths found outside the pack's"
         " doc_files directory. Please move the following images to the doc_files"
         " directory:\n../../content/image.jpg."
         " See https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on"

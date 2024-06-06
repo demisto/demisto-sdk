@@ -18,6 +18,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = ContentItem
 
+
 class ImagePathValidator(BaseValidator, ABC):
     error_code = "RM108"
     description = (
@@ -33,7 +34,7 @@ class ImagePathValidator(BaseValidator, ABC):
         " how to add images to pack markdown files."
     )
     related_file_type = [RelatedFileType.README, RelatedFileType.DESCRIPTION_File]
-    
+
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -42,11 +43,9 @@ class ImagePathValidator(BaseValidator, ABC):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                error_message := self.validate_content_items(content_item)
-            )
+            if (error_message := self.validate_content_items(content_item))
         ]
-    
+
     def validate_content_items(self, content_item):
         """Check if the content items are valid by passing verify_absolute_images_not_exist and verify_relative_saved_in_doc_files.
 

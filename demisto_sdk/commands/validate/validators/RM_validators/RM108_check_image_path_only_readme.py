@@ -28,8 +28,7 @@ class ImagePathOnlyReadMeValidator(ImagePathValidator, BaseValidator[ContentType
         Returns:
             str -- The error message if the content item isn't valid.
         """
-        error_message = (
-            self.verify_absolute_images_not_exist(content_item.readme.file_content) +
-            self.verify_relative_saved_in_doc_files(content_item.readme.file_content)
-        )
+        error_message = self.verify_absolute_images_not_exist(
+            content_item.readme.file_content
+        ) + self.verify_relative_saved_in_doc_files(content_item.readme.file_content)
         return error_message

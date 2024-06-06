@@ -2,21 +2,21 @@ from __future__ import annotations
 
 import re
 from abc import ABC
-from typing import Iterable,List
+from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     DOC_FILE_IMAGE_REGEX,
     HTML_IMAGE_LINK_REGEX,
     URL_IMAGE_LINK_REGEX,
 )
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    ValidationResult
+    ValidationResult,
 )
 
-
-ContentTypes = ""
+ContentTypes = ContentItem
 
 class ImagePathValidator(BaseValidator, ABC):
     error_code = "RM108"
@@ -34,7 +34,28 @@ class ImagePathValidator(BaseValidator, ABC):
     )
     related_file_type = [RelatedFileType.README, RelatedFileType.DESCRIPTION_File]
     
-    def is_valid(self, content_item: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(error_message),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (
+                error_message := self.validate_content_items(content_item)
+            )
+        ]
+    
+    def validate_content_items(self, content_item):
+        """Check if the content items are valid by passing verify_absolute_images_not_exist and verify_relative_saved_in_doc_files.
+
+        Arguments:
+            content_item {ContentTypes} -- The content item to check.
+
+        Returns:
+            str -- The error message if the content item isn't valid.
+        """
         raise NotImplementedError("Subclasses must implement this method.")
 
     def verify_absolute_images_not_exist(self, content_item) -> str:

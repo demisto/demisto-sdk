@@ -25,7 +25,7 @@ class IndicatorField(IndicatorIncidentField, content_type=ContentType.INDICATOR_
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        if "id" in _dict:
+        if "id" in _dict and isinstance(_dict["id"], str):
             _id = str(_dict["id"]).lower()
             if _id.startswith("indicator"):
                 return True

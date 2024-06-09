@@ -190,6 +190,7 @@ class ValidationInitializer:
         self.run_on_deprecated = ""
         self.min_content_type_val = 1
         self.max_content_type_val = int(list(CONTENT_TYPES_DICT.keys())[-1])
+        self.using_graph = False
 
     def run_initializer(self):
         """
@@ -207,6 +208,7 @@ class ValidationInitializer:
         """
         self.initialize_error_details()
         self.initialize_validation_details()
+        self.initialize_using_graph()
         self.initialize_file_name()
 
     def initialize_error_details(self):
@@ -304,9 +306,11 @@ class ValidationInitializer:
             )
         if not validator_class_name.endswith("Validator"):
             validator_class_name = f"{validator_class_name}Validator"
-        self.class_declaration = (
-            f"class {validator_class_name}(BaseValidator[ContentTypes]):"
-        )
+        self.class_name = validator_class_name
+        if not self.using_graph:
+            self.class_declaration = (f"class {validator_class_name}(BaseValidator[ContentTypes]):")
+        else:
+            self.class_declaration = (f"class {validator_class_name}(BaseValidator, ABC):")
 
     def initialize_git_statuses(self):
         """
@@ -433,6 +437,18 @@ Fill the content types as the numbers they appear as: """
         if run_on_deprecated in ["Y", "y"]:
             self.run_on_deprecated = "\n    run_on_deprecated = True"
 
+    def initialize_using_graph(self):
+        """
+        Request the info wether the validation is using graph or not and ensure the input is valid.
+        """
+        using_graph = str(input("does the validation using graph? (Y/N): "))
+        while not using_graph or using_graph not in ["Y", "N", "y", "n"]:
+            using_graph = str(
+                input("Please enter wether the validation using graph or not? (Y/N): ")
+            )
+        if using_graph in ["Y", "y"]:
+            self.using_graph = True
+
     def initialize_file_name(self):
         """
         Request the file name, ensure the given name is valid.
@@ -462,6 +478,9 @@ Fill the content types as the numbers they appear as: """
         self.generate_is_valid_function()
         self.generate_fix_function()
         self.generate_file_info()
+        if self.using_graph:
+            self.using_graph_all_files_class = self.Generate_files_according_execution_mode('AllFiles')
+            self.using_graph_list_files_class = self.Generate_files_according_execution_mode('ListFiles')
 
     def generate_related_file_section(self):
         """
@@ -492,20 +511,25 @@ Fill the content types as the numbers they appear as: """
         Generate the imports section string.
         """
         self.imports = "from __future__ import annotations\n\n"
+        if self.using_graph:
+            self.imports += "from abc import ABC\n\n"
         if len(self.content_types) == 1:
             self.imports += "from typing import Iterable, List\n\n"
         else:
             self.imports += "from typing import Iterable, List, Union\n\n"
+
         if self.git_statuses:
             self.imports += (
                 "from demisto_sdk.commands.common.constants import GitStatuses\n"
             )
+        self.related_files_imports = ''
         if self.related_files:
-            self.imports += "from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType\n"
+            self.related_files_imports += "from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType\n"
         for content_type in self.content_types:
-            self.imports += (
+            self.related_files_imports += (
                 f"{CONTENT_TYPES_DICT.get(content_type, {}).get('import', '')}\n"
             )
+        self.imports += self.related_files_imports
         fix_result_import = "FixResult,\n        " if self.support_fix else ""
         self.imports += f"""from demisto_sdk.commands.validate.validators.base_validator import (
         BaseValidator,
@@ -531,7 +555,8 @@ Fill the content types as the numbers they appear as: """
         """
         Generate the is_valid function.
         """
-        self.is_valid_method = """
+        if not self.using_graph:
+            self.is_valid_method = """
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -544,7 +569,23 @@ Fill the content types as the numbers they appear as: """
                 # Add your validation right here
             )
         ]
-    """
+        """
+
+        else:
+            self.is_valid_method = """
+        def is_valid_using_graph(self, content_items: Iterable[ContentTypes], validate_all_files) -> List[ValidationResult]:
+            return [
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message,
+                    content_object=content_item,
+                )
+                for content_item in content_items
+                if (
+                    # Add your validation right here
+                )
+            ]
+        """
 
     def generate_fix_function(self):
         """
@@ -568,14 +609,46 @@ Fill the content types as the numbers they appear as: """
             self.file_name = pascal_to_snake(self.class_declaration[6:-39])
         if not self.file_name.startswith(self.error_code):
             self.file_name = f"{self.error_code}_{self.file_name}"
-        if not self.file_name.endswith(".py"):
-            self.file_name = f"{self.file_name}.py"
+        if self.file_name.endswith(".py"):
+            self.file_name = f"{self.file_name[0:-3]}"
         dir_path = (
             f"demisto_sdk/commands/validate/validators/{self.error_code[:2]}_validators"
         )
         if not Path(dir_path).exists():
             os.makedirs(dir_path)
         self.file_path = f"{dir_path}/{self.file_name}"
+
+    def Generate_files_according_execution_mode(self, execution_mode):
+        """Generate files according to the execution_mode if using graph"""
+        if execution_mode == "AllFiles":
+            expected_execution_mode = '[ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]'
+            all_files = True
+        else:
+            expected_execution_mode = '[ExecutionMode.ALL_FILES]'
+            all_files = False
+        return f"""
+from __future__ import annotations
+
+from typing import Iterable, List
+
+from demisto_sdk.commands.common.constants import ExecutionMode
+{self.related_files_imports}
+from demisto_sdk.commands.validate.validators.base_validator import (
+        BaseValidator,
+        ValidationResult,
+)
+
+from demisto_sdk.commands.validate.validators.{self.error_code[:2]}_validators.{self.file_name} import {self.class_name}
+
+{self.supported_content_types}
+
+
+class {self.class_name}{execution_mode}({self.class_name}, BaseValidator[ContentTypes]):
+    expected_execution_mode = {expected_execution_mode}
+    
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        return self.is_valid_using_graph(content_items, {all_files})
+        """
 
     """ Create new py file """
 
@@ -584,7 +657,7 @@ Fill the content types as the numbers they appear as: """
         insert all the information into the validation template and write the validation into a new py file with the given name under
         demisto_sdk/commands/validate/validators/<error_code_prefix>_validators.
         """
-        with open(self.file_path, "w") as file:
+        with open(f'{self.file_path}.py', "w") as file:
             # Write the content into VALIDATION_TEMPLATE
             new_file_content = Template(VALIDATION_TEMPLATE).safe_substitute(
                 imports=self.imports,
@@ -604,6 +677,12 @@ Fill the content types as the numbers they appear as: """
                 support_deprecated=self.run_on_deprecated,
             )
             file.write(new_file_content)
+
+        if self.using_graph:
+            with open(f'{self.file_path}_all_files.py', "w") as file:
+                file.write(self.using_graph_all_files_class)
+            with open(f'{self.file_path}_list_files.py', "w") as file:
+                file.write(self.using_graph_list_files_class)
 
 
 def main():

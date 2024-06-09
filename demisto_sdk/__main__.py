@@ -3536,7 +3536,7 @@ def update_content_graph(
     type=PathsParamType(
         exists=True, resolve_path=True
     ),  # PathsParamType allows passing a list of paths
-    help="A list of content packs/files to validate.",
+    help="Paths to content integrations or script to setup the environment. If not provided, will configure the environment for the content repository.",
 )
 @click.option(
     "--create-virtualenv",

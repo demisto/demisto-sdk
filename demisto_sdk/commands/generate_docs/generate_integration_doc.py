@@ -24,10 +24,12 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_content_path,
+    get_pack_metadata,
     get_yaml,
 )
 from demisto_sdk.commands.generate_docs.common import (
     CONFIGURATION_SECTION_STEPS,
+    DEFAULT_ARG_DESCRIPTION,
     add_lines,
     build_example_dict,
     generate_numbered_section,
@@ -551,6 +553,17 @@ def generate_integration_doc(
                         "",
                     ]
                 )
+            # Checks if this integration is the default data source
+            pack_metadata = get_pack_metadata(input_path)
+            default_data_source_id = pack_metadata.get("defaultDataSource")
+            if yml_data.get("commonfields", {}).get("id") == default_data_source_id:
+                docs.extend(
+                    [
+                        "This is the default integration for this content pack when configured by the Data Onboarder "
+                        "in Cortex XSIAM.",
+                        "",
+                    ]
+                )
             # Checks if the integration is a new version
             integration_version = re.findall("[vV][2-9]$", yml_data.get("display", ""))
             if integration_version and not skip_breaking_changes:
@@ -924,7 +937,7 @@ def generate_single_command_section(
             ]
         )
         for arg in arguments:
-            description = arg.get("description")
+            description = arg.get("description", DEFAULT_ARG_DESCRIPTION)
             if not description:
                 errors.append(
                     "Error! You are missing description in input {} of command {}".format(

@@ -1,6 +1,0 @@
-changes:
-- description: Removed lint step from all sdk build steps.
-  type: internal
-- description: Started adaption for **demisto-sdk lint** command. The command will be fully removed soon Use **demisto-sdk pre-commit** instead.
-  type: breaking
-pr_number: 4286

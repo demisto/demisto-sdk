@@ -61,6 +61,7 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    description_content: Optional[str] = None,
     name: Optional[str] = None,
     code: Optional[str] = None,
 ) -> Integration:
@@ -75,11 +76,15 @@ def create_integration_object(
     """
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
+
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
 
     additional_params = {}
+
+    if description_content:
+        additional_params["description"] = description_content
 
     if readme_content is not None:
         additional_params["readme"] = readme_content
@@ -217,6 +222,7 @@ def create_script_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
+    readme_content: Optional[str] = None,
     name: Optional[str] = None,
     code: Optional[str] = None,
     test_code: Optional[str] = None,
@@ -240,6 +246,9 @@ def create_script_object(
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
+    if readme_content is not None:
+        additional_params["readme"] = readme_content
+
     script = pack.create_script(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"
     script.code.write(code)
@@ -288,6 +297,7 @@ def create_pack_object(
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
     pack.readme.write_text(readme_text)
+
     if image is not None:
         pack.author_image.write(image)
     if playbooks:

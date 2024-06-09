@@ -99,6 +99,9 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "layoutrule": BaseUpdateJSON,
     "assetsmodelingrule": BaseUpdateYML,
     "assetsmodelingruleschema": BaseUpdateJSON,
+    "casefield": BaseUpdateJSON,
+    "caselayout": LayoutBaseFormat,
+    "caselayoutrule": BaseUpdateJSON,
 }
 
 UNFORMATTED_FILES = [

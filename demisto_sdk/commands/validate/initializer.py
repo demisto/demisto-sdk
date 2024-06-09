@@ -525,7 +525,10 @@ class Initializer:
                 elif self.is_code_file(path, path_str):
                     path = self.obtain_yml_from_code(path_str)
                     if path not in statuses_dict:
-                        statuses_dict[path] = git_status
+                        if git_status != GitStatuses.RENAMED:
+                            statuses_dict[path] = git_status
+                        else:
+                            statuses_dict[path] = None
                 elif f"_{PACKS_README_FILE_NAME}" in path_str:
                     path = Path(path_str.replace(f"_{PACKS_README_FILE_NAME}", ".yml"))
                     if path not in statuses_dict:

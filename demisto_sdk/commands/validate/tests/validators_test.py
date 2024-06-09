@@ -8,7 +8,7 @@ import pytest
 import toml
 from more_itertools import map_reduce
 
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, GitStatuses
+from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, GitStatuses, ExecutionMode
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -125,18 +125,18 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
 
 
 @pytest.mark.parametrize(
-    "category_to_run, use_git, config_file_content, expected_results, ignore_support_level",
+    "category_to_run, execution_mode, config_file_content, expected_results, ignore_support_level",
     [
         (
             None,
-            True,
+            ExecutionMode.USE_GIT,
             {"use_git": {"select": ["BA101", "BC100", "PA108"]}},
             ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
             False,
         ),
         (
             "custom_category",
-            True,
+            ExecutionMode.USE_GIT,
             {
                 "ignorable_errors": ["BA101"],
                 "custom_category": {
@@ -149,14 +149,14 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
         ),
         (
             None,
-            False,
+            ExecutionMode.SPECIFIC_FILES,
             {"path_based_validations": {"select": ["BA101", "BC100", "PA108"]}},
             ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
             False,
         ),
         (
             None,
-            True,
+            ExecutionMode.USE_GIT,
             {
                 "support_level": {"community": {"ignore": ["BA101", "BC100", "PA108"]}},
                 "use_git": {"select": ["TE105", "TE106", "TE107"]},
@@ -171,7 +171,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
         ),
         (
             None,
-            True,
+            ExecutionMode.USE_GIT,
             {
                 "support_level": {"community": {"ignore": ["BA101", "BC100", "PA108"]}},
                 "use_git": {"select": ["TE105", "TE106", "TE107"]},
@@ -184,7 +184,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
 def test_gather_validations_to_run(
     mocker,
     category_to_run,
-    use_git,
+    execution_mode,
     config_file_content,
     expected_results,
     ignore_support_level,
@@ -192,11 +192,11 @@ def test_gather_validations_to_run(
     """
     Given
     a category_to_run, a use_git flag, a config file content, and a ignore_support_level flag.
-        - Case 1: No category to run, use_git flag set to True, config file content with only use_git.select section, and ignore_support_level set to False.
-        - Case 2: A custom category to run, use_git flag set to True, config file content with use_git.select, and custom_category with both ignorable_errors and select sections, and ignore_support_level set to False.
-        - Case 3: No category to run, use_git flag set to False, config file content with path_based_validations.select section, and ignore_support_level set to False.
-        - Case 4: No category to run, use_git flag set to True, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to False.
-        - Case 5: No category to run, use_git flag set to True, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to True.
+        - Case 1: No category to run, execution_mode set to use_git, config file content with only use_git.select section, and ignore_support_level set to False.
+        - Case 2: A custom category to run, execution_mode set to use_git, config file content with use_git.select, and custom_category with both ignorable_errors and select sections, and ignore_support_level set to False.
+        - Case 3: No category to run, execution_mode not set to use_git, config file content with path_based_validations.select section, and ignore_support_level set to False.
+        - Case 4: No category to run, execution_mode set to use_git, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to False.
+        - Case 5: No category to run, execution_mode set to use_git, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to True.
     When
     - Calling the gather_validations_to_run function.
     Then
@@ -209,7 +209,7 @@ def test_gather_validations_to_run(
     mocker.patch.object(toml, "load", return_value=config_file_content)
     config_reader = ConfigReader(category_to_run=category_to_run)
     results: ConfiguredValidations = config_reader.gather_validations_to_run(
-        use_git=use_git, ignore_support_level=ignore_support_level
+        execution_mode=execution_mode, ignore_support_level=ignore_support_level
     )
     assert results.validations_to_run == expected_results.validations_to_run
     assert results.ignorable_errors == expected_results.ignorable_errors

@@ -1,0 +1,4 @@
+changes:
+- description: Added a flow to upload playbook execution resport to artifacts bucket.
+  type: internal
+pr_number: 4284

@@ -3007,7 +3007,7 @@ def openapi_codegen(ctx, **kwargs):
     "-ab",
     "--artifacts_bucket",
     help="The artifacts bucket name to upload the results to",
-    required=True,
+    required=False,
 )
 @click.option("-s", "--server", help="The server URL to connect to")
 @click.option("-c", "--conf", help="Path to content conf.json file", required=True)

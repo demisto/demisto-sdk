@@ -282,6 +282,9 @@ class IntegrationDocUpdateManager:
             except (ValueError, IndexError) as e:
                 error = f"Unable to replace '{modified_command}' section in README: {str(e)}"
                 self.update_errors.append(error)
+            except KeyError:
+                error = f"Unable to find '{modified_command}' in the README. The command was likely renamed."
+                self.update_errors.append(error)
 
     def _get_sections_to_update(self) -> Tuple[bool, List[str], List[str]]:
 

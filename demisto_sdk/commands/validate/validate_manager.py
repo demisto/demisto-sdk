@@ -45,7 +45,8 @@ class ValidateManager:
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
             self.config_reader.gather_validations_to_run(
-                self.initializer.execution_mode, ignore_support_level=self.ignore_support_level
+                self.initializer.execution_mode,
+                ignore_support_level=self.ignore_support_level,
             )
         )
         self.validators = self.filter_validators()

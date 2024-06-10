@@ -3,8 +3,8 @@ from typing import Dict, List, Optional
 
 import toml
 
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.constants import ExecutionMode
+from demisto_sdk.commands.common.logger import logger
 
 USE_GIT = "use_git"
 PATH_BASED_VALIDATIONS = "path_based_validations"
@@ -54,7 +54,11 @@ class ConfigReader:
             Tuple[List, List, List, dict]: the select, warning, and ignorable errors sections from the given category,
             and the support_level dict with errors to ignore.
         """
-        flag = self.category_to_run or (USE_GIT if execution_mode == ExecutionMode.USE_GIT else PATH_BASED_VALIDATIONS)
+        flag = self.category_to_run or (
+            USE_GIT
+            if execution_mode == ExecutionMode.USE_GIT
+            else PATH_BASED_VALIDATIONS
+        )
         section = self.config_file_content.get(flag, {})
         return ConfiguredValidations(
             section.get("select", []),

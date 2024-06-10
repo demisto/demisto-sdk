@@ -8,7 +8,11 @@ import pytest
 import toml
 from more_itertools import map_reduce
 
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, GitStatuses, ExecutionMode
+from demisto_sdk.commands.common.constants import (
+    INTEGRATIONS_DIR,
+    ExecutionMode,
+    GitStatuses,
+)
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -435,7 +439,9 @@ def test_should_run(validator, expected_results):
         - Case 2: Should return False.
         - Case 3: Should return False.
     """
-    assert expected_results == validator.should_run(INTEGRATION, [], {})
+    assert expected_results == validator.should_run(
+        INTEGRATION, [], {}, execution_mode=ExecutionMode.USE_GIT
+    )
 
 
 def test_object_collection_with_readme_path(repo):
@@ -476,7 +482,9 @@ def test_object_collection_with_pack_path(repo):
     integration = pack.create_integration(yml=yml_content)
     integration.code.write("from MicrosoftApiModule import *")
     integration.readme.write("test")
-    initializer = Initializer(file_path=pack.path)
+    initializer = Initializer(
+        file_path=pack.path, execution_mode=ExecutionMode.SPECIFIC_FILES
+    )
     obj_set, _ = initializer.gather_objects_to_run_on()
     obj_types = {obj.content_type for obj in obj_set}
     assert obj_types == {ContentType.INTEGRATION, ContentType.PACK}

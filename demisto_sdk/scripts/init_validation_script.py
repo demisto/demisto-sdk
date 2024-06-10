@@ -308,9 +308,13 @@ class ValidationInitializer:
             validator_class_name = f"{validator_class_name}Validator"
         self.class_name = validator_class_name
         if not self.using_graph:
-            self.class_declaration = (f"class {validator_class_name}(BaseValidator[ContentTypes]):")
+            self.class_declaration = (
+                f"class {validator_class_name}(BaseValidator[ContentTypes]):"
+            )
         else:
-            self.class_declaration = (f"class {validator_class_name}(BaseValidator, ABC):")
+            self.class_declaration = (
+                f"class {validator_class_name}(BaseValidator, ABC):"
+            )
 
     def initialize_git_statuses(self):
         """
@@ -479,8 +483,12 @@ Fill the content types as the numbers they appear as: """
         self.generate_fix_function()
         self.generate_file_info()
         if self.using_graph:
-            self.using_graph_all_files_class = self.Generate_files_according_execution_mode('AllFiles')
-            self.using_graph_list_files_class = self.Generate_files_according_execution_mode('ListFiles')
+            self.using_graph_all_files_class = (
+                self.Generate_files_according_execution_mode("AllFiles")
+            )
+            self.using_graph_list_files_class = (
+                self.Generate_files_according_execution_mode("ListFiles")
+            )
 
     def generate_related_file_section(self):
         """
@@ -522,7 +530,7 @@ Fill the content types as the numbers they appear as: """
             self.imports += (
                 "from demisto_sdk.commands.common.constants import GitStatuses\n"
             )
-        self.related_files_imports = ''
+        self.related_files_imports = ""
         if self.related_files:
             self.related_files_imports += "from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType\n"
         for content_type in self.content_types:
@@ -621,10 +629,12 @@ Fill the content types as the numbers they appear as: """
     def Generate_files_according_execution_mode(self, execution_mode):
         """Generate files according to the execution_mode if using graph"""
         if execution_mode == "AllFiles":
-            expected_execution_mode = '[ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]'
+            expected_execution_mode = (
+                "[ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]"
+            )
             all_files = True
         else:
-            expected_execution_mode = '[ExecutionMode.ALL_FILES]'
+            expected_execution_mode = "[ExecutionMode.ALL_FILES]"
             all_files = False
         return f"""
 from __future__ import annotations
@@ -645,7 +655,7 @@ from demisto_sdk.commands.validate.validators.{self.error_code[:2]}_validators.{
 
 class {self.class_name}{execution_mode}({self.class_name}, BaseValidator[ContentTypes]):
     expected_execution_mode = {expected_execution_mode}
-    
+
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return self.is_valid_using_graph(content_items, {all_files})
         """
@@ -657,7 +667,7 @@ class {self.class_name}{execution_mode}({self.class_name}, BaseValidator[Content
         insert all the information into the validation template and write the validation into a new py file with the given name under
         demisto_sdk/commands/validate/validators/<error_code_prefix>_validators.
         """
-        with open(f'{self.file_path}.py', "w") as file:
+        with open(f"{self.file_path}.py", "w") as file:
             # Write the content into VALIDATION_TEMPLATE
             new_file_content = Template(VALIDATION_TEMPLATE).safe_substitute(
                 imports=self.imports,
@@ -679,9 +689,9 @@ class {self.class_name}{execution_mode}({self.class_name}, BaseValidator[Content
             file.write(new_file_content)
 
         if self.using_graph:
-            with open(f'{self.file_path}_all_files.py', "w") as file:
+            with open(f"{self.file_path}_all_files.py", "w") as file:
                 file.write(self.using_graph_all_files_class)
-            with open(f'{self.file_path}_list_files.py', "w") as file:
+            with open(f"{self.file_path}_list_files.py", "w") as file:
                 file.write(self.using_graph_list_files_class)
 
 

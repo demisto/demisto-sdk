@@ -14,7 +14,7 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import GitStatuses, ExecutionMode
+from demisto_sdk.commands.common.constants import ExecutionMode, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_abstract_class
@@ -108,7 +108,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         content_item: ContentTypes,
         ignorable_errors: list,
         support_level_dict: dict,
-        execution_mode: ExecutionMode
+        execution_mode: ExecutionMode,
     ) -> bool:
         """check whether to run validation on the given content item or not.
 
@@ -125,7 +125,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             [
                 isinstance(content_item, self.get_content_types()),
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
-                should_run_on_execution_mode(self.expected_execution_mode, execution_mode),
+                should_run_on_execution_mode(
+                    self.expected_execution_mode, execution_mode
+                ),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),

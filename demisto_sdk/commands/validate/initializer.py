@@ -20,9 +20,9 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_DIR,
     RELEASE_NOTES_DIR,
     SCRIPTS_DIR,
+    ExecutionMode,
     GitStatuses,
     PathLevel,
-    ExecutionMode,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.logger import logger

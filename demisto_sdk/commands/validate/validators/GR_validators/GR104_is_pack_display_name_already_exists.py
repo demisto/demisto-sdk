@@ -1,15 +1,13 @@
-
 from __future__ import annotations
 
 from abc import ABC
-
 from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Pack
@@ -19,18 +17,23 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
     error_code = "GR104"
     description = "Validate that there are no duplicate display names in the repo"
     rationale = " Validate the existance of duplicate display names"
-    error_message = "Pack '{content_id}' has a duplicate display_name as: {pack_display_id} "
+    error_message = (
+        "Pack '{content_id}' has a duplicate display_name as: {pack_display_id} "
+    )
     related_field = ""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.JSON]
 
-    def is_valid_display_name(self, content_items: Iterable[ContentTypes], all_files=False) -> List[ValidationResult]:
+    def is_valid_display_name(
+        self, content_items: Iterable[ContentTypes], all_files=False
+    ) -> List[ValidationResult]:
 
         file_paths_to_objects = {
-            str(content_item.path).replace(f'{content_item.repo_path}/', '')
-            for content_item in content_items}
+            str(content_item.path).replace(f"{content_item.repo_path}/", "")  # type: ignore[attr-defined]
+            for content_item in content_items
+        }
 
-        content_id_to_objects = {item.object.object_id: item for item in content_items}
+        content_id_to_objects = {item.object.object_id: item for item in content_items}  # type: ignore[attr-defined]
 
         query_list = list(file_paths_to_objects) if not all_files else []
 
@@ -40,7 +43,8 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_id=content_id, pack_display_id=(', '.join(duplicate_names_id))
+                    content_id=content_id,
+                    pack_display_id=(", ".join(duplicate_names_id)),
                 ),
                 content_object=content_id_to_objects[content_id],
             )

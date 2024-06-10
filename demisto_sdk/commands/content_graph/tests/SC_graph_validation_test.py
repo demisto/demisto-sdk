@@ -4,13 +4,14 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.SC_validators import (
-    SC109_script_name_is_not_unique_validator_file_list, SC109_script_name_is_not_unique_validator_all_files
+    SC109_script_name_is_not_unique_validator_all_files,
+    SC109_script_name_is_not_unique_validator_file_list,
+)
+from demisto_sdk.commands.validate.validators.SC_validators.SC109_script_name_is_not_unique_validator_all_files import (
+    DuplicatedScriptNameValidatorAllFiles,
 )
 from demisto_sdk.commands.validate.validators.SC_validators.SC109_script_name_is_not_unique_validator_file_list import (
     DuplicatedScriptNameValidatorFileList,
-)
-from demisto_sdk.commands.validate.validators.SC_validators.SC109_script_name_is_not_unique_validator_all_files import (
-    DuplicatedScriptNameValidatorAllFiles
 )
 from TestSuite.repo import Repo
 
@@ -36,7 +37,9 @@ def test_DuplicatedScriptNameValidatorFileList_is_valid(mocker, graph_repo: Repo
         - Validate that only the first pair of scripts appear in the results, and the rest of the scripts is valid.
     """
     mocker.patch.object(
-        SC109_script_name_is_not_unique_validator_file_list, "CONTENT_PATH", new=graph_repo.path
+        SC109_script_name_is_not_unique_validator_file_list,
+        "CONTENT_PATH",
+        new=graph_repo.path,
     )
     pack = graph_repo.create_pack()
 
@@ -80,7 +83,9 @@ def test_DuplicatedScriptNameValidatorAllFiles_is_valid(mocker, graph_repo: Repo
         - Validate that only the first pair of scripts appear in the results, and the rest of the scripts is valid.
     """
     mocker.patch.object(
-        SC109_script_name_is_not_unique_validator_all_files, "CONTENT_PATH", new=graph_repo.path
+        SC109_script_name_is_not_unique_validator_all_files,
+        "CONTENT_PATH",
+        new=graph_repo.path,
     )
     pack = graph_repo.create_pack()
 

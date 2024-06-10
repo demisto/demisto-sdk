@@ -216,8 +216,8 @@ class PathIsUnified(ExemptedPath):
     message = "Paths of unified content items are not validated."
 
 
-class PathIsTestData(ExemptedPath):
-    message = "Paths under test_data are not validated."
+class PathIsTestdataOrDocfiles(ExemptedPath):
+    message = "Paths under test data or doc_files are not validated."
 
 
 def _validate(path: Path) -> None:
@@ -245,8 +245,8 @@ def _validate(path: Path) -> None:
         """
         raise PathUnderDeprecatedContent
 
-    if set(path.parts).intersection(TESTS_DIRECTORIES):
-        raise PathIsTestData
+    if set(path.parts).intersection(TESTS_AND_DOC_DIRECTORIES):
+        raise PathIsTestdataOrDocfiles
 
     parts_inside_pack = parts_after_packs[1:]  # everything after Packs/<pack name>
     depth = len(parts_inside_pack) - 1

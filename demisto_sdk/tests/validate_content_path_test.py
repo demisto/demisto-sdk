@@ -31,7 +31,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidXDRCTemplatesFileName,
     InvalidXSIAMReportFileName,
     PathIsFolder,
-    PathIsTestData,
+    PathIsTestdataOrDocfiles,
     PathIsUnified,
     PathUnderDeprecatedContent,
     SpacesInFileName,
@@ -166,7 +166,7 @@ def test_depth_one_pass(folder: str):
     try:
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "file"))
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
-    except PathIsTestData:
+    except PathIsTestdataOrDocfiles:
         pass
     except (
         InvalidIntegrationScriptFileType,

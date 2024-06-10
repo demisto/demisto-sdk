@@ -24,6 +24,6 @@ def test_ValidateSchemaFileExistsValidator_is_valid():
     modeling_rule.schema_file.exist = False
     results = ValidateSchemaFileExistsValidator().is_valid([modeling_rule])
     assert (
-        "Packs/pack_0/ModelingRules/modelingrule_0/modelingrule_0.yml is missing a schema file."
-        in results[0].message
+        'The modeling rule "Duo Modeling Rule" is missing a schema file.'
+        == results[0].message
     )

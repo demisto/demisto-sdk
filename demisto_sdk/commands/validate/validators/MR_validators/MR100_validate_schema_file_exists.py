@@ -15,7 +15,7 @@ class ValidateSchemaFileExistsValidator(BaseValidator[ContentTypes]):
     error_code = "MR100"
     description = "Validate that each modeling rule has a corresponding schema file."
     rationale = "For each modeling rule, there has to be schema file."
-    error_message = "The modeling rule {0} is missing a schema file."
+    error_message = 'The modeling rule "{0}" is missing a schema file.'
     related_field = "modeling rule"
     is_auto_fixable = False
 
@@ -23,7 +23,7 @@ class ValidateSchemaFileExistsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.path),
+                message=self.error_message.format(content_item.name),
                 content_object=content_item,
             )
             for content_item in content_items

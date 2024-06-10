@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where beta integration not deprecated correctly when using **format** command with **--deprecate** flag.
+- description: Fixed an issue where beta integration was not deprecated correctly when using the **format** command with the **--deprecate** flag.
   type: fix
 pr_number: 4332

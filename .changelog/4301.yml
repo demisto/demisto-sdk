@@ -1,0 +1,4 @@
+changes:
+- description: added support in the new validation. For validators that run on all files and use the graph.
+  type: internal
+pr_number: 4301

@@ -12,7 +12,6 @@ from demisto_sdk.commands.common.constants import (
     PACKS_FOLDER,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
-    TESTS_AND_DOC_DIRECTORIES,
     TESTS_DIRECTORIES,
     XDRC_TEMPLATE_DIR,
 )

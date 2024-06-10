@@ -1457,9 +1457,9 @@ class TestFormatting:
         pack: Pack,
         mocker: MockerFixture,
         monkeypatch: pytest.MonkeyPatch,
-        user_input,
-        description_result,
-        file_type,
+        user_input: str,
+        description_result: str,
+        file_type: str,
     ):
         """
         Given

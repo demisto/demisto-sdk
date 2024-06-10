@@ -859,8 +859,8 @@ class BuildContext:
         self.tests_data_keeper = TestResults(
             self.conf.unmockable_integrations,
             kwargs["artifacts_path"],
-            kwargs["service_account"],
-            kwargs["artifacts_bucket"],
+            kwargs.get("service_account"),
+            kwargs.get("artifacts_bucket"),
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()

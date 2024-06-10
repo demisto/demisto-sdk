@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_FOLDER,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
+    TESTS_AND_DOC_DIRECTORIES,
     XDRC_TEMPLATE_DIR,
 )
 from demisto_sdk.scripts.validate_content_path import (
@@ -422,3 +423,18 @@ def test_doc_file_valid(file_name: str):
 def test_doc_file_invalid(file_name: str):
     with pytest.raises(InvalidImageFileName):
         _validate(DUMMY_PACK_PATH / DOC_FILES_DIR / file_name)
+
+
+@pytest.mark.parametrize("folder", TESTS_AND_DOC_DIRECTORIES)
+@pytest.mark.parametrize("suffix", ("xyz", "sh", "pem"))
+def test_exotic_suffix_test_doc_data(folder: str, suffix: str):
+    # should NOT raise InvalidSuffix if under TESTS_AND_DOC_DIRECTORIES
+
+    try:
+        _validate((DUMMY_PACK_PATH / folder / "file").with_suffix(f".{suffix}"))
+    except PathIsTestData:
+        """
+        This is how we suppress test data.
+        We suppress doc files by just not-raising here, as doc files are checked more than test data
+        """
+        pass

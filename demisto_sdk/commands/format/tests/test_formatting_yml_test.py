@@ -1453,7 +1453,13 @@ class TestFormatting:
         ],
     )
     def test_update_deprecate_in_integration(
-        self, pack: Pack, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch, user_input, description_result, file_type
+        self,
+        pack: Pack,
+        mocker: MockerFixture,
+        monkeypatch: pytest.MonkeyPatch,
+        user_input,
+        description_result,
+        file_type,
     ):
         """
         Given

@@ -375,7 +375,7 @@ class BaseUpdateYML(BaseUpdate):
         ):
             self.data["tests"] = [NO_TESTS_DEPRECATED]
 
-        if file_type in [INTEGRATION, BETA_INTEGRATION, PLAYBOOK]:
+        if file_type in (INTEGRATION, BETA_INTEGRATION, PLAYBOOK):
 
             description_field = "description"
 

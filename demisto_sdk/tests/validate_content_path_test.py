@@ -6,11 +6,13 @@ from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
     DOC_FILES_DIR,
+    DOCS_DIRECTORIES,
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
     PACKS_FOLDER,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
+    TESTS_DIRECTORIES,
     XDRC_TEMPLATE_DIR,
 )
 from demisto_sdk.scripts.validate_content_path import (
@@ -422,3 +424,21 @@ def test_doc_file_valid(file_name: str):
 def test_doc_file_invalid(file_name: str):
     with pytest.raises(InvalidImageFileName):
         _validate(DUMMY_PACK_PATH / DOC_FILES_DIR / file_name)
+
+
+EXOTIC_SUFFIXES = ("xys", "sh", "pem")
+
+
+@pytest.mark.parametrize("folder", TESTS_DIRECTORIES)
+@pytest.mark.parametrize("suffix", EXOTIC_SUFFIXES)
+def test_exotic_suffix_test_data(folder: str, suffix: str):
+    # should NOT raise InvalidSuffix
+    with pytest.raises(PathIsTestData):
+        _validate((DUMMY_PACK_PATH / folder / "file").with_suffix(f".{suffix}"))
+
+
+@pytest.mark.parametrize("folder", DOCS_DIRECTORIES)
+@pytest.mark.parametrize("suffix", EXOTIC_SUFFIXES)
+def test_exotic_suffix_doc_data(folder: str, suffix: str):
+    # should NOT raise InvalidSuffix
+    _validate((DUMMY_PACK_PATH / folder / "file").with_suffix(f".{suffix}"))

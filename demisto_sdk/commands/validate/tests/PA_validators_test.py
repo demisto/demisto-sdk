@@ -736,14 +736,14 @@ def test_IsValidDescriptionFieldValidator_is_valid(
 @pytest.mark.parametrize(
     "pack, integrations, expected_number_of_failures",
     [
-        (
-            create_pack_object(),
+        (create_pack_object(),
             [
                 create_integration_object(
                     ["script.isfetch", "name"], ["true", "TestIntegration1"]
                 ),
                 create_integration_object(["script.isfetch"], ["true"]),
             ],
+
             1,
         ),
         (

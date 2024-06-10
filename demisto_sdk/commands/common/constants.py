@@ -2155,6 +2155,8 @@ STRING_TO_BOOL_MAP = {
 #  date formats:
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
+# Markdown Format
+RN_MARKDOWN_HEADER = r"^(#+)\s+(.*)"
 
 class ImagesFolderNames(StrEnum):
     README_IMAGES = "readme_images"

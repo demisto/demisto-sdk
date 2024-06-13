@@ -32,8 +32,8 @@ class IsContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 invalid_lines := search_substrings_by_line(
-                    substrings_to_search=["BSD", "MIT", "Copyright", "proprietary"],
-                    split_line=True,
+                    phrases_to_search=["BSD", "MIT", "Copyright", "proprietary"],
+                    search_whole_word=True,
                     text=content_item.readme.file_content,
                 )
             )

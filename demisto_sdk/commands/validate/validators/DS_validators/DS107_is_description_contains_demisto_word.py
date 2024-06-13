@@ -38,9 +38,10 @@ class IsDescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 lines_contain_demsito := search_substrings_by_line(
-                    substrings_to_search=["demisto"],
+                    phrases_to_search=["demisto"],
                     case_insensitive=True,
                     text=content_item.description_file.file_content,
+                    exceptionally_allowed_substrings=["/demisto", "demisto/"],  # in URL
                 )
             )
         ]

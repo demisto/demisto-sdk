@@ -4405,10 +4405,10 @@ def is_str_bool(input_: str) -> bool:
 
 
 def search_substrings_by_line(
-    substrings_to_search: List[str],
+    phrases_to_search: List[str],
     text: str,
     case_insensitive: bool = False,
-    split_line: bool = False,
+    search_whole_word: bool = False,
     exceptionally_allowed_substrings: Optional[list[str]] = None,
 ) -> List[str]:
     invalid_lines = []
@@ -4425,13 +4425,13 @@ def search_substrings_by_line(
         if case_insensitive:
             line = line.lower()
 
-        if split_line:
+        if search_whole_word:
             line = line.split()  # type: ignore[assignment]
 
-        for phrase in substrings_to_search:
-            if phrase in line:
+        for phrase_to_search in phrases_to_search:
+            if phrase_to_search in line:
                 if exceptionally_allowed_substrings and any(
-                    (allowed in line and phrase in allowed)
+                    (allowed in line and phrase_to_search in allowed)
                     for allowed in exceptionally_allowed_substrings
                 ):
                     """

@@ -13,8 +13,8 @@ ContentTypes = Playbook
 
 class IsPlaybookHasUnconnectedTasks(BaseValidator[ContentTypes]):
     error_code = "PB103"
-    description = "Checks whether there is an unconnected task."
-    rationale = "Checks whether there is an unconnected task to the root task."
+    description = "Validate whether there is an unconnected task."
+    rationale = "Validate whether there is an unconnected task to the root task."
     error_message = (
         "Playbook conditional task with id:{task_id} has task with unreachable "
         'next task condition "{next_task_branch}". Please remove this task or add '

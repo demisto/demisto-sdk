@@ -4430,19 +4430,18 @@ def search_substrings_by_line(
 
         for phrase in substrings_to_search:
             if phrase in line:
-                if exceptionally_allowed_substrings:
-                    if any(
-                        (allowed in line and phrase in allowed)
-                        for allowed in exceptionally_allowed_substrings
-                    ):
-                        """
-                        example: we want to catch 'demisto', but not when it's in a URL.
-                            phrase = 'demisto'
-                            allowed = '/demisto/'
-                            line = 'foo/demisto/bar'
-                        we'll skip this line only iff 'demisto' in '/demisto/' and '/demisto/' in foo/demisto/bar
-                        """
-                        continue
+                if exceptionally_allowed_substrings and any(
+                    (allowed in line and phrase in allowed)
+                    for allowed in exceptionally_allowed_substrings
+                ):
+                    """
+                    example: we want to catch 'demisto', but not when it's in a URL.
+                        phrase = 'demisto'
+                        allowed = '/demisto/'
+                        line = 'foo/demisto/bar'
+                    we'll skip this line only iff 'demisto' in '/demisto/' and '/demisto/' in foo/demisto/bar
+                    """
+                    continue
                 invalid_lines.append(str(line_num + 1))
 
     return invalid_lines

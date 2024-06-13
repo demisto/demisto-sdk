@@ -7,6 +7,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename
 from demisto_sdk.commands.validate.validators.PB_validators.PB101_is_playbook_has_unreachable_condition import (
     IsAskConditionHasUnreachableConditionValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB103_is_playbook_has_unconnected_tasks import (
+    IsPlaybookHasUnconnectedTasks,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
@@ -188,7 +191,6 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
 
 
 def test_IsAskConditionHasUnreachableConditionValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
     playbook.tasks = {
@@ -203,7 +205,6 @@ def test_IsAskConditionHasUnreachableConditionValidator():
 
 
 def test_IsAskConditionHasUnhandledReplyOptionsValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
     playbook.tasks = {
@@ -215,3 +216,57 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         }
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_is_playbook_has_unconnected_tasks():
+    """
+    Given: A playbook with tasks that are connected to each other.
+    When: Validating the playbook.
+    Then: The playbook is valid.
+    """
+    playbook = create_playbook_object(paths=["starttaskid"], values=["0"])
+    playbook.tasks = {
+        "0": {
+            "id": "test task",
+            "type": "regular",
+            "message": {"replyOptions": ["yes"]},
+            "nexttasks": {"#none#": "1"},
+        },
+        "1": {
+            "id": "test task",
+            "type": "condition",
+            "message": {"replyOptions": ["yes"]},
+            "nexttasks": {"no": ["2"]},
+        },
+    }
+    assert IsPlaybookHasUnconnectedTasks().is_valid([playbook])
+
+
+def test_is_playbook_has_unconnected_tasks_not_valid():
+    """
+    Given: A playbook with tasks that are not connected to the root task.
+    When: Validating the playbook.
+    Then: The playbook is not valid.
+    """
+    playbook = create_playbook_object(paths=["starttaskid"], values=["0"])
+    playbook.tasks = {
+        "0": {
+            "id": "test task",
+            "type": "regular",
+            "message": {"replyOptions": ["yes"]},
+            "nexttasks": {"#none#": "1"},
+        },
+        "1": {
+            "id": "test task",
+            "type": "condition",
+            "message": {"replyOptions": ["yes"]},
+            "nexttasks": {"no": ["2"]},
+        },
+        "3": {
+            "id": "test task",
+            "type": "condition",
+            "message": {"replyOptions": ["yes"]},
+            "nexttasks": {"no": ["2"]},
+        },
+    }
+    assert not IsPlaybookHasUnconnectedTasks().is_valid([playbook])

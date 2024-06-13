@@ -1,0 +1,4 @@
+changes:
+- description: Added the PA114 validation to the new **validate** command.
+  type: internal
+pr_number: 4342

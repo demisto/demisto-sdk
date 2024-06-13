@@ -11,6 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
+DISALLOWED_PHRASES = ["BSD", "MIT", "Copyright", "proprietary"]
 ContentTypes = Union[Integration, Script]
 
 
@@ -45,20 +46,18 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
         malformed_files = {}
         if "CommonServerPython" in content_item.name:
             return {}
-        if content_item.code_file.exist and (
-            invalid_lines := search_substrings_by_line(
-                substrings_to_search=["BSD", "MIT", "Copyright", "proprietary"],
-                split_line=True,
-                text=content_item.code_file.file_content,
-            )
+
+        for nickname, file in (
+            ("code file", content_item.code_file),
+            ("test code file", content_item.test_code_file),
         ):
-            malformed_files["code file"] = invalid_lines
-        if content_item.test_code_file.exist and (
-            invalid_lines := search_substrings_by_line(
-                substrings_to_search=["BSD", "MIT", "Copyright", "proprietary"],
-                split_line=True,
-                text=content_item.test_code_file.file_content,
-            )
-        ):
-            malformed_files["test code file"] = invalid_lines
+            if file.exist and (
+                invalid_lines := search_substrings_by_line(
+                    phrases_to_search=DISALLOWED_PHRASES,
+                    search_whole_word=True,
+                    text=file.file_content,
+                )
+            ):
+                malformed_files[nickname] = invalid_lines
+
         return malformed_files

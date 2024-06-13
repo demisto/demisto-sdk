@@ -35,12 +35,12 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(", ".join(lines_contain_demisto)),
+                message=self.error_message.format(", ".join(lines_contain_demsito)),
                 content_object=content_item,
             )
             for content_item in content_items
             if (
-                lines_contain_demisto := check_text_content_contain_sub_text(
+                lines_contain_demsito := check_text_content_contain_sub_text(
                     sub_text_list=["demisto"],
                     is_lower=True,
                     text=content_item.readme.file_content,

@@ -1,0 +1,4 @@
+changes:
+- description: Updated the artifacts_bucket argument of the test-content command to be optional.
+  type: internal
+pr_number: 4334

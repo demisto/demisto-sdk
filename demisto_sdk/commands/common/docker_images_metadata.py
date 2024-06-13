@@ -5,8 +5,8 @@ from pydantic import BaseModel
 from requests.exceptions import ConnectionError
 
 from demisto_sdk.commands.common.constants import (
-    DEMISTO_GIT_PRIMARY_BRANCH,
     DOCKERFILES_INFO_REPO,
+    DOCKERFILES_INFO_REPO_PRIMARY_BRANCH,
 )
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.files.errors import FileReadError
@@ -37,7 +37,7 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
     def __from_github(
         cls,
         file_name: str = DOCKER_IMAGES_METADATA_NAME,
-        tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
+        tag: str = DOCKERFILES_INFO_REPO_PRIMARY_BRANCH,
     ):
         """
         Get the docker_images_metadata.json from the dockerfiles-info repo and load it to a pydantic object.

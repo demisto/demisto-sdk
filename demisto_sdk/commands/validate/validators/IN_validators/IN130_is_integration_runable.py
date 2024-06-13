@@ -13,7 +13,7 @@ ContentTypes = Integration
 
 class IsIntegrationRunnableValidator(BaseValidator[ContentTypes]):
     error_code = "IN130"
-    description = "validate that the integration is runable"
+    description = "validate that the integration is runable."
     rationale = (
         "Integrations must have a functional purpose, such as executing commands, fetching incidents, "
         "fetching indicators from a feed, or running a long-running process. "

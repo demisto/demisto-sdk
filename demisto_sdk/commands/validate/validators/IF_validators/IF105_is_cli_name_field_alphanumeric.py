@@ -14,7 +14,7 @@ ContentTypes = Union[CaseField, IncidentField]
 
 class IsCliNameFieldAlphanumericValidator(BaseValidator[ContentTypes]):
     error_code = "IF105"
-    description = "Checks if cliName field is alphanumeric and lowercase."
+    description = "Check if cliName field is alphanumeric and lowercase."
     rationale = "Required by the platform."
     error_message = "Field `cliName` contains uppercase or non-alphanumeric symbols."
     related_field = "cliName"

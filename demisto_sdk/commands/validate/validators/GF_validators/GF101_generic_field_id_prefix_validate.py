@@ -15,7 +15,7 @@ ContentTypes = GenericField
 class GenericFieldIdPrefixValidateValidator(BaseValidator[ContentTypes]):
     error_code = "GF101"
     rationale = "Required by the platform."
-    description = "Checks if the id starts with `generic_`."
+    description = "Check if the ID starts with `generic_`."
     error_message = (
         "{generic_id} is not a valid id, it should start with {generic_id_prefix}."
     )

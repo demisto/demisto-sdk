@@ -19,7 +19,7 @@ ContentTypes = Union[Script, Integration]
 
 class IsDeprecatedCorrectlyValidator(BaseValidator[ContentTypes]):
     error_code = "BA126"
-    description = "Checks if script/integration is deprecated correctly"
+    description = "Check if script/integration is deprecated correctly."
     rationale = (
         "Deprecated scripts/integrations need clear descriptions for user guidance. "
         "For deprecation process, see: "

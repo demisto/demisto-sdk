@@ -18,9 +18,9 @@ VERSION_NAME_REGEX = re.compile(r"V([0-9]+)$", re.IGNORECASE)
 class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     error_code = "SC100"
     description = (
-        "Checks if script name is versioned correctly, e.g.: ends with V<number>."
+        "Check if script name is versioned correctly, it must end with V<number>."
     )
-    rationale = "This standardization ensures consistency across content items."
+    rationale = "Ensures consistency across content items."
     error_message = "The name {0} for the script is incorrect, it should be {1}."
     is_auto_fixable = True
     fix_message = "Updated name from {0} to {1}"

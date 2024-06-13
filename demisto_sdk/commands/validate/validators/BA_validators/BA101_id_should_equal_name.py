@@ -13,9 +13,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 class IDNameValidator(BaseValidator, ABC):
     error_code = "BA101"
-    description = "Validate that the file id and name fields are identical."
+    description = "Validate that the file ID and name fields are identical."
     rationale = (
-        "The id attribute serves as the unique identifier of files across the platform"
+        "The ID attribute serves as the unique identifier of files across the platform."
     )
     error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"
     fix_message = "Changing name to be equal to id ({0})."

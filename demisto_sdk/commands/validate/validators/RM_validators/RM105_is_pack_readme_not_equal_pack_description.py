@@ -17,7 +17,7 @@ class IsPackReadmeNotEqualPackDescriptionValidator(BaseValidator[ContentTypes]):
     rationale = (
         "An informative README helps users know more about the product and its uses."
     )
-    description = "Checks if the README.md file is not same as the pack description."
+    description = "Check if the README.md file is not the same as the pack description."
     error_message = (
         "README.md content is identical to the pack description. "
         "Add more information to the README. "

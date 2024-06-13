@@ -13,7 +13,7 @@ ContentTypes = Script
 
 class ScriptRunAsIsNotDBotRoleValidator(BaseValidator[ContentTypes]):
     error_code = "SC106"
-    description = "Checks that the script runas is not equal to DBotRole"
+    description = "Check that the script runas is not equal to DBotRole"
     rationale = "For security reasons, the `runas` field should not be set to DBotRole."
     error_message = "The script {0} runas field = DBotRole, it may cause access and exposure of sensitive data."
     related_field = "runas"

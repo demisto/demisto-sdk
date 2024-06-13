@@ -19,8 +19,8 @@ class IsValidEndpointCommandValidator(BaseValidator[ContentTypes]):
         "Validate that an endpoint command has at least one of the required fields."
     )
     rationale = (
-        "Without them, the command may not function properly or may return incomplete or incorrect data. "
-        "for more info see https://xsoar.pan.dev/docs/integrations/generic-endpoint-command"
+        "Without at least one of the required fields, the command may not function properly or may return incomplete or incorrect data. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/generic-endpoint-command"
     )
     error_message = f"At least one of these {', '.join(ENDPOINT_FLEXIBLE_REQUIRED_ARGS)} arguments is required for endpoint command."
     related_field = "script.commands"

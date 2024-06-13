@@ -14,8 +14,8 @@ ContentTypes = Union[Integration, Script]
 
 class DockerImageIsNotNativeImageValidator(BaseValidator[ContentTypes]):
     error_code = "DO102"
-    description = "Validate that the given content item uses a docker image that is not the native image."
-    rationale = "The 'native-image' Docker image is intended for internal development and should not be used for running integrations or scripts."
+    description = "Validate that the given content item uses a Docker image that is not the native image."
+    rationale = "The 'native-image' Docker image is intended for internal development and should not be used to run integrations or scripts."
     error_message = "The docker image {0} is native-image, do not use a native-image"
     related_field = "Docker image"
     is_auto_fixable = False

@@ -15,7 +15,7 @@ ContentTypes = Union[CaseField, IncidentField]
 
 class IsValidSystemFlagValidator(BaseValidator[ContentTypes]):
     error_code = "IF102"
-    description = "Checks if system flag is false."
+    description = "Check if system flag is false."
     rationale = "Required by the platform."
     error_message = "The `system` key must be set to false."
     fix_message = "`system` field is set to false."

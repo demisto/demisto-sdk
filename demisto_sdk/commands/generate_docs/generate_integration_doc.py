@@ -342,7 +342,25 @@ class IntegrationDocUpdateManager:
         if added_commands:
             self.output_doc += "\n"
 
+            renamed_commands = self.integration_diff.get_renamed_commands()
+
             for cmd in added_commands:
+
+                skip = False
+                # We don't want to add renamed commands
+                if renamed_commands:
+                    for (
+                        renamed_command_original_name,
+                        renamed_command_changed_name,
+                    ) in renamed_commands:
+                        if cmd == renamed_command_changed_name:
+                            error = f"Skipping adding command '{cmd}' as it was detected as a renamed from '{renamed_command_original_name}'"
+                            self.update_errors.append(error)
+                            skip = True
+                            break
+                if skip:
+                    continue
+
                 logger.info(f"\t\u2699 Generating docs for command `{cmd}`...")
                 (
                     command_section,

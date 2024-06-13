@@ -2651,3 +2651,58 @@ class TestIntegrationDocUpdate:
         assert "#### Command example" in actual_readme
         assert "#### Context Example" in actual_readme
         assert f"{integration_name.lower()}-get-audits" in actual_readme
+
+    def test_rename_cmd_name(self, git_repo: Repo, mocker: MockerFixture):
+        """
+        Test the behavior of the doc update when a
+        command name is modified.
+
+        Given:
+        - An integration.
+        - An updated integration.
+
+        When:
+        - The updated integration includes a change to a command name.
+
+        Then:
+        - The command is not modified.
+        - An error printed to indicate the command name was changed.
+        """
+
+        integration_name = pack_name = "SplunkPy"
+        test_asset_path = "test_added_conf_cmd_modified_cmd"
+
+        yml_code_path = Path(TEST_FILES, test_asset_path, f"{integration_name}.yml")
+        modified_yml_path = Path(
+            TEST_FILES, test_asset_path, f"{integration_name}_change_cmd_name.yml"
+        )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(TEST_FILES, test_asset_path, INTEGRATIONS_README_FILE_NAME)
+
+        # Create Pack and Integration
+        git_repo.create_pack(pack_name)
+        git_repo.packs[0].create_integration(
+            integration_name, yml=yml_code, readme=readme_path.read_text()
+        )
+
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
+        )
+
+        shutil.copyfile(
+            src=modified_yml_path, dst=git_repo.packs[0].integrations[0].yml.path
+        )
+
+        generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
+
+        assert Path(git_repo.packs[0].integrations[0].readme.path).exists()
+        actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
+        assert actual
+        assert "### splunk-results-1" not in actual
+        assert "### splunk-results" in actual

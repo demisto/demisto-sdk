@@ -29,8 +29,10 @@ class RelativeImagePathValidator(BaseValidator, ABC):
         "Using relative references to files in the repo folder enhances security by reducing reliance"
         " on external links, minimizing the risk of link manipulation or redirection attacks. "
     )
-    error_message = ("{} Read the following documentation on how to add images to pack markdown files:\n"
-                     " https://xsoar.pan.dev/docs/integrations/integration-docs#images")
+    error_message = (
+        "{} Read the following documentation on how to add images to pack markdown files:\n"
+        " https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    )
     related_file_type = [RelatedFileType.README, RelatedFileType.DESCRIPTION_File]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -81,7 +83,8 @@ class RelativeImagePathValidator(BaseValidator, ABC):
             return (
                 " Invalid image path(s) have been detected."
                 " Please utilize relative paths instead for the links provided below.:\n"
-                + "\n".join(absolute_links) + "\n\n"
+                + "\n".join(absolute_links)
+                + "\n\n"
             )
         return ""
 
@@ -106,7 +109,8 @@ class RelativeImagePathValidator(BaseValidator, ABC):
             # extracts the actual image path from each matched link tuple in the relative_images list.
             # It selects between relative_image[1] and relative_image[2] based on whether the link
             # matches the URL or HTML pattern.
-            relative_image[1] if relative_image[0] else relative_image[2] for relative_image in relative_images
+            relative_image[1] if relative_image[0] else relative_image[2]
+            for relative_image in relative_images
         ]
         invalid_links = [
             rel_img
@@ -117,6 +121,7 @@ class RelativeImagePathValidator(BaseValidator, ABC):
             return (
                 "Relative image paths have been identified outside the pack's 'doc_files' directory. Please relocate"
                 " the following images to the 'doc_files' directory:\n"
-                + "\n".join(invalid_links) + "\n\n"
+                + "\n".join(invalid_links)
+                + "\n\n"
             )
         return ""

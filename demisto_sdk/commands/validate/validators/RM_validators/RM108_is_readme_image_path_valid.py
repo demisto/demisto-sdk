@@ -16,7 +16,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_image_path_
 ContentTypes = Union[Script, Playbook, Pack]
 
 
-class ReadmeRelativeImagePathValidator(RelativeImagePathValidator, BaseValidator[ContentTypes]):
+class ReadmeRelativeImagePathValidator(
+    RelativeImagePathValidator, BaseValidator[ContentTypes]
+):
     related_file_type = [RelatedFileType.README]
 
     def validate_content_items(self, content_item: ContentTypes) -> str:

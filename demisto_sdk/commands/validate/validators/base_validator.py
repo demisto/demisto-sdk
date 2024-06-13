@@ -95,6 +95,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
+    external_args: ClassVar[dict] = {}
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore

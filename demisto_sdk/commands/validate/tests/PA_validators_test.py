@@ -56,6 +56,9 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA111_empty_metadata
 from demisto_sdk.commands.validate.validators.PA_validators.PA113_is_url_or_email_exists import (
     IsURLOrEmailExistsValidator,
 )
+from demisto_sdk.commands.validate.validators.PA_validators.PA114_pack_metadata_version_should_be_raised import (
+    PackMetadataVersionShouldBeRaisedValidator,
+)
 from demisto_sdk.commands.validate.validators.PA_validators.PA115_is_created_field_in_iso_format import (
     IsCreatedFieldInISOFormatValidator,
 )
@@ -1613,3 +1616,32 @@ def test_PackFilesValidator_fix(file_attribute: str):
 
     assert meta_file.file_path.exists()
     assert meta_file.exist  # changed in the fix
+
+
+@pytest.mark.parametrize(
+    "old_version, current_version, expected_invalid",
+    [("1.0.0", "1.0.1", 0), ("1.0.0", "1.0.0", 1), ("1.1.0", "1.0.1", 1)],
+)
+def test_PackMetadataVersionShouldBeRaisedValidator(
+    mocker, old_version, current_version, expected_invalid
+):
+    """
+    Given: A previous pack version and a current pack version.
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Assure the validation succeeds if the current version <= previous version.
+    Cases:
+        1) current version > previous version: 0 validation errors.
+        2) current version = previous version: 1 validation errors.
+        3) current version < previous version: 1 validation errors.
+    """
+    pack = create_pack_object(["currentVersion"], [current_version])
+    integration = create_integration_object()
+    pack.content_items.integration.extend(integration)
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.PA_validators"
+        ".PA114_pack_metadata_version_should_be_raised.get_remote_file",
+        return_value={"currentVersion": old_version},
+    )
+    version_bump_validator = PackMetadataVersionShouldBeRaisedValidator()
+    version_bump_validator.external_args["prev_ver"] = "origin/master"
+    assert len(version_bump_validator.is_valid([pack])) == expected_invalid

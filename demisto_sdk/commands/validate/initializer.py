@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_DIR,
     RELEASE_NOTES_DIR,
     SCRIPTS_DIR,
+    SKIP_RELEASE_NOTES_FOR_TYPES,
     GitStatuses,
     PathLevel,
 )
@@ -27,9 +28,12 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
+    find_type,
     get_file_by_status,
+    get_pack_name,
     get_relative_path_from_packs_dir,
     is_external_repo,
+    pack_name_to_path,
     specify_files_from_directory,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -299,6 +303,24 @@ class Initializer:
 
         return filtered_modified_files, filtered_added_files, filtered_renamed_files
 
+    @staticmethod
+    def get_associated_pack_metadata(content_files: Set[BaseContent]):
+        pack_names = []
+        pack_metadatas: Set[Optional[BaseContent]] = set()
+        for content_file in content_files:
+            if find_type(str(content_file.path)) not in SKIP_RELEASE_NOTES_FOR_TYPES:
+                pack_name = get_pack_name(content_file.path)
+                pack_path = pack_name_to_path(pack_name)
+                pack_names.append(pack_name)
+                pack_metadata = BaseContent.from_path(
+                    Path(pack_path) / PACKS_PACK_META_FILE_NAME, metadata_only=True
+                )
+                pack_metadatas.add(pack_metadata)
+
+        if pack_metadatas:
+            logger.info(f"Running on pack metadata files in packs: {pack_names}")
+        return pack_metadatas
+
     def gather_objects_to_run_on(
         self,
     ) -> Tuple[Set[BaseContent], Set[Path]]:
@@ -317,6 +339,9 @@ class Initializer:
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
+            content_objects_to_run = content_objects_to_run.union(
+                self.get_associated_pack_metadata(content_objects_to_run)
+            )
         elif self.file_path:
             (
                 content_objects_to_run,
@@ -339,6 +364,9 @@ class Initializer:
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
+            content_objects_to_run = content_objects_to_run.union(
+                self.get_associated_pack_metadata(content_objects_to_run)
+            )
         if not self.use_git:
             content_objects_to_run_with_packs: Set[
                 BaseContent

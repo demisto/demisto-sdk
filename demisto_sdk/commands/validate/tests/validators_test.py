@@ -12,13 +12,17 @@ from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
     ConfiguredValidations,
 )
 from demisto_sdk.commands.validate.initializer import Initializer
-from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_integration_object,
+    create_pack_object,
+)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
@@ -39,6 +43,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA114_pack_metadata_version_should_be_raised import (
+    PackMetadataVersionShouldBeRaisedValidator,
 )
 from TestSuite.test_tools import str_in_call_args_list
 
@@ -655,3 +662,44 @@ def test_description():
     assert not [
         validator for validator in get_all_validators() if not validator.description
     ]
+
+
+def test_check_metadata_version_bump_on_content_changes(mocker, repo):
+    """
+    Given: pack with newly added integration.
+    When: Initializing ValidateManager using git
+    Then: Ensure PackMetadataVersionShouldBeRaisedValidator is initialized and the external args are properly passed.
+    """
+    pack = create_pack_object(["currentVersion"], ["1.1.1"])
+    integration = create_integration_object()
+    pack.content_items.integration.extend(integration)
+    validation_results = ResultWriter()
+    config_reader = ConfigReader(category_to_run="use_git")
+    mocker.patch.object(
+        Initializer,
+        "gather_objects_to_run_on",
+        return_value=(
+            {
+                BaseContent.from_path(Path(integration.path)),
+                BaseContent.from_path(Path(pack.path)),
+            },
+            {},
+        ),
+    )
+    initializer = Initializer(prev_ver="some_prev_ver")
+
+    validate_manager = ValidateManager(
+        validation_results=validation_results,
+        config_reader=config_reader,
+        initializer=initializer,
+    )
+
+    version_bump_validator = None
+    for validator in validate_manager.validators:
+        if isinstance(validator, PackMetadataVersionShouldBeRaisedValidator):
+            version_bump_validator = validator
+
+    # Assert the PA114 validation will run
+    assert version_bump_validator
+    # Assert external args were propagated correctly.
+    assert version_bump_validator.external_args["prev_ver"] == "some_prev_ver"

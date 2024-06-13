@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List, Union
 
-from demisto_sdk.commands.common.tools import check_text_content_contain_sub_text
+from demisto_sdk.commands.common.tools import search_substrings_by_line
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -46,17 +46,17 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
         if "CommonServerPython" in content_item.name:
             return {}
         if content_item.code_file.exist and (
-            invalid_lines := check_text_content_contain_sub_text(
-                sub_text_list=["BSD", "MIT", "Copyright", "proprietary"],
-                to_split=True,
+            invalid_lines := search_substrings_by_line(
+                substrings_to_search=["BSD", "MIT", "Copyright", "proprietary"],
+                split_line=True,
                 text=content_item.code_file.file_content,
             )
         ):
             malformed_files["code file"] = invalid_lines
         if content_item.test_code_file.exist and (
-            invalid_lines := check_text_content_contain_sub_text(
-                sub_text_list=["BSD", "MIT", "Copyright", "proprietary"],
-                to_split=True,
+            invalid_lines := search_substrings_by_line(
+                substrings_to_search=["BSD", "MIT", "Copyright", "proprietary"],
+                split_line=True,
                 text=content_item.test_code_file.file_content,
             )
         ):

@@ -1,0 +1,4 @@
+changes:
+- description: Added the PB103 to the new validation format. Validates that the modeling rules have a schema file.
+  type: internal
+pr_number: 4340

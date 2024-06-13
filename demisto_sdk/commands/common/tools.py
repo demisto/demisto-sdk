@@ -4409,11 +4409,17 @@ def search_substrings_by_line(
     text: str,
     case_insensitive: bool = False,
     split_line: bool = False,
+    exceptionally_allowed_substrings: Optional[list[str]] = None,
 ) -> List[str]:
     invalid_lines = []
 
     if case_insensitive:
         text = text.lower()
+        if exceptionally_allowed_substrings:
+            exceptionally_allowed_substrings = [
+                allowed_phrase.lower()
+                for allowed_phrase in exceptionally_allowed_substrings
+            ]
 
     for line_num, line in enumerate(text.split("\n")):
         if case_insensitive:
@@ -4424,6 +4430,19 @@ def search_substrings_by_line(
 
         for phrase in substrings_to_search:
             if phrase in line:
+                if exceptionally_allowed_substrings:
+                    if any(
+                        (allowed in line and phrase in allowed)
+                        for allowed in exceptionally_allowed_substrings
+                    ):
+                        """
+                        example: we want to catch 'demisto', but not when it's in a URL.
+                            phrase = 'demisto'
+                            allowed = '/demisto/'
+                            line = 'foo/demisto/bar'
+                        we'll skip this line only iff 'demisto' in '/demisto/' and '/demisto/' in foo/demisto/bar
+                        """
+                        continue
                 invalid_lines.append(str(line_num + 1))
 
     return invalid_lines

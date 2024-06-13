@@ -1,0 +1,4 @@
+changes:
+- description: Started adaption for relative paths enforcement in the upload flow.
+  type: internal
+pr_number: 4338

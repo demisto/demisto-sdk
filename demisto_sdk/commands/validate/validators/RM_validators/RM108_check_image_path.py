@@ -29,10 +29,8 @@ class ImagePathValidator(BaseValidator, ABC):
         "Using relative references to files in the repo folder enhances security by reducing reliance"
         " on external links, minimizing the risk of link manipulation or redirection attacks. "
     )
-    error_message = (
-        "{}. See https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on"
-        " how to add images to pack markdown files."
-    )
+    error_message = ("{} Read the following documentation on how to add images to pack markdown files:\n"
+                     " https://xsoar.pan.dev/docs/integrations/integration-docs#images")
     related_file_type = [RelatedFileType.README, RelatedFileType.DESCRIPTION_File]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -79,7 +77,7 @@ class ImagePathValidator(BaseValidator, ABC):
 
             return (
                 " Invalid image path(s) detected. Please use relative paths instead in the following links:\n"
-                + "\n".join(absolute_links)
+                + "\n".join(absolute_links) + "\n\n"
             )
         return ""
 
@@ -112,6 +110,6 @@ class ImagePathValidator(BaseValidator, ABC):
             return (
                 " Relative image paths found outside the pack's doc_files directory."
                 " Please move the following images to the doc_files directory:\n"
-                + "\n".join(invalid_links)
+                + "\n".join(invalid_links) + "\n\n"
             )
         return ""

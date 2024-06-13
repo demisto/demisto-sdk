@@ -26,7 +26,7 @@ select = [
     "PA107", "PA108", "PA111", "PA115", "PA128", "PA130",
     "RP101",
 ]
-warning = []
+warning = ["RM108"]
 
 
 [xsoar_best_practices_use_git]
@@ -70,7 +70,7 @@ select = [
     "IM101", "IM108",
     "RP101"
 ]
-warning = []
+warning = ["RM108"]
 
 
 [Custom_Categories]

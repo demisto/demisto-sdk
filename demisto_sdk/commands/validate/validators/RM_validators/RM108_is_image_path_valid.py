@@ -19,7 +19,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = ContentItem
 
 
-class ImagePathValidator(BaseValidator, ABC):
+class RelativeImagePathValidator(BaseValidator, ABC):
     error_code = "RM108"
     description = (
         "This validation verifies that images in the readme and description files are"
@@ -55,8 +55,8 @@ class ImagePathValidator(BaseValidator, ABC):
         """
         raise NotImplementedError("Subclasses must implement this method.")
 
-    def verify_absolute_images_not_exist(self, content_item) -> str:
-        """Check if the content item contains exists image paths.
+    def detect_absolute_image_paths(self, content_item) -> str:
+        """Check if the content item contains absolute image paths.
 
         Arguments:
             content_item {ContentTypes} -- The content item to check.
@@ -70,13 +70,17 @@ class ImagePathValidator(BaseValidator, ABC):
             re.IGNORECASE | re.MULTILINE,
         )
         if absolute_links:
+            # Extract the actual link from the found absolute links,
             absolute_links = [
+                # extracts the URL from the matched link tuple, choosing between absolute_link[1] or absolute_link[2]
+                # based on whether the link matches the URL or HTML pattern.
                 absolute_link[1] if absolute_link[0] else absolute_link[2]
                 for absolute_link in absolute_links
             ]
 
             return (
-                " Invalid image path(s) detected. Please use relative paths instead in the following links:\n"
+                " Invalid image path(s) have been detected."
+                " Please utilize relative paths instead for the links provided below.:\n"
                 + "\n".join(absolute_links) + "\n\n"
             )
         return ""
@@ -99,7 +103,10 @@ class ImagePathValidator(BaseValidator, ABC):
             re.IGNORECASE | re.MULTILINE,
         )
         relative_images = [
-            match[1] if match[0] else match[2] for match in relative_images
+            # extracts the actual image path from each matched link tuple in the relative_images list.
+            # It selects between relative_image[1] and relative_image[2] based on whether the link
+            # matches the URL or HTML pattern.
+            relative_image[1] if relative_image[0] else relative_image[2] for relative_image in relative_images
         ]
         invalid_links = [
             rel_img
@@ -108,8 +115,8 @@ class ImagePathValidator(BaseValidator, ABC):
         ]
         if invalid_links:
             return (
-                " Relative image paths found outside the pack's doc_files directory."
-                " Please move the following images to the doc_files directory:\n"
+                "Relative image paths have been identified outside the pack's 'doc_files' directory. Please relocate"
+                " the following images to the 'doc_files' directory:\n"
                 + "\n".join(invalid_links) + "\n\n"
             )
         return ""

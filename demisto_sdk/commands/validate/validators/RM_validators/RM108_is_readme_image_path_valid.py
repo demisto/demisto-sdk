@@ -9,14 +9,14 @@ from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFile
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
 )
-from demisto_sdk.commands.validate.validators.RM_validators.RM108_check_image_path import (
-    ImagePathValidator,
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_image_path_valid import (
+    RelativeImagePathValidator,
 )
 
 ContentTypes = Union[Script, Playbook, Pack]
 
 
-class ImagePathOnlyReadMeValidator(ImagePathValidator, BaseValidator[ContentTypes]):
+class ReadmeRelativeImagePathValidator(RelativeImagePathValidator, BaseValidator[ContentTypes]):
     related_file_type = [RelatedFileType.README]
 
     def validate_content_items(self, content_item: ContentTypes) -> str:
@@ -28,7 +28,7 @@ class ImagePathOnlyReadMeValidator(ImagePathValidator, BaseValidator[ContentType
         Returns:
             str -- The error message if the content item isn't valid.
         """
-        error_message = self.verify_absolute_images_not_exist(
+        error_message = self.detect_absolute_image_paths(
             content_item.readme.file_content
         ) + self.verify_relative_saved_in_doc_files(content_item.readme.file_content)
         return error_message

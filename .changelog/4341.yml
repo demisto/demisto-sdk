@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where validations searching for `demisto` in strings would find it in URLs (`/demisto/content`).
+  type: fix
+pr_number: 4341

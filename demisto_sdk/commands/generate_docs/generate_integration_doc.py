@@ -1321,7 +1321,7 @@ def get_commands_sections(doc_text: str) -> Dict[str, Tuple[int, int]]:
     start and end line of the command section within the README.
     """
 
-    command_start_section_pattern = rf"^{HEADER_TYPE.H3}\s+([a-z]+(-[a-z]+)*$)"
+    command_start_section_pattern = rf"^{HEADER_TYPE.H3}\s+([a-z0-9]+(-[a-z0-9]+)*$)"
 
     out = {}
 

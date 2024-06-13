@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     error_codes,
 )
 from demisto_sdk.commands.common.hook_validations.readme import mdx_server_is_up
+
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,

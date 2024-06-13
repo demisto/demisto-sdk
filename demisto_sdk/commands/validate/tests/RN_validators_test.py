@@ -72,3 +72,25 @@ def test_release_note_filled_out_validator(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+<<<<<<< Updated upstream
+=======
+
+
+def test_release_note_invalid_content_name_header_validator_modified_valid():
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Integrations\n##### hello world\nThis is a valid rn."
+    )
+    integrations = [
+        create_integration_object(
+            ["script.isfetch", "name"], ["true", "TestIntegration1"]
+        ),
+        create_integration_object(
+            ["script.isfetch"], ["true"]
+        )
+    ]
+    pack.content_items.integration.extend(integrations)
+    results = ReleaseNoteInvalidContentNameHeaderValidatorModified().is_valid(content_items=[pack])
+    assert len(results) == 0
+>>>>>>> Stashed changes

@@ -42,7 +42,7 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
             if (
                 lines_contain_demsito := search_substrings_by_line(
                     phrases_to_search=["demisto"],
-                    case_insensitive=True,
+                    ignore_case=True,
                     text=content_item.readme.file_content,
                     exceptionally_allowed_substrings=["/demisto/"],  # in URL
                 )

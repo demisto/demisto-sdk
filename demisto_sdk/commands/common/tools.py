@@ -4407,23 +4407,23 @@ def is_str_bool(input_: str) -> bool:
 def search_substrings_by_line(
     phrases_to_search: List[str],
     text: str,
-    case_insensitive: bool = False,
+    ignore_case: bool = False,
     search_whole_word: bool = False,
     exceptionally_allowed_substrings: Optional[list[str]] = None,
 ) -> List[str]:
     invalid_lines = []
 
-    if case_insensitive:
-        text = text.lower()
+    if ignore_case:
+        text = text.casefold()
         if exceptionally_allowed_substrings:
             exceptionally_allowed_substrings = [
-                allowed_phrase.lower()
+                allowed_phrase.casefold()
                 for allowed_phrase in exceptionally_allowed_substrings
             ]
 
     for line_num, line in enumerate(text.split("\n")):
-        if case_insensitive:
-            line = line.lower()
+        if ignore_case:
+            line = line.casefold()
 
         if search_whole_word:
             line = line.split()  # type: ignore[assignment]

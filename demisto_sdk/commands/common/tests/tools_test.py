@@ -112,6 +112,7 @@ from demisto_sdk.commands.common.tools import (
     parse_multiple_path_inputs,
     run_command_os,
     search_and_delete_from_conf,
+    search_substrings_by_line,
     server_version_compare,
     set_value,
     str2bool,
@@ -3330,3 +3331,84 @@ def test_check_timestamp_format():
     assert not check_timestamp_format(missing_z)
     assert not check_timestamp_format(only_date)
     assert not check_timestamp_format(with_hyphen)
+
+
+class TestSearchSubstringByLine:
+    @staticmethod
+    @pytest.mark.parametrize(
+        "phrases,text,expected",
+        (
+            pytest.param(["foo"], "foo bar", ["1"], id="found"),
+            pytest.param(
+                ["foo"],
+                "bar baz",
+                [],
+                id="nothing to find",
+            ),
+        ),
+    )
+    def test_search_substring_by_line(
+        phrases: List[str], text: str, expected: List[str]
+    ):
+        assert search_substrings_by_line(phrases, text) == expected
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "phrases,text,ignore_case,expected",
+        (
+            pytest.param(
+                ["foo"],
+                "this is Fooland",
+                False,
+                [],
+                id="case difference, case sensitive, not found",
+            ),
+            pytest.param(
+                ["foo"],
+                "this is Fooland",
+                True,
+                ["1"],
+                id="different case, ignore case, found",
+            ),
+        ),
+    )
+    def test_search_substring_by_line_case(
+        phrases: List[str], text: str, ignore_case: bool, expected: List[str]
+    ):
+        assert (
+            search_substrings_by_line(phrases, text, ignore_case=ignore_case)
+            == expected
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "phrases,text,exceptions,expected",
+        (
+            pytest.param(
+                ["foo"],
+                "I like food",
+                [],
+                ["1"],
+                id="no exceptions, foo found in food",
+            ),
+            pytest.param(
+                ["foo"],
+                "I like food",
+                ["food"],
+                [],
+                id="exceptionally ignoring foo in food",
+            ),
+        ),
+    )
+    def test_search_substring_by_line_exceptions(
+        phrases: List[str],
+        text: str,
+        exceptions: Optional[list[str]],
+        expected: List[str],
+    ):
+        assert (
+            search_substrings_by_line(
+                phrases, text, exceptionally_allowed_substrings=exceptions
+            )
+            == expected
+        )

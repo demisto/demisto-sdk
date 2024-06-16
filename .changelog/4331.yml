@@ -1,4 +1,4 @@
 changes:
-- description: Added the MR100 to the new validation format. Validates that the modeling rules has a schema file.
+- description: Modified the MR100 validation to follow the new validation format.
   type: internal
 pr_number: 4331

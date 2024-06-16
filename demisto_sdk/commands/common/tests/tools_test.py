@@ -3383,7 +3383,7 @@ class TestSearchSubstringByLine:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "phrases,text,exceptions,expected",
+        "phrases,text,exceptions,expected_to_find",
         (
             pytest.param(
                 ["foo"],

@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
+    PlaybookTaskType,
 )
 from demisto_sdk.commands.common.tools import remove_nulls_from_dictionary, write_dict
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -99,7 +100,7 @@ class Task(BaseModel):
 class TaskConfig(BaseModel):
     id: str
     taskid: str
-    type: Optional[str] = None
+    type: Optional[PlaybookTaskType] = None
     form: Optional[Dict] = None
     message: Optional[Dict] = None
     defaultassigneecomplex: Optional[Dict] = None

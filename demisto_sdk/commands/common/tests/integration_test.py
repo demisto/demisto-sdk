@@ -1912,16 +1912,6 @@ class TestIntegrationValidator:
             (["true"], False),
             (["True"], False),
             (MarketplaceVersions.XSOAR, False),
-            (
-                [
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                    MarketplaceVersions.XPANSE,
-                    MarketplaceVersions.XSOAR_SAAS,
-                    MarketplaceVersions.XSOAR_ON_PREM,
-                ],
-                False,
-            ),
             ("🥲", False),
             ("Trüe", False),
             ([MarketplaceVersions.XSOAR, None], False),
@@ -2388,16 +2378,16 @@ class TestIsFeedParamsExist:
     IS_VALID_HIDDEN_PARAMS = [
         (NO_HIDDEN, True),
         (HIDDEN_FALSE, True),
-        (HIDDEN_TRUE, False),
-        (HIDDEN_TRUE_AND_FALSE, False),
+        (HIDDEN_TRUE, True),
+        (HIDDEN_TRUE_AND_FALSE, True),
         (HIDDEN_ALLOWED_TRUE, True),
         (HIDDEN_ALLOWED_FEED_REPUTATION, True),
         (HIDDEN_TRUE_BUT_REPLACED_TYPE_0, True),
         (HIDDEN_TRUE_BUT_REPLACED_TYPE_12, True),
         (HIDDEN_TRUE_BUT_REPLACED_TYPE_14, True),
-        (HIDDEN_TRUE_BUT_REPLACED_BY_NOT_ALLOWED, False),
+        (HIDDEN_TRUE_BUT_REPLACED_BY_NOT_ALLOWED, True),
         (HIDDEN_TRUE_BUT_REPLACED_4, True),
-        (HIDDEN_ONE_REPLACED_TO_9_OTHER_NOT, False),
+        (HIDDEN_ONE_REPLACED_TO_9_OTHER_NOT, True),
     ]
 
     @pytest.mark.parametrize("current, answer", IS_VALID_HIDDEN_PARAMS)

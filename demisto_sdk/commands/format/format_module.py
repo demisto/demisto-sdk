@@ -99,6 +99,9 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "layoutrule": BaseUpdateJSON,
     "assetsmodelingrule": BaseUpdateYML,
     "assetsmodelingruleschema": BaseUpdateJSON,
+    "casefield": BaseUpdateJSON,
+    "caselayout": LayoutBaseFormat,
+    "caselayoutrule": BaseUpdateJSON,
 }
 
 UNFORMATTED_FILES = [
@@ -247,6 +250,7 @@ def format_manager(
                     deprecate=deprecate,
                     add_tests=add_tests,
                     graph=graph,
+                    clear_cache=clear_cache,
                 )
                 if err_res:
                     log_list.extend([(err_res, "red")])

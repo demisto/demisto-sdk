@@ -148,6 +148,18 @@ CONTENT_TYPES_DICT = {
         "import": "from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport",
         "content_type": "XSIAMReport",
     },
+    "30": {
+        "import": "from demisto_sdk.commands.content_graph.objects.case_field",
+        "content_type": "CaseField",
+    },
+    "31": {
+        "import": "from demisto_sdk.commands.content_graph.objects.case_layout",
+        "content_type": "CaseLayout",
+    },
+    "32": {
+        "import": "from demisto_sdk.commands.content_graph.objects.case_layout_rule",
+        "content_type": "CaseLayoutRule",
+    },
 }
 
 VALIDATION_TEMPLATE = """

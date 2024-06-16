@@ -214,6 +214,10 @@ class BaseContent(BaseNode):
         """
         for key, val in self.field_mapping.items():
             attr = getattr(self, key)
+            if isinstance(attr, dict):
+                attr = {
+                    key: elem.dict(exclude_unset=True) for key, elem in attr.items()
+                }
             if key == "docker_image":
                 attr = str(attr)
             elif key in ["params"]:
@@ -236,7 +240,7 @@ class BaseContent(BaseNode):
     def __hash__(self):
         return hash(self.path)
 
-    def save(self):
+    def save(self, output_path: Path = None):
         raise NotImplementedError
 
     @property

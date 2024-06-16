@@ -1,0 +1,8 @@
+changes:
+- description: Fixed an issue where **generate-docs** command couldn't find the sections within the integration README.md when updating documentation for modified commands.
+  type: fix
+- description: Added the `--force` flag to the **generate-docs** command to force the README.md generation instead of use version control to update the doc.
+  type: feature
+- description: Fixed an issue where modified command names were treated as a new command.
+  type: fix
+pr_number: 4303

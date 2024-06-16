@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where the logic for retrieving the latest Docker image was based on the entire tag (x.y.z.abcde) instead of just the last part of the image tag (_._._.abcde). Only the last part will now be used, per demisto/dockerfiles convention. 
+- description: Fixed an issue where the logic for retrieving the latest Docker image was based on the entire tag (x.y.z.abcde) instead of just the last part of the image tag (_._._.abcde). Only the last part will now be used, per demisto/dockerfiles convention.
   type: breaking
 pr_number: 4294

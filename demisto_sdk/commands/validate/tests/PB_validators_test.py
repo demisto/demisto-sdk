@@ -8,6 +8,7 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB101_is_playbook_ha
     IsAskConditionHasUnreachableConditionValidator,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB103_is_playbook_has_unconnected_tasks import (
+    ERROR_MSG,
     IsPlaybookHasUnconnectedTasks,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
@@ -239,7 +240,8 @@ def test_is_playbook_has_unconnected_tasks():
             "nexttasks": {"no": ["2"]},
         },
     }
-    assert IsPlaybookHasUnconnectedTasks().is_valid([playbook])
+    validation_results = IsPlaybookHasUnconnectedTasks().is_valid([playbook])
+    assert len(validation_results) == 0  # No validation results should be returned
 
 
 def test_is_playbook_has_unconnected_tasks_not_valid():
@@ -268,5 +270,14 @@ def test_is_playbook_has_unconnected_tasks_not_valid():
             "message": {"replyOptions": ["yes"]},
             "nexttasks": {"no": ["2"]},
         },
+        "4": {
+            "id": "test task",
+            "type": "condition",
+            "message": {"replyOptions": ["yes"]},
+            "nexttasks": {"no": ["2"]},
+        },
     }
-    assert not IsPlaybookHasUnconnectedTasks().is_valid([playbook])
+    orphan_tasks = ["3", "4"]
+    validation_result = IsPlaybookHasUnconnectedTasks().is_valid([playbook])
+    assert validation_result
+    assert validation_result[0].message == ERROR_MSG.format(orphan_tasks=orphan_tasks)

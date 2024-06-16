@@ -3350,10 +3350,8 @@ class TestSearchSubstringByLine:
     def test_search_substring_by_line(
         phrases: List[str], text: str, expected_to_find: bool
     ):
-        assert (
-            search_substrings_by_line(phrases, text) == ["1"]
-            if expected_to_find
-            else []
+        assert search_substrings_by_line(phrases, text) == (
+            ["1"] if expected_to_find else []
         )
 
     @staticmethod
@@ -3379,10 +3377,8 @@ class TestSearchSubstringByLine:
     def test_search_substring_by_line_case(
         phrases: List[str], text: str, ignore_case: bool, expected_to_find: bool
     ):
-        assert (
-            search_substrings_by_line(phrases, text, ignore_case=ignore_case) == ["1"]
-            if expected_to_find
-            else []
+        assert search_substrings_by_line(phrases, text, ignore_case=ignore_case) == (
+            ["1"] if expected_to_find else []
         )
 
     @staticmethod
@@ -3408,14 +3404,9 @@ class TestSearchSubstringByLine:
     def test_search_substring_by_line_exceptions(
         phrases: List[str],
         text: str,
-        exceptions: Optional[list[str]],
+        exceptions: Optional[List[str]],
         expected_to_find: bool,
     ):
-        assert (
-            search_substrings_by_line(
-                phrases, text, exceptionally_allowed_substrings=exceptions
-            )
-            == ["1"]
-            if expected_to_find
-            else []
-        )
+        assert search_substrings_by_line(
+            phrases, text, exceptionally_allowed_substrings=exceptions
+        ) == (["1"] if expected_to_find else [])

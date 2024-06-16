@@ -3336,7 +3336,7 @@ def test_check_timestamp_format():
 class TestSearchSubstringByLine:
     @staticmethod
     @pytest.mark.parametrize(
-        "phrases,text,expected",
+        "phrases,text,expected_to_find",
         (
             pytest.param(["foo"], "foo bar", True, id="found"),
             pytest.param(

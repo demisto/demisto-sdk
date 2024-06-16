@@ -3338,46 +3338,51 @@ class TestSearchSubstringByLine:
     @pytest.mark.parametrize(
         "phrases,text,expected",
         (
-            pytest.param(["foo"], "foo bar", ["1"], id="found"),
+            pytest.param(["foo"], "foo bar", True, id="found"),
             pytest.param(
                 ["foo"],
                 "bar baz",
-                [],
+                False,
                 id="nothing to find",
             ),
         ),
     )
     def test_search_substring_by_line(
-        phrases: List[str], text: str, expected: List[str]
+        phrases: List[str], text: str, expected_to_find: bool
     ):
-        assert search_substrings_by_line(phrases, text) == expected
+        assert (
+            search_substrings_by_line(phrases, text) == ["1"]
+            if expected_to_find
+            else []
+        )
 
     @staticmethod
     @pytest.mark.parametrize(
-        "phrases,text,ignore_case,expected",
+        "phrases,text,ignore_case,expected_to_find",
         (
             pytest.param(
                 ["foo"],
                 "this is Fooland",
                 False,
-                [],
+                False,
                 id="case difference, case sensitive, not found",
             ),
             pytest.param(
                 ["foo"],
                 "this is Fooland",
                 True,
-                ["1"],
+                True,
                 id="different case, ignore case, found",
             ),
         ),
     )
     def test_search_substring_by_line_case(
-        phrases: List[str], text: str, ignore_case: bool, expected: List[str]
+        phrases: List[str], text: str, ignore_case: bool, expected_to_find: bool
     ):
         assert (
-            search_substrings_by_line(phrases, text, ignore_case=ignore_case)
-            == expected
+            search_substrings_by_line(phrases, text, ignore_case=ignore_case) == ["1"]
+            if expected_to_find
+            else []
         )
 
     @staticmethod
@@ -3388,14 +3393,14 @@ class TestSearchSubstringByLine:
                 ["foo"],
                 "I like food",
                 [],
-                ["1"],
+                True,
                 id="no exceptions, foo found in food",
             ),
             pytest.param(
                 ["foo"],
                 "I like food",
                 ["food"],
-                [],
+                False,
                 id="exceptionally ignoring foo in food",
             ),
         ),
@@ -3404,11 +3409,13 @@ class TestSearchSubstringByLine:
         phrases: List[str],
         text: str,
         exceptions: Optional[list[str]],
-        expected: List[str],
+        expected_to_find: bool,
     ):
         assert (
             search_substrings_by_line(
                 phrases, text, exceptionally_allowed_substrings=exceptions
             )
-            == expected
+            == ["1"]
+            if expected_to_find
+            else []
         )

@@ -4411,15 +4411,18 @@ def search_substrings_by_line(
     search_whole_word: bool = False,
     exceptionally_allowed_substrings: Optional[list[str]] = None,
 ) -> List[str]:
+    """
+    Returns the list of line indices (as strings) in text,
+    where the searched phrases are found
+    """
     invalid_lines = []
 
     if ignore_case:
         text = text.casefold()
-        if exceptionally_allowed_substrings:
-            exceptionally_allowed_substrings = [
-                allowed_phrase.casefold()
-                for allowed_phrase in exceptionally_allowed_substrings
-            ]
+        exceptionally_allowed_substrings = [
+            allowed_phrase.casefold()
+            for allowed_phrase in (exceptionally_allowed_substrings or ())
+        ]
 
     for line_num, line in enumerate(text.split("\n")):
         if ignore_case:

@@ -7,7 +7,7 @@ from collections import defaultdict
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import more_itertools
 from packaging.version import Version
@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.git_util import GitUtil, Path
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     write_dict,

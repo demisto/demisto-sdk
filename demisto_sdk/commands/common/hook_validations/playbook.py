@@ -70,7 +70,7 @@ class PlaybookValidator(ContentEntityValidator):
             self._is_correct_value_references_interface(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
-            self.inputs_in_use_check(is_modified),
+            self.inputs_in_use_check(True),
             self.is_playbook_deprecated_and_used(),
         ]
         answers = all(playbook_checks)

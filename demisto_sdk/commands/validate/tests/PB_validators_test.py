@@ -17,6 +17,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB114_playbook_quiet
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB119_check_inputs_used import (
+    CheckInputsUsedExist,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
@@ -83,6 +86,25 @@ def test_is_valid_all_inputs_in_use(content_item, expected_result):
         result == expected_result
         if isinstance(expected_result, list)
         else result[0].message == expected_result
+    )
+
+
+def test_using_input_not_provided():
+    playbook = create_playbook_object(
+        paths=["inputs", "tasks.0.task.key"],
+        values=[
+            [
+                {"key": "input_name1", "value": "input_value1"},
+                {"key": "input_name2", "value": "input_value2"},
+            ],
+            {"first_input": "inputs.input_name1", "another 1 ": "inputs.input_name3"},
+        ],
+    )
+    result = CheckInputsUsedExist().is_valid([playbook])
+    assert len(result) == 1
+    assert (
+        result[0].message
+        == "Inputs [Comments, File, ReportFileType, Systems, Timeout, input_name3] were used but not provided for this playbook."
     )
 
 

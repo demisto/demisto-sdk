@@ -18,6 +18,10 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
 
+from demisto_sdk.commands.validate.validators.PB_validators.PB116_is_stopping_on_error import (
+    IsStoppingOnErrorValidator
+)
+
 
 @pytest.mark.parametrize(
     "content_item, expected_result",
@@ -222,3 +226,40 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+def test_IsStoppingOnError_valid():
+    playbook = create_playbook_object()
+    assert not IsStoppingOnErrorValidator().is_valid([playbook])
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test task",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+            }
+        )
+    }
+    assert not IsStoppingOnErrorValidator().is_valid([playbook])
+
+
+def test_IsStoppingOnError_invalid():
+    playbook = create_playbook_object()
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test task",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "continueonerror": True,
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+
+            }
+        )
+    }
+    res = IsStoppingOnErrorValidator().is_valid([playbook])
+    assert res

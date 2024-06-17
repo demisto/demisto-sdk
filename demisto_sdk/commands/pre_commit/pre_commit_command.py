@@ -662,15 +662,15 @@ def preprocess_files(
         raw_files = git_util._get_all_changed_files(prev_version)
         if not commited_only:
             raw_files = raw_files.union(staged_files)
+        if os.getenv('CONTRIB_BRANCH'):
+            '''
+            if the command runs on an external contribution branch,
+            get all untracked files with path that start with Packs/...
+            '''
+            raw_files.union(set(map(Path, filter(lambda f: f.startswith('Packs/'), git_util.repo.untracked_files))))
     elif all_files:
         raw_files = all_git_files
-    elif os.getenv('CONTRIB_BRANCH'):
-        # gets files of unknown status
-        # contrib_diff = tuple(filter(lambda f: f.startswith('Packs/'), git_util.repo.untracked_files))
-        # logger.info('contribution branch found, contrib-diff:\n' + '\n'.join(contrib_diff))
-        # raw_files = git_util._get_untracked_files()
-        ''' if the command runs on an external contribution branch, get all untracked files with path that start with Packs/... '''
-        raw_files = set(map(Path, filter(lambda f: f.startswith('Packs/'), git_util.repo.untracked_files)))
+
 
     else:
         raise ValueError(

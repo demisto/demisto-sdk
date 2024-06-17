@@ -16,7 +16,7 @@ VALID_INDICATOR_TYPE = "^[A-Za-z0-9_& ]*$"
 
 
 class IsValidIndicatorTypeId(BaseValidator[ContentTypes]):
-    error_code = "RP103"  # comment to remove
+    error_code = "RP103"
     description = "Validate that the 'id' field of indicator type has valid value."
     error_message = "id field contain invalid value."
     rationale = "we want to make sure the id of the indicator type is valid."

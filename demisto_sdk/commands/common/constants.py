@@ -617,8 +617,12 @@ INCORRECT_PACK_NAME_PATTERN = (
     "^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ "
 )
 # Release note regex
-CONTENT_TYPE_SECTION_REGEX = r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)"
-CONTENT_ITEM_SECTION_REGEX = r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
+CONTENT_TYPE_SECTION_REGEX = (
+    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)"
+)
+CONTENT_ITEM_SECTION_REGEX = (
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
+)
 
 
 # Packs regex

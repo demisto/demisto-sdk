@@ -37,7 +37,7 @@ class PlaybookQuietModeValidator(BaseValidator[ContentTypes]):
             if (
                 any(
                     (i["playbookInputQuery"] or {}).get("queryEntity") == "indicators"
-                    for i in content_item.inputs
+                    for i in content_item.data.get("inputs", {})
                 )
                 and not content_item.quiet
             )

@@ -33,13 +33,13 @@ class PlaybookDeleteContextAllValidator(BaseValidator[ContentTypes]):
         tasks = playbook.tasks
         invalid_tasks = []
         for task in tasks.values():
-            current_task = task.get("task", {})
-            script_args = task.get("scriptarguments", {})
+            current_task = task.task
+            script_args = task.scriptarguments
             if (
-                current_task and current_task.get("scriptName", "") == "DeleteContext"
+                current_task and current_task.scriptName == "DeleteContext"
                 and script_args and script_args.get("all", {}).get("simple", "") == "yes"
             ):
-                invalid_tasks.append(current_task.get("id"))
+                invalid_tasks.append(task.task.id)
         return invalid_tasks
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

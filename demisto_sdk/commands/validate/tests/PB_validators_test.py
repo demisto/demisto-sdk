@@ -230,26 +230,35 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
 def test_PlaybookDeleteContextAllValidator():
     """
         Given:
-        - A playbook with valid tasks, with DeleteContext with all set to 'Yes'
+        - A playbook with tasks.
+        Case 1: The playbook is valid - test with the default playbook object.
+        Case 2: The playbook is invalid, with DeleteContext with all set to 'Yes'
+        - 
 
         When:
         - calling PlaybookDeleteContextAllValidator.is_valid.
 
         Then:
-        - The playbook is invalid
+        - The results should be as expected:
+            Case 1: The playbook is valid.
+            Case 2: The playbook is invalid.
     """
     playbook = create_playbook_object()
-    assert PlaybookDeleteContextAllValidator().is_valid([playbook])
+    assert not PlaybookDeleteContextAllValidator().is_valid([playbook])
     playbook.tasks = {
-        "0": {
-            'id': '1',
-             'taskid': '99ad564d-0b17-45c4-8a20-bbc8dd6f3e7c',
-             'type': 'regular',
-             'task': {'id': 'task-id',
-                      'name': 'DeleteContext',
-                      'scriptName': 'DeleteContext'},
-             'scriptarguments': {'all': {'simple': 'yes'}},
-        }
+        "0": TaskConfig(
+            **{
+                "id": "test task",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"], "yes": ["2"]},
+                'task': {'id': 'task-id',
+                         'name': 'DeleteContext',
+                         'scriptName': 'DeleteContext'},
+                'scriptarguments': {'all': {'simple': 'yes'}},
+            }
+        )
     }
     expected_result = ("The playbook includes DeleteContext tasks with all set to 'yes', which is not permitted."
                        " Please correct the following tasks: ['task-id']"

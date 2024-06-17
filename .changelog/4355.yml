@@ -1,0 +1,4 @@
+changes:
+- description: Added the RP102 validation
+  type: internal
+pr_number: 4355

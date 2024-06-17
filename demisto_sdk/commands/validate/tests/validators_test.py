@@ -185,7 +185,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
         ),
     ],
 )
-def test_gather_validations_to_run(
+def test_gather_validations_from_conf(
     mocker,
     category_to_run,
     execution_mode,
@@ -202,7 +202,7 @@ def test_gather_validations_to_run(
         - Case 4: No category to run, execution_mode set to use_git, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to False.
         - Case 5: No category to run, execution_mode set to use_git, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to True.
     When
-    - Calling the gather_validations_to_run function.
+    - Calling the gather_validations_from_conf function.
     Then
         - Case 1: Make sure the retrieved results contains only use_git.select results
         - Case 2: Make sure the retrieved results contains the custom category results and ignored the use_git results.
@@ -212,7 +212,7 @@ def test_gather_validations_to_run(
     """
     mocker.patch.object(toml, "load", return_value=config_file_content)
     config_reader = ConfigReader(category_to_run=category_to_run)
-    results: ConfiguredValidations = config_reader.gather_validations_to_run(
+    results: ConfiguredValidations = config_reader.gather_validations_from_conf(
         execution_mode=execution_mode, ignore_support_level=ignore_support_level
     )
     assert results.validations_to_run == expected_results.validations_to_run

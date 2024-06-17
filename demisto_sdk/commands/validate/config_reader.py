@@ -42,7 +42,7 @@ class ConfigReader:
             logger.error(f"Failed to find config file at path {config_file_path}")
             exit(1)
 
-    def gather_validations_to_run(
+    def gather_validations_from_conf(
         self,
         execution_mode: ExecutionMode,
         ignore_support_level: Optional[bool] = False,

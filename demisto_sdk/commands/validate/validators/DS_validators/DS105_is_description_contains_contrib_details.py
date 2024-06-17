@@ -19,9 +19,10 @@ class IsDescriptionContainsContribDetailsValidator(BaseValidator[ContentTypes]):
     error_code = "DS105"
     description = "check if DESCRIPTION file contains contribution details"
     rationale = "the contribution/partner details will be generated automatically and we don't want should be duplicate"
-    error_message = ("Description file contains contribution/partner details that will be generated "
-                     "automatically when the upload command is performed.\n"
-                     "Delete any details related to contribution/partner ")
+    error_message = ("Description file ({0}) "
+                     "contains contribution/partner details that will be generated automatically"
+                     " when the upload command is performed.\n"
+                     "Delete any details related to contribution/partner")
     is_auto_fixable = False
     related_file_type = [RelatedFileType.DESCRIPTION_File]
     
@@ -29,7 +30,7 @@ class IsDescriptionContainsContribDetailsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(content_item.description_file.file_path.name),
                 content_object=content_item,
             )
             for content_item in content_items

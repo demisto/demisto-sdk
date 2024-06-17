@@ -11,15 +11,16 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB101_is_playbook_ha
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
+    IsTaskidDifferentFromidValidator
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
-from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
-    IsTaskidDifferentFromidValidator
-)
+
 
 @pytest.mark.parametrize(
     "content_item, expected_result",
@@ -253,4 +254,5 @@ def test_IsTaskidDifferentFromidValidator():
             }
         )
     }
+    
     assert len(IsTaskidDifferentFromidValidator().is_valid([playbook])) == 1

@@ -5,8 +5,8 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = TestPlaybook
@@ -14,7 +14,9 @@ ContentTypes = TestPlaybook
 
 class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
     error_code = "PB109"
-    description = "Check that taskid field and id field under task field contains equal values"
+    description = (
+        "Check that taskid field and id field under task field contains equal values"
+    )
     rationale = ""
     error_message = "On task: {},  the field 'taskid': {} and the 'id' under the 'task' field: {}, must be with equal value."
     related_field = ""
@@ -30,15 +32,15 @@ class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
                 inner_id = task.id
                 is_valid_task = taskid == inner_id
                 if not is_valid_task:
-                    error_results.append(ValidationResult(
+                    error_results.append(
+                        ValidationResult(
                             validator=self,
                             message=self.error_message.format(
-                                task_key,
-                                taskid,
-                                inner_id
+                                task_key, taskid, inner_id
                             ),
-                            content_object=content_item
-                        ))
+                            content_object=content_item,
+                        )
+                    )
         return error_results
     
 

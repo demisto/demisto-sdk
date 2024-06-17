@@ -12,7 +12,7 @@ ContentTypes = Playbook
 ERROR_MSG = "The following tasks ids have no previous tasks: {orphan_tasks}."
 
 
-class IsPlaybookHasUnconnectedTasks(BaseValidator[ContentTypes]):
+class DoesPlaybookHaveUnconnectedTasks(BaseValidator[ContentTypes]):
     error_code = "PB103"
     description = "Validate whether there is an unconnected task."
     rationale = "Make sure there are no unconnected tasks to ensure the playbook will work as expected."

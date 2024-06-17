@@ -20,7 +20,7 @@ class PlaybookOnlyDefaultNextValidator(BaseValidator[ContentTypes]):
     rationale = "Validates that a condition task doesn't has only a default next-task."
     error_message = (
         'Playbook with id:"{playbook_id}" has conditional tasks with an only default condition. Tasks IDs: {tasks}.\n'
-        "Please remove these tasks or add another non-default condition to these conditional tasks"
+        "Please remove these tasks or add another non-default condition to these conditional tasks."
     )
     related_field = "conditions"
     is_auto_fixable = False

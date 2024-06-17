@@ -9,7 +9,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Playbook
-ERROR_MSG = "The following tasks ids have no previous tasks: {orphan_tasks}"
+ERROR_MSG = "The following tasks ids have no previous tasks: {orphan_tasks}."
 
 
 class IsPlaybookHasUnconnectedTasks(BaseValidator[ContentTypes]):

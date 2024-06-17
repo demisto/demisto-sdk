@@ -232,29 +232,30 @@ def test_is_playbook_has_unconnected_tasks():
     When: Validating the playbook.
     Then: The playbook is valid.
     """
-    playbook = create_playbook_object(paths=["starttaskid"], values=["0"])
-    playbook.tasks = {
-        "0": TaskConfig(
-            **{
-                "id": "test task",
-                "type": "regular",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"#none#": ["1"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
-            }
-        ),
-        "1": TaskConfig(
-            **{
-                "id": "test task",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["2"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
-            }
-        ),
-    }
+    playbook = create_playbook_object(
+        paths=["starttaskid", "tasks"],
+        values=[
+            "0",
+            {
+                "0": {
+                    "id": "test task",
+                    "type": "regular",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"#none#": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                },
+                "1": {
+                    "id": "test task",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["2"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
+                },
+            },
+        ],
+    )
     validation_results = IsPlaybookHasUnconnectedTasks().is_valid([playbook])
     assert len(validation_results) == 0  # No validation results should be returned
 
@@ -265,49 +266,46 @@ def test_is_playbook_has_unconnected_tasks_not_valid():
     When: Validating the playbook.
     Then: The playbook is not valid.
     """
-    playbook = create_playbook_object(paths=["starttaskid"], values=["0"])
-    playbook.tasks = {
-        "0": TaskConfig(
-            **{
-                "id": "test task",
-                "type": "regular",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"#none#": ["1"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
-            }
-        ),
-        "1": TaskConfig(
-            **{
-                "id": "test task",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["2"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
-            }
-        ),
-        "3": TaskConfig(
-            **{
-                "id": "test task",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["2"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
-            }
-        ),
-        "4": TaskConfig(
-            **{
-                "id": "test task",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["2"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
-            }
-        ),
-    }
+    playbook = create_playbook_object(
+        paths=["starttaskid", "tasks"],
+        values=[
+            "0",
+            {
+                "0": {
+                    "id": "test task",
+                    "type": "regular",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"#none#": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                },
+                "1": {
+                    "id": "test task",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["2"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
+                },
+                "3": {
+                    "id": "test task",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["2"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
+                },
+                "4": {
+                    "id": "test task",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["2"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
+                },
+            },
+        ],
+    )
     orphan_tasks = ["3", "4"]
     validation_result = IsPlaybookHasUnconnectedTasks().is_valid([playbook])
     assert validation_result

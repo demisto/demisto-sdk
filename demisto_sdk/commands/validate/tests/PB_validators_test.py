@@ -8,9 +8,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename
 from demisto_sdk.commands.validate.validators.PB_validators.PB101_is_playbook_has_unreachable_condition import (
     IsAskConditionHasUnreachableConditionValidator,
 )
-from demisto_sdk.commands.validate.validators.PB_validators.PB103_is_playbook_has_unconnected_tasks import (
+from demisto_sdk.commands.validate.validators.PB_validators.PB103_does_playbook_have_unconnected_tasks import (
     ERROR_MSG,
-    IsPlaybookHasUnconnectedTasks,
+    DoesPlaybookHaveUnconnectedTasks,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
@@ -226,7 +226,7 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
 
 
-def test_is_playbook_has_unconnected_tasks():
+def test_does_playbook_have_unconnected_tasks():
     """
     Given: A playbook with tasks that are connected to each other.
     When: Validating the playbook.
@@ -256,11 +256,11 @@ def test_is_playbook_has_unconnected_tasks():
             },
         ],
     )
-    validation_results = IsPlaybookHasUnconnectedTasks().is_valid([playbook])
+    validation_results = DoesPlaybookHaveUnconnectedTasks().is_valid([playbook])
     assert len(validation_results) == 0  # No validation results should be returned
 
 
-def test_is_playbook_has_unconnected_tasks_not_valid():
+def test_does_playbook_have_unconnected_tasks_not_valid():
     """
     Given: A playbook with tasks that are not connected to the root task.
     When: Validating the playbook.
@@ -307,6 +307,6 @@ def test_is_playbook_has_unconnected_tasks_not_valid():
         ],
     )
     orphan_tasks = ["3", "4"]
-    validation_result = IsPlaybookHasUnconnectedTasks().is_valid([playbook])
+    validation_result = DoesPlaybookHaveUnconnectedTasks().is_valid([playbook])
     assert validation_result
     assert validation_result[0].message == ERROR_MSG.format(orphan_tasks=orphan_tasks)

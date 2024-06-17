@@ -17,7 +17,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
-
+from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
+    IsTaskidDifferentFromidValidator
+)
 
 @pytest.mark.parametrize(
     "content_item, expected_result",
@@ -222,3 +224,33 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_IsTaskidDifferentFromidValidator():
+    playbook = create_playbook_object()
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test",
+                "taskid": "test",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+            }
+        )
+    }
+    assert len(IsTaskidDifferentFromidValidator().is_valid([playbook])) == 0
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test",
+                "taskid": "test1",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+            }
+        )
+    }
+    assert len(IsTaskidDifferentFromidValidator().is_valid([playbook])) == 1

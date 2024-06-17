@@ -1,4 +1,4 @@
 changes:
-- description: Fix an issue in `generate-docs` when integration commands arguments are missing descriptions.
+- description: Fixed an issue in **generate-docs** where integration commands arguments had missing descriptions.
   type: fix
 pr_number: 4320

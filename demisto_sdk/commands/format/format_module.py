@@ -250,6 +250,7 @@ def format_manager(
                     deprecate=deprecate,
                     add_tests=add_tests,
                     graph=graph,
+                    clear_cache=clear_cache,
                 )
                 if err_res:
                     log_list.extend([(err_res, "red")])

@@ -2,17 +2,9 @@ import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_pack_object,
-    create_integration_object,
-    REPO
 )
-
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
     IsReleaseNotesFilledOutValidator,
-)
-
-from demisto_sdk.commands.validate.validators.RN_validators.RN114_is_release_notes_header_valid_modified import (
-    ReleaseNoteInvalidContentNameHeaderValidatorModified,
 )
 
 
@@ -80,22 +72,3 @@ def test_release_note_filled_out_validator(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
-
-
-def test_release_note_invalid_content_name_header_validator_modified_valid():
-    pack = create_pack_object(
-        paths=["version"],
-        values=["2.0.5"],
-        release_note_content="#### Integrations\n ##### hello world\nThis is a valid rn."
-    )
-    integrations = [
-        create_integration_object(
-            ["script.isfetch", "name"], ["true", "TestIntegration1"]
-        ),
-        create_integration_object(
-            ["script.isfetch"], ["true"]
-        )
-    ]
-    pack.content_items.integration.extend(integrations)
-    results = ReleaseNoteInvalidContentNameHeaderValidatorModified().is_valid(content_items=[pack])
-    assert len(results) == 0

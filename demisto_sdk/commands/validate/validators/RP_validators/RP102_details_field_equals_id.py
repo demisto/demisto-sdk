@@ -17,6 +17,7 @@ class DetailsFieldEqualsIdValidator(BaseValidator[ContentTypes]):
     error_code = "RP102"
     description = "Validate that the id and the details fields are equal"
     error_message = "id and details fields are not equal."
+    rationale = "To align with the platform requirements."
     related_field = "id"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.JSON]

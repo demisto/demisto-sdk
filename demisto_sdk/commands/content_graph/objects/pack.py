@@ -57,7 +57,7 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SecretsIgnoreRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-    replace_markdown_urls_and_upload_to_artifacts,
+    update_markdown_images_with_urls_and_rel_paths,
 )
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
@@ -314,7 +314,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
-        replace_markdown_urls_and_upload_to_artifacts(
+        update_markdown_images_with_urls_and_rel_paths(
             path, marketplace, self.object_id, file_type=ImagesFolderNames.README_IMAGES
         )
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.common.tools import check_text_content_contain_sub_text
+from demisto_sdk.commands.common.tools import search_substrings_by_line
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -37,10 +37,11 @@ class IsDescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                lines_contain_demsito := check_text_content_contain_sub_text(
-                    sub_text_list=["demisto"],
-                    is_lower=True,
+                lines_contain_demsito := search_substrings_by_line(
+                    phrases_to_search=["demisto"],
+                    ignore_case=True,
                     text=content_item.description_file.file_content,
+                    exceptionally_allowed_substrings=["/demisto/"],  # in URL
                 )
             )
         ]

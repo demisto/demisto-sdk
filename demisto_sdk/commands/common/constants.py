@@ -2140,6 +2140,7 @@ XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
 XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
+MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 STRING_TO_BOOL_MAP = {
@@ -2181,6 +2182,17 @@ class IncidentState(StrEnum):
     IN_PROGRESS = "IN_PROGRESS"
     CLOSED = "CLOSED"
     ACKNOWLEDGED = "ACKNOWLEDGED"
+
+
+class PlaybookTaskType(StrEnum):
+    REGULAR = "regular"
+    PLAYBOOK = "playbook"
+    CONDITION = "condition"
+    START = "start"
+    TITLE = "title"
+    SECTION = "section"
+    STANDARD = "standard"
+    COLLECTION = "collection"
 
 
 # Used to format the writing of the yml/json file

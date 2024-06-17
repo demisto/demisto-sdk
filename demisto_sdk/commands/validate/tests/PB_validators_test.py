@@ -275,6 +275,8 @@ def test_PlaybookDeleteContextAllValidator():
         PlaybookDeleteContextAllValidator().is_valid([playbook])[0].message
         == expected_result
     )
+
+
 def test_does_playbook_have_unconnected_tasks():
     """
     Given: A playbook with tasks that are connected to each other.

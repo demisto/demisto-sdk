@@ -19,7 +19,7 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
     error_code = "DS108"
     description = "Ensure that all yml's description fields ends with a dot."
     rationale = "To ensure high documentation standards."
-    error_message = ""
+    error_message = "The {0} contains description fields without dots at the end:{1}Please make sure to fix that."
     fix_message = 'Description must end with a period ("."), fix the following:\n{0}'
     related_field = "description, comment"
     is_auto_fixable = True
@@ -29,6 +29,7 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
+            self.lines_without_dots[content_item.name] = {}
             lines_with_missing_dot: str = ""
             if (
                 stripped_description := strip_description(
@@ -38,7 +39,7 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
                 self.lines_without_dots[content_item.name][
                     "description"
                 ] = f"{stripped_description}."
-                lines_with_missing_dot = f"{lines_with_missing_dot}The file's description field is missing a '.' in the end of the sentence."
+                lines_with_missing_dot = f"{lines_with_missing_dot}\nThe file's {'comment' if isinstance(content_item, Script) else 'description'} field is missing a '.' in the end of the sentence."
             lines_with_missing_dot_dict: Dict[str, List[str]] = {}
             if isinstance(content_item, Script):
                 if args_and_context_lines_with_missing_dot := is_line_ends_with_dot(
@@ -64,7 +65,9 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
             results.append(
                 ValidationResult(
                     validator=self,
-                    message=self.error_message.format(lines_with_missing_dot),
+                    message=self.error_message.format(
+                        content_item.content_type, lines_with_missing_dot
+                    ),
                     content_object=content_item,
                 )
             )

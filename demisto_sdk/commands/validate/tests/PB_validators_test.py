@@ -17,6 +17,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB126_is_default_not_only_condition import (
+    IsDefaultNotOnlyConditionValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -187,7 +190,6 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
 
 
 def test_IsAskConditionHasUnreachableConditionValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
     playbook.tasks = {
@@ -206,7 +208,6 @@ def test_IsAskConditionHasUnreachableConditionValidator():
 
 
 def test_IsAskConditionHasUnhandledReplyOptionsValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
     playbook.tasks = {
@@ -222,3 +223,33 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_IsDefaultNotOnlyConditionValidator():
+    playbook = create_playbook_object()
+    assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "0",
+                "type": "condition",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "message": {"replyOptions": ["yes", "no"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+            }
+        )
+    }
+
+    assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "0",
+                "type": "condition",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "message": {"replyOptions": ["#default#"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+            }
+        )
+    }
+    assert IsDefaultNotOnlyConditionValidator().is_valid([playbook])

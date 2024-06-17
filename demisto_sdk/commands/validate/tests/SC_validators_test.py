@@ -6,6 +6,10 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
+from demisto_sdk.commands.validate.validators.SC_validators import (
+    SC109_script_name_is_not_unique_validator,
+)
 from demisto_sdk.commands.validate.validators.SC_validators.SC100_script_has_invalid_version import (
     ScriptNameIsVersionedCorrectlyValidator,
 )
@@ -15,18 +19,13 @@ from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_i
 from demisto_sdk.commands.validate.validators.SC_validators.SC106_script_runas_dbot_role_validator import (
     ScriptRunAsIsNotDBotRoleValidator,
 )
-from TestSuite.repo import ChangeCWD, Repo
-
-from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
-from demisto_sdk.commands.validate.validators.SC_validators import (
-    SC109_script_name_is_not_unique_validator,
-)
 from demisto_sdk.commands.validate.validators.SC_validators.SC109_script_name_is_not_unique_validator_all_files import (
     DuplicatedScriptNameValidatorAllFiles,
 )
 from demisto_sdk.commands.validate.validators.SC_validators.SC109_script_name_is_not_unique_validator_list_files import (
     DuplicatedScriptNameValidatorListFiles,
 )
+from TestSuite.repo import ChangeCWD, Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
 MP_V2 = [MarketplaceVersions.MarketplaceV2.value]

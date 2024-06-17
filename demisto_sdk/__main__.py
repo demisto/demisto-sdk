@@ -28,7 +28,6 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
     ENV_DEMISTO_SDK_MARKETPLACE,
-    INTEGRATIONS_README_FILE_NAME,
     ExecutionMode,
     FileType,
     MarketplaceVersions,

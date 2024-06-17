@@ -16,8 +16,10 @@ ContentTypes = Pack
 class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
     error_code = "GR104"
     description = "Validate that there are no duplicate display names in the repo"
-    rationale = ("We want to avoid the existance of duplicate display names"
-                 " in order to make sure we don't confuse between content items.")
+    rationale = (
+        "We want to avoid the existance of duplicate display names"
+        " in order to make sure we don't confuse between content items."
+    )
     error_message = (
         "Pack '{content_id}' has a duplicate display_name as: {pack_display_id}."
     )

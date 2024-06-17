@@ -3,14 +3,13 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import replace_incident_to_alert
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-
 
 ContentTypes = Script
 
@@ -31,7 +30,9 @@ class DuplicatedScriptNameValidator(BaseValidator, ABC):
     related_field = "name"
     is_auto_fixable = False
 
-    def is_valid_using_graph(self, content_items: Iterable[ContentTypes], validate_all_files) -> List[ValidationResult]:
+    def is_valid_using_graph(
+        self, content_items: Iterable[ContentTypes], validate_all_files
+    ) -> List[ValidationResult]:
         """
         Validate that there are no duplicate names of scripts
         when the script name included `alert`.
@@ -42,7 +43,9 @@ class DuplicatedScriptNameValidator(BaseValidator, ABC):
         }
         query_list = list(file_paths_to_objects) if not validate_all_files else []
 
-        query_results = self.graph.get_duplicate_script_name_included_incident(query_list)
+        query_results = self.graph.get_duplicate_script_name_included_incident(
+            query_list
+        )
 
         return [
             ValidationResult(

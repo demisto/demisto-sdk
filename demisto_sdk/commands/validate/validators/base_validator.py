@@ -333,8 +333,10 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     return True
 
 
-def should_run_on_execution_mode(expected_execution_mode: Optional[list[ExecutionMode]],
-                                 running_execution_mode: ExecutionMode):
+def should_run_on_execution_mode(
+    expected_execution_mode: Optional[list[ExecutionMode]],
+    running_execution_mode: ExecutionMode,
+):
     """
     Check if the running_execution_mode is in the expected_execution_mode of validation.
     Args:

@@ -180,7 +180,7 @@ def test_IsDescriptionContainsContribDetailsValidator_is_valid(
     Given
     content_items iterables.
             - Case 1: description file without Contrib Details.
-            - Case 3: description file with Contrib Details.
+            - Case 2: description file with Contrib Details.
     When
     - Calling the IsDescriptionContainsContribDetailsValidator is valid function.
     Then

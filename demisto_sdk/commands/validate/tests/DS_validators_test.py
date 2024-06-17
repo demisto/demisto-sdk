@@ -1,9 +1,9 @@
 import pytest
 
+from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
 )
-from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
 
 
 @pytest.mark.parametrize(

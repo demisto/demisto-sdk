@@ -19,6 +19,7 @@ class IsValidIndicatorTypeId(BaseValidator[ContentTypes]):
     error_code = "RP103"
     description = "Validate that the 'id' field of indicator type has valid value."
     error_message = "id field contain invalid value."
+    rationale = "we want to make sure the id of the indicator type is valid."
     related_field = "id"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.YML]

@@ -108,7 +108,10 @@ def test_indicator_pb_must_be_quiet():
     )
     result = PlaybookQuietModeValidator().is_valid([playbook])
     assert len(result) == 1
-    assert result[0].message == "this is my error"
+    assert (
+        result[0].message
+        == "Playbooks with a playbookInputQuery for indicators should be on quiet mode."
+    )
 
 
 @pytest.mark.parametrize(

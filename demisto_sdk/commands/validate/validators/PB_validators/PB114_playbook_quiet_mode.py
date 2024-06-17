@@ -1,13 +1,12 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        FixResult,
-        ValidationResult,
+    BaseValidator,
+    FixResult,
+    ValidationResult,
 )
 
 ContentTypes = Playbook
@@ -16,13 +15,17 @@ ContentTypes = Playbook
 class PlaybookQuietModeValidator(BaseValidator[ContentTypes]):
     error_code = "PB114"
     description = "Validates that playbooks for indicator types will be on quiet mode."
-    rationale = ("Playbooks for indicators will likely be executing on thousands of indicators "
-                 "so they need to be on quiet mode.")
-    error_message = "this is my error"
-    fix_message = "This was fixed"
+    rationale = (
+        "Playbooks for indicators will likely be executing on thousands of indicators "
+        "so they need to be on quiet mode."
+    )
+    error_message = (
+        "Playbooks with a playbookInputQuery for indicators should be on quiet mode."
+    )
+    fix_message = "This playbooks quiet mode was set to true"
     related_field = "quiet"
     is_auto_fixable = True
-    
+
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -32,8 +35,11 @@ class PlaybookQuietModeValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                    any((i['playbookInputQuery'] or {}).get('queryEntity') == 'indicators'  for i in content_item.inputs)
-                    and not content_item.quiet
+                any(
+                    (i["playbookInputQuery"] or {}).get("queryEntity") == "indicators"
+                    for i in content_item.inputs
+                )
+                and not content_item.quiet
             )
         ]
 
@@ -44,4 +50,3 @@ class PlaybookQuietModeValidator(BaseValidator[ContentTypes]):
             message=self.fix_message,
             content_object=content_item,
         )
-            

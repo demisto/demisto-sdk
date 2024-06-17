@@ -17,6 +17,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
+    IsTasksQuietModeValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -222,3 +225,100 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+    
+    
+def test_IsTasksQuietModeValidator_fail_case():
+    """
+    Given:
+    - A invalid playbook with tasks that "quietmode" field is 2
+    - An invalid playbook to fix
+
+    When:
+    - calling IsTasksQuietModeValidator.is_valid.
+    - calling IsTasksQuietModeValidator.fix 
+
+    Then:
+    - The playbook is invalid
+    -The playbook becomes valid
+    """
+    playbook = create_playbook_object(
+        ["inputs", "quiet"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            False,
+        ],
+        pack_info={}
+    )
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test fail task",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                "quietmode": 2
+            }
+        )
+    }
+    # assert that the playbook is invalid
+    assert len(IsTasksQuietModeValidator().is_valid([playbook])) == 1
+    # fix the playbook
+    fix_playbook = IsTasksQuietModeValidator().fix(playbook).content_object
+    # validate the fixing
+    assert len(IsTasksQuietModeValidator().is_valid([fix_playbook])) == 0
+    
+def test_IsTasksQuietModeValidator_pass_case():
+    """
+    Given:
+    - A valid playbook with tasks that "quietmode" field is 1
+
+    When:
+    - calling IsTasksQuietModeValidator.is_valid.
+    - calling IsTasksQuietModeValidator.fix 
+
+    Then:
+    - The playbook is valid
+    - The playbook doesn't changed
+    """
+    playbook = create_playbook_object(
+        ["inputs", "quiet"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            False,
+        ],
+    )
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test task",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                "quietmode": 1
+            }
+        )
+    }
+    assert len(IsTasksQuietModeValidator().is_valid([playbook])) == 0
+    fix_playbook = IsTasksQuietModeValidator().fix(playbook).content_object
+    assert fix_playbook == playbook
+    
+
+    

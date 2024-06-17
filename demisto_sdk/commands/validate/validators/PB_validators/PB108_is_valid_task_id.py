@@ -26,6 +26,12 @@ class IsValidTaskIdValidator(BaseValidator[ContentTypes]):
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        """Check whether all playbook tasks has valid taskid and the 'id' under the 'task' field is valid as well.
+        Args:
+            - content_items (Iterable[ContentTypes]): The content items to check.
+        Return:
+            - List[ValidationResult]. List of ValidationResults objects.
+        """
         results: List[ValidationResult] = []
         for content_item in content_items:
             invalid_tasks = self.invalid_tasks(content_item.tasks)
@@ -40,6 +46,12 @@ class IsValidTaskIdValidator(BaseValidator[ContentTypes]):
         return results
 
     def invalid_tasks(self, tasks: dict[str, TaskConfig]) -> dict[str, TaskConfig]:
+        """Check which tasks has invalid taskid or the 'id' under the 'task' field is invalid
+        Args:
+            - tasks dict[str, TaskConfig]: The playbook tasks.
+        Return:
+            - dict[str, TaskConfig] that contains the invalid tasks.
+        """
         invalid_tasks = {}
         for task_id in tasks:
             task = tasks[task_id]

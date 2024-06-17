@@ -230,6 +230,12 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
 
 
 def create_invalid_playbook(field: str):
+    """Create an invalid playbook that has an invalid taskid or the 'id' under the 'task' field is invalid
+    Args:
+        - field str: which field to update taskid or task.id.
+    Return:
+        - a playbook object
+    """
     playbook = create_playbook_object()
     tasks = playbook.tasks
     for task_id in tasks:

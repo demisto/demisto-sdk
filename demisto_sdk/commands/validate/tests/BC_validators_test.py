@@ -1341,16 +1341,19 @@ def test_has_removed_integration_parameters_with_changed_params():
     - return a ValidationResult with a list of missing parameters.
     """
     new_item = create_integration_object(
-        paths=['configuration'],
-        values=[[{'name': 'param_3'}, {'name': 'param_4'}]] )
+        paths=["configuration"], values=[[{"name": "param_3"}, {"name": "param_4"}]]
+    )
     new_item.old_base_content_object = create_integration_object(
-        paths=['configuration'],
-        values=[[{'name': 'param_1'}, {'name': 'param_2'}, {'name': 'param_3'}]]
+        paths=["configuration"],
+        values=[[{"name": "param_1"}, {"name": "param_2"}, {"name": "param_3"}]],
     )
 
     res = NoRemovedIntegrationParametersValidator().is_valid([new_item])
 
-    assert res[0].message == "Parameters have been removed from the integration, the removed parameters are: 'param_2', 'param_1'."
+    assert (
+        res[0].message
+        == "Parameters have been removed from the integration, the removed parameters are: 'param_2', 'param_1'."
+    )
 
 
 def test_has_removed_integration_parameters_without_changed_params():
@@ -1365,12 +1368,10 @@ def test_has_removed_integration_parameters_without_changed_params():
     - return an empty list.
     """
     new_item = create_integration_object(
-        paths=['configuration'],
-        values=[[{'name': 'param_1'}, {'name': 'param_2'}]]
+        paths=["configuration"], values=[[{"name": "param_1"}, {"name": "param_2"}]]
     )
     new_item.old_base_content_object = create_integration_object(
-        paths=['configuration'],
-        values=[[{'name': 'param_1'}, {'name': 'param_2'}]]
+        paths=["configuration"], values=[[{"name": "param_1"}, {"name": "param_2"}]]
     )
 
     res = NoRemovedIntegrationParametersValidator().is_valid([new_item])

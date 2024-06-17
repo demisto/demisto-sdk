@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -28,11 +27,15 @@ class NoRemovedIntegrationParametersValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(', '.join(map(repr, difference))),
+                message=self.error_message.format(", ".join(map(repr, difference))),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (difference := self.removed_parameters(content_item.old_base_content_object, content_item))
+            if (
+                difference := self.removed_parameters(
+                    content_item.old_base_content_object, content_item
+                )
+            )
         ]
 
     def removed_parameters(self, old_item: ContentTypes, new_item: ContentTypes) -> set:

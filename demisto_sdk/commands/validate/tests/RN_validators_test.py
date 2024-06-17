@@ -108,7 +108,7 @@ def test_release_note_header_validator_valid():
     assert len(results) == 0
 
 
-def test_release_note_header_validator_valid():
+def test_release_note_header_validator_invalid():
     """
     Given:
     - content_items.
@@ -134,7 +134,7 @@ def test_release_note_header_validator_valid():
         "##### TestIntegration1\n"
         "This is an exemple\n\n"
         "##### Not exist content item\n"
-        "This is an exemple too\n"
+        "This is an exemple too\n"P
         "#### InvalidHeader\n"
         "##### playbook A\n",
     )

@@ -1,5 +1,6 @@
 import pytest
 
+from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.validate.tests.test_tools import create_playbook_object
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
     IsNoRolenameValidator,
@@ -23,24 +24,22 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional
     [
         (
             create_playbook_object(
-                paths=["inputs", "tasks"],
+                paths=["inputs", "tasks.0.task.key"],
                 values=[
                     [{"key": "input_name1", "value": "input_value1"}],
-                    {"key": {"first_input": "inputs.input_name1"}},
+                    {"first_input": "inputs.input_name1"},
                 ],
             ),
             [],
         ),
         (
             create_playbook_object(
-                paths=["inputs", "tasks"],
+                paths=["inputs", "tasks.0.task.key"],
                 values=[
                     [{"key": "input_name1", "value": "input_value1"}],
                     {
-                        "key": {
-                            "first_input": "inputs.input_name1",
-                            "second_input": "inputs.input_name2",
-                        }
+                        "first_input": "inputs.input_name1",
+                        "second_input": "inputs.input_name2",
                     },
                 ],
             ),
@@ -48,10 +47,10 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional
         ),
         (
             create_playbook_object(
-                paths=["inputs", "tasks"],
+                paths=["inputs", "tasks.0.task.key"],
                 values=[
                     [{"key": "input_name2", "value": "input_value2"}],
-                    {"key": {"first_input": "inputs.input_name1"}},
+                    {"first_input": "inputs.input_name1"},
                 ],
             ),
             "The playbook 'Detonate File - JoeSecurity V2' contains the following inputs that are not used in any of its tasks: input_name2",
@@ -192,12 +191,16 @@ def test_IsAskConditionHasUnreachableConditionValidator():
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
     playbook.tasks = {
-        "0": {
-            "id": "test task",
-            "type": "condition",
-            "message": {"replyOptions": ["yes"]},
-            "nexttasks": {"no": ["1"], "yes": ["2"]},
-        }
+        "0": TaskConfig(
+            **{
+                "id": "test task",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"], "yes": ["2"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+            }
+        )
     }
     assert IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
 
@@ -207,11 +210,15 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
     playbook.tasks = {
-        "0": {
-            "id": "test task",
-            "type": "condition",
-            "message": {"replyOptions": ["yes"]},
-            "nexttasks": {"no": ["1"]},
-        }
+        "0": TaskConfig(
+            **{
+                "id": "test task",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+            }
+        )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])

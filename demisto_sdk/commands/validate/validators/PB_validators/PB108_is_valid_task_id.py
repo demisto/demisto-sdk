@@ -1,15 +1,13 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.tools import is_string_uuid
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Playbook
@@ -19,8 +17,10 @@ class IsValidTaskIdValidator(BaseValidator[ContentTypes]):
     error_code = "PB108"
     description = "Validate that the task ID and the 'id' under the 'task' field are from UUID format"
     rationale = ""
-    error_message = ("On task: {0},  the field 'taskid': {1} and the 'id' under the 'task' field: {2}, must be from "
-                     "uuid format.")
+    error_message = (
+        "On task: {0},  the field 'taskid': {1} and the 'id' under the 'task' field: {2}, must be from "
+        "uuid format."
+    )
     related_field = "taskid"
     is_auto_fixable = False
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
@@ -38,11 +38,13 @@ class IsValidTaskIdValidator(BaseValidator[ContentTypes]):
             for task_id in invalid_tasks:
                 taskid = invalid_tasks[task_id].taskid
                 inner_id = invalid_tasks[task_id].task.id
-                results.append(ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(task_id, taskid, inner_id),
-                    content_object=content_item,
-                ))
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(task_id, taskid, inner_id),
+                        content_object=content_item,
+                    )
+                )
         return results
 
     def invalid_tasks(self, tasks: dict[str, TaskConfig]) -> dict[str, TaskConfig]:

@@ -1,0 +1,4 @@
+changes:
+- description: Moved BP108 to the new validate
+  type: internal
+pr_number: 4359

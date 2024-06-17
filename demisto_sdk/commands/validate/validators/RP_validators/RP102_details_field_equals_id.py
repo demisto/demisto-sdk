@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -22,7 +21,6 @@ class DetailsFieldEqualsIdValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.JSON]
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -31,8 +29,5 @@ class DetailsFieldEqualsIdValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.description != content_item.content_item.object_id
+            if content_item.description != content_item.object_id
         ]
-    
-
-    

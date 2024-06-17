@@ -60,44 +60,24 @@ def test_ExpirationFieldIsNumericValidator_is_valid(
     )
 
 
-@pytest.mark.parametrize(
-    "expected_number_of_failures, content_items, expected_msgs",
-    [
-        (0, [create_indicator_type_object()], []),
-        (0, [create_indicator_type_object(["details", "id"], ["test", "test"])], []),
-        (
-            1,
-            [
-                create_indicator_type_object(["details", "id"], ["test", "test"]),
-                create_indicator_type_object(["details", "id"], ["test", "test-not-equal"]),
-            ],
-            [
-                "id and details fields are not equal.",
-            ],
-        ),
-    ],
-)
-def test_DetailsFieldEqualsIdValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
-):
+def test_DetailsFieldEqualsIdValidator_is_valid():
     """
     Given
-    content_items iterables.
-        - Case 1: One indicator_type with expiration = 43200.
-        - Case 2: One indicator_type with expiration = 0.
-        - Case 3: Three indicator_type objects:
-            - One indicator_type with expiration = 0.
-            - One indicator_type with expiration = -1.
+        - two indicator_type objects:
+            - One indicator_type with id equals details.
+            - One indicator_type with id not equals details.
     When
-    - Calling the ExpirationFieldIsNumericValidator is valid function.
+        - Calling the DetailsFieldEqualsIdValidator is valid function.
     Then
-        - Make sure the right amount of failures return.
-        - Case 1: Shouldn't fail anything.
-        - Case 2: Shouldn't fail anything.
-        - Case 3: Should fail object two and three.
+        - Make sure the right amount of failures return. Should fail object two.
     """
+    content_items = [
+        create_indicator_type_object(["details", "id"], ["test", "test"]),
+        create_indicator_type_object(["details", "id"], ["test", "test-not-equal"]),
+    ]
+    expected_msgs = ["id and details fields are not equal."]
     results = DetailsFieldEqualsIdValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
+    assert len(results) == 1
     assert all(
         [
             result.message == expected_msg

@@ -68,7 +68,7 @@ class ValidateManager:
                         content_item=content_object,
                         ignorable_errors=self.configured_validations.ignorable_errors,
                         support_level_dict=self.configured_validations.support_level_dict,
-                        execution_mode=self.initializer.execution_mode,
+                        running_execution_mode=self.initializer.execution_mode,
                     ),
                     self.objects_to_run,
                 )

@@ -14,29 +14,33 @@ ContentTypes = TestPlaybook
 class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
     error_code = "PB109"
     description = (
-        "Check that taskid field and id field under task field contains equal values"
+        "Check that taskid field and id field under task field contains equal values."
     )
-    rationale = ""
-    error_message = "On task: {},  the field 'taskid': {} and the 'id' under the 'task' field: {}, must be with equal value."
-    related_field = ""
+    rationale = "Playbooks task ids should be in uuid format"
+    error_message = "On tasks: {},  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
+    related_field = "1"
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         error_results = []
+        
         for content_item in content_items:
             tasks: dict = content_item.tasks
+            not_valid_tasks = []
+            
             for task_key, task in tasks.items():
-                taskid = task.taskid
-                inner_id = task.id
-                is_valid_task = taskid == inner_id
-                if not is_valid_task:
-                    error_results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message.format(
-                                task_key, taskid, inner_id
-                            ),
-                            content_object=content_item,
-                        )
-                    )
+                if task.taskid != task.task.id:
+                    not_valid_tasks.append(task_key)
+                    
+            if not_valid_tasks:
+                error_results.append(
+                ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    not_valid_tasks,
+                ),
+                content_object=content_item,
+                ))
+            
         return error_results
+        

@@ -228,20 +228,23 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
 
 
 def test_IsTaskidDifferentFromidValidator():
+    """
+    Given:
+    - A playbook with tasks, taskid and id
+        Case 1: id equals taskid
+        Case 2: id not equals taskid
+
+    When:
+    - Validating the playbook
+
+    Then:
+    - The results should be as expected:
+        Case 1: an empty list
+        Case 2: a list in length 1 because there is one error
+    """
     playbook = create_playbook_object()
-    playbook.tasks = {
-        "0": TaskConfig(
-            **{
-                "id": "test",
-                "taskid": "test",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["1"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-            }
-        )
-    }
-    assert len(IsTaskidDifferentFromidValidator().is_valid([playbook])) == 0
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 0
     playbook.tasks = {
         "0": TaskConfig(
             **{
@@ -255,4 +258,6 @@ def test_IsTaskidDifferentFromidValidator():
         )
     }
 
-    assert len(IsTaskidDifferentFromidValidator().is_valid([playbook])) == 1
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 1
+    assert results[0].message == "On tasks: ['0'],  the field 'taskid' and the 'id' under the 'task' field must be with equal value."

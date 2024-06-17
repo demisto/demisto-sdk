@@ -8,6 +8,10 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename
 from demisto_sdk.commands.validate.validators.PB_validators.PB101_is_playbook_has_unreachable_condition import (
     IsAskConditionHasUnreachableConditionValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB103_does_playbook_have_unconnected_tasks import (
+    ERROR_MSG,
+    DoesPlaybookHaveUnconnectedTasks,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
@@ -187,7 +191,6 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
 
 
 def test_IsAskConditionHasUnreachableConditionValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
     playbook.tasks = {
@@ -206,7 +209,6 @@ def test_IsAskConditionHasUnreachableConditionValidator():
 
 
 def test_IsAskConditionHasUnhandledReplyOptionsValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
     playbook.tasks = {
@@ -222,3 +224,89 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_does_playbook_have_unconnected_tasks():
+    """
+    Given: A playbook with tasks that are connected to each other.
+    When: Validating the playbook.
+    Then: The playbook is valid.
+    """
+    playbook = create_playbook_object(
+        paths=["starttaskid", "tasks"],
+        values=[
+            "0",
+            {
+                "0": {
+                    "id": "test task",
+                    "type": "regular",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"#none#": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                },
+                "1": {
+                    "id": "test task",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["2"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
+                },
+            },
+        ],
+    )
+    validation_results = DoesPlaybookHaveUnconnectedTasks().is_valid([playbook])
+    assert len(validation_results) == 0  # No validation results should be returned
+
+
+def test_does_playbook_have_unconnected_tasks_not_valid():
+    """
+    Given: A playbook with tasks that are not connected to the root task.
+    When: Validating the playbook.
+    Then: The playbook is not valid.
+    """
+    playbook = create_playbook_object(
+        paths=["starttaskid", "tasks"],
+        values=[
+            "0",
+            {
+                "0": {
+                    "id": "test task",
+                    "type": "regular",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"#none#": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                },
+                "1": {
+                    "id": "test task",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["2"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
+                },
+                "3": {
+                    "id": "test task",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["2"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
+                },
+                "4": {
+                    "id": "test task",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["2"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a632",
+                },
+            },
+        ],
+    )
+    orphan_tasks = ["3", "4"]
+    validation_result = DoesPlaybookHaveUnconnectedTasks().is_valid([playbook])
+    assert validation_result
+    assert validation_result[0].message == ERROR_MSG.format(orphan_tasks=orphan_tasks)

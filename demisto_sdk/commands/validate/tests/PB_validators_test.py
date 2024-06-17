@@ -17,6 +17,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
 
+from demisto_sdk.commands.validate.validators.PB_validators.PB105_playbook_delete_context_all import (
+    PlaybookDeleteContextAllValidator,
+)
 
 @pytest.mark.parametrize(
     "content_item, expected_result",
@@ -215,3 +218,55 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         }
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_PlaybookDeleteContextAllValidator_invalid():
+    """
+        Given:
+        - A playbook with valid tasks, with DeleteContext with all set to 'Yes'
+
+        When:
+        - calling PlaybookDeleteContextAllValidator.is_valid.
+
+        Then:
+        - The playbook is invalid
+    """
+    playbook = create_playbook_object()
+    playbook.tasks = {
+        "0": {
+            'id': '1',
+             'taskid': '99ad564d-0b17-45c4-8a20-bbc8dd6f3e7c',
+             'type': 'regular',
+             'task': {'id': 'task-id',
+                      'name': 'DeleteContext',
+                      'scriptName': 'DeleteContext'},
+             'scriptarguments': {'all': {'simple': 'yes'}},
+        }
+    }
+    assert not PlaybookDeleteContextAllValidator().is_valid([playbook])
+
+
+def test_PlaybookDeleteContextAllValidator_valid():
+    """
+        Given:
+        - A playbook with valid tasks, without DeleteContext with all set to 'Yes'
+
+        When:
+        - calling PlaybookDeleteContextAllValidator.is_valid.
+
+        Then:
+        - The playbook is valid
+    """
+    playbook = create_playbook_object()
+    playbook.tasks = {
+        "0": {
+            'id': '1',
+             'taskid': '99ad564d-0b17-45c4-8a20-bbc8dd6f3e7c',
+             'type': 'regular',
+             'task': {'id': 'task-id',
+                      'name': 'DeleteContext',
+                      'scriptName': 'DeleteContext'},
+             'scriptarguments': {'all': {'simple': 'no'}, 'key': {'simple': 'key'}},
+        }
+    }
+    assert PlaybookDeleteContextAllValidator().is_valid([playbook])

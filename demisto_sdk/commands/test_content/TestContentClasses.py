@@ -89,6 +89,676 @@ __all__ = [
 ]
 
 
+class TestConfiguration:
+    def __init__(self, test_configuration: dict, default_test_timeout: int):
+        """
+        Args:
+            test_configuration: A record of a test from 'tests' list in conf.json file in content repository.
+            default_test_timeout: The default timeout to use in case no timeout is specified in the configuration
+        """
+        self.raw_dict = test_configuration
+        self.playbook_id = test_configuration.get("playbookID", "")
+        self.nightly_test = test_configuration.get("nightly", False)
+        self.from_version = test_configuration.get(
+            "fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION
+        )
+        self.to_version = test_configuration.get(
+            "toversion", DEFAULT_CONTENT_ITEM_TO_VERSION
+        )
+        self.timeout = test_configuration.get("timeout", default_test_timeout)
+        self.memory_threshold = test_configuration.get(
+            "memory_threshold", Docker.DEFAULT_CONTAINER_MEMORY_USAGE
+        )
+        self.pid_threshold = test_configuration.get(
+            "pid_threshold", Docker.DEFAULT_CONTAINER_PIDS_USAGE
+        )
+        self.runnable_on_docker_only: bool = test_configuration.get(
+            "runnable_on_docker_only", False
+        )
+        self.is_mockable = test_configuration.get("is_mockable")
+        self.context_print_dt = test_configuration.get("context_print_dt")
+        self.test_integrations: List[str] = self._parse_integrations_conf(
+            test_configuration
+        )
+        self.test_instance_names: List[str] = self._parse_instance_names_conf(
+            test_configuration
+        )
+        self.marketplaces: List[MarketplaceVersions] = self._parse_marketplaces_conf(
+            test_configuration
+        )
+        self.instance_configuration: dict = test_configuration.get(
+            "instance_configuration", {}
+        )
+        self.external_playbook_config: dict = test_configuration.get(
+            "external_playbook_config", {}
+        )
+        self.is_first_playback_failed: bool = False
+        self.number_of_executions: int = 0
+        self.number_of_successful_runs: int = 0
+
+    @staticmethod
+    def _parse_integrations_conf(test_configuration):
+        integrations_conf = test_configuration.get("integrations", [])
+        if not isinstance(integrations_conf, list):
+            integrations_conf = [integrations_conf]
+        return integrations_conf
+
+    @staticmethod
+    def _parse_instance_names_conf(test_configuration):
+        instance_names_conf = test_configuration.get("instance_names", [])
+        if not isinstance(instance_names_conf, list):
+            instance_names_conf = [instance_names_conf]
+        return instance_names_conf
+
+    @staticmethod
+    def _parse_marketplaces_conf(
+        test_configuration,
+    ) -> List[MarketplaceVersions]:
+        marketplaces_conf = test_configuration.get("marketplaces", [])
+        if not isinstance(marketplaces_conf, list):
+            marketplaces_conf = [marketplaces_conf]
+        marketplaces_conf = [
+            MarketplaceVersions(marketplace) for marketplace in marketplaces_conf
+        ]
+
+        if MarketplaceVersions.XSOAR in marketplaces_conf:
+            marketplaces_conf.append(MarketplaceVersions.XSOAR_SAAS)
+
+        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_conf:
+            marketplaces_conf.append(MarketplaceVersions.XSOAR)
+
+        return marketplaces_conf
+
+    def __str__(self):
+        return str(self.raw_dict)
+
+
+class TestPlaybook:
+    def __init__(
+        self, build_context, test_configuration: TestConfiguration, server_context
+    ):
+        """
+        This class has all the info related to a test playbook during test execution
+        Args:
+            build_context (BuildContext): The build context to use in the build
+            test_configuration: The configuration from content conf.json file
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
+
+        """
+        self.build_context = build_context
+        self.server_context = server_context
+        self.configuration: TestConfiguration = test_configuration
+        self.is_mockable: bool = (
+            self.configuration.playbook_id not in server_context.unmockable_test_ids
+        )
+        self.test_suite = TestSuite(self.configuration.playbook_id)
+        self.start_time = datetime.now(timezone.utc)
+        self.test_suite_system_out: List[str] = []
+        self.test_suite_system_err: List[str] = []
+        self.integrations: List[Integration] = [
+            Integration(
+                build_context=self.build_context,
+                integration_name=integration_name,
+                potential_integration_instance_names=self.configuration.test_instance_names,
+                playbook=self,
+                server_context=self.server_context,
+            )
+            for integration_name in self.configuration.test_integrations
+        ]
+        self.integrations_to_lock = [
+            integration
+            for integration in self.integrations
+            if integration.name not in self.build_context.conf.parallel_integrations
+        ]
+        self.populate_test_suite()
+
+    def log_debug(self, message: str, real_time: bool = False):
+        self.build_context.logging_module.debug(message, real_time)
+        self.test_suite_system_out.append(message)
+
+    def log_info(self, message: str, real_time: bool = False):
+        self.build_context.logging_module.info(message, real_time)
+        self.test_suite_system_out.append(message)
+
+    def log_success(self, message: str, real_time: bool = False):
+        self.build_context.logging_module.success(message, real_time)
+        self.test_suite_system_out.append(message)
+
+    def log_error(self, message: str, real_time: bool = False):
+        self.build_context.logging_module.error(message, real_time)
+        self.test_suite_system_err.append(message)
+
+    def log_warning(self, message: str, real_time: bool = False):
+        self.build_context.logging_module.warning(message, real_time)
+        self.test_suite_system_err.append(message)
+
+    def log_exception(self, message: str, real_time: bool = False):
+        self.build_context.logging_module.exception(message, real_time)
+        self.test_suite_system_err.append(message)
+
+    def populate_test_suite(self):
+        self.test_suite.add_property("build_number", self.build_context.build_number)
+        self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
+        self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
+        self.test_suite.add_property(
+            "is_saas_server_type", self.build_context.is_saas_server_type
+        )
+        self.test_suite.add_property("server_type", self.build_context.server_type)
+        self.test_suite.add_property("product_type", self.build_context.product_type)
+        self.test_suite.add_property("memCheck", self.build_context.memCheck)
+        self.test_suite.add_property(
+            "server_numeric_version", self.build_context.server_numeric_version
+        )
+        self.test_suite.add_property(
+            "server_version", self.build_context.server_version
+        )
+        self.test_suite.add_property(
+            "cloud_servers_path", self.build_context.cloud_servers_path
+        )
+        self.test_suite.add_property("cloud_ui_path", self.server_context.cloud_ui_path)
+        self.test_suite.add_property(
+            "instances_ips", ",".join(self.build_context.instances_ips)
+        )
+
+        self.test_suite.add_property(
+            "playbook.is_mockable", self.is_mockable  # type:ignore[arg-type]
+        )
+        self.test_suite.add_property(
+            "is_mockable", self.configuration.is_mockable  # type:ignore[arg-type]
+        )
+        self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
+        self.test_suite.add_property("from_version", self.configuration.from_version)
+        self.test_suite.add_property("to_version", self.configuration.to_version)
+        self.test_suite.add_property("nightly_test", self.configuration.nightly_test)
+        self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
+        self.test_suite.add_property(
+            "memory_threshold",
+            self.configuration.memory_threshold,
+        )
+        self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
+        self.test_suite.add_property("timeout", self.configuration.timeout)
+        self.test_suite.add_property(
+            "playbook.test_instance_names",
+            ",".join(self.configuration.test_instance_names),
+        )
+        self.test_suite.add_property(
+            "playbook.marketplaces",
+            ",".join(self.configuration.marketplaces),
+        )
+        self.test_suite.add_property(
+            "playbook.integrations", ",".join(map(str, self.integrations))
+        )
+        self.test_suite.add_property(
+            "runnable_on_docker_only",
+            self.configuration.runnable_on_docker_only,  # type:ignore[arg-type]
+        )
+
+    def close_test_suite(self, results: Optional[List[Result]] = None):
+        results = results or []
+        duration = (datetime.now(timezone.utc) - self.start_time).total_seconds()
+        test_case = TestCase(
+            f"Test Playbook {self.configuration.playbook_id} on {self.build_context.server_version}",
+            "TestPlaybook",
+            duration,
+        )
+        test_case.system_out = "\n".join(self.test_suite_system_out)
+        test_case.system_err = "\n".join(self.test_suite_system_err)
+        test_case.result += results  # type:ignore[arg-type]
+        self.test_suite.add_testcase(test_case)
+        self.build_context.tests_data_keeper.test_results_xml_file.add_testsuite(
+            self.test_suite
+        )
+
+    def __str__(self):
+        return f'"{self.configuration.playbook_id}"'
+
+    def __repr__(self):
+        return str(self)
+
+    def should_test_run(self):
+        skipped_tests_collected = self.build_context.tests_data_keeper.skipped_tests
+
+        def in_filtered_tests():
+            """
+            Checks if there are a list of filtered tests that the playbook is in them.
+            """
+            if (
+                not self.server_context.filtered_tests
+                or self.configuration.playbook_id
+                not in self.server_context.filtered_tests
+            ):
+                msg = f"Skipping {self} because it's not in filtered tests"
+                self.log_debug(msg)
+                self.close_test_suite([Skipped(msg)])
+                skipped_tests_collected[
+                    self.configuration.playbook_id
+                ] = "not in filtered tests"
+                return False
+            return True
+
+        def nightly_test_in_non_nightly_build():
+            """
+            Checks if we are on a build which is not nightly, and the test should run only on nightly builds.
+            """
+            if self.configuration.nightly_test and not self.build_context.is_nightly:
+                log_message = f"Skipping {self} because it's a nightly test in a non nightly build"
+                self.close_test_suite([Skipped(log_message)])
+                if self.configuration.playbook_id in self.server_context.filtered_tests:
+                    self.log_warning(log_message)
+                else:
+                    self.log_debug(log_message)
+                skipped_tests_collected[
+                    self.configuration.playbook_id
+                ] = "nightly test in a non nightly build"
+                return True
+            return False
+
+        def skipped_test():
+            if (
+                self.configuration.playbook_id
+                not in self.build_context.conf.skipped_tests
+            ):
+                return False
+            log_message = f"Skipping test {self} because it's in skipped test list"
+            if self.configuration.playbook_id in self.server_context.filtered_tests:
+                # Add warning log, as the playbook is supposed to run according to the filters, but it's skipped
+                self.log_warning(log_message)
+            else:
+                self.log_debug(log_message)
+            reason = self.build_context.conf.skipped_tests[
+                self.configuration.playbook_id
+            ]
+            self.close_test_suite([Skipped(log_message)])
+            skipped_tests_collected[self.configuration.playbook_id] = reason
+            return True
+
+        def version_mismatch():
+            if not (
+                Version(self.configuration.from_version)
+                <= Version(self.build_context.server_numeric_version)
+                <= Version(self.configuration.to_version)
+            ):
+                log_message = (
+                    f"Test {self} ignored due to version mismatch "
+                    f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})\n"
+                )
+                self.log_warning(log_message)
+                self.close_test_suite([Skipped(log_message)])
+                skipped_tests_collected[
+                    self.configuration.playbook_id
+                ] = f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
+                return True
+            return False
+
+        def test_has_skipped_integration():
+            if skipped_integrations := (
+                self.build_context.conf.skipped_integrations_set
+                & set(self.configuration.test_integrations)
+            ):
+                # The playbook should be run but has a skipped integration.
+                self.log_debug(
+                    f"Skipping {self} because it has skipped integrations:{','.join(skipped_integrations)}"
+                )
+                results: List[Result] = []
+                for integration in skipped_integrations:
+
+                    if (
+                        self.server_context.filtered_tests
+                        and self.configuration.playbook_id
+                        in self.server_context.filtered_tests
+                    ):
+                        # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
+                        msg = (
+                            f"{self.configuration.playbook_id} - reason: "
+                            f"{self.build_context.conf.skipped_integrations[integration]}"
+                        )
+                        self.build_context.tests_data_keeper.playbook_skipped_integration.add(
+                            msg
+                        )
+                        log_message = f"The integration {integration} is skipped and critical for the test {self}."
+                        self.test_suite_system_err.append(log_message)
+                        self.log_warning(log_message)
+                        results.append(Skipped(msg))
+
+                skipped_tests_collected[
+                    self.configuration.playbook_id
+                ] = f'The integrations:{",".join(skipped_integrations)} are skipped'
+                self.test_suite.add_property(
+                    "skipped_integrations", ",".join(skipped_integrations)
+                )
+                self.close_test_suite(results)
+                return True
+
+            return False
+
+        def marketplaces_match_server_type() -> bool:
+            """
+            Checks if the test has a marketplace value, and if so- if it matches the server machine we are on.
+            A test playbook might have several entries, each with a different marketplace. This might cause the test playbook to
+            be in the filtered tests list, even when the provided entry is not be the one that runs with the current sever
+            machine marketplace. This function checks that the entry provided is the exact one that needs to run.
+            Entries might differ in any field, the most common one is instance_names.
+            """
+            test_server_types: Set[str] = set()
+            for marketplace in self.configuration.marketplaces or []:
+                test_server_types.update(
+                    MARKETPLACE_VERSIONS_TO_SERVER_TYPE[marketplace]
+                )
+
+            if not test_server_types:
+                return True  # test doesn't have a marketplace value so it runs on all machines
+
+            instance_names_log_message = (
+                f" for instance names: {', '.join(self.configuration.test_instance_names)}"
+                if self.configuration.test_instance_names
+                else ""
+            )
+
+            if self.build_context.server_type in test_server_types:
+                self.log_debug(
+                    f"Running {self} with current server marketplace{instance_names_log_message}"
+                )
+                return True  # test has a marketplace value that matched the build server marketplace
+
+            log_message = (
+                f"Skipping {self} because it's marketplace values are: "
+                f"{', '.join(self.configuration.marketplaces)}{instance_names_log_message}, "
+                f"which is not compatible with the current server marketplace value"
+            )
+            self.close_test_suite([Skipped(log_message)])
+            if self.configuration.playbook_id in self.server_context.filtered_tests:
+                self.log_warning(log_message)
+            else:
+                self.log_debug(log_message)
+            skipped_tests_collected[
+                self.configuration.playbook_id
+            ] = f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
+            return False  # test has a marketplace value that doesn't matched the build server marketplace
+
+        return (
+            in_filtered_tests()
+            and not nightly_test_in_non_nightly_build()
+            and not skipped_test()
+            and not version_mismatch()
+            and not test_has_skipped_integration()
+            and marketplaces_match_server_type()
+        )
+
+    def run_test_module_on_integrations(self, client: DefaultApi) -> bool:
+        """
+        runs 'test-module' on all integrations that the playbook uses and return a boolean indicating the result
+        Args:
+            client: The demisto_client to use
+
+        Returns:
+            True if all integrations was test-module execution was successful else False
+        """
+        for integration in self.integrations:
+            success = integration.test_integration_instance(client)
+            if not success:
+                return False
+        return True
+
+    def configure_integrations(
+        self,
+        client: DefaultApi,
+        instance_configuration: dict,
+    ) -> bool:
+        """
+        Configures all integrations that the playbook uses and return a boolean indicating the result
+        Args:
+            instance_configuration: The instance configuration to use for the integrations
+            client: The demisto_client to use
+
+        Returns:
+            True if all integrations was configured else False
+        """
+        configured_integrations: List[Integration] = []
+        for integration in self.integrations:
+            instance_created = integration.create_integration_instance(
+                client,
+                self.configuration.playbook_id,
+                self.is_mockable,
+                self.server_context,
+                instance_configuration,
+            )
+            if not instance_created:
+                self.log_error(
+                    f"Cannot run playbook {self}, integration {integration} failed to configure"
+                )
+                # Deleting all the already configured integrations
+                for configured_integration in configured_integrations:
+                    configured_integration.delete_integration_instance(client)
+                return False
+            configured_integrations.append(integration)
+        return True
+
+    def disable_integrations(self, client: DefaultApi):
+        """
+        Disables all integrations that the playbook uses
+        Clears server configurations set for the integration if there are such
+        Reset containers if server configurations were cleared
+
+        Args:
+            client: The demisto_client to use
+        """
+        for integration in self.integrations:
+            integration.disable_integration_instance(client)
+        updated_keys = False
+        if not self.build_context.is_saas_server_type:
+            updated_keys = self._set_prev_server_keys(client)
+        if updated_keys:
+            self.server_context.reset_containers()
+
+    def _set_prev_server_keys(self, client: DefaultApi) -> bool:
+        """Sets previous stored system (server) config, if existed
+
+        Args:
+            client (DefaultApi): The demisto_client to use
+
+        Returns:
+             bool: Whether server configurations were updated to indicate if reset containers is required
+        """
+        updated = False
+        for integration in self.integrations:
+            if (
+                integration.configuration
+                and "server_keys" not in integration.configuration.params
+            ):
+                continue
+            if self.server_context.prev_system_conf:
+                update_server_configuration(
+                    client=client,
+                    server_configuration=self.server_context.prev_system_conf,
+                    error_msg="Failed to set server keys",
+                    logging_manager=self.build_context.logging_module,
+                )
+                self.server_context.prev_system_conf = {}
+                updated = True
+            else:
+                self.log_error(
+                    f"Failed clearing system conf. Found server_keys for integration {integration.name} but could not"
+                    "find previous system conf stored"
+                )
+        return updated
+
+    def delete_integration_instances(self, client: DefaultApi):
+        """
+        Deletes all integrations that the playbook uses
+        Args:
+            client: The demisto_client to use
+        """
+        for integration in self.integrations:
+            integration.delete_integration_instance(client)
+
+    def create_incident(
+        self, client: DefaultApi, timeout: int = 300, sleep_interval: int = 10
+    ) -> Optional[Incident]:
+        """
+        Creates an incident with the current playbook ID
+        Args:
+            client: The demisto_client to use.
+            timeout: The timeout to wait for the incident to be created, in seconds.
+            sleep_interval: The interval to sleep between each poll, in seconds.
+
+        Returns:
+            - The created incident or None
+        """
+        # Preparing the incident request
+
+        incident_name = (
+            f"inc-{self.configuration.playbook_id}--build_number:"
+            f"{self.build_context.build_number}--{uuid.uuid4()}"
+        )
+        create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
+        create_incident_request.create_investigation = True
+        create_incident_request.playbook_id = self.configuration.playbook_id
+        create_incident_request.name = incident_name
+
+        inc_id = "incCreateErr"
+        try:
+            response = client.create_incident(
+                create_incident_request=create_incident_request
+            )
+            inc_id = response.id
+        except ApiException:
+            self.log_exception(
+                f"Failed to create incident with name {incident_name} for playbook {self}"
+            )
+
+        if inc_id == "incCreateErr":
+            self.log_error(
+                f"Failed to create incident for playbookID: {self}."
+                "Possible reasons are:\nMismatch between playbookID in conf.json and "
+                "the id of the real playbook you were trying to use, "
+                "or schema problems in the TestPlaybook."
+            )
+            return None
+
+        # get incident
+        search_filter = demisto_client.demisto_api.SearchIncidentsData()
+        inc_filter = demisto_client.demisto_api.IncidentFilter()
+        if inc_id:
+            inc_filter.query = f"id: {inc_id}"
+        if self.build_context.is_saas_server_type:
+            # In XSIAM or XSOAR SAAS - `create_incident` response don`t return created incident id.
+            inc_filter.name = [incident_name]
+        # inc_filter.query
+        search_filter.filter = inc_filter
+
+        # poll the incidents queue, until the timeout is reached.
+        end_time = time.time() + timeout
+        while True:
+            try:
+                incidents = client.search_incidents(filter=search_filter)
+                if len(incidents.data):
+                    return incidents.data[0]
+            except ApiException:
+                if self.build_context.is_saas_server_type:
+                    self.log_exception(
+                        f"Searching incident with name {incident_name} failed"
+                    )
+                else:
+                    self.log_exception(f"Searching incident with id {inc_id} failed")
+            if time.time() > end_time:
+                if self.build_context.is_saas_server_type:
+                    self.log_error(
+                        f"Got timeout for searching incident with name "
+                        f"{incident_name}"
+                    )
+                else:
+                    self.log_error(f"Got timeout for searching incident id {inc_id}")
+                return None
+
+            time.sleep(sleep_interval)
+
+    def delete_incident(self, client: DefaultApi, incident_id: str) -> bool:
+        """
+        Deletes a Demisto incident
+        Args:
+            client: demisto_client instance to use
+            incident_id: Incident to delete
+
+        Returns:
+            True if incident was deleted else False
+        """
+        try:
+            body = {"ids": [incident_id], "filter": {}, "all": False}
+            response, status_code, headers = demisto_client.generic_request_func(
+                self=client, method="POST", path="/incident/batchDelete", body=body
+            )
+        except ApiException:
+            self.log_exception(
+                "Failed to delete incident, error trying to communicate with demisto server"
+            )
+            return False
+
+        if status_code != requests.codes.ok:
+            self.log_error(
+                f"delete incident failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
+            )
+            return False
+
+        return True
+
+    def close_incident(self, client: DefaultApi, incident_id: str) -> bool:
+        """
+        Closes a Demisto incident
+        Args:
+            client: demisto_client instance to use
+            incident_id: Incident to close
+
+        Returns:
+            True if incident was closed else False
+        """
+        try:
+            body = {"id": incident_id, "CustomFields": {}}
+            response, status_code, headers = demisto_client.generic_request_func(
+                self=client, method="POST", path="/incident/close", body=body
+            )
+            self.log_info(f"Closed incident: {incident_id}.")
+        except ApiException:
+            self.log_warning(
+                "Failed to close incident, error trying to communicate with demisto server."
+            )
+            return False
+
+        if status_code != requests.codes.ok:
+            self.log_warning(
+                f"Close incident failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
+            )
+            return False
+
+        return True
+
+    def print_context_to_log(self, client: DefaultApi, incident_id: str):
+        try:
+            body = {"query": f"${{{self.configuration.context_print_dt}}}"}
+            response, status_code, headers = demisto_client.generic_request_func(
+                self=client,
+                method="POST",
+                path=f"/investigation/{incident_id}/context",
+                body=body,
+                response_type="object",
+            )
+            if status_code != requests.codes.ok:
+                self.log_error(
+                    f"incident context fetch failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
+                )
+                return
+            try:
+                msg = json.dumps(response, indent=4)
+                self.log_info(msg)
+            except (ValueError, TypeError, json.JSONDecodeError):
+                self.log_error(
+                    f"unable to parse result for result with value: {response}"
+                )
+        except ApiException:
+            self.log_error(
+                "Failed to get context, error trying to communicate with demisto server"
+            )
+
+
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
 
@@ -890,676 +1560,6 @@ class OnPremServerContext(ServerContext):
             raise
         finally:
             self.build_context.logging_module.execute_logs()
-
-
-class TestConfiguration:
-    def __init__(self, test_configuration: dict, default_test_timeout: int):
-        """
-        Args:
-            test_configuration: A record of a test from 'tests' list in conf.json file in content repository.
-            default_test_timeout: The default timeout to use in case no timeout is specified in the configuration
-        """
-        self.raw_dict = test_configuration
-        self.playbook_id = test_configuration.get("playbookID", "")
-        self.nightly_test = test_configuration.get("nightly", False)
-        self.from_version = test_configuration.get(
-            "fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION
-        )
-        self.to_version = test_configuration.get(
-            "toversion", DEFAULT_CONTENT_ITEM_TO_VERSION
-        )
-        self.timeout = test_configuration.get("timeout", default_test_timeout)
-        self.memory_threshold = test_configuration.get(
-            "memory_threshold", Docker.DEFAULT_CONTAINER_MEMORY_USAGE
-        )
-        self.pid_threshold = test_configuration.get(
-            "pid_threshold", Docker.DEFAULT_CONTAINER_PIDS_USAGE
-        )
-        self.runnable_on_docker_only: bool = test_configuration.get(
-            "runnable_on_docker_only", False
-        )
-        self.is_mockable = test_configuration.get("is_mockable")
-        self.context_print_dt = test_configuration.get("context_print_dt")
-        self.test_integrations: List[str] = self._parse_integrations_conf(
-            test_configuration
-        )
-        self.test_instance_names: List[str] = self._parse_instance_names_conf(
-            test_configuration
-        )
-        self.marketplaces: List[MarketplaceVersions] = self._parse_marketplaces_conf(
-            test_configuration
-        )
-        self.instance_configuration: dict = test_configuration.get(
-            "instance_configuration", {}
-        )
-        self.external_playbook_config: dict = test_configuration.get(
-            "external_playbook_config", {}
-        )
-        self.is_first_playback_failed: bool = False
-        self.number_of_executions: int = 0
-        self.number_of_successful_runs: int = 0
-
-    @staticmethod
-    def _parse_integrations_conf(test_configuration):
-        integrations_conf = test_configuration.get("integrations", [])
-        if not isinstance(integrations_conf, list):
-            integrations_conf = [integrations_conf]
-        return integrations_conf
-
-    @staticmethod
-    def _parse_instance_names_conf(test_configuration):
-        instance_names_conf = test_configuration.get("instance_names", [])
-        if not isinstance(instance_names_conf, list):
-            instance_names_conf = [instance_names_conf]
-        return instance_names_conf
-
-    @staticmethod
-    def _parse_marketplaces_conf(
-        test_configuration,
-    ) -> List[MarketplaceVersions]:
-        marketplaces_conf = test_configuration.get("marketplaces", [])
-        if not isinstance(marketplaces_conf, list):
-            marketplaces_conf = [marketplaces_conf]
-        marketplaces_conf = [
-            MarketplaceVersions(marketplace) for marketplace in marketplaces_conf
-        ]
-
-        if MarketplaceVersions.XSOAR in marketplaces_conf:
-            marketplaces_conf.append(MarketplaceVersions.XSOAR_SAAS)
-
-        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_conf:
-            marketplaces_conf.append(MarketplaceVersions.XSOAR)
-
-        return marketplaces_conf
-
-    def __str__(self):
-        return str(self.raw_dict)
-
-
-class TestPlaybook:
-    def __init__(
-        self, build_context, test_configuration: TestConfiguration, server_context
-    ):
-        """
-        This class has all the info related to a test playbook during test execution
-        Args:
-            build_context (BuildContext): The build context to use in the build
-            test_configuration: The configuration from content conf.json file
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
-
-        """
-        self.build_context = build_context
-        self.server_context = server_context
-        self.configuration: TestConfiguration = test_configuration
-        self.is_mockable: bool = (
-            self.configuration.playbook_id not in server_context.unmockable_test_ids
-        )
-        self.test_suite = TestSuite(self.configuration.playbook_id)
-        self.start_time = datetime.now(timezone.utc)
-        self.test_suite_system_out: List[str] = []
-        self.test_suite_system_err: List[str] = []
-        self.integrations: List[Integration] = [
-            Integration(
-                build_context=self.build_context,
-                integration_name=integration_name,
-                potential_integration_instance_names=self.configuration.test_instance_names,
-                playbook=self,
-                server_context=self.server_context,
-            )
-            for integration_name in self.configuration.test_integrations
-        ]
-        self.integrations_to_lock = [
-            integration
-            for integration in self.integrations
-            if integration.name not in self.build_context.conf.parallel_integrations
-        ]
-        self.populate_test_suite()
-
-    def log_debug(self, message: str, real_time: bool = False):
-        self.build_context.logging_module.debug(message, real_time)
-        self.test_suite_system_out.append(message)
-
-    def log_info(self, message: str, real_time: bool = False):
-        self.build_context.logging_module.info(message, real_time)
-        self.test_suite_system_out.append(message)
-
-    def log_success(self, message: str, real_time: bool = False):
-        self.build_context.logging_module.success(message, real_time)
-        self.test_suite_system_out.append(message)
-
-    def log_error(self, message: str, real_time: bool = False):
-        self.build_context.logging_module.error(message, real_time)
-        self.test_suite_system_err.append(message)
-
-    def log_warning(self, message: str, real_time: bool = False):
-        self.build_context.logging_module.warning(message, real_time)
-        self.test_suite_system_err.append(message)
-
-    def log_exception(self, message: str, real_time: bool = False):
-        self.build_context.logging_module.exception(message, real_time)
-        self.test_suite_system_err.append(message)
-
-    def populate_test_suite(self):
-        self.test_suite.add_property("build_number", self.build_context.build_number)
-        self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
-        self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
-        self.test_suite.add_property(
-            "is_saas_server_type", self.build_context.is_saas_server_type
-        )
-        self.test_suite.add_property("server_type", self.build_context.server_type)
-        self.test_suite.add_property("product_type", self.build_context.product_type)
-        self.test_suite.add_property("memCheck", self.build_context.memCheck)
-        self.test_suite.add_property(
-            "server_numeric_version", self.build_context.server_numeric_version
-        )
-        self.test_suite.add_property(
-            "server_version", self.build_context.server_version
-        )
-        self.test_suite.add_property(
-            "cloud_servers_path", self.build_context.cloud_servers_path
-        )
-        self.test_suite.add_property("cloud_ui_path", self.server_context.cloud_ui_path)
-        self.test_suite.add_property(
-            "instances_ips", ",".join(self.build_context.instances_ips)
-        )
-
-        self.test_suite.add_property(
-            "playbook.is_mockable", self.is_mockable  # type:ignore[arg-type]
-        )
-        self.test_suite.add_property(
-            "is_mockable", self.configuration.is_mockable  # type:ignore[arg-type]
-        )
-        self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
-        self.test_suite.add_property("from_version", self.configuration.from_version)
-        self.test_suite.add_property("to_version", self.configuration.to_version)
-        self.test_suite.add_property("nightly_test", self.configuration.nightly_test)
-        self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
-        self.test_suite.add_property(
-            "memory_threshold",
-            self.configuration.memory_threshold,
-        )
-        self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
-        self.test_suite.add_property("timeout", self.configuration.timeout)
-        self.test_suite.add_property(
-            "playbook.test_instance_names",
-            ",".join(self.configuration.test_instance_names),
-        )
-        self.test_suite.add_property(
-            "playbook.marketplaces",
-            ",".join(self.configuration.marketplaces),
-        )
-        self.test_suite.add_property(
-            "playbook.integrations", ",".join(map(str, self.integrations))
-        )
-        self.test_suite.add_property(
-            "runnable_on_docker_only",
-            self.configuration.runnable_on_docker_only,  # type:ignore[arg-type]
-        )
-
-    def close_test_suite(self, results: Optional[List[Result]] = None):
-        results = results or []
-        duration = (datetime.now(timezone.utc) - self.start_time).total_seconds()
-        test_case = TestCase(
-            f"Test Playbook {self.configuration.playbook_id} on {self.build_context.server_version}",
-            "TestPlaybook",
-            duration,
-        )
-        test_case.system_out = "\n".join(self.test_suite_system_out)
-        test_case.system_err = "\n".join(self.test_suite_system_err)
-        test_case.result += results  # type:ignore[arg-type]
-        self.test_suite.add_testcase(test_case)
-        self.build_context.tests_data_keeper.test_results_xml_file.add_testsuite(
-            self.test_suite
-        )
-
-    def __str__(self):
-        return f'"{self.configuration.playbook_id}"'
-
-    def __repr__(self):
-        return str(self)
-
-    def should_test_run(self):
-        skipped_tests_collected = self.build_context.tests_data_keeper.skipped_tests
-
-        def in_filtered_tests():
-            """
-            Checks if there are a list of filtered tests that the playbook is in them.
-            """
-            if (
-                not self.server_context.filtered_tests
-                or self.configuration.playbook_id
-                not in self.server_context.filtered_tests
-            ):
-                msg = f"Skipping {self} because it's not in filtered tests"
-                self.log_debug(msg)
-                self.close_test_suite([Skipped(msg)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "not in filtered tests"
-                return False
-            return True
-
-        def nightly_test_in_non_nightly_build():
-            """
-            Checks if we are on a build which is not nightly, and the test should run only on nightly builds.
-            """
-            if self.configuration.nightly_test and not self.build_context.is_nightly:
-                log_message = f"Skipping {self} because it's a nightly test in a non nightly build"
-                self.close_test_suite([Skipped(log_message)])
-                if self.configuration.playbook_id in self.server_context.filtered_tests:
-                    self.log_warning(log_message)
-                else:
-                    self.log_debug(log_message)
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "nightly test in a non nightly build"
-                return True
-            return False
-
-        def skipped_test():
-            if (
-                self.configuration.playbook_id
-                not in self.build_context.conf.skipped_tests
-            ):
-                return False
-            log_message = f"Skipping test {self} because it's in skipped test list"
-            if self.configuration.playbook_id in self.server_context.filtered_tests:
-                # Add warning log, as the playbook is supposed to run according to the filters, but it's skipped
-                self.log_warning(log_message)
-            else:
-                self.log_debug(log_message)
-            reason = self.build_context.conf.skipped_tests[
-                self.configuration.playbook_id
-            ]
-            self.close_test_suite([Skipped(log_message)])
-            skipped_tests_collected[self.configuration.playbook_id] = reason
-            return True
-
-        def version_mismatch():
-            if not (
-                Version(self.configuration.from_version)
-                <= Version(self.build_context.server_numeric_version)
-                <= Version(self.configuration.to_version)
-            ):
-                log_message = (
-                    f"Test {self} ignored due to version mismatch "
-                    f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})\n"
-                )
-                self.log_warning(log_message)
-                self.close_test_suite([Skipped(log_message)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
-                return True
-            return False
-
-        def test_has_skipped_integration():
-            if skipped_integrations := (
-                self.build_context.conf.skipped_integrations_set
-                & set(self.configuration.test_integrations)
-            ):
-                # The playbook should be run but has a skipped integration.
-                self.log_debug(
-                    f"Skipping {self} because it has skipped integrations:{','.join(skipped_integrations)}"
-                )
-                results: List[Result] = []
-                for integration in skipped_integrations:
-
-                    if (
-                        self.server_context.filtered_tests
-                        and self.configuration.playbook_id
-                        in self.server_context.filtered_tests
-                    ):
-                        # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
-                        msg = (
-                            f"{self.configuration.playbook_id} - reason: "
-                            f"{self.build_context.conf.skipped_integrations[integration]}"
-                        )
-                        self.build_context.tests_data_keeper.playbook_skipped_integration.add(
-                            msg
-                        )
-                        log_message = f"The integration {integration} is skipped and critical for the test {self}."
-                        self.test_suite_system_err.append(log_message)
-                        self.log_warning(log_message)
-                        results.append(Skipped(msg))
-
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f'The integrations:{",".join(skipped_integrations)} are skipped'
-                self.test_suite.add_property(
-                    "skipped_integrations", ",".join(skipped_integrations)
-                )
-                self.close_test_suite(results)
-                return True
-
-            return False
-
-        def marketplaces_match_server_type() -> bool:
-            """
-            Checks if the test has a marketplace value, and if so- if it matches the server machine we are on.
-            A test playbook might have several entries, each with a different marketplace. This might cause the test playbook to
-            be in the filtered tests list, even when the provided entry is not be the one that runs with the current sever
-            machine marketplace. This function checks that the entry provided is the exact one that needs to run.
-            Entries might differ in any field, the most common one is instance_names.
-            """
-            test_server_types: Set[str] = set()
-            for marketplace in self.configuration.marketplaces or []:
-                test_server_types.update(
-                    MARKETPLACE_VERSIONS_TO_SERVER_TYPE[marketplace]
-                )
-
-            if not test_server_types:
-                return True  # test doesn't have a marketplace value so it runs on all machines
-
-            instance_names_log_message = (
-                f" for instance names: {', '.join(self.configuration.test_instance_names)}"
-                if self.configuration.test_instance_names
-                else ""
-            )
-
-            if self.build_context.server_type in test_server_types:
-                self.log_debug(
-                    f"Running {self} with current server marketplace{instance_names_log_message}"
-                )
-                return True  # test has a marketplace value that matched the build server marketplace
-
-            log_message = (
-                f"Skipping {self} because it's marketplace values are: "
-                f"{', '.join(self.configuration.marketplaces)}{instance_names_log_message}, "
-                f"which is not compatible with the current server marketplace value"
-            )
-            self.close_test_suite([Skipped(log_message)])
-            if self.configuration.playbook_id in self.server_context.filtered_tests:
-                self.log_warning(log_message)
-            else:
-                self.log_debug(log_message)
-            skipped_tests_collected[
-                self.configuration.playbook_id
-            ] = f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
-            return False  # test has a marketplace value that doesn't matched the build server marketplace
-
-        return (
-            in_filtered_tests()
-            and not nightly_test_in_non_nightly_build()
-            and not skipped_test()
-            and not version_mismatch()
-            and not test_has_skipped_integration()
-            and marketplaces_match_server_type()
-        )
-
-    def run_test_module_on_integrations(self, client: DefaultApi) -> bool:
-        """
-        runs 'test-module' on all integrations that the playbook uses and return a boolean indicating the result
-        Args:
-            client: The demisto_client to use
-
-        Returns:
-            True if all integrations was test-module execution was successful else False
-        """
-        for integration in self.integrations:
-            success = integration.test_integration_instance(client)
-            if not success:
-                return False
-        return True
-
-    def configure_integrations(
-        self,
-        client: DefaultApi,
-        instance_configuration: dict,
-    ) -> bool:
-        """
-        Configures all integrations that the playbook uses and return a boolean indicating the result
-        Args:
-            instance_configuration: The instance configuration to use for the integrations
-            client: The demisto_client to use
-
-        Returns:
-            True if all integrations was configured else False
-        """
-        configured_integrations: List[Integration] = []
-        for integration in self.integrations:
-            instance_created = integration.create_integration_instance(
-                client,
-                self.configuration.playbook_id,
-                self.is_mockable,
-                self.server_context,
-                instance_configuration,
-            )
-            if not instance_created:
-                self.log_error(
-                    f"Cannot run playbook {self}, integration {integration} failed to configure"
-                )
-                # Deleting all the already configured integrations
-                for configured_integration in configured_integrations:
-                    configured_integration.delete_integration_instance(client)
-                return False
-            configured_integrations.append(integration)
-        return True
-
-    def disable_integrations(self, client: DefaultApi):
-        """
-        Disables all integrations that the playbook uses
-        Clears server configurations set for the integration if there are such
-        Reset containers if server configurations were cleared
-
-        Args:
-            client: The demisto_client to use
-        """
-        for integration in self.integrations:
-            integration.disable_integration_instance(client)
-        updated_keys = False
-        if not self.build_context.is_saas_server_type:
-            updated_keys = self._set_prev_server_keys(client)
-        if updated_keys:
-            self.server_context.reset_containers()
-
-    def _set_prev_server_keys(self, client: DefaultApi) -> bool:
-        """Sets previous stored system (server) config, if existed
-
-        Args:
-            client (DefaultApi): The demisto_client to use
-
-        Returns:
-             bool: Whether server configurations were updated to indicate if reset containers is required
-        """
-        updated = False
-        for integration in self.integrations:
-            if (
-                integration.configuration
-                and "server_keys" not in integration.configuration.params
-            ):
-                continue
-            if self.server_context.prev_system_conf:
-                update_server_configuration(
-                    client=client,
-                    server_configuration=self.server_context.prev_system_conf,
-                    error_msg="Failed to set server keys",
-                    logging_manager=self.build_context.logging_module,
-                )
-                self.server_context.prev_system_conf = {}
-                updated = True
-            else:
-                self.log_error(
-                    f"Failed clearing system conf. Found server_keys for integration {integration.name} but could not"
-                    "find previous system conf stored"
-                )
-        return updated
-
-    def delete_integration_instances(self, client: DefaultApi):
-        """
-        Deletes all integrations that the playbook uses
-        Args:
-            client: The demisto_client to use
-        """
-        for integration in self.integrations:
-            integration.delete_integration_instance(client)
-
-    def create_incident(
-        self, client: DefaultApi, timeout: int = 300, sleep_interval: int = 10
-    ) -> Optional[Incident]:
-        """
-        Creates an incident with the current playbook ID
-        Args:
-            client: The demisto_client to use.
-            timeout: The timeout to wait for the incident to be created, in seconds.
-            sleep_interval: The interval to sleep between each poll, in seconds.
-
-        Returns:
-            - The created incident or None
-        """
-        # Preparing the incident request
-
-        incident_name = (
-            f"inc-{self.configuration.playbook_id}--build_number:"
-            f"{self.build_context.build_number}--{uuid.uuid4()}"
-        )
-        create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
-        create_incident_request.create_investigation = True
-        create_incident_request.playbook_id = self.configuration.playbook_id
-        create_incident_request.name = incident_name
-
-        inc_id = "incCreateErr"
-        try:
-            response = client.create_incident(
-                create_incident_request=create_incident_request
-            )
-            inc_id = response.id
-        except ApiException:
-            self.log_exception(
-                f"Failed to create incident with name {incident_name} for playbook {self}"
-            )
-
-        if inc_id == "incCreateErr":
-            self.log_error(
-                f"Failed to create incident for playbookID: {self}."
-                "Possible reasons are:\nMismatch between playbookID in conf.json and "
-                "the id of the real playbook you were trying to use, "
-                "or schema problems in the TestPlaybook."
-            )
-            return None
-
-        # get incident
-        search_filter = demisto_client.demisto_api.SearchIncidentsData()
-        inc_filter = demisto_client.demisto_api.IncidentFilter()
-        if inc_id:
-            inc_filter.query = f"id: {inc_id}"
-        if self.build_context.is_saas_server_type:
-            # In XSIAM or XSOAR SAAS - `create_incident` response don`t return created incident id.
-            inc_filter.name = [incident_name]
-        # inc_filter.query
-        search_filter.filter = inc_filter
-
-        # poll the incidents queue, until the timeout is reached.
-        end_time = time.time() + timeout
-        while True:
-            try:
-                incidents = client.search_incidents(filter=search_filter)
-                if len(incidents.data):
-                    return incidents.data[0]
-            except ApiException:
-                if self.build_context.is_saas_server_type:
-                    self.log_exception(
-                        f"Searching incident with name {incident_name} failed"
-                    )
-                else:
-                    self.log_exception(f"Searching incident with id {inc_id} failed")
-            if time.time() > end_time:
-                if self.build_context.is_saas_server_type:
-                    self.log_error(
-                        f"Got timeout for searching incident with name "
-                        f"{incident_name}"
-                    )
-                else:
-                    self.log_error(f"Got timeout for searching incident id {inc_id}")
-                return None
-
-            time.sleep(sleep_interval)
-
-    def delete_incident(self, client: DefaultApi, incident_id: str) -> bool:
-        """
-        Deletes a Demisto incident
-        Args:
-            client: demisto_client instance to use
-            incident_id: Incident to delete
-
-        Returns:
-            True if incident was deleted else False
-        """
-        try:
-            body = {"ids": [incident_id], "filter": {}, "all": False}
-            response, status_code, headers = demisto_client.generic_request_func(
-                self=client, method="POST", path="/incident/batchDelete", body=body
-            )
-        except ApiException:
-            self.log_exception(
-                "Failed to delete incident, error trying to communicate with demisto server"
-            )
-            return False
-
-        if status_code != requests.codes.ok:
-            self.log_error(
-                f"delete incident failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
-            )
-            return False
-
-        return True
-
-    def close_incident(self, client: DefaultApi, incident_id: str) -> bool:
-        """
-        Closes a Demisto incident
-        Args:
-            client: demisto_client instance to use
-            incident_id: Incident to close
-
-        Returns:
-            True if incident was closed else False
-        """
-        try:
-            body = {"id": incident_id, "CustomFields": {}}
-            response, status_code, headers = demisto_client.generic_request_func(
-                self=client, method="POST", path="/incident/close", body=body
-            )
-            self.log_info(f"Closed incident: {incident_id}.")
-        except ApiException:
-            self.log_warning(
-                "Failed to close incident, error trying to communicate with demisto server."
-            )
-            return False
-
-        if status_code != requests.codes.ok:
-            self.log_warning(
-                f"Close incident failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
-            )
-            return False
-
-        return True
-
-    def print_context_to_log(self, client: DefaultApi, incident_id: str):
-        try:
-            body = {"query": f"${{{self.configuration.context_print_dt}}}"}
-            response, status_code, headers = demisto_client.generic_request_func(
-                self=client,
-                method="POST",
-                path=f"/investigation/{incident_id}/context",
-                body=body,
-                response_type="object",
-            )
-            if status_code != requests.codes.ok:
-                self.log_error(
-                    f"incident context fetch failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
-                )
-                return
-            try:
-                msg = json.dumps(response, indent=4)
-                self.log_info(msg)
-            except (ValueError, TypeError, json.JSONDecodeError):
-                self.log_error(
-                    f"unable to parse result for result with value: {response}"
-                )
-        except ApiException:
-            self.log_error(
-                "Failed to get context, error trying to communicate with demisto server"
-            )
 
 
 class IntegrationConfiguration:

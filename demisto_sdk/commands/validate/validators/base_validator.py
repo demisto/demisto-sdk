@@ -108,7 +108,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         content_item: ContentTypes,
         ignorable_errors: list,
         support_level_dict: dict,
-        execution_mode: ExecutionMode,
+        running_execution_mode: ExecutionMode,
     ) -> bool:
         """check whether to run validation on the given content item or not.
 
@@ -116,7 +116,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             content_item (BaseContent): The content item to run the validation on.
             ignorable_errors (list): The list of the errors that can be ignored.
             support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
-            execution_mode: (ExecutionMode)
+            running_execution_mode: (ExecutionMode)
 
         Returns:
             bool: True if the validation should run. Otherwise, return False.
@@ -126,7 +126,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                 isinstance(content_item, self.get_content_types()),
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
                 should_run_on_execution_mode(
-                    self.expected_execution_mode, execution_mode
+                    self.expected_execution_mode, running_execution_mode
                 ),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
@@ -333,15 +333,16 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     return True
 
 
-def should_run_on_execution_mode(expected_execution_mode, execution_mode):
+def should_run_on_execution_mode(expected_execution_mode: Optional[list[ExecutionMode]],
+                                 running_execution_mode: ExecutionMode):
     """
-    Check if the execution_mode is in the expected_execution_mode of validation.
+    Check if the running_execution_mode is in the expected_execution_mode of validation.
     Args:
-        execution_mode (ExecutionMode): The running execution_mode.
         expected_execution_mode (Optional[list[ExecutionMode]]): The validation's expected execution_mode, if None then validation should run on all execution modes.
+        running_execution_mode (ExecutionMode): The running execution_mode.
     Returns:
-        bool: True if the given validation should run on the execution_mode. Otherwise, return False.
+        bool: True if the given validation should run on the running_execution_mode. Otherwise, return False.
     """
-    if not expected_execution_mode or execution_mode in expected_execution_mode:
+    if not expected_execution_mode or running_execution_mode in expected_execution_mode:
         return True
     return False

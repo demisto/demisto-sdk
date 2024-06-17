@@ -21,4 +21,4 @@ class IsPackDisplayNameAlreadyExistsValidatorListFiles(
     expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return self.is_valid_display_name(content_items, False)
+        return self.is_valid_display_name(content_items=content_items, all_files=False)

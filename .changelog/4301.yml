@@ -1,4 +1,4 @@
 changes:
-- description: added support in the new validation. For validators that run on all files and use the graph.
+- description: Support for different validation modes (-i, -a, -g) was added to the new validate command.
   type: internal
 pr_number: 4301

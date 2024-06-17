@@ -44,8 +44,8 @@ class ValidateManager:
         ) = self.initializer.gather_objects_to_run_on()
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
-            self.config_reader.gather_validations_to_run(
-                self.initializer.execution_mode,
+            self.config_reader.gather_validations_from_conf(
+                execution_mode=self.initializer.execution_mode,
                 ignore_support_level=self.ignore_support_level,
             )
         )
@@ -65,10 +65,10 @@ class ValidateManager:
             if filtered_content_objects_for_validator := list(
                 filter(
                     lambda content_object: validator.should_run(
-                        content_object,
-                        self.configured_validations.ignorable_errors,
-                        self.configured_validations.support_level_dict,
-                        self.initializer.execution_mode,
+                        content_item=content_object,
+                        ignorable_errors=self.configured_validations.ignorable_errors,
+                        support_level_dict=self.configured_validations.support_level_dict,
+                        execution_mode=self.initializer.execution_mode,
                     ),
                     self.objects_to_run,
                 )

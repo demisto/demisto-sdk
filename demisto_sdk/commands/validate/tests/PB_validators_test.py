@@ -96,7 +96,7 @@ def test_using_input_not_provided():
     When:
         using input 3
     Then:
-        Will fail on input 3 (and other defaults from test config)
+        Will fail on input 3 (Comments, File, ReportFileType, Systems, Timeout are from the default test config)
 
     """
     playbook = create_playbook_object(

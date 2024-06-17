@@ -22,7 +22,7 @@ class PlaybookQuietModeValidator(BaseValidator[ContentTypes]):
     error_message = (
         "Playbooks with a playbookInputQuery for indicators should be on quiet mode."
     )
-    fix_message = "This playbooks quiet mode was set to true"
+    fix_message = "This playbooks quiet mode was set to true."
     related_field = "quiet"
     is_auto_fixable = True
 

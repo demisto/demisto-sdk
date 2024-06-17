@@ -192,4 +192,4 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 invalid_headers_content_item.extend(invalid_items)
         if invalid_headers_content_item:
             invalid_headers.append(invalid_headers_content_item)
-        return invalid_headers_type, invalid_headers_content_item
+        return invalid_headers

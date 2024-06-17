@@ -15,23 +15,23 @@ ContentTypes = Integration
 
 class IsValidDescriptionNameValidator(BaseValidator[ContentTypes]):
     error_code = "DS106"
-    description = "Check if the description file exist and the name is valid"
-    rationale = "Because we want a generic name for the files"
+    description = "Check if the description file exist and the name is valid."
+    rationale = ("We want to make sure all integrations have all required documentation"
+                 " and that the file name is according to our standards.")
     error_message = (
         "The description's file is missing or the file name is invalid - "
-        "make sure the name looks like the following: <integration_name>_description.md "
-        "and that the integration_name is the same as the folder containing it."
+        "make sure the name looks like the following: {0}."
     )
 
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.ADDED]
+    # expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.ADDED]
     related_file_type = [RelatedFileType.DESCRIPTION_File]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(content_item.description_file.file_path.name),
                 content_object=content_item,
             )
             for content_item in content_items

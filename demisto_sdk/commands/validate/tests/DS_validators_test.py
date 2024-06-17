@@ -180,7 +180,7 @@ def test_IsValidDescriptionNameValidator_is_valid(
     Given
     content_items iterables.
             - Case 1: the description file exist.
-            - Case 3: the description file not exist.
+            - Case 2: the description file not exist.
     When
     - Calling the IsValidDescriptionNameValidator is valid function.
     Then

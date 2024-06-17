@@ -664,10 +664,15 @@ def preprocess_files(
             raw_files = raw_files.union(staged_files)
         if os.getenv('CONTRIB_BRANCH'):
             '''
-            if the command runs on an external contribution branch,
-            get all untracked files with path that start with Packs/...
+            If this command runs on a build triggered by an external contribution PR,
+            the relevant modified files would have an "untracked" status in git.
+            The following code segment retrieves all relevant untracked files that were changed in the external contribution PR.
             '''
-            raw_files.union(set(map(Path, filter(lambda f: f.startswith('Packs/'), git_util.repo.untracked_files))))
+            # filter out a string list of untracked files with a path that starts with "Packs/"
+            untracked_files_list = filter(lambda f: f.startswith('Packs/'), git_util.repo.untracked_files)
+            # convert the string list of untracked files to a set of Path object
+            untracked_files_paths = set(map(Path, untracked_files_list))
+            raw_files.union(untracked_files_paths)
     elif all_files:
         raw_files = all_git_files
 

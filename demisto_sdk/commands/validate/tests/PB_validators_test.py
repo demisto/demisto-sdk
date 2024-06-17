@@ -243,7 +243,12 @@ def test_PlaybookDeleteContextAllValidator_invalid():
              'scriptarguments': {'all': {'simple': 'yes'}},
         }
     }
-    assert not PlaybookDeleteContextAllValidator().is_valid([playbook])
+    expected_result = ("The playbook includes DeleteContext tasks with all set to 'yes', which is not permitted."
+                       " Please correct the following tasks: ['task-id']"
+                       " For more info, see:"
+                       " https://xsoar.pan.dev/docs/playbooks/playbooks-overview#inputs-and-outputs")
+
+    assert PlaybookDeleteContextAllValidator().is_valid([playbook])[0].message == expected_result
 
 
 def test_PlaybookDeleteContextAllValidator_valid():

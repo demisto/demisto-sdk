@@ -17,7 +17,8 @@ class PlaybookDeleteContextAllValidator(BaseValidator[ContentTypes]):
     description = ("Validate whether the playbook has a DeleteContext with all set to 'Yes'."
                    " If the Playbook has it, it is not valid.")
     rationale = "Playbook can not have DeleteContext script with arg all set to yes."
-    error_message = ("The playbook contains DeleteContext with all set to True which is not allowed."
+    error_message = ("The playbook includes DeleteContext tasks with all set to 'yes', which is not permitted."
+                     " Please correct the following tasks: {invalid_tasks}"
                      " For more info, see: https://xsoar.pan.dev/docs/playbooks/playbooks-overview#inputs-and-outputs")
     related_field = "task"
     is_auto_fixable = False
@@ -30,26 +31,27 @@ class PlaybookDeleteContextAllValidator(BaseValidator[ContentTypes]):
                 - True if playbook has a DeleteContext with all set to 'Yes' and False otherwise.
         """
         tasks = playbook.tasks
+        invalid_tasks = []
         for task in tasks.values():
-            curr_task = task.get("task", {})
+            current_task = task.get("task", {})
             script_args = task.get("scriptarguments", {})
             if (
-                curr_task and curr_task.get("scriptName", "") == "DeleteContext"
+                current_task and current_task.get("scriptName", "") == "DeleteContext"
                 and script_args and script_args.get("all", {}).get("simple", "") == "yes"
             ):
-                return True
-        return False
+                invalid_tasks.append(current_task.get("id"))
+        return invalid_tasks
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(invalid_tasks=invalid_tasks),
                 content_object=content_item,
             )
             for content_item in content_items
             if (
-                not self.if_delete_context_exists(content_item)
+                invalid_tasks := self.if_delete_context_exists(content_item)
             )
         ]
     

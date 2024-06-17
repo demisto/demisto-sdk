@@ -54,7 +54,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(
-            {"object_id": "id", "tasks": "tasks", "inputs": "inputs", "quiet": "quiet"}
+            {"object_id": "id", "tasks": "tasks", "quiet": "quiet"}
         )
         return super().field_mapping
 

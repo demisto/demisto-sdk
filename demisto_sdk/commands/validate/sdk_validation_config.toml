@@ -41,7 +41,7 @@ select = [
     "RP101",
     "DA100", "DA101",
     "IT100", "IT101", "IT102", "IT103",
-    "MR100",
+    "MR100", "MR101",
 ]
 warning = []
 
@@ -66,7 +66,7 @@ select = [
     "IM101", "IM108", "IM111",
     "RP101",
     "IT102", "IT103",
-    "MR100",
+    "MR100", "MR101",
 ]
 warning = [
     "IN101",
@@ -76,7 +76,7 @@ warning = [
 
 
 [Custom_Categories]
-select = []
+select = ["MR101"]
 warning = []
 
 

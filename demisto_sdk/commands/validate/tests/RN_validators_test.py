@@ -2,11 +2,15 @@ import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_pack_object,
+    create_integration_object,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
     IsReleaseNotesFilledOutValidator,
 )
 
+from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
+    ReleaseNoteHeaderValidator,
+)
 
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
@@ -72,8 +76,6 @@ def test_release_note_filled_out_validator(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
-<<<<<<< Updated upstream
-=======
 
 
 def test_release_note_invalid_content_name_header_validator_modified_valid():
@@ -87,10 +89,10 @@ def test_release_note_invalid_content_name_header_validator_modified_valid():
             ["script.isfetch", "name"], ["true", "TestIntegration1"]
         ),
         create_integration_object(
-            ["script.isfetch"], ["true"]
+             ["true"]
         )
     ]
     pack.content_items.integration.extend(integrations)
-    results = ReleaseNoteInvalidContentNameHeaderValidatorModified().is_valid(content_items=[pack])
+    results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
     assert len(results) == 0
->>>>>>> Stashed changes
+

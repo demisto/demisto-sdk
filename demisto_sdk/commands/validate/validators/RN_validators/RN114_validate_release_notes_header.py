@@ -30,7 +30,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Pack
 
-class ReleaseNoteInvalidContentNameHeaderValidatorModified(BaseValidator[ContentTypes]):
+class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"
     description = ("Validate the 2nd headers (the content items) are exists in the pack and having the right display"
                    " name.")

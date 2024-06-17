@@ -7,7 +7,7 @@ from collections import defaultdict
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 import more_itertools
 from packaging.version import Version
@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.git_util import GitUtil, Path
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     write_dict,
@@ -664,10 +664,19 @@ def preprocess_files(
             raw_files = raw_files.union(staged_files)
     elif all_files:
         raw_files = all_git_files
+    elif os.getenv('CONTRIB_BRANCH'):
+        # gets files of unknown status
+        # contrib_diff = tuple(filter(lambda f: f.startswith('Packs/'), git_util.repo.untracked_files))
+        # logger.info('contribution branch found, contrib-diff:\n' + '\n'.join(contrib_diff))
+        # raw_files = git_util._get_untracked_files()
+        ''' if the command runs on an external contribution branch, get all untracked files with path that start with Packs/... '''
+        raw_files = set(map(Path, filter(lambda f: f.startswith('Packs/'), git_util.repo.untracked_files)))
+
     else:
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."
         )
+
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():

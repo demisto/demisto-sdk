@@ -9,6 +9,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_valid import (
+    IsImagePathValidValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
@@ -17,6 +20,12 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
     IsContainDemistoWordValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_integration_image_path_valid import (
+    IntegrationRelativeImagePathValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_readme_image_path_valid import (
+    ReadmeRelativeImagePathValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
@@ -149,6 +158,72 @@ def test_empty_readme_validator(
         [
             result.message == expected_msg
             for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        ([create_integration_object()], 0),
+        (
+            [
+                create_integration_object(
+                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+        (
+            [
+                create_script_object(
+                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+        (
+            [
+                create_playbook_object(
+                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+    ],
+)
+def test_is_image_path_validator(content_items, expected_number_of_failures):
+    """
+    Given:
+        - A list of content items with their respective readme contents.
+    When:
+        - The IsImagePathValidValidator is run on the provided content items.
+            - A content item with no images (expected failures: 0).
+            - A content item with a non-raw image URL in the readme (expected failures: 1).
+            - A script object with a non-raw image URL in the readme (expected failures: 1).
+            - A pack object with a non-raw image URL in the readme (expected failures: 1).
+            - A playbook object with a non-raw image URL in the readme (expected failures: 1).
+
+    Then:
+        - Validate that the number of detected invalid image paths matches the expected number of failures.
+        - Ensure that each failure message correctly identifies the non-raw GitHub image URL and suggests the proper raw URL format.
+    """
+    results = IsImagePathValidValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message.endswith(
+                "detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
+            )
+            for result in results
         ]
     )
 
@@ -365,3 +440,105 @@ def test_IsContainDemistoWordValidator_is_invalid():
     results = IsContainDemistoWordValidator().is_valid(content_items)
     assert len(results) == 1
     assert results[0].message == expected_msg
+
+
+def test_ImagePathIntegrationValidator_is_valid_valid_case():
+    """
+    Given
+    content_items.
+    - Pack with valid readme and valid description contain only relative paths.
+    When
+    - Calling the ImagePathIntegrationValidator is_valid function.
+    Then
+    - Make sure that the pack isn't failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="![Example Image](../doc_files/image.png)",
+            description_content="valid description ![Example Image](../doc_files/image.png)",
+        ),
+    ]
+    assert not IntegrationRelativeImagePathValidator().is_valid(content_items)
+
+
+def test_ImagePathIntegrationValidator_is_valid_invalid_case():
+    """
+        Given
+        content_items.
+        - Pack with:
+            1. invalid readme that contains absolute path.
+            2. description contains relative path that saved not under dec_files.
+    demisto_sdk/commands/validate/sdk_validation_config.toml
+
+        When
+        - Calling the ImagePathIntegrationValidator is_valid function.
+        Then
+        - Make sure that the pack is failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
+            " ![Example Image](https://www.example.com/images/example_image.jpg)",
+            description_content="valid description ![Example Image](../../content/image.jpg)",
+        ),
+    ]
+    expected = (
+        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links "
+        "provided below.:\nhttps://www.example.com/images/example_image.jpg\n\nRelative image paths have been"
+        " identified outside the pack's 'doc_files' directory. Please relocate the following images to the"
+        " 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add"
+        " images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    )
+    result = IntegrationRelativeImagePathValidator().is_valid(content_items)
+    assert result[0].message == expected
+
+
+def test_ImagePathOnlyReadMeValidator_is_valid_valid_case():
+    """
+    Given
+    content_items.
+    - Pack with valid readme contains only relative paths.
+    When
+    - Calling the ImagePathIntegrationValidator is_valid function.
+    Then
+    - Make sure that the pack isn't failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="![Example Image](../doc_files/image.png)",
+        ),
+    ]
+    assert not ReadmeRelativeImagePathValidator().is_valid(content_items)
+
+
+def test_ImagePathOnlyReadMeValidator_is_valid_invalid_case():
+    """
+    Given
+    content_items.
+    - Pack with:
+        1. invalid readme that contains absolute path and contains
+         relative path that saved not under dec_files.
+
+    When
+    - Calling the ImagePathOnlyReadMeValidator is_valid function.
+
+    Then
+    - Make sure that the pack is failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
+            " ![Example Image](https://www.example.com/images/example_image.jpg)"
+            " ![Example Image](../../content/image.jpg)",
+        ),
+    ]
+    expected = (
+        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links"
+        " provided below.:\nhttps://www.example.com/images/example_image.jpg\n\nRelative image paths have been"
+        " identified outside the pack's 'doc_files' directory. Please relocate the following images to the"
+        " 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add"
+        " images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    )
+
+    result = ReadmeRelativeImagePathValidator().is_valid(content_items)
+    assert result[0].message == expected

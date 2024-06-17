@@ -316,6 +316,9 @@ class OldValidateManager:
             FileType.PEM,
             FileType.METADATA,
             FileType.VULTURE_WHITELIST,
+            FileType.CASE_LAYOUT_RULE,
+            FileType.CASE_LAYOUT,
+            FileType.CASE_FIELD,
         )
 
         self.is_external_repo = is_external_repo
@@ -789,7 +792,11 @@ class OldValidateManager:
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
-            or (self.git_util and self.git_util._is_file_git_ignored(file_path))
+            or (
+                self.use_git
+                and self.git_util
+                and self.git_util._is_file_git_ignored(file_path)
+            )
             or detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):

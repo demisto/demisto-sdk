@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
+from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = IncidentField
+ContentTypes = Union[CaseField, IncidentField]
 
 
 class IsCliNameFieldAlphanumericValidator(BaseValidator[ContentTypes]):

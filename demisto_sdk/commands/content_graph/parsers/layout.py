@@ -57,9 +57,12 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             dependency_field_type = ContentType.INCIDENT_FIELD
         elif self.group == "indicator":
             dependency_field_type = ContentType.INDICATOR_FIELD
+        elif self.group == "case":
+            dependency_field_type = ContentType.CASE_FIELD
+
         else:
             raise ValueError(
-                f'{self.node_id}: Unknown group "{self.group}" - Expected "incident" or "indicator".'
+                f'{self.node_id}: Unknown group "{self.group}" - Expected "incident", "indicator" or "case".'
             )
 
         for field in self.get_field_ids_recursively():
@@ -85,7 +88,9 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
                 for key, value in current_object.items():
                     if key == "fieldId" and isinstance(value, str):
                         values.add(
-                            value.replace("incident_", "").replace("indicator_", "")
+                            value.replace("incident_", "")
+                            .replace("indicator_", "")
+                            .replace("case_", "")
                         )
                     else:
                         get_values(value)

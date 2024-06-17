@@ -11,6 +11,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB101_is_playbook_ha
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB106_is_playbook_using_an_instance import (
+    IsPlayBookUsingAnInstanceValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
@@ -222,3 +225,61 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_IsPlayBookUsingAnInstanceValidator_is_valid():
+    """
+    Given:
+    - A playbook
+        Case 1: The playbook is valid.
+        Case 2: The playbook isn't valid, it has using field.
+    When:
+    - calling IsPlayBookUsingAnInstanceValidator.is_valid.
+    Then:
+    - The results should be as expected:
+        Case 1: The playbook is valid
+        Case 2: The playbook is invalid
+    """
+    # Case 1
+    playbook_valid = create_playbook_object()
+    results_valid = IsPlayBookUsingAnInstanceValidator().is_valid([playbook_valid])
+
+    # Case 2
+    playbook_invalid = create_playbook_object()
+    for _, task in playbook_invalid.tasks.items():
+        scriptargs = task.scriptarguments or {}
+        scriptargs.update({"using": "instance_name"})
+    results_invalid = IsPlayBookUsingAnInstanceValidator().is_valid([playbook_invalid])
+
+    assert not results_valid
+    assert results_invalid
+
+
+def test_IsPlayBookUsingAnInstanceValidator_fix():
+    """
+    Given:
+    - A playbook
+        Case 1: The playbook is valid.
+        Case 2: The playbook isn't valid, it will be fixed.
+    When:
+    - calling IsPlayBookUsingAnInstanceValidator.fix.
+    Then:
+    - The results should be as expected:
+        Case 1: The playbook is valid
+        Case 2: The playbook is invalid
+    """
+    # Case 1
+    playbook_valid = create_playbook_object()
+    results_valid = IsPlayBookUsingAnInstanceValidator().fix(playbook_valid)
+
+    # Case 2
+    playbook_invalid = create_playbook_object()
+    for _, task in playbook_invalid.tasks.items():
+        scriptargs = task.scriptarguments or {}
+        scriptargs.update({"using": "instance_name"})
+    results_invalid = IsPlayBookUsingAnInstanceValidator().fix(playbook_invalid)
+
+    # Case 1 assertion.
+    assert playbook_valid == results_valid
+    # Case 2 assertion.
+    assert results_invalid.message == "The using instance from the playbook was removed"

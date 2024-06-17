@@ -160,6 +160,46 @@ def test_IsValidBetaDescriptionValidator_is_valid(
 
 
 @pytest.mark.parametrize(
+    "description_file_content, result_len",
+    [
+        (
+            "",
+            0,
+        ),
+        (
+            "### This is a partner Contributed Integration",
+            1,
+        ),
+    ],
+)
+def test_IsDescriptionContainsContribDetailsValidator_is_valid(
+    description_file_content,
+    result_len,
+):
+    """
+    Given
+    content_items iterables.
+            - Case 1: description file without Contrib Details.
+            - Case 2: description file with Contrib Details.
+    When
+    - Calling the IsDescriptionContainsContribDetailsValidator is valid function.
+    Then
+        - Make sure that the validation is implemented correctly.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail.
+    """
+    from demisto_sdk.commands.validate.validators.DS_validators.DS105_is_description_contains_contrib_details import (
+        IsDescriptionContainsContribDetailsValidator,
+    )
+
+    integration = create_integration_object()
+    integration.description_file.file_content_str = description_file_content
+
+    is_valid = IsDescriptionContainsContribDetailsValidator().is_valid([integration])
+    assert result_len == len(is_valid)
+
+
+@pytest.mark.parametrize(
     "is_file_exist, result_len",
     [
         (

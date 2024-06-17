@@ -1,0 +1,4 @@
+changes:
+- description: Added the `removed_integration_parameter` validation to the new validate as `NoRemovedIntegrationParametersValidator`.
+  type: internal
+pr_number: 4354

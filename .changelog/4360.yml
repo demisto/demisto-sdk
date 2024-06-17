@@ -1,0 +1,4 @@
+changes:
+- description: Convert the PB106 validate to new format
+  type: internal
+pr_number: 4360

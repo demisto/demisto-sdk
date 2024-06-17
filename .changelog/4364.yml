@@ -1,0 +1,4 @@
+changes:
+- description: Add PB116 validation, playbook stops on error
+  type: internal
+pr_number: 4364

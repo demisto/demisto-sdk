@@ -1,0 +1,4 @@
+changes:
+- description: Modified the PB125 validation to follow the new validation format.
+  type: internal
+pr_number: 4365

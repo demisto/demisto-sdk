@@ -136,7 +136,7 @@ def test_indicator_pb_must_be_quiet():
     Given:
         A pb with queryEntity indicators
     When:
-        in quiet mode
+        not in quiet mode
     Then:
         The validation should fail
 

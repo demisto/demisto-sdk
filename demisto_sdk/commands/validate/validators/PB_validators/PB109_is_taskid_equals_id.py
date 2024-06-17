@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -22,7 +21,6 @@ class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = False
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         error_results = []
         for content_item in content_items:
@@ -42,6 +40,3 @@ class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
                         )
                     )
         return error_results
-    
-
-    

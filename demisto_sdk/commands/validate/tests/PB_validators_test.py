@@ -12,7 +12,7 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_des
     DeprecatedDescriptionValidator,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
-    IsTaskidDifferentFromidValidator
+    IsTaskidDifferentFromidValidator,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
@@ -254,5 +254,5 @@ def test_IsTaskidDifferentFromidValidator():
             }
         )
     }
-    
+
     assert len(IsTaskidDifferentFromidValidator().is_valid([playbook])) == 1

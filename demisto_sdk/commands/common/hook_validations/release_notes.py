@@ -86,7 +86,7 @@ class ReleaseNotesValidator(BaseValidator):
         """
         return list(filter(lambda x: x, ls))
 
-    def extract_rn_headers(self, markdown) -> Dict[str, List[str]]:
+    def extract_rn_headers(self) -> Dict[str, List[str]]:
         """
             Extracts the headers from the release notes file.
         Args:

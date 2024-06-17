@@ -3046,12 +3046,10 @@ def openapi_codegen(ctx, **kwargs):
     help="On which product type runs the tests:XSIAM, XSOAR",
     default="XSOAR",
 )
+@click.option("--cloud_machine_ids", help="Cloud machine ids to use.")
+@click.option("--cloud_servers_path", help="Path to secret cloud server metadata file.")
 @click.option(
-    "-x", "--xsiam-machines", help="XSIAM machine to use, if it is XSIAM build."
-)
-@click.option("--xsiam-servers-path", help="Path to secret xsiam server metadata file.")
-@click.option(
-    "--xsiam-servers-api-keys-path", help="Path to file with XSIAM Servers api keys."
+    "--cloud_servers_api_keys", help="Path to file with cloud Servers api keys."
 )
 @click.pass_context
 @logging_setup_decorator

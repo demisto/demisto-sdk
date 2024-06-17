@@ -6,6 +6,7 @@ import sys
 import time
 import urllib.parse
 import uuid
+from abc import abstractmethod
 from copy import deepcopy
 from datetime import datetime, timezone
 from math import ceil
@@ -113,20 +114,23 @@ class BuildContext:
 
         # --------------------------- Machine preparation -------------------------------
 
-        self.xsiam_machines = kwargs.get("xsiam_machines").split(',')
-        self.xsiam_servers_path = kwargs.get("xsiam_servers_path")
-        self.xsiam_servers_api_keys_path = kwargs.get("xsiam_servers_api_keys_path")
+        self.cloud_machines = kwargs.get("cloud_machine_ids").split(",")
+        self.cloud_servers_path = kwargs.get("cloud_servers_path")
+        self.cloud_servers_api_keys_path = kwargs.get("cloud_servers_api_keys")
         self.use_retries_mechanism = kwargs.get("use_retries", False)
         self.conf, self.secret_conf = self._load_conf_files(
             kwargs["conf"], kwargs["secret"]
         )
 
         if self.is_saas_server_type:
-            self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
-            self.env_json = {machine: self.xsiam_conf.get(machine, {}) for machine in self.xsiam_machines}
+            self.cloud_conf = self._load_cloud_file(self.cloud_servers_api_keys_path)
+            self.env_json = {
+                machine: self.cloud_conf.get(machine, {})
+                for machine in self.cloud_machines
+            }
         else:
             self.env_json = self._load_env_results_json()
-            self.api_key = kwargs['api_key']
+            self.api_key = kwargs["api_key"]
 
         self.instances_ips = self._get_instances_ips()
         self.servers = self.create_servers()
@@ -134,24 +138,41 @@ class BuildContext:
 
         # --------------------------- Testing preparation -------------------------------
 
-        self.filtered_tests = self._extract_filtered_tests()
         self.tests_data_keeper = TestResults(
             self.conf.unmockable_integrations, kwargs["artifacts_path"]
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.slack_user_id = self._retrieve_slack_user_id()
+        self.machine_assignment_json = self._extract_filtered_tests()
 
     # --------------------------- Machine preparation logic -------------------------------
 
+    @staticmethod
+    def _extract_filtered_tests() -> dict:
+        """
+        Reads the content from ./artifacts/packs_to_install_by_machine.json and parses it into a list of test playbook IDs that should be run
+        in the current build
+        Returns:
+            A list of playbook IDs that should be run in the current build
+        """
+        with open(FILTER_CONF) as filter_file:
+            return json.loads(filter_file.read())
+
     def create_servers(self):
         """
-            Create servers object based on build type.
+        Create servers object based on build type.
         """
         servers: dict = {}
         if self.is_saas_server_type:
-            for machine in self.xsiam_machines:
+            for machine in self.cloud_machines:
                 ip = self.env_json.get(machine).get("base_url")
-                servers.update({machine: CloudServerContext(self, ip, machine, self.use_retries_mechanism)})
+                servers.update(
+                    {
+                        machine: CloudServerContext(
+                            self, ip, machine, self.use_retries_mechanism
+                        )
+                    }
+                )
         else:
             servers.update({self.server: OnPremServerContext(self, self.server)})
         return servers
@@ -228,10 +249,10 @@ class BuildContext:
         return server_numeric_version
 
     @staticmethod
-    def _load_xsiam_file(xsiam_servers_path):
+    def _load_cloud_file(cloud_servers_path):
         conf = None
-        if xsiam_servers_path:
-            with open(xsiam_servers_path) as data_file:
+        if cloud_servers_path:
+            with open(cloud_servers_path) as data_file:
                 conf = json.load(data_file)
 
         return conf
@@ -274,7 +295,7 @@ class BuildContext:
         user_id = ""
         try:
             user_name = (
-                    os.getenv("GITLAB_USER_LOGIN") or self._get_user_name_from_circle()
+                os.getenv("GITLAB_USER_LOGIN") or self._get_user_name_from_circle()
             )
             res = self.slack_client.api_call("users.list")
 
@@ -290,19 +311,6 @@ class BuildContext:
         return user_id
 
     # --------------------------- Testing logic -------------------------------
-
-    @staticmethod
-    def _extract_filtered_tests() -> list:
-        """
-        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
-        in the current build
-        Returns:
-            A list of playbook IDs that should be run in the current build
-        """
-        with open(FILTER_CONF) as filter_file:
-            filtered_tests = [line.strip("\n") for line in filter_file.readlines()]
-
-        return filtered_tests
 
     def _get_unmockable_tests_from_conf(self) -> list:
         """
@@ -321,9 +329,9 @@ class BuildContext:
                 if integration_name in unmockable_integrations
             ]
             if (
-                    test_name
-                    and (not test_record.test_integrations or unmockable_integrations_used)
-                    or not self.isAMI
+                test_name
+                and (not test_record.test_integrations or unmockable_integrations_used)
+                or not self.isAMI
             ):
                 unmockable_tests.append(test_record)
                 # In case a test has both - an unmockable integration and is configured with is_mockable=False -
@@ -336,19 +344,23 @@ class BuildContext:
 
 class ServerContext:
     def __init__(
-            self,
-            build_context: BuildContext,
-            server_private_ip: str,
-            use_retries_mechanism: bool = True,
+        self,
+        build_context: BuildContext,
+        server_private_ip: str,
+        use_retries_mechanism: bool = True,
     ):
 
         # --------------------------- Overall build configuration -------------------------------
 
+        self.auth_id = None
+        self.api_key = None
+        self.server_url = None
+        self.proxy = None
+        self.cloud_ui_path = None
         self.build_context = build_context
         self.server_ip = server_private_ip
         self.client: Optional[DefaultApi] = None
         self.configure_new_client()
-        # currently not supported on XSIAM (CIAC-514)
         self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
@@ -357,16 +369,14 @@ class ServerContext:
         # --------------------------- Testing preparation -------------------------------
 
         self.use_retries_mechanism: bool = use_retries_mechanism
-        self.all_integrations_configurations = self._get_all_integration_config(
-            build_context.instances_ips
-        )
+        self.all_integrations_configurations = self._get_all_integration_config()
         self.test_retries_queue: Queue = Queue()
         (
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
         ) = self._get_tests_to_run()
         self.unmockable_test_ids: Set[str] = set()
-
+        self.filtered_tests: list[str] = []
 
     def _execute_unmockable_tests(self):
         """
@@ -394,7 +404,7 @@ class ServerContext:
                 continue
             self.configure_new_client()
             if TestContext(
-                    self.build_context, test_playbook, self.client, self
+                self.build_context, test_playbook, self.client, self
             ).execute_test(self.proxy):
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
             else:
@@ -425,7 +435,7 @@ class ServerContext:
         self._execute_tests(self.test_retries_queue)
 
     def _reset_tests_round_if_necessary(
-            self, test_playbook: TestPlaybook, queue_: Queue
+        self, test_playbook: TestPlaybook, queue_: Queue
     ):
         """
         Checks if the string representation of the current test configuration is already in
@@ -485,7 +495,7 @@ class ServerContext:
         pass
 
     def get_all_installed_integrations_configurations(
-            self, server_url: str, timeout: int = 180, sleep_interval: int = 5
+        self, server_url: str, timeout: int = 180, sleep_interval: int = 5
     ) -> list:
         """
         Gets all integration configuration as it exists on the demisto server
@@ -503,7 +513,7 @@ class ServerContext:
             api_key=self.api_key,
             verify_ssl=False,
         )
-        self.logging_module.debug("Getting all integrations instances")
+        self.build_context.logging_module.debug("Getting all integrations instances")
 
         end_time = time.time() + timeout
         while True:
@@ -518,11 +528,11 @@ class ServerContext:
                 if "configurations" in response:
                     return response["configurations"]
             except ApiException:
-                self.logging_module.exception(
+                self.build_context.logging_module.exception(
                     "failed to get all integrations configuration"
                 )
             if time.time() > end_time:
-                self.logging_module.error(
+                self.build_context.logging_module.error(
                     "Timeout - failed to get all integration configuration."
                 )
                 return []
@@ -546,7 +556,11 @@ class ServerContext:
         """
         queue: Queue = Queue()
         for test in tests_to_run:
-            playbook = TestPlaybook(self.build_context, test)
+            playbook = TestPlaybook(
+                build_context=self.build_context,
+                test_configuration=test,
+                server_context=self,
+            )
             if playbook.should_test_run():
                 queue.put(playbook)
         return queue
@@ -563,11 +577,13 @@ class ServerContext:
 
 
 class CloudServerContext(ServerContext):
-    def __init__(self,
-                 build_context: BuildContext,
-                 server_private_ip: str,
-                 xsiam_machine: str,
-                 use_retries_mechanism: bool = True):
+    def __init__(
+        self,
+        build_context: BuildContext,
+        server_private_ip: str,
+        cloud_machine: str,
+        use_retries_mechanism: bool = True,
+    ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
 
         self.server_url = server_private_ip
@@ -578,11 +594,18 @@ class CloudServerContext(ServerContext):
         self.proxy = None
         self.check_if_can_create_manual_alerts()
 
-        with open(build_context.xsiam_servers_api_keys_path) as json_file:  # type: ignore[arg-type]
-            xsiam_servers_api_keys = json.loads(json_file.read())
-        self.api_key = xsiam_servers_api_keys.get(xsiam_machine)
-        self.auth_id = self.build_context.xsiam_conf.get(xsiam_machine, {}).get("x-xdr-auth-id")
-        self.xsiam_ui_path = self.build_context.xsiam_conf.get(xsiam_machine, {}).get("ui_url")
+        with open(build_context.cloud_servers_api_keys_path) as json_file:  # type: ignore[arg-type]
+            cloud_servers_api_keys = json.loads(json_file.read())
+        self.api_key = cloud_servers_api_keys.get(cloud_machine)
+        self.auth_id = self.build_context.cloud_conf.get(cloud_machine, {}).get(
+            "x-xdr-auth-id"
+        )
+        self.cloud_ui_path = self.build_context.cloud_conf.get(cloud_machine, {}).get(
+            "ui_url"
+        )
+        self.filtered_tests = self.build_context.machine_assignment_json.get(
+            cloud_machine, {}
+        ).get("playbooks_to_run")
 
     def reset_containers(self):
         self.build_context.logging_module.info(
@@ -736,7 +759,6 @@ class CloudServerContext(ServerContext):
                 real_time=True,
             )
 
-
             self.build_context.logging_module.debug(
                 f"Tests executed on server {self.server_ip}:\n"
                 f"{pformat(self.executed_tests)}"
@@ -760,9 +782,12 @@ class OnPremServerContext(ServerContext):
         )
 
         self.api_key = build_context.api_key
-        self.xsiam_conf = None
+        self.cloud_conf = None
         self.auth_id = None
-        self.xsiam_ui_path = None
+        self.cloud_ui_path = None
+        self.filtered_tests = self.build_context.machine_assignment_json.get(
+            "xsoar-machine", {}
+        ).get("playbooks_to_run")
 
     def reset_containers(self):
         self.build_context.logging_module.info("Resetting containers\n", real_time=True)
@@ -851,9 +876,9 @@ class OnPremServerContext(ServerContext):
             self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
 
             if (
-                    self.build_context.isAMI
-                    and self.proxy
-                    and self.proxy.should_update_mock_repo
+                self.build_context.isAMI
+                and self.proxy
+                and self.proxy.should_update_mock_repo
             ):
                 self.proxy.push_mock_files()
             self.build_context.logging_module.debug(
@@ -952,7 +977,9 @@ class TestConfiguration:
 
 
 class TestPlaybook:
-    def __init__(self, build_context, test_configuration: TestConfiguration, server_context):
+    def __init__(
+        self, build_context, test_configuration: TestConfiguration, server_context
+    ):
         """
         This class has all the info related to a test playbook during test execution
         Args:
@@ -973,10 +1000,11 @@ class TestPlaybook:
         self.test_suite_system_err: List[str] = []
         self.integrations: List[Integration] = [
             Integration(
-                self.build_context,
-                integration_name,
-                self.configuration.test_instance_names,
-                self,
+                build_context=self.build_context,
+                integration_name=integration_name,
+                potential_integration_instance_names=self.configuration.test_instance_names,
+                playbook=self,
+                server_context=self.server_context,
             )
             for integration_name in self.configuration.test_integrations
         ]
@@ -1028,9 +1056,9 @@ class TestPlaybook:
             "server_version", self.build_context.server_version
         )
         self.test_suite.add_property(
-            "xsiam_servers_path", self.build_context.xsiam_servers_path
+            "cloud_servers_path", self.build_context.cloud_servers_path
         )
-        self.test_suite.add_property("xsiam_ui_path", self.server_context.xsiam_ui_path)
+        self.test_suite.add_property("cloud_ui_path", self.server_context.cloud_ui_path)
         self.test_suite.add_property(
             "instances_ips", ",".join(self.build_context.instances_ips)
         )
@@ -1098,9 +1126,9 @@ class TestPlaybook:
             Checks if there are a list of filtered tests that the playbook is in them.
             """
             if (
-                not self.build_context.filtered_tests
+                not self.server_context.filtered_tests
                 or self.configuration.playbook_id
-                not in self.build_context.filtered_tests
+                not in self.server_context.filtered_tests
             ):
                 msg = f"Skipping {self} because it's not in filtered tests"
                 self.log_debug(msg)
@@ -1118,7 +1146,7 @@ class TestPlaybook:
             if self.configuration.nightly_test and not self.build_context.is_nightly:
                 log_message = f"Skipping {self} because it's a nightly test in a non nightly build"
                 self.close_test_suite([Skipped(log_message)])
-                if self.configuration.playbook_id in self.build_context.filtered_tests:
+                if self.configuration.playbook_id in self.server_context.filtered_tests:
                     self.log_warning(log_message)
                 else:
                     self.log_debug(log_message)
@@ -1135,7 +1163,7 @@ class TestPlaybook:
             ):
                 return False
             log_message = f"Skipping test {self} because it's in skipped test list"
-            if self.configuration.playbook_id in self.build_context.filtered_tests:
+            if self.configuration.playbook_id in self.server_context.filtered_tests:
                 # Add warning log, as the playbook is supposed to run according to the filters, but it's skipped
                 self.log_warning(log_message)
             else:
@@ -1178,9 +1206,9 @@ class TestPlaybook:
                 for integration in skipped_integrations:
 
                     if (
-                        self.build_context.filtered_tests
+                        self.server_context.filtered_tests
                         and self.configuration.playbook_id
-                        in self.build_context.filtered_tests
+                        in self.server_context.filtered_tests
                     ):
                         # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
                         msg = (
@@ -1241,7 +1269,7 @@ class TestPlaybook:
                 f"which is not compatible with the current server marketplace value"
             )
             self.close_test_suite([Skipped(log_message)])
-            if self.configuration.playbook_id in self.build_context.filtered_tests:
+            if self.configuration.playbook_id in self.server_context.filtered_tests:
                 self.log_warning(log_message)
             else:
                 self.log_debug(log_message)
@@ -1325,9 +1353,7 @@ class TestPlaybook:
         if updated_keys:
             self.server_context.reset_containers()
 
-    def _set_prev_server_keys(
-        self, client: DefaultApi
-    ) -> bool:
+    def _set_prev_server_keys(self, client: DefaultApi) -> bool:
         """Sets previous stored system (server) config, if existed
 
         Args:
@@ -1752,7 +1778,7 @@ class Integration:
         integration_name: str,
         potential_integration_instance_names: list,
         playbook: TestPlaybook,
-        server_context: ServerContext
+        server_context: ServerContext,
     ):
         """
         An integration class that should represent the integrations during the build
@@ -2620,7 +2646,7 @@ class TestContext:
             instance_configuration = self.playbook.configuration.instance_configuration
 
             if not self.playbook.configure_integrations(
-                self.client, self.server_context, instance_configuration
+                self.client, instance_configuration
             ):
                 return PB_Status.CONFIGURATION_FAILED
 
@@ -2628,7 +2654,7 @@ class TestContext:
                 self.client
             )
             if not test_module_result:
-                self.playbook.disable_integrations(self.client, self.server_context)
+                self.playbook.disable_integrations(self.client)
                 return PB_Status.FAILED
 
             external_playbook_configuration = (
@@ -2668,7 +2694,7 @@ class TestContext:
             server_url = get_ui_url(self.client.api_client.configuration.host)
             if self.build_context.is_saas_server_type:
                 self.playbook.log_info(
-                    f"Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId="
+                    f"Investigation URL: {self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
                     f"{investigation_id}&action:openAlertDetails={investigation_id}-work_plan"
                 )
             else:
@@ -2690,7 +2716,7 @@ class TestContext:
                     server_version=server_version,
                 )
 
-            self.playbook.disable_integrations(self.client, self.server_context)
+            self.playbook.disable_integrations(self.client)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:
@@ -3058,7 +3084,7 @@ class TestContext:
                 f"Using the retries mechanism for test {self}.\n"
                 f"Test-Playbook was executed {number_of_executions} times, more executions are needed."
             )
-            self.build_context.test_retries_queue.put(self.playbook)
+            self.server_context.test_retries_queue.put(self.playbook)
             return PB_Status.IN_PROGRESS
 
         else:  # number_of_executions == MAX_RETRIES:
@@ -3258,5 +3284,3 @@ class TestContext:
 
     def __repr__(self):
         return str(self)
-
-

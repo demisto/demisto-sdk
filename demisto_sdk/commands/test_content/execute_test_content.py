@@ -9,7 +9,6 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import (
 )
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext,
-    ServerContext,
 )
 
 SKIPPED_CONTENT_COMMENT = (
@@ -88,7 +87,9 @@ def execute_test_content(**kwargs):
 
     threads_list = []
     for server in build_context.servers:
-        threads_list.append(Thread(target=build_context.servers.get(server).execute_tests))
+        threads_list.append(
+            Thread(target=build_context.servers.get(server).execute_tests)
+        )
 
     logging_manager.info("Finished creating configurations, starting to run tests.")
     for thread in threads_list:
@@ -98,15 +99,16 @@ def execute_test_content(**kwargs):
         t.join()
 
     logging_manager.info("Finished running tests.")
-    if (
-        not build_context.unmockable_tests_to_run.empty()
-        or not build_context.mockable_tests_to_run.empty()
-    ):
-        logging_manager.critical(
-            "Not all tests have been executed. Not destroying instances. Exiting",
-            real_time=True,
-        )
-        sys.exit(1)
+    for server in build_context.servers:
+        if (
+            not server.unmockable_tests_to_run.empty()
+            or not server.mockable_tests_to_run.empty()
+        ):
+            logging_manager.critical(
+                "Not all tests have been executed. Not destroying instances. Exiting",
+                real_time=True,
+            )
+            sys.exit(1)
     if (
         build_context.tests_data_keeper.playbook_skipped_integration
         and build_context.build_name != "master"

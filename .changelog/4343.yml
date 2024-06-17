@@ -1,0 +1,4 @@
+changes:
+- description: Modeled base_playbook tasks into objects to ease on the use in various flows.
+  type: internal
+pr_number: 4343

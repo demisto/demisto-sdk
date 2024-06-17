@@ -4,13 +4,7 @@ import re
 from typing import Iterable, List, Set, Dict, Union, Tuple
 import os
 
-CONTENT_TYPE_SECTION_REGEX = re.compile(
-    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
-)
-CONTENT_ITEM_SECTION_REGEX = re.compile(
-    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$",
-    re.M,
-)
+
 from demisto_sdk.commands.common.constants import (
     GitStatuses,
     RN_HEADER_BY_FILE_TYPE,
@@ -21,7 +15,8 @@ from demisto_sdk.commands.common.constants import (
     FILE_TYPE_BY_RN_HEADER,
     CUSTOM_CONTENT_FILE_ENDINGS,
     ENTITY_TYPE_TO_DIR,
-    MARKDOWN_HEADER
+    CONTENT_TYPE_SECTION_REGEX,
+    CONTENT_ITEM_SECTION_REGEX
 )
 from demisto_sdk.commands.common.tools import (
     get_files_in_dir,
@@ -82,13 +77,20 @@ class ReleaseNoteInvalidContentNameHeaderValidatorModified(BaseValidator[Content
             A dictionary representation of the release notes file that maps content types' headers to their corresponding content items' headers.
         """
         headers: Dict = {}
+        content_type_section = re.compile(
+            CONTENT_TYPE_SECTION_REGEX, re.M
+        )
+        content_item_section = re.compile(
+            CONTENT_ITEM_SECTION_REGEX,
+            re.M,
+        )
         # Get all sections from the release notes using regex
-        rn_sections = CONTENT_TYPE_SECTION_REGEX.findall(release_note_content)
+        rn_sections = content_type_section.findall(release_note_content)
         for section in rn_sections:
             section = self.filter_nones(ls=section)
             content_type = section[0]
             content_type_sections_str = section[1]
-            content_type_sections_ls = CONTENT_ITEM_SECTION_REGEX.findall(
+            content_type_sections_ls = content_item_section.findall(
                 content_type_sections_str
             )
             if not content_type_sections_ls:

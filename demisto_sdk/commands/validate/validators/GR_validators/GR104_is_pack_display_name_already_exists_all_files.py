@@ -21,4 +21,4 @@ class IsPackDisplayNameAlreadyExistsValidatorAllFiles(
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return self.is_valid_display_name(content_items=content_items, all_files=True)
+        return self.is_valid_using_graph(content_items=content_items, validate_all_files=True)

@@ -116,7 +116,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             content_item (BaseContent): The content item to run the validation on.
             ignorable_errors (list): The list of the errors that can be ignored.
             support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
-            running_execution_mode: (ExecutionMode)
+            running_execution_mode (ExecutionMode): the execution mode of the current running
 
         Returns:
             bool: True if the validation should run. Otherwise, return False.

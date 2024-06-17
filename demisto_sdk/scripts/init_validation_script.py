@@ -445,7 +445,7 @@ Fill the content types as the numbers they appear as: """
         """
         Request the info wether the validation is using graph or not and ensure the input is valid.
         """
-        using_graph = str(input("does the validation using graph? (Y/N): "))
+        using_graph = str(input("does the validation used the graph object? (Y/N): "))
         while not using_graph or using_graph not in ["Y", "N", "y", "n"]:
             using_graph = str(
                 input("Please enter wether the validation using graph or not? (Y/N): ")

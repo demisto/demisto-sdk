@@ -16,16 +16,17 @@ ContentTypes = Pack
 class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
     error_code = "GR104"
     description = "Validate that there are no duplicate display names in the repo"
-    rationale = " Validate the existance of duplicate display names"
+    rationale = ("We want to avoid the existance of duplicate display names"
+                 " in order to make sure we don't confuse between content items.")
     error_message = (
-        "Pack '{content_id}' has a duplicate display_name as: {pack_display_id} "
+        "Pack '{content_id}' has a duplicate display_name as: {pack_display_id}."
     )
     related_field = ""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.JSON]
 
-    def is_valid_display_name(
-        self, content_items: Iterable[ContentTypes], all_files=False
+    def is_valid_using_graph(
+        self, content_items: Iterable[ContentTypes], validate_all_files=False
     ) -> List[ValidationResult]:
 
         file_paths_to_objects = {
@@ -35,7 +36,7 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
 
         content_id_to_objects = {item.object.object_id: item for item in content_items}  # type: ignore[attr-defined]
 
-        query_list = list(file_paths_to_objects) if not all_files else []
+        query_list = list(file_paths_to_objects) if not validate_all_files else []
 
         query_results = self.graph.get_duplicate_pack_display_name(query_list)
 

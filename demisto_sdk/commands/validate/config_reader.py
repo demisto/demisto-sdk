@@ -43,7 +43,7 @@ class ConfigReader:
             exit(1)
 
     def gather_validations_to_run(
-        self, execution_mode: bool, ignore_support_level: Optional[bool] = False
+        self, execution_mode: ExecutionMode, ignore_support_level: Optional[bool] = False
     ) -> ConfiguredValidations:
         """Extract the relevant information from the relevant category in the config file.
 

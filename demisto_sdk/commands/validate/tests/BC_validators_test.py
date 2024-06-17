@@ -1352,7 +1352,7 @@ def test_has_removed_integration_parameters_with_changed_params():
 
     assert (
         res[0].message
-        == "Parameters have been removed from the integration, the removed parameters are: 'param_2', 'param_1'."
+        == "Parameters have been removed from the integration, the removed parameters are: 'param_1', 'param_2'."
     )
 
 

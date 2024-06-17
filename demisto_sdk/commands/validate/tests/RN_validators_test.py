@@ -78,21 +78,78 @@ def test_release_note_filled_out_validator(
     )
 
 
-def test_release_note_invalid_content_name_header_validator_modified_valid():
+def test_release_note_header_validator_valid():
+    """
+        Given:
+        - content_items.
+            pack_metadata: pack with valid release note headers.
+
+        When:
+        - Calling the ReleaseNoteHeaderValidator is_valid function.
+
+        Then:
+        - Make sure the validation passes.
+    """
     pack = create_pack_object(
         paths=["version"],
         values=["2.0.5"],
-        release_note_content="#### Integrations\n##### hello world\nThis is a valid rn."
+        release_note_content="#### Integrations\n"
+                             "##### TestIntegration1\n"
+                             "This is an exemple\n\n"
+                             "##### TestIntegration2\n"
+                             "This is an exemple too\n   "
     )
     integrations = [
         create_integration_object(
-            ["script.isfetch", "name"], ["true", "TestIntegration1"]
+            ["name"], [ "TestIntegration1"]
         ),
         create_integration_object(
-             ["true"]
+             ["name"], ["TestIntegration2"]
         )
     ]
     pack.content_items.integration.extend(integrations)
     results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
     assert len(results) == 0
+
+
+def test_release_note_header_validator_valid():
+    """
+        Given:
+        - content_items.
+            pack_metadata: pack with invalid release note headers.
+
+        When:
+        - Calling the ReleaseNoteHeaderValidator is_valid function.
+
+        Then:
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+    """
+    expected_error = ('The invalid header(s) were found.\n'
+                      'The content header(s) type are invalid: InvalidHeader\n'
+                      'those are the items: playbook A\n'
+                      'For common troubleshooting steps, please review the documentation'
+                      ' found here: https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips')
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Integrations\n"
+                             "##### TestIntegration1\n"
+                             "This is an exemple\n\n"
+                             "##### Not exist content item\n"
+                             "This is an exemple too\n"
+                             "#### InvalidHeader\n"
+                             "##### playbook A\n"
+    )
+    integrations = [
+        create_integration_object(
+            ["name"], ["TestIntegration1"]
+        ),
+        create_integration_object(
+             ["name"], ["TestIntegration2"]
+        )
+    ]
+    pack.content_items.integration.extend(integrations)
+    results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
+    assert expected_error == results[0].message
+
 

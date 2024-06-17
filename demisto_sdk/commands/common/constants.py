@@ -619,7 +619,7 @@ INCORRECT_PACK_NAME_PATTERN = (
 # Release note regex
 CONTENT_TYPE_SECTION_REGEX = r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)"
 CONTENT_ITEM_SECTION_REGEX = r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
-MARKDOWN_HEADER = r'^(#+)\s+(.*)$'
+
 
 # Packs regex
 PACKS_DIR_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}"

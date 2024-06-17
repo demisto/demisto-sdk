@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -20,7 +20,7 @@ class NoRemovedIntegrationParametersValidator(BaseValidator[ContentTypes]):
     error_message = "Parameters have been removed from the integration, the removed parameters are: {}."
     related_field = "configuration"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -33,7 +33,8 @@ class NoRemovedIntegrationParametersValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 difference := self.removed_parameters(
-                    content_item.old_base_content_object, content_item
+                    cast(ContentTypes, content_item.old_base_content_object),
+                    content_item,
                 )
             )
         ]

@@ -27,7 +27,9 @@ class NoRemovedIntegrationParametersValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(", ".join(map(repr, difference))),
+                message=self.error_message.format(
+                    ", ".join(map(repr, sorted(difference)))
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

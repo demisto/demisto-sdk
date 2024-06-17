@@ -1,0 +1,4 @@
+changes:
+- description: Added `-h` option as a short option for the `--help` flag to all the Demisto-SDK commands.
+  type: feature
+pr_number: 4350

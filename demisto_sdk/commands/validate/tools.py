@@ -37,8 +37,7 @@ def collect_all_inputs_from_inputs_section(content_item: Playbook) -> Set[str]:
     Returns:
         - A set of all inputs defined in the 'inputs' section of playbook.
     """
-    inputs: dict = content_item.data.get("inputs", {})
-    inputs_keys = [input["key"].strip() for input in inputs if input["key"]]
+    inputs_keys = [i["key"].strip() for i in content_item.inputs if i["key"]]
     return set(inputs_keys)
 
 

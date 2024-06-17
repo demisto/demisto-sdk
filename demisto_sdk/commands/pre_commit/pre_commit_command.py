@@ -675,8 +675,6 @@ def preprocess_files(
             raw_files.union(untracked_files_paths)
     elif all_files:
         raw_files = all_git_files
-
-
     else:
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -13,7 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Playbook, TestPlaybook]
+ContentTypes = Playbook
 
 
 class IsPlayBookUsingAnInstanceValidator(BaseValidator[ContentTypes]):

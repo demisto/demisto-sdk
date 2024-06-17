@@ -84,10 +84,6 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
             )
 
     @property
-    def inputs(self) -> Optional[List]:
-        return get_value(self.yml_data, self.field_mapping.get("inputs", ""), [])
-
-    @property
     def quiet(self) -> bool:
         return get_value(self.yml_data, self.field_mapping.get("quiet", ""), False)
 

@@ -15,15 +15,11 @@ ContentTypes = Playbook
 
 class IsValidTaskIdValidator(BaseValidator[ContentTypes]):
     error_code = "PB108"
-    description = "Validate that the task ID and the 'id' under the 'task' field are from UUID format"
-    rationale = ""
-    error_message = (
-        "On task: {0},  the field 'taskid': {1} and the 'id' under the 'task' field: {2}, must be from "
-        "uuid format."
-    )
+    description = "Validate that the task ID and the 'id' under the 'task' field are from UUID format."
+    rationale = "Validate that the task ID and the 'id' under the 'task' field are from UUID format."
+    error_message = "This playbook has tasks with invalid 'taskid' or invalid 'id' under the 'task' field."
     related_field = "taskid"
     is_auto_fixable = False
-    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         """Check whether all playbook tasks has valid taskid and the 'id' under the 'task' field is valid as well.
@@ -35,19 +31,23 @@ class IsValidTaskIdValidator(BaseValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for content_item in content_items:
             invalid_tasks = self.invalid_tasks(content_item.tasks)
+            tasks_error_message = self.error_message
             for task_id in invalid_tasks:
-                taskid = invalid_tasks[task_id].taskid
-                inner_id = invalid_tasks[task_id].task.id
+                tasks_error_message = (
+                    f"{tasks_error_message}\nTask {task_id} has invalid UUIDs in the fields "
+                    f"{invalid_tasks[task_id]}."
+                )
+            if invalid_tasks:
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(task_id, taskid, inner_id),
+                        message=tasks_error_message,
                         content_object=content_item,
                     )
                 )
         return results
 
-    def invalid_tasks(self, tasks: dict[str, TaskConfig]) -> dict[str, TaskConfig]:
+    def invalid_tasks(self, tasks: dict[str, TaskConfig]) -> dict[str, list]:
         """Check which tasks has invalid taskid or the 'id' under the 'task' field is invalid
         Args:
             - tasks dict[str, TaskConfig]: The playbook tasks.
@@ -59,7 +59,13 @@ class IsValidTaskIdValidator(BaseValidator[ContentTypes]):
             task = tasks[task_id]
             taskid = task.taskid
             inner_id = task.task.id
-            is_valid_task = is_string_uuid(taskid) and is_string_uuid(inner_id)
-            if not is_valid_task:
-                invalid_tasks[task_id] = task
+            is_valid_taskid = is_string_uuid(taskid)
+            is_valid_inner_id = is_string_uuid(inner_id)
+            invalid_fields = []
+            if not is_valid_taskid:
+                invalid_fields.append("taskid")
+            if not is_valid_inner_id:
+                invalid_fields.append("the 'id' under the 'task' field")
+            if invalid_fields:
+                invalid_tasks[task_id] = invalid_fields
         return invalid_tasks

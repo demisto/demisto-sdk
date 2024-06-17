@@ -1,4 +1,4 @@
 changes:
-- description: Moved PB108 to the new validate
+- description: Moved PB108 to the new validate format. The validate checks that the 'taskid' and the 'id' under the 'task' field are from UUID format.
   type: internal
 pr_number: 4359

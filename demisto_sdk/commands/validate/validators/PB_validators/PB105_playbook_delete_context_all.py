@@ -23,6 +23,12 @@ class PlaybookDeleteContextAllValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
 
     def if_delete_context_exists(self, playbook: ContentTypes):
+        """Check whether the playbook has a DeleteContext with all set to 'Yes'.
+            Args:
+                - content_items (Iterable[ContentTypes]): The content items to check.
+            Return:
+                - True if playbook has a DeleteContext with all set to 'Yes' and False otherwise.
+        """
         tasks = playbook.tasks
         for task in tasks.values():
             curr_task = task.get("task", {})

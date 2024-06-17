@@ -7,6 +7,10 @@ from demisto_sdk.commands.validate.validators.RP_validators.RP101_expiration_fie
     ExpirationFieldIsNumericValidator,
 )
 
+from demisto_sdk.commands.validate.validators.RP_validators.RP103_is_valid_indicator_type_id import (
+    IsValidIndicatorTypeId,
+)
+
 
 @pytest.mark.parametrize(
     "expected_number_of_failures, content_items, expected_msgs",
@@ -14,21 +18,21 @@ from demisto_sdk.commands.validate.validators.RP_validators.RP101_expiration_fie
         (0, [create_indicator_type_object()], []),
         (0, [create_indicator_type_object(["expiration"], [0])], []),
         (
-            2,
-            [
-                create_indicator_type_object(["expiration"], [0]),
-                create_indicator_type_object(["expiration"], [-1]),
-                create_indicator_type_object(["expiration"], ["1"]),
-            ],
-            [
-                "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
-                "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
-            ],
+                2,
+                [
+                    create_indicator_type_object(["expiration"], [0]),
+                    create_indicator_type_object(["expiration"], [-1]),
+                    create_indicator_type_object(["expiration"], ["1"]),
+                ],
+                [
+                    "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
+                    "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
+                ],
         ),
     ],
 )
 def test_ExpirationFieldIsNumericValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+        content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -48,6 +52,50 @@ def test_ExpirationFieldIsNumericValidator_is_valid(
         - Case 3: Should fail object two and three.
     """
     results = ExpirationFieldIsNumericValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "expected_number_of_failures, content_items, expected_msgs",
+    [
+        (0, [create_indicator_type_object()], []),
+        (0, [create_indicator_type_object(["id"], ["test"])], []),
+        (
+                1,
+                [
+                    create_indicator_type_object(["id"], ["test"]),
+                    create_indicator_type_object(["id"], ["test-not-equal"]),
+                ],
+                [
+                    "id field contain invalid value.",
+                ],
+        ),
+    ],
+)
+def test_IsValidIndicatorTypeId(content_items, expected_number_of_failures, expected_msgs):
+    """
+    Given
+    content_items iterables.
+        - Case 1: One indicator_type with id = 'urlRep'.
+        - Case 2: One indicator_type with id = test.
+        - Case 3: Two indicator_type objects:
+            - One indicator_type with id = test.
+            - One indicator_type with id = test-not-equal.
+    When
+    - Calling the IsValidIndicatorTypeId is valid function.
+    Then
+        - Make sure the right amount of failures return.
+        - Case 1: Shouldn't fail anything.
+        - Case 2: Shouldn't fail anything.
+        - Case 3: Should fail object two.
+    """
+    results = IsValidIndicatorTypeId().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [

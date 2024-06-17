@@ -13,41 +13,46 @@ from demisto_sdk.commands.validate.tools import (
     [
         (
             create_playbook_object(
-                paths=["tasks"],
-                values=[
-                    {"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}}
-                ],
+                paths=["tasks.0.task.key", "tasks.1.task.key"],
+                values=[{"inputs.hello": "test"}, {"inputs.example": "test"}],
             ),
-            {"hello: test", "example: test"},
+            {
+                "Systems",
+                "Comments",
+                "Timeout",
+                "File",
+                "hello: test",
+                "example: test",
+                "ReportFileType",
+            },
         ),
         (
             create_playbook_object(
-                paths=["tasks"],
-                values=[{"0": {"inputs": "test"}, "1": {"inputs": "test2"}}],
+                paths=["tasks.0.task.key", "tasks.1.task.key"],
+                values=[{"inputs": "test"}, {"inputs": "test2"}],
             ),
-            set(),
+            {"Systems", "File", "ReportFileType", "Timeout", "Comments"},
         ),
     ],
 )
 def test_collect_all_inputs_in_use(content_item, expected_result):
     """
     Given:
-        - A playbook with inputs in some tasks
+        - A playbook with inputs in certain tasks
           Case 1:
-            The inputs for the first task are 'inputs.hello: test'
-            The inputs for the second task are 'inputs.example: test'
+            The first task input is: 'inputs.hello: test'
+            The second task input is: 'inputs.example: test'
           Case 2:
-            The inputs for the first task are 'inputs: test'
-            The inputs for the second task are 'inputs: test2'
+            The first task input is: 'inputs: test'
+            The second task input is: 'inputs: test2'
     When:
         - Running collect_all_inputs_in_use
     Then:
-        - Return a set of input names and values from any task in the playbook, if the inputs match the pattern inputs.<input_name>
-        Case 1: The results should be A set object containing:
+        - It should return a set of input names and values from any task in the playbook, provided the inputs match the pattern: inputs.<input_name>
+        Case 1: The output should be a set object containing all default task inputs and the newly added inputs:
             'hello: test'
-           'example: test'
-        Case 2: The results should be:
-            An empty set object. (Because the inputs are not in the pattern inputs.<input_name>)
+            'example: test'
+        Case 2: The output should be: Only the default inputs, as the inputs do not match the pattern inputs.<input_name>)
     """
     assert collect_all_inputs_in_use(content_item) == expected_result
 

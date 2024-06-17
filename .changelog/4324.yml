@@ -1,0 +1,4 @@
+changes:
+- description: Modified the RM108 validation to follow the new validation format.
+  type: internal
+pr_number: 4275

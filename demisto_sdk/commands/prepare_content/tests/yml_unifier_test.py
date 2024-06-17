@@ -277,6 +277,70 @@ def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
     )
 
 
+@pytest.mark.parametrize(
+    "display_name, support_level, expected_name",
+    (
+        ("Cymulate v2", "partner", "Cymulate v2 (Partner Contribution)"),
+        (
+            "Cymulate v2 (Partner Contribution)",
+            "partner",
+            "Cymulate v2 (Partner Contribution)",
+        ),
+        ("Cymulate v2", "xsoar", "Cymulate v2"),
+        ("Cymulate v2", None, "Cymulate v2"),
+        ("Cymulate v2", "community", "Cymulate v2 (Community Contribution)"),
+        (None, "community", None),
+        ("", "community", ""),
+    ),
+)
+def test_get_display_name(display_name, support_level, expected_name):
+    """
+    Given:
+        - Current display name and pack support level
+
+    When:
+        - Enhancing the integration yml display name to also hold the support level
+
+    Then:
+        - The returned display name holds the expected support level suffix
+    """
+    assert (
+        IntegrationScriptUnifier.get_display_name(display_name, support_level)
+        == expected_name
+    )
+
+
+@pytest.mark.parametrize(
+    "display_name, support_level, expected_name",
+    (
+        ("Cymulate v2 (Partner Contribution)", "partner", "Cymulate v2"),
+        ("Cymulate v2 (Partner Contribution)", "partner", "Cymulate v2"),
+        ("Cymulate v2", "xsoar", "Cymulate v2"),
+        ("Cymulate v2", None, "Cymulate v2"),
+        ("Cymulate v2 (Community Contribution)", "community", "Cymulate v2"),
+        (None, "community", None),
+        ("", "community", ""),
+    ),
+)
+def test_remove_support_from_display_name(display_name, support_level, expected_name):
+    """
+    Given:
+        - Current display name and pack support level
+
+    When:
+        - Removing the support level from the integration display name to hold the
+
+    Then:
+        - The returned display name doesn't hold the support level suffix
+    """
+    assert (
+        IntegrationScriptUnifier.remove_support_from_display_name(
+            display_name, support_level
+        )
+        == expected_name
+    )
+
+
 def test_get_integration_doc_link_positive(tmp_path):
     """
     Given:

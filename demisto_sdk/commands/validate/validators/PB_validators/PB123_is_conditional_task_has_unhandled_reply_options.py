@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import PlaybookTaskType
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -61,12 +62,12 @@ class IsAskConditionHasUnhandledReplyOptionsValidator(BaseValidator[ContentTypes
         unhandled_conditions = {}
         tasks = playbook.tasks
         for task in tasks.values():
-            if task.get("type") == "condition" and task.get("message"):
-                next_tasks: dict = task.get("nexttasks", {})
+            if task.type == PlaybookTaskType.CONDITION and task.message:
+                next_tasks: dict = task.nexttasks or {}
 
                 # ADD all replyOptions to unhandled_reply_options (UPPER)
                 unhandled_reply_options = set(
-                    map(str.upper, task.get("message", {}).get("replyOptions", []))
+                    map(str.upper, task.message.get("replyOptions", []))
                 )
 
                 # Rename the keys in dictionary to upper case
@@ -92,6 +93,6 @@ class IsAskConditionHasUnhandledReplyOptionsValidator(BaseValidator[ContentTypes
                         len(unhandled_reply_options) == 1
                         and "#DEFAULT#" in next_tasks_upper
                     ):
-                        unhandled_conditions[task.get("id")] = unhandled_reply_options
+                        unhandled_conditions[task.id] = unhandled_reply_options
 
         return unhandled_conditions

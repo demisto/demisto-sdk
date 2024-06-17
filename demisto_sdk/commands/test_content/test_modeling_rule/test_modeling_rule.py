@@ -1380,7 +1380,11 @@ def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optiona
 
 @app.command(
     no_args_is_help=True,
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    context_settings={
+        "allow_extra_args": True,
+        "ignore_unknown_options": True,
+        "help_option_names": ["-h", "--help"],
+    },
 )
 def test_modeling_rule(
     ctx: typer.Context,

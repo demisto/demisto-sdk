@@ -3642,7 +3642,9 @@ def exit_from_program(result=0, **kwargs):
 
 
 # ====================== Pre-Commit ====================== #
-pre_commit_app = typer.Typer(name="Pre-Commit")
+pre_commit_app = typer.Typer(
+    name="Pre-Commit", context_settings={"help_option_names": ["-h", "--help"]}
+)
 
 
 @pre_commit_app.command()
@@ -3783,7 +3785,10 @@ main.add_command(typer.main.get_command(pre_commit_app), "pre-commit")
 
 # ====================== modeling-rules command group ====================== #
 modeling_rules_app = typer.Typer(
-    name="modeling-rules", hidden=True, no_args_is_help=True
+    name="modeling-rules",
+    hidden=True,
+    no_args_is_help=True,
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
 modeling_rules_app.command("test", no_args_is_help=True)(
     test_modeling_rule.test_modeling_rule
@@ -3795,7 +3800,9 @@ typer_click_object = typer.main.get_command(modeling_rules_app)
 main.add_command(typer_click_object, "modeling-rules")
 
 app_generate_modeling_rules = typer.Typer(
-    name="generate-modeling-rules", no_args_is_help=True
+    name="generate-modeling-rules",
+    no_args_is_help=True,
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
 app_generate_modeling_rules.command("generate-modeling-rules", no_args_is_help=True)(
     generate_modeling_rules.generate_modeling_rules
@@ -3807,7 +3814,12 @@ main.add_command(typer_click_object2, "generate-modeling-rules")
 
 # ====================== graph command group ====================== #
 
-graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
+graph_cmd_group = typer.Typer(
+    name="graph",
+    hidden=True,
+    no_args_is_help=True,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 graph_cmd_group.command("create", no_args_is_help=False)(create)
 graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
@@ -3817,7 +3829,9 @@ main.add_command(typer.main.get_command(graph_cmd_group), "graph")
 
 # ====================== Xsoar-Lint ====================== #
 
-xsoar_linter_app = typer.Typer(name="Xsoar-Lint")
+xsoar_linter_app = typer.Typer(
+    name="Xsoar-Lint", context_settings={"help_option_names": ["-h", "--help"]}
+)
 
 
 @xsoar_linter_app.command(
@@ -3849,7 +3863,9 @@ main.add_command(typer.main.get_command(xsoar_linter_app), "xsoar-lint")
 
 # ====================== export ====================== #
 
-export_app = typer.Typer(name="dump-api")
+export_app = typer.Typer(
+    name="dump-api", context_settings={"help_option_names": ["-h", "--help"]}
+)
 
 
 @export_app.command(

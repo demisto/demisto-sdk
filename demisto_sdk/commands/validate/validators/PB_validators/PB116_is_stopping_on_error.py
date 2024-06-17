@@ -12,6 +12,16 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Playbook
 
 
+def is_indicator_pb(playbook: Playbook):
+    return any(
+        (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators" for i in playbook.data.get("inputs", {})
+    )
+
+
+def does_playbook_continue_on_error(playbook: Playbook):
+    return any(task.continueonerror for task in playbook.tasks.values())
+
+
 class IsStoppingOnErrorValidator(BaseValidator[ContentTypes]):
     error_code = "PB116"
     description = "The validation checks that all playbook tasks stop when encountering an error."
@@ -29,5 +39,5 @@ class IsStoppingOnErrorValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if any(task.continueonerror for task in content_item.tasks.values())
+            if is_indicator_pb(content_item) and does_playbook_continue_on_error(content_item)
         ]

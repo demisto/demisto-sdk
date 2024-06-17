@@ -227,9 +227,28 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
 
-def test_IsStoppingOnError_valid():
-    playbook = create_playbook_object()
-    assert not IsStoppingOnErrorValidator().is_valid([playbook])
+
+def test_indicator_pb_must_stop_on_error():
+    """
+    Given: A pb with queryEntity indicators
+    When: Playbook stops on error
+    Then: Validation should pass
+    """
+    playbook = create_playbook_object(
+        ["inputs"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+        ],
+    )
+    res = IsStoppingOnErrorValidator().is_valid([playbook])
+    assert len(res) == 0
     playbook.tasks = {
         "0": TaskConfig(
             **{
@@ -242,11 +261,24 @@ def test_IsStoppingOnError_valid():
             }
         )
     }
-    assert not IsStoppingOnErrorValidator().is_valid([playbook])
+    res = IsStoppingOnErrorValidator().is_valid([playbook])
+    assert len(res) == 0
 
 
-def test_IsStoppingOnError_invalid():
-    playbook = create_playbook_object()
+def test_indicator_pb_must_stop_on_error_invalid():
+    playbook = create_playbook_object(
+        ["inputs"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+        ],
+    )
     playbook.tasks = {
         "0": TaskConfig(
             **{
@@ -262,4 +294,4 @@ def test_IsStoppingOnError_invalid():
         )
     }
     res = IsStoppingOnErrorValidator().is_valid([playbook])
-    assert res
+    assert len(res) == 1

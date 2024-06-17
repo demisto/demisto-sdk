@@ -2139,6 +2139,7 @@ XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
 XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
+MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 STRING_TO_BOOL_MAP = {

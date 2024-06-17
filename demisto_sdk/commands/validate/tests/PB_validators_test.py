@@ -90,6 +90,15 @@ def test_is_valid_all_inputs_in_use(content_item, expected_result):
 
 
 def test_using_input_not_provided():
+    """
+    Given:
+        inputs 2 and
+    When:
+        using input 3
+    Then:
+        Will fail on input 3 (and other defaults from test config)
+
+    """
     playbook = create_playbook_object(
         paths=["inputs", "tasks.0.task.key"],
         values=[
@@ -109,11 +118,29 @@ def test_using_input_not_provided():
 
 
 def test_playbook_quiet_mode_regular_playbook_pass():
+    """
+    Given:
+        A regular pb with quiet mode false
+    When:
+        Calling Validate
+    Then:
+        The validation shouldnt fail
+
+    """
     playbook = create_playbook_object(["quiet"], [False])
     assert PlaybookQuietModeValidator().is_valid([playbook]) == []
 
 
 def test_indicator_pb_must_be_quiet():
+    """
+    Given:
+        A pb with queryEntity indicators
+    When:
+        in quiet mode
+    Then:
+        The validation should fail
+
+    """
     playbook = create_playbook_object(
         ["inputs", "quiet"],
         [

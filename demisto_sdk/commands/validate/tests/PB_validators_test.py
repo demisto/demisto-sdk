@@ -11,6 +11,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB101_is_playbook_ha
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB114_playbook_quiet_mode import (
+    PlaybookQuietModeValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
@@ -81,6 +84,31 @@ def test_is_valid_all_inputs_in_use(content_item, expected_result):
         if isinstance(expected_result, list)
         else result[0].message == expected_result
     )
+
+
+def test_playbook_quiet_mode_regular_playbook_pass():
+    playbook = create_playbook_object(["quiet"], [False])
+    assert PlaybookQuietModeValidator().is_valid([playbook]) == []
+
+
+def test_indicator_pb_must_be_quiet():
+    playbook = create_playbook_object(
+        ["inputs", "quiet"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            False,
+        ],
+    )
+    result = PlaybookQuietModeValidator().is_valid([playbook])
+    assert len(result) == 1
+    assert result[0].message == "this is my error"
 
 
 @pytest.mark.parametrize(
@@ -187,7 +215,6 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
 
 
 def test_IsAskConditionHasUnreachableConditionValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
     playbook.tasks = {
@@ -206,7 +233,6 @@ def test_IsAskConditionHasUnreachableConditionValidator():
 
 
 def test_IsAskConditionHasUnhandledReplyOptionsValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
     playbook.tasks = {

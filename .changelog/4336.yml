@@ -1,6 +1,6 @@
 changes:
-- description: Changed test-pre-commit-command validate hook to run only BA100 validation.
+- description: Modified the test-pre-commit-command validate hook to run only BA100 validation.
   type: internal
-- description: demist-sdk lint command is deprecated and should be fully removed from the SDK on September 1st. Please use the pre-commit command instead.
+- description: demist-sdk **lint** command is deprecated and should be fully removed from the SDK on September 1st. Please use the **pre-commit** command instead.
   type: breaking
 pr_number: 4336

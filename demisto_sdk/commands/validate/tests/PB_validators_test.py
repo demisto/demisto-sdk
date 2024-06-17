@@ -220,7 +220,7 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
 
 
-def test_PlaybookDeleteContextAllValidator_invalid():
+def test_PlaybookDeleteContextAllValidator():
     """
         Given:
         - A playbook with valid tasks, with DeleteContext with all set to 'Yes'
@@ -232,6 +232,7 @@ def test_PlaybookDeleteContextAllValidator_invalid():
         - The playbook is invalid
     """
     playbook = create_playbook_object()
+    assert PlaybookDeleteContextAllValidator().is_valid([playbook])
     playbook.tasks = {
         "0": {
             'id': '1',
@@ -249,29 +250,3 @@ def test_PlaybookDeleteContextAllValidator_invalid():
                        " https://xsoar.pan.dev/docs/playbooks/playbooks-overview#inputs-and-outputs")
 
     assert PlaybookDeleteContextAllValidator().is_valid([playbook])[0].message == expected_result
-
-
-def test_PlaybookDeleteContextAllValidator_valid():
-    """
-        Given:
-        - A playbook with valid tasks, without DeleteContext with all set to 'Yes'
-
-        When:
-        - calling PlaybookDeleteContextAllValidator.is_valid.
-
-        Then:
-        - The playbook is valid
-    """
-    playbook = create_playbook_object()
-    playbook.tasks = {
-        "0": {
-            'id': '1',
-             'taskid': '99ad564d-0b17-45c4-8a20-bbc8dd6f3e7c',
-             'type': 'regular',
-             'task': {'id': 'task-id',
-                      'name': 'DeleteContext',
-                      'scriptName': 'DeleteContext'},
-             'scriptarguments': {'all': {'simple': 'no'}, 'key': {'simple': 'key'}},
-        }
-    }
-    assert PlaybookDeleteContextAllValidator().is_valid([playbook])

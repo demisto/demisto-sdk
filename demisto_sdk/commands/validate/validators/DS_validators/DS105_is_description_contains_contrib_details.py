@@ -18,7 +18,7 @@ ContentTypes = Integration
 class IsDescriptionContainsContribDetailsValidator(BaseValidator[ContentTypes]):
     error_code = "DS105"
     description = "check if DESCRIPTION file contains contribution details"
-    rationale = ""
+    rationale = "the contribution/partner details will be generated automatically and we don't want should be duplicate"
     error_message = ("Description file contains contribution/partner details that will be generated "
                      "automatically when the upload command is performed.\n"
                      "Delete any details related to contribution/partner ")

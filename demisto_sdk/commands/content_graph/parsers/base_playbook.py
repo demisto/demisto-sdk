@@ -53,7 +53,9 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"object_id": "id", "tasks": "tasks"})
+        super().field_mapping.update(
+            {"object_id": "id", "tasks": "tasks", "inputs": "inputs", "quiet": "quiet"}
+        )
         return super().field_mapping
 
     def is_mandatory_dependency(self, task_id: str) -> bool:
@@ -83,11 +85,11 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
 
     @property
     def inputs(self) -> Optional[List]:
-        return get_value(self.yml_data, 'inputs', [])
+        return get_value(self.yml_data, self.field_mapping.get("inputs", ""), [])
 
     @property
     def quiet(self) -> bool:
-        return get_value(self.yml_data, 'quiet', False)
+        return get_value(self.yml_data, self.field_mapping.get("quiet", ""), False)
 
     @property
     def tasks(self) -> Optional[Dict]:

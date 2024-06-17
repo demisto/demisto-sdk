@@ -50,6 +50,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC110_new_required_a
 from demisto_sdk.commands.validate.validators.BC_validators.BC111_new_required_argument_script import (
     NewRequiredArgumentScriptValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC112_no_removed_integration_parameters import (
+    NoRemovedIntegrationParametersValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 ALL_MARKETPLACES = list(MarketplaceVersions)
@@ -1324,3 +1327,52 @@ def test_NewRequiredArgumentScriptValidator__passes(new_args):
 
     create_old_file_pointers([new_content_item], [old_content_item])
     assert not NewRequiredArgumentScriptValidator().is_valid([new_content_item])
+
+
+def test_has_removed_integration_parameters_with_changed_params():
+    """
+    Given
+    - integration configuration with changed parameters.
+
+    When
+    - running the validation no_removed_integration_parameters.
+
+    Then
+    - return a ValidationResult with a list of missing parameters.
+    """
+    new_item = create_integration_object(
+        paths=['configuration'],
+        values=[[{'name': 'param_3'}, {'name': 'param_4'}]] )
+    new_item.old_base_content_object = create_integration_object(
+        paths=['configuration'],
+        values=[[{'name': 'param_1'}, {'name': 'param_2'}, {'name': 'param_3'}]]
+    )
+
+    res = NoRemovedIntegrationParametersValidator().is_valid([new_item])
+
+    assert res[0].message == "Parameters have been removed from the integration, the removed parameters are: 'param_2', 'param_1'."
+
+
+def test_has_removed_integration_parameters_without_changed_params():
+    """
+    Given
+    - integration configuration with no changed parameters.
+
+    When
+    - running the validation no_removed_integration_parameters.
+
+    Then
+    - return an empty list.
+    """
+    new_item = create_integration_object(
+        paths=['configuration'],
+        values=[[{'name': 'param_1'}, {'name': 'param_2'}]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=['configuration'],
+        values=[[{'name': 'param_1'}, {'name': 'param_2'}]]
+    )
+
+    res = NoRemovedIntegrationParametersValidator().is_valid([new_item])
+
+    assert res == []

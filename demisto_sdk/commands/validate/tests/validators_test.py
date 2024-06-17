@@ -440,7 +440,7 @@ def test_should_run(validator, expected_results):
         - Case 3: Should return False.
     """
     assert expected_results == validator.should_run(
-        INTEGRATION, [], {}, execution_mode=ExecutionMode.USE_GIT
+        INTEGRATION, [], {}, running_execution_mode=ExecutionMode.USE_GIT
     )
 
 

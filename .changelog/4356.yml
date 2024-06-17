@@ -1,0 +1,5 @@
+changes:
+- description: Converted the PB105 validation to the new format.
+               The validation verifies the playbook doesn't contain deleteContext with all=Yes.
+  type: feature
+pr_number: 4356

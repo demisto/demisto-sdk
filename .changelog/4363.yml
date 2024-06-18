@@ -1,0 +1,4 @@
+changes:
+- description: Added PB122 to the new validation format. Validate whether branches of built-in conditional tasks are handled properly.
+  type: internal
+pr_number: 4363

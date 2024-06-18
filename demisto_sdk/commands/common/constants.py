@@ -821,6 +821,8 @@ INCIDENT_FIELD_FILE_NAME_REGEX = r"incidentfield-.*\.json"
 
 LAYOUT_FILE_NAME__REGEX = r"layout.*\.json"
 
+VALID_INDICATOR_TYPE = "^[A-Za-z0-9_& ]*$"
+
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"

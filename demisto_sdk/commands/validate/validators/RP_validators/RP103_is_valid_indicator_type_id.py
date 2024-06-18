@@ -1,7 +1,7 @@
 from __future__ import annotations
 import re
 from typing import Iterable, List
-
+from demisto_sdk.commands.common.constants import VALID_INDICATOR_TYPE
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -11,9 +11,8 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = IndicatorType
 
-# Valid indicator type can include letters, numbers whitespaces, ampersands and underscores.
-VALID_INDICATOR_TYPE = "^[A-Za-z0-9_& ]*$"
 
+# Valid indicator type can include letters, numbers whitespaces, ampersands and underscores.
 
 class IsValidIndicatorTypeId(BaseValidator[ContentTypes]):
     error_code = "RP103"

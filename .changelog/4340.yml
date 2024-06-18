@@ -1,0 +1,4 @@
+changes:
+- description: Added the PB103 to the new validation format. Validate whether there is an unconnected task.
+  type: internal
+pr_number: 4340

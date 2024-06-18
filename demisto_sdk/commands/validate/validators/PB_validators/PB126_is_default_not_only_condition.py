@@ -15,11 +15,11 @@ ContentTypes = Playbook
 class IsDefaultNotOnlyConditionValidator(BaseValidator[ContentTypes]):
     error_code = "PB126"
     description = (
-        "Ensure that conditional tasks have an execution path besides for the default"
+        "Ensure that conditional tasks have an execution path besides for the default."
     )
     rationale = (
         "We want to ensure that conditional tasks have more than path which is not the default one o/w it "
-        "make no sense to have such"
+        "make no sense to have such."
     )
     error_message = (
         "The following playbook conditional tasks only have a default option: {}. Please remove these tasks or add "

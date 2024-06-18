@@ -241,45 +241,42 @@ def test_IsPlayBookUsingAnInstanceValidator_is_valid():
         Case 2: The playbook is invalid
     """
     # Case 1
-    playbook_valid = create_playbook_object()
-    results_valid = IsPlayBookUsingAnInstanceValidator().is_valid([playbook_valid])
+    valid_playbook = create_playbook_object()
+    valid_result = IsPlayBookUsingAnInstanceValidator().is_valid([valid_playbook])
 
     # Case 2
-    playbook_invalid = create_playbook_object()
-    for _, task in playbook_invalid.tasks.items():
-        scriptargs = task.scriptarguments or {}
-        scriptargs.update({"using": "instance_name"})
-    results_invalid = IsPlayBookUsingAnInstanceValidator().is_valid([playbook_invalid])
+    invalid_playbook = create_playbook_object()
+    for _, task in invalid_playbook.tasks.items():
+        task.scriptarguments = {"using": "instance_name"}
+    results_invalid = IsPlayBookUsingAnInstanceValidator().is_valid([invalid_playbook])
 
-    assert not results_valid
-    assert results_invalid
+    assert valid_result == []
+    assert results_invalid != []
 
 
 def test_IsPlayBookUsingAnInstanceValidator_fix():
     """
     Given:
     - A playbook
-        Case 1: The playbook is valid.
-        Case 2: The playbook isn't valid, it will be fixed.
+        Case 1: The playbook isn't valid, it will be fixed.
     When:
     - calling IsPlayBookUsingAnInstanceValidator.fix.
     Then:
-    - The results should be as expected:
-        Case 1: The playbook is valid
-        Case 2: The playbook is invalid
+    - The message appears with the invalid tasks.
     """
+
     # Case 1
-    playbook_valid = create_playbook_object()
-    results_valid = IsPlayBookUsingAnInstanceValidator().fix(playbook_valid)
-
-    # Case 2
-    playbook_invalid = create_playbook_object()
-    for _, task in playbook_invalid.tasks.items():
-        scriptargs = task.scriptarguments or {}
-        scriptargs.update({"using": "instance_name"})
-    results_invalid = IsPlayBookUsingAnInstanceValidator().fix(playbook_invalid)
-
-    # Case 1 assertion.
-    assert playbook_valid == results_valid
-    # Case 2 assertion.
-    assert results_invalid.message == "The using instance from the playbook was removed"
+    invalid_playbook = create_playbook_object()
+    for _, task in invalid_playbook.tasks.items():
+        task.scriptarguments = {"using": "instance_name"}
+    validator_invalid_playbook = IsPlayBookUsingAnInstanceValidator()
+    validator_invalid_playbook.invalid_tasks[invalid_playbook.name] = [
+        task for task in invalid_playbook.tasks.values()
+    ]
+    fix_message = validator_invalid_playbook.fix(invalid_playbook).message
+    expected_message = (
+        "The 'using' statements from the playbook for tasks: {0} were removed".format(
+            ", ".join([task.taskid for task in invalid_playbook.tasks.values()])
+        )
+    )
+    assert fix_message == expected_message

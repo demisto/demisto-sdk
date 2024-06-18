@@ -178,7 +178,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         Returns:
             str: Error if headers are invalid, or an empty string if all headers are valid.
         """
-        invalid_headers: List[str] = []
+        invalid_headers: List[Any] = []
         headers = self.extract_rn_headers(content_item.release_note.file_content)
         invalid_headers_type: List[str] = [
             header_type

@@ -5,11 +5,13 @@ from typing import Any, Dict, Iterable, List, Set, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     CONTENT_ITEM_SECTION_REGEX,
-    CONTENT_TYPE_BY_RN_HEADER,
     CONTENT_TYPE_SECTION_REGEX,
     RN_HEADER_BY_FILE_TYPE,
 )
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import (
+    CONTENT_TYPE_BY_RN_HEADER,
+    ContentType,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType

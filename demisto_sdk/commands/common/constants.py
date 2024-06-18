@@ -302,50 +302,6 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT: "Case Layouts",
 }
 
-RN_HEADER_BY_CONTENT_TYPE = {
-    ContentType.PLAYBOOK: "Playbooks",
-    ContentType.INTEGRATION: "Integrations",
-    ContentType.SCRIPT: "Scripts",
-    ContentType.INCIDENT_FIELD: "Incident Fields",
-    ContentType.INDICATOR_FIELD: "Indicator Fields",
-    ContentType.INCIDENT_TYPE: "Incident Types",
-    ContentType.CLASSIFIER: "Classifiers",
-    # ContentType.LAYOUTS_CONTAINER: "Layouts", #check
-    ContentType.LAYOUT: "Layouts",
-    ContentType.REPORT: "Reports",
-    ContentType.WIDGET: "Widgets",
-    ContentType.DASHBOARD: "Dashboards",
-    ContentType.CONNECTION: "Connections",
-    ContentType.MAPPER: "Mappers",
-    ContentType.PREPROCESS_RULE: "PreProcess Rules",  # todo
-    ContentType.GENERIC_DEFINITION: "Objects",
-    ContentType.GENERIC_MODULE: "Modules",
-    ContentType.GENERIC_TYPE: "Object Types",
-    ContentType.GENERIC_FIELD: "Object Fields",
-    ContentType.LIST: "Lists",
-    ContentType.JOB: "Jobs",
-    ContentType.PARSING_RULE: "Parsing Rules",
-    ContentType.MODELING_RULE: "Modeling Rules",
-    # ContentType.MODELING_RULE_SCHEMA: "Modeling Rules Schema", # todo
-    ContentType.CORRELATION_RULE: "Correlation Rules",
-    ContentType.XSIAM_DASHBOARD: "XSIAM Dashboards",
-    ContentType.XSIAM_REPORT: "XSIAM Reports",
-    ContentType.TRIGGER: "Triggers Recommendations",  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
-    ContentType.WIZARD: "Wizards",
-    ContentType.XDRC_TEMPLATE: "XDRC Templates",
-    ContentType.LAYOUT_RULE: "Layout Rules",
-    ContentType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
-    ContentType.CASE_LAYOUT_RULE: "Case Layout Rules",
-    ContentType.CASE_FIELD: "Case Fields",
-    ContentType.CASE_LAYOUT: "Case Layouts",
-}
-CONTENT_TYPE_BY_RN_HEADER = {
-    header: content_type for content_type, header in RN_HEADER_BY_CONTENT_TYPE.items()
-}
-
-FILE_TYPE_BY_RN_HEADER = {
-    header: file_type for file_type, header in RN_HEADER_BY_FILE_TYPE.items()
-}
 
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from abc import ABC
 from typing import Any, Dict, Iterable, List, Set, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
@@ -26,7 +27,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Pack
 
 
-class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
+class ReleaseNoteHeaderValidator(BaseValidator, ABC):
     error_code = "RN114"
     description = (
         "Validate the 2nd headers (the content items) are exists in the pack and having the right display"
@@ -49,12 +50,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(
-                    content_type=f"The content header(s) type are invalid:"
-                    f' {", ".join(invalid_headers[0])}',
-                    content_item=f"those are the items:"
-                    f' {", ".join(invalid_headers[1])}',
-                ),
+                message=self.error_message.format(" ,".join(invalid_headers)),
                 content_object=content_item,
             )
             for content_item in content_items
@@ -176,24 +172,6 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             content_item: The content item to validate.
 
         Returns:
-            str: Error if headers are invalid, or an empty string if all headers are valid.
+            Array: if headers are invalid, or an empty Array if all headers are valid.
         """
-        invalid_headers: List[Any] = []
-        headers = self.extract_rn_headers(content_item.release_note.file_content)
-        invalid_headers_type: List[str] = [
-            header_type
-            for header_type in headers.keys()
-            if not self.validate_content_type_header(header_type)
-        ]
-        if invalid_headers_type:
-            invalid_headers.append(invalid_headers_type)
-        invalid_headers_content_item: List[str] = []
-        for header_type, header_content_items in headers.items():
-            invalid_items = self.validate_content_item_header(
-                header_type, header_content_items, content_item
-            )
-            if invalid_items:
-                invalid_headers_content_item.extend(invalid_items)
-        if invalid_headers_content_item:
-            invalid_headers.append(invalid_headers_content_item)
-        return invalid_headers
+        raise NotImplementedError("Subclasses must implement this method.")

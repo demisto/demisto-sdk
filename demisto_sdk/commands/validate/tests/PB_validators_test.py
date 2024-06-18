@@ -18,6 +18,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_des
 from demisto_sdk.commands.validate.validators.PB_validators.PB105_playbook_delete_context_all import (
     PlaybookDeleteContextAllValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_id import (
+    IsValidTaskIdValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
@@ -230,6 +233,61 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def create_invalid_playbook(field: str):
+    """Create an invalid playbook that has an invalid taskid or the 'id' under the 'task' field is invalid
+    Args:
+        - field str: which field to update taskid or task.id.
+    Return:
+        - a playbook object
+    """
+    playbook = create_playbook_object()
+    tasks = playbook.tasks
+    for task_id in tasks:
+        task_obj = tasks[task_id]
+        if field == "taskid":
+            task_obj.taskid = task_obj.taskid + "1234"
+        else:
+            task_obj.task.id = task_obj.task.id + "1234"
+        break
+    return playbook
+
+
+def test_IsValidTaskIdValidator(playbook):
+    """
+    Given:
+    - A playbook
+        Case 1: The playbook is valid.
+        Case 2: The playbook isn't valid, it has invalid taskid.
+        Case 3: The playbook isn't valid, the 'id' under the 'task' field is invalid.
+
+    When:
+    - calling IsValidTaskIdValidator.is_valid.
+
+    Then:
+    - The results should be as expected:
+        Case 1: The playbook is valid
+        Case 2: The playbook is invalid
+        Case 3: The playbook is invalid
+    """
+    # Case 1
+    playbook_valid = create_playbook_object()
+    results_valid = IsValidTaskIdValidator().is_valid([playbook_valid])
+
+    # Case 2
+    playbook_invalid_taskid = create_invalid_playbook("taskid")
+    results_invalid_taskid = IsValidTaskIdValidator().is_valid(
+        [playbook_invalid_taskid]
+    )
+
+    # Case 3
+    playbook_invalid_id = create_invalid_playbook("id")
+    results_invalid_id = IsValidTaskIdValidator().is_valid([playbook_invalid_id])
+
+    assert not results_valid
+    assert results_invalid_taskid
+    assert results_invalid_id
 
 
 def test_PlaybookDeleteContextAllValidator():

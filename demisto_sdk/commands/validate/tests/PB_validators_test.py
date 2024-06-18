@@ -24,6 +24,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB122_does_playbook_have_unhandled_conditions import (
+    DoesPlaybookHaveUnhandledConditionsValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
@@ -196,6 +199,88 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
         result == expected_result
         if isinstance(expected_result, list)
         else result[0].message == expected_result
+    )
+
+
+def test_does_playbook_have_unhandled_conditions__valid():
+    """
+    Given: A playbook with condition tasks.
+    When:
+    - All condition options are handled properly.
+    Then:
+    - Ensure the validation does not fail.
+    """
+    playbook = create_playbook_object()
+    playbook.tasks = {
+        "VALID__NOT_A_CONDITION": TaskConfig(
+            id="valid_0",
+            type="playbook",
+            taskid="",
+            task={"id": ""},
+        ),
+        "VALID__NO_CONDITIONS": TaskConfig(
+            id="valid_1",
+            type="condition",
+            nexttasks={"yes": ["2"]},
+            conditions=[],
+            taskid="",
+            task={"id": ""},
+        ),
+        "VALID__MULTIPLE_OPTIONS_AND_#DEFAULT#_NEXTTASK": TaskConfig(
+            id="valid_2",
+            type="condition",
+            nexttasks={"#default#": ["3"], "yes": ["4"], "no": ["5"]},
+            conditions=[{"label": "yes"}, {"label": "no"}],
+            taskid="",
+            task={"id": ""},
+        ),
+    }
+    errors = DoesPlaybookHaveUnhandledConditionsValidator().is_valid([playbook])
+    assert len(errors) == 0
+
+
+def test_does_playbook_have_unhandled_conditions__invalid():
+    """
+    Given: A playbook with condition tasks.
+    When:
+    - Some condition option are unhandled.
+    Then:
+    - Ensure the validation fails on the expected errors.
+    """
+    playbook = create_playbook_object()
+    playbook.tasks = {
+        "INVALID__LABEL_WITHOUT_NEXTTASK": TaskConfig(
+            id="invalid_0",
+            type="condition",
+            nexttasks={},
+            conditions=[{"label": "oh"}],
+            taskid="",
+            task={"id": ""},
+        ),
+        "INVALID__NEXTTASK_WITHOUT_LABEL": TaskConfig(
+            id="invalid_1",
+            type="condition",
+            nexttasks={"yes": ["4"], "oh": ["3"]},
+            conditions=[{"label": "yes"}],
+            taskid="",
+            task={"id": ""},
+        ),
+        "INVALID__MULTIPLE_HANDLED_AND_UNHANDLED_CONDITIONS": TaskConfig(
+            id="invalid_2",
+            type="condition",
+            nexttasks={"#default#": ["3"], "yes": ["4"], "no": ["5"], "hi": ["6"]},
+            conditions=[{"label": "yes"}, {"label": "no"}, {"label": "bye"}],
+            taskid="",
+            task={"id": ""},
+        ),
+    }
+    errors = DoesPlaybookHaveUnhandledConditionsValidator().is_valid([playbook])
+    assert len(errors) == len(playbook.tasks)
+    assert any(
+        "ID: invalid_2" in error.message
+        and "HI" in error.message
+        and "BYE" in error.message
+        for error in errors
     )
 
 

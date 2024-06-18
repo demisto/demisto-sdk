@@ -13,12 +13,18 @@ ContentTypes = Playbook
 
 
 def is_indicator_pb(playbook: Playbook):
+    """
+    Check if the playbook has indicators as input query.
+    """
     return any(
         (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators" for i in playbook.data.get("inputs", {})
     )
 
 
 def does_playbook_continue_on_error(playbook: Playbook):
+    """
+    Check if the playbook has tasks that continue on error.
+    """
     return any(task.continueonerror for task in playbook.tasks.values())
 
 

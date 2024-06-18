@@ -27,37 +27,37 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB116_is_stopping_on
     "content_item, expected_result",
     [
         (
-            create_playbook_object(
-                paths=["inputs", "tasks.0.task.key"],
-                values=[
-                    [{"key": "input_name1", "value": "input_value1"}],
-                    {"first_input": "inputs.input_name1"},
-                ],
-            ),
-            [],
+                create_playbook_object(
+                    paths=["inputs", "tasks.0.task.key"],
+                    values=[
+                        [{"key": "input_name1", "value": "input_value1"}],
+                        {"first_input": "inputs.input_name1"},
+                    ],
+                ),
+                [],
         ),
         (
-            create_playbook_object(
-                paths=["inputs", "tasks.0.task.key"],
-                values=[
-                    [{"key": "input_name1", "value": "input_value1"}],
-                    {
-                        "first_input": "inputs.input_name1",
-                        "second_input": "inputs.input_name2",
-                    },
-                ],
-            ),
-            [],
+                create_playbook_object(
+                    paths=["inputs", "tasks.0.task.key"],
+                    values=[
+                        [{"key": "input_name1", "value": "input_value1"}],
+                        {
+                            "first_input": "inputs.input_name1",
+                            "second_input": "inputs.input_name2",
+                        },
+                    ],
+                ),
+                [],
         ),
         (
-            create_playbook_object(
-                paths=["inputs", "tasks.0.task.key"],
-                values=[
-                    [{"key": "input_name2", "value": "input_value2"}],
-                    {"first_input": "inputs.input_name1"},
-                ],
-            ),
-            "The playbook 'Detonate File - JoeSecurity V2' contains the following inputs that are not used in any of its tasks: input_name2",
+                create_playbook_object(
+                    paths=["inputs", "tasks.0.task.key"],
+                    values=[
+                        [{"key": "input_name2", "value": "input_value2"}],
+                        {"first_input": "inputs.input_name1"},
+                    ],
+                ),
+                "The playbook 'Detonate File - JoeSecurity V2' contains the following inputs that are not used in any of its tasks: input_name2",
         ),
     ],
 )
@@ -91,22 +91,22 @@ def test_is_valid_all_inputs_in_use(content_item, expected_result):
     "content_item, expected_result",
     [
         (
-            create_playbook_object(),
-            [],
+                create_playbook_object(),
+                [],
         ),
         (
-            create_playbook_object(
-                paths=["rolename"],
-                values=[[]],
-            ),
-            [],
+                create_playbook_object(
+                    paths=["rolename"],
+                    values=[[]],
+                ),
+                [],
         ),
         (
-            create_playbook_object(
-                paths=["rolename"],
-                values=[["Administrator"]],
-            ),
-            "The playbook 'Detonate File - JoeSecurity V2' can not have a rolename, please remove the field.",
+                create_playbook_object(
+                    paths=["rolename"],
+                    values=[["Administrator"]],
+                ),
+                "The playbook 'Detonate File - JoeSecurity V2' can not have a rolename, please remove the field.",
         ),
     ],
 )
@@ -140,27 +140,27 @@ def test_is_no_rolename(content_item, expected_result):
     "content_item, expected_result",
     [
         (
-            create_playbook_object(
-                paths=["deprecated", "description"],
-                values=[True, "Deprecated. Use <PLAYBOOK_NAME> instead."],
-            ),
-            [],
+                create_playbook_object(
+                    paths=["deprecated", "description"],
+                    values=[True, "Deprecated. Use <PLAYBOOK_NAME> instead."],
+                ),
+                [],
         ),
         (
-            create_playbook_object(
-                paths=["deprecated", "description"],
-                values=[True, "Deprecated. <REASON> No available replacement."],
-            ),
-            [],
+                create_playbook_object(
+                    paths=["deprecated", "description"],
+                    values=[True, "Deprecated. <REASON> No available replacement."],
+                ),
+                [],
         ),
         (
-            create_playbook_object(
-                paths=["deprecated", "description"],
-                values=[True, "Not a valid description"],
-            ),
-            "The deprecated playbook 'Detonate File - JoeSecurity V2' has invalid description.\nThe description of "
-            'all deprecated playbooks should follow one of the formats:\n1. "Deprecated. Use <PLAYBOOK_NAME> '
-            'instead."\n2. "Deprecated. <REASON> No available replacement."',
+                create_playbook_object(
+                    paths=["deprecated", "description"],
+                    values=[True, "Not a valid description"],
+                ),
+                "The deprecated playbook 'Detonate File - JoeSecurity V2' has invalid description.\nThe description of "
+                'all deprecated playbooks should follow one of the formats:\n1. "Deprecated. Use <PLAYBOOK_NAME> '
+                'instead."\n2. "Deprecated. <REASON> No available replacement."',
         ),
     ],
 )
@@ -191,7 +191,6 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
 
 
 def test_IsAskConditionHasUnreachableConditionValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
     playbook.tasks = {
@@ -210,7 +209,6 @@ def test_IsAskConditionHasUnreachableConditionValidator():
 
 
 def test_IsAskConditionHasUnhandledReplyOptionsValidator():
-
     playbook = create_playbook_object()
     assert not IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
     playbook.tasks = {
@@ -249,25 +247,16 @@ def test_indicator_pb_must_stop_on_error():
     )
     res = IsStoppingOnErrorValidator().is_valid([playbook])
     assert len(res) == 0
-    playbook.tasks = {
-        "0": TaskConfig(
-            **{
-                "id": "test task",
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["1"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-            }
-        )
-    }
-    res = IsStoppingOnErrorValidator().is_valid([playbook])
-    assert len(res) == 0
 
 
 def test_indicator_pb_must_stop_on_error_invalid():
+    """
+    Given: A pb with queryEntity indicators
+    When: Playbook continues on error
+    Then: Validation should fail
+    """
     playbook = create_playbook_object(
-        ["inputs"],
+        ["inputs", "tasks.0.continueonerror"],
         [
             [
                 {
@@ -277,21 +266,8 @@ def test_indicator_pb_must_stop_on_error_invalid():
                     "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
                 }
             ],
+            True
         ],
     )
-    playbook.tasks = {
-        "0": TaskConfig(
-            **{
-                "id": "test task",
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["1"]},
-                "continueonerror": True,
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-
-            }
-        )
-    }
     res = IsStoppingOnErrorValidator().is_valid([playbook])
     assert len(res) == 1

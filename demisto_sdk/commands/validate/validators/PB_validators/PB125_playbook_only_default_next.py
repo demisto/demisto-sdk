@@ -39,15 +39,13 @@ class PlaybookOnlyDefaultNextValidator(BaseValidator[ContentTypes]):
                 ):
                     invalid_tasks.append(task_id)
 
-            if not invalid_tasks:
-                continue
-
-            validation_results.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(tasks=invalid_tasks),
-                    content_object=content_item,
+            if invalid_tasks:
+                validation_results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(tasks=invalid_tasks),
+                        content_object=content_item,
+                    )
                 )
-            )
 
         return validation_results

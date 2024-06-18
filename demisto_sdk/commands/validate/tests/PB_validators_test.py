@@ -264,19 +264,21 @@ def test_PB125_playbook_only_default_next_not_valid():
     Then:
     - The results should contain a validation error object.
     """
-    playbook = create_playbook_object()
-    playbook.tasks = {
-        "0": TaskConfig(
-            **{
-                "id": "test task",
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"#default#": ["1"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+    playbook = create_playbook_object(
+        paths=["tasks"],
+        values=[
+            {
+                "0": {
+                    "id": "test task",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"#default#": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                }
             }
-        )
-    }
+        ],
+    )
     result = PlaybookOnlyDefaultNextValidator().is_valid([playbook])
     assert result[0].message == (
         "Playbook has conditional tasks with an only default condition. Tasks IDs: ['0'].\n"

@@ -18,10 +18,10 @@ class IsPlayBookUsingAnInstanceValidator(BaseValidator[ContentTypes]):
     invalid_tasks: ClassVar[dict[str, list[TaskConfig]]] = {}
     error_code = "PB106"
     description = "Validate whether the playbook does not use an instance. If the Playbook use an instance it is not valid."
-    rationale = "If the playbook uses a specific instance it can leads to errors because not all the users have the same instance"
+    rationale = "If the playbook uses a specific instance it can leads to errors because not all the users have the same instance."
     error_message = "Playbook should not use specific instance for tasks: {0}."
-    fix_message = "The 'using' statements from the playbook for tasks: {0} were removed"
-    related_field = ""
+    fix_message = "Removed The 'using' statement from the following tasks tasks: {0}."
+    related_field = "using"
     is_auto_fixable = True
     related_file_type = [RelatedFileType.YML]
 
@@ -32,7 +32,7 @@ class IsPlayBookUsingAnInstanceValidator(BaseValidator[ContentTypes]):
         invalid_tasks: list[TaskConfig] = []
         for _, task in content_item_tasks.items():
             scriptargs = task.scriptarguments
-            if scriptargs and scriptargs.get("using", {}):
+            if scriptargs and scriptargs.get("using"):
                 invalid_tasks.append(task)
         self.invalid_tasks[content_item.name] = invalid_tasks
         return invalid_tasks

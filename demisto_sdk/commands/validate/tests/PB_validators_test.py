@@ -15,13 +15,11 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB103_does_playbook_
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
-<<<<<<< HEAD
 from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
     IsTaskidDifferentFromidValidator,
-=======
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB105_playbook_delete_context_all import (
     PlaybookDeleteContextAllValidator,
->>>>>>> 62fa38551de357c18b84d6b289853f8ba1272728
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
@@ -237,34 +235,6 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
 
 
-<<<<<<< HEAD
-def test_IsTaskidDifferentFromidValidator():
-    """
-    Given:
-    - A playbook with tasks, taskid and id
-        Case 1: id equals taskid
-        Case 2: id not equals taskid
-
-    When:
-    - Validating the playbook
-
-    Then:
-    - The results should be as expected:
-        Case 1: an empty list
-        Case 2: a list in length 1 because there is one error
-    """
-    playbook = create_playbook_object()
-    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
-    assert len(results) == 0
-    playbook.tasks = {
-        "0": TaskConfig(
-            **{
-                "id": "test",
-                "taskid": "test1",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["1"]},
-=======
 def test_PlaybookDeleteContextAllValidator():
     """
     Given:
@@ -420,17 +390,10 @@ def test_IsDefaultNotOnlyConditionValidator():
                 "type": "condition",
                 "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
                 "message": {"replyOptions": ["yes", "no"]},
->>>>>>> 62fa38551de357c18b84d6b289853f8ba1272728
                 "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
             }
         )
     }
-
-<<<<<<< HEAD
-    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
-    assert len(results) == 1
-    assert results[0].message == "On tasks: ['0'],  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
-=======
     assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
     playbook.tasks = {
         "0": TaskConfig(
@@ -444,4 +407,37 @@ def test_IsDefaultNotOnlyConditionValidator():
         )
     }
     assert IsDefaultNotOnlyConditionValidator().is_valid([playbook])
->>>>>>> 62fa38551de357c18b84d6b289853f8ba1272728
+
+def test_IsTaskidDifferentFromidValidator():
+    """
+    Given:
+    - A playbook with tasks, taskid and id
+        Case 1: id equals taskid
+        Case 2: id not equals taskid
+
+    When:
+    - Validating the playbook
+
+    Then:
+    - The results should be as expected:
+        Case 1: an empty list
+        Case 2: a list in length 1 because there is one error
+    """
+    playbook = create_playbook_object()
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 0
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test",
+                "taskid": "test1",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "test"},
+            }
+        )
+    }
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 1
+    assert results[0].message == "On tasks: ['0'],  the field 'taskid' and the 'id' under the 'task' field must be with equal value."

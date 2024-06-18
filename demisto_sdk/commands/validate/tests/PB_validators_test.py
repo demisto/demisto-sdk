@@ -229,7 +229,6 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
 
 
-<<<<<<< HEAD
 def create_invalid_playbook(field: str):
     """Create an invalid playbook that has an invalid taskid or the 'id' under the 'task' field is invalid
     Args:
@@ -283,6 +282,7 @@ def test_IsValidTaskIdValidator(playbook):
     assert not results_valid
     assert results_invalid_taskid
     assert results_invalid_id
+
 
 def test_does_playbook_have_unconnected_tasks():
     """

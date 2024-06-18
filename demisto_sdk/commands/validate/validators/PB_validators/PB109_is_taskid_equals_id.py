@@ -23,15 +23,15 @@ class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         error_results = []
-        
+
         for content_item in content_items:
             tasks: dict = content_item.tasks
             not_valid_tasks = []
-            
+
             for task_key, task in tasks.items():
                 if task.taskid != task.task.id:
                     not_valid_tasks.append(task_key)
-                      
+
             if not_valid_tasks:
                 error_results.append(
                     ValidationResult(
@@ -42,6 +42,5 @@ class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
                         content_object=content_item,
                     )
                 )
-                
+
         return error_results
-        

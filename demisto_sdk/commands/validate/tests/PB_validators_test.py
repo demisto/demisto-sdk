@@ -30,6 +30,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB122_does_playbook_
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB125_playbook_only_default_next import (
+    PlaybookOnlyDefaultNextValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB126_is_default_not_only_condition import (
     IsDefaultNotOnlyConditionValidator,
 )
@@ -318,6 +321,54 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_PB125_playbook_only_default_next_valid():
+    """
+    Given:
+    - A default standard playbook.
+
+    When:
+    - calling PlaybookOnlyDefaultNextValidator.is_valid.
+
+    Then:
+    - The results should be empty as expected without validation error results.
+    """
+    playbook = create_playbook_object()
+    assert not PlaybookOnlyDefaultNextValidator().is_valid([playbook])
+
+
+def test_PB125_playbook_only_default_next_not_valid():
+    """
+    Given:
+    - A playbook with a condition task with only a default nexttask.
+
+    When:
+    - calling PlaybookOnlyDefaultNextValidator.is_valid.
+
+    Then:
+    - The results should contain a validation error object.
+    """
+    playbook = create_playbook_object(
+        paths=["tasks"],
+        values=[
+            {
+                "0": {
+                    "id": "test task",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"#default#": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                }
+            }
+        ],
+    )
+    result = PlaybookOnlyDefaultNextValidator().is_valid([playbook])
+    assert result[0].message == (
+        "Playbook has conditional tasks with an only default condition. Tasks IDs: ['0'].\n"
+        "Please remove these tasks or add another non-default condition to these conditional tasks."
+    )
 
 
 def create_invalid_playbook(field: str):

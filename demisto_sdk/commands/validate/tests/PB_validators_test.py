@@ -15,13 +15,11 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB103_does_playbook_
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
-<<<<<<< HEAD
 from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_id import (
     IsValidTaskIdValidator,
-=======
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB105_playbook_delete_context_all import (
     PlaybookDeleteContextAllValidator,
->>>>>>> master
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,

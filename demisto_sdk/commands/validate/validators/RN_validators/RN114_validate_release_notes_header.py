@@ -85,11 +85,11 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                                   content types' headers to their corresponding content items' headers.
         """
         headers: Dict[str, List[str]] = {}
-        content_type_section = re.compile(CONTENT_TYPE_SECTION_REGEX, re.M)
-        content_item_section = re.compile(CONTENT_ITEM_SECTION_REGEX, re.M)
+        content_type_section_pattern = re.compile(CONTENT_TYPE_SECTION_REGEX, re.M)
+        content_item_section_pattern = re.compile(CONTENT_ITEM_SECTION_REGEX, re.M)
 
         # Get all sections from the release notes using regex
-        rn_sections = content_type_section.findall(release_note_content)
+        rn_sections = content_type_section_pattern.findall(release_note_content)
         for section in rn_sections:
             section = self.remove_none_values(ls=section)
             if not section:
@@ -97,7 +97,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
 
             content_type = section[0]
             content_type_sections_str = section[1]
-            content_type_sections_ls = content_item_section.findall(
+            content_type_sections_ls = content_item_section_pattern.findall(
                 content_type_sections_str
             )
 
@@ -178,16 +178,16 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         Returns:
             str: Error if headers are invalid, or an empty string if all headers are valid.
         """
-        invalid_headers = []
+        invalid_headers: List[str] = []
         headers = self.extract_rn_headers(content_item.release_note.file_content)
-        invalid_headers_type = [
+        invalid_headers_type: List[str] = [
             header_type
             for header_type in headers.keys()
             if not self.validate_content_type_header(header_type)
         ]
         if invalid_headers_type:
             invalid_headers.append(invalid_headers_type)
-        invalid_headers_content_item = []
+        invalid_headers_content_item: List[str] = []
         for header_type, header_content_items in headers.items():
             invalid_items = self.validate_content_item_header(
                 header_type, header_content_items, content_item

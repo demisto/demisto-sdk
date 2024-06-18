@@ -279,7 +279,7 @@ def test_PB125_playbook_only_default_next_not_valid():
     }
     result = PlaybookOnlyDefaultNextValidator().is_valid([playbook])
     assert result[0].message == (
-        'Playbook with id:"Detonate File - JoeSecurity V2" has conditional tasks with an only default condition. Tasks IDs: [\'0\'].\n'
+        "Playbook with id:\"Detonate File - JoeSecurity V2\" has conditional tasks with an only default condition. Tasks IDs: ['0'].\n"
         "Please remove these tasks or add another non-default condition to these conditional tasks."
     )
 

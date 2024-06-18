@@ -501,5 +501,5 @@ def test_IsTaskidDifferentFromidValidator():
     assert len(results) == 1
     assert (
         results[0].message
-        == "On tasks: ['0'],  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
+        == "On tasks: 0,  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
     )

@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+from demisto_sdk.commands.content_graph.objects.test_playbook import BasePlaybook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = TestPlaybook
+ContentTypes = BasePlaybook
 
 
 class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
@@ -16,9 +16,9 @@ class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
     description = (
         "Check that taskid field and id field under task field contains equal values."
     )
-    rationale = "Playbooks task ids should be in uuid format"
+    rationale = "System requirements"
     error_message = "On tasks: {},  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
-    related_field = "1"
+    related_field = "tasks"
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -37,7 +37,7 @@ class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            not_valid_tasks,
+                            ", ".join(not_valid_tasks),
                         ),
                         content_object=content_item,
                     )

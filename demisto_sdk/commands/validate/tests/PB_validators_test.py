@@ -24,6 +24,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB126_is_default_not_only_condition import (
+    IsDefaultNotOnlyConditionValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -361,3 +364,44 @@ def test_does_playbook_have_unconnected_tasks_not_valid():
     validation_result = DoesPlaybookHaveUnconnectedTasks().is_valid([playbook])
     assert validation_result
     assert validation_result[0].message == ERROR_MSG.format(orphan_tasks=orphan_tasks)
+
+
+def test_IsDefaultNotOnlyConditionValidator():
+    """
+    Given:
+        Case a: playbook with no conditional tasks.
+        Case b: playbook with conditional tasks that has two reply options - yes/no.
+        Case c: playbook with conditional tasks that has one reply options - #default#.
+    When: Validating the playbook tasks to have more than a default option (IsDefaultNotOnlyConditionValidator).
+    Then:
+        Case a: The validation passes (result list of invalid items is empty)
+        Case b: The validation passes (result list of invalid items is empty)
+        Case c: The validation fails (result list of invalid items contains the invalid playbook)
+    """
+    playbook = create_playbook_object()
+    assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "0",
+                "type": "condition",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "message": {"replyOptions": ["yes", "no"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+            }
+        )
+    }
+
+    assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "0",
+                "type": "condition",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "message": {"replyOptions": ["#default#"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+            }
+        )
+    }
+    assert IsDefaultNotOnlyConditionValidator().is_valid([playbook])

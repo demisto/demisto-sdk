@@ -76,7 +76,7 @@ warning = [
 
 
 [Custom_Categories]
-select = ["MR101"]
+select = []
 warning = []
 
 

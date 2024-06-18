@@ -19,7 +19,7 @@ class PlaybookOnlyDefaultNextValidator(BaseValidator[ContentTypes]):
     )
     rationale = "Validates that a condition task doesn't has only a default next-task."
     error_message = (
-        'Playbook with id:"{playbook_id}" has conditional tasks with an only default condition. Tasks IDs: {tasks}.\n'
+        "Playbook has conditional tasks with an only default condition. Tasks IDs: {tasks}.\n"
         "Please remove these tasks or add another non-default condition to these conditional tasks."
     )
     related_field = "conditions"
@@ -27,23 +27,27 @@ class PlaybookOnlyDefaultNextValidator(BaseValidator[ContentTypes]):
     related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        tasks_with_only_default_nexttasks: dict = dict()
+        validation_results: list = list()
 
         for content_item in content_items:
+
+            invalid_tasks: list = []
             for task_id, task in content_item.tasks.items():
                 if (
                     len(list(task.nexttasks or {})) == 1
                     and list((task.nexttasks or {}).keys())[0].lower() == "#default#"
                 ):
-                    tasks_with_only_default_nexttasks.setdefault(
-                        content_item.object_id, []
-                    ).append(task_id)
+                    invalid_tasks.append(task_id)
 
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message.format(playbook_id=playbook_id, tasks=tasks),
-                content_object=content_item,
+            if not invalid_tasks:
+                continue
+
+            validation_results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(tasks=invalid_tasks),
+                    content_object=content_item,
+                )
             )
-            for playbook_id, tasks in tasks_with_only_default_nexttasks.items()
-        ]
+
+        return validation_results

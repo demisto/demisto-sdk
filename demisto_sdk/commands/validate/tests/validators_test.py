@@ -1,4 +1,5 @@
 import logging
+import os
 import tempfile
 from pathlib import Path
 from typing import Set
@@ -10,6 +11,7 @@ from more_itertools import map_reduce
 
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
@@ -655,3 +657,30 @@ def test_description():
     assert not [
         validator for validator in get_all_validators() if not validator.description
     ]
+
+
+def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(mocker):
+    """
+    Given:
+        - `CONTRIB_BRANCH` environment variable exists.
+    When:
+        - validate command is running in context of an external contribution PR.
+    Then:
+        - Collect all files within "Packs/" path, which represent changes made in a external contribution PR
+            and run the validate command on them as well.
+    """
+    expected_output = set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])
+    # mocker.patch.object(
+    #     GitUtil, "_get_all_changed_files", return_value=expected_output
+    # )
+    mocker.patch.dict(
+        os.environ, {"CONTRIB_BRANCH": "true"}
+    )
+    initializer = Initializer()
+    initializer.validate_git_installed()
+    mocker.patch.object(GitUtil, "modified_files", return_value={Path("Packs/modified.txt")})
+    mocker.patch.object(GitUtil, "added_files", return_value={})
+    mocker.patch.object(GitUtil, "renamed_files", return_value={})
+    repo = mocker.patch("git.repo.base.Repo._get_untracked_files", return_value=['Packs/untracked.txt'])
+    output = initializer.get_unfiltered_changed_files_from_git()
+    assert output[0] == expected_output

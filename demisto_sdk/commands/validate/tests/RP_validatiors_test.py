@@ -6,7 +6,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.RP_validators.RP101_expiration_field_is_numeric import (
     ExpirationFieldIsNumericValidator,
 )
-
 from demisto_sdk.commands.validate.validators.RP_validators.RP103_is_valid_indicator_type_id import (
     IsValidIndicatorTypeId,
 )
@@ -18,21 +17,21 @@ from demisto_sdk.commands.validate.validators.RP_validators.RP103_is_valid_indic
         (0, [create_indicator_type_object()], []),
         (0, [create_indicator_type_object(["expiration"], [0])], []),
         (
-                2,
-                [
-                    create_indicator_type_object(["expiration"], [0]),
-                    create_indicator_type_object(["expiration"], [-1]),
-                    create_indicator_type_object(["expiration"], ["1"]),
-                ],
-                [
-                    "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
-                    "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
-                ],
+            2,
+            [
+                create_indicator_type_object(["expiration"], [0]),
+                create_indicator_type_object(["expiration"], [-1]),
+                create_indicator_type_object(["expiration"], ["1"]),
+            ],
+            [
+                "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
+                "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
+            ],
         ),
     ],
 )
 def test_ExpirationFieldIsNumericValidator_is_valid(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -67,18 +66,20 @@ def test_ExpirationFieldIsNumericValidator_is_valid(
         (0, [create_indicator_type_object()], []),
         (0, [create_indicator_type_object(["id"], ["test"])], []),
         (
-                1,
-                [
-                    create_indicator_type_object(["id"], ["test"]),
-                    create_indicator_type_object(["id"], ["test-not-equal"]),
-                ],
-                [
-                    "id field contain invalid value.",
-                ],
+            1,
+            [
+                create_indicator_type_object(["id"], ["test"]),
+                create_indicator_type_object(["id"], ["test-not-equal"]),
+            ],
+            [
+                "id field contain invalid value.",
+            ],
         ),
     ],
 )
-def test_IsValidIndicatorTypeId(content_items, expected_number_of_failures, expected_msgs):
+def test_IsValidIndicatorTypeId(
+    content_items, expected_number_of_failures, expected_msgs
+):
     """
     Given
     content_items iterables.

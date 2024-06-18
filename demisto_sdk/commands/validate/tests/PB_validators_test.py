@@ -15,8 +15,13 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB103_does_playbook_
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
+<<<<<<< HEAD
 from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_id import (
     IsValidTaskIdValidator,
+=======
+from demisto_sdk.commands.validate.validators.PB_validators.PB105_playbook_delete_context_all import (
+    PlaybookDeleteContextAllValidator,
+>>>>>>> master
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
@@ -282,6 +287,52 @@ def test_IsValidTaskIdValidator(playbook):
     assert not results_valid
     assert results_invalid_taskid
     assert results_invalid_id
+def test_PlaybookDeleteContextAllValidator():
+    """
+    Given:
+    - A playbook with tasks.
+    Case 1: The playbook is valid - test with the default playbook object.
+    Case 2: The playbook is invalid, with DeleteContext with all set to 'Yes'
+    -
+
+    When:
+    - calling PlaybookDeleteContextAllValidator.is_valid.
+
+    Then:
+    - The results should be as expected:
+        Case 1: The playbook is valid.
+        Case 2: The playbook is invalid.
+    """
+    playbook = create_playbook_object()
+    assert not PlaybookDeleteContextAllValidator().is_valid([playbook])
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test task",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"], "yes": ["2"]},
+                "task": {
+                    "id": "task-id",
+                    "name": "DeleteContext",
+                    "scriptName": "DeleteContext",
+                },
+                "scriptarguments": {"all": {"simple": "yes"}},
+            }
+        )
+    }
+    expected_result = (
+        "The playbook includes DeleteContext tasks with all set to 'yes', which is not permitted."
+        " Please correct the following tasks: ['task-id']"
+        " For more info, see:"
+        " https://xsoar.pan.dev/docs/playbooks/playbooks-overview#inputs-and-outputs"
+    )
+
+    assert (
+        PlaybookDeleteContextAllValidator().is_valid([playbook])[0].message
+        == expected_result
+    )
 
 
 def test_does_playbook_have_unconnected_tasks():

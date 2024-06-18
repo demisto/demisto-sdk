@@ -16,7 +16,7 @@ ContentTypes = Playbook
 class IsValidTaskIdValidator(BaseValidator[ContentTypes]):
     error_code = "PB108"
     description = "Validate that the task ID and the 'id' under the 'task' field are from UUID format."
-    rationale = "Validate that the task ID and the 'id' under the 'task' field are from UUID format."
+    rationale = "Each task should have a unique id in UUID format to avoid unknown behavior and breaking the playbook."
     error_message = "This playbook has tasks with invalid 'taskid' or invalid 'id' under the 'task' field.\n{0}"
     related_field = "taskid"
     is_auto_fixable = False

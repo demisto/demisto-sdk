@@ -8,7 +8,6 @@ from typing import Dict, List
 from packaging.version import Version
 
 from demisto_sdk.commands.common.StrEnum import StrEnum
-from demisto_sdk.commands.content_graph.common import ContentType
 
 # Note: Do NOT add imports of internal modules here, as it may cause circular imports.
 
@@ -302,6 +301,9 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT: "Case Layouts",
 }
 
+FILE_TYPE_BY_RN_HEADER = {
+    header: file_type for file_type, header in RN_HEADER_BY_FILE_TYPE.items()
+}
 
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
@@ -614,16 +616,7 @@ INCORRECT_PACK_NAME_PATTERN = (
     "^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT["
     "^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ "
 )
-# Release note regex
-CONTENT_TYPE_SECTION_REGEX = (
-    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)"
-)
-CONTENT_ITEM_SECTION_REGEX = (
-    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
-)
 
-
-# Packs regex
 PACKS_DIR_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}"
 PACK_DIR_REGEX = rf"{PACKS_DIR_REGEX}\/([^\\\/]+)"
 
@@ -2208,4 +2201,11 @@ PACK_DEFAULT_MARKETPLACES: List = [
 
 INVALID_IMAGE_PATH_REGEX = (
     r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")"
+)
+# Release note regex
+CONTENT_TYPE_SECTION_REGEX = (
+    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)"
+)
+CONTENT_ITEM_SECTION_REGEX = (
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
 )

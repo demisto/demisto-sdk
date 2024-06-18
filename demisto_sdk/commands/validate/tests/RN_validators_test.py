@@ -94,14 +94,11 @@ def test_release_note_header_validator_valid():
         paths=["version"],
         values=["2.0.5"],
         release_note_content="#### Integrations\n"
-        "##### TestIntegration1\n"
-        "This is an exemple\n\n"
-        "##### TestIntegration2\n"
-        "This is an exemple too\n   ",
+        "##### TestIntegration\n"
+        "This is an exemple\n\n",
     )
     integrations = [
-        create_integration_object(["name"], ["TestIntegration1"]),
-        create_integration_object(["name"], ["TestIntegration2"]),
+        create_integration_object(["name"], ["TestIntegration"]),
     ]
     pack.content_items.integration.extend(integrations)
     results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
@@ -121,26 +118,23 @@ def test_release_note_header_validator_invalid():
     - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
     """
     expected_error = (
-        "The invalid header(s) were found.\n"
-        "The content header(s) type are invalid: InvalidHeader\n"
-        "those are the items: playbook A\n"
-        "For common troubleshooting steps, please review the documentation"
-        " found here: https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
+        "The following invalid headers were found:\n"
+        "Content Types: InvalidHeader\n"
+        "Content Items: Not exist content item\n\n"
+        "For common troubleshooting steps, please review the documentation found here:"
+        " https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
     )
     pack = create_pack_object(
         paths=["version"],
         values=["2.0.5"],
         release_note_content="#### Integrations\n"
-        "##### TestIntegration1\n"
-        "This is an example\n\n"
         "##### Not exist content item\n"
-        "This is an example too\n"
+        "This is an example\n"
         "#### InvalidHeader\n"
         "##### playbook A\n",
     )
     integrations = [
-        create_integration_object(["name"], ["TestIntegration1"]),
-        create_integration_object(["name"], ["TestIntegration2"]),
+        create_integration_object(),
     ]
     pack.content_items.integration.extend(integrations)
     results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])

@@ -12,8 +12,8 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_NEO4J_PASSWORD,
     DEMISTO_SDK_NEO4J_USERNAME,
     PACKS_FOLDER,
-    MarketplaceVersions,
     RN_HEADER_BY_FILE_TYPE,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -37,7 +37,6 @@ PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
 
 SERVER_CONTENT_ITEMS_PATH = Path("Tests/Marketplace/server_content_items.json")
-
 
 
 class Neo4jRelationshipResult(NamedTuple):
@@ -314,13 +313,6 @@ RN_HEADER_BY_CONTENT_TYPE = {
     ContentType.CASE_FIELD: "Case Fields",
     ContentType.CASE_LAYOUT: "Case Layouts",
 }
-CONTENT_TYPE_BY_RN_HEADER = {
-    header: content_type for content_type, header in RN_HEADER_BY_CONTENT_TYPE.items()
-}
-
-FILE_TYPE_BY_RN_HEADER = {
-    header: file_type for file_type, header in RN_HEADER_BY_FILE_TYPE.items()
-}
 
 
 class Relationship(BaseModel):
@@ -511,4 +503,12 @@ CONTENT_PRIVATE_ITEMS: dict = {
     ContentType.LAYOUT: [
         "MITRE Layout",
     ],
+}
+
+CONTENT_TYPE_BY_RN_HEADER = {
+    header: content_type for content_type, header in RN_HEADER_BY_CONTENT_TYPE.items()
+}
+
+FILE_TYPE_BY_RN_HEADER = {
+    header: file_type for file_type, header in RN_HEADER_BY_FILE_TYPE.items()
 }

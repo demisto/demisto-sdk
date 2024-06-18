@@ -50,25 +50,21 @@ class ReleaseNoteHeaderValidator(BaseValidator):
                 invalid_headers_content_type,
                 invalid_headers_content_item,
             ) = self.validate_release_notes_headers(content_item)
-            content_type_message = content_item_message = ""
-            if invalid_headers_content_type:
-                content_type_message = "Content Types: {}\n".format(
-                    ", ".join(invalid_headers_content_type)
+            if invalid_headers_content_type or invalid_headers_content_item:
+                validator_results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            content_type_message="Content Types: {}\n".format(
+                                ", ".join(invalid_headers_content_type)
+                            ),
+                            content_item_message="Content Items: {}\n".format(
+                                ", ".join(invalid_headers_content_item)
+                            ),
+                        ),
+                        content_object=content_item,
+                    )
                 )
-            if invalid_headers_content_item:
-                content_item_message = "Content Items: {}\n".format(
-                    ", ".join(invalid_headers_content_item)
-                )
-            validator_results.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(
-                        content_type_message=content_type_message,
-                        content_item_message=content_item_message,
-                    ),
-                    content_object=content_item,
-                )
-            )
         return validator_results
 
     def remove_none_values(self, ls: Union[List[Any], Tuple[Any, ...]]) -> List[Any]:
@@ -187,18 +183,22 @@ class ReleaseNoteHeaderValidator(BaseValidator):
         """
         headers = self.extract_rn_headers(content_item.release_note.file_content)
         pack_items_by_types = content_item.content_items.items_by_type()
-        invalid_headers_type: List[str] = [
+        invalid_content_type: List[str] = [
             header_type
             for header_type in headers.keys()
             if not self.validate_content_type_header(header_type)
         ]
-        invalid_headers_content_item: List[str] = []
-        if invalid_headers := self.validate_content_item_header(
+        # removing invalid 1st header types
+        headers = {
+            key: value
+            for key, value in headers.items()
+            if key not in invalid_content_type
+        }
+        invalid_content_item: List[str] = [
+            value
+            for set_value in self.validate_content_item_header(
                 headers, pack_items_by_types
-            ):
-            invalid_headers_content_item = [
-                header
-                for header, display_names in invalid_headers.items()
-                for display_name in display_names
-            ]
-        return invalid_headers_type, invalid_headers_content_item
+            ).values()
+            for value in set_value
+        ]
+        return invalid_content_type, invalid_content_item

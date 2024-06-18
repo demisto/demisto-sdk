@@ -209,10 +209,10 @@ def test_does_playbook_have_unhandled_conditions():
             taskid="",
             task={"id": ""},
         ),
-        "VALID__ONLY_#DEFAULT#_NEXTTASK": TaskConfig(
+        "VALID__NO_CONDITIONS": TaskConfig(
             id="valid_1",
             type="condition",
-            nexttasks={"#default#": ["2"]},
+            nexttasks={"yes": ["2"]},
             conditions=[],
             taskid="",
             task={"id": ""},
@@ -236,8 +236,8 @@ def test_does_playbook_have_unhandled_conditions():
         "INVALID__NEXTTASK_WITHOUT_LABEL": TaskConfig(
             id="invalid_4",
             type="condition",
-            nexttasks={"oh": ["3"]},
-            conditions=[],
+            nexttasks={"yes": ["4"], "oh": ["3"]},
+            conditions=[{"label": "yes"}],
             taskid="",
             task={"id": ""},
         ),

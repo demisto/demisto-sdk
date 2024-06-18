@@ -52,7 +52,7 @@ class DoesPlaybookHaveUnhandledConditionsValidator(BaseValidator[ContentTypes]):
         unhandled_conditions = {}
         tasks = playbook.tasks
         for task in tasks.values():
-            if task.type == PlaybookTaskType.CONDITION:
+            if task.type == PlaybookTaskType.CONDITION and task.conditions:
                 next_tasks: set[str] = {
                     k.upper()
                     for k in (task.nexttasks or {}).keys()
@@ -60,7 +60,7 @@ class DoesPlaybookHaveUnhandledConditionsValidator(BaseValidator[ContentTypes]):
                 }
                 condition_labels: set[str] = {
                     str(condition.get("label")).upper()
-                    for condition in task.conditions or []
+                    for condition in task.conditions
                     if condition.get("label")
                 }
                 if task_unhandled_conditions := condition_labels ^ next_tasks:

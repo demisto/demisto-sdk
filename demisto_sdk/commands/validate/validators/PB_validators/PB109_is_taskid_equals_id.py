@@ -34,13 +34,14 @@ class IsTaskidDifferentFromidValidator(BaseValidator[ContentTypes]):
                     
             if not_valid_tasks:
                 error_results.append(
-                ValidationResult(
-                validator=self,
-                message=self.error_message.format(
-                    not_valid_tasks,
-                ),
-                content_object=content_item,
-                ))
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            not_valid_tasks,
+                        ),
+                        content_object=content_item,
+                    )
+                )
             
         return error_results
         

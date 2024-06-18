@@ -53,7 +53,7 @@ class DoesPlaybookHaveUnhandledConditionsValidator(BaseValidator[ContentTypes]):
         tasks = playbook.tasks
         for task in tasks.values():
             if task.type == PlaybookTaskType.CONDITION and task.conditions:
-                next_tasks: set[str] = {
+                nondefault_nexttasks: set[str] = {
                     k.upper()
                     for k in (task.nexttasks or {}).keys()
                     if k and k.upper() != "#DEFAULT#"
@@ -63,7 +63,7 @@ class DoesPlaybookHaveUnhandledConditionsValidator(BaseValidator[ContentTypes]):
                     for condition in task.conditions
                     if condition.get("label")
                 }
-                if task_unhandled_conditions := condition_labels ^ next_tasks:
+                if task_unhandled_conditions := condition_labels ^ nondefault_nexttasks:
                     unhandled_conditions[task.id] = task_unhandled_conditions
 
         return unhandled_conditions

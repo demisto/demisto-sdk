@@ -202,13 +202,13 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
     )
 
 
-def test_does_playbook_have_unhandled_conditions():
+def test_does_playbook_have_unhandled_conditions__valid():
     """
     Given: A playbook with condition tasks.
     When:
-    - Some condition option are unhandled.
+    - All condition options are handled properly.
     Then:
-    - Ensure the validation failes on the expected errors only.
+    - Ensure the validation does not fail.
     """
     playbook = create_playbook_object()
     playbook.tasks = {
@@ -234,8 +234,23 @@ def test_does_playbook_have_unhandled_conditions():
             taskid="",
             task={"id": ""},
         ),
+    }
+    errors = DoesPlaybookHaveUnhandledConditionsValidator().is_valid([playbook])
+    assert len(errors) == 0
+
+
+def test_does_playbook_have_unhandled_conditions__invalid():
+    """
+    Given: A playbook with condition tasks.
+    When:
+    - Some condition option are unhandled.
+    Then:
+    - Ensure the validation fails on the expected errors.
+    """
+    playbook = create_playbook_object()
+    playbook.tasks = {
         "INVALID__LABEL_WITHOUT_NEXTTASK": TaskConfig(
-            id="invalid_3",
+            id="invalid_0",
             type="condition",
             nexttasks={},
             conditions=[{"label": "oh"}],
@@ -243,7 +258,7 @@ def test_does_playbook_have_unhandled_conditions():
             task={"id": ""},
         ),
         "INVALID__NEXTTASK_WITHOUT_LABEL": TaskConfig(
-            id="invalid_4",
+            id="invalid_1",
             type="condition",
             nexttasks={"yes": ["4"], "oh": ["3"]},
             conditions=[{"label": "yes"}],
@@ -251,7 +266,7 @@ def test_does_playbook_have_unhandled_conditions():
             task={"id": ""},
         ),
         "INVALID__MULTIPLE_HANDLED_AND_UNHANDLED_CONDITIONS": TaskConfig(
-            id="invalid_5",
+            id="invalid_2",
             type="condition",
             nexttasks={"#default#": ["3"], "yes": ["4"], "no": ["5"], "hi": ["6"]},
             conditions=[{"label": "yes"}, {"label": "no"}, {"label": "bye"}],
@@ -260,14 +275,9 @@ def test_does_playbook_have_unhandled_conditions():
         ),
     }
     errors = DoesPlaybookHaveUnhandledConditionsValidator().is_valid([playbook])
-    assert len(errors) == sum(
-        [bool(task) for task in playbook.tasks.values() if "invalid_" in task.id]
-    )
-    assert all("ID: valid_" not in error.message for error in errors)
-    assert all("ID: invalid_" in error.message for error in errors)
-
+    assert len(errors) == len(playbook.tasks)
     assert any(
-        "ID: invalid_5" in error.message
+        "ID: invalid_2" in error.message
         and "HI" in error.message
         and "BYE" in error.message
         for error in errors

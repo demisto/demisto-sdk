@@ -466,6 +466,7 @@ def test_IsDefaultNotOnlyConditionValidator():
     }
     assert IsDefaultNotOnlyConditionValidator().is_valid([playbook])
 
+
 def test_IsTaskidDifferentFromidValidator():
     """
     Given:

@@ -835,16 +835,20 @@ class BuildContext:
         servers: dict = {}
         if self.is_saas_server_type:
             for machine in self.cloud_machines:
-                ip = self.env_json.get(machine).get("base_url")
-                servers.update(
-                    {
-                        machine: CloudServerContext(
-                            self, ip, machine, self.use_retries_mechanism
-                        )
-                    }
+                server_ip = self.env_json.get(machine).get("base_url")
+                servers[machine] = CloudServerContext(
+                    self,
+                    server_private_ip=server_ip,
+                    cloud_machine=machine,
+                    use_retries_mechanism=self.use_retries_mechanism,
                 )
         else:
-            servers.update({self.server: OnPremServerContext(self, self.server)})
+            for server_ip in self.instances_ips:
+                servers[server_ip] = OnPremServerContext(
+                    self,
+                    server_private_ip=server_ip,
+                    use_retries_mechanism=self.use_retries_mechanism,
+                )
         return servers
 
     def _get_instances_ips(self) -> List[str]:
@@ -856,7 +860,7 @@ class BuildContext:
         if self.server:
             return [self.server]
         if self.is_saas_server_type:
-            return [env.get("base_url") for env in self.env_json.values()]
+            return [env.get("base_url") for env in self.env_json]
         return [
             env.get("InstanceDNS")
             for env in self.env_json
@@ -1441,8 +1445,13 @@ class CloudServerContext(ServerContext):
 
 
 class OnPremServerContext(ServerContext):
-    def __init__(self, build_context: BuildContext, server_private_ip: str):
-        super().__init__(build_context, server_private_ip)
+    def __init__(
+        self,
+        build_context: BuildContext,
+        server_private_ip: str,
+        use_retries_mechanism: bool = True,
+    ):
+        super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.server_url = f"https://{self.server_ip}"
         self.proxy = MITMProxy(
             server_private_ip,

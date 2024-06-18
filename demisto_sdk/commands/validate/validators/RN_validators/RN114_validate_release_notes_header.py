@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Dict, Iterable, List, Pattern, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Set, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     CONTENT_ITEM_SECTION_REGEX,
@@ -61,7 +61,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             if (invalid_headers := self.validate_release_notes_headers(content_item))
         ]
 
-    def remove_none_values(self, ls: Union[List, Tuple]) -> Pattern[str]:
+    def remove_none_values(self, ls: Union[List[Any], Tuple[Any, ...]]) -> List[Any]:
         """
         Filters out None values from a list or tuple.
 
@@ -94,6 +94,8 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         rn_sections = content_type_section.findall(release_note_content)
         for section in rn_sections:
             section = self.remove_none_values(ls=section)
+            if not section:
+                continue
             content_type = section[0]
             content_type_sections_str = section[1]
             content_type_sections_ls = content_item_section.findall(

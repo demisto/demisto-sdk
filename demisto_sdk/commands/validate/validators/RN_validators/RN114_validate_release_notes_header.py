@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     RN_HEADER_BY_FILE_TYPE,
 )
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -31,7 +32,8 @@ class ReleaseNoteHeaderValidator(BaseValidator):
         " Validate headers for accuracy."
     )
     error_message = (
-        "The invalid header(s) were found.\n{content_type}\n{content_item}\n"
+        "The following invalid headers were found:\n"
+        "{content_type_message}{content_item_message}\n"
         "For common troubleshooting steps, please review the documentation found here: "
         "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
     )
@@ -40,15 +42,32 @@ class ReleaseNoteHeaderValidator(BaseValidator):
     related_file_type = [RelatedFileType.RELEASE_NOTE]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message.format(" ,".join(invalid_headers)),
-                content_object=content_item,
+        validator_results: List[ValidationResult] = []
+        for content_item in content_items:
+            (
+                invalid_headers_content_type,
+                invalid_headers_content_item,
+            ) = self.validate_release_notes_headers(content_item)
+            content_type_message = content_item_message = ""
+            if invalid_headers_content_type:
+                content_type_message = "Content Types: {}\n".format(
+                    ", ".join(invalid_headers_content_type)
+                )
+            if invalid_headers_content_item:
+                content_item_message = "Content Items: {}\n".format(
+                    ", ".join(invalid_headers_content_item)
+                )
+            validator_results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        content_type_message=content_type_message,
+                        content_item_message=content_item_message,
+                    ),
+                    content_object=content_item,
+                )
             )
-            for content_item in content_items
-            if (invalid_headers := self.validate_release_notes_headers(content_item))
-        ]
+        return validator_results
 
     def remove_none_values(self, ls: Union[List[Any], Tuple[Any, ...]]) -> List[Any]:
         """
@@ -118,20 +137,23 @@ class ReleaseNoteHeaderValidator(BaseValidator):
         return content_type in rn_valid_headers
 
     def validate_content_item_header(
-        self, headers_to_display_names: Dict[str, List[str]], pack: ContentTypes
+        self,
+        headers_to_display_names: Dict[str, List[str]],
+        pack_items_by_types: Dict[ContentType, List[ContentItem]],
     ) -> Dict[ContentType, Set[str]]:
         """
         Validate that the content items' display names match expected values.
 
         Args:
-            header_content_type: (str) - The type of content to validate (e.g., Integrations, Playbooks, etc.).
-            header_content_items: (List) - List of expected display names for content items.
-            content_item: Placeholder for the content item.
+        headers_to_display_names: A dictionary mapping header names (e.g., Integrations)
+            to lists of expected display names for content items.
+        pack_items_by_types: A dictionary mapping content types to lists of ContentItem
+            instances.
 
         Returns:
-            Set: Invalid content items' display names.
+            A dictionary where keys are ContentType and values are sets of invalid display names
+            for content items that do not match expected values.
         """
-        pack_items_by_types = pack.content_items.items_by_type()
         missing_display_names = {}
         for header, display_names in headers_to_display_names.items():
             content_type = CONTENT_TYPE_BY_RN_HEADER[header]
@@ -145,7 +167,9 @@ class ReleaseNoteHeaderValidator(BaseValidator):
                 )
         return missing_display_names
 
-    def validate_release_notes_headers(self, content_item):
+    def validate_release_notes_headers(
+        self, content_item: Pack
+    ) -> Tuple[List[str], List[str]]:
         """
         Validate that the release notes headers are valid:
         - Validate that the release notes 1st headers are a valid content entity.
@@ -155,23 +179,24 @@ class ReleaseNoteHeaderValidator(BaseValidator):
             content_item: The content item to validate.
 
         Returns:
-            Array: if headers are invalid, or an empty Array if all headers are valid.
+            A tuple containing two lists:
+            - List of invalid header types (str or None).
+            - List of invalid header content items (str or None).
         """
-        # To do
         headers = self.extract_rn_headers(content_item.release_note.file_content)
+        pack_items_by_types = content_item.content_items.items_by_type()
         invalid_headers_type: List[str] = [
             header_type
             for header_type in headers.keys()
             if not self.validate_content_type_header(header_type)
         ]
         invalid_headers_content_item: List[str] = []
-        headers = self.extract_rn_headers(content_item.release_note.file_content)
-        for header_type, header_content_items in headers.items():
-
-            invalid_items = self.validate_content_item_header(
-                header_type, header_content_items, content_item
-            )
-            if invalid_items:
-                invalid_headers_content_item.extend(invalid_items)
-        # return invalid_headers_content_item
-        return invalid_headers_type
+        if invalid_headers := self.validate_content_item_header(
+                headers, pack_items_by_types
+            ):
+            invalid_headers_content_item = [
+                header
+                for header, display_names in invalid_headers.items()
+                for display_name in display_names
+            ]
+        return invalid_headers_type, invalid_headers_content_item

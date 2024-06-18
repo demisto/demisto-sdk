@@ -23,7 +23,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Pack
 
 
-class ReleaseNoteHeaderValidator(BaseValidator):
+class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"
     description = (
         "Validate the 2nd headers (the content items) are exists in the pack and having the right display"
@@ -192,7 +192,7 @@ class ReleaseNoteHeaderValidator(BaseValidator):
         headers = {
             key: value
             for key, value in headers.items()
-            if key not in invalid_content_type
+            if key not in invalid_content_type and value
         }
         invalid_content_item: List[str] = [
             value

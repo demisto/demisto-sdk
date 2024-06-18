@@ -132,9 +132,9 @@ def test_release_note_header_validator_invalid():
         values=["2.0.5"],
         release_note_content="#### Integrations\n"
         "##### TestIntegration1\n"
-        "This is an exemple\n\n"
+        "This is an example\n\n"
         "##### Not exist content item\n"
-        "This is an exemple too\n"P
+        "This is an example too\n"
         "#### InvalidHeader\n"
         "##### playbook A\n",
     )

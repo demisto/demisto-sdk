@@ -73,46 +73,48 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         """
         return list(filter(lambda x: x, ls))
 
-    def extract_rn_headers(self, release_note_content) -> Dict[str, List[str]]:
+    def extract_rn_headers(self, release_note_content: str) -> Dict[str, List[str]]:
         """
-            Extracts the headers from the release notes file.
+        Extracts the headers from the release notes file.
+
         Args:
-            None.
+            release_note_content (str): Content of the release notes file.
+
         Return:
-            A dictionary representation of the release notes file that maps content types' headers to their
-            corresponding content items' headers.
+            Dict[str, List[str]]: A dictionary representation of the release notes file that maps
+                                  content types' headers to their corresponding content items' headers.
         """
         headers: Dict[str, List[str]] = {}
         content_type_section = re.compile(CONTENT_TYPE_SECTION_REGEX, re.M)
+        content_item_section = re.compile(CONTENT_ITEM_SECTION_REGEX, re.M)
 
-        # Regular expressions for matching content type sections and content items
-        content_item_section = re.compile(
-            CONTENT_ITEM_SECTION_REGEX,
-            re.M,
-        )
         # Get all sections from the release notes using regex
         rn_sections = content_type_section.findall(release_note_content)
         for section in rn_sections:
             section = self.remove_none_values(ls=section)
             if not section:
                 continue
+
             content_type = section[0]
             content_type_sections_str = section[1]
             content_type_sections_ls = content_item_section.findall(
                 content_type_sections_str
             )
+
             if not content_type_sections_ls:
-                #  Did not find content items headers under content type - might be duo to invalid format.
-                #  Will raise error in rn_valid_header_format.
+                # Did not find content items headers under content type - might be due to invalid format.
+                # Will raise error in rn_valid_header_format.
                 headers[content_type] = []
+
             for content_type_section in content_type_sections_ls:
                 content_type_section = self.remove_none_values(ls=content_type_section)
                 if content_type_section:
                     header = content_type_section[0]
-                    if headers.get(content_type):
+                    if content_type in headers:
                         headers[content_type].append(header)
                     else:
                         headers[content_type] = [header]
+
         return headers
 
     def validate_content_type_header(self, content_type: str) -> bool:

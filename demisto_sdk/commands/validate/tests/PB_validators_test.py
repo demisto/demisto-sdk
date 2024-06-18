@@ -15,11 +15,11 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB103_does_playbook_
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
-from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
-    IsTaskidDifferentFromidValidator,
-)
 from demisto_sdk.commands.validate.validators.PB_validators.PB105_playbook_delete_context_all import (
     PlaybookDeleteContextAllValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
+    IsTaskidDifferentFromidValidator,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
@@ -440,4 +440,7 @@ def test_IsTaskidDifferentFromidValidator():
     }
     results = IsTaskidDifferentFromidValidator().is_valid([playbook])
     assert len(results) == 1
-    assert results[0].message == "On tasks: ['0'],  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
+    assert (
+        results[0].message
+        == "On tasks: ['0'],  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
+    )

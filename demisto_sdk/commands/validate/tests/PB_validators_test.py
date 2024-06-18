@@ -265,6 +265,7 @@ def test_indicator_pb_must_stop_on_error_invalid():
     When: Playbook continues on error
     Then: Validation should fail
     """
+    error_message = IsStoppingOnErrorValidator.error_message
     playbook = create_playbook_object(
         ["inputs", "tasks.0.continueonerror"],
         [
@@ -281,6 +282,8 @@ def test_indicator_pb_must_stop_on_error_invalid():
     )
     res = IsStoppingOnErrorValidator().is_valid([playbook])
     assert len(res) == 1
+    bad_task = playbook.tasks
+    assert res[0].message == error_message.format([bad_task.get('0')])
 
 
 def test_PlaybookDeleteContextAllValidator():

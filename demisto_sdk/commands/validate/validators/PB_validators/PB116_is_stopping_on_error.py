@@ -21,11 +21,11 @@ def is_indicator_pb(playbook: Playbook):
     )
 
 
-def does_playbook_continue_on_error(playbook: Playbook):
+def get_error_tolerant_tasks(playbook: Playbook):
     """
-    Check if the playbook has tasks that continue on error.
+    Retrieve tasks from the playbook that are set to continue on error.
     """
-    return any(task.continueonerror for task in playbook.tasks.values())
+    return [task for task in playbook.tasks.values() if task.continueonerror]
 
 
 class IsStoppingOnErrorValidator(BaseValidator[ContentTypes]):
@@ -38,12 +38,14 @@ class IsStoppingOnErrorValidator(BaseValidator[ContentTypes]):
     related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message,
-                content_object=content_item,
-            )
-            for content_item in content_items
-            if is_indicator_pb(content_item) and does_playbook_continue_on_error(content_item)
-        ]
+        results = []
+        for content_item in content_items:
+            if is_indicator_pb(content_item) and (bad_tasks := get_error_tolerant_tasks(content_item)):
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(bad_tasks),
+                        content_object=content_item,
+                    )
+                )
+        return results

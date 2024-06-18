@@ -482,6 +482,29 @@ class TestPreprocessFiles:
         output = preprocess_files(all_files=True)
         assert output == expected_output
 
+    def test_preprocess_files_in_external_pr_use_case(self, mocker):
+        """
+        Given:
+            - `CONTRIB_BRANCH` environment variable exists.
+        When:
+            - pre commit command is running in context of an external contribution PR.
+        Then:
+            - Collect all files within "Packs/" path, which represent changes made in a external contribution PR
+              and run the pre-commit command on them as well.
+        """
+        expected_output = set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])
+        mocker.patch.object(
+            GitUtil, "_get_all_changed_files", return_value=expected_output
+        )
+        mocker.patch.dict(
+            os.environ, {"CONTRIB_BRANCH": "true"}
+        )
+        mocker.patch.object(GitUtil, "_get_staged_files", return_value=set())
+        mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
+        repo = mocker.patch("git.repo.base.Repo._get_untracked_files", return_value=['Packs/untracked.txt'])
+        output = preprocess_files(use_git=True)
+        assert output == expected_output
+
 
 def test_exclude_hooks_by_version(mocker, repo: Repo):
     """

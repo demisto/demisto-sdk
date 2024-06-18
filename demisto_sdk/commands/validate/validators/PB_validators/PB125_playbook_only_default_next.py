@@ -24,7 +24,6 @@ class PlaybookOnlyDefaultNextValidator(BaseValidator[ContentTypes]):
     )
     related_field = "conditions"
     is_auto_fixable = False
-    related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         validation_results: list = list()

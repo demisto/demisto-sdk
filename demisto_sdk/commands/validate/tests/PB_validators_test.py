@@ -367,6 +367,17 @@ def test_does_playbook_have_unconnected_tasks_not_valid():
 
 
 def test_IsDefaultNotOnlyConditionValidator():
+    """
+    Given:
+        Case a: playbook with no conditional tasks.
+        Case b: playbook with conditional tasks that has two reply options - yes/no.
+        Case c: playbook with conditional tasks that has one reply options - #default#.
+    When: Validating the playbook tasks to have more than a default option (IsDefaultNotOnlyConditionValidator).
+    Then:
+        Case a: The validation passes (result list of invalid items is empty)
+        Case b: The validation passes (result list of invalid items is empty)
+        Case c: The validation fails (result list of invalid items contains the invalid playbook)
+    """
     playbook = create_playbook_object()
     assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
     playbook.tasks = {

@@ -1,22 +1,15 @@
 from __future__ import annotations
 
-import os
 import re
-from abc import ABC
 from typing import Any, Dict, Iterable, List, Set, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     CONTENT_ITEM_SECTION_REGEX,
+    CONTENT_TYPE_BY_RN_HEADER,
     CONTENT_TYPE_SECTION_REGEX,
-    CUSTOM_CONTENT_FILE_ENDINGS,
-    ENTITY_TYPE_TO_DIR,
-    FILE_TYPE_BY_RN_HEADER,
     RN_HEADER_BY_FILE_TYPE,
 )
-from demisto_sdk.commands.common.tools import (
-    get_display_name,
-    get_files_in_dir,
-)
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -27,7 +20,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Pack
 
 
-class ReleaseNoteHeaderValidator(BaseValidator, ABC):
+class ReleaseNoteHeaderValidator(BaseValidator):
     error_code = "RN114"
     description = (
         "Validate the 2nd headers (the content items) are exists in the pack and having the right display"
@@ -122,11 +115,11 @@ class ReleaseNoteHeaderValidator(BaseValidator, ABC):
             True if the content type is valid, False otherwise.
         """
         rn_valid_headers = RN_HEADER_BY_FILE_TYPE.values()
-        return True if content_type in rn_valid_headers else False
+        return content_type in rn_valid_headers
 
     def validate_content_item_header(
-        self, header_content_type: str, header_content_items: List[str], content_item
-    ) -> Set[str]:
+        self, headers_to_display_names: Dict[str, List[str]], pack: ContentTypes
+    ) -> Dict[ContentType, Set[str]]:
         """
         Validate that the content items' display names match expected values.
 
@@ -138,29 +131,19 @@ class ReleaseNoteHeaderValidator(BaseValidator, ABC):
         Returns:
             Set: Invalid content items' display names.
         """
-        entity_type = FILE_TYPE_BY_RN_HEADER.get(header_content_type, "")
+        pack_items_by_types = pack.content_items.items_by_type()
+        missing_display_names = {}
+        for header, display_names in headers_to_display_names.items():
+            content_type = CONTENT_TYPE_BY_RN_HEADER[header]
+            pack_display_names = {
+                item.display_name for item in pack_items_by_types.get(content_type, [])
+            }
 
-        content_type_dir_name = ENTITY_TYPE_TO_DIR.get(entity_type, entity_type)
-        content_type_path = str(os.path.join(content_item.path, content_type_dir_name))
-
-        content_type_dir_list = get_files_in_dir(
-            content_type_path,
-            CUSTOM_CONTENT_FILE_ENDINGS,
-            recursive=True,
-            ignore_test_files=True,
-        )
-        if not content_type_dir_list:
-            return set()
-        existing_display_names = {
-            get_display_name(item)
-            for item in content_type_dir_list
-            if isinstance(item, str)
-        }
-        expected_display_names = set(header_content_items)
-        invalid_display_names = expected_display_names.difference(
-            existing_display_names
-        )
-        return invalid_display_names
+            if not set(display_names).issubset(pack_display_names):
+                missing_display_names[content_type] = (
+                    set(display_names) - pack_display_names
+                )
+        return missing_display_names
 
     def validate_release_notes_headers(self, content_item):
         """
@@ -174,4 +157,21 @@ class ReleaseNoteHeaderValidator(BaseValidator, ABC):
         Returns:
             Array: if headers are invalid, or an empty Array if all headers are valid.
         """
-        raise NotImplementedError("Subclasses must implement this method.")
+        # To do
+        headers = self.extract_rn_headers(content_item.release_note.file_content)
+        invalid_headers_type: List[str] = [
+            header_type
+            for header_type in headers.keys()
+            if not self.validate_content_type_header(header_type)
+        ]
+        invalid_headers_content_item: List[str] = []
+        headers = self.extract_rn_headers(content_item.release_note.file_content)
+        for header_type, header_content_items in headers.items():
+
+            invalid_items = self.validate_content_item_header(
+                header_type, header_content_items, content_item
+            )
+            if invalid_items:
+                invalid_headers_content_item.extend(invalid_items)
+        # return invalid_headers_content_item
+        return invalid_headers_type

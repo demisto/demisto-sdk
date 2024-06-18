@@ -21,7 +21,6 @@ class NoRemovedIntegrationParametersValidator(BaseValidator[ContentTypes]):
     related_field = "configuration"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
-    related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

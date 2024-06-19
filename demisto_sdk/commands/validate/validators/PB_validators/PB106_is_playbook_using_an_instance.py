@@ -14,7 +14,7 @@ ContentTypes = Playbook
 
 
 class IsPlayBookUsingAnInstanceValidator(BaseValidator[ContentTypes]):
-    invalid_tasks: ClassVar[Dict[str, list[TaskConfig]]] = {}
+    invalid_tasks: ClassVar[dict] = {}
     error_code = "PB106"
     description = "Validate whether the playbook does not use an instance. If the Playbook use an instance it is not valid."
     rationale = "If the playbook uses a specific instance it can leads to errors because not all the users have the same instance."

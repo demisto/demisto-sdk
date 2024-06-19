@@ -4,7 +4,6 @@ from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -23,7 +22,6 @@ class IsPlayBookUsingAnInstanceValidator(BaseValidator[ContentTypes]):
     fix_message = "Removed The 'using' statement from the following tasks tasks: {0}."
     related_field = "using"
     is_auto_fixable = True
-    related_file_type = [RelatedFileType.YML]
 
     def is_playbook_using_an_instance(
         self, content_item: ContentTypes

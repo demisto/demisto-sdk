@@ -26,7 +26,7 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
     related_file_type = [RelatedFileType.YML]
     invalid_tasks_in_playbooks = {}
 
-    def get_invalid_task_ids(self, content_item: ContentTypes) -> List:
+    def get_invalid_task_ids(self, content_item: Playbook) -> List:
         """
         Identify tasks with quietmode == 2 and update self.invalid_tasks_in_playbooks with these tasks.
 
@@ -41,8 +41,7 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
             for task in content_item.tasks.values()
             if task.quietmode == 2
         ]
-        if invalid_task_ids:
-            self.invalid_tasks_in_playbooks[content_item.name] = invalid_task_ids
+        self.invalid_tasks_in_playbooks[content_item.name] = invalid_task_ids
         return invalid_task_ids
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

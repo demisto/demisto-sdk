@@ -346,7 +346,7 @@ def test_IsTasksQuietModeValidator_fail_case():
     -The playbook becomes valid
     """
     playbook = create_playbook_object(
-        ["inputs", "quiet"],
+        ["inputs", "quiet","tasks"],
         [
             [
                 {
@@ -357,33 +357,29 @@ def test_IsTasksQuietModeValidator_fail_case():
                 }
             ],
             False,
+            {
+                "0":{
+                    "id": "test fail task No1",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 2,
+                },
+                "1": {
+                    "id": "test fail task No2",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 2,
+                },
+            },
         ],
         pack_info={},
     )
-    playbook.tasks = {
-        "0": TaskConfig(
-            **{
-                "id": "test fail task No1",
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["1"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "quietmode": 2,
-            }
-        ),
-        "1": TaskConfig(
-            **{
-                "id": "test fail task No2",
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["1"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "quietmode": 2,
-            }
-        ),
-    }
     validator = IsTasksQuietModeValidator()
     validate_res = validator.is_valid([playbook])
     assert len(validate_res) == 1
@@ -391,9 +387,7 @@ def test_IsTasksQuietModeValidator_fail_case():
         (validate_res[0]).message
         == "Playbook 'Detonate File - JoeSecurity V2' contains tasks that are not in quiet mode (quietmode: 2) The tasks names is: 'test fail task No1, test fail task No2'."
     )
-    # fix the playbook
     fix_playbook = validator.fix(playbook).content_object
-    # validate the fixing
     assert len(validator.is_valid([fix_playbook])) == 0
 
 
@@ -411,7 +405,7 @@ def test_IsTasksQuietModeValidator_pass_case():
     - The playbook doesn't changed
     """
     playbook = create_playbook_object(
-        ["inputs", "quiet"],
+        ["inputs", "quiet", "tasks"],
         [
             [
                 {
@@ -422,25 +416,24 @@ def test_IsTasksQuietModeValidator_pass_case():
                 }
             ],
             False,
+            {
+                "0": {
+                    "id": "test task",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 1,
+                }
+            },
         ],
     )
-    playbook.tasks = {
-        "0": TaskConfig(
-            **{
-                "id": "test task",
-                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
-                "type": "condition",
-                "message": {"replyOptions": ["yes"]},
-                "nexttasks": {"no": ["1"]},
-                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "quietmode": 1,
-            }
-        )
-    }
     validator = IsTasksQuietModeValidator()
     assert len(validator.is_valid([playbook])) == 0
     fix_playbook = validator.fix(playbook).content_object
     assert fix_playbook == playbook
+
 
 def test_PB125_playbook_only_default_next_valid():
     """
@@ -783,4 +776,3 @@ def test_IsPlayBookUsingAnInstanceValidator_fix():
     for tasks in fixed_content_item.tasks.values():
         scriptargs = tasks.scriptarguments
         assert scriptargs == {"some_key": "value"}
-

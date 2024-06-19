@@ -83,6 +83,8 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         validator_results: List[ValidationResult] = []
         for content_item in content_items:
+            if content_item.pack_metadata_dict.get("hidden"):
+                continue
             (
                 invalid_headers_content_type,
                 invalid_headers_content_item,

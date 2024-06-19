@@ -280,17 +280,17 @@ def test_IsTasksQuietModeValidator_fail_case():
             }
         ),
     }
-    # assert that the playbook is invalid
-    validate_res = IsTasksQuietModeValidator().is_valid([playbook])
+    validator = IsTasksQuietModeValidator()
+    validate_res = validator.is_valid([playbook])
     assert len(validate_res) == 1
     assert (
         (validate_res[0]).message
         == "Playbook 'Detonate File - JoeSecurity V2' contains tasks that are not in quiet mode (quietmode: 2) The tasks names is: 'test fail task No1, test fail task No2'."
     )
     # fix the playbook
-    fix_playbook = IsTasksQuietModeValidator().fix(playbook).content_object
+    fix_playbook = validator.fix(playbook).content_object
     # validate the fixing
-    assert len(IsTasksQuietModeValidator().is_valid([fix_playbook])) == 0
+    assert len(validator.is_valid([fix_playbook])) == 0
 
 
 def test_IsTasksQuietModeValidator_pass_case():
@@ -333,6 +333,7 @@ def test_IsTasksQuietModeValidator_pass_case():
             }
         )
     }
-    assert len(IsTasksQuietModeValidator().is_valid([playbook])) == 0
-    fix_playbook = IsTasksQuietModeValidator().fix(playbook).content_object
+    validator = IsTasksQuietModeValidator()
+    assert len(validator.is_valid([playbook])) == 0
+    fix_playbook = validator.fix(playbook).content_object
     assert fix_playbook == playbook

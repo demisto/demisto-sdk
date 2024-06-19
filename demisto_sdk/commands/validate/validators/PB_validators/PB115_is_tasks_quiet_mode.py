@@ -24,9 +24,9 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
     related_field = "tasks"
     is_auto_fixable = True
     related_file_type = [RelatedFileType.YML]
-    invalid_tasks_in_playbooks: dict[str, str] = {}
+    invalid_tasks_in_playbooks = {}
 
-    def get_invalid_task_ids(self, content_item: ContentTypes) -> List[tuple[str, str]]:
+    def get_invalid_task_ids(self, content_item: ContentTypes) -> List:
         """
         Identify tasks with quietmode == 2 and update self.invalid_tasks_in_playbooks with these tasks.
 
@@ -37,14 +37,12 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
             List[str]: List of task IDs where quietmode == 2.
         """
         invalid_task_ids = [
-            (task, task_key.id)
-            for task, task_key in content_item.tasks.items()
-            if task_key.quietmode == 2
+            task
+            for task in content_item.tasks.values()
+            if task.quietmode == 2
         ]
-
         if invalid_task_ids:
             self.invalid_tasks_in_playbooks[content_item.name] = invalid_task_ids
-
         return invalid_task_ids
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -62,7 +60,7 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     playbook_name=content_item.name,
-                    tasks=", ".join([task[1] for task in invalid_tasks]),
+                    tasks=", ".join([task.id for task in invalid_tasks]),
                 ),
                 content_object=content_item,
             )
@@ -87,15 +85,14 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
         Returns:
             FixResult: The result of the fix operation.
         """
-        tasks_to_fix = self.get_invalid_task_ids(content_item)
-        for task, _ in tasks_to_fix:
-            task_key = content_item.tasks.get(task)
-            task_key.quietmode = 0
+        invalid_tasks = self.invalid_tasks_in_playbooks.get(content_item.name, [])
+        for task in invalid_tasks:
+            task.quietmode = 0
         return FixResult(
             validator=self,
             message=self.fix_message.format(
                 playbook_name=content_item.name,
-                tasks=", ".join([task[1] for task in tasks_to_fix]),
+                tasks=", ".join([task.id for task in invalid_tasks]),
             ),
             content_object=content_item,
         )

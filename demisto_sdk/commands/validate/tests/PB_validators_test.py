@@ -25,6 +25,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB106_is_playbook_us
 from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_id import (
     IsValidTaskIdValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
+    IsTaskidDifferentFromidValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
     IsTasksQuietModeValidator,
 )
@@ -696,7 +699,6 @@ def test_IsDefaultNotOnlyConditionValidator():
             }
         )
     }
-
     assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
     playbook.tasks = {
         "0": TaskConfig(
@@ -710,6 +712,44 @@ def test_IsDefaultNotOnlyConditionValidator():
         )
     }
     assert IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+
+
+def test_IsTaskidDifferentFromidValidator():
+    """
+    Given:
+    - A playbook with tasks, taskid and id
+        Case 1: id equals taskid
+        Case 2: id not equals taskid
+
+    When:
+    - Validating the playbook
+
+    Then:
+    - The results should be as expected:
+        Case 1: an empty list
+        Case 2: a list in length 1 because there is one error
+    """
+    playbook = create_playbook_object()
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 0
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test",
+                "taskid": "test1",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "test"},
+            }
+        )
+    }
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "On tasks: 0,  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
+    )
 
 
 def test_IsPlayBookUsingAnInstanceValidator_is_valid():

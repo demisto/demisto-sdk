@@ -37,7 +37,6 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB122_does_playbook_
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
-
 from demisto_sdk.commands.validate.validators.PB_validators.PB125_playbook_only_default_next import (
     PlaybookOnlyDefaultNextValidator,
 )
@@ -346,7 +345,7 @@ def test_IsTasksQuietModeValidator_fail_case():
     -The playbook becomes valid
     """
     playbook = create_playbook_object(
-        ["inputs", "quiet","tasks"],
+        ["inputs", "quiet", "tasks"],
         [
             [
                 {
@@ -358,7 +357,7 @@ def test_IsTasksQuietModeValidator_fail_case():
             ],
             False,
             {
-                "0":{
+                "0": {
                     "id": "test fail task No1",
                     "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
                     "type": "condition",

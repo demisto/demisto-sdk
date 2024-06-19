@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Dict, Iterable, List
 
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -23,10 +23,9 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
     )
     related_field = "tasks"
     is_auto_fixable = True
-    related_file_type = [RelatedFileType.YML]
-    invalid_tasks_in_playbooks = {}
+    invalid_tasks_in_playbooks: Dict[str, list[TaskConfig]] = {}
 
-    def get_invalid_task_ids(self, content_item: Playbook) -> List:
+    def get_invalid_task_ids(self, content_item: Playbook) -> List[TaskConfig]:
         """
         Identify tasks with quietmode == 2 and update self.invalid_tasks_in_playbooks with these tasks.
 
@@ -37,9 +36,7 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
             List[str]: List of task IDs where quietmode == 2.
         """
         invalid_task_ids = [
-            task
-            for task in content_item.tasks.values()
-            if task.quietmode == 2
+            task for task in list(content_item.tasks.values()) if task.quietmode == 2
         ]
         self.invalid_tasks_in_playbooks[content_item.name] = invalid_task_ids
         return invalid_task_ids

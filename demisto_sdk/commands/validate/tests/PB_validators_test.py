@@ -1,6 +1,7 @@
 import pytest
 
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tests.test_tools import create_playbook_object
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
     IsNoRolenameValidator,
@@ -18,8 +19,17 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_des
 from demisto_sdk.commands.validate.validators.PB_validators.PB105_playbook_delete_context_all import (
     PlaybookDeleteContextAllValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB106_is_playbook_using_an_instance import (
+    IsPlayBookUsingAnInstanceValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_id import (
     IsValidTaskIdValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
+    IsTaskidDifferentFromidValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
+    IsTasksQuietModeValidator,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
@@ -323,6 +333,110 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
 
 
+def test_IsTasksQuietModeValidator_fail_case():
+    """
+    Given:
+    - A invalid playbook with tasks that "quietmode" field is 2
+    - An invalid playbook to fix
+
+    When:
+    - calling IsTasksQuietModeValidator.is_valid.
+    - calling IsTasksQuietModeValidator.fix
+
+    Then:
+    - The playbook is invalid
+    -The playbook becomes valid
+    """
+    playbook = create_playbook_object(
+        ["inputs", "quiet", "tasks"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            False,
+            {
+                "0": {
+                    "id": "test fail task No1",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 2,
+                },
+                "1": {
+                    "id": "test fail task No2",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 2,
+                },
+            },
+        ],
+        pack_info={},
+    )
+    validator = IsTasksQuietModeValidator()
+    validate_res = validator.is_valid([playbook])
+    assert len(validate_res) == 1
+    assert (
+        (validate_res[0]).message
+        == "Playbook 'Detonate File - JoeSecurity V2' contains tasks that are not in quiet mode (quietmode: 2) The tasks names is: 'test fail task No1, test fail task No2'."
+    )
+    fix_playbook = validator.fix(playbook).content_object
+    assert len(validator.is_valid([fix_playbook])) == 0
+
+
+def test_IsTasksQuietModeValidator_pass_case():
+    """
+    Given:
+    - A valid playbook with tasks that "quietmode" field is 1
+
+    When:
+    - calling IsTasksQuietModeValidator.is_valid.
+    - calling IsTasksQuietModeValidator.fix
+
+    Then:
+    - The playbook is valid
+    - The playbook doesn't changed
+    """
+    playbook = create_playbook_object(
+        ["inputs", "quiet", "tasks"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            False,
+            {
+                "0": {
+                    "id": "test task",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 1,
+                }
+            },
+        ],
+    )
+    validator = IsTasksQuietModeValidator()
+    assert len(validator.is_valid([playbook])) == 0
+    fix_playbook = validator.fix(playbook).content_object
+    assert fix_playbook == playbook
+
+
 def test_PB125_playbook_only_default_next_valid():
     """
     Given:
@@ -585,7 +699,6 @@ def test_IsDefaultNotOnlyConditionValidator():
             }
         )
     }
-
     assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
     playbook.tasks = {
         "0": TaskConfig(
@@ -599,3 +712,106 @@ def test_IsDefaultNotOnlyConditionValidator():
         )
     }
     assert IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+
+
+def test_IsTaskidDifferentFromidValidator():
+    """
+    Given:
+    - A playbook with tasks, taskid and id
+        Case 1: id equals taskid
+        Case 2: id not equals taskid
+
+    When:
+    - Validating the playbook
+
+    Then:
+    - The results should be as expected:
+        Case 1: an empty list
+        Case 2: a list in length 1 because there is one error
+    """
+    playbook = create_playbook_object()
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 0
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test",
+                "taskid": "test1",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "test"},
+            }
+        )
+    }
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "On tasks: 0,  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
+    )
+
+
+def test_IsPlayBookUsingAnInstanceValidator_is_valid():
+    """
+    Given:
+    - A playbook
+        Case 1: The playbook is valid.
+        Case 2: The playbook isn't valid, it has using field.
+    When:
+    - calling IsPlayBookUsingAnInstanceValidator.is_valid.
+    Then:
+    - The results should be as expected:
+        Case 1: The playbook is valid
+        Case 2: The playbook is invalid
+    """
+    # Case 1
+    valid_playbook = create_playbook_object()
+    valid_result = IsPlayBookUsingAnInstanceValidator().is_valid([valid_playbook])
+
+    # Case 2
+    invalid_playbook = create_playbook_object()
+    for _, task in invalid_playbook.tasks.items():
+        task.scriptarguments = {"using": "instance_name"}
+    results_invalid = IsPlayBookUsingAnInstanceValidator().is_valid([invalid_playbook])
+
+    assert valid_result == []
+    assert results_invalid != []
+    assert results_invalid[0].message == (
+        "Playbook should not use specific instance for tasks: {0}.".format(
+            ", ".join([task.taskid for task in invalid_playbook.tasks.values()])
+        )
+    )
+
+
+def test_IsPlayBookUsingAnInstanceValidator_fix():
+    """
+    Given:
+    - A playbook
+        Case 1: The playbook isn't valid, it will be fixed.
+    When:
+    - calling IsPlayBookUsingAnInstanceValidator.fix.
+    Then:
+    - The message appears with the invalid tasks.
+    """
+
+    # Case 1
+    invalid_playbook = create_playbook_object()
+    for _, task in invalid_playbook.tasks.items():
+        task.scriptarguments = {"using": "instance_name", "some_key": "value"}
+    validator_invalid_playbook = IsPlayBookUsingAnInstanceValidator()
+    validator_invalid_playbook.invalid_tasks[invalid_playbook.name] = [
+        task for task in invalid_playbook.tasks.values()
+    ]
+    fix_validator = validator_invalid_playbook.fix(invalid_playbook)
+    fix_message = fix_validator.message
+    fixed_content_item: Playbook = fix_validator.content_object
+    expected_message = (
+        "Removed The 'using' statement from the following tasks tasks: {0}.".format(
+            ", ".join([task.taskid for task in invalid_playbook.tasks.values()])
+        )
+    )
+    assert fix_message == expected_message
+    for tasks in fixed_content_item.tasks.values():
+        scriptargs = tasks.scriptarguments
+        assert scriptargs == {"some_key": "value"}

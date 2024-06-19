@@ -225,8 +225,8 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
-    
-    
+
+
 def test_IsTasksQuietModeValidator_fail_case():
     """
     Given:
@@ -235,7 +235,7 @@ def test_IsTasksQuietModeValidator_fail_case():
 
     When:
     - calling IsTasksQuietModeValidator.is_valid.
-    - calling IsTasksQuietModeValidator.fix 
+    - calling IsTasksQuietModeValidator.fix
 
     Then:
     - The playbook is invalid
@@ -254,28 +254,45 @@ def test_IsTasksQuietModeValidator_fail_case():
             ],
             False,
         ],
-        pack_info={}
+        pack_info={},
     )
     playbook.tasks = {
         "0": TaskConfig(
             **{
-                "id": "test fail task",
+                "id": "test fail task No1",
                 "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
                 "type": "condition",
                 "message": {"replyOptions": ["yes"]},
                 "nexttasks": {"no": ["1"]},
                 "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "quietmode": 2
+                "quietmode": 2,
             }
-        )
+        ),
+        "1": TaskConfig(
+            **{
+                "id": "test fail task No2",
+                "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                "quietmode": 2,
+            }
+        ),
     }
     # assert that the playbook is invalid
-    assert len(IsTasksQuietModeValidator().is_valid([playbook])) == 1
+    validate_res = IsTasksQuietModeValidator().is_valid([playbook])
+    assert len(validate_res) == 1
+    assert (
+        (validate_res[0]).message
+        == "Playbook 'Detonate File - JoeSecurity V2' contains tasks that are not in quiet mode (quietmode: 2) The tasks names is: 'test fail task No1, test fail task No2'."
+    )
     # fix the playbook
     fix_playbook = IsTasksQuietModeValidator().fix(playbook).content_object
     # validate the fixing
     assert len(IsTasksQuietModeValidator().is_valid([fix_playbook])) == 0
-    
+
+
 def test_IsTasksQuietModeValidator_pass_case():
     """
     Given:
@@ -283,7 +300,7 @@ def test_IsTasksQuietModeValidator_pass_case():
 
     When:
     - calling IsTasksQuietModeValidator.is_valid.
-    - calling IsTasksQuietModeValidator.fix 
+    - calling IsTasksQuietModeValidator.fix
 
     Then:
     - The playbook is valid
@@ -312,13 +329,10 @@ def test_IsTasksQuietModeValidator_pass_case():
                 "message": {"replyOptions": ["yes"]},
                 "nexttasks": {"no": ["1"]},
                 "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
-                "quietmode": 1
+                "quietmode": 1,
             }
         )
     }
     assert len(IsTasksQuietModeValidator().is_valid([playbook])) == 0
     fix_playbook = IsTasksQuietModeValidator().fix(playbook).content_object
     assert fix_playbook == playbook
-    
-
-    

@@ -696,7 +696,7 @@ class TestParsersAndModels:
         ContentItemModelVerifier.run(
             model,
             expected_id="urlRep",
-            expected_name="URL",
+            expected_name="urlRep",
             expected_path=indicator_type_path,
             expected_content_type=ContentType.INDICATOR_TYPE,
             expected_fromversion="5.5.0",

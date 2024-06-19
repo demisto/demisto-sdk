@@ -14,21 +14,19 @@ GIT_STATUSES_DICT = {
 }
 
 RELATED_FILES_DICT = {
-    "1": "RelatedFileType.YML",
-    "2": "RelatedFileType.JSON",
-    "3": "RelatedFileType.README",
-    "4": "RelatedFileType.DESCRIPTION_File",
-    "5": "RelatedFileType.IMAGE",
-    "6": "RelatedFileType.DARK_SVG",
-    "7": "RelatedFileType.LIGHT_SVG",
-    "8": "RelatedFileType.CODE_FILE",
-    "9": "RelatedFileType.TEST_CODE_FILE",
-    "10": "RelatedFileType.SCHEMA",
-    "11": "RelatedFileType.XIF",
-    "12": "RelatedFileType.PACK_IGNORE",
-    "13": "RelatedFileType.SECRETS_IGNORE",
-    "14": "RelatedFileType.AUTHOR_IMAGE",
-    "15": "RelatedFileType.RELEASE_NOTES",
+    "1": "RelatedFileType.README",
+    "2": "RelatedFileType.DESCRIPTION_File",
+    "3": "RelatedFileType.IMAGE",
+    "4": "RelatedFileType.DARK_SVG",
+    "5": "RelatedFileType.LIGHT_SVG",
+    "6": "RelatedFileType.CODE_FILE",
+    "7": "RelatedFileType.TEST_CODE_FILE",
+    "8": "RelatedFileType.SCHEMA",
+    "9": "RelatedFileType.XIF",
+    "10": "RelatedFileType.PACK_IGNORE",
+    "11": "RelatedFileType.SECRETS_IGNORE",
+    "12": "RelatedFileType.AUTHOR_IMAGE",
+    "13": "RelatedFileType.RELEASE_NOTES",
 }
 
 CONTENT_TYPES_DICT = {
@@ -147,6 +145,18 @@ CONTENT_TYPES_DICT = {
     "29": {
         "import": "from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport",
         "content_type": "XSIAMReport",
+    },
+    "30": {
+        "import": "from demisto_sdk.commands.content_graph.objects.case_field",
+        "content_type": "CaseField",
+    },
+    "31": {
+        "import": "from demisto_sdk.commands.content_graph.objects.case_layout",
+        "content_type": "CaseLayout",
+    },
+    "32": {
+        "import": "from demisto_sdk.commands.content_graph.objects.case_layout_rule",
+        "content_type": "CaseLayoutRule",
     },
 }
 

@@ -715,11 +715,11 @@ def test_IsValidCategoryValidator_is_valid(
         (
             [
                 create_integration_object(
-                    paths=["commonfields.id", "script.beta"],
+                    paths=["commonfields.id", "beta"],
                     values=["contain_beta", False],
                 ),
                 create_integration_object(
-                    paths=["commonfields.id", "script.beta"], values=["test", True]
+                    paths=["commonfields.id", "beta"], values=["test", True]
                 ),
             ],
             0,
@@ -728,10 +728,10 @@ def test_IsValidCategoryValidator_is_valid(
         (
             [
                 create_integration_object(
-                    paths=["commonfields.id", "script.beta"], values=["beta_test", True]
+                    paths=["commonfields.id", "beta"], values=["beta_test", True]
                 ),
                 create_integration_object(
-                    paths=["commonfields.id", "script.beta"], values=["test beta", True]
+                    paths=["commonfields.id", "beta"], values=["test beta", True]
                 ),
             ],
             2,
@@ -783,7 +783,7 @@ def test_IsIdContainBetaValidator_fix():
         - Make sure the right ID was fixed correctly and that the right ID was returned.
     """
     content_item = create_integration_object(
-        paths=["commonfields.id", "script.beta"], values=["test beta", True]
+        paths=["commonfields.id", "beta"], values=["test beta", True]
     )
     assert content_item.object_id == "test beta"
     assert (
@@ -799,10 +799,10 @@ def test_IsIdContainBetaValidator_fix():
         (
             [
                 create_integration_object(
-                    paths=["name", "script.beta"], values=["contain_beta", False]
+                    paths=["name", "beta"], values=["contain_beta", False]
                 ),
                 create_integration_object(
-                    paths=["name", "script.beta"], values=["test", True]
+                    paths=["name", "beta"], values=["test", True]
                 ),
             ],
             0,
@@ -811,10 +811,10 @@ def test_IsIdContainBetaValidator_fix():
         (
             [
                 create_integration_object(
-                    paths=["name", "script.beta"], values=["beta_test", True]
+                    paths=["name", "beta"], values=["beta_test", True]
                 ),
                 create_integration_object(
-                    paths=["name", "script.beta"], values=["test beta", True]
+                    paths=["name", "beta"], values=["test beta", True]
                 ),
             ],
             2,
@@ -866,7 +866,7 @@ def test_IsNameContainBetaValidator_fix():
         - Make sure the right ID was fixed correctly and that the right name was returned.
     """
     content_item = create_integration_object(
-        paths=["name", "script.beta"], values=["test beta", True]
+        paths=["name", "beta"], values=["test beta", True]
     )
     assert content_item.name == "test beta"
     assert (
@@ -882,10 +882,10 @@ def test_IsNameContainBetaValidator_fix():
         (
             [
                 create_integration_object(
-                    paths=["display", "script.beta"], values=["contain beta", True]
+                    paths=["display", "beta"], values=["contain beta", True]
                 ),
                 create_integration_object(
-                    paths=["display", "script.beta"], values=["test", False]
+                    paths=["display", "beta"], values=["test", False]
                 ),
             ],
             0,
@@ -894,7 +894,7 @@ def test_IsNameContainBetaValidator_fix():
         (
             [
                 create_integration_object(
-                    paths=["display", "script.beta"], values=["should fail", True]
+                    paths=["display", "beta"], values=["should fail", True]
                 ),
             ],
             1,

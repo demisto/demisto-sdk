@@ -1,4 +1,27 @@
 # Changelog
+## 1.30.0
+* Started a deprecation process of the **lint** command. It will be fully removed soon. Use **demisto-sdk pre-commit** instead. [#4286](https://github.com/demisto/demisto-sdk/pull/4286)
+* Added support for Python 3.11 [#2801](https://github.com/demisto/demisto-sdk/pull/2801)
+* Added validation for image files in doc_files folder. [#4249](https://github.com/demisto/demisto-sdk/pull/4249)
+* Refactored PB101 and PB123 valildations. [#4273](https://github.com/demisto/demisto-sdk/pull/4273)
+* Refactored validation IF116, Check whether a selectValue key in an incidentField of type multiSelect contains empty options. [#4278](https://github.com/demisto/demisto-sdk/pull/4278)
+* Added support for IT valildations in the new validation command. [#4264](https://github.com/demisto/demisto-sdk/pull/4264)
+* Converted the RM106 validation to the new format. The validation verifies that README doesn't contain the word 'demisto'. [#4295](https://github.com/demisto/demisto-sdk/pull/4295)
+* Converted the DS107 validation to the new format. The validation verifies the integration description doesn't contain the word 'demisto'. [#4296](https://github.com/demisto/demisto-sdk/pull/4296)
+* Added XSIAM prefix for the `defaultDataSource` integration README. [#4305](https://github.com/demisto/demisto-sdk/pull/4305)
+* When updating an existing graph, the list of updated packs is now sorted. [#4261](https://github.com/demisto/demisto-sdk/pull/4261)
+* Refactored all DA valildations. [#4264](https://github.com/demisto/demisto-sdk/pull/4264)
+* Updated validation BC106, Verify that the fromVersion key in an incident field has not been changed. [#4276](https://github.com/demisto/demisto-sdk/pull/4276)
+* Refactored validation DS100, check whether a description file exists for a beta integration. [#4274](https://github.com/demisto/demisto-sdk/pull/4274)
+* Removed support for the `defaultDataSource` field in the pack metadata for hybrid packs. [#4302](https://github.com/demisto/demisto-sdk/pull/4302)
+* Refactored validation IM111, Verify the integration image is within the allowed dimensions. [#4255](https://github.com/demisto/demisto-sdk/pull/4255)
+* Added the `defaultDataSource` field to the pack metadata. [#4139](https://github.com/demisto/demisto-sdk/pull/4139)
+* Change the default `fromversion` of XSIAM content items to 8.0.0 [#4243](https://github.com/demisto/demisto-sdk/pull/4243)
+* Fixed an issue where `.demisto-sdk-conf` did not take into consideration command arguments setting to `false`. [#4253](https://github.com/demisto/demisto-sdk/pull/4253)
+* Fixed an issue where **format** did not take `.demisto-sdk-conf` into consideration. [#4253](https://github.com/demisto/demisto-sdk/pull/4253)
+* More detailed error message with action items for validation RM108. [#4269](https://github.com/demisto/demisto-sdk/pull/4269)
+* Removed lint step from all sdk build steps. [#4286](https://github.com/demisto/demisto-sdk/pull/4286)
+
 ## 1.29.3
 * Fixed an issue where **validate** ran from-version validation on `trigger` content items which do not have *from_version* field. [#4235](https://github.com/demisto/demisto-sdk/pull/4235)
 * Fixed an issue where requests to dockerhub failed on rate-limits when authenticating with username and password. [#4227](https://github.com/demisto/demisto-sdk/pull/4227)

@@ -21,6 +21,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme
 from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
     IsContainDemistoWordValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM107_is_template_sentence_in_readme import (
+    IsTemplateNotInReadmeValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_integration_image_path_valid import (
     IntegrationRelativeImagePathValidator,
 )
@@ -43,26 +46,26 @@ from TestSuite.repo import ChangeCWD
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-            [
-                create_pack_object(readme_text="This is a valid readme."),
-                create_pack_object(readme_text=""),
-            ],
-            0,
-            [],
+                [
+                    create_pack_object(readme_text="This is a valid readme."),
+                    create_pack_object(readme_text=""),
+                ],
+                0,
+                [],
         ),
         (
-            [create_pack_object(readme_text="Invalid readme\nBSD\nCopyright")],
-            1,
-            [
-                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines: 2, 3. Copyright section cannot be part of pack readme."
-            ],
+                [create_pack_object(readme_text="Invalid readme\nBSD\nCopyright")],
+                1,
+                [
+                    "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines: 2, 3. Copyright section cannot be part of pack readme."
+                ],
         ),
     ],
 )
 def test_IsContainCopyRightSectionValidator_is_valid(
-    content_items,
-    expected_number_of_failures,
-    expected_msgs,
+        content_items,
+        expected_number_of_failures,
+        expected_msgs,
 ):
     """
     Given
@@ -92,48 +95,48 @@ def test_IsContainCopyRightSectionValidator_is_valid(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-            [
-                create_pack_object(
-                    paths=["support"],
-                    values=["partner"],
-                    readme_text="This is a valid readme.",
-                ),  # valid readme with partner support
-                create_pack_object(
-                    readme_text=""
-                ),  # empty readme but with no partner support and no playbooks
-                create_pack_object(
-                    readme_text="This is valid readme", playbooks=1
-                ),  # should pass as it has a valid readme and playbooks
-            ],
-            0,
-            [],
+                [
+                    create_pack_object(
+                        paths=["support"],
+                        values=["partner"],
+                        readme_text="This is a valid readme.",
+                    ),  # valid readme with partner support
+                    create_pack_object(
+                        readme_text=""
+                    ),  # empty readme but with no partner support and no playbooks
+                    create_pack_object(
+                        readme_text="This is valid readme", playbooks=1
+                    ),  # should pass as it has a valid readme and playbooks
+                ],
+                0,
+                [],
         ),
         (
-            [
-                create_pack_object(
-                    paths=["support"], values=["partner"], readme_text=""
-                ),
-            ],  # empty readme with partner support, not valid
-            1,
-            [
-                "Pack HelloWorld written by a partner or pack containing playbooks must have a full README.md file with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme for more information",
-            ],
+                [
+                    create_pack_object(
+                        paths=["support"], values=["partner"], readme_text=""
+                    ),
+                ],  # empty readme with partner support, not valid
+                1,
+                [
+                    "Pack HelloWorld written by a partner or pack containing playbooks must have a full README.md file with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme for more information",
+                ],
         ),
         (
-            [
-                create_pack_object(readme_text="", playbooks=1)
-            ],  # empty readme with playbooks, not valid
-            1,
-            [
-                "Pack HelloWorld written by a partner or pack containing playbooks must have a full README.md file with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme for more information"
-            ],
+                [
+                    create_pack_object(readme_text="", playbooks=1)
+                ],  # empty readme with playbooks, not valid
+                1,
+                [
+                    "Pack HelloWorld written by a partner or pack containing playbooks must have a full README.md file with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme for more information"
+                ],
         ),
     ],
 )
 def test_empty_readme_validator(
-    content_items,
-    expected_number_of_failures,
-    expected_msgs,
+        content_items,
+        expected_number_of_failures,
+        expected_msgs,
 ):
     """
     Given:
@@ -167,36 +170,36 @@ def test_empty_readme_validator(
     [
         ([create_integration_object()], 0),
         (
-            [
-                create_integration_object(
-                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
-                )
-            ],
-            1,
+                [
+                    create_integration_object(
+                        readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                    )
+                ],
+                1,
         ),
         (
-            [
-                create_script_object(
-                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
-                )
-            ],
-            1,
+                [
+                    create_script_object(
+                        readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                    )
+                ],
+                1,
         ),
         (
-            [
-                create_pack_object(
-                    readme_text='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
-                )
-            ],
-            1,
+                [
+                    create_pack_object(
+                        readme_text='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                    )
+                ],
+                1,
         ),
         (
-            [
-                create_playbook_object(
-                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
-                )
-            ],
-            1,
+                [
+                    create_playbook_object(
+                        readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                    )
+                ],
+                1,
         ),
     ],
 )
@@ -232,58 +235,58 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
     "content_items, is_file_exist, expected_number_of_failures, expected_msgs",
     [
         (
-            [
-                create_playbook_object(
-                    readme_content="This is a valid readme without any images.",
-                    pack_info={"name": "test1"},
-                ),
-                create_playbook_object(
-                    readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)",
-                    pack_info={"name": "test1"},
-                ),
-                create_playbook_object(readme_content="", pack_info={"name": "test1"}),
-                create_integration_object(
-                    readme_content="This is a valid readme without any images.",
-                    pack_info={"name": "test2"},
-                ),
-                create_integration_object(
-                    readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)",
-                    pack_info={"name": "test2"},
-                ),
-                create_integration_object(
-                    readme_content="", pack_info={"name": "test2"}
-                ),
-            ],
-            True,
-            0,
-            [],
+                [
+                    create_playbook_object(
+                        readme_content="This is a valid readme without any images.",
+                        pack_info={"name": "test1"},
+                    ),
+                    create_playbook_object(
+                        readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)",
+                        pack_info={"name": "test1"},
+                    ),
+                    create_playbook_object(readme_content="", pack_info={"name": "test1"}),
+                    create_integration_object(
+                        readme_content="This is a valid readme without any images.",
+                        pack_info={"name": "test2"},
+                    ),
+                    create_integration_object(
+                        readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)",
+                        pack_info={"name": "test2"},
+                    ),
+                    create_integration_object(
+                        readme_content="", pack_info={"name": "test2"}
+                    ),
+                ],
+                True,
+                0,
+                [],
         ),
         (
-            [
-                create_playbook_object(
-                    readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png), ",
-                    pack_info={"name": "test1"},
-                ),
-                create_integration_object(
-                    readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png)",
-                    pack_info={"name": "test2"},
-                ),
-            ],
-            False,
-            2,
-            [
-                "The following images do not exist: Packs/test1/doc_files/example.png",
-                "The following images do not exist: Packs/test2/doc_files/example.png",
-            ],
+                [
+                    create_playbook_object(
+                        readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png), ",
+                        pack_info={"name": "test1"},
+                    ),
+                    create_integration_object(
+                        readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png)",
+                        pack_info={"name": "test2"},
+                    ),
+                ],
+                False,
+                2,
+                [
+                    "The following images do not exist: Packs/test1/doc_files/example.png",
+                    "The following images do not exist: Packs/test2/doc_files/example.png",
+                ],
         ),
     ],
 )
 def test_IsImageExistsInReadmeValidator_is_valid(
-    mocker,
-    content_items,
-    is_file_exist,
-    expected_number_of_failures,
-    expected_msgs,
+        mocker,
+        content_items,
+        is_file_exist,
+        expected_number_of_failures,
+        expected_msgs,
 ):
     mocker.patch.object(Path, "is_file", return_value=is_file_exist)
 
@@ -341,39 +344,39 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-            [
-                create_playbook_object(),
-                create_playbook_object(),
-            ],
-            1,
-            [
-                "The Playbook 'Detonate File - JoeSecurity V2' doesn't have a README file. Please add a README.md file in the content item's directory."
-            ],
+                [
+                    create_playbook_object(),
+                    create_playbook_object(),
+                ],
+                1,
+                [
+                    "The Playbook 'Detonate File - JoeSecurity V2' doesn't have a README file. Please add a README.md file in the content item's directory."
+                ],
         ),
         (
-            [
-                create_script_object(),
-                create_script_object(),
-            ],
-            1,
-            [
-                "The Script 'myScript' doesn't have a README file. Please add a README.md file in the content item's directory."
-            ],
+                [
+                    create_script_object(),
+                    create_script_object(),
+                ],
+                1,
+                [
+                    "The Script 'myScript' doesn't have a README file. Please add a README.md file in the content item's directory."
+                ],
         ),
         (
-            [
-                create_integration_object(),
-                create_integration_object(),
-            ],
-            1,
-            [
-                "The Integration 'TestIntegration' doesn't have a README file. Please add a README.md file in the content item's directory."
-            ],
+                [
+                    create_integration_object(),
+                    create_integration_object(),
+                ],
+                1,
+                [
+                    "The Integration 'TestIntegration' doesn't have a README file. Please add a README.md file in the content item's directory."
+                ],
         ),
     ],
 )
 def test_IsReadmeExistsValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+        content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given:
@@ -478,7 +481,7 @@ def test_ImagePathIntegrationValidator_is_valid_invalid_case():
     content_items = [
         create_integration_object(
             readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
-            " ![Example Image](https://www.example.com/images/example_image.jpg)",
+                           " ![Example Image](https://www.example.com/images/example_image.jpg)",
             description_content="valid description ![Example Image](../../content/image.jpg)",
         ),
     ]
@@ -528,8 +531,8 @@ def test_ImagePathOnlyReadMeValidator_is_valid_invalid_case():
     content_items = [
         create_integration_object(
             readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
-            " ![Example Image](https://www.example.com/images/example_image.jpg)"
-            " ![Example Image](../../content/image.jpg)",
+                           " ![Example Image](https://www.example.com/images/example_image.jpg)"
+                           " ![Example Image](../../content/image.jpg)",
         ),
     ]
     expected = (
@@ -542,3 +545,8 @@ def test_ImagePathOnlyReadMeValidator_is_valid_invalid_case():
 
     result = ReadmeRelativeImagePathValidator().is_valid(content_items)
     assert result[0].message == expected
+
+
+def test_VerifyTemplateNotInReadmeValidator_valid_case():
+    pass
+#IsTemplateNotInReadmeValidator

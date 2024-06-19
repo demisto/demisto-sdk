@@ -25,13 +25,10 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB106_is_playbook_us
 from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_id import (
     IsValidTaskIdValidator,
 )
-<<<<<<< HEAD
 from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
     IsTaskidDifferentFromidValidator,
-=======
 from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
     IsTasksQuietModeValidator,
->>>>>>> master
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,

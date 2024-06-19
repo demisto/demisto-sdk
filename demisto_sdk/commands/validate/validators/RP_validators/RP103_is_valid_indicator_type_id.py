@@ -20,7 +20,7 @@ ContentTypes = IndicatorType
 class IsValidIndicatorTypeId(BaseValidator[ContentTypes]):
     error_code = "RP103"
     description = "Validate that the 'id' field of indicator type has valid value."
-    error_message = "id field contain invalid value."
+    error_message = "The `id` field must consist of alphanumeric characters (A-Z, a-z, 0-9), whitespaces ( ), underscores (_), and ampersands (&) only."
     rationale = "we want to make sure the id of the indicator type is valid."
     related_field = "id"
     is_auto_fixable = False

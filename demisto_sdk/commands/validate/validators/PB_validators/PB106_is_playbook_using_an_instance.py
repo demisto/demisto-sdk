@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import ClassVar, Iterable, List
+from typing import ClassVar, Dict, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -14,7 +14,7 @@ ContentTypes = Playbook
 
 
 class IsPlayBookUsingAnInstanceValidator(BaseValidator[ContentTypes]):
-    invalid_tasks: ClassVar[dict[str, list[TaskConfig]]] = {}
+    invalid_tasks: ClassVar[Dict[str, list[TaskConfig]]] = {}
     error_code = "PB106"
     description = "Validate whether the playbook does not use an instance. If the Playbook use an instance it is not valid."
     rationale = "If the playbook uses a specific instance it can leads to errors because not all the users have the same instance."
@@ -26,7 +26,7 @@ class IsPlayBookUsingAnInstanceValidator(BaseValidator[ContentTypes]):
     def is_playbook_using_an_instance(
         self, content_item: ContentTypes
     ) -> list[TaskConfig]:
-        content_item_tasks: dict[str, TaskConfig] = content_item.tasks
+        content_item_tasks: Dict[str, TaskConfig] = content_item.tasks
         invalid_tasks: list[TaskConfig] = []
         for _, task in content_item_tasks.items():
             scriptargs = task.scriptarguments

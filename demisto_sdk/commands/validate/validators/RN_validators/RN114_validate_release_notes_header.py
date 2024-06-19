@@ -77,7 +77,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         Returns:
             List: Filtered list with None values removed.
         """
-        return list(filter(lambda x: x, ls))
+        return list(filter(None, ls))
 
     def extract_rn_headers(self, release_note_content: str) -> Dict[str, List[str]]:
         """
@@ -123,7 +123,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
 
         return headers
 
-    def validate_content_type_header(self, content_type: str) -> bool:
+    def validate_content_type_header(self, header: str) -> bool:
         """
             Validate that the release notes 1st headers (the content type) are a valid content entity.
         Args:
@@ -131,8 +131,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         Return:
             True if the content type is valid, False otherwise.
         """
-        rn_valid_headers = RN_HEADER_BY_FILE_TYPE.values()
-        return content_type in rn_valid_headers
+        return content_type in RN_HEADER_BY_FILE_TYPE.values()
 
     def validate_content_item_header(
         self,
@@ -159,10 +158,8 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 item.display_name for item in pack_items_by_types.get(content_type, [])
             }
 
-            if not set(display_names).issubset(pack_display_names):
-                missing_display_names[content_type] = (
-                    set(display_names) - pack_display_names
-                )
+            if missing := set(display_names).difference(pack_display_names):
+                missing_display_names[content_type] = missing
         return missing_display_names
 
     def validate_release_notes_headers(
@@ -189,7 +186,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             if not self.validate_content_type_header(header_type)
         ]
         # removing invalid 1st header types
-        headers = {
+        valid_headers = {
             key: value
             for key, value in headers.items()
             if key not in invalid_content_type and value
@@ -197,7 +194,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         invalid_content_item: List[str] = [
             value
             for set_value in self.validate_content_item_header(
-                headers, pack_items_by_types
+                valid_headers, pack_items_by_types
             ).values()
             for value in set_value
         ]

@@ -109,6 +109,9 @@ WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
 LAYOUT_RULES_DIR = "LayoutRules"
 ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
+CASE_LAYOUT_RULES_DIR = "CaseLayoutRules"
+CASE_LAYOUTS_DIR = "CaseLayouts"
+CASE_FIELDS_DIR = "CaseFields"
 
 # NAMES OF ENTITIES
 
@@ -158,6 +161,9 @@ LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 EVENT_COLLECTOR = "EventCollector"
 ASSETS_MODELING_RULE = "assetsmodelingrule"
+CASE_LAYOUT_RULE = "caselayoutrule"
+CASE_FIELD = "casefield"
+CASE_LAYOUT = "caselayout"
 
 # Marketplaces
 
@@ -249,6 +255,9 @@ class FileType(StrEnum):
     ASSETS_MODELING_RULE_SCHEMA = "assetsmodelingruleschema"
     ASSETS_MODELING_RULE = "assetsmodelingrule"
     ASSETS_MODELING_RULE_XIF = "assetsmodelingrulexif"
+    CASE_LAYOUT_RULE = "caselayoutrule"
+    CASE_FIELD = "casefield"
+    CASE_LAYOUT = "caselayout"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -287,6 +296,9 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.XDRC_TEMPLATE: "XDRC Templates",
     FileType.LAYOUT_RULE: "Layout Rules",
     FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
+    FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
+    FileType.CASE_FIELD: "Case Fields",
+    FileType.CASE_LAYOUT: "Case Layouts",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -329,6 +341,9 @@ ENTITY_TYPE_TO_DIR = {
     FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
     FileType.ASSETS_MODELING_RULE.value: ASSETS_MODELING_RULES_DIR,
+    FileType.CASE_FIELD.value: CASE_FIELDS_DIR,
+    FileType.CASE_LAYOUT.value: CASE_LAYOUTS_DIR,
+    FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -341,6 +356,9 @@ SIEM_ONLY_ENTITIES = [
     FileType.XDRC_TEMPLATE.value,
     FileType.LAYOUT_RULE.value,
     FileType.ASSETS_MODELING_RULE,
+    FileType.CASE_LAYOUT_RULE.value,
+    FileType.CASE_FIELD.value,
+    FileType.CASE_LAYOUT.value,
 ]
 
 CONTENT_FILE_ENDINGS = ["py", "yml", "png", "json", "md"]
@@ -387,6 +405,9 @@ CONTENT_ENTITIES_DIRS = [
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
     ASSETS_MODELING_RULES_DIR,
+    CASE_LAYOUT_RULES_DIR,
+    CASE_FIELDS_DIR,
+    CASE_LAYOUTS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -406,20 +427,6 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     LISTS_DIR,
     JOBS_DIR,
     WIZARDS_DIR,
-]
-
-RN_CONTENT_ENTITY_WITH_STARS = [
-    FileType.CONNECTION,
-    FileType.INCIDENT_TYPE,
-    FileType.REPUTATION,
-    FileType.LAYOUT,
-    FileType.INCIDENT_FIELD,
-    FileType.INDICATOR_FIELD,
-    FileType.TRIGGER,
-    FileType.GENERIC_DEFINITION,
-    FileType.GENERIC_MODULE,
-    FileType.GENERIC_TYPE,
-    FileType.GENERIC_FIELD,
 ]
 
 DEFAULT_IMAGE = "demisto_sdk/tests/test_files/default_image.png"
@@ -1583,6 +1590,9 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.LAYOUT_RULE: "6.10.0",
     FileType.XSIAM_DASHBOARD: "6.10.0",
     FileType.ASSETS_MODELING_RULE: "6.2.1",
+    FileType.CASE_LAYOUT_RULE: "8.7.0",
+    FileType.CASE_FIELD: "8.7.0",
+    FileType.CASE_LAYOUT: "8.7.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1872,6 +1882,9 @@ class ContentItems(Enum):
     XDRC_TEMPLATE = "xdrctemplate"
     LAYOUT_RULES = "layoutrule"
     ASSETS_MODELING_RULES = "assetsmodelingrule"
+    CASE_LAYOUT_RULES = "caselayoutrule"
+    CASE_FIELDS = "casefield"
+    CASE_LAYOUTS = "caselayout"
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1900,6 +1913,9 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     XDRC_TEMPLATE_DIR,
     LAYOUT_RULES_DIR,
     ASSETS_MODELING_RULES_DIR,
+    CASE_LAYOUT_RULES_DIR,
+    CASE_FIELDS_DIR,
+    CASE_LAYOUTS_DIR,
 }
 
 
@@ -2082,6 +2098,7 @@ TABLE_INCIDENT_TO_ALERT = {
 FORMATTING_SCRIPT = "indicator-format"
 
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
+DOCKERFILES_INFO_REPO_PRIMARY_BRANCH = "master"
 DOCKERFILES_REPO = "demisto/dockerfiles"
 CONTENT_REPO = "demisto/content"
 
@@ -2169,3 +2186,7 @@ PACK_DEFAULT_MARKETPLACES: List = [
     MarketplaceVersions.XSOAR.value,
     MarketplaceVersions.MarketplaceV2.value,
 ]
+
+INVALID_IMAGE_PATH_REGEX = (
+    r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")"
+)

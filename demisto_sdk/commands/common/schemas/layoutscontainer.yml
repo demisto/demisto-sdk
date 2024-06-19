@@ -6,7 +6,7 @@ mapping:
   group:
     type: str
     required: true
-    enum: ['incident', 'indicator']
+    enum: ['incident', 'indicator', 'case']
   definitionId:
     type: str
   version:

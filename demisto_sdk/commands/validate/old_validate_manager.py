@@ -316,6 +316,9 @@ class OldValidateManager:
             FileType.PEM,
             FileType.METADATA,
             FileType.VULTURE_WHITELIST,
+            FileType.CASE_LAYOUT_RULE,
+            FileType.CASE_LAYOUT,
+            FileType.CASE_FIELD,
         )
 
         self.is_external_repo = is_external_repo

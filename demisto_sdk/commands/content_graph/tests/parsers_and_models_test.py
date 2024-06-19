@@ -35,7 +35,7 @@ from TestSuite.repo import Repo
 
 
 def content_items_to_node_ids(
-    content_items_dict: Dict[ContentType, List[str]]
+    content_items_dict: Dict[ContentType, List[str]],
 ) -> Set[str]:
     """A helper method that converts a dict of content items to a set of their node ids."""
     return {
@@ -1272,7 +1272,14 @@ class TestParsersAndModels:
 
     @pytest.mark.parametrize(
         "raw_value, expected_value",
-        [("false", False), ("true", True), ("tRue", True), ("something", True)],
+        [
+            (False, False),
+            (True, True),
+            ("true", True),
+            ("false", False),
+            ("tRue", True),
+            ("faLse", False),
+        ],
     )
     def test_script_parser_set_autoupdate(self, raw_value, expected_value, pack: Pack):
         """

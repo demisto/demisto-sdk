@@ -24,7 +24,7 @@ class IsPackReadmeNotEqualPackDescriptionValidator(BaseValidator[ContentTypes]):
         "See https://xsoar.pan.dev/docs/documentation/readme_file for more information."
     )
     related_field = "readme, description"
-    related_file_type = [RelatedFileType.JSON, RelatedFileType.README]
+    related_file_type = [RelatedFileType.README]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

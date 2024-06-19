@@ -17,21 +17,21 @@ from demisto_sdk.commands.validate.validators.RP_validators.RP103_is_valid_indic
         (0, [create_indicator_type_object()], []),
         (0, [create_indicator_type_object(["expiration"], [0])], []),
         (
-            2,
-            [
-                create_indicator_type_object(["expiration"], [0]),
-                create_indicator_type_object(["expiration"], [-1]),
-                create_indicator_type_object(["expiration"], ["1"]),
-            ],
-            [
-                "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
-                "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
-            ],
+                2,
+                [
+                    create_indicator_type_object(["expiration"], [0]),
+                    create_indicator_type_object(["expiration"], [-1]),
+                    create_indicator_type_object(["expiration"], ["1"]),
+                ],
+                [
+                    "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
+                    "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
+                ],
         ),
     ],
 )
 def test_ExpirationFieldIsNumericValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+        content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -60,42 +60,57 @@ def test_ExpirationFieldIsNumericValidator_is_valid(
     )
 
 
-@pytest.mark.parametrize(
-    "expected_number_of_failures, content_items, expected_msgs",
-    [
-        (0, [create_indicator_type_object()], []),
-        (0, [create_indicator_type_object(["id"], ["test"])], []),
-        (
-            1,
-            [
-                create_indicator_type_object(["id"], ["test"]),
-                create_indicator_type_object(["id"], ["test-not-equal"]),
-            ],
-            [
-                "id field contain invalid value.",
-            ],
-        ),
-    ],
-)
-def test_IsValidIndicatorTypeId(
-    content_items, expected_number_of_failures, expected_msgs
-):
+def test_ValidIndicatorTypeId():
     """
     Given
     content_items iterables.
-        - Case 1: One indicator_type with id = 'urlRep'.
-        - Case 2: One indicator_type with id = test.
-        - Case 3: Two indicator_type objects:
-            - One indicator_type with id = test.
-            - One indicator_type with id = test-not-equal.
+        - Case 1: One indicator_type with letters string
+        - Case 2: One indicator_type with letters string with ampersands
+        - Case 3: One indicator_type with letters string with whitespaces
+        - Case 4: One indicator_type with letters string with underscores
+        - Case 5: One indicator_type with letters string with numbers
     When
-    - Calling the IsValidIndicatorTypeId is valid function.
+    - Calling the IsValidIndicatorTypeId is_valid function.
     Then
-        - Make sure the right amount of failures return.
-        - Case 1: Shouldn't fail anything.
-        - Case 2: Shouldn't fail anything.
-        - Case 3: Should fail object two.
+        - Make sure no errors will return.
     """
+
+    content_items = [create_indicator_type_object(["id"], ["teststring"]),
+                     create_indicator_type_object(["id"], ["test&string&with&ampersands&"]),
+                     create_indicator_type_object(["id"], ["test string with whitespaces"]),
+                     create_indicator_type_object(["id"], ["test_string_with_underscores"]),
+                     create_indicator_type_object(["id"], ["test0string1with2numbers3"])]
+    expected_number_of_failures = 0
+    expected_msgs = []
+    results = IsValidIndicatorTypeId().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_InValidIndicatorTypeId():
+    """
+    Given
+    content_items iterables.
+        - Case 1: One indicator_type with invalid special characters.
+        - Case 2: One indicator_type with invalid slashes
+    When
+    - Calling the IsValidIndicatorTypeId is_valid function.
+    Then
+        - Make sure it will return 2 errors with the appropriate message.
+    """
+
+    content_items = [create_indicator_type_object(["id"], ["string_with_special_characters_*#$"]),
+                     create_indicator_type_object(["id"], ["string_with_slash_/"])]
+    expected_number_of_failures = 2
+    expected_msgs = ["The `id` field must consist of alphanumeric characters (A-Z, a-z, 0-9), whitespaces ( ), "
+                     "underscores (_), and ampersands (&) only.",
+                     "The `id` field must consist of alphanumeric characters (A-Z, a-z, 0-9), whitespaces ( ), "
+                     "underscores (_), and ampersands (&) only."]
     results = IsValidIndicatorTypeId().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(

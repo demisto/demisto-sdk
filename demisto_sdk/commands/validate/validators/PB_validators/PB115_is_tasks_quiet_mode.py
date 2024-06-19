@@ -15,7 +15,7 @@ ContentTypes = Playbook
 
 class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
     error_code = "PB115"
-    description = "Checks if all tasks in a playbook are in quiet mode."
+    description = "Checks if the 'quietmode' field of all tasks in playbook are not in default value."
     rationale = "Confirmation of turning off quitmode"
     error_message = "Playbook '{playbook_name}' contains tasks that are not in quiet mode (quietmode: 2) The tasks names is: '{tasks}'."
     fix_message = (

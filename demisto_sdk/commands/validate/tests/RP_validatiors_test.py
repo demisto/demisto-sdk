@@ -75,7 +75,7 @@ def test_DetailsFieldEqualsIdValidator_is_valid():
         create_indicator_type_object(["details", "id"], ["test", "test"]),
         create_indicator_type_object(["details", "id"], ["test", "test-not-equal"]),
     ]
-    expected_msgs = ["id and details fields are not equal."]
+    expected_msgs = ["id and details fields are not equal. id=test-not-equal, details=test"]
     results = DetailsFieldEqualsIdValidator().is_valid(content_items)
     assert len(results) == 1
     assert all(

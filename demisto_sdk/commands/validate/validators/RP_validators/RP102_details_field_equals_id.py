@@ -15,19 +15,19 @@ ContentTypes = IndicatorType
 
 class DetailsFieldEqualsIdValidator(BaseValidator[ContentTypes]):
     error_code = "RP102"
-    description = "Validate that the id and the details fields are equal"
-    error_message = "id and details fields are not equal."
+    description = "Validate that the id and the details fields are equal."
+    error_message = "id and details fields are not equal. id={0}, details={1}"
     rationale = "To align with the platform requirements."
     related_field = "id"
-    is_auto_fixable = False
-    related_file_type = [RelatedFileType.JSON]
     expected_git_statuses = [GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(
+                    content_item.object_id, content_item.description
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

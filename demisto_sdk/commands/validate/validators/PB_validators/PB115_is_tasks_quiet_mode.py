@@ -23,7 +23,7 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
     )
     related_field = "tasks"
     is_auto_fixable = True
-    invalid_tasks_in_playbooks: Dict[str, list[TaskConfig]] = {}
+    invalid_tasks_in_playbooks: Dict[str, List[TaskConfig]] = {}
 
     def get_invalid_task_ids(self, content_item: Playbook) -> List[TaskConfig]:
         """

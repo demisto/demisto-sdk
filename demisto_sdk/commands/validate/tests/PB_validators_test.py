@@ -25,6 +25,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB106_is_playbook_us
 from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_id import (
     IsValidTaskIdValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
+    IsTasksQuietModeValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
@@ -325,6 +328,110 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_IsTasksQuietModeValidator_fail_case():
+    """
+    Given:
+    - A invalid playbook with tasks that "quietmode" field is 2
+    - An invalid playbook to fix
+
+    When:
+    - calling IsTasksQuietModeValidator.is_valid.
+    - calling IsTasksQuietModeValidator.fix
+
+    Then:
+    - The playbook is invalid
+    -The playbook becomes valid
+    """
+    playbook = create_playbook_object(
+        ["inputs", "quiet", "tasks"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            False,
+            {
+                "0": {
+                    "id": "test fail task No1",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 2,
+                },
+                "1": {
+                    "id": "test fail task No2",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 2,
+                },
+            },
+        ],
+        pack_info={},
+    )
+    validator = IsTasksQuietModeValidator()
+    validate_res = validator.is_valid([playbook])
+    assert len(validate_res) == 1
+    assert (
+        (validate_res[0]).message
+        == "Playbook 'Detonate File - JoeSecurity V2' contains tasks that are not in quiet mode (quietmode: 2) The tasks names is: 'test fail task No1, test fail task No2'."
+    )
+    fix_playbook = validator.fix(playbook).content_object
+    assert len(validator.is_valid([fix_playbook])) == 0
+
+
+def test_IsTasksQuietModeValidator_pass_case():
+    """
+    Given:
+    - A valid playbook with tasks that "quietmode" field is 1
+
+    When:
+    - calling IsTasksQuietModeValidator.is_valid.
+    - calling IsTasksQuietModeValidator.fix
+
+    Then:
+    - The playbook is valid
+    - The playbook doesn't changed
+    """
+    playbook = create_playbook_object(
+        ["inputs", "quiet", "tasks"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            False,
+            {
+                "0": {
+                    "id": "test task",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 1,
+                }
+            },
+        ],
+    )
+    validator = IsTasksQuietModeValidator()
+    assert len(validator.is_valid([playbook])) == 0
+    fix_playbook = validator.fix(playbook).content_object
+    assert fix_playbook == playbook
 
 
 def test_PB125_playbook_only_default_next_valid():

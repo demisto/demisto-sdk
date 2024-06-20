@@ -176,9 +176,11 @@ def test_depth_one_pass(folder: str):
         InvalidIntegrationScriptFileType,
         InvalidIntegrationScriptFileName,
         InvalidXDRCTemplatesFileName,
+        InvalidModelingRuleFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
+        # InvalidModelingRuleFileName will be raised but it is irrelevant for this test.
         pass
 
 

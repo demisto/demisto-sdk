@@ -104,9 +104,9 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             if invalid_headers_content_type or invalid_headers_content_item:
                 validator_results.append(
                     ValidationResult(
-                        release_note_version=content_item.release_note.file_path,
                         validator=self,
                         message=self.error_message.format(
+                            release_note_version=content_item.release_note.file_path,
                             content_type_message=content_type_message,
                             content_item_message=content_item_message,
                         ),

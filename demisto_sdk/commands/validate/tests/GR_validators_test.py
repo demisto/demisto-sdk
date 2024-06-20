@@ -18,7 +18,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
     Given
         - 3 packs, and 2 of them are with the same name
     When
-        - running IsPackDisplayNameAlreadyExistsValidatorListFiles is_valid function.
+        - running IsPackDisplayNameAlreadyExistsValidatorListFiles is_valid function, on one of the duplicate packs.
     Then
         - Validate that we got the error messages for the duplicate name.
     """
@@ -41,11 +41,11 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
     BaseValidator.graph_interface = graph_repo.create_graph()
 
     results = IsPackDisplayNameAlreadyExistsValidatorListFiles().is_valid(
-        [pack for pack in graph_repo.packs]
+        [graph_repo.packs[0], graph_repo.packs[2]]
     )
 
-    assert len(results) == 2
-
+    assert len(results) == 1
+    assert results[0].message == "Pack 'pack1' has a duplicate display_name as: pack2."
 
 def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(
     mocker, graph_repo: Repo

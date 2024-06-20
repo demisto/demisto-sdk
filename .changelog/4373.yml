@@ -1,0 +1,4 @@
+changes:
+  - description: Added RM107 to the new validation format. The validation checks if given readme is consist %%FILL HERE%% substring or not.
+    type: internal
+pr_number: 4373

@@ -51,7 +51,7 @@ class ConfigReader:
 
         Args:
             execution_mode (executionMode): The execution mode.
-
+            ignore_support_level Optional[bool]: Whether to ignore_support_level
         Returns:
             Tuple[List, List, List, dict]: the select, warning, and ignorable errors sections from the given category,
             and the support_level dict with errors to ignore.

@@ -76,7 +76,7 @@ class Pack(TestSuiteBase):
     def __init__(self, packs_dir: Path, name: str, repo):
         # Initiate lists:
         self.name = name
-        self.id = name
+        self.object_id = name
         self.node_id = name
         self._repo = repo
         self.repo_path = repo.path
@@ -120,7 +120,7 @@ class Pack(TestSuiteBase):
         # Create base pack
         self._pack_path = packs_dir / self.name
         self._pack_path.mkdir()
-        self.path = str(self._pack_path)
+        self.path = self._pack_path
 
         # Create repo structure
         self._integrations_path = self._pack_path / "Integrations"

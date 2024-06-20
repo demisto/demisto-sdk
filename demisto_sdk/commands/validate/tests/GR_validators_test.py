@@ -1,4 +1,7 @@
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
+from demisto_sdk.commands.validate.validators.GR_validators import (
+    GR104_is_pack_display_name_already_exists,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_all_files import (
     IsPackDisplayNameAlreadyExistsValidatorAllFiles,
 )
@@ -8,7 +11,9 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_displa
 from TestSuite.repo import Repo
 
 
-def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(graph_repo: Repo):
+def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
+    mocker, graph_repo: Repo
+):
     """
     Given
         - 3 packs, and 2 of them are with the same name
@@ -17,7 +22,11 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(graph_repo: R
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-
+    mocker.patch.object(
+        GR104_is_pack_display_name_already_exists,
+        "CONTENT_PATH",
+        new=graph_repo.path,
+    )
     graph_repo.create_pack(name="pack1")
 
     graph_repo.create_pack(name="pack2")
@@ -38,7 +47,9 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(graph_repo: R
     assert len(results) == 2
 
 
-def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(graph_repo: Repo):
+def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(
+    mocker, graph_repo: Repo
+):
     """
     Given
         - 3 packs, and 2 of them are with the same name
@@ -47,7 +58,11 @@ def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(graph_repo: Re
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-
+    mocker.patch.object(
+        GR104_is_pack_display_name_already_exists,
+        "CONTENT_PATH",
+        new=graph_repo.path,
+    )
     graph_repo.create_pack(name="pack1")
 
     graph_repo.create_pack(name="pack2")

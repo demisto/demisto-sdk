@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -28,15 +29,14 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
     related_file_type = [RelatedFileType.JSON]
 
     def is_valid_using_graph(
-        self, content_items: Iterable[ContentTypes], validate_all_files=False
+        self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
 
         file_paths_to_objects = {
-            str(content_item.path).replace(f"{content_item.repo_path}/", "")  # type: ignore[attr-defined]
+            str(content_item.path.relative_to(CONTENT_PATH)): content_item
             for content_item in content_items
         }
-
-        content_id_to_objects = {item.object.object_id: item for item in content_items}  # type: ignore[attr-defined]
+        content_id_to_objects = {item.object_id: item for item in content_items}  # type: ignore[attr-defined]
 
         query_list = list(file_paths_to_objects) if not validate_all_files else []
 

@@ -581,18 +581,18 @@ Fill the content types as the numbers they appear as: """
 
         else:
             self.is_valid_method = """
-        def is_valid_using_graph(self, content_items: Iterable[ContentTypes], validate_all_files) -> List[ValidationResult]:
-            return [
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message,
-                    content_object=content_item,
-                )
-                for content_item in content_items
-                if (
-                    # Add your validation right here
-                )
-            ]
+    def is_valid_using_graph(self, content_items: Iterable[ContentTypes], validate_all_files: bool) -> List[ValidationResult]:
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message,
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (
+                # Add your validation right here
+            )
+        ]
         """
 
     def generate_fix_function(self):

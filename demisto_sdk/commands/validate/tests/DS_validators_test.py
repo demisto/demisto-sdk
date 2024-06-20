@@ -3,6 +3,10 @@ import pytest
 from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
+    create_script_object,
+)
+from demisto_sdk.commands.validate.validators.DS_validators.DS108_description_ends_with_dot import (
+    DescriptionEndsWithDotValidator,
 )
 
 
@@ -237,3 +241,169 @@ def test_IsValidDescriptionNameValidator_is_valid(
 
     is_valid = IsValidDescriptionNameValidator().is_valid([integration])
     assert result_len == len(is_valid)
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_error_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    ["description", "script.commands"],
+                    [
+                        "description without dot",
+                        [
+                            {
+                                "name": "command_number_one",
+                                "description": "command_number_one description.",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "arg_one",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "arg_one_desc.",
+                                    },
+                                    {
+                                        "name": "arg_two",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "arg_two_desc",
+                                    },
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextPath": "path_1",
+                                        "description": "description_1",
+                                    },
+                                    {
+                                        "name": "output_2",
+                                        "contextPath": "path_2",
+                                        "description": "description_2.",
+                                    },
+                                ],
+                            },
+                        ],
+                    ],
+                ),
+                create_integration_object(
+                    ["description", "script.commands"],
+                    [
+                        'This description ends with a json list [\n{\n"name": "example json ending on another line"\n}\n]',
+                        [
+                            {
+                                "name": "command_number_two",
+                                "description": "command_number_one description.",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "arg_one",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "an arg description that has a trailing new line.\n",
+                                    },
+                                    {
+                                        "name": "arg_two",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "This description is okay!",
+                                    },
+                                    {
+                                        "name": "arg_three",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "a yml with a description that has an 'example without dot at the end of the string.'",
+                                    },
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextPath": "path_1",
+                                        "description": "a contextPath description with a dot in the bracket (like this.)",
+                                    },
+                                    {
+                                        "name": "output_2",
+                                        "contextPath": "path_2",
+                                        "description": "",
+                                    },
+                                ],
+                            },
+                        ],
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The Integration contains description fields without dots at the end:\nThe file's description field is missing a '.' at the end of the sentence.\n- In command 'command_number_one':\n\tThe argument arg_two description should end with a period.\n\tThe context path path_1 description should end with a period.\nPlease make sure to add a dot at the end of all the mentioned fields."
+            ],
+        ),
+        (
+            [
+                create_script_object(
+                    paths=["args", "comment"],
+                    values=[
+                        [
+                            {
+                                "name": "arg_no_one",
+                                "description": "an arg description that ends with a url www.test.com",
+                            },
+                            {
+                                "name": "arg_no_two",
+                                "description": "an arg description that doesn't ends with a dot.",
+                            },
+                        ],
+                        "an arg with a description that has www.test.com in the middle of the sentence and no dot at the end",
+                    ],
+                )
+            ],
+            1,
+            [
+                "The Script contains description fields without dots at the end:\nThe file's comment field is missing a '.' at the end of the sentence.\nPlease make sure to add a dot at the end of all the mentioned fields."
+            ],
+        ),
+    ],
+)
+def test_DescriptionEndsWithDotValidator_is_valid(
+    content_items,
+    expected_number_of_failures,
+    expected_error_msgs,
+):
+    """
+    Given
+    content_items iterables.
+            - Case 1: Two integrations:
+                - One integration with a description field without a dot at the end and one command with two arguments and two context paths:
+                    - One argument with regular text description and a dot at the end.
+                    - One argument with regular text description and no dot at the end.
+                    - One contextPath with regular text description and a dot at the end.
+                    - One contextPath with regular text description and no dot at the end.
+                - One integration with a description field with a json example at the end and no dot with three arguments and two context paths:
+                    - One argument with a dot and a trailing new line at the end.
+                    - One argument without a dot and an exclamation mark at the end.
+                    - One argument with an example string at the end.
+                    - One contextPath description ending with a dot inside brackets.
+                    - One contextPath with empty description.
+            - Case 2: One script with a comment with a url address at the middle and no dot at the end and two arguments:
+                - One argument with a description ending with a url address.
+                - One argument with a regular text ending a dot.
+    When
+    - Calling the DescriptionEndsWithDotValidator is valid function.
+    Then
+        - Make sure that the description file exist.
+        - Case 1: One failure, The first integration should fail for it's description, second argument and first context Path.
+        - Case 2: The script should fail only for it's comment section.
+    """
+    results = DescriptionEndsWithDotValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_error_msgs)
+        ]
+    )

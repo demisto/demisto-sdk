@@ -21,7 +21,6 @@ class ValidateEmptyKeysValidator(BaseValidator[ContentTypes]):
         "Either the 'rules' key or the 'schema' key are missing or not empty, "
         "make sure to set the values of these keys to an empty string."
     )
-    fix_message = "Updated the keys 'rules' and 'schema' to be an empty string."
     related_field = "modeling rule"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

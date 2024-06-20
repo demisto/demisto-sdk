@@ -1,0 +1,4 @@
+changes:
+- description: "Added the option to specify a marketplace to the following playbook fields: inputs, scriptarguments, message, form, left, right, tasks."
+  type: feature
+pr_number: 4375

@@ -102,14 +102,6 @@ class TextFiles(RelatedFile):
         return self.file_content_str
 
 
-class YmlRelatedFile(RelatedFile):
-    file_type = RelatedFileType.YML
-
-
-class JsonRelatedFile(RelatedFile):
-    file_type = RelatedFileType.JSON
-
-
 class RNRelatedFile(TextFiles):
     file_type = RelatedFileType.RELEASE_NOTE
 

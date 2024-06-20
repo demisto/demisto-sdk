@@ -670,7 +670,7 @@ class TestDocReviewPrinting:
         cmd_args: List[str] = []
         for pack in mix_invalid_packs:
             cmd_args.append("--input")
-            cmd_args.append(pack.path)
+            cmd_args.append(str(pack.path))
 
             if is_xsoar_supported_pack(pack.path):
                 expected_supported = (
@@ -1341,11 +1341,11 @@ def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
     # add a yml script directly into Scripts folder
     pack._create_yaml_based(
         name=script1_name,
-        dir_path=f"{pack.path}//Scripts",
+        dir_path=f"{str(pack.path)}//Scripts",
         content={"name": script1_name},
     )
     # add a .md file script directly into Scripts folder
-    pack._create_text_based("bla.md", "", dir_path=Path(f"{pack.path}//Scripts"))
+    pack._create_text_based("bla.md", "", dir_path=Path(f"{str(pack.path)}//Scripts"))
     # add a script into second_script folder
     script2 = pack.create_script(name="second_script")
     rn_file = pack.create_release_notes(

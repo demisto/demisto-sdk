@@ -713,7 +713,7 @@ class TestPackUniqueFilesValidator:
         elif pack_content == "layout":
             pack.create_layout(name="Layout")
 
-        self.validator.pack_path =str(pack.path)
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert self.validator.is_right_usage_of_usecase_tag() == is_valid
@@ -747,7 +747,7 @@ class TestPackUniqueFilesValidator:
             {PACK_METADATA_USE_CASES: [], PACK_METADATA_SUPPORT: type}
         )
 
-        self.validator.pack_path =str(pack.path)
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert self.validator._is_valid_support_type() == is_valid
@@ -1230,7 +1230,7 @@ class TestPackUniqueFilesValidator:
             }
         )
 
-        self.validator.pack_path =str(pack.path)
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert (
@@ -1257,7 +1257,7 @@ class TestPackUniqueFilesValidator:
         self.restart_validator()
         pack_name = "PackName"
         pack = repo.create_pack(pack_name)
-        self.validator.pack_path =str(pack.path)
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             Path(pack.readme.path).unlink()
@@ -1328,7 +1328,7 @@ class TestPackUniqueFilesValidator:
         pack = repo.create_pack("MyPack")
 
         self.validator.metadata_content = {"support": "partner"}
-        self.validator.pack_path =str(pack.path)
+        self.validator.pack_path = str(pack.path)
         author_image_path = pack.author_image.path
 
         with ChangeCWD(repo.path):
@@ -1353,7 +1353,7 @@ class TestPackUniqueFilesValidator:
         pack = repo.create_pack("MyPack")
 
         self.validator.metadata_content = {"support": "partner"}
-        self.validator.pack_path =str(pack.path)
+        self.validator.pack_path = str(pack.path)
         author_image_path = pack.author_image.path
 
         with ChangeCWD(repo.path):
@@ -1397,7 +1397,7 @@ class TestPackUniqueFilesValidator:
         """
         pack = repo.create_pack("MyPack")
         self.validator.metadata_content = pack_metadata
-        self.validator.pack_path =str(pack.path)
+        self.validator.pack_path = str(pack.path)
         self.validator.pack_meta_file = PACKS_PACK_META_FILE_NAME
         if create_rn:
             pack.create_release_notes(version=rn_version)

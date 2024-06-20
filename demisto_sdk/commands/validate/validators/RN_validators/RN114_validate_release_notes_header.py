@@ -71,7 +71,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         " Validate headers for accuracy."
     )
     error_message = (
-        "{release_note_version}: The following invalid headers were found in:\n"
+        "The following invalid headers were found in:\n"
         "{content_type_message}{content_item_message}\n"
         "For common troubleshooting steps, please review the documentation found here: "
         "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"

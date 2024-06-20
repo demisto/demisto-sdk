@@ -51,6 +51,7 @@ class YAMLContentItemParser(ContentItemParser):
                 "description": "description",
                 "fromversion": "fromversion",
                 "toversion": "toversion",
+                "version": "version",
             }
         )
         return super().field_mapping

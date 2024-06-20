@@ -61,7 +61,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 "subtype": "script.subtype",
                 "alt_docker_images": "script.alt_dockerimages",
                 "params": "configuration",
-                "version": "version",
             }
         )
         return super().field_mapping

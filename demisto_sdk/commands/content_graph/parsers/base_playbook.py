@@ -53,9 +53,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update(
-            {"object_id": "id", "tasks": "tasks", "version": "version"}
-        )
+        super().field_mapping.update({"object_id": "id", "tasks": "tasks"})
         return super().field_mapping
 
     def is_mandatory_dependency(self, task_id: str) -> bool:

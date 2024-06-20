@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from typing import Iterable, List, Union
-
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -16,14 +14,6 @@ from demisto_sdk.commands.common.tools import search_substrings_by_line
 
 ContentTypes = Union[Integration, Script, Playbook, Pack]
 
-
-# error_code = "RP103"
-# description = "Validate that the 'id' field of indicator type has valid value."
-# error_message = ("The `id` field must consist of alphanumeric characters (A-Z, a-z, 0-9), whitespaces ( ), "
-#                  "underscores (_), and ampersands (&) only.")
-# rationale = "we want to make sure the id of the indicator type is valid."
-# related_field = "id"
-# is_auto_fixable = False
 
 class IsTemplateNotInReadmeValidator(BaseValidator[ContentTypes]):
     error_code = "RM107"
@@ -44,12 +34,12 @@ class IsTemplateNotInReadmeValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(f"{invalid_lines}"),
+                message=self.error_message,
                 content_object=content_item,
             )
             for content_item in content_items
             if (
-                invalid_lines := search_substrings_by_line(
+                invalid_lines := not search_substrings_by_line(
                     phrases_to_search=["%%FILL HERE%%"],
                     text=content_item.readme.file_content
                 )

@@ -15,6 +15,9 @@ DATA = {
     "some:xpanse": "xpanse",
     "some:xsoar_on_prem": "xsoar_on_prem",
     "some:xsoar_saas": "xsoar_saas",
+    "value": {"simple": "test value"},
+    "value:xsoar": {"simple": "test xsoar value"},
+    "value:marketplacev2": {"simple": "test marketplacev2 value"},
     "properties": {
         "ab": "test",
         "ab:xsoar": "xsoar",
@@ -47,6 +50,7 @@ def test_remove_xsoar():
         "name": "Test",
         "image": "testregular",
         "some": "some",
+        "value": {"simple": "test xsoar value"},
         "properties": {
             "ab": "xsoar",
             "cd": "test2",
@@ -76,6 +80,7 @@ def test_remove_marketplacev2():
         "name": "Test",
         "image": "marketplacev2",
         "some": "some",
+        "value": {"simple": "test marketplacev2 value"},
         "properties": {
             "ab": "test",
             "cd": "test2",
@@ -103,6 +108,7 @@ def test_remove_xpanse():
         "name": "Test",
         "image": "testregular",
         "some": "xpanse",
+        "value": {"simple": "test value"},
         "properties": {
             "ab": "test",
             "cd": "xpanse",
@@ -132,6 +138,7 @@ def test_remove_xsoar_saas():
         "name": "Test",
         "image": "testregular",
         "some": "xsoar_saas",
+        "value": {"simple": "test xsoar value"},
         "properties": {
             "ab": "xsoar",
             "cd": "test2",
@@ -161,6 +168,7 @@ def test_remove_xsoar_on_prem():
         "name": "Test",
         "image": "testregular",
         "some": "xsoar_on_prem",
+        "value": {"simple": "test xsoar value"},
         "properties": {
             "ab": "xsoar",
             "cd": "test2",

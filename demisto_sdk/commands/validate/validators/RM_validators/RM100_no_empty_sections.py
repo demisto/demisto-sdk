@@ -1,0 +1,85 @@
+
+
+from __future__ import annotations
+
+import re
+from typing import Iterable, List, Union
+
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    ValidationResult,
+)
+
+ContentTypes = Union[Integration, Script, Playbook, Pack]
+
+SECTIONS = [
+    "Troubleshooting",
+    "Use Cases",
+    "Known Limitations",
+    "Additional Information",
+]
+
+
+class EmptySectionsValidator(BaseValidator[ContentTypes]):
+    error_code = "RM100"
+    description = (
+        "Validate that the pack contains a full README.md file with pack information. "
+    )
+    error_message = "The section: {0} are empty\nplease elaborate or delete the section.\n"
+    related_field = "readme"
+    rationale = """Check that if the following headlines exists, they are not empty:
+            1. Troubleshooting
+            2. Use Cases
+            3. Known Limitations
+            4. Additional Information
+            """
+    is_auto_fixable = False
+    related_file_type = [RelatedFileType.README]
+    empty_sections: List[str] = []
+
+    def verify_no_empty_sections(self, content_item: ContentTypes) -> bool:
+        """Check that if the following headlines exists, they are not empty:
+            1. Troubleshooting
+            2. Use Cases
+            3. Known Limitations
+            4. Additional Information
+        Returns:
+            bool: True If all req ok else False
+        """
+        self.empty_sections = []
+        for section in SECTIONS:
+            found_section = re.findall(
+                rf"(## {section}\n*)(-*\s*\n\n?)?(\s*.*)",
+                content_item.readme.file_content,
+                re.IGNORECASE,
+            )
+            if not found_section:
+                continue
+
+            line_after_headline = str(found_section[0][2])
+            # checks if the line after the section's headline is another headline or empty
+            if not line_after_headline or line_after_headline.startswith("##"):
+                # assuming that a sub headline is part of the section
+                if not line_after_headline.startswith("###"):
+                    self.empty_sections.append(section)
+
+        if self.empty_sections:
+            return True
+
+        return False
+
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(', '.join(self.empty_sections)),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (self.verify_no_empty_sections(content_item))
+        ]

@@ -46,7 +46,9 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(', '.join(invalid_types)),
                 content_object=content_item,
             )
+
             for content_item in content_items
+
             if (
                 invalid_types := self.invalid_schema_types(content_item.schema_file)
             )

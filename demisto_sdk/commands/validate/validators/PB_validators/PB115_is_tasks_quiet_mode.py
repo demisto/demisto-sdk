@@ -4,6 +4,7 @@ from typing import Dict, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.validate.tools import is_indicator_pb
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -61,14 +62,7 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                any(
-                    (input.get("playbookInputQuery") or {}).get("queryEntity")
-                    == "indicators"
-                    for input in content_item.data.get("inputs", {})
-                )
-                and (invalid_tasks := self.get_invalid_task_ids(content_item))
-            )
+            if is_indicator_pb(content_item) and (invalid_tasks := self.get_invalid_task_ids(content_item))
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:

@@ -4,21 +4,13 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.validate.tools import is_indicator_pb
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
 ContentTypes = Playbook
-
-
-def is_indicator_pb(playbook: Playbook):
-    """
-    Check if the playbook has indicators as input query.
-    """
-    return any(
-        (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators" for i in playbook.data.get("inputs", {})
-    )
 
 
 def get_error_tolerant_tasks(playbook: Playbook):

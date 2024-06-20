@@ -4,7 +4,7 @@ from demisto_sdk.commands.validate.tests.test_tools import create_playbook_objec
 from demisto_sdk.commands.validate.tools import (
     collect_all_inputs_from_inputs_section,
     collect_all_inputs_in_use,
-    compare_lists,
+    compare_lists, is_indicator_pb,
 )
 
 
@@ -113,3 +113,41 @@ def test_compare_lists():
         "b",
         "d",
     ]
+
+
+def test_is_indicator_pb_positive_case():
+    """
+    Given:
+        - A playbook with indicators as input query.
+    When:
+        - Running is_indicator_pb
+    Then:
+        - It should return True.
+    """
+    playbook = create_playbook_object(
+        ["inputs"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+        ],
+    )
+    assert is_indicator_pb(playbook)
+
+
+def test_is_indicator_pb_negative_case():
+    """
+    Given:
+        - A playbook with indicators as input query.
+    When:
+        - Running is_indicator_pb
+    Then:
+        - It should return True.
+    """
+    playbook = create_playbook_object()
+    assert not is_indicator_pb(playbook)

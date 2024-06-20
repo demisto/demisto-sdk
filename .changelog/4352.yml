@@ -1,0 +1,4 @@
+changes:
+- description: updated the tenacity version to fix an installation error
+  type: fix
+pr_number: 4352

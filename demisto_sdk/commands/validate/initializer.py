@@ -304,9 +304,19 @@ class Initializer:
         return filtered_modified_files, filtered_added_files, filtered_renamed_files
 
     @staticmethod
-    def get_associated_pack_metadata(content_files: Set[BaseContent]):
+    def get_associated_pack_metadata(
+        content_files: Set[BaseContent],
+    ) -> Set[BaseContent]:
+        """Get associated pack metadata files even if they were not changed/given explicitly.
+
+        Args:
+            content_files (Set[BaseContent]): The files to get their metadata pairs.
+
+        Return:
+            (Set[BaseContent]): A set of the relevant pack metadata files.
+        """
         pack_names = []
-        pack_metadatas: Set[Optional[BaseContent]] = set()
+        pack_metadatas: Set[BaseContent] = set()
         for content_file in content_files:
             if find_type(str(content_file.path)) not in SKIP_RELEASE_NOTES_FOR_TYPES:
                 pack_name = get_pack_name(content_file.path)
@@ -315,7 +325,8 @@ class Initializer:
                 pack_metadata = BaseContent.from_path(
                     Path(pack_path) / PACKS_PACK_META_FILE_NAME, metadata_only=True
                 )
-                pack_metadatas.add(pack_metadata)
+                if pack_metadata:
+                    pack_metadatas.add(pack_metadata)
 
         if pack_metadatas:
             logger.info(f"Running on pack metadata files in packs: {pack_names}")

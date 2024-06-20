@@ -677,14 +677,13 @@ def test_check_metadata_version_bump_on_content_changes(mocker, repo):
     config_reader = ConfigReader(category_to_run="use_git")
     mocker.patch.object(
         Initializer,
-        "gather_objects_to_run_on",
-        return_value=(
-            {
-                BaseContent.from_path(Path(integration.path)),
-                BaseContent.from_path(Path(pack.path)),
-            },
-            {},
-        ),
+        "get_files_using_git",
+        return_value=({BaseContent.from_path(Path(integration.path))}, {}, {}),
+    )
+    mocker.patch.object(
+        BaseContent,
+        "from_path",
+        return_value=BaseContent.from_path(Path(pack.path), metadata_only=True),
     )
     initializer = Initializer(prev_ver="some_prev_ver")
 

@@ -1,0 +1,205 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  group:
+    type: str
+    required: true
+    enum: ['case']
+  definitionId:
+    type: str
+  version:
+    type: number
+    required: true
+  name:
+    type: str
+    required: true
+  fromVersion:
+    type: str
+    required: true
+  toVersion:
+    type: str
+  description:
+    type: str
+  system:
+    type: bool
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str
+      enum: ['marketplacev2']
+  edit:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  indicatorsDetails:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  indicatorsQuickView:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  quickView:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  close:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  details:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  detailsV2:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  mobile:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+
+schema;tabs_schema:
+  type: any
+
+schema;section_schema:
+  type: map
+  mapping:
+    id:
+      type: str
+    version:
+      type: number
+    modified:
+      type: str
+    name:
+      type: str
+    type:
+      type: str
+    isVisible:
+      type: bool
+    readOnly:
+      type: bool
+    description:
+      type: str
+    query:
+      type: any
+    queryType:
+      type: str
+    sortValues:
+      type: str
+    fields:
+      type: seq
+      sequence:
+      - include: field_schema
+
+schema;field_schema:
+  type: map
+  mapping:
+    id:
+      type: str
+    version:
+      type: number
+    modified:
+      type: str
+    fieldId:
+      type: str
+    isVisible:
+      type: bool
+    sortValues:
+      type: str
+    filters:
+      type: seq
+      sequence:
+      - include: arg_filters_schema
+
+schema;arg_filters_schema:
+  type: seq
+  sequence:
+  - include: arg_filter_schema
+
+schema;arg_filter_schema:
+  type: map
+  mapping:
+    operator:
+      type: str
+      required: true
+    ignorecase:
+      type: bool
+    left:
+      type: map
+      required: true
+      mapping:
+        value:
+          type: any
+          required: true
+        isContext:
+          type: bool
+    right:
+      type: map
+      mapping:
+        value:
+          type: any
+          required: true
+        isContext:
+          type: bool
+    type:
+      type: str

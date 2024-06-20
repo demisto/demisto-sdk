@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
     ENV_DEMISTO_SDK_MARKETPLACE,
+    INTEGRATIONS_README_FILE_NAME,
     FileType,
     MarketplaceVersions,
 )
@@ -2231,6 +2232,13 @@ def init(ctx, **kwargs):
     is_flag=True,
     default=True,
 )
+@click.option(
+    "-f",
+    "--force",
+    help="Whether to force the generation of documentation (rather than update when it exists in version control)",
+    is_flag=True,
+    default=False,
+)
 @click.pass_context
 @logging_setup_decorator
 def generate_docs(ctx, **kwargs):
@@ -2302,21 +2310,23 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     custom_image_path: str = kwargs.get("custom_image_path", "")
     readme_template: str = kwargs.get("readme_template", "")
     use_graph = kwargs.get("graph", True)
+    force = kwargs.get("force", False)
 
     try:
         if command:
             if (
                 output_path
-                and (not Path(output_path, "README.md").is_file())
+                and (not Path(output_path, INTEGRATIONS_README_FILE_NAME).is_file())
                 or (not output_path)
                 and (
                     not Path(
-                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+                        os.path.dirname(os.path.realpath(input_path)),
+                        INTEGRATIONS_README_FILE_NAME,
                     ).is_file()
                 )
             ):
                 raise Exception(
-                    "[red]The `command` argument must be presented with existing `README.md` docs."
+                    f"[red]The `command` argument must be presented with existing `{INTEGRATIONS_README_FILE_NAME}` docs."
                 )
 
         file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
@@ -2356,6 +2366,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 command=command,
                 old_version=old_version,
                 skip_breaking_changes=skip_breaking_changes,
+                force=force,
             )
         elif file_type == FileType.SCRIPT:
             logger.info(f"Generating {file_type.value.lower()} documentation")
@@ -3003,10 +3014,17 @@ def openapi_codegen(ctx, **kwargs):
 @click.option(
     "-k", "--api-key", help="The Demisto API key for the server", required=True
 )
+@click.option(
+    "-ab",
+    "--artifacts_bucket",
+    help="The artifacts bucket name to upload the results to",
+    required=False,
+)
 @click.option("-s", "--server", help="The server URL to connect to")
 @click.option("-c", "--conf", help="Path to content conf.json file", required=True)
 @click.option("-e", "--secret", help="Path to content-test-conf conf.json file")
 @click.option("-n", "--nightly", type=bool, help="Run nightly tests")
+@click.option("-sa", "--service_account", help="GCP service account.")
 @click.option("-t", "--slack", help="The token for slack", required=True)
 @click.option("-a", "--circleci", help="The token for circleci", required=True)
 @click.option("-b", "--build-number", help="The build number", required=True)
@@ -3532,7 +3550,7 @@ def update_content_graph(
     type=PathsParamType(
         exists=True, resolve_path=True
     ),  # PathsParamType allows passing a list of paths
-    help="A list of content packs/files to validate.",
+    help="Paths to content integrations or script to setup the environment. If not provided, will configure the environment for the content repository.",
 )
 @click.option(
     "--create-virtualenv",

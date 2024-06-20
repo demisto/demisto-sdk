@@ -1,0 +1,4 @@
+changes:
+- description: Added PB126 to the new validation format. Ensure that conditional tasks have more than path which is not the default one
+  type: internal
+pr_number: 4349

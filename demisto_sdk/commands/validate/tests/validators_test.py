@@ -1,5 +1,4 @@
 import logging
-import os
 import tempfile
 from pathlib import Path
 from typing import Set
@@ -670,10 +669,6 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(mocker):
             and run the validate command on them as well.
     """
     expected_output = set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])
-    # mocker.patch.object(
-    #     GitUtil, "_get_all_changed_files", return_value=expected_output
-    # )
-    mocker.patch.dict(os.environ, {"CONTRIB_BRANCH": "true"})
     initializer = Initializer()
     initializer.validate_git_installed()
     mocker.patch.object(
@@ -681,7 +676,7 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(mocker):
     )
     mocker.patch.object(GitUtil, "added_files", return_value={})
     mocker.patch.object(GitUtil, "renamed_files", return_value={})
-    repo = mocker.patch(
+    mocker.patch(
         "git.repo.base.Repo._get_untracked_files", return_value=["Packs/untracked.txt"]
     )
     output = initializer.get_unfiltered_changed_files_from_git()

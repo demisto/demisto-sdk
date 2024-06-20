@@ -472,19 +472,14 @@ schema;input_schema:
 # playbook->inputSections
     key:xsoar:
       type: str
-      required: true
     key:marketplacev2:
       type: str
-      required: true
     key:xpanse:
       type: str
-      required: true
     key:xsoar_saas:
       type: str
-      required: true
     key:xsoar_on_prem:
       type: str
-      required: true
     value:xsoar:
       type: any
     value:marketplacev2:
@@ -636,29 +631,30 @@ schema;arg_filter_schema:
     ignorecase:
       type: bool
     left:
-      - include: left_or_right_schema
+      include: left_or_right_schema
+      required: true
     left:xsoar:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     left:marketplacev2:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     left:xpanse:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     left:xsoar_saas:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     left:xsoar_on_prem:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     right:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     right:xsoar:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     right:marketplacev2:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     right:xpanse:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     right:xsoar_saas:
-      - include: left_or_right_schema
+      include: left_or_right_schema
     right:xsoar_on_prem:
-      - include: left_or_right_schema
+      include: left_or_right_schema
 
 schema;timertriggers_schema:
   type: map
@@ -698,4 +694,3 @@ schema;left_or_right_schema:
       type: bool
     iscontext:xsoar_on_prem:
       type: bool
-

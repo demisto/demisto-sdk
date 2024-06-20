@@ -400,6 +400,16 @@ schema;input_schema:
       type: any
 
 # playbook->inputSections
+    value:xsoar:
+      type: any
+    value:marketplacev2:
+      type: any
+    value:xpanse:
+      type: any
+    value:xsoar_saas:
+      type: any
+    value:xsoar_on_prem:
+      type: any
     description:xsoar:
       type: str
     description:marketplacev2:

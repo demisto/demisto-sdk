@@ -672,7 +672,7 @@ class TestDocReviewPrinting:
             cmd_args.append("--input")
             cmd_args.append(str(pack.path))
 
-            if is_xsoar_supported_pack(pack.path):
+            if is_xsoar_supported_pack(str(pack.path)):
                 expected_supported = (
                     f"Words that might be misspelled were found in {str(pack.path)}"
                 )

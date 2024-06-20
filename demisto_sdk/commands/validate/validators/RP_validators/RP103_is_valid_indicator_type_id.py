@@ -25,7 +25,6 @@ class IsValidIndicatorTypeId(BaseValidator[ContentTypes]):
     rationale = "we want to make sure the id of the indicator type is valid."
     related_field = "id"
     is_auto_fixable = False
-    related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

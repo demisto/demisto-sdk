@@ -822,14 +822,14 @@ class TestValidators:
         )
 
         validate_manager.validate_pack_unique_files(
-            pack.path, pack_error_ignore_list={}
+            str(pack.path), pack_error_ignore_list={}
         )
         assert not str_in_call_args_list(logger_error.call_args_list, err_msg)
         assert not str_in_call_args_list(logger_error.call_args_list, err_code)
 
         Path(pack.pack_metadata.path).unlink()
         validate_manager.validate_pack_unique_files(
-            pack.path, pack_error_ignore_list={}
+            str(pack.path), pack_error_ignore_list={}
         )
         assert all(
             [

@@ -674,7 +674,7 @@ class TestDocReviewPrinting:
 
             if is_xsoar_supported_pack(pack.path):
                 expected_supported = (
-                    f"Words that might be misspelled were found in {pack.path}"
+                    f"Words that might be misspelled were found in {str(pack.path)}"
                 )
             else:
                 expected_not_supported_readme = f"File '{pack.readme.path}' was skipped because it does not belong to an XSOAR-supported Pack"

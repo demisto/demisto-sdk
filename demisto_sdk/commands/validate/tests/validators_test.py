@@ -483,7 +483,7 @@ def test_object_collection_with_pack_path(repo):
     integration.code.write("from MicrosoftApiModule import *")
     integration.readme.write("test")
     initializer = Initializer(
-        file_path=pack.path, execution_mode=ExecutionMode.SPECIFIC_FILES
+        file_path=str(pack.path), execution_mode=ExecutionMode.SPECIFIC_FILES
     )
     obj_set, _ = initializer.gather_objects_to_run_on()
     obj_types = {obj.content_type for obj in obj_set}
@@ -502,9 +502,9 @@ def test_load_files_with_pack_path(repo):
     pack = repo.create_pack("pack_no_1")
     pack.create_integration()
     initializer = Initializer()
-    loaded_files_set = initializer.load_files([pack.path])
+    loaded_files_set = initializer.load_files([str(pack.path)])
     assert len(loaded_files_set) == 1
-    assert loaded_files_set.pop() == Path(pack.path)
+    assert loaded_files_set.pop() == pack.path
 
 
 def test_load_files_with_integration_dir(repo):

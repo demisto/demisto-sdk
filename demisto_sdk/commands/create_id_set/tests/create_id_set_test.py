@@ -168,7 +168,7 @@ class TestIDSetCreator:
         )
         packs.append(pack_to_not_create_id_set_on)
 
-        id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)
+        id_set_creator = IDSetCreator(str(self.file_path), pack_to_create_id_set_on.path)
 
         id_set_creator.create_id_set()
 
@@ -205,7 +205,7 @@ class TestIDSetCreator:
 
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
-        id_set_creator = IDSetCreator(self.file_path, pack.path)
+        id_set_creator = IDSetCreator(str(self.file_path), pack.path)
 
         id_set_creator.create_id_set()
 

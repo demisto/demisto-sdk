@@ -18,7 +18,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.common.logger import logger
 
 ContentTypes = Pack
 RN_HEADER_BY_CONTENT_TYPE = {

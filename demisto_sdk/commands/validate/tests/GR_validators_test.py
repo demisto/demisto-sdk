@@ -47,6 +47,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
     assert len(results) == 1
     assert results[0].message == "Pack 'pack1' has a duplicate display_name as: pack2."
 
+
 def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(
     mocker, graph_repo: Repo
 ):

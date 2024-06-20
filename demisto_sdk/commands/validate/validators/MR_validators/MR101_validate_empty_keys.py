@@ -13,10 +13,8 @@ ContentTypes = ModelingRule
 
 class ValidateEmptyKeysValidator(BaseValidator[ContentTypes]):
     error_code = "MR101"
-    description = (
-        "Validate that the modeling rules keys - rules and schema exist and are empty"
-    )
-    rationale = "This standardization is to handle modeling rules correctly."
+    description = 'Validate that the modeling rules keys - "rules" and "schema" exist and are empty'
+    rationale = "This validation is for compatibility resaons. Without those fields the modeling rules won't work."
     error_message = (
         "Either the 'rules' key or the 'schema' key are missing or not empty, "
         "make sure to set the values of these keys to an empty string."

@@ -510,6 +510,16 @@ schema;input_schema:
       type: bool
     required:xsoar_on_prem:
       type: bool
+    playbookInputQuery:xsoar:
+      type: any
+    playbookInputQuery:marketplacev2:
+      type: any
+    playbookInputQuery:xpanse:
+      type: any
+    playbookInputQuery:xsoar_saas:
+      type: any
+    playbookInputQuery:xsoar_on_prem:
+      type: any
 schema;inputsSection_schema:
   type: map
   mapping:

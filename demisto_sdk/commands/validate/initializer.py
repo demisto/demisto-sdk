@@ -60,6 +60,7 @@ class Initializer:
         prev_ver=None,
         file_path=None,
         all_files=False,
+        skip_pack_dependencies=False,
     ):
         self.staged = staged
         self.use_git = use_git
@@ -67,6 +68,7 @@ class Initializer:
         self.all_files = all_files
         self.committed_only = committed_only
         self.prev_ver = prev_ver
+        self.skip_pack_dependencies = skip_pack_dependencies
 
     def validate_git_installed(self):
         """Initialize git util."""
@@ -303,8 +305,8 @@ class Initializer:
 
         return filtered_modified_files, filtered_added_files, filtered_renamed_files
 
-    @staticmethod
     def get_associated_pack_metadata(
+        self,
         content_files: Set[BaseContent],
     ) -> Set[BaseContent]:
         """Get associated pack metadata files even if they were not changed/given explicitly.
@@ -317,6 +319,11 @@ class Initializer:
         """
         pack_names = []
         pack_metadatas: Set[BaseContent] = set()
+
+        if self.skip_pack_dependencies:
+            logger.debug("Skipping pack metadata files validation.")
+            return set()
+
         for content_file in content_files:
             if find_type(str(content_file.path)) not in SKIP_RELEASE_NOTES_FOR_TYPES:
                 pack_name = get_pack_name(content_file.path)

@@ -18,6 +18,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
+from demisto_sdk.commands.common.logger import logger
 
 ContentTypes = Pack
 RN_HEADER_BY_CONTENT_TYPE = {
@@ -164,7 +165,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 content_type_section = self.remove_none_values(ls=content_type_section)
                 if content_type_section:
                     header = (
-                        content_type_section[0]
+                        content_type_section[0].rstrip()
                         if ("New: " not in content_type_section[0])
                         else content_type_section[0][5:]
                     )
@@ -209,7 +210,6 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             pack_display_names = {
                 item.display_name for item in pack_items_by_types.get(content_type, [])
             }
-
             if missing := set(display_names).difference(pack_display_names):
                 missing_display_names[content_type] = missing
         return missing_display_names

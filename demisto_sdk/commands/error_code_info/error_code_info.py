@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Dict, List, Optional, Union, get_args, get_origin
+from typing import Any, Dict, List, Literal, Optional, Union, get_args, get_origin
 
 from more_itertools import map_reduce
 
@@ -83,7 +83,11 @@ def generate_legacy_error_code_information(error_code):
     return 0
 
 
-def print_error_info(error_code: str):
+def print_error_info(error_code: str) -> Union[Literal[0], Literal[1]]:
+    """
+    Tries to print info of a BaseValidator-based class validation.
+    If there isn't one for the given code, uses legacy code that prints from errors.py, instead.
+    """
     code_to_validators = map_reduce(
         get_all_validators(), lambda validator: validator.error_code
     )
@@ -96,12 +100,19 @@ def print_error_info(error_code: str):
             logger.info(
                 "\n".join(
                     (
-                        f"Error Code:\t{error_code} ({is_autofix})",
-                        f"Description:\t{validator.description}",
-                        f"Rationale:\t{validator.rationale}",
+                        f"{k}\t{v}"
+                        for k, v in (
+                            ("Error Code", f"{error_code} ({is_autofix})"),
+                            ("Description", validator.description),
+                            ("Rationale", validator.rationale),
+                        )
                     )
                 )
             )
         return 0
     else:
+        logger.debug(
+            f"Could not find a BaseValidator-inheriting class for {error_code}, "
+            "using legacy `error-code` command instead."
+        )
         return generate_legacy_error_code_information(error_code)

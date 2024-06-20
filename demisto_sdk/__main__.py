@@ -3372,14 +3372,16 @@ def generate_unit_tests(
 @click.pass_context
 @logging_setup_decorator
 def error_code(ctx, config, **kwargs):
-    from demisto_sdk.commands.error_code_info.error_code_info import (
-        generate_legacy_error_code_information,
-    )
+    from demisto_sdk.commands.error_code_info.error_code_info import print_error_info
 
     update_command_args_from_config_file("error-code-info", kwargs)
     sys.path.append(config.configuration.env_dir)
 
-    result = generate_legacy_error_code_information(kwargs.get("input"))
+    if error_code_input := kwargs.get("input"):
+        result = print_error_info(error_code_input)
+    else:
+        logger.error("Provide an error code, e.g. `-i DO106`")
+        result = 1
 
     sys.exit(result)
 

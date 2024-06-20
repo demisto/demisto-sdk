@@ -91,17 +91,17 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 invalid_headers_content_type,
                 invalid_headers_content_item,
             ) = self.validate_release_notes_headers(content_item)
+            content_type_message = "Content Types: {}\n".format(
+                ", ".join(invalid_headers_content_type)) if invalid_headers_content_type else ""
+            content_item_message = "Content Items: {}\n".format(
+                ", ".join(invalid_headers_content_item)) if invalid_headers_content_item else ""
             if invalid_headers_content_type or invalid_headers_content_item:
                 validator_results.append(
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            content_type_message="Content Types: {}\n".format(
-                                ", ".join(invalid_headers_content_type)
-                            ),
-                            content_item_message="Content Items: {}\n".format(
-                                ", ".join(invalid_headers_content_item)
-                            ),
+                            content_type_message=content_type_message,
+                            content_item_message=content_item_message,
                         ),
                         content_object=content_item,
                     )
@@ -156,7 +156,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             for content_type_section in content_type_sections_ls:
                 content_type_section = self.remove_none_values(ls=content_type_section)
                 if content_type_section:
-                    header = content_type_section[0]
+                    header = content_type_section[0] if (not "New: " in content_type_section[0]) else content_type_section[0][5:]
                     if content_type in headers:
                         headers[content_type].append(header)
                     else:

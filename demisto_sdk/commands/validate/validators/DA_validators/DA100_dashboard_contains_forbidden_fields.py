@@ -30,10 +30,8 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
     description = "Validate that the dashboard excludes all the unnecessary fields."
     rationale = "The Dashboard should contain only the required fields."
     dashboard_error_message = "The '{0}' fields need to be removed from {1}."
-    widgets_error_message = (
-        "The '{0}' fields need to be removed from {1} Widget listed under {2}."
-    )
-    fix_message = f'Removed all unnecessary fields from the dashboard: {", ".join(FIELDS_TO_EXCLUDE)}'
+    widgets_error_message = "The '{0}' fields need to be removed from {1} Widget listed under {2}."
+    fix_message = 'Removed all unnecessary fields from {}: ' + ", ".join(FIELDS_TO_EXCLUDE)
     related_field = "layout"
     is_auto_fixable = True
 
@@ -92,6 +90,6 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
 
         return FixResult(
             validator=self,
-            message=self.fix_message,
+            message=self.fix_message.format(content_item.name),
             content_object=content_item,
         )

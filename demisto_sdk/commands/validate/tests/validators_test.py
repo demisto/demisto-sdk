@@ -662,11 +662,19 @@ def test_description():
 @pytest.mark.parametrize(
     "untracked_files, expected_output",
     [
-        (["Packs/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
-        (["Packs/untracked.txt", "invalid/path/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
+        (
+            ["Packs/untracked.txt"],
+            set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
+        ),
+        (
+            ["Packs/untracked.txt", "invalid/path/untracked.txt"],
+            set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
+        ),
     ],
 )
-def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(mocker, untracked_files, expected_output):
+def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
+    mocker, untracked_files, expected_output
+):
     """
     Given:
         - `CONTRIB_BRANCH` environment variable exists.

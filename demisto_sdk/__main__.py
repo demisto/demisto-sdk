@@ -751,7 +751,7 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "-sv",
     "--run-specific-validations",
-    help="Relevant only for the old validate flow and will be removed in a future release. Run specific validations by stating the error codes.",
+    help="A comma separated list of validations to run stated the error codes.",
     is_flag=False,
 )
 @click.option(
@@ -864,7 +864,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 "include_untracked",
                 "quiet_bc_validation",
                 "allow_skipped",
-                "run_specific_validations",
                 "no_multiprocessing",
             ]:
                 if kwargs.get(old_validate_flag):
@@ -912,6 +911,9 @@ def validate(ctx, config, file_paths: str, **kwargs):
             config_reader = ConfigReader(
                 config_file_path=kwargs.get("config_path"),
                 category_to_run=kwargs.get("category_to_run"),
+                specific_validations=(
+                    kwargs.get("run_specific_validations", "").split(",")
+                ),
             )
             initializer = Initializer(
                 use_git=kwargs["use_git"],

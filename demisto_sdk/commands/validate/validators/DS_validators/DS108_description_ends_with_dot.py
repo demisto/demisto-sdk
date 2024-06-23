@@ -20,7 +20,7 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
     description = "Ensure that all yml's description fields ends with a dot."
     rationale = "To ensure high documentation standards."
     error_message = "The {0} contains description fields without dots at the end:{1}\nPlease make sure to add a dot at the end of all the mentioned fields."
-    fix_message = 'Added dots (".") at the end of the following description fields:{0}'
+    fix_message = "Added dots ('.') at the end of the following description fields:{0}"
     related_field = "description, comment"
     is_auto_fixable = True
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
@@ -96,10 +96,12 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
             for command in content_item.commands:
                 command_fix_msg = ""
                 if command.name in content_item_malformed_lines:
-                    command_malformed_args = content_item_malformed_lines["args"]
-                    command_malformed_context_paths = content_item_malformed_lines[
-                        "contextPath"
+                    command_malformed_args = content_item_malformed_lines[command.name][
+                        "args"
                     ]
+                    command_malformed_context_paths = content_item_malformed_lines[
+                        command.name
+                    ]["contextPath"]
                     for arg in command.args:
                         if arg.name in command_malformed_args:
                             arg.description = f"{arg.description}."
@@ -109,10 +111,10 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
                             output.description = f"{output.description}."
                             command_fix_msg = f"{command_fix_msg}\n\tAdded a '.' at the end of the output '{output.contextPath}' description field."
                     if command_fix_msg:
-                        fix_message = f"{fix_message}\n In the command {command.name}:"
+                        fix_message = f"{fix_message}\n In the command {command.name}:{command_fix_msg}"
         return FixResult(
             validator=self,
-            message=self.fix_message,
+            message=self.fix_message.format(fix_message),
             content_object=content_item,
         )
 

@@ -407,3 +407,95 @@ def test_DescriptionEndsWithDotValidator_is_valid(
             for result, expected_msg in zip(results, expected_error_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "content_item, expected_fix_msg, lines_without_dots",
+    [
+        (
+            create_integration_object(
+                ["description", "script.commands"],
+                [
+                    "description without dot",
+                    [
+                        {
+                            "name": "command_number_one",
+                            "description": "command_number_one description.",
+                            "deprecated": False,
+                            "arguments": [
+                                {
+                                    "name": "arg_one",
+                                    "default": True,
+                                    "isArray": True,
+                                    "required": True,
+                                    "description": "arg_one_desc.",
+                                },
+                                {
+                                    "name": "arg_two",
+                                    "default": True,
+                                    "isArray": True,
+                                    "required": True,
+                                    "description": "arg_two_desc",
+                                },
+                            ],
+                            "outputs": [
+                                {
+                                    "name": "output_1",
+                                    "contextPath": "path_1",
+                                    "description": "description_1",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2",
+                                    "description": "description_2.",
+                                },
+                            ],
+                        },
+                    ],
+                ],
+            ),
+            "Added dots ('.') at the end of the following description fields:\nAdded a '.' at the end of the description field.\n In the command command_number_one:\n\tAdded a '.' at the end of the argument 'arg_two' description field.\n\tAdded a '.' at the end of the output 'path_1' description field.",
+            {
+                "description": "description without dot.",
+                "command_number_one": {"args": ["arg_two"], "contextPath": ["path_1"]},
+            },
+        ),
+        (
+            create_script_object(
+                paths=["args", "comment"],
+                values=[
+                    [
+                        {
+                            "name": "arg_no_one",
+                            "description": "an arg description that ends with a url www.test.com",
+                        },
+                        {
+                            "name": "arg_no_two",
+                            "description": "an arg description that doesn't ends with a dot.",
+                        },
+                    ],
+                    "an arg with a description that has www.test.com in the middle of the sentence and no dot at the end",
+                ],
+            ),
+            "Added dots ('.') at the end of the following description fields:\nAdded a '.' at the end of the comment field.",
+            {
+                "description": "an arg with a description that has www.test.com in the middle of the sentence and no dot at the end."
+            },
+        ),
+    ],
+)
+def test_DescriptionEndsWithDotValidator_fix(
+    content_item, expected_fix_msg, lines_without_dots
+):
+    """
+    Given
+        - An integration with three params: one type 17 without display name, and two type 17 with display name.
+    When
+    - Calling the DescriptionEndsWithDotValidator fix function.
+    Then
+        - Make sure the display name was removed for all params and that the right msg was returned.
+    """
+    validator = DescriptionEndsWithDotValidator()
+    validator.lines_without_dots[content_item.name] = lines_without_dots
+    assert validator.fix(content_item).message == expected_fix_msg
+    assert not validator.is_valid([content_item])

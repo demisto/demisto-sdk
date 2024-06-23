@@ -1,4 +1,5 @@
 import logging
+import os
 import tempfile
 from pathlib import Path
 from typing import Set
@@ -674,6 +675,7 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(mocker):
     mocker.patch.object(
         GitUtil, "modified_files", return_value={Path("Packs/modified.txt")}
     )
+    mocker.patch.dict(os.environ, {"CONTRIB_BRANCH": "true"})
     mocker.patch.object(GitUtil, "added_files", return_value={})
     mocker.patch.object(GitUtil, "renamed_files", return_value={})
     mocker.patch(

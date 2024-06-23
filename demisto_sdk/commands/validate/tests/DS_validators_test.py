@@ -489,11 +489,19 @@ def test_DescriptionEndsWithDotValidator_fix(
 ):
     """
     Given
-        - An integration with three params: one type 17 without display name, and two type 17 with display name.
+        content_items iterables.
+            - Case 1: One integration with a description field without a dot at the end and one command with two arguments and two context paths:
+                    - One argument with regular text description and a dot at the end.
+                    - One argument with regular text description and no dot at the end.
+                    - One contextPath with regular text description and a dot at the end.
+                    - One contextPath with regular text description and no dot at the end.
+            - Case 2: One script with a comment with a url address at the middle and no dot at the end and two arguments:
+                - One argument with a description ending with a url address.
+                - One argument with a regular text ending a dot.
     When
     - Calling the DescriptionEndsWithDotValidator fix function.
     Then
-        - Make sure the display name was removed for all params and that the right msg was returned.
+        - Make sure that dots were added to all relevant description fields and that the right fix message was returned.
     """
     validator = DescriptionEndsWithDotValidator()
     validator.lines_without_dots[content_item.name] = lines_without_dots

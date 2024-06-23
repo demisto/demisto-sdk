@@ -483,11 +483,11 @@ class TestPreprocessFiles:
         assert output == expected_output
 
     @pytest.mark.parametrize(
-    "untracked_files, expected_output",
-    [
-        (["Packs/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
-        (["Packs/untracked.txt", "invalid/path/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
-    ],
+        "untracked_files, expected_output",
+        [
+            (["Packs/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
+            (["Packs/untracked.txt", "invalid/path/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
+        ],
     )
     def test_preprocess_files_in_external_pr_use_case(self, mocker, untracked_files, expected_output):
         """

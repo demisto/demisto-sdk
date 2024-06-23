@@ -445,7 +445,6 @@ class Initializer:
     def paths_to_basecontent_set(
         self, files_set: Set[Path]
     ) -> Tuple[Set[BaseContent], Set[Path], Set[Path]]:
-
         """Attempting to convert the given paths to a set of BaseContent.
 
         Args:

@@ -20,7 +20,7 @@ class IsTemplateInReadmeValidator(BaseValidator[ContentTypes]):
     description = "Checks if there are the generic sentence '%%FILL HERE%%' in the README content."
     rationale = "Checks if there are the generic sentence '%%FILL HERE%%' in the README content."
     error_message = "The template '%%FILL HERE%%' exists in the following lines of the README content: {0}."
-    related_field = "readme.file_content"
+    related_field = "readme"
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

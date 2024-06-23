@@ -56,7 +56,7 @@ class ValidateManager:
     def run_validations(self) -> int:
         """
             Running all the relevant validation on all the filtered files based on the should_run calculations,
-            calling the fix method if the validation fail, has an autofix, and the allow_autofix flag is given,
+            calling the fix method if the validation fail, has an autofix, and the allow_autofix flag is given,def
             and calling the post_results at the end.
         Returns:
             int: the exit code to obtained from the calculations of post_results.

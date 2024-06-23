@@ -658,18 +658,25 @@ def test_description():
         validator for validator in get_all_validators() if not validator.description
     ]
 
-
-def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(mocker):
+@pytest.mark.parametrize(
+    "untracked_files, expected_output",
+    [
+        (["Packs/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
+        (["Packs/untracked.txt", "invalid/path/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
+    ],
+)
+def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(mocker , untracked_files, expected_output):
     """
     Given:
         - `CONTRIB_BRANCH` environment variable exists.
+        - validate command is running in context of an external contribution PR
     When:
-        - validate command is running in context of an external contribution PR.
+        Case 1: All untracked files have a "Pack/..." path.
+        Case 2: Not all untracked files have a "Pack/..." path, irrelevant untracked files exist which we do not want validate to run on.
     Then:
         - Collect all files within "Packs/" path, which represent changes made in a external contribution PR
             and run the validate command on them as well.
     """
-    expected_output = set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])
     initializer = Initializer()
     initializer.validate_git_installed()
     mocker.patch.object(
@@ -679,7 +686,7 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(mocker):
     mocker.patch.object(GitUtil, "added_files", return_value={})
     mocker.patch.object(GitUtil, "renamed_files", return_value={})
     mocker.patch(
-        "git.repo.base.Repo._get_untracked_files", return_value=["Packs/untracked.txt"]
+        "git.repo.base.Repo._get_untracked_files", return_value=untracked_files
     )
     output = initializer.get_unfiltered_changed_files_from_git()
     assert output[0] == expected_output

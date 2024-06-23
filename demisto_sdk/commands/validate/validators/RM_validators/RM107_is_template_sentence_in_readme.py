@@ -15,11 +15,11 @@ from demisto_sdk.commands.common.tools import search_substrings_by_line
 ContentTypes = Union[Integration, Script, Playbook, Pack]
 
 
-class IsTemplateNotInReadmeValidator(BaseValidator[ContentTypes]):
+class IsTemplateInReadmeValidator(BaseValidator[ContentTypes]):
     error_code = "RM107"
     description = "Checks if there are the generic sentence '%%FILL HERE%%' in the README content."
     rationale = "Checks if there are the generic sentence '%%FILL HERE%%' in the README content."
-    error_message = "The template '%%FILL HERE%%' does not exist in the README content."
+    error_message = "The template '%%FILL HERE%%' exists in the following lines of the README content: {0}"
     related_field = "readme.file_content"
     is_auto_fixable = False
 
@@ -28,18 +28,17 @@ class IsTemplateNotInReadmeValidator(BaseValidator[ContentTypes]):
         Checks if there are the generic sentence '%%FILL HERE%%' in the README content.
 
         Return:
-            True if '%%FILL HERE%%' does not exist in the README content, and False if it does.
+            List of ValidationResult that each element has '%%FILL HERE%%' in the README content.
         """
-
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(", ".join(invalid_lines)),
                 content_object=content_item,
             )
             for content_item in content_items
             if (
-                invalid_lines := not search_substrings_by_line(
+                invalid_lines := search_substrings_by_line(
                     phrases_to_search=["%%FILL HERE%%"],
                     text=content_item.readme.file_content
                 )

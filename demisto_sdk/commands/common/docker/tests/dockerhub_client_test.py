@@ -156,16 +156,21 @@ def test_get_token_with_existing_expired_token(
             "3.10.13.81631",
         ),
         (["1.0.0.81877", "1.0.0.78900", "1.0.0.72295"], "1.0.0.81877"),
-        (["1.0.0.81877", "1.0.0.78900", "2.0.0.72295"], "2.0.0.72295"),
+        (["1.0.0.61877", "1.0.0.78900", "2.0.0.79295"], "2.0.0.79295"),
+        (["2.0.0.81877", "2.0.0.78900", "1.0.0.99295"], "1.0.0.99295"),
+        (
+            ["0.110.3.93571", "1.0.0.93128"],
+            "0.110.3.93571",
+        ),  # Important example of fastapi docker image.
         (
             [
                 "invalid_value",
-                "7.4.0.80528",
+                "7.4.0.80530",
                 "1.5.0.80528",
                 "2.5.0.80528",
                 "2.5.0.80529",
             ],
-            "7.4.0.80528",
+            "7.4.0.80530",
         ),
     ],
 )
@@ -183,7 +188,9 @@ def test_get_latest_docker_image_tag(
         - running get_latest_docker_image_tag method
 
     Then:
-        - ensure that the latest tag is returned always
+        - ensure that the latest tag is always returned. (decided by the build number showing up in the last place of
+         the version tag e.g. 1.2.3.45 --> 45)
+
     """
     requests_mock.get(
         "https://auth.docker.io/token",

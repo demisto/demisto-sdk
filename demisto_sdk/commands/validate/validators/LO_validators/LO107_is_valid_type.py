@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Union
 
 from ordered_set import OrderedSet
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.layout import Layout
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = Layout
+ContentTypes = Union[Layout, CaseLayout]
 
 INVALID_SECTIONS: List = [
     "evidence",
@@ -32,7 +32,6 @@ class IsValidTypeValidator(BaseValidator[ContentTypes]):
     rationale = "Limited by the platform."
     error_message = "The following invalid types were found in the layout: {0}. Those types are not supported in XSIAM, remove them or change the layout to be XSOAR only."
     related_field = "tabs.sections.type, tabs.type"
-    related_file_type = [RelatedFileType.JSON]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         validator_results: List[ValidationResult] = []

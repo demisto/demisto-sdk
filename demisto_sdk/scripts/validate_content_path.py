@@ -265,7 +265,9 @@ def _validate(path: Path) -> None:
         raise SpacesInFileName
 
     if path.suffix not in ALLOWED_SUFFIXES:
-        raise InvalidSuffix
+        if set(path.parts).isdisjoint(TESTS_AND_DOC_DIRECTORIES):
+            # all files are allowed under TESTS_AND_DOC_DIRECTORIES
+            raise InvalidSuffix
 
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
         _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified

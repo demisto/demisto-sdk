@@ -102,6 +102,9 @@ class ContentType(StrEnum):
     XDRC_TEMPLATE = "XDRCTemplate"
     LAYOUT_RULE = "LayoutRule"
     ASSETS_MODELING_RULE = "AssetsModelingRule"
+    CASE_LAYOUT_RULE = "CaseLayoutRule"
+    CASE_FIELD = "CaseField"
+    CASE_LAYOUT = "CaseLayout"
 
     def __str__(self) -> str:
         return self.value
@@ -132,7 +135,9 @@ class ContentType(StrEnum):
             return "reputation"
         elif self == ContentType.INDICATOR_FIELD:
             return "incidentfield-indicatorfield"
-        elif self == ContentType.LAYOUT:
+        elif self == ContentType.CASE_FIELD:
+            return "casefield"
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "layoutscontainer"
         elif self == ContentType.PREPROCESS_RULE:
             return "preprocessrule"
@@ -151,7 +156,7 @@ class ContentType(StrEnum):
             return "automation"
         elif self == ContentType.INDICATOR_TYPE:
             return "reputation"
-        elif self == ContentType.LAYOUT:
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "layoutscontainer"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
@@ -167,7 +172,7 @@ class ContentType(StrEnum):
             return "Reputation"
         elif self == ContentType.MAPPER:
             return "Classifier"
-        elif self == ContentType.LAYOUT:
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "Layouts Container"
         else:
             return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)

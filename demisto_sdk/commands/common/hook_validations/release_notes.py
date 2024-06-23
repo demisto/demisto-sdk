@@ -35,8 +35,7 @@ CONTENT_TYPE_SECTION_REGEX = re.compile(
     r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
 )
 CONTENT_ITEM_SECTION_REGEX = re.compile(
-    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|"
-    r"^- (?:New: )?\*\*(.+)\*\*$",
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$",
     re.M,
 )
 

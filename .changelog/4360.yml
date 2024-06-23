@@ -1,0 +1,4 @@
+changes:
+- description: Converted PB106 validation to new validation format. The validation checks if the playbook uses a specific instance.
+  type: internal
+pr_number: 4360

@@ -672,7 +672,7 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(mocker , 
         - validate command is running in context of an external contribution PR
     When:
         Case 1: All untracked files have a "Pack/..." path.
-        Case 2: Not all untracked files have a "Pack/..." path, irrelevant untracked files exist which we do not want validate to run on.
+        Case 2: Not all untracked files have a "Pack/..." path, irrelevant untracked files exist which validate shouldn't run run on.
     Then:
         - Collect all files within "Packs/" path, which represent changes made in a external contribution PR
             and run the validate command on them as well.

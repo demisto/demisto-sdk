@@ -482,17 +482,25 @@ class TestPreprocessFiles:
         output = preprocess_files(all_files=True)
         assert output == expected_output
 
-    def test_preprocess_files_in_external_pr_use_case(self, mocker):
+    @pytest.mark.parametrize(
+    "untracked_files, expected_output",
+    [
+        (["Packs/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
+        (["Packs/untracked.txt", "invalid/path/untracked.txt"], set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])),
+    ],
+    )
+    def test_preprocess_files_in_external_pr_use_case(self, mocker, untracked_files, expected_output):
         """
         Given:
             - `CONTRIB_BRANCH` environment variable exists.
+            - pre commit command is running in context of an external contribution PR
         When:
-            - pre commit command is running in context of an external contribution PR.
+            Case 1: All untracked files have a "Pack/..." path.
+            Case 2: Not all untracked files have a "Pack/..." path, irrelevant untracked files exist which pre commit shouldn't run on.
         Then:
             - Collect all files within "Packs/" path, which represent changes made in a external contribution PR
-              and run the pre-commit command on them as well.
+              and run the pre commit command on them as well.
         """
-        expected_output = set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")])
         mocker.patch.object(
             GitUtil, "_get_all_changed_files", return_value=expected_output
         )
@@ -501,7 +509,7 @@ class TestPreprocessFiles:
         mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
         mocker.patch(
             "git.repo.base.Repo._get_untracked_files",
-            return_value=["Packs/untracked.txt"],
+            return_value=untracked_files,
         )
         output = preprocess_files(use_git=True)
         assert output == expected_output

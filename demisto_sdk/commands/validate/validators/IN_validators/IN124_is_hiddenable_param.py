@@ -4,6 +4,7 @@ from typing import ClassVar, Dict, Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     ALLOWED_HIDDEN_PARAMS,
+    GitStatuses,
     MarketplaceVersions,
     ParameterType,
 )
@@ -86,12 +87,25 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
         self.invalid_params[content_item.name] = invalid_params
         return invalid_params
 
-    def is_param_already_hidden(self, content_item, param):
-        return (
+    def is_param_already_hidden(
+        self, content_item: Integration, param: Parameter
+    ) -> bool:
+        """
+        Return True if the param was already set to True in the old content object.
+        Args:
+            content_item (Integration): The integration to test.
+            param (Parameter): The current param to check.
+
+        Returns:
+            bool: True if the param was already set to True in the old content object. Otherwise, return False.
+        """
+        return bool(
             (old_obj := content_item.old_base_content_object)
-            and (old_param := old_obj.params)
-            and (old_param := find_param(param.name, old_obj.params))
-            and old_param.hidden in ("true", True)
+            and content_item.old_base_content_object.git_status
+            in [GitStatuses.MODIFIED, GitStatuses.RENAMED]
+            and (old_param := old_obj.params)  # type: ignore[attr-defined]
+            and (old_param := find_param(old_param, param.name))
+            and old_param.hidden == param.hidden
         )
 
     def _is_replaced_by_type9(self, display_name: str, params: List[Parameter]) -> bool:

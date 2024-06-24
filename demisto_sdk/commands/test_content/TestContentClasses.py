@@ -864,7 +864,7 @@ class BuildContext:
         if self.server:
             return [self.server]
         if self.is_saas_server_type:
-            return [env.get("base_url") for env in self.env_json]
+            return [env.get("base_url") for env in self.env_json.values()]
         return [
             env.get("InstanceDNS")
             for env in self.env_json

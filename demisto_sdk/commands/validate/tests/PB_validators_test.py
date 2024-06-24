@@ -31,6 +31,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equa
 from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
     IsTasksQuietModeValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB116_is_stopping_on_error import (
+    IsStoppingOnErrorValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
@@ -47,46 +50,42 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB126_is_default_not
     IsDefaultNotOnlyConditionValidator,
 )
 
-from demisto_sdk.commands.validate.validators.PB_validators.PB116_is_stopping_on_error import (
-    IsStoppingOnErrorValidator
-)
-
 
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
         (
-                create_playbook_object(
-                    paths=["inputs", "tasks.0.task.key"],
-                    values=[
-                        [{"key": "input_name1", "value": "input_value1"}],
-                        {"first_input": "inputs.input_name1"},
-                    ],
-                ),
-                [],
+            create_playbook_object(
+                paths=["inputs", "tasks.0.task.key"],
+                values=[
+                    [{"key": "input_name1", "value": "input_value1"}],
+                    {"first_input": "inputs.input_name1"},
+                ],
+            ),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["inputs", "tasks.0.task.key"],
-                    values=[
-                        [{"key": "input_name1", "value": "input_value1"}],
-                        {
-                            "first_input": "inputs.input_name1",
-                            "second_input": "inputs.input_name2",
-                        },
-                    ],
-                ),
-                [],
+            create_playbook_object(
+                paths=["inputs", "tasks.0.task.key"],
+                values=[
+                    [{"key": "input_name1", "value": "input_value1"}],
+                    {
+                        "first_input": "inputs.input_name1",
+                        "second_input": "inputs.input_name2",
+                    },
+                ],
+            ),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["inputs", "tasks.0.task.key"],
-                    values=[
-                        [{"key": "input_name2", "value": "input_value2"}],
-                        {"first_input": "inputs.input_name1"},
-                    ],
-                ),
-                "The playbook 'Detonate File - JoeSecurity V2' contains the following inputs that are not used in any of its tasks: input_name2",
+            create_playbook_object(
+                paths=["inputs", "tasks.0.task.key"],
+                values=[
+                    [{"key": "input_name2", "value": "input_value2"}],
+                    {"first_input": "inputs.input_name1"},
+                ],
+            ),
+            "The playbook 'Detonate File - JoeSecurity V2' contains the following inputs that are not used in any of its tasks: input_name2",
         ),
     ],
 )
@@ -120,22 +119,22 @@ def test_is_valid_all_inputs_in_use(content_item, expected_result):
     "content_item, expected_result",
     [
         (
-                create_playbook_object(),
-                [],
+            create_playbook_object(),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["rolename"],
-                    values=[[]],
-                ),
-                [],
+            create_playbook_object(
+                paths=["rolename"],
+                values=[[]],
+            ),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["rolename"],
-                    values=[["Administrator"]],
-                ),
-                "The playbook 'Detonate File - JoeSecurity V2' can not have a rolename, please remove the field.",
+            create_playbook_object(
+                paths=["rolename"],
+                values=[["Administrator"]],
+            ),
+            "The playbook 'Detonate File - JoeSecurity V2' can not have a rolename, please remove the field.",
         ),
     ],
 )
@@ -169,27 +168,27 @@ def test_is_no_rolename(content_item, expected_result):
     "content_item, expected_result",
     [
         (
-                create_playbook_object(
-                    paths=["deprecated", "description"],
-                    values=[True, "Deprecated. Use <PLAYBOOK_NAME> instead."],
-                ),
-                [],
+            create_playbook_object(
+                paths=["deprecated", "description"],
+                values=[True, "Deprecated. Use <PLAYBOOK_NAME> instead."],
+            ),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["deprecated", "description"],
-                    values=[True, "Deprecated. <REASON> No available replacement."],
-                ),
-                [],
+            create_playbook_object(
+                paths=["deprecated", "description"],
+                values=[True, "Deprecated. <REASON> No available replacement."],
+            ),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["deprecated", "description"],
-                    values=[True, "Not a valid description"],
-                ),
-                "The deprecated playbook 'Detonate File - JoeSecurity V2' has invalid description.\nThe description of "
-                'all deprecated playbooks should follow one of the formats:\n1. "Deprecated. Use <PLAYBOOK_NAME> '
-                'instead."\n2. "Deprecated. <REASON> No available replacement."',
+            create_playbook_object(
+                paths=["deprecated", "description"],
+                values=[True, "Not a valid description"],
+            ),
+            "The deprecated playbook 'Detonate File - JoeSecurity V2' has invalid description.\nThe description of "
+            'all deprecated playbooks should follow one of the formats:\n1. "Deprecated. Use <PLAYBOOK_NAME> '
+            'instead."\n2. "Deprecated. <REASON> No available replacement."',
         ),
     ],
 )
@@ -378,13 +377,13 @@ def test_indicator_pb_must_stop_on_error_invalid():
                     "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
                 }
             ],
-            True
+            True,
         ],
     )
     res = IsStoppingOnErrorValidator().is_valid([playbook])
     assert len(res) == 1
     bad_task = playbook.tasks
-    assert res[0].message == error_message.format([bad_task.get('0')])
+    assert res[0].message == error_message.format([bad_task.get("0")])
 
 
 def test_IsTasksQuietModeValidator_fail_case():
@@ -440,8 +439,8 @@ def test_IsTasksQuietModeValidator_fail_case():
     validate_res = validator.is_valid([playbook])
     assert len(validate_res) == 1
     assert (
-            (validate_res[0]).message
-            == "Playbook 'Detonate File - JoeSecurity V2' contains tasks that are not in quiet mode (quietmode: 2) The tasks names is: 'test fail task No1, test fail task No2'."
+        (validate_res[0]).message
+        == "Playbook 'Detonate File - JoeSecurity V2' contains tasks that are not in quiet mode (quietmode: 2) The tasks names is: 'test fail task No1, test fail task No2'."
     )
     fix_playbook = validator.fix(playbook).content_object
     assert len(validator.is_valid([fix_playbook])) == 0
@@ -637,8 +636,8 @@ def test_PlaybookDeleteContextAllValidator():
     )
 
     assert (
-            PlaybookDeleteContextAllValidator().is_valid([playbook])[0].message
-            == expected_result
+        PlaybookDeleteContextAllValidator().is_valid([playbook])[0].message
+        == expected_result
     )
 
 
@@ -801,8 +800,8 @@ def test_IsTaskidDifferentFromidValidator():
     results = IsTaskidDifferentFromidValidator().is_valid([playbook])
     assert len(results) == 1
     assert (
-            results[0].message
-            == "On tasks: 0,  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
+        results[0].message
+        == "On tasks: 0,  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
     )
 
 

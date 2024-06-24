@@ -169,5 +169,6 @@ def is_indicator_pb(playbook: Playbook):
     Check if the playbook has indicators as input query.
     """
     return any(
-        (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators" for i in playbook.data.get("inputs", {})
+        (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators"
+        for i in playbook.data.get("inputs", {})
     )

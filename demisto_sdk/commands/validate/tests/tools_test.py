@@ -4,7 +4,8 @@ from demisto_sdk.commands.validate.tests.test_tools import create_playbook_objec
 from demisto_sdk.commands.validate.tools import (
     collect_all_inputs_from_inputs_section,
     collect_all_inputs_in_use,
-    compare_lists, is_indicator_pb,
+    compare_lists,
+    is_indicator_pb,
 )
 
 

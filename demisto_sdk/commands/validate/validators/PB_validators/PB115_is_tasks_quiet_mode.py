@@ -62,7 +62,8 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if is_indicator_pb(content_item) and (invalid_tasks := self.get_invalid_task_ids(content_item))
+            if is_indicator_pb(content_item)
+            and (invalid_tasks := self.get_invalid_task_ids(content_item))
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:

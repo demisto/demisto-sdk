@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tools import is_indicator_pb
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -22,7 +21,9 @@ def get_error_tolerant_tasks(playbook: Playbook):
 
 class IsStoppingOnErrorValidator(BaseValidator[ContentTypes]):
     error_code = "PB116"
-    description = "The validation checks that all playbook tasks stop when encountering an error."
+    description = (
+        "The validation checks that all playbook tasks stop when encountering an error."
+    )
     error_message = "The following tasks of the playbook do not stop on error:\n{}"
     related_field = "tasks"
     is_auto_fixable = False
@@ -33,11 +34,12 @@ class IsStoppingOnErrorValidator(BaseValidator[ContentTypes]):
         "causing following tasks to rely on its output and fail."
     )
 
-
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results = []
         for content_item in content_items:
-            if is_indicator_pb(content_item) and (bad_tasks := get_error_tolerant_tasks(content_item)):
+            if is_indicator_pb(content_item) and (
+                bad_tasks := get_error_tolerant_tasks(content_item)
+            ):
                 results.append(
                     ValidationResult(
                         validator=self,

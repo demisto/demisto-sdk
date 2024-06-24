@@ -55,11 +55,12 @@ def test_release_note_filled_out_validator(
     """
     Given:
     - content_items.
-        - Case 1: Four pack_metadatas:
+        - Case 1: Five pack_metadatas:
             - 1 pack with valid release note.
             - 1 pack with an invalid empty release note.
             - 1 pack with invalid release note.
             - 1 pack with invalid release note.
+            - 1 pack without any release notes.
 
     When:
     - Calling the IsReleaseNotesFilledOutValidator is_valid function.

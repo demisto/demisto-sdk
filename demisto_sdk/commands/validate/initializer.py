@@ -260,7 +260,9 @@ class Initializer:
             untracked_files_list = filter(
                 lambda f: f.startswith("Packs/"), self.git_util.repo.untracked_files
             )
-            logger.info(f"\n[cyan]Running on untracked files: {untracked_files_list}[/cyan]")
+            logger.info(
+                f"\n[cyan]Running on untracked files: {untracked_files_list}[/cyan]"
+            )
             # convert the string list of untracked files to a set of Path object
             untracked_files_paths = set(map(Path, untracked_files_list))
             modified_files = modified_files.union(untracked_files_paths)

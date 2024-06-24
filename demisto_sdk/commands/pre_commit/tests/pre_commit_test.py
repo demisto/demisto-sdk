@@ -552,9 +552,7 @@ class TestPreprocessFiles:
             GitUtil, "_get_all_changed_files", return_value=expected_output
         )
         mocker.patch.dict(os.environ, {"CONTRIB_BRANCH": "true"})
-        mocker.patch.object(
-            GitUtil, "_get_staged_files", return_value=modified_files
-        )
+        mocker.patch.object(GitUtil, "_get_staged_files", return_value=modified_files)
         mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
         mocker.patch(
             "git.repo.base.Repo._get_untracked_files",

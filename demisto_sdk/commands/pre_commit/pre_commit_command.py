@@ -674,7 +674,9 @@ def preprocess_files(
             untracked_files_list = filter(
                 lambda f: f.startswith("Packs/"), git_util.repo.untracked_files
             )
-            logger.info(f"\n[cyan]Running on untracked files: {untracked_files_list}[/cyan]")
+            logger.info(
+                f"\n[cyan]Running on untracked files: {untracked_files_list}[/cyan]"
+            )
             # convert the string list of untracked files to a set of Path object
             untracked_files_paths = set(map(Path, untracked_files_list))
             raw_files = raw_files.union(untracked_files_paths)

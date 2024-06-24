@@ -24,8 +24,7 @@ class IsAskConditionHasUnhandledReplyOptionsValidator(BaseValidator[ContentTypes
     description = "Checks whether an ask conditional has unhandled reply options."
     rationale = "Checks whether an ask conditional has unhandled reply options."
     error_message = (
-        "Playbook conditional task with id:{task_id} has an unhandled "
-        "condition: {condition}."
+        "The playbook contains conditional tasks with unhandled conditions:{0}"
     )
     related_field = "conditions"
     is_auto_fixable = False
@@ -37,25 +36,22 @@ class IsAskConditionHasUnhandledReplyOptionsValidator(BaseValidator[ContentTypes
         Return:
             - List[ValidationResult]. List of ValidationResults objects.
         """
-        results: List[ValidationResult] = []
-        for content_item in content_items:
-            invalid_tasks = self.unhandled_conditions(content_item)
-
-            for task_id, unhandled_options in invalid_tasks.items():
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            task_id=task_id,
-                            condition=",".join(
-                                map(lambda x: f"{str(x)}", unhandled_options)
-                            ),
-                        ),
-                        content_object=content_item,
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    "\n".join(
+                        [
+                            f"Playbook conditional task with {task_id=} contains the following unhandled conditions: {', '.join(list(unhandled_options))}."
+                            for task_id, unhandled_options in invalid_tasks.items()
+                        ]
                     )
-                )
-
-        return results
+                ),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (invalid_tasks := self.unhandled_conditions(content_item))
+        ]
 
     @staticmethod
     def unhandled_conditions(playbook: ContentTypes):

@@ -70,5 +70,5 @@ warning = []
 
 
 [Custom_Categories]
-select = []
+select = ["DS108"]
 warning = []

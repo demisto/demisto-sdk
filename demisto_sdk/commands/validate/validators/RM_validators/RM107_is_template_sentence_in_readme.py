@@ -18,7 +18,7 @@ ContentTypes = Union[Integration, Script, Playbook, Pack]
 class IsTemplateInReadmeValidator(BaseValidator[ContentTypes]):
     error_code = "RM107"
     description = "Checks if there are the generic sentence '%%FILL HERE%%' in the README content."
-    rationale = "Checks if there are the generic sentence '%%FILL HERE%%' in the README content."
+    rationale = "Ensuring our documentation looks good and professional."
     error_message = "The template '%%FILL HERE%%' exists in the following lines of the README content: {0}."
     related_field = "readme"
     is_auto_fixable = False

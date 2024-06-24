@@ -1,4 +1,4 @@
 changes:
-- description: Added the `-h` option as a short option for the `--help` flag to all the typer-based commands.
+- description: Added the `-h` option as a short option for the `--help` flag in `typer`-based commands.
   type: feature
 pr_number: 4350

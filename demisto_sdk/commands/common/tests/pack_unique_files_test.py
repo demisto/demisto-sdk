@@ -45,6 +45,7 @@ PACK_METADATA_PARTNER = {
     "price": 2,
     "email": "some@mail.com",
     "url": "https://www.paloaltonetworks.com/cortex",
+    "marketplaces": ["xsoar"],
 }
 
 README_INPUT_RESULTS_LIST = [

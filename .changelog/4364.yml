@@ -1,0 +1,4 @@
+changes:
+- description: Moved PB116 validation to the new format. The validation checks that indicator playbooks stop on error.
+  type: internal
+pr_number: 4364

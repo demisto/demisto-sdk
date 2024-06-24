@@ -10,7 +10,6 @@ GIT_STATUSES_DICT = {
     "A": "GitStatuses.ADDED",
     "R": "GitStatuses.RENAMED",
     "M": "GitStatuses.MODIFIED",
-    "D": "GitStatuses.DELETED",
 }
 
 RELATED_FILES_DICT = {
@@ -321,16 +320,16 @@ class ValidationInitializer:
         self.git_statuses_str = str(
             input(
                 "Enter a comma separated list of git statuses the validation should run on,\n"
-                "R: renamed files\nA: added files\nD: deleted files\nM: modified files\nor leave empty if you wish that the validation will run on all files: "
+                "R: renamed files\nA: added files\nM: modified files\nor leave empty if you wish that the validation will run on all files: "
             )
         )
         while self.git_statuses_str and not set(
             self.git_statuses_str.split(",")
-        ).issubset({"A", "R", "M", "D"}):
+        ).issubset({"A", "R", "M"}):
             self.git_statuses_str = str(
                 input(
                     "Please make sure to insert either valid inputs which are:\n"
-                    "R: renamed files\nA: added files\nD: deleted files\nM: modified files\nor leave empty if you wish that the validation will run on all files: "
+                    "R: renamed files\nA: added files\nM: modified files\nor leave empty if you wish that the validation will run on all files: "
                 )
             )
 

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where RN103 failed on newly added packs due to missing release notes.
+  type: fix
+pr_number: 4383

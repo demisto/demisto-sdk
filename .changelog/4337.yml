@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where **validate-content-path** checked suffixes of test- or doc-files
-  type: fix
-pr_number: 4337

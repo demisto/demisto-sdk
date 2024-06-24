@@ -35,6 +35,7 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
     fix_message = "Unhiddened the following params {0}."
     related_field = "configuration, hidden"
     is_auto_fixable = True
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     invalid_params: ClassVar[Dict[str, list]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -101,8 +102,6 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
         """
         return bool(
             (old_obj := content_item.old_base_content_object)
-            and content_item.old_base_content_object.git_status
-            in [GitStatuses.MODIFIED, GitStatuses.RENAMED]
             and (old_param := old_obj.params)  # type: ignore[attr-defined]
             and (old_param := find_param(old_param, param.name))
             and old_param.hidden == param.hidden

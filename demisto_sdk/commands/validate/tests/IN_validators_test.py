@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.constants import (
     RELIABILITY_PARAM,
     SUPPORT_LEVEL_HEADER,
     XSOAR_SUPPORT,
-    GitStatuses,
     MarketplaceVersions,
     ParameterType,
 )
@@ -4386,36 +4385,21 @@ def test_IsHiddenableParamValidator_with_old_content_object_is_valid():
     """
     Given
     content_items iterables.
-        - Case 1: Four invalid integrations with old content objects with different git statuses:
-            - One integration with a non-hiddenable param with hidden value = True with modified status.
-            - One integration with a non-hiddenable param with hidden value = True and type not in 0,4,12,14, with a type 9 replacement with renamed status.
-            - One integration with a non-hiddenable param with hidden value = 'true' with added status.
-            - One integration with a non-hiddenable param with hidden value = all market places and another hidden type 4 param without type 9 replacement with modified status.
+        - Case 1: Four invalid integrations with old content objects which is a copy of the current one:
+            - One integration with a non-hiddenable param with hidden value = True.
+            - One integration with a non-hiddenable param with hidden value = True and type not in 0,4,12,14, with a type 9 replacement.
+            - One integration with a non-hiddenable param with hidden value = 'true'.
+            - One integration with a non-hiddenable param with hidden value = all market places and another hidden type 4 param without type 9 replacement.
     When
     - Calling the IsHiddenableParamValidator is valid function.
     Then
         - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all except for the third content item.
+        - Case 1: Should pass all.
     """
     content_items = INVALID_HIDDEN_PARAM_INTEGRATIONS
     old_content_items = copy.deepcopy(content_items)
-    for old_content_item, git_status in zip(
-        old_content_items,
-        [
-            GitStatuses.MODIFIED,
-            GitStatuses.RENAMED,
-            GitStatuses.ADDED,
-            GitStatuses.MODIFIED,
-        ],
-    ):
-        old_content_item.git_status = git_status
     create_old_file_pointers(content_items, old_content_items)
-    results = IsHiddenableParamValidator().is_valid(content_items)
-    assert len(results) == 1
-    assert (
-        results[0].message
-        == "The following fields are hidden and cannot be hidden, please unhide them: non_hiddenable_param."
-    )
+    assert not IsHiddenableParamValidator().is_valid(content_items)
 
 
 def test_IsHiddenableParamValidator_fix():

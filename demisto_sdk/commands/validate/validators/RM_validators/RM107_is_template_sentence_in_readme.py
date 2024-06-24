@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from typing import Iterable, List, Union
+
+from demisto_sdk.commands.common.tools import search_substrings_by_line
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-
-from demisto_sdk.commands.common.tools import search_substrings_by_line
 
 ContentTypes = Union[Integration, Script, Playbook, Pack]
 
@@ -40,7 +40,7 @@ class IsTemplateInReadmeValidator(BaseValidator[ContentTypes]):
             if (
                 invalid_lines := search_substrings_by_line(
                     phrases_to_search=["%%FILL HERE%%"],
-                    text=content_item.readme.file_content
+                    text=content_item.readme.file_content,
                 )
             )
         ]

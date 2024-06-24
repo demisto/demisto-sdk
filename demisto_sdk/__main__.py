@@ -912,7 +912,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 config_file_path=kwargs.get("config_path"),
                 category_to_run=kwargs.get("category_to_run"),
                 specific_validations=(
-                    kwargs.get("run_specific_validations", "").split(",")
+                    (kwargs.get("run_specific_validations") or "").split(",")
                 ),
             )
             initializer = Initializer(

@@ -37,10 +37,7 @@ def test_error_code_info_sanity(mocker, monkeypatch):
     assert all(
         [
             str_in_call_args_list(logger_info.call_args_list, current_str)
-            for current_str in [
-                "Function: wrong_version(expected='-1')",
-                "The version for our files should always be -1, please update the file.",
-            ]
+            for current_str in ["BA100", "should always be -1"]
         ]
     )
     assert result.exit_code == 0

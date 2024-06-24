@@ -3064,6 +3064,7 @@ pack_metadata_invalid_tags = {
     "tags": ["Use Case"],
     "useCases": [],
     "keywords": [],
+    "marketplaces": ["xsoar"],
 }
 
 

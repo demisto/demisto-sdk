@@ -1,0 +1,4 @@
+changes:
+- description: Converted PB115 validation to new validation format. The validation checks if the 'quietmode' field of all tasks in playbook are not in default value.
+  type: internal
+pr_number: 4366

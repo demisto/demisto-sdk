@@ -1033,6 +1033,7 @@ class ServerContext:
         self.auth_id = None
         self.api_key = None
         self.server_ip = server_private_ip
+        self.build_context = build_context
         if self.build_context.is_saas_server_type:
             self.server_url = self.server_ip
             # we use client without demisto username
@@ -1042,7 +1043,6 @@ class ServerContext:
 
         self.proxy = None
         self.cloud_ui_path = None
-        self.build_context = build_context
         self.client: Optional[DefaultApi] = None
         self.configure_new_client()
         self.is_instance_using_docker = not is_redhat_instance(self.server_ip)

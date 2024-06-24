@@ -576,7 +576,7 @@ def test_VerifyTemplateInReadmeValidator_valid_case(repo):
         ),
     ]
 
-    expected_error_message = "The template '%%FILL HERE%%' exists in the following lines of the README content: 1"
+    expected_error_message = "The template '%%FILL HERE%%' exists in the following lines of the README content: 1."
     validator_results = IsTemplateInReadmeValidator().is_valid(content_items)
     assert validator_results
     for validator_result in validator_results:

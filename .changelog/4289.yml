@@ -1,0 +1,4 @@
+changes:
+- description: Added DS101 to the new validation format. Check if the beta disclaimer exists in the detailed description.
+  type: feature
+pr_number: 4289

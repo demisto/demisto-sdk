@@ -2,6 +2,7 @@ import base64
 from abc import ABC
 from enum import Enum
 import json
+from functools import cached_property
 from pathlib import Path
 from typing import Any, ClassVar, List, Optional, Union
 
@@ -103,14 +104,6 @@ class TextFiles(RelatedFile):
         return self.file_content_str
 
 
-class YmlRelatedFile(RelatedFile):
-    file_type = RelatedFileType.YML
-
-
-class JsonRelatedFile(RelatedFile):
-    file_type = RelatedFileType.JSON
-
-
 class RNRelatedFile(TextFiles):
     file_type = RelatedFileType.RELEASE_NOTE
 
@@ -151,9 +144,27 @@ class XifRelatedFile(RelatedFile):
 
 class SchemaRelatedFile(RelatedFile):
     file_type = RelatedFileType.SCHEMA
+    file_content = dict
 
     def get_optional_paths(self) -> List[Path]:
         return [Path(str(self.main_file_path).replace(".yml", "_schema.json"))]
+
+    @cached_property
+    def file_content(self) -> dict:
+        """
+            Reads and returns JSON content from the first optional path.
+            Returns None if the file cannot be read or parsed.
+        """
+        paths = self.get_optional_paths()
+        if not paths:
+            return None  # No paths available
+        try:
+            with open(paths[0], 'r') as file:
+                json_data = json.load(file)
+            return json_data
+        except Exception as e:
+            logger.debug(f"Failed to get related text file, error: {e}")
+        return None
 
 
 class ReadmeRelatedFile(TextFiles):

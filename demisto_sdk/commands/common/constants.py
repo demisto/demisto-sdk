@@ -2180,6 +2180,17 @@ class IncidentState(StrEnum):
     ACKNOWLEDGED = "ACKNOWLEDGED"
 
 
+class PlaybookTaskType(StrEnum):
+    REGULAR = "regular"
+    PLAYBOOK = "playbook"
+    CONDITION = "condition"
+    START = "start"
+    TITLE = "title"
+    SECTION = "section"
+    STANDARD = "standard"
+    COLLECTION = "collection"
+
+
 # Used to format the writing of the yml/json file
 DEFAULT_JSON_INDENT = 4
 DEFAULT_YAML_INDENT = 0

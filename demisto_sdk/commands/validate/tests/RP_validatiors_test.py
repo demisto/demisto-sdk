@@ -6,6 +6,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.RP_validators.RP101_expiration_field_is_numeric import (
     ExpirationFieldIsNumericValidator,
 )
+from demisto_sdk.commands.validate.validators.RP_validators.RP102_details_field_equals_id import (
+    DetailsFieldEqualsIdValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -49,6 +52,34 @@ def test_ExpirationFieldIsNumericValidator_is_valid(
     """
     results = ExpirationFieldIsNumericValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_DetailsFieldEqualsIdValidator_is_valid():
+    """
+    Given
+        - two indicator_type objects:
+            - One indicator_type with id equals details.
+            - One indicator_type with id not equals details.
+    When
+        - Calling the DetailsFieldEqualsIdValidator is valid function.
+    Then
+        - Make sure the right amount of failures return. Should fail object two.
+    """
+    content_items = [
+        create_indicator_type_object(["details", "id"], ["test", "test"]),
+        create_indicator_type_object(["details", "id"], ["test", "test-not-equal"]),
+    ]
+    expected_msgs = [
+        "id and details fields are not equal. id=test-not-equal, details=test"
+    ]
+    results = DetailsFieldEqualsIdValidator().is_valid(content_items)
+    assert len(results) == 1
     assert all(
         [
             result.message == expected_msg

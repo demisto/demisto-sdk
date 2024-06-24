@@ -39,40 +39,27 @@ def test_ValidateSchemaFileExistsValidator_is_valid():
 def test_ModelingRuleSchemaTypesValidator_valid():
     """
         Given:
+        - Modeling Rules content items:
             - Modeling Rules content items with valid schema types
+            - Modeling Rules content items with invalid schema types
         When:
             - run ModelingRuleSchemaTypesValidator().is_valid method
         Then:
+
             - Ensure that no ValidationResult returned when schema types exists.
+            - Ensure that the ValidationResult returned.
     """
     modeling_rule = create_modeling_rule_object()
     # Valid
     assert not ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])
     modeling_rule.schema_file.file_content = {"test": {"test_attribute": {"type": "Dict","is_array": "false"}}}
     results = ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])
+    # invalid
     assert (
             'The following types in the schema file are invalid: "Dict".'
             ' Valid types are: string, int , float, datetime, boolean.'
             == results[0].message
     )
-
-def test_ModelingRuleSchemaTypesValidator_invalid():
-    """
-        Given:
-            - Modeling Rules content items with invalid schema types
-        When:
-            - run ModelingRuleSchemaTypesValidator().is_valid method
-        Then:
-            - Ensure that the ValidationResult returned.
-    """
-    modeling_rule = create_modeling_rule_object(
-        paths=["schema_file.file_content"],
-        values=['{"test": {"test_attribute": {"type": "Dict","is_array": "false"}}']
-    )
-
-    # Valid
-    results = ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])
-
 
 
 def test_ValidateEmptyKeysValidator_is_valid():

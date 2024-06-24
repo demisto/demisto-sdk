@@ -20,21 +20,21 @@ from demisto_sdk.commands.validate.validators.RP_validators.RP103_is_valid_indic
         (0, [create_indicator_type_object()], []),
         (0, [create_indicator_type_object(["expiration"], [0])], []),
         (
-            2,
-            [
-                create_indicator_type_object(["expiration"], [0]),
-                create_indicator_type_object(["expiration"], [-1]),
-                create_indicator_type_object(["expiration"], ["1"]),
-            ],
-            [
-                "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
-                "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
-            ],
+                2,
+                [
+                    create_indicator_type_object(["expiration"], [0]),
+                    create_indicator_type_object(["expiration"], [-1]),
+                    create_indicator_type_object(["expiration"], ["1"]),
+                ],
+                [
+                    "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
+                    "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
+                ],
         ),
     ],
 )
 def test_ExpirationFieldIsNumericValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+        content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given

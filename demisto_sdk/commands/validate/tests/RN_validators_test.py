@@ -33,6 +33,10 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_not
                     values=["2.0.5"],
                     release_note_content="This is an invalid release note %%XSIAM_VERSION%%",
                 ),  # shouldn't pass as it has an invalid release note
+                create_pack_object(
+                    paths=["version"],
+                    values=["1.0.0"],
+                ),
             ],
             3,
             [

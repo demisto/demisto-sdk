@@ -23,11 +23,16 @@ def get_error_tolerant_tasks(playbook: Playbook):
 class IsStoppingOnErrorValidator(BaseValidator[ContentTypes]):
     error_code = "PB116"
     description = "The validation checks that all playbook tasks stop when encountering an error."
-    rationale = "If a playbook task does not stop on error, following tasks might rely on its output and fail."
     error_message = "The following tasks of the playbook do not stop on error:\n{}"
     related_field = "tasks"
     is_auto_fixable = False
-    related_file_type = [RelatedFileType.YML]
+    rationale = (
+        "For indicator playbooks, tasks will likely be executing on thousands of indicators. "
+        "Without these validations in place, we may easily release playbooks for general availability "
+        "that can crash Demisto instances if a playbook task does not stop on error, "
+        "causing following tasks to rely on its output and fail."
+    )
+
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results = []

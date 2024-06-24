@@ -1,4 +1,4 @@
 changes:
-- description: Changed the **error-code** command to show information using the new BaseValidator standard. When such isn't available, defaults to legacy-style inforamtion. 
+- description: Changed the **error-code** command to show information using the new BaseValidator standard. When such isn't available, defaults to legacy-style inforamtion.
   type: feature
 pr_number: 4374

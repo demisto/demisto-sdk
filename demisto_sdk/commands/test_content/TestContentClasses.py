@@ -1032,11 +1032,17 @@ class ServerContext:
 
         self.auth_id = None
         self.api_key = None
-        self.server_url = None
+        self.server_ip = server_private_ip
+        if self.build_context.is_saas_server_type:
+            self.server_url = self.server_ip
+            # we use client without demisto username
+            os.environ.pop("DEMISTO_USERNAME", None)
+        else:
+            self.server_url = f"https://{self.server_ip}"
+
         self.proxy = None
         self.cloud_ui_path = None
         self.build_context = build_context
-        self.server_ip = server_private_ip
         self.client: Optional[DefaultApi] = None
         self.configure_new_client()
         self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
@@ -1264,10 +1270,6 @@ class CloudServerContext(ServerContext):
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
 
-        self.server_url = server_private_ip
-        # we use client without demisto username
-        os.environ.pop("DEMISTO_USERNAME", None)
-
         # In XSIAM or XSOAR SAAS - We're running without proxy. This code won't be executed on SaaS servers.
         self.proxy = None
         self.check_if_can_create_manual_alerts()
@@ -1456,7 +1458,6 @@ class OnPremServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
-        self.server_url = f"https://{self.server_ip}"
         self.proxy = MITMProxy(
             server_private_ip,
             self.build_context.logging_module,

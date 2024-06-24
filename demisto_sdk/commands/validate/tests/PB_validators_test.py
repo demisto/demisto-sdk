@@ -16,8 +16,6 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB103_does_playbook_
 from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
     DeprecatedDescriptionValidator,
 )
-from demisto_sdk.commands.validate.validators.PB_validators.PB114_playbook_quiet_mode import (
-    PlaybookQuietModeValidator,
 from demisto_sdk.commands.validate.validators.PB_validators.PB105_playbook_delete_context_all import (
     PlaybookDeleteContextAllValidator,
 )
@@ -30,6 +28,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_
 from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
     IsTaskidDifferentFromidValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB114_playbook_quiet_mode import (
+    PlaybookQuietModeValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
     IsTasksQuietModeValidator,
 )
@@ -41,6 +42,7 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB119_check_inputs_used import (
     CheckInputsUsedExist,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB122_does_playbook_have_unhandled_conditions import (
     DoesPlaybookHaveUnhandledConditionsValidator,
 )

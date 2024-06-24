@@ -454,6 +454,7 @@ def test_exotic_suffix_doc_data(folder: str, suffix: str):
         "RuleEventCollector_1_2.yml",
         "RuleEventCollector_1_2.xif",
         "RuleEventCollector_1_2_schema.json",
+        "RuleEventCollector_1_2_testdata.json",
     ],
 )
 def test_modeling_rule_file_valid(file_name: str):
@@ -467,6 +468,7 @@ def test_modeling_rule_file_valid(file_name: str):
         "RuleEventCollector_1_3.yml",
         "RuleEventCollector1_1_2.xif",
         "RuleEventColector_1_2_schema.json",
+        "RuleEventCollector_1_2.json",  # json without schema
     ],
 )
 def test_modeling_rule_file_invalid(file_name: str):

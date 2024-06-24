@@ -319,8 +319,11 @@ def _validate(path: Path) -> None:
         elif first_level_folder == ContentType.MODELING_RULE.as_folder and not (
             path.stem.startswith(path.parent.name)
             and (
-                path.suffix in {".json", ".yml", ".xif"}
-                or path.stem.endswith("_schema")
+                path.suffix in {".yml", ".xif"}
+                or (
+                    path.stem.endswith(("_schema", "_testdata"))
+                    and path.suffix == ".json"
+                )
             )
         ):
             raise InvalidModelingRuleFileName

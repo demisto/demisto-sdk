@@ -192,6 +192,13 @@ class InvalidCommandExampleFile(InvalidPathException):
     message = "This file's name must be command_examples"
 
 
+class InvalidModelingRuleFileName(InvalidPathException):
+    message = (
+        "Name of modeling rules files must match the directory containing them, e.g. `{parent folder}.json`, "
+        "`{parent folder}.yml` and `{parent folder}.xif`"
+    )
+
+
 class InvalidXDRCTemplatesFileName(InvalidPathException):
     message = "Name of XDRC template files must match the directory containing them, e.g. `{parent folder}.json`, or `{parent folder}.yml`"
 
@@ -265,7 +272,9 @@ def _validate(path: Path) -> None:
         raise SpacesInFileName
 
     if path.suffix not in ALLOWED_SUFFIXES:
-        raise InvalidSuffix
+        if set(path.parts).isdisjoint(TESTS_AND_DOC_DIRECTORIES):
+            # all files are allowed under TESTS_AND_DOC_DIRECTORIES
+            raise InvalidSuffix
 
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
         _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
@@ -307,6 +316,16 @@ def _validate(path: Path) -> None:
             path.stem == path.parent.name and path.suffix in {".json", ".yml"}
         ):
             raise InvalidXDRCTemplatesFileName
+
+        elif first_level_folder == ContentType.MODELING_RULE.as_folder and not (
+            (path.stem == path.parent.name and path.suffix in {".yml", ".xif"})
+            or (
+                path.stem.startswith(path.parent.name)
+                and path.stem.endswith(("_schema", "_testdata"))
+                and path.suffix == ".json"
+            )
+        ):
+            raise InvalidModelingRuleFileName
 
 
 def _validate_image_file_name(image_name: str):

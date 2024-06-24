@@ -54,7 +54,7 @@ warning = []
 
 [xsoar_best_practices_path_based_validations]
 select = [
-    "IN100", "IN102", "IN104", "IN106", "IN107", "IN108", "IN109", "IN110", "IN112", "IN113", "IN114", "IN121", "IN122", "IN123", "IN124", "IN125", "IN126", "IN127", "IN130",
+    "IN100", "IN102", "IN104", "IN106", "IN107", "IN108", "IN109", "IN110", "IN112", "IN113", "IN114", "IN121", "IN122", "IN123", "IN125", "IN126", "IN127", "IN130",
     "IN131", "IN134", "IN135", "IN139", "IN141", "IN142", "IN144", "IN145", "IN146", "IN149", "IN150", "IN151", "IN152", "IN153", "IN154", "IN156", "IN158", "IN159", "IN160",
     "IN161", "IN162",
     "BA100", "BA101", "BA105", "BA106", "BA110", "BA111", "BA116", "BA118", "BA126",
@@ -74,5 +74,5 @@ warning = []
 
 
 [Custom_Categories]
-select = []
+select = ["DS108"]
 warning = []

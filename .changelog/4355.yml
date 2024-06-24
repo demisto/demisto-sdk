@@ -1,0 +1,4 @@
+changes:
+- description: Modified the RP102 validation to support the new validate format. The validation checks wether the id field equals the details field in an indicator type
+  type: internal
+pr_number: 4355

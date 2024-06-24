@@ -809,11 +809,6 @@ Lists all data within a specific KV store collection or collections.
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
 | Splunk.KVstoreData | Unknown | An array of collection names. Each collection name will have an array of values, e.g., Splunk.KVstoreData.&lt;collection_name&gt; is a list of the data in the collection. | 
-| Splunk.Test | String | Test output for Splunk | 
-
-| Splunk.Test | String | Test output for Splunk | 
-
-
 
 #### Command Example
 ```!splunk-kv-store-collection-data-list app_name=search limit=3 kv_store_collection_name=demisto_store```
@@ -968,7 +963,7 @@ Deletes the specified object in store. Search can be a basic key-value pair or a
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
-| app_name | The name of the Splunk application that contains the KV store collection. Default is search. | Required | 
+| app_name | The name of the Splunk application that contains the KV store collection. | Required | 
 | kv_store_collection_name | The name of the KV store collection. | Required | 
 | indicator_path | The path to the indicator value in kv_store_data. | Optional | 
 | key | The key name to search in the store. If the query argument is used, this argument will be ignored. | Optional | 

@@ -31,7 +31,10 @@ class ConfiguredValidations:
 
 
 class ConfigReader:
-    def __init__(self, config_file_path=None, category_to_run=None):
+    def __init__(
+        self, config_file_path=None, category_to_run=None, specific_validations=[]
+    ):
+        self.specific_validations = specific_validations
         if not config_file_path:
             config_file_path = CONFIG_FILE_PATH
         try:
@@ -53,10 +56,13 @@ class ConfigReader:
             Tuple[List, List, List, dict]: the select, warning, and ignorable errors sections from the given category,
             and the support_level dict with errors to ignore.
         """
+        specific_validations = []
+        if self.specific_validations and self.specific_validations[0]:
+            specific_validations = self.specific_validations
         flag = self.category_to_run or (USE_GIT if use_git else PATH_BASED_VALIDATIONS)
         section = self.config_file_content.get(flag, {})
         return ConfiguredValidations(
-            section.get("select", []),
+            specific_validations or section.get("select", []),
             section.get("warning", []),
             self.config_file_content.get("ignorable_errors", []),
             self.config_file_content.get("support_level", {})

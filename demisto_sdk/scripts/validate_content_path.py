@@ -316,14 +316,13 @@ def _validate(path: Path) -> None:
             path.stem == path.parent.name and path.suffix in {".json", ".yml"}
         ):
             raise InvalidXDRCTemplatesFileName
+
         elif first_level_folder == ContentType.MODELING_RULE.as_folder and not (
-            path.stem.startswith(path.parent.name)
-            and (
-                path.suffix in {".yml", ".xif"}
-                or (
-                    path.stem.endswith(("_schema", "_testdata"))
-                    and path.suffix == ".json"
-                )
+            (path.stem == path.parent.name and path.suffix in {".yml", ".xif"})
+            or (
+                path.stem.startswith(path.parent.name)
+                and path.stem.endswith(("_schema", "_testdata"))
+                and path.suffix == ".json"
             )
         ):
             raise InvalidModelingRuleFileName

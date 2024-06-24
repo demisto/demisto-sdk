@@ -469,6 +469,7 @@ def test_modeling_rule_file_valid(file_name: str):
         "RuleEventCollector1_1_2.xif",
         "RuleEventColector_1_2_schema.json",
         "RuleEventCollector_1_2.json",  # json without schema
+        "RuleEventCollector_1_2_3.yml",
     ],
 )
 def test_modeling_rule_file_invalid(file_name: str):

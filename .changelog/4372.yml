@@ -1,0 +1,3 @@
+changes:
+- description: Converted MR106 validation to new validation format. The validation verifies the types in schema files.
+pr_number: 4372

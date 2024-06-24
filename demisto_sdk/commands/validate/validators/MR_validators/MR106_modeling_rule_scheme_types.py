@@ -17,7 +17,7 @@ ContentTypes = ModelingRule
 class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
     error_code = "MR106"
     description = ("Type validation in schema files verifies that each specified data type conforms to a predefined set"
-                   " of acceptable types, ensuring data consistency and accuracy.")
+                   " of acceptable types")
     rationale = ("Validating types in schema files is crucial for maintaining data integrity and compatibility across"
                  " systems, preventing errors and ensuring reliable data processing.")
     error_message = ("The following types in the schema file are invalid: {invalid_types}."

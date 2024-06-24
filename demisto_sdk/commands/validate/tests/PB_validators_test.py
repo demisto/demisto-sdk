@@ -31,6 +31,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equa
 from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
     IsTasksQuietModeValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB116_is_stopping_on_error import (
+    IsStoppingOnErrorValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
@@ -331,6 +334,56 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_indicator_pb_must_stop_on_error():
+    """
+    Given: A pb with queryEntity indicators
+    When: Playbook stops on error
+    Then: Validation should pass
+    """
+    playbook = create_playbook_object(
+        ["inputs"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+        ],
+    )
+    res = IsStoppingOnErrorValidator().is_valid([playbook])
+    assert len(res) == 0
+
+
+def test_indicator_pb_must_stop_on_error_invalid():
+    """
+    Given: A pb with queryEntity indicators
+    When: Playbook continues on error
+    Then: Validation should fail
+    """
+    error_message = IsStoppingOnErrorValidator.error_message
+    playbook = create_playbook_object(
+        ["inputs", "tasks.0.continueonerror"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            True,
+        ],
+    )
+    res = IsStoppingOnErrorValidator().is_valid([playbook])
+    assert len(res) == 1
+    bad_task = playbook.tasks
+    assert res[0].message == error_message.format([bad_task.get("0")])
 
 
 def test_IsTasksQuietModeValidator_fail_case():

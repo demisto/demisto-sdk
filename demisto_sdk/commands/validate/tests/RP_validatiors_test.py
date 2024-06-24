@@ -13,27 +13,28 @@ from demisto_sdk.commands.validate.validators.RP_validators.RP103_is_valid_indic
     IsValidIndicatorTypeId,
 )
 
+
 @pytest.mark.parametrize(
     "expected_number_of_failures, content_items, expected_msgs",
     [
         (0, [create_indicator_type_object()], []),
         (0, [create_indicator_type_object(["expiration"], [0])], []),
         (
-                2,
-                [
-                    create_indicator_type_object(["expiration"], [0]),
-                    create_indicator_type_object(["expiration"], [-1]),
-                    create_indicator_type_object(["expiration"], ["1"]),
-                ],
-                [
-                    "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
-                    "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
-                ],
+            2,
+            [
+                create_indicator_type_object(["expiration"], [0]),
+                create_indicator_type_object(["expiration"], [-1]),
+                create_indicator_type_object(["expiration"], ["1"]),
+            ],
+            [
+                "The 'expiration' field should have a non-negative integer value, current is: -1 of type <class 'int'>.",
+                "The 'expiration' field should have a non-negative integer value, current is: 1 of type <class 'str'>.",
+            ],
         ),
     ],
 )
 def test_ExpirationFieldIsNumericValidator_is_valid(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -88,7 +89,8 @@ def test_DetailsFieldEqualsIdValidator_is_valid():
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
-    
+
+
 def test_ValidIndicatorTypeId():
     """
     Given
@@ -104,11 +106,13 @@ def test_ValidIndicatorTypeId():
         - Make sure no errors will return.
     """
 
-    content_items = [create_indicator_type_object(["id"], ["teststring"]),
-                     create_indicator_type_object(["id"], ["test&string&with&ampersands&"]),
-                     create_indicator_type_object(["id"], ["test string with whitespaces"]),
-                     create_indicator_type_object(["id"], ["test_string_with_underscores"]),
-                     create_indicator_type_object(["id"], ["test0string1with2numbers3"])]
+    content_items = [
+        create_indicator_type_object(["id"], ["teststring"]),
+        create_indicator_type_object(["id"], ["test&string&with&ampersands&"]),
+        create_indicator_type_object(["id"], ["test string with whitespaces"]),
+        create_indicator_type_object(["id"], ["test_string_with_underscores"]),
+        create_indicator_type_object(["id"], ["test0string1with2numbers3"]),
+    ]
     expected_number_of_failures = 0
     expected_msgs = []
     results = IsValidIndicatorTypeId().is_valid(content_items)
@@ -133,12 +137,16 @@ def test_InValidIndicatorTypeId():
         - Make sure it will return 2 errors with the appropriate message.
     """
 
-    content_items = [create_indicator_type_object(["id"], ["string_with_special_characters_*#$"]),
-                     create_indicator_type_object(["id"], ["string_with_slash_/"])]
+    content_items = [
+        create_indicator_type_object(["id"], ["string_with_special_characters_*#$"]),
+        create_indicator_type_object(["id"], ["string_with_slash_/"]),
+    ]
     expected_number_of_failures = 2
-    expected_msgs = ["The `id` field must consist of alphanumeric characters (A-Z, a-z, 0-9), whitespaces ( ), "
-                     "underscores (_), and ampersands (&) only.",
-                     "The `id` field must consist of alphanumeric characters (A-Z, a-z, 0-9), whitespaces ( ), "
-                     "underscores (_), and ampersands (&) only."]
+    expected_msgs = [
+        "The `id` field must consist of alphanumeric characters (A-Z, a-z, 0-9), whitespaces ( ), "
+        "underscores (_), and ampersands (&) only.",
+        "The `id` field must consist of alphanumeric characters (A-Z, a-z, 0-9), whitespaces ( ), "
+        "underscores (_), and ampersands (&) only.",
+    ]
     results = IsValidIndicatorTypeId().is_valid(content_items)
     assert len(results) == expected_number_of_failures

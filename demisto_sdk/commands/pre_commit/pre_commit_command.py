@@ -670,6 +670,7 @@ def preprocess_files(
             and adds them to `raw_files`. See CIAC-10490 for more info.
             """
             # filter out a string list of untracked files with a path that starts with "Packs/"
+            # The file paths in the build machine are relative.
             untracked_files_list = filter(
                 lambda f: f.startswith("Packs/"), git_util.repo.untracked_files
             )

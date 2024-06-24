@@ -147,7 +147,7 @@ def create_playbook_object(
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
 ) -> Playbook:
-    """Creating an playbook object with altered fields from a default playbook yml structure.
+    """Creating a playbook object with altered fields from a default playbook yml structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.

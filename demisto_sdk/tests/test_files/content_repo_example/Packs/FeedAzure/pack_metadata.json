@@ -9,6 +9,9 @@
     "email": "",
     "categories": ["Analytics & SIEM"],
     "tags": [],
+    "marketplaces": [
+        "xsoar"
+    ],
     "updated": "2020-03-28T12:58:02Z",
     "beta": true,
     "deprecated": false,

@@ -313,7 +313,6 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
-    # @error_codes("DS108")
     def has_markdown_lint_errors(self, file_content: str):
         if mdx_server_is_up():
             markdown_response = run_markdownlint(file_content)

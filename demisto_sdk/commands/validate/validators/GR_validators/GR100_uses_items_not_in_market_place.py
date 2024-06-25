@@ -94,12 +94,13 @@ class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
             self, content_items: Iterable[ContentTypes], validate_all_files=False
     ) -> List[ValidationResult]:
         validation_results = []
-        pack_ids_to_validate = [item.pack_id for item in content_items] \
-            if not validate_all_files else []
-        for content_item in self.graph.find_uses_paths_with_invalid_marketplaces(
-            pack_ids_to_validate
-        ):
-            used_content_items = [
+
+        pack_ids_to_validate = [item.pack_id for item in content_items] if not validate_all_files else []
+
+        # The content items that use content items with invalid marketplaces.
+        invalid_content_items = self.graph.find_uses_paths_with_invalid_marketplaces(pack_ids_to_validate)
+        for content_item in invalid_content_items:
+            uses_content_items = [
                 item.content_item_to.object_id
                 for item in content_item.relationships_data.get(RelationshipType.USES)
             ]
@@ -110,7 +111,7 @@ class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
                     message=self.error_message.format(
                         content_name=content_item.name,
                         marketplaces=", ".join(content_item.marketplaces),
-                        used_content_items=", ".join(used_content_items),
+                        used_content_items=", ".join(uses_content_items),
                     ),
                     content_object=content_item,
                 )

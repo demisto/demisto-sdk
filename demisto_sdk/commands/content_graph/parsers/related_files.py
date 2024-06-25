@@ -159,7 +159,7 @@ class SchemaRelatedFile(RelatedFile):
             return None  # No paths available
         try:
             with open(paths[0], "r") as file:
-                json_data = json5_handler.JSON5_Handler().loads(s=file.read())
+                json_data = json5.loads(s=file.read())
             return json_data
         except Exception as e:
             logger.debug(f"Failed to get related text file, error: {e}")

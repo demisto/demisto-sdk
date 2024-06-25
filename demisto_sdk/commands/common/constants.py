@@ -1317,7 +1317,6 @@ OFFICIAL_INDEX_JSON_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETP
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
-FILTER_CONF = "./artifacts/packs_to_install_by_machine.json"
 
 GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com"
 

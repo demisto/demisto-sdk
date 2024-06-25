@@ -153,7 +153,7 @@ class TestConfiguration:
 
     @staticmethod
     def _parse_marketplaces_conf(
-        test_configuration,
+            test_configuration,
     ) -> List[MarketplaceVersions]:
         marketplaces_conf = test_configuration.get("marketplaces", [])
         if not isinstance(marketplaces_conf, list):
@@ -176,7 +176,7 @@ class TestConfiguration:
 
 class TestPlaybook:
     def __init__(
-        self, build_context, test_configuration: TestConfiguration, server_context
+            self, build_context, test_configuration: TestConfiguration, server_context
     ):
         """
         This class has all the info related to a test playbook during test execution
@@ -190,7 +190,7 @@ class TestPlaybook:
         self.server_context = server_context
         self.configuration: TestConfiguration = test_configuration
         self.is_mockable: bool = (
-            self.configuration.playbook_id not in server_context.unmockable_test_ids
+                self.configuration.playbook_id not in server_context.unmockable_test_ids
         )
         self.test_suite = TestSuite(self.configuration.playbook_id)
         self.start_time = datetime.now(timezone.utc)
@@ -324,9 +324,9 @@ class TestPlaybook:
             Checks if there are a list of filtered tests that the playbook is in them.
             """
             if (
-                not self.server_context.filtered_tests
-                or self.configuration.playbook_id
-                not in self.server_context.filtered_tests
+                    not self.server_context.filtered_tests
+                    or self.configuration.playbook_id
+                    not in self.server_context.filtered_tests
             ):
                 msg = f"Skipping {self} because it's not in filtered tests"
                 self.log_debug(msg)
@@ -356,8 +356,8 @@ class TestPlaybook:
 
         def skipped_test():
             if (
-                self.configuration.playbook_id
-                not in self.build_context.conf.skipped_tests
+                    self.configuration.playbook_id
+                    not in self.build_context.conf.skipped_tests
             ):
                 return False
             log_message = f"Skipping test {self} because it's in skipped test list"
@@ -375,9 +375,9 @@ class TestPlaybook:
 
         def version_mismatch():
             if not (
-                Version(self.configuration.from_version)
-                <= Version(self.build_context.server_numeric_version)
-                <= Version(self.configuration.to_version)
+                    Version(self.configuration.from_version)
+                    <= Version(self.build_context.server_numeric_version)
+                    <= Version(self.configuration.to_version)
             ):
                 log_message = (
                     f"Test {self} ignored due to version mismatch "
@@ -393,8 +393,8 @@ class TestPlaybook:
 
         def test_has_skipped_integration():
             if skipped_integrations := (
-                self.build_context.conf.skipped_integrations_set
-                & set(self.configuration.test_integrations)
+                    self.build_context.conf.skipped_integrations_set
+                    & set(self.configuration.test_integrations)
             ):
                 # The playbook should be run but has a skipped integration.
                 self.log_debug(
@@ -404,9 +404,9 @@ class TestPlaybook:
                 for integration in skipped_integrations:
 
                     if (
-                        self.server_context.filtered_tests
-                        and self.configuration.playbook_id
-                        in self.server_context.filtered_tests
+                            self.server_context.filtered_tests
+                            and self.configuration.playbook_id
+                            in self.server_context.filtered_tests
                     ):
                         # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
                         msg = (
@@ -477,12 +477,12 @@ class TestPlaybook:
             return False  # test has a marketplace value that doesn't matched the build server marketplace
 
         return (
-            in_filtered_tests()
-            and not nightly_test_in_non_nightly_build()
-            and not skipped_test()
-            and not version_mismatch()
-            and not test_has_skipped_integration()
-            and marketplaces_match_server_type()
+                in_filtered_tests()
+                and not nightly_test_in_non_nightly_build()
+                and not skipped_test()
+                and not version_mismatch()
+                and not test_has_skipped_integration()
+                and marketplaces_match_server_type()
         )
 
     def run_test_module_on_integrations(self, client: DefaultApi) -> bool:
@@ -501,9 +501,9 @@ class TestPlaybook:
         return True
 
     def configure_integrations(
-        self,
-        client: DefaultApi,
-        instance_configuration: dict,
+            self,
+            client: DefaultApi,
+            instance_configuration: dict,
     ) -> bool:
         """
         Configures all integrations that the playbook uses and return a boolean indicating the result
@@ -563,8 +563,8 @@ class TestPlaybook:
         updated = False
         for integration in self.integrations:
             if (
-                integration.configuration
-                and "server_keys" not in integration.configuration.params
+                    integration.configuration
+                    and "server_keys" not in integration.configuration.params
             ):
                 continue
             if self.server_context.prev_system_conf:
@@ -593,7 +593,7 @@ class TestPlaybook:
             integration.delete_integration_instance(client)
 
     def create_incident(
-        self, client: DefaultApi, timeout: int = 300, sleep_interval: int = 10
+            self, client: DefaultApi, timeout: int = 300, sleep_interval: int = 10
     ) -> Optional[Incident]:
         """
         Creates an incident with the current playbook ID
@@ -815,24 +815,24 @@ class BuildContext:
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
 
         self.slack_user_id = self._retrieve_slack_user_id()
+        self.packs_to_install_by_machine_path = kwargs["machine_assignment"]
         self.machine_assignment_json = self._extract_filtered_tests()
 
-    # --------------------------- Machine preparation logic -------------------------------
+        # --------------------------- Machine preparation logic -------------------------------
 
         self.instances_ips = self._get_instances_ips()
         self.server_numeric_version = self._get_server_numeric_version()
         self.servers = self.create_servers()
 
-    @staticmethod
-    def _extract_filtered_tests() -> dict:
+    def _extract_filtered_tests(self) -> dict:
         """
-        Reads the content from ./artifacts/packs_to_install_by_machine.json and parses it into a list of test playbook IDs that should be run
+        Reads the content from packs_to_install_by_machine.json and parses it into a list of test playbook IDs that should be run
         in the current build
         Returns:
             A list of playbook IDs that should be run in the current build
         """
-        with open(FILTER_CONF) as filter_file:
-            return json.loads(filter_file.read())
+        with open(self.packs_to_install_by_machine_path) as packs_to_install_by_machine:
+            return json.loads(packs_to_install_by_machine.read())
 
     def create_servers(self):
         """
@@ -975,7 +975,7 @@ class BuildContext:
         user_id = ""
         try:
             user_name = (
-                os.getenv("GITLAB_USER_LOGIN") or self._get_user_name_from_circle()
+                    os.getenv("GITLAB_USER_LOGIN") or self._get_user_name_from_circle()
             )
             res = self.slack_client.api_call("users.list")
 
@@ -1009,9 +1009,9 @@ class BuildContext:
                 if integration_name in unmockable_integrations
             ]
             if (
-                test_name
-                and (not test_record.test_integrations or unmockable_integrations_used)
-                or not self.isAMI
+                    test_name
+                    and (not test_record.test_integrations or unmockable_integrations_used)
+                    or not self.isAMI
             ):
                 unmockable_tests.append(test_record)
                 # In case a test has both - an unmockable integration and is configured with is_mockable=False -
@@ -1025,10 +1025,10 @@ class BuildContext:
 
 class ServerContext:
     def __init__(
-        self,
-        build_context: BuildContext,
-        server_private_ip: str,
-        use_retries_mechanism: bool = True,
+            self,
+            build_context: BuildContext,
+            server_private_ip: str,
+            use_retries_mechanism: bool = True,
     ):
 
         # --------------------------- Overall build configuration -------------------------------
@@ -1091,7 +1091,7 @@ class ServerContext:
                 continue
             self.configure_new_client()
             if TestContext(
-                self.build_context, test_playbook, self.client, self
+                    self.build_context, test_playbook, self.client, self
             ).execute_test(self.proxy):
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
             else:
@@ -1122,7 +1122,7 @@ class ServerContext:
         self._execute_tests(self.test_retries_queue)
 
     def _reset_tests_round_if_necessary(
-        self, test_playbook: TestPlaybook, queue_: Queue
+            self, test_playbook: TestPlaybook, queue_: Queue
     ):
         """
         Checks if the string representation of the current test configuration is already in
@@ -1182,7 +1182,7 @@ class ServerContext:
         pass
 
     def get_all_installed_integrations_configurations(
-        self, server_url: str, timeout: int = 180, sleep_interval: int = 5
+            self, server_url: str, timeout: int = 180, sleep_interval: int = 5
     ) -> list:
         """
         Gets all integration configuration as it exists on the demisto server
@@ -1265,11 +1265,11 @@ class ServerContext:
 
 class CloudServerContext(ServerContext):
     def __init__(
-        self,
-        build_context: BuildContext,
-        server_private_ip: str,
-        cloud_machine: str,
-        use_retries_mechanism: bool = True,
+            self,
+            build_context: BuildContext,
+            server_private_ip: str,
+            cloud_machine: str,
+            use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
 
@@ -1453,10 +1453,10 @@ class CloudServerContext(ServerContext):
 
 class OnPremServerContext(ServerContext):
     def __init__(
-        self,
-        build_context: BuildContext,
-        server_private_ip: str,
-        use_retries_mechanism: bool = True,
+            self,
+            build_context: BuildContext,
+            server_private_ip: str,
+            use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.proxy = MITMProxy(
@@ -1560,9 +1560,9 @@ class OnPremServerContext(ServerContext):
             self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
 
             if (
-                self.build_context.isAMI
-                and self.proxy
-                and self.proxy.should_update_mock_repo
+                    self.build_context.isAMI
+                    and self.proxy
+                    and self.proxy.should_update_mock_repo
             ):
                 self.proxy.push_mock_files()
             self.build_context.logging_module.debug(
@@ -1634,11 +1634,11 @@ class Conf:
 
 class TestResults:
     def __init__(
-        self,
-        unmockable_integrations,
-        artifacts_path: str,
-        service_account: str = None,
-        artifacts_bucket: str = None,
+            self,
+            unmockable_integrations,
+            artifacts_path: str,
+            service_account: str = None,
+            artifacts_bucket: str = None,
     ):
         self.succeeded_playbooks: List[str] = []
         self.failed_playbooks: Set[str] = set()
@@ -1671,7 +1671,7 @@ class TestResults:
         self.write_artifacts_file("skipped_tests.txt", self.skipped_tests)
         self.write_artifacts_file("skipped_integrations.txt", self.skipped_integrations)
         with open(
-            self.artifacts_path / "test_playbooks_report.json", "w"
+                self.artifacts_path / "test_playbooks_report.json", "w"
         ) as test_playbooks_report_file:
             json.dump(self.playbook_report, test_playbooks_report_file, indent=4)
 
@@ -1680,9 +1680,9 @@ class TestResults:
         )
 
     def print_test_summary(
-        self,
-        is_ami: bool = True,
-        logging_module: Union[Any, ParallelLoggingManager] = logging,
+            self,
+            is_ami: bool = True,
+            logging_module: Union[Any, ParallelLoggingManager] = logging,
     ):
         """
         Takes the information stored in the tests_data_keeper and prints it in a human-readable way.
@@ -1793,10 +1793,10 @@ class TestResults:
         logging_method(f"{table_name}:\n{table}", real_time=True)
 
     def upload_playbook_result_json_to_bucket(
-        self,
-        repository_name: str,
-        file_name,
-        logging_module: Union[Any, ParallelLoggingManager] = logging,
+            self,
+            repository_name: str,
+            file_name,
+            logging_module: Union[Any, ParallelLoggingManager] = logging,
     ):
         """Uploads a JSON object to a specified path in the GCP bucket.
 
@@ -1823,12 +1823,12 @@ class TestResults:
 
 class Integration:
     def __init__(
-        self,
-        build_context: BuildContext,
-        integration_name: str,
-        potential_integration_instance_names: list,
-        playbook: TestPlaybook,
-        server_context: ServerContext,
+            self,
+            build_context: BuildContext,
+            integration_name: str,
+            potential_integration_instance_names: list,
+            playbook: TestPlaybook,
+            server_context: ServerContext,
     ):
         """
         An integration class that should represent the integrations during the build
@@ -1857,7 +1857,7 @@ class Integration:
 
     @staticmethod
     def _change_placeholders_to_values(
-        server_url: str, config_item: IntegrationConfiguration
+            server_url: str, config_item: IntegrationConfiguration
     ) -> IntegrationConfiguration:
         """Some integration should be configured on the current server as host and has the string '%%SERVER_HOST%%'
         in the content-test-conf conf.json configuration.
@@ -1878,7 +1878,7 @@ class Integration:
         return config_item
 
     def _set_integration_params(
-        self, server_url: str, playbook_id: str, is_mockable: bool
+            self, server_url: str, playbook_id: str, is_mockable: bool
     ) -> bool:
         """
         Finds the matching configuration for the integration in content-test-data conf.json file
@@ -1982,7 +1982,7 @@ class Integration:
         return deepcopy(match_configurations[0])
 
     def _delete_integration_instance_if_determined_by_name(
-        self, client: DefaultApi, instance_name: str
+            self, client: DefaultApi, instance_name: str
     ):
         """Deletes integration instance by its name.
 
@@ -2059,10 +2059,10 @@ class Integration:
         server_context.prev_system_conf = prev_system_conf
 
     def create_module(
-        self,
-        instance_name: str,
-        configuration: dict,
-        incident_configuration: dict = None,
+            self,
+            instance_name: str,
+            configuration: dict,
+            incident_configuration: dict = None,
     ) -> Dict[str, Any]:
         module_configuration = configuration["configuration"]
 
@@ -2107,12 +2107,12 @@ class Integration:
         return module_instance
 
     def create_integration_instance(
-        self,
-        client: DefaultApi,
-        playbook_id: str,
-        is_mockable: bool,
-        server_context: "ServerContext",
-        instance_configuration: dict,
+            self,
+            client: DefaultApi,
+            playbook_id: str,
+            is_mockable: bool,
+            server_context: "ServerContext",
+            instance_configuration: dict,
     ) -> bool:
         """
         Create an instance of the integration in the server specified in the demisto client instance.
@@ -2212,13 +2212,13 @@ class Integration:
         self.integration_configuration_from_server = response
         self.module_instance = module_instance
         integration_script = (
-            response.get("configuration", {}).get("integrationScript", {}) or {}
+                response.get("configuration", {}).get("integrationScript", {}) or {}
         )
         self.integration_type = integration_script.get("type", "")
         return True
 
     def delete_integration_instance(
-        self, client, instance_id: Optional[str] = None
+            self, client, instance_id: Optional[str] = None
     ) -> bool:
         """
         Deletes an integration with the given ID
@@ -2388,11 +2388,11 @@ class Integration:
 
 class TestContext:
     def __init__(
-        self,
-        build_context: BuildContext,
-        playbook: TestPlaybook,
-        client: DefaultApi,
-        server_context: "ServerContext",
+            self,
+            build_context: BuildContext,
+            playbook: TestPlaybook,
+            client: DefaultApi,
+            server_context: "ServerContext",
     ):
         """
         Initializes the TestContext class
@@ -2539,9 +2539,9 @@ class TestContext:
         return playbook_state
 
     def replace_external_playbook_configuration(
-        self,
-        external_playbook_configuration: dict,
-        server_version: Version,
+            self,
+            external_playbook_configuration: dict,
+            server_version: Version,
     ):
         """takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
                                                "input_parameters":{"Endpoint_hostname": {"simple", "test"}}}
@@ -2591,7 +2591,7 @@ class TestContext:
         # Change Configuration for external pb.
         for input_ in external_playbook_configuration["input_parameters"]:
             if matching_record := list(
-                filter(lambda x: x.get("key") == input_, inputs)
+                    filter(lambda x: x.get("key") == input_, inputs)
             ):
                 existing_val = matching_record[0]
                 simple = external_playbook_configuration["input_parameters"][
@@ -2658,7 +2658,7 @@ class TestContext:
         return True, inputs_default, saving_inputs_path
 
     def restore_external_playbook_configuration(
-        self, restore_path: str, restore_values: dict, server_version: Version
+            self, restore_path: str, restore_values: dict, server_version: Version
     ):
         self.playbook.log_info("Restoring External Playbook parameters.")
 
@@ -2696,7 +2696,7 @@ class TestContext:
             instance_configuration = self.playbook.configuration.instance_configuration
 
             if not self.playbook.configure_integrations(
-                self.client, instance_configuration
+                    self.client, instance_configuration
             ):
                 return PB_Status.CONFIGURATION_FAILED
 
@@ -2799,12 +2799,12 @@ class TestContext:
         if self.test_docker_images:
             memory_threshold, pid_threshold = self.get_threshold_values()
             if error_message := Docker.check_resource_usage(
-                server_url=self.server_context.server_ip,
-                docker_images=self.test_docker_images,
-                def_memory_threshold=memory_threshold,
-                def_pid_threshold=pid_threshold,
-                docker_thresholds=self.build_context.conf.docker_thresholds,
-                logging_module=self.build_context.logging_module,
+                    server_url=self.server_context.server_ip,
+                    docker_images=self.test_docker_images,
+                    def_memory_threshold=memory_threshold,
+                    def_pid_threshold=pid_threshold,
+                    docker_thresholds=self.build_context.conf.docker_thresholds,
+                    logging_module=self.build_context.logging_module,
             ):
                 self.playbook.log_error(error_message)
                 return False
@@ -2874,7 +2874,7 @@ class TestContext:
         self.playbook.close_test_suite()
 
     def _add_details_to_failed_tests_report(
-        self, playbook_name: str, failed_stage: str
+            self, playbook_name: str, failed_stage: str
     ):
         """
         Adds the relevant details to the failed tests report.
@@ -2895,7 +2895,7 @@ class TestContext:
 
     @staticmethod
     def _get_failed_stage(
-        status: Optional[str], is_second_playback_run: bool = False
+            status: Optional[str], is_second_playback_run: bool = False
     ) -> str:
         """
         Gets the test failed stage.
@@ -2913,7 +2913,7 @@ class TestContext:
         return "Execution"
 
     def _add_to_failed_playbooks(
-        self, is_second_playback_run: bool = False, status: Optional[str] = None
+            self, is_second_playback_run: bool = False, status: Optional[str] = None
     ):
         """
         Adds the playbook to the failed playbooks list
@@ -2974,9 +2974,9 @@ class TestContext:
         Sends a Slack messages with the number of bytes currently in use and the number of processes currently in use
         """
         if (
-            self.build_context.is_nightly
-            and self.build_context.memCheck
-            and not self.build_context.is_local_run
+                self.build_context.is_nightly
+                and self.build_context.memCheck
+                and not self.build_context.is_local_run
         ):
             stdout, stderr = self._get_circle_memory_data()
             text = stderr or f"Memory Usage: {stdout}"
@@ -2999,8 +2999,8 @@ class TestContext:
         # We don't want to run docker tests on redhat instance because it does not use docker, and it does not support
         # the threshold configurations.
         if (
-            playbook_state == PB_Status.COMPLETED
-            and self.server_context.is_instance_using_docker
+                playbook_state == PB_Status.COMPLETED
+                and self.server_context.is_instance_using_docker
         ) and not self.build_context.is_saas_server_type:
             #  currently not supported on XSIAM (CIAC-508)
             docker_test_results = self._run_docker_threshold_test()
@@ -3028,13 +3028,13 @@ class TestContext:
         return True
 
     def _update_complete_status(
-        self,
-        is_first_execution: bool,
-        is_record_run: bool,
-        is_first_playback_run: bool,
-        is_second_playback_run: bool,
-        use_retries_mechanism: bool,
-        number_of_executions: int,
+            self,
+            is_first_execution: bool,
+            is_record_run: bool,
+            is_first_playback_run: bool,
+            is_second_playback_run: bool,
+            use_retries_mechanism: bool,
+            number_of_executions: int,
     ):
         """
         Updates (if necessary) the playbook status in case the original status is complete.
@@ -3075,12 +3075,12 @@ class TestContext:
         return PB_Status.COMPLETED
 
     def _update_failed_status(
-        self,
-        is_record_run: bool,
-        is_first_playback_run: bool,
-        is_second_playback_run: bool,
-        use_retries_mechanism: bool,
-        number_of_executions: int,
+            self,
+            is_record_run: bool,
+            is_first_playback_run: bool,
+            is_second_playback_run: bool,
+            use_retries_mechanism: bool,
+            number_of_executions: int,
     ):
         """
         Handles the playbook failed status
@@ -3116,7 +3116,7 @@ class TestContext:
         return PB_Status.FAILED
 
     def _update_status_based_on_retries_mechanism(
-        self, number_of_executions, is_record_run
+            self, number_of_executions, is_record_run
     ):
         """
         Updates the status of a test-playbook when using the retries' mechanism.
@@ -3140,8 +3140,8 @@ class TestContext:
         else:  # number_of_executions == MAX_RETRIES:
             # check if in most executions, the test passed.
             if (
-                self.playbook.configuration.number_of_successful_runs
-                >= RETRIES_THRESHOLD
+                    self.playbook.configuration.number_of_successful_runs
+                    >= RETRIES_THRESHOLD
             ):
                 # It's not enough that the record run will pass to declare the test as successful,
                 # we need the second playback to pass as well.
@@ -3164,11 +3164,11 @@ class TestContext:
                 return PB_Status.FAILED
 
     def _update_playbook_status(
-        self,
-        status: str,
-        is_first_playback_run: bool = False,
-        is_second_playback_run: bool = False,
-        is_record_run: bool = False,
+            self,
+            status: str,
+            is_first_playback_run: bool = False,
+            is_second_playback_run: bool = False,
+            is_record_run: bool = False,
     ) -> str:
         """
         Updates the playbook status if necessary and adds the test to the right set (succeeded/failed) if test is done.
@@ -3226,12 +3226,12 @@ class TestContext:
         """
         # we want to test first playback only once (we want to skip it when using retries mechanism)
         if (
-            not self.playbook.configuration.is_first_playback_failed
-            and proxy.has_mock_file(self.playbook.configuration.playbook_id)
+                not self.playbook.configuration.is_first_playback_failed
+                and proxy.has_mock_file(self.playbook.configuration.playbook_id)
         ):
             self.playbook.log_info(f"------ Test {self} start ------ (Mock: Playback)")
             with run_with_mock(
-                proxy, self.playbook.configuration.playbook_id
+                    proxy, self.playbook.configuration.playbook_id
             ) as result_holder:
                 status = self._incident_and_docker_test()
                 status = self._update_playbook_status(
@@ -3253,7 +3253,7 @@ class TestContext:
                 return False
 
             with run_with_mock(
-                proxy, self.playbook.configuration.playbook_id, record=True
+                    proxy, self.playbook.configuration.playbook_id, record=True
             ) as result_holder:
                 status = self._incident_and_docker_test()
                 self.playbook.configuration.number_of_executions += 1
@@ -3265,7 +3265,7 @@ class TestContext:
                 f"------ Test {self} start ------ (Mock: Second playback)"
             )
             with run_with_mock(
-                proxy, self.playbook.configuration.playbook_id
+                    proxy, self.playbook.configuration.playbook_id
             ) as result_holder:
                 status = self._run_incident_test()
                 self._update_playbook_status(status, is_second_playback_run=True)
@@ -3282,8 +3282,8 @@ class TestContext:
             True if this instance can be run on the current instance else False
         """
         if (
-            self.playbook.configuration.runnable_on_docker_only
-            and not self.server_context.is_instance_using_docker
+                self.playbook.configuration.runnable_on_docker_only
+                and not self.server_context.is_instance_using_docker
         ):
             log_message = f"Skipping test {self.playbook} since it's not runnable on podman instances"
             self.playbook.log_debug(log_message)

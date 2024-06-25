@@ -57,6 +57,7 @@ def replace_markdown_urls_and_update_markdown_images(
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images urls were found in the README
     """
+    init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
     urls_list = collect_images_from_markdown_and_replace_with_storage_path(
         markdown_path, pack_name, marketplace, file_type
     )
@@ -89,6 +90,7 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images relative paths were found in the README
     """
+    init_json_file(MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME)
     rel_paths_list = (
         collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
             markdown_path, pack_name, marketplace, file_type
@@ -179,6 +181,24 @@ def collect_images_from_markdown_and_replace_with_storage_path(
     return urls_list
 
 
+def init_json_file(markdown_images_file_name: str):
+    """Initialize a json file at with the given file name if doesn't exist.
+
+    Args:
+        markdown_images_file_name (str): The file name to create.
+    """
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+        artifacts_folder
+    ).exists():
+        artifacts_markdown_images_path = Path(
+            f"{artifacts_folder}/{markdown_images_file_name}"
+        )
+        if not artifacts_markdown_images_path.exists():
+            with open(artifacts_markdown_images_path, "w") as f:
+                # If this is the first pack init the file with an empty dict.
+                json.dump({}, f)
+
+
 def update_markdown_images_file_links(
     images_dict: dict,
     pack_name: str,
@@ -199,10 +219,6 @@ def update_markdown_images_file_links(
         artifacts_markdown_images_path = Path(
             f"{artifacts_folder}/{markdown_images_file_name}"
         )
-        if not artifacts_markdown_images_path.exists():
-            with open(artifacts_markdown_images_path, "w") as f:
-                # If this is the first pack init the file with an empty dict.
-                json.dump({}, f)
 
         markdown_images_data_dict = get_file(
             artifacts_markdown_images_path, raise_on_error=True

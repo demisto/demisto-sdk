@@ -804,10 +804,6 @@ class BuildContext:
             self.env_json = self._load_env_results_json()
             self.api_key = kwargs["api_key"]
 
-        self.instances_ips = self._get_instances_ips()
-        self.servers = self.create_servers()
-        self.server_numeric_version = self._get_server_numeric_version()
-
         # --------------------------- Testing preparation -------------------------------
 
         self.tests_data_keeper = TestResults(
@@ -823,6 +819,10 @@ class BuildContext:
         self.machine_assignment_json = self._extract_filtered_tests()
 
     # --------------------------- Machine preparation logic -------------------------------
+
+        self.instances_ips = self._get_instances_ips()
+        self.server_numeric_version = self._get_server_numeric_version()
+        self.servers = self.create_servers()
 
     @staticmethod
     def _extract_filtered_tests() -> dict:

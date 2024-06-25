@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import (
+    SCHEMA_FILE_VALID_ATTRIBUTES_TYPE,
+)
 from demisto_sdk.commands.content_graph.objects.modeling_rule import (
     ModelingRule,
 )
@@ -36,13 +39,12 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
         """
         Validates all types used in the schema file are valid, i.e. part of the list below.
         """
-        valid_types = {"string", "int", "float", "datetime", "boolean"}
         schema_content = content_item.schema_file.file_content
         invalid_types = [
             f'"{attribute.get("type")}"'
             for attributes in schema_content.values()
             for attribute in attributes.values()
-            if attribute.get("type") not in valid_types
+            if attribute.get("type") not in SCHEMA_FILE_VALID_ATTRIBUTES_TYPE
         ]
         return invalid_types
 

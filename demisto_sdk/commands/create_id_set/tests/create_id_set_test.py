@@ -168,7 +168,9 @@ class TestIDSetCreator:
         )
         packs.append(pack_to_not_create_id_set_on)
 
-        id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)
+        id_set_creator = IDSetCreator(
+            self.file_path, str(pack_to_create_id_set_on.path)
+        )
 
         id_set_creator.create_id_set()
 
@@ -205,11 +207,11 @@ class TestIDSetCreator:
 
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
-        id_set_creator = IDSetCreator(self.file_path, pack.path)
+        id_set_creator = IDSetCreator(self.file_path, str(pack.path))
 
         id_set_creator.create_id_set()
 
-        with open(self.file_path) as id_set_file:
+        with open(str(self.file_path)) as id_set_file:
             private_id_set = json.load(id_set_file)
         for content_entity, content_entity_value_list in private_id_set.items():
             if content_entity != "Packs":

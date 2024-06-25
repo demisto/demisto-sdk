@@ -56,9 +56,8 @@ def test_ModelingRuleSchemaTypesValidator_valid():
     }
     results = ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])
     # invalid
-    assert (
-        'The following types in the schema file are invalid: "Dict".'
-        " Valid types are: string, int , float, datetime, boolean."
+    assert ( 'The following types in the schema file are invalid: "Dict".'
+            ' Valid types are: boolean, float, datetime, string, int.'
         == results[0].message
     )
 

@@ -40,12 +40,16 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
         Returns invalid types used in the schema file, i.e. not part of SCHEMA_FILE_VALID_ATTRIBUTES_TYPE.
         """
         schema_content = content_item.schema_file.file_content
-        invalid_types = [
-            f'"{attribute.get("type")}"'
-            for attributes in schema_content.values()
-            for attribute in attributes.values()
-            if attribute.get("type") not in SCHEMA_FILE_VALID_ATTRIBUTES_TYPE
-        ] if schema_content else []
+        invalid_types = (
+            [
+                f'"{attribute.get("type")}"'
+                for attributes in schema_content.values()
+                for attribute in attributes.values()
+                if attribute.get("type") not in SCHEMA_FILE_VALID_ATTRIBUTES_TYPE
+            ]
+            if schema_content
+            else []
+        )
         return invalid_types
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

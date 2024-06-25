@@ -1,10 +1,9 @@
 import base64
-import json
 from abc import ABC
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, ClassVar, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Union
 
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
@@ -16,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers.json import json5_handler
 from demisto_sdk.commands.common.logger import logger
 
 
@@ -149,7 +149,7 @@ class SchemaRelatedFile(RelatedFile):
         return [Path(str(self.main_file_path).replace(".yml", "_schema.json"))]
 
     @cached_property
-    def file_content(self) -> dict | None:
+    def file_content(self) -> Optional[Dict[str, Any]]:
         """
         Reads and returns JSON content from the first optional path.
         Returns None if the file cannot be read or parsed.
@@ -159,7 +159,7 @@ class SchemaRelatedFile(RelatedFile):
             return None  # No paths available
         try:
             with open(paths[0], "r") as file:
-                json_data = json.load(file)
+                json_data = json5_handler.JSON5_Handler().loads(s=file.read())
             return json_data
         except Exception as e:
             logger.debug(f"Failed to get related text file, error: {e}")

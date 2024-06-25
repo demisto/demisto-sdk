@@ -144,13 +144,12 @@ class XifRelatedFile(RelatedFile):
 
 class SchemaRelatedFile(RelatedFile):
     file_type = RelatedFileType.SCHEMA
-    file_content = dict
 
     def get_optional_paths(self) -> List[Path]:
         return [Path(str(self.main_file_path).replace(".yml", "_schema.json"))]
 
     @cached_property
-    def file_content(self) -> dict:
+    def file_content(self) -> dict | None:
         """
         Reads and returns JSON content from the first optional path.
         Returns None if the file cannot be read or parsed.

@@ -35,7 +35,7 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
 
-    def invalid_schema_types(self, content_item: ContentItem) -> list[str]:
+    def invalid_schema_types(self, content_item: ContentTypes) -> list[str]:
         """
         Returns invalid types used in the schema file, i.e. not part of SCHEMA_FILE_VALID_ATTRIBUTES_TYPE.
         """
@@ -45,7 +45,7 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
             for attributes in schema_content.values()
             for attribute in attributes.values()
             if attribute.get("type") not in SCHEMA_FILE_VALID_ATTRIBUTES_TYPE
-        ]
+        ] if schema_content else []
         return invalid_types
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

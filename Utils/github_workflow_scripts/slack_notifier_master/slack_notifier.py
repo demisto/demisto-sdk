@@ -139,7 +139,10 @@ def construct_slack_message(
     return []
 
 
-main = typer.Typer(pretty_exceptions_enable=False)
+main = typer.Typer(
+    pretty_exceptions_enable=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 
 @main.command()

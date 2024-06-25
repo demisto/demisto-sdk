@@ -813,7 +813,6 @@ class BuildContext:
             kwargs.get("artifacts_bucket"),
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
-        self.build_context.logging_module.info(f"{self.conf_unmockable_tests=}")
 
         self.slack_user_id = self._retrieve_slack_user_id()
         self.machine_assignment_json = self._extract_filtered_tests()
@@ -1020,8 +1019,6 @@ class BuildContext:
                 continue
             if test_record.is_mockable is False:
                 unmockable_tests.append(test_record)
-
-        self.build_context.logging_module.info(f"{unmockable_tests=}")
 
         return unmockable_tests
 

@@ -20,8 +20,8 @@ ContentTypes = ModelingRule
 class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
     error_code = "MR106"
     description = (
-        "Type validation in schema files verifies that each specified data type conforms to a predefined set"
-        " of acceptable types"
+        "Verifies that each specified data type in the schema files of modeling rules conforms to a predefined set"
+        " of acceptable types."
     )
     rationale = (
         "Validating types in schema files is crucial for maintaining data integrity and compatibility across"
@@ -29,15 +29,15 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
     )
     error_message = (
         "The following types in the schema file are invalid: {invalid_types}."
-        " Valid types are: string, int , float, datetime, boolean."
+        f" Valid types are: {', '.join(SCHEMA_FILE_VALID_ATTRIBUTES_TYPE)}."
     )
     related_field = "Schema"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
 
-    def invalid_schema_types(self, content_item):
+    def invalid_schema_types(self, content_item: ContentItem) -> list[str]:
         """
-        Validates all types used in the schema file are valid, i.e. part of the list below.
+        Returns invalid types used in the schema file, i.e. not part of SCHEMA_FILE_VALID_ATTRIBUTES_TYPE.
         """
         schema_content = content_item.schema_file.file_content
         invalid_types = [

@@ -1,4 +1,4 @@
 changes:
-- description: Converted MR106 validation to new validation format. The validation verifies the types in schema files.
+- description: Converted MR106 validation to new validation format. The validation verifies the types in schema files of modeling rules.
   type: internal
 pr_number: 4372

@@ -28,7 +28,7 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
         "The following types in the schema file are invalid: {invalid_types}."
         " Valid types are: string, int , float, datetime, boolean."
     )
-    related_field = ""
+    related_field = "Schema"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
 

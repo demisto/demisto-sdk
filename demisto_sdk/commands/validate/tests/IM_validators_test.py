@@ -24,6 +24,9 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM108_author_image_i
 from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_exists_validation import (
     AuthorImageExistsValidator,
 )
+from demisto_sdk.commands.validate.validators.IM_validators.IM111_invalid_image_dimensions import (
+    InvalidImageDimensionsValidator,
+)
 
 
 def test_ImageExistsValidator_is_valid_image_path():
@@ -102,6 +105,37 @@ def test_ImageTooLargeValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "image_resolution, expected_message",
+    [
+        ((120, 50), ""),
+        (
+            (1, 5),
+            "The image dimensions do not match the requirements. A resolution of 120x50 pixels is required.",
+        ),
+        (
+            (1200, 500),
+            "The image dimensions do not match the requirements. A resolution of 120x50 pixels is required.",
+        ),
+    ],
+)
+def test_InvalidImageDimensionsValidator_is_valid(
+    mocker, image_resolution, expected_message
+):
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.IM_validators.IM111_invalid_image_dimensions.imagesize.get",
+        return_value=image_resolution,
+    )
+    content_items = [
+        create_integration_object(paths=["image"], values=["very nice image"])
+    ]
+
+    results = InvalidImageDimensionsValidator().is_valid(content_items)
+
+    if len(results) > 0:
+        assert results[0].message == expected_message
 
 
 def test_AuthorImageExistsValidator_is_valid_image_path():

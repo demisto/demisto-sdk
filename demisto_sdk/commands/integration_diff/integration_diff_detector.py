@@ -591,6 +591,33 @@ class IntegrationDiffDetector:
 
         return list(set(new_cmds).difference(old_cmds))
 
+    def get_renamed_commands(self) -> List[Tuple[str, str]]:
+        """
+        Helper function to return the list of renamed commands.
+
+        Returns:
+        - `List[Tuple[str, str]]` with the names of the renamed commands.
+        The first element in the tuple is the original command name,
+        the second element is the changed command name.
+        """
+
+        renamed_cmds: List[Tuple[str, str]] = []
+
+        logger.debug("Getting renamed commands...")
+        for i, new_cmd in enumerate(self.new_yaml_data["script"]["commands"]):
+            try:
+                old_cmd = self.old_yaml_data["script"]["commands"][i]
+                diff = list(dictdiffer.diff(new_cmd, old_cmd))
+                if diff and diff[0][0] == "change" and diff[0][1] == "name":
+                    renamed_cmds.append((diff[0][2][1], diff[0][2][0]))
+            except IndexError:
+                logger.debug(
+                    f"Unable to find {i}th command in old integration. Skipping the rest..."
+                )
+                break
+
+        return renamed_cmds
+
     def is_configuration_different(self) -> bool:
         """
         Helper function to return whether the configuration is

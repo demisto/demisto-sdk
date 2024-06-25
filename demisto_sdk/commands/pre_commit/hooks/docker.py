@@ -40,7 +40,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 NO_SPLIT = None
 USER_DEMITSO = "demisto"
 
-IMAGES_BATCH = 50
+IMAGES_BATCH = int(os.getenv("IMAGES_BATCH") or 40)
 
 
 @lru_cache()
@@ -73,18 +73,23 @@ def with_native_tags(
     """
 
     all_tags_to_files = defaultdict(list)
-    native_image_config = NativeImageConfig.get_instance()
+    is_native_image = any(
+        DockerImageFlagOption.NATIVE.value in docker_flag
+        for docker_flag in docker_flags
+    )
 
     for image, scripts in tags_to_files.items():
         for file, obj in scripts:
-            supported_native_images = ScriptIntegrationSupportedNativeImages(
-                _id=obj.object_id,
-                native_image_config=native_image_config,
-                docker_image=image,
-            ).get_supported_native_docker_tags(docker_flags, include_candidate=True)
+            if is_native_image:
+                native_image_config = NativeImageConfig.get_instance()
+                supported_native_images = ScriptIntegrationSupportedNativeImages(
+                    _id=obj.object_id,
+                    native_image_config=native_image_config,
+                    docker_image=image,
+                ).get_supported_native_docker_tags(docker_flags, include_candidate=True)
 
-            for native_image in supported_native_images:
-                all_tags_to_files[docker_image or native_image].append((file, obj))
+                for native_image in supported_native_images:
+                    all_tags_to_files[docker_image or native_image].append((file, obj))
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,

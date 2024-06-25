@@ -44,6 +44,11 @@ class PackContentItems:
     """A class that holds all pack's content items in lists by their types."""
 
     def __init__(self) -> None:
+        self.case_field = ContentItemsList(content_type=ContentType.CASE_FIELD)
+        self.case_layout = ContentItemsList(content_type=ContentType.CASE_LAYOUT)
+        self.case_layout_rule = ContentItemsList(
+            content_type=ContentType.CASE_LAYOUT_RULE
+        )
         self.classifier = ContentItemsList(content_type=ContentType.CLASSIFIER)
         self.correlation_rule = ContentItemsList(
             content_type=ContentType.CORRELATION_RULE
@@ -149,6 +154,7 @@ class PackMetadataParser:
             self.commit = ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
+        self.default_data_source_id: str = metadata.get("defaultDataSource") or ""
         self.keywords: List[str] = metadata.get("keywords", [])
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
@@ -371,4 +377,5 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "modules": "modules",
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
+            "default_data_source_id": "defaultDataSource",
         }

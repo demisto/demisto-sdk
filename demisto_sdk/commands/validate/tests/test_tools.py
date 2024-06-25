@@ -61,6 +61,8 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    description_content: Optional[str] = None,
+    name: Optional[str] = None,
     code: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
@@ -74,14 +76,21 @@ def create_integration_object(
     """
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
+
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
 
     additional_params = {}
 
+    if description_content:
+        additional_params["description"] = description_content
+
     if readme_content is not None:
         additional_params["readme"] = readme_content
+
+    if name is not None:
+        additional_params["name"] = name
 
     integration = pack.create_integration(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"
@@ -138,7 +147,7 @@ def create_playbook_object(
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
 ) -> Playbook:
-    """Creating an playbook object with altered fields from a default playbook yml structure.
+    """Creating a playbook object with altered fields from a default playbook yml structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
@@ -213,6 +222,8 @@ def create_script_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
+    readme_content: Optional[str] = None,
+    name: Optional[str] = None,
     code: Optional[str] = None,
     test_code: Optional[str] = None,
 ) -> Script:
@@ -226,12 +237,19 @@ def create_script_object(
     Returns:
         The script object.
     """
+    additional_params = {}
+    if name is not None:
+        additional_params["name"] = name
+
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
-    script = pack.create_script(yml=yml_content)
+    if readme_content is not None:
+        additional_params["readme"] = readme_content
+
+    script = pack.create_script(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"
     script.code.write(code)
     if test_code:
@@ -279,6 +297,7 @@ def create_pack_object(
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
     pack.readme.write_text(readme_text)
+
     if image is not None:
         pack.author_image.write(image)
     if playbooks:

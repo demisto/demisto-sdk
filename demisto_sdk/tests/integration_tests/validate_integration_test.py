@@ -1614,7 +1614,6 @@ class TestIntegrationValidation:
         - Ensure failure message on hidden params.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(
             IntegrationValidator,
             "has_no_fromlicense_key_in_contributions_integration",
@@ -1647,10 +1646,6 @@ class TestIntegrationValidation:
         assert result.exit_code == 1
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {integration_path} as integration"
-        )
-        assert str_in_call_args_list(
-            logger_error.call_args_list,
-            '[IN124] - Parameter: "credentials" can\'t be hidden in all marketplaces',
         )
 
     def test_positive_hidden_param(self, mocker):
@@ -6185,7 +6180,7 @@ class TestValidationUsingGit:
                     "--no-conf-json",
                     "--skip-pack-release-notes",
                     "-i",
-                    pack_1.path,
+                    str(pack_1.path),
                 ],
                 catch_exceptions=False,
             )

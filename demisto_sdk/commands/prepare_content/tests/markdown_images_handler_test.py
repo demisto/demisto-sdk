@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.prepare_content import markdown_images_handler
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-    upload_markdown_images_to_artifacts,
+    update_markdown_images_file_links,
 )
 
 expected_urls_ret = [
@@ -89,7 +89,7 @@ def test_replace_markdown_urls(mocker):
         return_value={},
     )
     assert (
-        markdown_images_handler.replace_markdown_urls_and_upload_to_artifacts(
+        markdown_images_handler.replace_markdown_urls_and_update_markdown_images(
             Path("fake_path"),
             MarketplaceVersions.XSOAR,
             "test_pack",
@@ -191,10 +191,10 @@ def test_dump_same_pack_images_in_desc_and_readme(
     excepted_res[pack_name].update(deepcopy(return_value2[pack_name]))
     with TemporaryDirectory() as artifact_dir:
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
-        upload_markdown_images_to_artifacts(
+        update_markdown_images_file_links(
             return_value1, pack_name, ImagesFolderNames.README_IMAGES
         )
-        upload_markdown_images_to_artifacts(
+        update_markdown_images_file_links(
             return_value2, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
         )
         res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")
@@ -224,10 +224,10 @@ def test_dump_pack_readme(mocker, image_data_one, image_data_two):
     excepted_res.update(deepcopy(return_value2))
     with TemporaryDirectory() as artifact_dir:
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
-        upload_markdown_images_to_artifacts(
+        update_markdown_images_file_links(
             return_value1, "PrismaCloudCompute", ImagesFolderNames.README_IMAGES
         )
-        upload_markdown_images_to_artifacts(
+        update_markdown_images_file_links(
             return_value2,
             "CVE_2022_30190",
             ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES,
@@ -259,10 +259,10 @@ def test_dump_more_than_one_description_file_one_empty(mocker, image_data_one):
     )
     with TemporaryDirectory() as artifact_dir:
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
-        upload_markdown_images_to_artifacts(
+        update_markdown_images_file_links(
             return_value1, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
         )
-        upload_markdown_images_to_artifacts(
+        update_markdown_images_file_links(
             return_value2, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
         )
         res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")
@@ -296,10 +296,10 @@ def test_dump_more_than_one_description_file(mocker, image_data_one, image_data_
     )
     with TemporaryDirectory() as artifact_dir:
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
-        upload_markdown_images_to_artifacts(
+        update_markdown_images_file_links(
             return_value1, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
         )
-        upload_markdown_images_to_artifacts(
+        update_markdown_images_file_links(
             return_value2, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
         )
         res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")

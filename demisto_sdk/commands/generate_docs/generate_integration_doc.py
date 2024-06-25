@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     DOCS_COMMAND_SECTION_REGEX,
     INTEGRATIONS_DIR,
     INTEGRATIONS_README_FILE_NAME,
+    SCRIPT,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -24,10 +25,13 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_content_path,
+    get_pack_metadata,
     get_yaml,
 )
 from demisto_sdk.commands.generate_docs.common import (
     CONFIGURATION_SECTION_STEPS,
+    DEFAULT_ARG_DESCRIPTION,
+    HEADER_TYPE,
     add_lines,
     build_example_dict,
     generate_numbered_section,
@@ -215,9 +219,6 @@ class IntegrationDocUpdateManager:
 
             doc_text_lines = self.output_doc.splitlines()
 
-            # We take the first and the second-to-last index of the old section
-            # and use the section range to replace it with the new section.
-            # Second-to-last index because the last element is an empty string
             old_config_start_line = doc_text_lines.index(
                 CONFIGURATION_SECTION_STEPS.STEP_1.value
             )
@@ -243,16 +244,12 @@ class IntegrationDocUpdateManager:
         README.
         """
 
-        for i, modified_command in enumerate(
-            self.integration_diff.get_modified_commands()
-        ):
+        command_sections = get_commands_sections(self.output_doc)
+
+        for modified_command in self.integration_diff.get_modified_commands():
             try:
-                old_command_section, _ = generate_commands_section(
-                    self.integration_diff.old_yaml_data,
-                    {},
-                    {},
-                    modified_command,
-                )
+
+                start_line, end_line = command_sections[modified_command]
 
                 (
                     new_command_section,
@@ -279,34 +276,14 @@ class IntegrationDocUpdateManager:
 
                 doc_text_lines = self.output_doc.splitlines()
 
-                # We take the first and the second-to-last index of the old section
-                # and use the section range to replace it with the new section.
-                # Second-to-last index because the last element is an empty string
-                old_cmd_start_line = doc_text_lines.index(old_command_section[0])
-
-                # In cases when there are multiple identical context outputs
-                # in the second-to-last line, we need to find the relevant
-                # second-to-last line for the specific command we're replacing.
-                indices = [
-                    i
-                    for i, doc_line in enumerate(doc_text_lines)
-                    if doc_line == old_command_section[-2]
-                ]
-
-                if indices and len(indices) > 1:
-                    old_cmd_end_line = doc_text_lines.index(
-                        old_command_section[-2], indices[i]
-                    )
-                else:
-                    old_cmd_end_line = doc_text_lines.index(old_command_section[-2])
-
-                doc_text_lines[
-                    old_cmd_start_line : old_cmd_end_line + 1
-                ] = new_command_section
+                doc_text_lines[start_line:end_line] = new_command_section
 
                 self.output_doc = "\n".join(doc_text_lines)
             except (ValueError, IndexError) as e:
                 error = f"Unable to replace '{modified_command}' section in README: {str(e)}"
+                self.update_errors.append(error)
+            except KeyError:
+                error = f"Unable to find '{modified_command}' in the README. The command was likely renamed."
                 self.update_errors.append(error)
 
     def _get_sections_to_update(self) -> Tuple[bool, List[str], List[str]]:
@@ -316,11 +293,6 @@ class IntegrationDocUpdateManager:
             self.integration_diff.get_modified_commands(),
             self.integration_diff.get_added_commands(),
         )
-
-    def _get_resource_path(self) -> str:
-        """
-        Helper function to resolve the resource path.
-        """
 
     def _write_resource_to_tmp(self, resource_path: Path, content: str) -> Path:
         """
@@ -370,7 +342,25 @@ class IntegrationDocUpdateManager:
         if added_commands:
             self.output_doc += "\n"
 
+            renamed_commands = self.integration_diff.get_renamed_commands()
+
             for cmd in added_commands:
+
+                skip = False
+                # We don't want to add renamed commands
+                if renamed_commands:
+                    for (
+                        renamed_command_original_name,
+                        renamed_command_changed_name,
+                    ) in renamed_commands:
+                        if cmd == renamed_command_changed_name:
+                            error = f"Skipping adding command '{cmd}' as it was detected as a renamed from '{renamed_command_original_name}'"
+                            self.update_errors.append(error)
+                            skip = True
+                            break
+                if skip:
+                    continue
+
                 logger.info(f"\t\u2699 Generating docs for command `{cmd}`...")
                 (
                     command_section,
@@ -454,6 +444,7 @@ def generate_integration_doc(
     old_version: str = "",
     skip_breaking_changes: bool = False,
     is_contribution: bool = False,
+    force: bool = False,
 ):
     """
     Generate integration documentation.
@@ -472,6 +463,7 @@ def generate_integration_doc(
         insecure: should use insecure
         command: specific command to generate docs for
         is_contribution: Check if the content item is a new integration contribution or not.
+        force: `bool` whether to force create a new integration doc even if it exists in version control.
 
     """
     try:
@@ -535,7 +527,7 @@ def generate_integration_doc(
         # in source control:
         # - An integration YAML.
         # - An integration README.
-        elif update_mgr.can_update_docs():
+        elif not force and update_mgr.can_update_docs():
             logger.info("Found existing integration, updating documentation...")
             doc_text, update_errors = update_mgr.update_docs()
 
@@ -548,6 +540,17 @@ def generate_integration_doc(
                 docs.extend(
                     [
                         f"This integration was integrated and tested with version xx of {yml_data['name']}.",
+                        "",
+                    ]
+                )
+            # Checks if this integration is the default data source
+            pack_metadata = get_pack_metadata(input_path)
+            default_data_source_id = pack_metadata.get("defaultDataSource")
+            if yml_data.get("commonfields", {}).get("id") == default_data_source_id:
+                docs.extend(
+                    [
+                        "This is the default integration for this content pack when configured by the Data Onboarder "
+                        "in Cortex XSIAM.",
                         "",
                     ]
                 )
@@ -838,9 +841,7 @@ def generate_commands_section(
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
         "",
     ]
-    commands = filter(
-        lambda cmd: not cmd.get("deprecated", False), yaml_data["script"]["commands"]
-    )
+    commands = get_integration_commands(yaml_data)
     command_sections: list = []
     if command:
         # for specific command, return it only.
@@ -893,7 +894,7 @@ def generate_single_command_section(
         cmd_permission_example = []
 
     section = [
-        "### {}".format(cmd["name"]),
+        f"{HEADER_TYPE.H3} {cmd['name']}",
         "",
         "***",
     ]
@@ -924,7 +925,7 @@ def generate_single_command_section(
             ]
         )
         for arg in arguments:
-            description = arg.get("description")
+            description = arg.get("description", DEFAULT_ARG_DESCRIPTION)
             if not description:
                 errors.append(
                     "Error! You are missing description in input {} of command {}".format(
@@ -1285,3 +1286,65 @@ def add_access_data_of_type_credentials(
             "Required": credentials_conf.get("required", ""),
         }
     )
+
+
+def get_integration_commands(yaml_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Helper function to return a list of integration commands.
+    Integration commands that are marked as deprecated will not be
+    returned.
+
+    Args:
+    - `yml_data` (``Dict[str, Any]``): The integration YAML as a dictionary.
+
+    Returns:
+    - `List[Dict[str, Any]]` of integration commands.
+    """
+
+    return list(
+        filter(
+            lambda cmd: not cmd.get("deprecated", False), yaml_data[SCRIPT]["commands"]
+        )
+    )
+
+
+def get_commands_sections(doc_text: str) -> Dict[str, Tuple[int, int]]:
+    """
+    Helper function that takes the integration README text
+    and returns a map of the commands and the start, end lines.
+
+    Args:
+    - `doc_text` (``str``): The integration README.
+
+    Returns:
+    - `dict[str, tuple]` with the name of the command and the
+    start and end line of the command section within the README.
+    """
+
+    command_start_section_pattern = rf"^{HEADER_TYPE.H3}\s+([a-z0-9]+(-[a-z0-9]+)*$)"
+
+    out = {}
+
+    # Here we iterate over the README line by line
+    # and find what lines the command sections are defined
+    for line_nr, line_text in enumerate(doc_text.splitlines()):
+        cmd_search = re.search(command_start_section_pattern, line_text)
+
+        if cmd_search:
+            out[cmd_search.group(1)] = line_nr
+
+    # We then transform the structure
+    # to include the end line as well
+    keys = list(out.keys())
+    values = list(out.values())
+
+    transformed = {}
+
+    # Iterate over the keys and values
+    for i in range(len(keys)):
+        if i < len(keys) - 1:
+            transformed[keys[i]] = (values[i], values[i + 1])
+        else:
+            transformed[keys[i]] = (values[i], len(doc_text.splitlines()))
+
+    return transformed

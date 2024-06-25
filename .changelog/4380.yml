@@ -1,0 +1,4 @@
+changes:
+- description: Added support to **run-specific-validations** flag to the new validate format.
+  type: feature
+pr_number: 4380

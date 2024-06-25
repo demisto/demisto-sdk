@@ -26,6 +26,7 @@ validate-content-path = "demisto_sdk.scripts.validate_content_path:main"
 validate-conf-json = "demisto_sdk.scripts.validate_conf_json:main"
 init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
+pytest-monkeytype = "demisto_sdk.scripts.monkeytype:main"
 
 [tool.poetry.dependencies]
 python = "^3.8,<3.12"

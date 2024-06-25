@@ -794,11 +794,12 @@ class BuildContext:
         )
 
         if self.is_saas_server_type:
-            self.cloud_conf = self._load_cloud_file(self.cloud_servers_api_keys_path)
+            cloud_conf = self._load_cloud_file(self.cloud_servers_path)
             self.env_json = {
-                machine: self.cloud_conf.get(machine, {})
+                machine: cloud_conf.get(machine, {})
                 for machine in self.cloud_machines
             }
+            self.api_key = self._load_cloud_file(self.cloud_servers_api_keys_path)
         else:
             self.env_json = self._load_env_results_json()
             self.api_key = kwargs["api_key"]
@@ -816,6 +817,8 @@ class BuildContext:
             kwargs.get("artifacts_bucket"),
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
+        self.build_context.logging_module.info(f"{self.conf_unmockable_tests=}")
+
         self.slack_user_id = self._retrieve_slack_user_id()
         self.machine_assignment_json = self._extract_filtered_tests()
 
@@ -1017,6 +1020,9 @@ class BuildContext:
                 continue
             if test_record.is_mockable is False:
                 unmockable_tests.append(test_record)
+
+        self.build_context.logging_module.info(f"{unmockable_tests=}")
+
         return unmockable_tests
 
 
@@ -1274,13 +1280,11 @@ class CloudServerContext(ServerContext):
         self.proxy = None
         self.check_if_can_create_manual_alerts()
 
-        with open(build_context.cloud_servers_api_keys_path) as json_file:  # type: ignore[arg-type]
-            cloud_servers_api_keys = json.loads(json_file.read())
-        self.api_key = cloud_servers_api_keys.get(cloud_machine)
-        self.auth_id = self.build_context.cloud_conf.get(cloud_machine, {}).get(
+        self.api_key = self.build_context.api_key.get(cloud_machine)
+        self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(
             "x-xdr-auth-id"
         )
-        self.cloud_ui_path = self.build_context.cloud_conf.get(cloud_machine, {}).get(
+        self.cloud_ui_path = self.build_context.env_json.get(cloud_machine, {}).get(
             "ui_url"
         )
         self.filtered_tests = self.build_context.machine_assignment_json.get(
@@ -1466,7 +1470,6 @@ class OnPremServerContext(ServerContext):
         )
 
         self.api_key = build_context.api_key
-        self.cloud_conf = None
         self.auth_id = None
         self.cloud_ui_path = None
         self.filtered_tests = self.build_context.machine_assignment_json.get(

@@ -122,9 +122,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             [
                 isinstance(content_item, self.get_content_types()),
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
-                # should_run_according_to_status(
-                #     content_item.git_status, self.expected_git_statuses
-                # ),
+                should_run_according_to_status(
+                    content_item.git_status, self.expected_git_statuses
+                ),
                 not is_error_ignored(
                     self.error_code,
                     ignorable_errors,

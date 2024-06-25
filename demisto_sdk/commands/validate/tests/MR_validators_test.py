@@ -45,8 +45,8 @@ def test_ModelingRuleSchemaTypesValidator_valid():
         - run ModelingRuleSchemaTypesValidator().is_valid method
     Then:
 
-        - Ensure that no ValidationResult returned when schema types exists.
-        - Ensure that the ValidationResult returned.
+        - Ensure that no ValidationResult is returned when schema types exist.
+        - Ensure that the ValidationResult is returned.
     """
     modeling_rule = create_modeling_rule_object()
     # Valid
@@ -58,7 +58,7 @@ def test_ModelingRuleSchemaTypesValidator_valid():
     # invalid
     assert (
         'The following types in the schema file are invalid: "Dict".'
-        " Valid types are: boolean, float, datetime, string, int." == results[0].message
+        "Valid types are: boolean, float, datetime, string, int." == results[0].message
     )
 
 

@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 
 import toml
 
+from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.common.logger import logger
 
 USE_GIT = "use_git"
@@ -44,14 +45,16 @@ class ConfigReader:
             logger.error(f"Failed to find config file at path {config_file_path}")
             exit(1)
 
-    def gather_validations_to_run(
-        self, use_git: bool, ignore_support_level: Optional[bool] = False
+    def gather_validations_from_conf(
+        self,
+        execution_mode: ExecutionMode,
+        ignore_support_level: Optional[bool] = False,
     ) -> ConfiguredValidations:
         """Extract the relevant information from the relevant category in the config file.
 
         Args:
-            use_git (bool): The use_git flag.
-
+            execution_mode (executionMode): The execution mode.
+            ignore_support_level Optional[bool]: Whether to ignore_support_level
         Returns:
             Tuple[List, List, List, dict]: the select, warning, and ignorable errors sections from the given category,
             and the support_level dict with errors to ignore.
@@ -59,7 +62,11 @@ class ConfigReader:
         specific_validations = []
         if self.specific_validations and self.specific_validations[0]:
             specific_validations = self.specific_validations
-        flag = self.category_to_run or (USE_GIT if use_git else PATH_BASED_VALIDATIONS)
+        flag = self.category_to_run or (
+            USE_GIT
+            if execution_mode == ExecutionMode.USE_GIT
+            else PATH_BASED_VALIDATIONS
+        )
         section = self.config_file_content.get(flag, {})
         return ConfiguredValidations(
             specific_validations or section.get("select", []),

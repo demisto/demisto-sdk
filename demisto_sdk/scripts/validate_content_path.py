@@ -451,7 +451,7 @@ def validate(
         return False
 
 
-@app.command(name="validate")
+@app.command(name="validate", context_settings={"help_option_names": ["-h", "--help"]})
 def validate_paths(
     paths: Annotated[
         List[Path], typer.Argument(exists=True, file_okay=True, dir_okay=True)
@@ -485,7 +485,9 @@ def validate_paths(
         raise typer.Exit(1)
 
 
-@app.command(name="validate-all")
+@app.command(
+    name="validate-all", context_settings={"help_option_names": ["-h", "--help"]}
+)
 def validate_all(
     content_path: Annotated[Path, typer.Argument(dir_okay=True, file_okay=False)],
     skip_depth_one_file: bool = False,

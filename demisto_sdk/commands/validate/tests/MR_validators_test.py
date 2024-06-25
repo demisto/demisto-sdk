@@ -7,9 +7,8 @@ from demisto_sdk.commands.validate.validators.MR_validators.MR100_validate_schem
 from demisto_sdk.commands.validate.validators.MR_validators.MR101_validate_empty_keys import (
     ValidateEmptyKeysValidator,
 )
-
 from demisto_sdk.commands.validate.validators.MR_validators.MR106_modeling_rule_scheme_types import (
-    ModelingRuleSchemaTypesValidator
+    ModelingRuleSchemaTypesValidator,
 )
 
 
@@ -38,27 +37,29 @@ def test_ValidateSchemaFileExistsValidator_is_valid():
 
 def test_ModelingRuleSchemaTypesValidator_valid():
     """
-        Given:
-        - Modeling Rules content items:
-            - Modeling Rules content items with valid schema types
-            - Modeling Rules content items with invalid schema types
-        When:
-            - run ModelingRuleSchemaTypesValidator().is_valid method
-        Then:
+    Given:
+    - Modeling Rules content items:
+        - Modeling Rules content items with valid schema types
+        - Modeling Rules content items with invalid schema types
+    When:
+        - run ModelingRuleSchemaTypesValidator().is_valid method
+    Then:
 
-            - Ensure that no ValidationResult returned when schema types exists.
-            - Ensure that the ValidationResult returned.
+        - Ensure that no ValidationResult returned when schema types exists.
+        - Ensure that the ValidationResult returned.
     """
     modeling_rule = create_modeling_rule_object()
     # Valid
     assert not ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])
-    modeling_rule.schema_file.file_content = {"test": {"test_attribute": {"type": "Dict","is_array": "false"}}}
+    modeling_rule.schema_file.file_content = {
+        "test": {"test_attribute": {"type": "Dict", "is_array": "false"}}
+    }
     results = ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])
     # invalid
     assert (
-            'The following types in the schema file are invalid: "Dict".'
-            ' Valid types are: string, int , float, datetime, boolean.'
-            == results[0].message
+        'The following types in the schema file are invalid: "Dict".'
+        " Valid types are: string, int , float, datetime, boolean."
+        == results[0].message
     )
 
 

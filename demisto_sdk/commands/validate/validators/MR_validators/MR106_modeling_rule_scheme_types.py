@@ -16,12 +16,18 @@ ContentTypes = ModelingRule
 
 class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
     error_code = "MR106"
-    description = ("Type validation in schema files verifies that each specified data type conforms to a predefined set"
-                   " of acceptable types")
-    rationale = ("Validating types in schema files is crucial for maintaining data integrity and compatibility across"
-                 " systems, preventing errors and ensuring reliable data processing.")
-    error_message = ("The following types in the schema file are invalid: {invalid_types}."
-                     " Valid types are: string, int , float, datetime, boolean.")
+    description = (
+        "Type validation in schema files verifies that each specified data type conforms to a predefined set"
+        " of acceptable types"
+    )
+    rationale = (
+        "Validating types in schema files is crucial for maintaining data integrity and compatibility across"
+        " systems, preventing errors and ensuring reliable data processing."
+    )
+    error_message = (
+        "The following types in the schema file are invalid: {invalid_types}."
+        " Valid types are: string, int , float, datetime, boolean."
+    )
     related_field = ""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
@@ -40,17 +46,15 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
         ]
         return invalid_types
 
-
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(invalid_types=', '.join(invalid_types)),
+                message=self.error_message.format(
+                    invalid_types=", ".join(invalid_types)
+                ),
                 content_object=content_item,
             )
-
             for content_item in content_items
-            if (
-                invalid_types := self.invalid_schema_types(content_item)
-            )
+            if (invalid_types := self.invalid_schema_types(content_item))
         ]

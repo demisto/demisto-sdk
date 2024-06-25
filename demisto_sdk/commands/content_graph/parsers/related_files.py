@@ -1,7 +1,7 @@
 import base64
+import json
 from abc import ABC
 from enum import Enum
-import json
 from functools import cached_property
 from pathlib import Path
 from typing import Any, ClassVar, List, Optional, Union
@@ -152,14 +152,14 @@ class SchemaRelatedFile(RelatedFile):
     @cached_property
     def file_content(self) -> dict:
         """
-            Reads and returns JSON content from the first optional path.
-            Returns None if the file cannot be read or parsed.
+        Reads and returns JSON content from the first optional path.
+        Returns None if the file cannot be read or parsed.
         """
         paths = self.get_optional_paths()
         if not paths:
             return None  # No paths available
         try:
-            with open(paths[0], 'r') as file:
+            with open(paths[0], "r") as file:
                 json_data = json.load(file)
             return json_data
         except Exception as e:

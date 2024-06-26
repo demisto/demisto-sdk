@@ -125,7 +125,7 @@ def test_release_note_header_validator_invalid():
     expected_error = (
         "The following invalid headers were found in:\n"
         "Headers Content Types: InvalidHeader\n\n"
-        "Headers Content Items: Integrations: {'Not exist content item'}\n\n"
+        "Headers Content Items: Integrations: Not exist content item\n\n"
         "For common troubleshooting steps, please review the documentation"
         " found here: https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
     )

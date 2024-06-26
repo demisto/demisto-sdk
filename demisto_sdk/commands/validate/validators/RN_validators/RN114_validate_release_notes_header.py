@@ -247,7 +247,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         }
 
         invalid_content_item: List[str] = [
-            f"{header_type}: {header_content_item}"
+            f"{header_type}: {', '.join(header_content_item)}"
             for header_type, header_content_item in self.validate_content_item_header(
                 valid_headers, pack_items_by_types
             ).items()

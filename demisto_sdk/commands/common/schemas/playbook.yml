@@ -468,8 +468,6 @@ schema;input_schema:
       type: bool
     playbookInputQuery:
       type: any
-
-# playbook->inputSections
     key:xsoar:
       type: str
     key:marketplacev2:

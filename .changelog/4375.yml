@@ -1,4 +1,9 @@
 changes:
-- description: "Added the option to specify a marketplace to the following playbook fields: inputs, scriptarguments, message, form, left, right, tasks."
+- description: |-
+    Added the option to specify a marketplace for certain playbook fields:
+    * All input fields: *key*, *value*, *description*, *required*, *playbookInputKey*).
+    * The following task fields: *scriptId*, *scriptarguments*, *loop.scriptArguments*, *message*, *form*.
+    * The task id mappings (for example the first task can be converted by "0" -> "0:xsoar").
+    * The *left* and *right* options of *condition*/*builtincondition* task fields (and their nested fields).
   type: feature
 pr_number: 4375

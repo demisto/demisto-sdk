@@ -30,6 +30,47 @@ DATA = {
         "ij": "test5",
         "ij:marketplacev2": "marketplacev2",
     },
+    "inputs": {
+        "description": "Test",
+        "description:xsoar": "xsoar desc",
+        "description:xpanse": "xpanse desc",
+        "key": "some_key",
+        "key:xsoar": "xsoar key",
+        "required": False,
+        "required:marketplacev2": True,
+    },
+    "1": {
+        "id": "1",
+        "task": {
+            "loop": {
+                "scriptId": "some script id",
+                "scriptId:marketplacev2": "mv2 script id",
+                "scriptArguments": "generic args",
+                "scriptArguments:marketplacev2": "mv2 script args",
+            }
+        },
+        "taskid": "some task id",
+        "form": "general form",
+        "form:marketplacev2": "mv2 form",
+        "message": "general message",
+        "message:marketplacev2": "mv2 message",
+        "conditions": {
+            "label": "yes",
+            "condition": [
+                {
+                    "operator": "isEqualString",
+                    "left": {"value": {"simple": "generic"}},
+                    "left:xpanse": {"value": {"simple": "xpanse"}},
+                    "right": {"value": {"simple": "generic"}},
+                    "right:xpanse": {"value": {"simple": "xpanse"}},
+                }
+            ],
+        },
+        "scriptarguments": {"alert_id": {"simple": "11"}},
+        "scriptarguments:xsoar_saas": {"alert_saas": {"simple": "saas"}},
+        "scriptarguments:xpanse": {"alert_saas": {"simple": "xpanse args"}},
+    },
+    "1:xsoar": {"id": "1"},
 }
 
 
@@ -57,6 +98,12 @@ def test_remove_xsoar():
             "ef": "test3",
             "gh": "test4",
             "ij": "test5",
+        },
+        "1": {"id": "1"},
+        "inputs": {
+            "description": "xsoar desc",
+            "key": "xsoar key",
+            "required": False,
         },
     }
 
@@ -88,6 +135,34 @@ def test_remove_marketplacev2():
             "gh": "test4",
             "ij": "marketplacev2",
         },
+        "inputs": {
+            "description": "Test",
+            "key": "some_key",
+            "required": True,
+        },
+        "1": {
+            "id": "1",
+            "task": {
+                "loop": {
+                    "scriptId": "mv2 script id",
+                    "scriptArguments": "mv2 script args",
+                }
+            },
+            "taskid": "some task id",
+            "form": "mv2 form",
+            "message": "mv2 message",
+            "conditions": {
+                "label": "yes",
+                "condition": [
+                    {
+                        "operator": "isEqualString",
+                        "left": {"value": {"simple": "generic"}},
+                        "right": {"value": {"simple": "generic"}},
+                    }
+                ],
+            },
+            "scriptarguments": {"alert_id": {"simple": "11"}},
+        },
     }
 
 
@@ -115,6 +190,34 @@ def test_remove_xpanse():
             "ef": "test3",
             "gh": "test4",
             "ij": "test5",
+        },
+        "inputs": {
+            "description": "xpanse desc",
+            "key": "some_key",
+            "required": False,
+        },
+        "1": {
+            "id": "1",
+            "task": {
+                "loop": {
+                    "scriptId": "some script id",
+                    "scriptArguments": "generic args",
+                }
+            },
+            "taskid": "some task id",
+            "form": "general form",
+            "message": "general message",
+            "conditions": {
+                "label": "yes",
+                "condition": [
+                    {
+                        "operator": "isEqualString",
+                        "left": {"value": {"simple": "xpanse"}},
+                        "right": {"value": {"simple": "xpanse"}},
+                    }
+                ],
+            },
+            "scriptarguments": {"alert_saas": {"simple": "xpanse args"}},
         },
     }
 
@@ -146,6 +249,12 @@ def test_remove_xsoar_saas():
             "gh": "xsoar_saas",
             "ij": "test5",
         },
+        "1": {"id": "1"},
+        "inputs": {
+            "description": "xsoar desc",
+            "key": "xsoar key",
+            "required": False,
+        },
     }
 
 
@@ -175,5 +284,11 @@ def test_remove_xsoar_on_prem():
             "ef": "xsoar_on_prem",
             "gh": "test4",
             "ij": "test5",
+        },
+        "1": {"id": "1"},
+        "inputs": {
+            "description": "xsoar desc",
+            "key": "xsoar key",
+            "required": False,
         },
     }

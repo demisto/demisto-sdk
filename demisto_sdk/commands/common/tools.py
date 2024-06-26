@@ -4559,12 +4559,12 @@ def find_regex_on_data(data: str, regex: str):
     )
 
 
-def wait_for_lock_reopen(
+def run_sync(
     lock_file_path: str,
     exclusive_function: Callable,
     exclusive_function_kwargs: dict = {},
 ):
-    """Executes the part where we want to wrap a call to function with a lock.
+    """Uses a given lock file path to run a method synchronously.
 
     Args:
         lock_file_path (str): The lock file path.
@@ -4583,7 +4583,7 @@ def wait_for_lock_reopen(
                 break
             except BlockingIOError:
                 logger.debug("Resource is busy, waiting...")
-                time.sleep(1)  # Wait for 1 second before retrying
+                time.sleep(0.1)  # Wait for 0.1 seconds before retrying
 
         # If lock is acquired, call the exclusive function
         exclusive_function(**exclusive_function_kwargs)

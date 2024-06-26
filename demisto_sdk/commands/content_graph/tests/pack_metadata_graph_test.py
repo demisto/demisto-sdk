@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -107,8 +109,10 @@ def test_pack_metadata_xsoar(git_repo: Repo, tmp_path: Path, mocker):
     test_playbook.yml.update({"fromversion": "6.2.0"})
     with ChangeCWD(git_repo.path):
         with ContentGraphInterface() as interface:
-            create_content_graph(interface, output_path=tmp_path)
-            content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
+            with TemporaryDirectory() as dir:
+                mocker.patch.object(os, "getenv", return_value=dir)
+                create_content_graph(interface, output_path=tmp_path)
+                content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
 
         content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
 

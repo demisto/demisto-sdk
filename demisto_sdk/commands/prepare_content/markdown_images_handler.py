@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
-    wait_for_lock_reopen,
+    run_sync,
     write_dict,
 )
 
@@ -59,7 +59,7 @@ def replace_markdown_urls_and_update_markdown_images(
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images urls were found in the README
     """
     lock_file_path = f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}"
-    wait_for_lock_reopen(
+    run_sync(
         lock_file_path,
         init_json_file,
         {"markdown_images_file_name": MARKDOWN_IMAGES_ARTIFACT_FILE_NAME},
@@ -74,7 +74,7 @@ def replace_markdown_urls_and_update_markdown_images(
 
     save_to_artifact = {pack_name: {file_type: urls_list}}
 
-    wait_for_lock_reopen(
+    run_sync(
         lock_file_path,
         update_markdown_images_file_links,
         {
@@ -107,7 +107,7 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images relative paths were found in the README
     """
     lock_file_path = f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}"
-    wait_for_lock_reopen(
+    run_sync(
         lock_file_path,
         init_json_file,
         {"markdown_images_file_name": MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME},
@@ -124,7 +124,7 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
 
     save_to_artifact = {pack_name: {file_type: rel_paths_list}}
 
-    wait_for_lock_reopen(
+    run_sync(
         lock_file_path,
         update_markdown_images_file_links,
         {

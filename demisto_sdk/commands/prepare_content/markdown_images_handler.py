@@ -62,7 +62,7 @@ def replace_markdown_urls_and_update_markdown_images(
     wait_for_lock_reopen(
         lock_file_path,
         init_json_file,
-        {"markdown_images_file_name": MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME},
+        {"markdown_images_file_name": MARKDOWN_IMAGES_ARTIFACT_FILE_NAME},
     )
     urls_list = collect_images_from_markdown_and_replace_with_storage_path(
         markdown_path, pack_name, marketplace, file_type
@@ -74,7 +74,6 @@ def replace_markdown_urls_and_update_markdown_images(
 
     save_to_artifact = {pack_name: {file_type: urls_list}}
 
-    update_markdown_images_file_links(save_to_artifact, pack_name, file_type)
     wait_for_lock_reopen(
         lock_file_path,
         update_markdown_images_file_links,

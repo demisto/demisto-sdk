@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 import requests
@@ -815,11 +816,13 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        unified_yml = PrepareUploadManager.prepare_for_upload(
-            input=Path(self.export_dir_path),
-            output=Path(self.test_dir_path),
-            marketplace=marketplace,
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            unified_yml = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path),
+                output=Path(self.test_dir_path),
+                marketplace=marketplace,
+            )
 
         hidden_true = set()
         hidden_false = set()
@@ -1023,9 +1026,11 @@ final test: hi
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(input_path_integration)
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                Path(input_path_integration)
+            )
         expected_yml_path = (
             TESTS_DIR
             + "/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml"

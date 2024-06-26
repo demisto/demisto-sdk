@@ -109,12 +109,12 @@ def test_pack_metadata_xsoar(git_repo: Repo, tmp_path: Path, mocker):
     test_playbook.yml.update({"fromversion": "6.2.0"})
     with ChangeCWD(git_repo.path):
         with ContentGraphInterface() as interface:
-            with TemporaryDirectory() as dir:
-                mocker.patch.object(os, "getenv", return_value=dir)
-                create_content_graph(interface, output_path=tmp_path)
-                content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
+            create_content_graph(interface, output_path=tmp_path)
+            content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
 
-        content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
+        with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
+            content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
 
     assert (tmp_path / "TestPack" / "metadata.json").exists()
     metadata = get_json(tmp_path / "TestPack" / "metadata.json")
@@ -244,8 +244,9 @@ def test_pack_metadata_marketplacev2(git_repo: Repo, tmp_path: Path, mocker):
         with ContentGraphInterface() as interface:
             create_content_graph(interface, output_path=tmp_path)
             content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
-
-        content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
+        with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
+            content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
 
     assert (tmp_path / "TestPack" / "metadata.json").exists()
     metadata = get_json(tmp_path / "TestPack" / "metadata.json")

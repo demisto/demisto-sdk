@@ -242,12 +242,14 @@ def test_insert_description_to_yml_with_markdown_image(
         IntegrationScriptUnifier, "get_data", return_value=(description_as_bytes, True)
     )
     package_path = Path("Packs/CybleEventsV2/Integrations/CybleEventsV2")
-    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
-        package_path,
-        {"commonfields": {"id": "VulnDB"}},
-        is_script,
-        MarketplaceVersions.XSOAR,
-    )
+    with TemporaryDirectory() as dir:
+        mocker.patch.object(os, "getenv", return_value=dir)
+        yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
+            package_path,
+            {"commonfields": {"id": "VulnDB"}},
+            is_script,
+            MarketplaceVersions.XSOAR,
+        )
     assert (
         GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH in yml_unified["detaileddescription"]
     ) == res
@@ -771,9 +773,11 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            input=Path(self.export_dir_path), output=Path(self.test_dir_path)
-        )
+        with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path), output=Path(self.test_dir_path)
+            )
 
         assert export_yml_path == Path(self.expected_yml_path)
 

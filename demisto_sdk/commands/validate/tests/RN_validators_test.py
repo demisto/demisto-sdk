@@ -120,14 +120,14 @@ def test_release_note_header_validator_invalid():
     - Calling the ReleaseNoteHeaderValidator is_valid function.
 
     Then:
-    - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
     """
     expected_error = (
-        "The following invalid headers were found:\n"
-        "Content Types: InvalidHeader\n"
-        "Content Items: Not exist content item\n\n"
-        "For common troubleshooting steps, please review the documentation found here:"
-        " https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
+        "The following invalid headers were found in:\n"
+        "Headers Content Types: InvalidHeader\n\n"
+        "Headers Content Items: Integrations: {'Not exist content item'}\n\n"
+        "For common troubleshooting steps, please review the documentation"
+        " found here: https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
     )
     pack = create_pack_object(
         paths=["version"],

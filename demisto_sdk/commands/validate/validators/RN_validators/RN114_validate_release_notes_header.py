@@ -71,8 +71,8 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         " Validate headers for accuracy."
     )
     error_message = (
-        "{release_note_version}: The following invalid headers were found in:\n"
-        "{content_type_message}{content_item_message}\n"
+        "The following invalid headers were found in:\n"
+        "{content_type_message}\n{content_item_message}\n"
         "For common troubleshooting steps, please review the documentation found here: "
         "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
     )
@@ -110,7 +110,6 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            release_note_version=content_item.release_note.file_path,
                             content_type_message=content_type_message,
                             content_item_message=content_item_message,
                         ),
@@ -193,7 +192,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         self,
         headers_to_display_names: Dict[str, List[str]],
         pack_items_by_types: Dict[ContentType, List[ContentItem]],
-    ) -> Dict[ContentType, Set[str]]:
+    ) -> Dict[str, Set[str]]:
         """
         Validate that the content items' display names match expected values.
 
@@ -214,7 +213,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 item.display_name for item in pack_items_by_types.get(content_type, [])
             }
             if missing := set(display_names).difference(pack_display_names):
-                missing_display_names[content_type] = missing
+                missing_display_names[header] = missing
         return missing_display_names
 
     def validate_release_notes_headers(
@@ -246,11 +245,11 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             for key, value in headers.items()
             if key not in invalid_content_type and value
         }
+
         invalid_content_item: List[str] = [
-            f"{key}: {value}"
-            for set_value in self.validate_content_item_header(
+            f"{header_type}: {header_content_item}"
+            for header_type, header_content_item in self.validate_content_item_header(
                 valid_headers, pack_items_by_types
             ).items()
-            for key, value in set_value
         ]
         return invalid_content_type, invalid_content_item

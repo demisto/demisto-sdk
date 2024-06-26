@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
+    wait_for_lock_reopen,
     write_dict,
 )
 
@@ -57,7 +58,12 @@ def replace_markdown_urls_and_update_markdown_images(
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images urls were found in the README
     """
-    init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
+    lock_file_path = f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}"
+    wait_for_lock_reopen(
+        lock_file_path,
+        init_json_file,
+        {"markdown_images_file_name": MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME},
+    )
     urls_list = collect_images_from_markdown_and_replace_with_storage_path(
         markdown_path, pack_name, marketplace, file_type
     )
@@ -69,6 +75,17 @@ def replace_markdown_urls_and_update_markdown_images(
     save_to_artifact = {pack_name: {file_type: urls_list}}
 
     update_markdown_images_file_links(save_to_artifact, pack_name, file_type)
+    wait_for_lock_reopen(
+        lock_file_path,
+        update_markdown_images_file_links,
+        {
+            "images_dict": save_to_artifact,
+            "pack_name": pack_name,
+            "file_type": file_type,
+            "markdown_images_file_name": MARKDOWN_IMAGES_ARTIFACT_FILE_NAME,
+        },
+    )
+
     logger.debug(f"returning the following urls to artifacts.\n{save_to_artifact=}")
     return save_to_artifact
 
@@ -90,7 +107,12 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images relative paths were found in the README
     """
-    init_json_file(MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME)
+    lock_file_path = f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}"
+    wait_for_lock_reopen(
+        lock_file_path,
+        init_json_file,
+        {"markdown_images_file_name": MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME},
+    )
     rel_paths_list = (
         collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
             markdown_path, pack_name, marketplace, file_type
@@ -103,12 +125,17 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
 
     save_to_artifact = {pack_name: {file_type: rel_paths_list}}
 
-    update_markdown_images_file_links(
-        save_to_artifact,
-        pack_name,
-        file_type,
-        MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME,
+    wait_for_lock_reopen(
+        lock_file_path,
+        update_markdown_images_file_links,
+        {
+            "images_dict": save_to_artifact,
+            "pack_name": pack_name,
+            "file_type": file_type,
+            "markdown_images_file_name": MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME,
+        },
     )
+
     logger.debug(f"Saved the following rel_paths to artifacts.\n{save_to_artifact=}")
     return save_to_artifact
 

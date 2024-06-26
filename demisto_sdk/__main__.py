@@ -122,7 +122,7 @@ class VersionParamType(click.ParamType):
     def convert(self, value, param, ctx):
         version_sections = value.split(".")
         if len(version_sections) == 3 and all(
-                version_section.isdigit() for version_section in version_sections
+            version_section.isdigit() for version_section in version_sections
         ):
             return value
         else:
@@ -159,12 +159,12 @@ def logging_setup_decorator(func, *args, **kwargs):
     @click.option(
         "--console-log-threshold",
         help="Minimum logging threshold for the console logger."
-             " Possible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
         "--file-log-threshold",
         help="Minimum logging threshold for the file logger."
-             " Possible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option("--log-file-path", help="Path to save log files onto.")
     @functools.wraps(func)
@@ -225,7 +225,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         )
 
     if (
-            (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
+        (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
     ) and not is_sdk_defined_working_offline():  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version
@@ -237,7 +237,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         else:
             last_release = ""
             if not os.environ.get(
-                    "CI"
+                "CI"
             ):  # Check only when not running in CI (e.g running locally).
                 last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
@@ -291,7 +291,7 @@ def main(ctx, config, version, release_notes, **kwargs):
 @click.option(
     "--no-auto-create-dir",
     help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts/*Dashboards"
-         "/*GenericModules.",
+    "/*GenericModules.",
     is_flag=True,
     show_default=True,
 )
@@ -365,7 +365,7 @@ def split(ctx, config, **kwargs):
 @click.option(
     "--no-common-server",
     help="Don't add an import for CommonServerPython."
-         "If not specified will import unless this is CommonServerPython",
+    "If not specified will import unless this is CommonServerPython",
     is_flag=True,
     show_default=True,
 )
@@ -444,7 +444,7 @@ def extract_code(ctx, config, **kwargs):
     "-mp",
     "--marketplace",
     help="The marketplace the content items are created for, that determines usage of marketplace "
-         "unique text. Default is the XSOAR marketplace.",
+    "unique text. Default is the XSOAR marketplace.",
     default="xsoar",
     type=click.Choice([mp.value for mp in list(MarketplaceVersions)] + ["v2"]),
 )
@@ -455,7 +455,7 @@ def prepare_content(ctx, **kwargs):
     This command is used to prepare the content to be used in the platform.
     """
     assert (
-            sum([bool(kwargs["all"]), bool(kwargs["input"])]) == 1
+        sum([bool(kwargs["all"]), bool(kwargs["input"])]) == 1
     ), "Exactly one of the '-a' or '-i' parameters must be provided."
 
     if kwargs["all"]:
@@ -635,31 +635,31 @@ def zip_packs(ctx, **kwargs) -> int:
     show_default=True,
     default=False,
     help="Validate changes using git - this will check current branch's changes against origin/master or origin/main. "
-         "If the --post-commit flag is supplied: validation will run only on the current branch's changed files "
-         "that have been committed. "
-         "If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, "
-         "both committed and not committed. ",
+    "If the --post-commit flag is supplied: validation will run only on the current branch's changed files "
+    "that have been committed. "
+    "If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, "
+    "both committed and not committed. ",
 )
 @click.option(
     "-pc",
     "--post-commit",
     is_flag=True,
     help="Whether the validation should run only on the current branch's committed changed files. "
-         "This applies only when the -g flag is supplied.",
+    "This applies only when the -g flag is supplied.",
 )
 @click.option(
     "-st",
     "--staged",
     is_flag=True,
     help="Whether the validation should ignore unstaged files."
-         "This applies only when the -g flag is supplied.",
+    "This applies only when the -g flag is supplied.",
 )
 @click.option(
     "-iu",
     "--include-untracked",
     is_flag=True,
     help="Relevant only for the old validate flow and will be removed in a future release. Whether to include untracked files in the validation. "
-         "This applies only when the -g flag is supplied.",
+    "This applies only when the -g flag is supplied.",
 )
 @click.option(
     "-a",
@@ -827,12 +827,12 @@ def validate(ctx, config, file_paths: str, **kwargs):
             kwargs["post_commit"] = True
         exit_code = 0
         run_new_validate = not kwargs["skip_new_validate"] or (
-                (env_flag := os.getenv("SKIP_NEW_VALIDATE"))
-                and str(env_flag).lower() == "true"
+            (env_flag := os.getenv("SKIP_NEW_VALIDATE"))
+            and str(env_flag).lower() == "true"
         )
         run_old_validate = kwargs["run_old_validate"] or (
-                (env_flag := os.getenv("RUN_OLD_VALIDATE"))
-                and str(env_flag).lower() == "true"
+            (env_flag := os.getenv("RUN_OLD_VALIDATE"))
+            and str(env_flag).lower() == "true"
         )
         if not run_new_validate:
             for new_validate_flag in [
@@ -957,7 +957,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
 @click.option(
     "--packs",
     help="Create only content_packs artifacts. "
-         "Used for server version 5.5.0 and earlier.",
+    "Used for server version 5.5.0 and earlier.",
     is_flag=True,
 )
 @click.option(
@@ -974,7 +974,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
 @click.option(
     "--cpus",
     help="Number of cpus/vcpus available - only required when os not reflect number of cpus (CircleCI"
-         "always show 32, but medium has 3.",
+    "always show 32, but medium has 3.",
     hidden=True,
     default=cpu_count(),
 )
@@ -989,9 +989,9 @@ def validate(ctx, config, file_paths: str, **kwargs):
     "-p",
     "--pack-names",
     help=(
-            "Packs to create artifacts for. Optional values are: `all` or "
-            "csv list of packs. "
-            "Default is set to `all`"
+        "Packs to create artifacts for. Optional values are: `all` or "
+        "csv list of packs. "
+        "Default is set to `all`"
     ),
     default="all",
     hidden=True,
@@ -1021,9 +1021,9 @@ def validate(ctx, config, file_paths: str, **kwargs):
     "-mp",
     "--marketplace",
     help="The marketplace the artifacts are created for, that "
-         "determines which artifacts are created for each pack. "
-         "Default is the XSOAR marketplace, that has all of the packs "
-         "artifacts.",
+    "determines which artifacts are created for each pack. "
+    "Default is the XSOAR marketplace, that has all of the packs "
+    "artifacts.",
     default="xsoar",
     type=click.Choice(["xsoar", "marketplacev2", "v2", "xpanse"]),
 )
@@ -1032,7 +1032,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
     "--filter-by-id-set",
     is_flag=True,
     help="Whether to use the id set as content items guide, meaning only include in the packs the "
-         "content items that appear in the id set.",
+    "content items that appear in the id set.",
     default=False,
     hidden=True,
 )
@@ -1079,9 +1079,9 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     is_flag=True,
     show_default=True,
     help="Whether the secretes is done after you committed your files, "
-         "this will help the command to determine which files it should check in its "
-         "run. Before you commit the files it should not be used. Mostly for build "
-         "validations.",
+    "this will help the command to determine which files it should check in its "
+    "run. Before you commit the files it should not be used. Mostly for build "
+    "validations.",
 )
 @click.option(
     "-ie",
@@ -1201,24 +1201,24 @@ def secrets(ctx, config, file_paths: str, **kwargs):
     "--docker-image",
     default="from-yml",
     help="The docker image to check package on. Can be a comma separated list of Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
-         " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
-         " 'from-yml', 'native:target'. To run lint only on native supported content with a specific image,"
-         " use 'native:target' with --docker-image-target <specific-image>.",
+    " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
+    " 'from-yml', 'native:target'. To run lint only on native supported content with a specific image,"
+    " use 'native:target' with --docker-image-target <specific-image>.",
 )
 @click.option(
     "-dit",
     "--docker-image-target",
     default="",
     help="The docker image to lint native supported content with. Should only be used with "
-         "--docker-image native:target. An error will be raised otherwise.",
+    "--docker-image native:target. An error will be raised otherwise.",
 )
 @click.option(
     "-cdam",
     "--check-dependent-api-module",
     is_flag=True,
     help="Run unit tests and lint on all packages that "
-         "are dependent on the found "
-         "modified api modules.",
+    "are dependent on the found "
+    "modified api modules.",
     default=False,
 )
 @click.option(
@@ -1346,7 +1346,7 @@ def coverage_analyze(ctx, **kwargs):
 
     try:
         no_degradation_check = (
-                kwargs["allowed_coverage_degradation_percentage"] == 100.0
+            kwargs["allowed_coverage_degradation_percentage"] == 100.0
         )
         no_min_coverage_enforcement = kwargs["no_min_coverage_enforcement"]
 
@@ -1365,9 +1365,9 @@ def coverage_analyze(ctx, **kwargs):
         cov_report.coverage_report()
         # if no_degradation_check=True we will suppress the minimum coverage check
         if (
-                no_degradation_check
-                or cov_report.coverage_diff_report()
-                or no_min_coverage_enforcement
+            no_degradation_check
+            or cov_report.coverage_diff_report()
+            or no_min_coverage_enforcement
         ):
             return 0
     except FileNotFoundError as e:
@@ -1391,7 +1391,7 @@ def coverage_analyze(ctx, **kwargs):
     "-i",
     "--input",
     help="The path of the script yml file or a comma separated list\n"
-         "If no input is specified, the format will be executed on all new/changed files.",
+    "If no input is specified, the format will be executed on all new/changed files.",
     type=PathsParamType(
         exists=True, resolve_path=True
     ),  # PathsParamType allows passing a list of paths
@@ -1512,11 +1512,11 @@ def format(ctx, **kwargs):
     "--input",
     type=PathsParamType(exists=True, resolve_path=True),
     help="The path of file or a directory to upload. The following are supported:\n"
-         "- Pack\n"
-         "- A content entity directory that is inside a pack. For example: an Integrations "
-         "directory or a Layouts directory.\n"
-         "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
-         "helloWorld.yml",
+    "- Pack\n"
+    "- A content entity directory that is inside a pack. For example: an Integrations "
+    "directory or a Layouts directory.\n"
+    "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
+    "helloWorld.yml",
     required=False,
 )
 @click.option(
@@ -1546,7 +1546,7 @@ def format(ctx, **kwargs):
 @click.option(
     "--keep-zip",
     help="Directory where to store the zip after creation, this argument is relevant only for packs "
-         "and in case the --zip flag is used.",
+    "and in case the --zip flag is used.",
     required=False,
     type=click.Path(exists=True),
 )
@@ -1555,22 +1555,22 @@ def format(ctx, **kwargs):
     "--skip_validation",
     is_flag=True,
     help="Only for upload zipped packs, "
-         "if true will skip upload packs validation, use just when migrate existing custom content to packs.",
+    "if true will skip upload packs validation, use just when migrate existing custom content to packs.",
 )
 @click.option(
     "--reattach",
     help="Reattach the detached files in the XSOAR instance"
-         "for the CI/CD Flow. If you set the --input-config-file flag, "
-         "any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder "
-         "will be re-attached.)",
+    "for the CI/CD Flow. If you set the --input-config-file flag, "
+    "any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder "
+    "will be re-attached.)",
     is_flag=True,
 )
 @click.option(
     "--override-existing",
     is_flag=True,
     help="This value (True/False) determines if the user should be presented with a confirmation prompt when "
-         "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
-         "command to be used within non-interactive shells.",
+    "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
+    "command to be used within non-interactive shells.",
 )
 @click.pass_context
 @logging_setup_decorator
@@ -1706,7 +1706,7 @@ def download(ctx, **kwargs):
     "-pd",
     "--pack-data",
     help="The Pack Data to add to XSOAR Configuration File - "
-         "Pack URL for Custom Pack and Pack Version for OOTB Pack",
+    "Pack URL for Custom Pack and Pack Version for OOTB Pack",
     required=False,
     multiple=False,
 )
@@ -1769,32 +1769,32 @@ def xsoar_config_file_update(ctx, **kwargs):
     "-D",
     "--debug",
     help="Whether to enable the debug-mode feature or not, if you want to save the output file "
-         "please use the --debug-path option",
+    "please use the --debug-path option",
     is_flag=True,
 )
 @click.option(
     "--debug-path",
     help="The path to save the debug file at, if not specified the debug file will be printed to the "
-         "terminal",
+    "terminal",
 )
 @click.option(
     "--json-to-outputs",
     help="Whether to run json_to_outputs command on the context output of the query. If the "
-         "context output does not exists or the `-r` flag is used, will use the raw"
-         " response of the query",
+    "context output does not exists or the `-r` flag is used, will use the raw"
+    " response of the query",
     is_flag=True,
 )
 @click.option(
     "-p",
     "--prefix",
     help="Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, "
-         "the base path for the outputs that the script generates",
+    "the base path for the outputs that the script generates",
 )
 @click.option(
     "-r",
     "--raw-response",
     help="Used with `json-to-outputs` flag. Use the raw response of the query for"
-         " `json-to-outputs`",
+    " `json-to-outputs`",
     is_flag=True,
 )
 @click.pass_context
@@ -1872,7 +1872,7 @@ def run_playbook(ctx, **kwargs):
     "-tpb",
     "--test-playbook-path",
     help="Path to test playbook to run, "
-         "can be a path to specific test playbook or path to pack name for example: Packs/GitHub.",
+    "can be a path to specific test playbook or path to pack name for example: Packs/GitHub.",
     required=False,
 )
 @click.option(
@@ -1919,14 +1919,14 @@ def run_test_playbook(ctx, **kwargs):
     "-j",
     "--json",
     help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
-         "The response can be obtained by running the command with `raw-response=true` argument.",
+    "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False,
 )
 @click.option(
     "-p",
     "--prefix",
     help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
-         "script generates",
+    "script generates",
     required=False,
 )
 @click.option(
@@ -1943,14 +1943,14 @@ def run_test_playbook(ctx, **kwargs):
 @click.option(
     "--interactive",
     help="If passed, then for each output field will ask user interactively to enter the "
-         "description. By default is interactive mode is disabled. No need to use with --ai (it is already interactive)",
+    "description. By default is interactive mode is disabled. No need to use with --ai (it is already interactive)",
     is_flag=True,
 )
 @click.option(
     "-d",
     "--descriptions",
     help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
-         "If not specified, the script prompt the user to input the JSON content.",
+    "If not specified, the script prompt the user to input the JSON content.",
     is_flag=True,
 )
 @click.option("-i", "--input", help="Valid YAML integration file path.", required=False)
@@ -1958,9 +1958,9 @@ def run_test_playbook(ctx, **kwargs):
     "-e",
     "--examples",
     help="Integrations: path for file containing command examples."
-         " Each command should be in a separate line."
-         " Scripts: the script example surrounded by quotes."
-         " For example: -e '!ConvertFile entry_id=<entry_id>'",
+    " Each command should be in a separate line."
+    " Scripts: the script example surrounded by quotes."
+    " For example: -e '!ConvertFile entry_id=<entry_id>'",
 )
 @click.option(
     "--insecure",
@@ -1999,12 +1999,12 @@ def generate_outputs(ctx, **kwargs):
     "--output",
     required=False,
     help="Specify output directory or path to an output yml file. "
-         "If a path to a yml file is specified - it will be the output path.\n"
-         "If a folder path is specified - a yml output will be saved in the folder.\n"
-         "If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, "
-         "the output will be saved under `.../Packs/<pack_name>/TestPlaybooks`.\n"
-         "Otherwise (no folder in the input hierarchy is named `Packs`), "
-         "the output will be saved in the current directory.",
+    "If a path to a yml file is specified - it will be the output path.\n"
+    "If a folder path is specified - a yml output will be saved in the folder.\n"
+    "If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, "
+    "the output will be saved under `.../Packs/<pack_name>/TestPlaybooks`.\n"
+    "Otherwise (no folder in the input hierarchy is named `Packs`), "
+    "the output will be saved in the current directory.",
 )
 @click.option(
     "-n",
@@ -2016,31 +2016,31 @@ def generate_outputs(ctx, **kwargs):
     "--no-outputs",
     is_flag=True,
     help="Skip generating verification conditions for each output contextPath. Use when you want to decide which "
-         "outputs to verify and which not",
+    "outputs to verify and which not",
 )
 @click.option(
     "-ab",
     "--all-brands",
     "use_all_brands",
     help="Generate a test-playbook which calls commands using integrations of all available brands. "
-         "When not used, the generated playbook calls commands using instances of the provided integration brand.",
+    "When not used, the generated playbook calls commands using instances of the provided integration brand.",
     is_flag=True,
 )
 @click.option(
     "-c",
     "--commands",
     help="A comma-separated command names to generate playbook tasks for, "
-         "will ignore the rest of the commands."
-         "e.g xdr-get-incidents,xdr-update-incident",
+    "will ignore the rest of the commands."
+    "e.g xdr-get-incidents,xdr-update-incident",
     required=False,
 )
 @click.option(
     "-e",
     "--examples",
     help="For integrations: path for file containing command examples."
-         " Each command should be in a separate line."
-         " For scripts: the script example surrounded by quotes."
-         " For example: -e '!ConvertFile entry_id=<entry_id>'",
+    " Each command should be in a separate line."
+    " For scripts: the script example surrounded by quotes."
+    " For example: -e '!ConvertFile entry_id=<entry_id>'",
 )
 @click.option(
     "-u",
@@ -2092,7 +2092,7 @@ def generate_test_playbook(ctx, **kwargs):
     "-o",
     "--output",
     help="The output dir to write the object into. The default one is the current working "
-         "directory.",
+    "directory.",
 )
 @click.option(
     "--integration",
@@ -2112,14 +2112,14 @@ def generate_test_playbook(ctx, **kwargs):
     "-t",
     "--template",
     help="Create an Integration/Script based on a specific template.\n"
-         "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
-         "Script template options: HelloWorldScript",
+    "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
+    "Script template options: HelloWorldScript",
 )
 @click.option(
     "-a",
     "--author-image",
     help="Path of the file 'Author_image.png'. \n "
-         "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50",
+    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50",
 )
 @click.option(
     "--demisto_mock",
@@ -2160,7 +2160,7 @@ def init(ctx, **kwargs):
     "-o",
     "--output",
     help="The output dir to write the documentation file into,"
-         " documentation file name is README.md. If not specified, will be in the yml dir.",
+    " documentation file name is README.md. If not specified, will be in the yml dir.",
     required=False,
 )
 @click.option(
@@ -2173,16 +2173,16 @@ def init(ctx, **kwargs):
     "-c",
     "--command",
     help="A comma-separated command names to generate doc for, will ignore the rest of the commands."
-         "e.g xdr-get-incidents,xdr-update-incident",
+    "e.g xdr-get-incidents,xdr-update-incident",
     required=False,
 )
 @click.option(
     "-e",
     "--examples",
     help="Integrations: path for file containing command examples."
-         " Each command should be in a separate line."
-         " Scripts: the script example surrounded by quotes."
-         " For example: -e '!ConvertFile entry_id=<entry_id>'",
+    " Each command should be in a separate line."
+    " Scripts: the script example surrounded by quotes."
+    " For example: -e '!ConvertFile entry_id=<entry_id>'",
 )
 @click.option(
     "-p",
@@ -2196,8 +2196,8 @@ def init(ctx, **kwargs):
     "-cp",
     "--command-permissions",
     help="Path for file containing commands permissions"
-         " Each command permissions should be in a separate line."
-         " (i.e. '<command-name> Administrator READ-WRITE')",
+    " Each command permissions should be in a separate line."
+    " (i.e. '<command-name> Administrator READ-WRITE')",
     required=False,
 )
 @click.option(
@@ -2317,15 +2317,15 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     try:
         if command:
             if (
-                    output_path
-                    and (not Path(output_path, INTEGRATIONS_README_FILE_NAME).is_file())
-                    or (not output_path)
-                    and (
+                output_path
+                and (not Path(output_path, INTEGRATIONS_README_FILE_NAME).is_file())
+                or (not output_path)
+                and (
                     not Path(
                         os.path.dirname(os.path.realpath(input_path)),
                         INTEGRATIONS_README_FILE_NAME,
                     ).is_file()
-            )
+                )
             ):
                 raise Exception(
                     f"[red]The `command` argument must be presented with existing `{INTEGRATIONS_README_FILE_NAME}` docs."
@@ -2430,8 +2430,8 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     "-mp",
     "--marketplace",
     help="The marketplace the id set are created for, that determines which packs are"
-         " inserted to the id set, and which items are present in the id set for "
-         "each pack. Default is all packs exists in the content repository.",
+    " inserted to the id set, and which items are present in the id set for "
+    "each pack. Default is all packs exists in the content repository.",
     default="",
 )
 @click.pass_context
@@ -2614,7 +2614,7 @@ def update_release_notes(ctx, **kwargs):
     "-i",
     "--input",
     help="Pack path to find dependencies. For example: Pack/HelloWorld. When using the"
-         " --get-dependent-on flag, this argument can be used multiple times.",
+    " --get-dependent-on flag, this argument can be used multiple times.",
     required=False,
     type=click.Path(exists=True, dir_okay=True),
     multiple=True,
@@ -2641,8 +2641,8 @@ def update_release_notes(ctx, **kwargs):
 @click.option(
     "--all-packs-dependencies",
     help="Return a json file with ALL content packs dependencies. "
-         "The json file will be saved under the path given in the "
-         "'--output-path' argument",
+    "The json file will be saved under the path given in the "
+    "'--output-path' argument",
     required=False,
     is_flag=True,
 )
@@ -2650,13 +2650,13 @@ def update_release_notes(ctx, **kwargs):
     "-o",
     "--output-path",
     help="The destination path for the packs dependencies json file. This argument is "
-         "only relevant for when using the '--all-packs-dependecies' flag.",
+    "only relevant for when using the '--all-packs-dependecies' flag.",
     required=False,
 )
 @click.option(
     "--get-dependent-on",
     help="Get only the packs dependent ON the given pack. Note: this flag can not be"
-         " used for the packs ApiModules and Base",
+    " used for the packs ApiModules and Base",
     required=False,
     is_flag=True,
 )
@@ -2664,7 +2664,7 @@ def update_release_notes(ctx, **kwargs):
     "-d",
     "--dependency",
     help="Find which items in a specific content pack appears as a mandatory "
-         "dependency of the searched pack ",
+    "dependency of the searched pack ",
     required=False,
 )
 @click.pass_context
@@ -2749,16 +2749,16 @@ def find_dependencies(ctx, **kwargs):
 @click.pass_context
 @logging_setup_decorator
 def postman_codegen(
-        ctx,
-        config,
-        input: IO,
-        output: Path,
-        name: str,
-        output_prefix: str,
-        command_prefix: str,
-        config_out: bool,
-        package: bool,
-        **kwargs,
+    ctx,
+    config,
+    input: IO,
+    output: Path,
+    name: str,
+    output_prefix: str,
+    command_prefix: str,
+    config_out: bool,
+    package: bool,
+    **kwargs,
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
@@ -2888,7 +2888,7 @@ def generate_integration(ctx, input: IO, output: Path, **kwargs):
     "--use_default",
     is_flag=True,
     help="Use the automatically generated integration configuration"
-         " (Skip the second run).",
+    " (Skip the second run).",
 )
 @click.pass_context
 @logging_setup_decorator
@@ -2974,9 +2974,9 @@ def openapi_codegen(ctx, **kwargs):
             if root_objects:
                 command_to_run = command_to_run + f' -r "{root_objects}"'
             if (
-                    kwargs.get("console_log_threshold")
-                    and int(kwargs.get("console_log_threshold", logging.INFO))
-                    >= logging.DEBUG
+                kwargs.get("console_log_threshold")
+                and int(kwargs.get("console_log_threshold", logging.INFO))
+                >= logging.DEBUG
             ):
                 command_to_run = command_to_run + " -v"
             if fix_code:
@@ -3039,7 +3039,7 @@ def openapi_codegen(ctx, **kwargs):
     "--mem-check",
     type=bool,
     help="Should trigger memory checks or not. The slack channel to check the data is: "
-         "dmst_content_nightly_memory_data",
+    "dmst_content_nightly_memory_data",
     default=False,
 )
 @click.option(
@@ -3053,7 +3053,7 @@ def openapi_codegen(ctx, **kwargs):
     "--use-retries",
     is_flag=True,
     help="Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and "
-         "determine success according to most of the runs",
+    "determine success according to most of the runs",
     default=False,
 )
 @click.option(
@@ -3071,8 +3071,11 @@ def openapi_codegen(ctx, **kwargs):
 @click.option(
     "--cloud_servers_api_keys", help="Path to file with cloud Servers api keys."
 )
-@click.option('--machine_assignment', help='the path to the machine assignment file.',
-              default='./packs_to_install_by_machine.json')
+@click.option(
+    "--machine_assignment",
+    help="the path to the machine assignment file.",
+    default="./packs_to_install_by_machine.json",
+)
 @click.pass_context
 @logging_setup_decorator
 def test_content(ctx, **kwargs):
@@ -3122,7 +3125,7 @@ def test_content(ctx, **kwargs):
     "--expand-dictionary",
     is_flag=True,
     help="Whether to expand the base dictionary to include more words - "
-         "will download 'brown' corpus from nltk package",
+    "will download 'brown' corpus from nltk package",
 )
 @click.option(
     "--templates", is_flag=True, help="Whether to print release notes templates"
@@ -3132,13 +3135,13 @@ def test_content(ctx, **kwargs):
     "--use-git",
     is_flag=True,
     help="Use git to identify the relevant changed files, "
-         "will be used by default if '-i' and '--templates' are not set",
+    "will be used by default if '-i' and '--templates' are not set",
 )
 @click.option(
     "--prev-ver",
     type=str,
     help="The branch against which changes will be detected "
-         "if '-g' flag is set. Default is 'demisto/master'",
+    "if '-g' flag is set. Default is 'demisto/master'",
 )
 @click.option(
     "-rn", "--release-notes", is_flag=True, help="Will run only on release notes files"
@@ -3155,8 +3158,8 @@ def test_content(ctx, **kwargs):
     "--use-packs-known-words/--skip-packs-known-words",
     is_flag=True,
     help="Will find and load the known_words file from the pack. "
-         "To use this option make sure you are running from the "
-         "content directory.",
+    "To use this option make sure you are running from the "
+    "content directory.",
     default=True,
 )
 @click.pass_context
@@ -3342,7 +3345,7 @@ def convert(ctx, config, **kwargs):
     "-e",
     "--examples",
     help="Integrations: path for file containing command examples."
-         " Each command should be in a separate line.",
+    " Each command should be in a separate line.",
 )
 @click.option(
     "-a",
@@ -3353,15 +3356,15 @@ def convert(ctx, config, **kwargs):
 @click.pass_context
 @logging_setup_decorator
 def generate_unit_tests(
-        ctx,
-        input_path: str = "",
-        commands: list = [],
-        output_dir: str = "",
-        examples: str = "",
-        insecure: bool = False,
-        use_demisto: bool = False,
-        append: bool = False,
-        **kwargs,
+    ctx,
+    input_path: str = "",
+    commands: list = [],
+    output_dir: str = "",
+    examples: str = "",
+    insecure: bool = False,
+    use_demisto: bool = False,
+    append: bool = False,
+    **kwargs,
 ):
     """
     This command is used to generate unit tests automatically from an  integration python code.
@@ -3433,11 +3436,11 @@ def error_code(ctx, config, **kwargs):
 @click.pass_context
 @logging_setup_decorator
 def create_content_graph(
-        ctx,
-        marketplace: str = MarketplaceVersions.XSOAR,
-        no_dependencies: bool = False,
-        output_path: Path = None,
-        **kwargs,
+    ctx,
+    marketplace: str = MarketplaceVersions.XSOAR,
+    no_dependencies: bool = False,
+    output_path: Path = None,
+    **kwargs,
 ):
     logger.warning(
         "[WARNING] The 'create-content-graph' command is deprecated and will be removed "
@@ -3462,9 +3465,9 @@ def create_content_graph(
     "-mp",
     "--marketplace",
     help="The marketplace the artifacts are created for, that "
-         "determines which artifacts are created for each pack. "
-         "Default is the XSOAR marketplace, that has all of the packs "
-         "artifacts.",
+    "determines which artifacts are created for each pack. "
+    "Default is the XSOAR marketplace, that has all of the packs "
+    "artifacts.",
     default="xsoar",
     type=click.Choice(list(MarketplaceVersions)),
 )
@@ -3509,14 +3512,14 @@ def create_content_graph(
 @click.pass_context
 @logging_setup_decorator
 def update_content_graph(
-        ctx,
-        use_git: bool = False,
-        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-        imported_path: Path = None,
-        packs: list = None,
-        no_dependencies: bool = False,
-        output_path: Path = None,
-        **kwargs,
+    ctx,
+    use_git: bool = False,
+    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+    imported_path: Path = None,
+    packs: list = None,
+    no_dependencies: bool = False,
+    output_path: Path = None,
+    **kwargs,
 ):
     logger.warning(
         "[WARNING] The 'update-content-graph' command is deprecated and will be removed "
@@ -3589,15 +3592,15 @@ def update_content_graph(
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
-        input,
-        ide,
-        file_paths,
-        create_virtualenv,
-        overwrite_virtualenv,
-        secret_id,
-        instance_name,
-        run_test_module,
-        clean,
+    input,
+    ide,
+    file_paths,
+    create_virtualenv,
+    overwrite_virtualenv,
+    secret_id,
+    instance_name,
+    run_test_module,
+    clean,
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup_env,
@@ -3649,103 +3652,103 @@ pre_commit_app = typer.Typer(name="Pre-Commit")
 
 @pre_commit_app.command()
 def pre_commit(
-        input_files: Optional[List[Path]] = typer.Option(
-            None,
-            "-i",
-            "--input",
-            "--files",
-            exists=True,
-            dir_okay=True,
-            resolve_path=True,
-            show_default=False,
-            help="The paths to run pre-commit on. May pass multiple paths.",
-        ),
-        staged_only: bool = typer.Option(
-            False, "--staged-only", help="Whether to run only on staged files."
-        ),
-        commited_only: bool = typer.Option(
-            False, "--commited-only", help="Whether to run on committed files only."
-        ),
-        git_diff: bool = typer.Option(
-            False,
-            "--git-diff",
-            "-g",
-            help="Whether to use git to determine which files to run on.",
-        ),
-        prev_version: Optional[str] = typer.Option(
-            None,
-            "--prev-version",
-            help="The previous version to compare against. "
-                 "If not provided, the previous version will be determined using git.",
-        ),
-        all_files: bool = typer.Option(
-            False, "--all-files", "-a", help="Whether to run on all files."
-        ),
-        mode: str = typer.Option(
-            "", "--mode", help="Special mode to run the pre-commit with."
-        ),
-        skip: Optional[List[str]] = typer.Option(
-            None, "--skip", help="A list of precommit hooks to skip."
-        ),
-        validate: bool = typer.Option(
-            True,
-            "--validate/--no-validate",
-            help="Whether to run demisto-sdk validate or not.",
-        ),
-        format: bool = typer.Option(
-            False, "--format/--no-format", help="Whether to run demisto-sdk format or not."
-        ),
-        secrets: bool = typer.Option(
-            True,
-            "--secrets/--no-secrets",
-            help="Whether to run demisto-sdk secrets or not.",
-        ),
-        verbose: bool = typer.Option(
-            False, "-v", "--verbose", help="Verbose output of pre-commit."
-        ),
-        show_diff_on_failure: bool = typer.Option(
-            False, "--show-diff-on-failure", help="Show diff on failure."
-        ),
-        dry_run: bool = typer.Option(
-            False,
-            "--dry-run",
-            help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.",
-        ),
-        docker: bool = typer.Option(
-            True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
-        ),
-        image_ref: Optional[str] = typer.Option(
-            None,
-            "--image-ref",
-            help="The docker image reference to run docker hooks with. Overrides the docker image from YAML or native image config.",
-        ),
-        docker_image: Optional[str] = typer.Option(
-            None,
-            "--docker-image",
-            help="Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.",
-        ),
-        run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
-        console_log_threshold: str = typer.Option(
-            "INFO",
-            "--console-log-threshold",
-            help="Minimum logging threshold for the console logger.",
-        ),
-        file_log_threshold: str = typer.Option(
-            "DEBUG",
-            "--file-log-threshold",
-            help="Minimum logging threshold for the file logger.",
-        ),
-        log_file_path: Optional[str] = typer.Option(
-            None,
-            "--log-file-path",
-            help="Path to save log files onto.",
-        ),
-        pre_commit_template_path: Optional[Path] = typer.Option(
-            None,
-            "--template-path",
-            envvar="PRE_COMMIT_TEMPLATE_PATH",
-            help="A custom path for pre-defined pre-commit template, if not provided will use the default template.",
-        ),
+    input_files: Optional[List[Path]] = typer.Option(
+        None,
+        "-i",
+        "--input",
+        "--files",
+        exists=True,
+        dir_okay=True,
+        resolve_path=True,
+        show_default=False,
+        help="The paths to run pre-commit on. May pass multiple paths.",
+    ),
+    staged_only: bool = typer.Option(
+        False, "--staged-only", help="Whether to run only on staged files."
+    ),
+    commited_only: bool = typer.Option(
+        False, "--commited-only", help="Whether to run on committed files only."
+    ),
+    git_diff: bool = typer.Option(
+        False,
+        "--git-diff",
+        "-g",
+        help="Whether to use git to determine which files to run on.",
+    ),
+    prev_version: Optional[str] = typer.Option(
+        None,
+        "--prev-version",
+        help="The previous version to compare against. "
+        "If not provided, the previous version will be determined using git.",
+    ),
+    all_files: bool = typer.Option(
+        False, "--all-files", "-a", help="Whether to run on all files."
+    ),
+    mode: str = typer.Option(
+        "", "--mode", help="Special mode to run the pre-commit with."
+    ),
+    skip: Optional[List[str]] = typer.Option(
+        None, "--skip", help="A list of precommit hooks to skip."
+    ),
+    validate: bool = typer.Option(
+        True,
+        "--validate/--no-validate",
+        help="Whether to run demisto-sdk validate or not.",
+    ),
+    format: bool = typer.Option(
+        False, "--format/--no-format", help="Whether to run demisto-sdk format or not."
+    ),
+    secrets: bool = typer.Option(
+        True,
+        "--secrets/--no-secrets",
+        help="Whether to run demisto-sdk secrets or not.",
+    ),
+    verbose: bool = typer.Option(
+        False, "-v", "--verbose", help="Verbose output of pre-commit."
+    ),
+    show_diff_on_failure: bool = typer.Option(
+        False, "--show-diff-on-failure", help="Show diff on failure."
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.",
+    ),
+    docker: bool = typer.Option(
+        True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
+    ),
+    image_ref: Optional[str] = typer.Option(
+        None,
+        "--image-ref",
+        help="The docker image reference to run docker hooks with. Overrides the docker image from YAML or native image config.",
+    ),
+    docker_image: Optional[str] = typer.Option(
+        None,
+        "--docker-image",
+        help="Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.",
+    ),
+    run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "--console-log-threshold",
+        help="Minimum logging threshold for the console logger.",
+    ),
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "--file-log-threshold",
+        help="Minimum logging threshold for the file logger.",
+    ),
+    log_file_path: Optional[str] = typer.Option(
+        None,
+        "--log-file-path",
+        help="Path to save log files onto.",
+    ),
+    pre_commit_template_path: Optional[Path] = typer.Option(
+        None,
+        "--template-path",
+        envvar="PRE_COMMIT_TEMPLATE_PATH",
+        help="A custom path for pre-defined pre-commit template, if not provided will use the default template.",
+    ),
 ):
     logging_setup(
         console_log_threshold=console_log_threshold,
@@ -3824,14 +3827,14 @@ xsoar_linter_app = typer.Typer(name="Xsoar-Lint")
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
 def xsoar_linter(
-        file_paths: Optional[List[Path]] = typer.Argument(
-            None,
-            exists=True,
-            dir_okay=True,
-            resolve_path=True,
-            show_default=False,
-            help=("The paths to run xsoar linter on. May pass multiple paths."),
-        )
+    file_paths: Optional[List[Path]] = typer.Argument(
+        None,
+        exists=True,
+        dir_okay=True,
+        resolve_path=True,
+        show_default=False,
+        help=("The paths to run xsoar linter on. May pass multiple paths."),
+    )
 ):
     """
     Runs the xsoar lint on the given paths.
@@ -3854,13 +3857,13 @@ export_app = typer.Typer(name="dump-api")
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
 def dump_api(
-        ctx: typer.Context,
-        output_path: Path = typer.Option(
-            CONTENT_PATH,
-            "-o",
-            "--output",
-            help="The output directory or JSON file to save the demisto-sdk api.",
-        ),
+    ctx: typer.Context,
+    output_path: Path = typer.Option(
+        CONTENT_PATH,
+        "-o",
+        "--output",
+        help="The output directory or JSON file to save the demisto-sdk api.",
+    ),
 ):
     """
     This commands dumps the `demisto-sdk` API to a file.

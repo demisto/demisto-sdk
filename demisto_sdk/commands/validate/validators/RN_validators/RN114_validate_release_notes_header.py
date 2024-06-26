@@ -92,12 +92,16 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 invalid_headers_content_item,
             ) = self.validate_release_notes_headers(content_item)
             content_type_message = (
-                "Headers Content Types: {}\n".format(", ".join(invalid_headers_content_type))
+                "Headers Content Types: {}\n".format(
+                    ", ".join(invalid_headers_content_type)
+                )
                 if invalid_headers_content_type
                 else ""
             )
             content_item_message = (
-                "Headers Content Items: {}\n".format(", ".join(invalid_headers_content_item))
+                "Headers Content Items: {}\n".format(
+                    ", ".join(invalid_headers_content_item)
+                )
                 if invalid_headers_content_item
                 else ""
             )
@@ -243,7 +247,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             if key not in invalid_content_type and value
         }
         invalid_content_item: List[str] = [
-            f'{key}: {value}'
+            f"{key}: {value}"
             for set_value in self.validate_content_item_header(
                 valid_headers, pack_items_by_types
             ).items()

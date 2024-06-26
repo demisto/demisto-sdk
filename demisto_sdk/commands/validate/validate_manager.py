@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Set
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -30,8 +30,8 @@ class ValidateManager:
         file_path=None,
         allow_autofix=False,
         ignore_support_level=False,
+        ignore: Optional[List[str]] = None,
     ):
-        self.ignore_support_level = ignore_support_level
         self.validate_all = validate_all
         self.file_path = file_path
         self.allow_autofix = allow_autofix
@@ -44,12 +44,11 @@ class ValidateManager:
             self.objects_to_run,
             self.invalid_items,
         ) = self.initializer.gather_objects_to_run_on()
-        self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
-        self.configured_validations: ConfiguredValidations = (
-            self.config_reader.gather_validations_to_run(
-                use_git=self.use_git, ignore_support_level=self.ignore_support_level
-            )
+        self.configured_validations: ConfiguredValidations = self.config_reader.read(
+            use_git=self.initializer.use_git,
+            ignore_support_level=ignore_support_level,
+            codes_to_ignore=ignore,
         )
         self.validators = self.filter_validators()
 

@@ -50,7 +50,7 @@ INTEGRATION.path = Path(
 
 def get_validate_manager(mocker):
     validation_results = ResultWriter()
-    config_reader = ConfigReader(category_to_run="test")
+    config_reader = ConfigReader(category="test")
     initializer = Initializer()
     mocker.patch.object(Initializer, "gather_objects_to_run_on", return_value=({}, {}))
     return ValidateManager(
@@ -207,8 +207,8 @@ def test_gather_validations_to_run(
         - Case 5: Make sure the retrieved results contains only the use_git section.
     """
     mocker.patch.object(toml, "load", return_value=config_file_content)
-    config_reader = ConfigReader(category_to_run=category_to_run)
-    results: ConfiguredValidations = config_reader.gather_validations_to_run(
+    config_reader = ConfigReader(category=category_to_run)
+    results: ConfiguredValidations = config_reader.read(
         use_git=use_git, ignore_support_level=ignore_support_level
     )
     assert results.validations_to_run == expected_results.validations_to_run

@@ -910,11 +910,13 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        unified_yml = PrepareUploadManager.prepare_for_upload(
-            input=Path(self.export_dir_path),
-            output=Path(self.test_dir_path),
-            marketplace=marketplace,
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            unified_yml = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path),
+                output=Path(self.test_dir_path),
+                marketplace=marketplace,
+            )
 
         for param in get_yaml(unified_yml)["configuration"]:
             # updates the three sets
@@ -995,9 +997,11 @@ final test: hi
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(self.export_dir_path), output=Path(self.test_dir_path)
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                Path(self.export_dir_path), output=Path(self.test_dir_path)
+            )
 
         assert export_yml_path == Path(self.expected_yml_path)
 

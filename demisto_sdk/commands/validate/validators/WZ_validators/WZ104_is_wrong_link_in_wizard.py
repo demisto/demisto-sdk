@@ -19,22 +19,26 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = False
 
-    def exist_fetch_integrations_that_dont_have_playbook(self, content_item: ContentTypes) -> bool:
-        wizard_json_object = json.loads(content_item.text)
-        playbooks_link_to_integration = []
-        for playbook in wizard_json_object.get('set_playbook', []):
-            playbooks_link_to_integration.append(playbook.get('link_to_integration'))
-
+    def integrations_without_playbook(self, content_item: ContentTypes) -> List[str]:
+        content_item_json = json.loads(content_item.text)
+        wizard_json_object = content_item_json.get('wizard', {})
+        set_playbooks = wizard_json_object.get("set_playbook", [])
+        playbooks_link_to_integration = {playbook.get("name", ""): playbook.get("link_to_integration") for playbook in
+                                         set_playbooks}
         integrations = []
         for integration in wizard_json_object.get('fetching_integrations', []):
             integrations.append(integration.get('name'))
-        for link in content_item.playbooks_link_to_integration:
+
+        integrations_without_playbook = []
+        for link in playbooks_link_to_integration.values():
             if not link:  # handle case that a playbook was mapped to all integration
-                return False
+                break
             if link not in integrations:
-                return True
+                integrations_without_playbook.append(link)
             else:
                 integrations.remove(link)
+
+        return integrations_without_playbook
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -45,10 +49,9 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                self.exist_fetch_integrations_that_dont_have_playbook(content_item)
+                integrations_without_playbook := self.integrations_without_playbook(content_item)
             )
         ]
-
     # @error_codes("WZ104,WZ105")
     # def do_all_fetch_integrations_have_playbook(self):
     #     all_fetch_integrations_have_playbook = True

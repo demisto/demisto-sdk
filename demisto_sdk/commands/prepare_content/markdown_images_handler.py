@@ -41,6 +41,22 @@ def update_markdown_images_with_urls_and_rel_paths(
     return (urls_dict, rel_paths_dict)
 
 
+def safe_init_json_file(file_path: str):
+    """Calling the init_json_file function using the synced function.
+
+    Args:
+        file_path (str): The json file path to init
+    """
+    lock_file_path = (
+        f"{os.getenv('ARTIFACTS_FOLDER')}/{file_path.replace('json', 'lock')}"
+    )
+    run_sync(
+        lock_file_path,
+        init_json_file,
+        {"markdown_images_file_name": file_path},
+    )
+
+
 def replace_markdown_urls_and_update_markdown_images(
     markdown_path: Path,
     marketplace: MarketplaceVersions,
@@ -58,12 +74,7 @@ def replace_markdown_urls_and_update_markdown_images(
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images urls were found in the README
     """
-    lock_file_path = f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}"
-    run_sync(
-        lock_file_path,
-        init_json_file,
-        {"markdown_images_file_name": MARKDOWN_IMAGES_ARTIFACT_FILE_NAME},
-    )
+    safe_init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
     urls_list = collect_images_from_markdown_and_replace_with_storage_path(
         markdown_path, pack_name, marketplace, file_type
     )
@@ -75,7 +86,7 @@ def replace_markdown_urls_and_update_markdown_images(
     save_to_artifact = {pack_name: {file_type: urls_list}}
 
     run_sync(
-        lock_file_path,
+        f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}",
         update_markdown_images_file_links,
         {
             "images_dict": save_to_artifact,
@@ -106,12 +117,7 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images relative paths were found in the README
     """
-    lock_file_path = f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}"
-    run_sync(
-        lock_file_path,
-        init_json_file,
-        {"markdown_images_file_name": MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME},
-    )
+    safe_init_json_file(MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME)
     rel_paths_list = (
         collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
             markdown_path, pack_name, marketplace, file_type
@@ -125,7 +131,7 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
     save_to_artifact = {pack_name: {file_type: rel_paths_list}}
 
     run_sync(
-        lock_file_path,
+        f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}",
         update_markdown_images_file_links,
         {
             "images_dict": save_to_artifact,

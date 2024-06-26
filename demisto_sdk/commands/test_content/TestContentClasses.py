@@ -1054,14 +1054,15 @@ class ServerContext:
         # --------------------------- Testing preparation -------------------------------
 
         self.use_retries_mechanism: bool = use_retries_mechanism
-        self.all_integrations_configurations = self._get_all_integration_config()
-        self.test_retries_queue: Queue = Queue()
+        self.unmockable_test_ids: Set[str] = set()
+        self.filtered_tests: list[str] = []
         (
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
         ) = self._get_tests_to_run()
-        self.unmockable_test_ids: Set[str] = set()
-        self.filtered_tests: list[str] = []
+        self.test_retries_queue: Queue = Queue()
+        self.all_integrations_configurations = self._get_all_integration_config()
+
 
     def _execute_unmockable_tests(self):
         """

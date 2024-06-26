@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Iterable, List
-
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -19,12 +19,22 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = False
 
-    def verify_is_wrong_link_in_wizard(self, content_item: ContentTypes) -> bool:
-        for link in self._set_playbooks.values():
+    def exist_fetch_integrations_that_dont_have_playbook(self, content_item: ContentTypes) -> bool:
+        wizard_json_object = json.loads(content_item.text)
+        playbooks_link_to_integration = []
+        for playbook in wizard_json_object.get('set_playbook', []):
+            playbooks_link_to_integration.append(playbook.get('link_to_integration'))
+
+        integrations = []
+        for integration in wizard_json_object.get('fetching_integrations', []):
+            integrations.append(integration.get('name'))
+        for link in content_item.playbooks_link_to_integration:
             if not link:  # handle case that a playbook was mapped to all integration
-                return True
-            if link not in content_item:
                 return False
+            if link not in integrations:
+                return True
+            else:
+                integrations.remove(link)
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -35,7 +45,7 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                self.verify_is_wrong_link_in_wizard(content_item)
+                self.exist_fetch_integrations_that_dont_have_playbook(content_item)
             )
         ]
 

@@ -2161,6 +2161,8 @@ STRING_TO_BOOL_MAP = {
     "f": False,
 }
 
+SCHEMA_FILE_VALID_ATTRIBUTES_TYPE = {"string", "int", "float", "datetime", "boolean"}
+
 
 #  date formats:
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"

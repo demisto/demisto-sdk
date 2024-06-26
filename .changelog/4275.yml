@@ -1,4 +1,0 @@
-changes:
-- description: Modified validations RN103 and RN104 to follow the new validations format.
-  type: internal
-pr_number: 4275

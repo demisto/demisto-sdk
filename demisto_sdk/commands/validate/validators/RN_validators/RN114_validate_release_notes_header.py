@@ -71,7 +71,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         " Validate headers for accuracy."
     )
     error_message = (
-        "The following invalid headers were found in:\n"
+        "{release_note_version}: The following invalid headers were found in:\n"
         "{content_type_message}{content_item_message}\n"
         "For common troubleshooting steps, please review the documentation found here: "
         "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
@@ -92,12 +92,12 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 invalid_headers_content_item,
             ) = self.validate_release_notes_headers(content_item)
             content_type_message = (
-                "Content Types: {}\n".format(", ".join(invalid_headers_content_type))
+                "Headers Content Types: {}\n".format(", ".join(invalid_headers_content_type))
                 if invalid_headers_content_type
                 else ""
             )
             content_item_message = (
-                "Content Items: {}\n".format(", ".join(invalid_headers_content_item))
+                "Headers Content Items: {}\n".format(", ".join(invalid_headers_content_item))
                 if invalid_headers_content_item
                 else ""
             )
@@ -243,10 +243,10 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             if key not in invalid_content_type and value
         }
         invalid_content_item: List[str] = [
-            value
+            f'{key}: {value}'
             for set_value in self.validate_content_item_header(
                 valid_headers, pack_items_by_types
-            ).values()
-            for value in set_value
+            ).items()
+            for key, value in set_value
         ]
         return invalid_content_type, invalid_content_item

@@ -237,7 +237,15 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     with ChangeCWD(pack.repo_path):
         result = runner.invoke(
             main,
-            [UPLOAD_CMD, "-i", pack.path, "-z", "--insecure", "--keep-zip", tmpdir],
+            [
+                UPLOAD_CMD,
+                "-i",
+                str(pack.path),
+                "-z",
+                "--insecure",
+                "--keep-zip",
+                tmpdir,
+            ],
         )
         assert result.exit_code == SUCCESS_RETURN_CODE
 

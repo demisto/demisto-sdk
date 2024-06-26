@@ -1,4 +1,0 @@
-changes:
-- description: Added DS106 to the new validation format. "Check if the description file exist and the name is valid"
-  type: feature
-pr_number: 4357

@@ -25,11 +25,23 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB106_is_playbook_us
 from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_id import (
     IsValidTaskIdValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
+    IsTaskidDifferentFromidValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB114_playbook_quiet_mode import (
+    PlaybookQuietModeValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
     IsTasksQuietModeValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB116_is_stopping_on_error import (
+    IsStoppingOnErrorValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB119_check_inputs_used import (
+    CheckInputsUsedExist,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB122_does_playbook_have_unhandled_conditions import (
     DoesPlaybookHaveUnhandledConditionsValidator,
@@ -106,6 +118,80 @@ def test_is_valid_all_inputs_in_use(content_item, expected_result):
         result == expected_result
         if isinstance(expected_result, list)
         else result[0].message == expected_result
+    )
+
+
+def test_using_input_not_provided():
+    """
+    Given:
+        inputs 2 and
+    When:
+        using input 3
+    Then:
+        Will fail on input 3 (Comments, File, ReportFileType, Systems, Timeout are from the default test config)
+
+    """
+    playbook = create_playbook_object(
+        paths=["inputs", "tasks.0.task.key"],
+        values=[
+            [
+                {"key": "input_name1", "value": "input_value1"},
+                {"key": "input_name2", "value": "input_value2"},
+            ],
+            {"first_input": "inputs.input_name1", "another 1 ": "inputs.input_name3"},
+        ],
+    )
+    result = CheckInputsUsedExist().is_valid([playbook])
+    assert len(result) == 1
+    assert (
+        result[0].message
+        == "Inputs [Comments, File, ReportFileType, Systems, Timeout, input_name3] were used but not provided for this playbook."
+    )
+
+
+def test_playbook_quiet_mode_regular_playbook_pass():
+    """
+    Given:
+        A regular pb with quiet mode false
+    When:
+        Calling Validate
+    Then:
+        The validation shouldnt fail
+
+    """
+    playbook = create_playbook_object(["quiet"], [False])
+    assert PlaybookQuietModeValidator().is_valid([playbook]) == []
+
+
+def test_indicator_pb_must_be_quiet():
+    """
+    Given:
+        A pb with queryEntity indicators
+    When:
+        not in quiet mode
+    Then:
+        The validation should fail
+
+    """
+    playbook = create_playbook_object(
+        ["inputs", "quiet"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            False,
+        ],
+    )
+    result = PlaybookQuietModeValidator().is_valid([playbook])
+    assert len(result) == 1
+    assert (
+        result[0].message
+        == "Playbooks with a playbookInputQuery for indicators should be on quiet mode."
     )
 
 
@@ -328,6 +414,56 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
         )
     }
     assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+
+
+def test_indicator_pb_must_stop_on_error():
+    """
+    Given: A pb with queryEntity indicators
+    When: Playbook stops on error
+    Then: Validation should pass
+    """
+    playbook = create_playbook_object(
+        ["inputs"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+        ],
+    )
+    res = IsStoppingOnErrorValidator().is_valid([playbook])
+    assert len(res) == 0
+
+
+def test_indicator_pb_must_stop_on_error_invalid():
+    """
+    Given: A pb with queryEntity indicators
+    When: Playbook continues on error
+    Then: Validation should fail
+    """
+    error_message = IsStoppingOnErrorValidator.error_message
+    playbook = create_playbook_object(
+        ["inputs", "tasks.0.continueonerror"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            True,
+        ],
+    )
+    res = IsStoppingOnErrorValidator().is_valid([playbook])
+    assert len(res) == 1
+    bad_task = playbook.tasks
+    assert res[0].message == error_message.format([bad_task.get("0")])
 
 
 def test_IsTasksQuietModeValidator_fail_case():
@@ -696,7 +832,6 @@ def test_IsDefaultNotOnlyConditionValidator():
             }
         )
     }
-
     assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
     playbook.tasks = {
         "0": TaskConfig(
@@ -710,6 +845,44 @@ def test_IsDefaultNotOnlyConditionValidator():
         )
     }
     assert IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+
+
+def test_IsTaskidDifferentFromidValidator():
+    """
+    Given:
+    - A playbook with tasks, taskid and id
+        Case 1: id equals taskid
+        Case 2: id not equals taskid
+
+    When:
+    - Validating the playbook
+
+    Then:
+    - The results should be as expected:
+        Case 1: an empty list
+        Case 2: a list in length 1 because there is one error
+    """
+    playbook = create_playbook_object()
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 0
+    playbook.tasks = {
+        "0": TaskConfig(
+            **{
+                "id": "test",
+                "taskid": "test1",
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"no": ["1"]},
+                "task": {"id": "test"},
+            }
+        )
+    }
+    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "On tasks: 0,  the field 'taskid' and the 'id' under the 'task' field must be with equal value."
+    )
 
 
 def test_IsPlayBookUsingAnInstanceValidator_is_valid():

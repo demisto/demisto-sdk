@@ -88,7 +88,7 @@ def execute_test_content(**kwargs):
     threads_list = []
     for server in build_context.servers:
         threads_list.append(
-            Thread(target=build_context.servers.get(server).execute_tests)
+            Thread(target=server.execute_tests)
         )
 
     logging_manager.info("Finished creating configurations, starting to run tests.")

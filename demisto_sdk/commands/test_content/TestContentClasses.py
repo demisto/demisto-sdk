@@ -836,23 +836,23 @@ class BuildContext:
         """
         Create servers object based on build type.
         """
-        servers: dict = {}
+        servers: set = set()
         if self.is_saas_server_type:
             for machine in self.cloud_machines:
                 server_ip = self.env_json.get(machine).get("base_url")
-                servers[machine] = CloudServerContext(
+                servers.add(CloudServerContext(
                     self,
                     server_private_ip=server_ip,
                     cloud_machine=machine,
                     use_retries_mechanism=self.use_retries_mechanism,
-                )
+                ))
         else:
             for server_ip in self.instances_ips:
-                servers[server_ip] = OnPremServerContext(
+                servers.add(OnPremServerContext(
                     self,
                     server_private_ip=server_ip,
                     use_retries_mechanism=self.use_retries_mechanism,
-                )
+                ))
         return servers
 
     def _get_instances_ips(self) -> List[str]:

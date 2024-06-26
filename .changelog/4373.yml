@@ -1,0 +1,4 @@
+changes:
+  - description: Added RM107 to the new validation format. The validation checks that all placeholders are removed and all sections are filled in the readme files.
+    type: internal
+pr_number: 4373

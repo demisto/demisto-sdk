@@ -1,0 +1,4 @@
+changes:
+  - description: Added RP103 to the new validation format. The validation make sure the indicator type id is valid. (can include letters, numbers whitespaces, ampersands and underscores.)
+    type: internal
+pr_number: 4361

@@ -1472,7 +1472,7 @@ def test_get_pack_metadata(repo):
     pack_metadata = pack.pack_metadata
     pack_metadata.write_json(metadata_json)
 
-    result = get_pack_metadata(pack.path)
+    result = get_pack_metadata(str(pack.path))
 
     assert metadata_json == result
 

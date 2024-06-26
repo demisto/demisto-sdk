@@ -821,6 +821,8 @@ INCIDENT_FIELD_FILE_NAME_REGEX = r"incidentfield-.*\.json"
 
 LAYOUT_FILE_NAME__REGEX = r"layout.*\.json"
 
+VALID_INDICATOR_TYPE_REGEX = "^[A-Za-z0-9_& ]*$"
+
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
@@ -868,6 +870,7 @@ MANDATORY_PACK_METADATA_FIELDS = (
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
     PACK_METADATA_KEYWORDS,
+    MARKETPLACE_KEY_PACK_METADATA,
 )
 PACK_METADATA_MANDATORY_FILLED_FIELDS = [
     PACK_METADATA_KEYWORDS,
@@ -1280,6 +1283,12 @@ class GitStatuses(StrEnum):
     MODIFIED = "M"
     ADDED = "A"
     DELETED = "D"
+
+
+class ExecutionMode(StrEnum):
+    ALL_FILES = "-a"
+    USE_GIT = "-g"
+    SPECIFIC_FILES = "-i"
 
 
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]

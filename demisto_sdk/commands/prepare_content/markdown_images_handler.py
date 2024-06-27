@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
+    run_sync,
     write_dict,
 )
 
@@ -40,6 +41,22 @@ def update_markdown_images_with_urls_and_rel_paths(
     return (urls_dict, rel_paths_dict)
 
 
+def safe_init_json_file(file_path: str):
+    """Calling the init_json_file function using the synced function.
+
+    Args:
+        file_path (str): The json file path to init
+    """
+    lock_file_path = (
+        f"{os.getenv('ARTIFACTS_FOLDER')}/{file_path.replace('json', 'lock')}"
+    )
+    run_sync(
+        lock_file_path,
+        init_json_file,
+        {"markdown_images_file_name": file_path},
+    )
+
+
 def replace_markdown_urls_and_update_markdown_images(
     markdown_path: Path,
     marketplace: MarketplaceVersions,
@@ -57,6 +74,7 @@ def replace_markdown_urls_and_update_markdown_images(
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images urls were found in the README
     """
+    safe_init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
     urls_list = collect_images_from_markdown_and_replace_with_storage_path(
         markdown_path, pack_name, marketplace, file_type
     )
@@ -66,8 +84,10 @@ def replace_markdown_urls_and_update_markdown_images(
         return {}
 
     save_to_artifact = {pack_name: {file_type: urls_list}}
+    safe_update_markdown_images_file_links(
+        save_to_artifact, pack_name, file_type, MARKDOWN_IMAGES_ARTIFACT_FILE_NAME
+    )
 
-    update_markdown_images_file_links(save_to_artifact, pack_name, file_type)
     logger.debug(f"returning the following urls to artifacts.\n{save_to_artifact=}")
     return save_to_artifact
 
@@ -89,6 +109,7 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images relative paths were found in the README
     """
+    safe_init_json_file(MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME)
     rel_paths_list = (
         collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
             markdown_path, pack_name, marketplace, file_type
@@ -100,15 +121,38 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
         return {}
 
     save_to_artifact = {pack_name: {file_type: rel_paths_list}}
-
-    update_markdown_images_file_links(
+    safe_update_markdown_images_file_links(
         save_to_artifact,
         pack_name,
         file_type,
         MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME,
     )
+
     logger.debug(f"Saved the following rel_paths to artifacts.\n{save_to_artifact=}")
     return save_to_artifact
+
+
+def safe_update_markdown_images_file_links(
+    images_dict, pack_name, file_type, image_file_path
+):
+    """Calling the update_markdown_images_file_links function using the synced function.
+
+    Args:
+        images_dict (dict): The dict contains all the images info for the current pack.
+        pack_name (str): The name of the pack to update.
+        file_type (ImagesFolderNames): The markdown file the pics was obtained from.
+        image_file_path (str): The json file path to update
+    """
+    run_sync(
+        f"{os.getenv('ARTIFACTS_FOLDER')}/{image_file_path.replace('json', 'lock')}",
+        update_markdown_images_file_links,
+        {
+            "images_dict": images_dict,
+            "pack_name": pack_name,
+            "file_type": file_type,
+            "markdown_images_file_name": image_file_path,
+        },
+    )
 
 
 def collect_images_from_markdown_and_replace_with_storage_path(
@@ -179,6 +223,24 @@ def collect_images_from_markdown_and_replace_with_storage_path(
     return urls_list
 
 
+def init_json_file(markdown_images_file_name: str):
+    """Initialize a json file at with the given file name if doesn't exist.
+
+    Args:
+        markdown_images_file_name (str): The file name to create.
+    """
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+        artifacts_folder
+    ).exists():
+        artifacts_markdown_images_path = Path(
+            f"{artifacts_folder}/{markdown_images_file_name}"
+        )
+        if not artifacts_markdown_images_path.exists():
+            with open(artifacts_markdown_images_path, "w") as f:
+                # If this is the first pack init the file with an empty dict.
+                json.dump({}, f)
+
+
 def update_markdown_images_file_links(
     images_dict: dict,
     pack_name: str,
@@ -199,10 +261,6 @@ def update_markdown_images_file_links(
         artifacts_markdown_images_path = Path(
             f"{artifacts_folder}/{markdown_images_file_name}"
         )
-        if not artifacts_markdown_images_path.exists():
-            with open(artifacts_markdown_images_path, "w") as f:
-                # If this is the first pack init the file with an empty dict.
-                json.dump({}, f)
 
         markdown_images_data_dict = get_file(
             artifacts_markdown_images_path, raise_on_error=True

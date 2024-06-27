@@ -2213,10 +2213,3 @@ PACK_DEFAULT_MARKETPLACES: List = [
 INVALID_IMAGE_PATH_REGEX = (
     r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")"
 )
-# Release note regex
-CONTENT_TYPE_SECTION_REGEX = (
-    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)"
-)
-CONTENT_ITEM_SECTION_REGEX = (
-    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
-)

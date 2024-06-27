@@ -4,8 +4,6 @@ import re
 from typing import Any, Dict, Iterable, List, Set, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
-    CONTENT_ITEM_SECTION_REGEX,
-    CONTENT_TYPE_SECTION_REGEX,
     RN_HEADER_BY_FILE_TYPE,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -59,6 +57,13 @@ CONTENT_TYPE_BY_RN_HEADER = {
     header: content_type for content_type, header in RN_HEADER_BY_CONTENT_TYPE.items()
 }
 
+# Release note regex
+CONTENT_TYPE_SECTION_REGEX = (
+    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)"
+)
+CONTENT_ITEM_SECTION_REGEX = (
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
+)
 
 class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"

@@ -69,12 +69,10 @@ CONTENT_ITEM_SECTION_REGEX = (
 class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"
     description = (
-        "Validate the 2nd headers (the content items) are exists in the pack and having the right display"
-        " name."
+        "Validate the content items mentioned in second-level headers (##), exist in the pack."
     )
     rationale = (
-        "Provide documentation with clear headers for all modifications to make content usage easier."
-        " Validate headers for accuracy."
+        "Providing documentation with accurate headers, and avoid confusion."
     )
     error_message = (
         "The following invalid headers were found in:\n"
@@ -105,8 +103,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 else ""
             )
             content_item_message = (
-                "Headers Content Items: {}\n".format(
-                    ", ".join(invalid_headers_content_item)
+                f"Headers Content Items: {', '.join(invalid_headers_content_item)}\n"
                 )
                 if invalid_headers_content_item
                 else ""
@@ -242,7 +239,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         pack_items_by_types = content_item.content_items.items_by_type()
         invalid_content_type: List[str] = [
             header_type
-            for header_type in headers.keys()
+            for header_type in headers
             if not self.validate_content_type_header(header_type)
         ]
         # removing invalid 1st header types

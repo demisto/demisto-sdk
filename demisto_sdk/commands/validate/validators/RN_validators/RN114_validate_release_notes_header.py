@@ -83,8 +83,7 @@ def remove_none_values(ls: Union[List[Any], Tuple[Any, ...]]) -> List[Any]:
 class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"
     description = (
-        "Validate the 2nd headers (the content items) are exists in the pack and having the right display"
-        " name."
+        "Validate the content items mentioned in second-level headers (##), exist in the pack."
     )
     rationale = (
         "Provide documentation with clear headers for all modifications to make content usage easier."

@@ -1,4 +1,0 @@
-changes:
-- description: Started adaption for relative paths enforcement in the upload flow - The flow will now attempt to create a json file including a dict objects of all the image paths appears in the markdown files in relative path formats.
-  type: internal
-pr_number: 4338

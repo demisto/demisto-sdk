@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
     ENV_DEMISTO_SDK_MARKETPLACE,
     INTEGRATIONS_README_FILE_NAME,
+    ExecutionMode,
     FileType,
     MarketplaceVersions,
 )
@@ -751,7 +752,7 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "-sv",
     "--run-specific-validations",
-    help="Relevant only for the old validate flow and will be removed in a future release. Run specific validations by stating the error codes.",
+    help="A comma separated list of validations to run stated the error codes.",
     is_flag=False,
 )
 @click.option(
@@ -821,8 +822,15 @@ def validate(ctx, config, file_paths: str, **kwargs):
         sys.exit(1)
     try:
         is_external_repo = is_external_repository()
-        # default validate to -g --post-commit
-        if not kwargs.get("validate_all") and not kwargs["use_git"] and not file_path:
+        if kwargs.get("validate_all"):
+            execution_mode = ExecutionMode.ALL_FILES
+        elif kwargs.get("use_git"):
+            execution_mode = ExecutionMode.USE_GIT
+        elif file_path:
+            execution_mode = ExecutionMode.SPECIFIC_FILES
+        else:
+            execution_mode = ExecutionMode.USE_GIT
+            # default validate to -g --post-commit
             kwargs["use_git"] = True
             kwargs["post_commit"] = True
         exit_code = 0
@@ -863,7 +871,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 "include_untracked",
                 "quiet_bc_validation",
                 "allow_skipped",
-                "run_specific_validations",
                 "no_multiprocessing",
             ]:
                 if kwargs.get(old_validate_flag):
@@ -911,19 +918,20 @@ def validate(ctx, config, file_paths: str, **kwargs):
             config_reader = ConfigReader(
                 config_file_path=kwargs.get("config_path"),
                 category_to_run=kwargs.get("category_to_run"),
+                specific_validations=(
+                    (kwargs.get("run_specific_validations") or "").split(",")
+                ),
             )
             initializer = Initializer(
-                use_git=kwargs["use_git"],
                 staged=kwargs["staged"],
                 committed_only=kwargs["post_commit"],
                 prev_ver=kwargs["prev_ver"],
                 file_path=file_path,
-                all_files=kwargs.get("validate_all"),
+                execution_mode=execution_mode,
                 skip_pack_dependencies=kwargs.get("skip_pack_dependencies"),
             )
             validator_v2 = ValidateManager(
                 file_path=file_path,
-                validate_all=kwargs.get("validate_all"),
                 initializer=initializer,
                 validation_results=validation_results,
                 config_reader=config_reader,
@@ -3390,14 +3398,16 @@ def generate_unit_tests(
 @click.pass_context
 @logging_setup_decorator
 def error_code(ctx, config, **kwargs):
-    from demisto_sdk.commands.error_code_info.error_code_info import (
-        generate_error_code_information,
-    )
+    from demisto_sdk.commands.error_code_info.error_code_info import print_error_info
 
     update_command_args_from_config_file("error-code-info", kwargs)
     sys.path.append(config.configuration.env_dir)
 
-    result = generate_error_code_information(kwargs.get("input"))
+    if error_code_input := kwargs.get("input"):
+        result = print_error_info(error_code_input)
+    else:
+        logger.error("Provide an error code, e.g. `-i DO106`")
+        result = 1
 
     sys.exit(result)
 
@@ -3642,7 +3652,9 @@ def exit_from_program(result=0, **kwargs):
 
 
 # ====================== Pre-Commit ====================== #
-pre_commit_app = typer.Typer(name="Pre-Commit")
+pre_commit_app = typer.Typer(
+    name="Pre-Commit", context_settings={"help_option_names": ["-h", "--help"]}
+)
 
 
 @pre_commit_app.command()
@@ -3783,7 +3795,10 @@ main.add_command(typer.main.get_command(pre_commit_app), "pre-commit")
 
 # ====================== modeling-rules command group ====================== #
 modeling_rules_app = typer.Typer(
-    name="modeling-rules", hidden=True, no_args_is_help=True
+    name="modeling-rules",
+    hidden=True,
+    no_args_is_help=True,
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
 modeling_rules_app.command("test", no_args_is_help=True)(
     test_modeling_rule.test_modeling_rule
@@ -3795,7 +3810,9 @@ typer_click_object = typer.main.get_command(modeling_rules_app)
 main.add_command(typer_click_object, "modeling-rules")
 
 app_generate_modeling_rules = typer.Typer(
-    name="generate-modeling-rules", no_args_is_help=True
+    name="generate-modeling-rules",
+    no_args_is_help=True,
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
 app_generate_modeling_rules.command("generate-modeling-rules", no_args_is_help=True)(
     generate_modeling_rules.generate_modeling_rules
@@ -3807,7 +3824,12 @@ main.add_command(typer_click_object2, "generate-modeling-rules")
 
 # ====================== graph command group ====================== #
 
-graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
+graph_cmd_group = typer.Typer(
+    name="graph",
+    hidden=True,
+    no_args_is_help=True,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 graph_cmd_group.command("create", no_args_is_help=False)(create)
 graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
@@ -3817,7 +3839,9 @@ main.add_command(typer.main.get_command(graph_cmd_group), "graph")
 
 # ====================== Xsoar-Lint ====================== #
 
-xsoar_linter_app = typer.Typer(name="Xsoar-Lint")
+xsoar_linter_app = typer.Typer(
+    name="Xsoar-Lint", context_settings={"help_option_names": ["-h", "--help"]}
+)
 
 
 @xsoar_linter_app.command(
@@ -3849,7 +3873,9 @@ main.add_command(typer.main.get_command(xsoar_linter_app), "xsoar-lint")
 
 # ====================== export ====================== #
 
-export_app = typer.Typer(name="dump-api")
+export_app = typer.Typer(
+    name="dump-api", context_settings={"help_option_names": ["-h", "--help"]}
+)
 
 
 @export_app.command(

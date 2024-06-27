@@ -3,6 +3,7 @@ import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
+    MARKETPLACE_KEY_PACK_METADATA,
     MODULES,
     PACK_METADATA_AUTHOR,
     PACK_METADATA_CATEGORIES,
@@ -293,12 +294,13 @@ def test_IsCurrentVersionCorrectFormatValidator_is_valid(
                         PACK_METADATA_TAGS,
                         PACK_METADATA_USE_CASES,
                         PACK_METADATA_KEYWORDS,
+                        MARKETPLACE_KEY_PACK_METADATA,
                     ]
                 )
             ],
             1,
             [
-                f"The following fields are missing from the file: {', '.join([PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SUPPORT, PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_CATEGORIES, PACK_METADATA_TAGS, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS])}."
+                f"The following fields are missing from the file: {', '.join([PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SUPPORT, PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_CATEGORIES, PACK_METADATA_TAGS, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS, MARKETPLACE_KEY_PACK_METADATA])}."
             ],
         ),
     ],
@@ -310,7 +312,7 @@ def test_MissingFieldInPackMetadataValidator_is_valid(
     Given
     content_items.
         - Case 1: One pack_metadata without missing fields.
-        - Case 2: One pack_metadata with name, desc, support, currentVersion, author, url, categories, tags, use_cases, keywords fields missing.
+        - Case 2: One pack_metadata with name, desc, support, currentVersion, author, url, categories, tags, use_cases, keywords, marketplaces fields missing.
     When
     - Calling the MissingFieldInPackMetadataValidator is_valid function.
     Then

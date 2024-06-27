@@ -20,11 +20,7 @@ warning = []
 
 [path_based_validations]
 select = [
-    "BA101", "BA105", "BA106", "BA116", "BA118",
-    "DO104",
-    "IN108", "IN130",
-    "PA107", "PA108", "PA111", "PA115", "PA128", "PA130",
-    "RP101",
+    "PB114",
 ]
 warning = []
 
@@ -45,6 +41,7 @@ select = [
     "RM104", "RM105", "RM113", "RM114",
     "CL100",
     "GF100", "GF101",
+    "GR104",
     "IF100", "IF101", "IF102", "IF103", "IF104", "IF105", "IF106",
     "IM100", "IM101", "IM108", "IM109",
     "RP101"
@@ -74,5 +71,5 @@ warning = []
 
 
 [Custom_Categories]
-select = []
+select = ["DS108"]
 warning = []

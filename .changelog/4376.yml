@@ -1,0 +1,4 @@
+changes:
+- description: Converted the MR103 to a path validation. Validates that the file names are the same as its folder.
+  type: internal
+pr_number: 4376

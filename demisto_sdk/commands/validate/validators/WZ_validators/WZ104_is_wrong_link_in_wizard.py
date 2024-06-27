@@ -15,7 +15,7 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
     error_code = "WZ104"
     description = ""
     rationale = ""
-    error_message = ""
+    error_message = "{0}"
     related_field = ""
     is_auto_fixable = False
 
@@ -44,7 +44,7 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(", ".join(integrations_without_playbook)),
                 content_object=content_item,
             )
             for content_item in content_items
@@ -52,25 +52,3 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
                 integrations_without_playbook := self.integrations_without_playbook(content_item)
             )
         ]
-    # @error_codes("WZ104,WZ105")
-    # def do_all_fetch_integrations_have_playbook(self):
-    #     all_fetch_integrations_have_playbook = True
-    #     integrations = self._fetching_integrations.copy()
-    #     for link in self._set_playbooks.values():
-    #         if not link:  # handle case that a playbook was mapped to all integration
-    #             return True
-    #         if link not in integrations:
-    #             error_message, error_code = Errors.wrong_link_in_wizard(link)
-    #             if self.handle_error(
-    #                 error_message, error_code, file_path=self.file_path
-    #             ):
-    #                 all_fetch_integrations_have_playbook = False
-    #         else:
-    #             integrations.remove(link)
-    #     if len(integrations) != 0:
-    #         error_message, error_code = Errors.wizard_integrations_without_playbooks(
-    #             integrations
-    #         )
-    #         if self.handle_error(error_message, error_code, file_path=self.file_path):
-    #             all_fetch_integrations_have_playbook = False
-    #     return all_fetch_integrations_have_playbook

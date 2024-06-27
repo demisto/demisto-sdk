@@ -1639,11 +1639,10 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
     pack = create_pack_object(["currentVersion"], [current_version])
     integration = create_integration_object()
     pack.content_items.integration.extend(integration)
-    mocker.patch(
-        "demisto_sdk.commands.validate.validators.PA_validators"
-        ".PA114_pack_metadata_version_should_be_raised.get_remote_file",
-        return_value={"currentVersion": old_version},
-    )
+
+    class MockOldMetadata:
+        current_version = old_version
+
+    pack.old_base_content_object = MockOldMetadata()
     version_bump_validator = PackMetadataVersionShouldBeRaisedValidator()
-    version_bump_validator.external_args["prev_ver"] = "origin/master"
     assert len(version_bump_validator.is_valid([pack])) == expected_invalid

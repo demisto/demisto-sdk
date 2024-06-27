@@ -79,6 +79,14 @@
 
 - id: validate-xsoar-config
   name: validate-xsoar-config
-  entry: validate-xsoar-config
+  entry: validate-xsoar-configx
   language: python
   pass_filenames: true
+
+- id: validate-file-permission-changes
+  name: Validate File Permission Changes
+  description: Validate that file permissions haven't been changed.
+  entry: validate-file-permission-changes
+  language: python
+  files: ^Packs/
+  fails_fast: true

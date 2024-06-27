@@ -1077,3 +1077,51 @@ class GitUtil:
     def commit_files(self, commit_message: str, files: Union[List, str] = "."):
         self.repo.git.add(files)
         self.repo.index.commit(commit_message)
+
+    def has_file_permissions_changed(
+        self, file_path: Union[Path, str]
+    ) -> tuple[bool, str | None, str | None]:
+        """
+        Check whether the supplied file permissions have changed.
+
+        Args:
+        - `file_path` (``Path|str``): The path to the file to check for
+        permission changes.
+
+        Returns:
+        - `bool` indicating whether the file permissions have changed.
+        - `str` with the old permissions.
+        - `str` with the new permissions.
+
+        """
+
+        summary_output = self.repo.git.diff("--summary", "--staged", str(file_path))
+
+        pattern = r"mode change (\d{6}) => (\d{6}) (.+)"
+
+        match = re.search(pattern, summary_output)
+
+        if match:
+            old_permissions = match.group(1)
+            new_permissions = match.group(2)
+
+            return True, old_permissions, new_permissions
+        else:
+            return False, None, None
+
+    def stage_file(self, file_path: Union[Path, str]):
+        """
+        Stage a file.
+
+        Args:
+        - `file_path` (``Path | str``): The file path to add.
+        """
+
+        if isinstance(file_path, str):
+            file_path = Path(file_path)
+
+        if file_path.exists():
+            self.repo.git.add(str(file_path))
+            logger.debug(f"Staged file '{file_path}'")
+        else:
+            logger.error(f"File '{file_path}' doesn't exist. Not adding.")

@@ -20,8 +20,8 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_DIR,
     RELEASE_NOTES_DIR,
     SCRIPTS_DIR,
-    ExecutionMode,
     SKIP_RELEASE_NOTES_FOR_TYPES,
+    ExecutionMode,
     GitStatuses,
     PathLevel,
 )
@@ -60,14 +60,12 @@ class Initializer:
         prev_ver=None,
         file_path=None,
         execution_mode=None,
-        skip_pack_dependencies=False,
     ):
         self.staged = staged
         self.file_path = file_path
         self.committed_only = committed_only
         self.prev_ver = prev_ver
         self.execution_mode = execution_mode
-        self.skip_pack_dependencies = skip_pack_dependencies
 
     def validate_git_installed(self):
         """Initialize git util."""
@@ -336,7 +334,7 @@ class Initializer:
         pack_names = []
         pack_metadatas: Set[BaseContent] = set()
 
-        if self.skip_pack_dependencies:
+        if self.execution_mode != ExecutionMode.USE_GIT:
             logger.debug("Skipping pack metadata files validation.")
             return set()
 
@@ -373,9 +371,6 @@ class Initializer:
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
-            content_objects_to_run = content_objects_to_run.union(
-                self.get_associated_pack_metadata(content_objects_to_run)
-            )
         elif self.execution_mode == ExecutionMode.SPECIFIC_FILES:
             (
                 content_objects_to_run,
@@ -398,15 +393,17 @@ class Initializer:
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
-            content_objects_to_run = content_objects_to_run.union(
-                self.get_associated_pack_metadata(content_objects_to_run)
-            )
+
         if self.execution_mode != ExecutionMode.USE_GIT:
             content_objects_to_run_with_packs: Set[
                 BaseContent
             ] = self.get_items_from_packs(content_objects_to_run)
         else:
+            content_objects_to_run = content_objects_to_run.union(
+                self.get_associated_pack_metadata(content_objects_to_run)
+            )
             content_objects_to_run_with_packs = content_objects_to_run
+
         for non_content_item in non_content_items:
             logger.warning(
                 f"Invalid content path provided: {str(non_content_item)}. Please provide a valid content item or pack path."

@@ -706,7 +706,7 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "--skip-pack-dependencies",
     is_flag=True,
-    help="Skip validation of pack dependencies.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip validation of pack dependencies.",
 )
 @click.option(
     "--create-id-set",
@@ -864,6 +864,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 "print_ignored_files",
                 "no_docker_checks",
                 "silence_init_prints",
+                "skip_pack_dependencies",
                 "id_set_path",
                 "create_id_set",
                 "skip_schema_check",
@@ -928,7 +929,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 prev_ver=kwargs["prev_ver"],
                 file_path=file_path,
                 execution_mode=execution_mode,
-                skip_pack_dependencies=kwargs.get("skip_pack_dependencies"),
             )
             validator_v2 = ValidateManager(
                 file_path=file_path,

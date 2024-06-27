@@ -252,8 +252,7 @@ jobs:
       - name: Create SDK Config File - Ignore BA101
         run: |
           # Run only a specific validation to make sure validate is triggered successfully in demisto-sdk pre-commit
-          cd content
-          echo -e '[use_git]\nselect = ["BA100"]\n[path_based_validations]\nselect = ["BA100"]' > validation_config.toml
+          echo -e '[use_git]\nselect = ["BA100"]\n[path_based_validations]\nselect = ["BA100"]' > demisto_sdk/commands/validate/sdk_validation_config.toml
 
       - name: run pre-commit on changed files
         timeout-minutes: 60

@@ -48,8 +48,6 @@ class ConfigReader:
         """Extract the relevant information from the relevant category in the config file.
 
         Args:
-            use_git (bool): The use_git flag.
-
         Returns:
             Tuple[List, List, List, dict]: the select, warning, and ignorable errors sections from the given category,
             and the support_level dict with errors to ignore.

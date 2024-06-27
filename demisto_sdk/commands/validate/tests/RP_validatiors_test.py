@@ -9,6 +9,9 @@ from demisto_sdk.commands.validate.validators.RP_validators.RP101_expiration_fie
 from demisto_sdk.commands.validate.validators.RP_validators.RP102_details_field_equals_id import (
     DetailsFieldEqualsIdValidator,
 )
+from demisto_sdk.commands.validate.validators.RP_validators.RP103_is_valid_indicator_type_id import (
+    IsValidIndicatorTypeId,
+)
 
 
 @pytest.mark.parametrize(
@@ -86,3 +89,65 @@ def test_DetailsFieldEqualsIdValidator_is_valid():
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_ValidIndicatorTypeId():
+    """
+    Given
+    content_items iterables.
+        - Case 1: One indicator_type with letters string
+        - Case 2: One indicator_type with letters string with ampersands
+        - Case 3: One indicator_type with letters string with whitespaces
+        - Case 4: One indicator_type with letters string with underscores
+        - Case 5: One indicator_type with letters string with numbers
+    When
+    - Calling the IsValidIndicatorTypeId is_valid function.
+    Then
+        - Make sure no errors will return.
+    """
+
+    content_items = [
+        create_indicator_type_object(["id"], ["teststring"]),
+        create_indicator_type_object(["id"], ["test&string&with&ampersands&"]),
+        create_indicator_type_object(["id"], ["test string with whitespaces"]),
+        create_indicator_type_object(["id"], ["test_string_with_underscores"]),
+        create_indicator_type_object(["id"], ["test0string1with2numbers3"]),
+    ]
+    expected_number_of_failures = 0
+    expected_msgs = []
+    results = IsValidIndicatorTypeId().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_InValidIndicatorTypeId():
+    """
+    Given
+    content_items iterables.
+        - Case 1: One indicator_type with invalid special characters.
+        - Case 2: One indicator_type with invalid slashes
+    When
+    - Calling the IsValidIndicatorTypeId is_valid function.
+    Then
+        - Make sure it will return 2 errors with the appropriate message.
+    """
+
+    content_items = [
+        create_indicator_type_object(["id"], ["string_with_special_characters_*#$"]),
+        create_indicator_type_object(["id"], ["string_with_slash_/"]),
+    ]
+    expected_number_of_failures = 2
+    expected_msg = (
+        "The `id` field must consist of alphanumeric characters (A-Z, a-z, 0-9), whitespaces ( ), "
+        "underscores (_), and ampersands (&) only."
+    )
+
+    results = IsValidIndicatorTypeId().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    for result in results:
+        assert result.message == expected_msg

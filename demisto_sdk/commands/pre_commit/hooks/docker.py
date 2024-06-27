@@ -40,7 +40,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 NO_SPLIT = None
 USER_DEMITSO = "demisto"
 
-IMAGES_BATCH = 50
+IMAGES_BATCH = int(os.getenv("IMAGES_BATCH") or 40)
 
 
 @lru_cache()

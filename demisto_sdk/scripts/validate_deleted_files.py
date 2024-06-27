@@ -76,7 +76,10 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
     ]
 
 
-main = typer.Typer(pretty_exceptions_enable=False)
+main = typer.Typer(
+    pretty_exceptions_enable=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 
 @main.command(

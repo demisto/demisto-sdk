@@ -96,8 +96,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 invalid_headers_content_item,
             ) = self.validate_release_notes_headers(content_item)
             content_type_message = (
-                "Headers Content Types: {}\n".format(
-                    ", ".join(invalid_headers_content_type)
+                f"Headers Content Types: {', '.join(invalid_headers_content_type)}\n"
                 )
                 if invalid_headers_content_type
                 else ""

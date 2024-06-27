@@ -84,16 +84,8 @@ def replace_markdown_urls_and_update_markdown_images(
         return {}
 
     save_to_artifact = {pack_name: {file_type: urls_list}}
-
-    run_sync(
-        f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}",
-        update_markdown_images_file_links,
-        {
-            "images_dict": save_to_artifact,
-            "pack_name": pack_name,
-            "file_type": file_type,
-            "markdown_images_file_name": MARKDOWN_IMAGES_ARTIFACT_FILE_NAME,
-        },
+    safe_update_markdown_images_file_links(
+        save_to_artifact, pack_name, file_type, MARKDOWN_IMAGES_ARTIFACT_FILE_NAME
     )
 
     logger.debug(f"returning the following urls to artifacts.\n{save_to_artifact=}")
@@ -129,20 +121,38 @@ def replace_markdown_rel_paths_and_upload_to_artifacts(
         return {}
 
     save_to_artifact = {pack_name: {file_type: rel_paths_list}}
-
-    run_sync(
-        f"{os.getenv('ARTIFACTS_FOLDER')}/{MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME.replace('json', 'lock')}",
-        update_markdown_images_file_links,
-        {
-            "images_dict": save_to_artifact,
-            "pack_name": pack_name,
-            "file_type": file_type,
-            "markdown_images_file_name": MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME,
-        },
+    safe_update_markdown_images_file_links(
+        save_to_artifact,
+        pack_name,
+        file_type,
+        MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME,
     )
 
     logger.debug(f"Saved the following rel_paths to artifacts.\n{save_to_artifact=}")
     return save_to_artifact
+
+
+def safe_update_markdown_images_file_links(
+    images_dict, pack_name, file_type, image_file_path
+):
+    """Calling the update_markdown_images_file_links function using the synced function.
+
+    Args:
+        images_dict (dict): The dict contains all the images info for the current pack.
+        pack_name (str): The name of the pack to update.
+        file_type (ImagesFolderNames): The markdown file the pics was obtained from.
+        image_file_path (str): The json file path to update
+    """
+    run_sync(
+        f"{os.getenv('ARTIFACTS_FOLDER')}/{image_file_path.replace('json', 'lock')}",
+        update_markdown_images_file_links,
+        {
+            "images_dict": images_dict,
+            "pack_name": pack_name,
+            "file_type": file_type,
+            "markdown_images_file_name": image_file_path,
+        },
+    )
 
 
 def collect_images_from_markdown_and_replace_with_storage_path(

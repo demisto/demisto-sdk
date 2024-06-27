@@ -1274,7 +1274,8 @@ class CloudServerContext(ServerContext):
 
         # In XSIAM or XSOAR SAAS - We're running without proxy. This code won't be executed on SaaS servers.
         self.proxy = None
-        self.check_if_can_create_manual_alerts()
+        if self.build_context.server_type == XSIAM_SERVER_TYPE:
+            self.check_if_can_create_manual_alerts()
 
         self.api_key = self.build_context.api_key.get(cloud_machine)
         self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(

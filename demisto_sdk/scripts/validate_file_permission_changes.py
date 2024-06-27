@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 import typer
 from git import Blob
@@ -33,7 +33,7 @@ def validate_changed_files_permissions() -> None:
             f"Iterating over {len(changed_files)} changed files to check if their permissions flags have changed..."
         )
 
-        result: dict[str, Any] = {}
+        result: Dict[str, Any] = {}
 
         for changed_file in changed_files:
             result[changed_file] = git_util.has_file_permissions_changed(changed_file)

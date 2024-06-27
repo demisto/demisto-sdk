@@ -159,3 +159,22 @@ class TestValidateFileChangePermissions:
             f"Please revert the file permissions using the command 'chmod +x {py_file_path}"
             in actual_output[2]
         )
+
+
+    def test_set_executable_not_pack(self, git_repo: Repo, mocker: MockerFixture):
+        """
+        Test a scenario where we modify a file's permission
+        outside the Packs directory.
+
+        Given:
+        - A content repo with a pack and integration.
+
+        When:
+        - We add a new file outside the Packs directory.
+        - We then modify the file permissions to make it executable.
+
+        Then:
+        - `validate_file_permission_changes` exit code is 0.
+        """
+
+        pass

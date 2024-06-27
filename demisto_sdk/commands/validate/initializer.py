@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_DIR,
     RELEASE_NOTES_DIR,
     SCRIPTS_DIR,
+    ExecutionMode,
     GitStatuses,
     PathLevel,
 )
@@ -50,19 +51,17 @@ class Initializer:
 
     def __init__(
         self,
-        use_git=False,
         staged=None,
         committed_only=None,
         prev_ver=None,
         file_path=None,
-        all_files=False,
+        execution_mode: Optional[ExecutionMode] = None,
     ):
         self.staged = staged
-        self.use_git = use_git
         self.file_path = file_path
-        self.all_files = all_files
         self.committed_only = committed_only
         self.prev_ver = prev_ver
+        self.execution_mode = execution_mode
 
     def validate_git_installed(self):
         """Initialize git util."""
@@ -71,7 +70,7 @@ class Initializer:
             self.branch_name = self.git_util.get_current_git_branch_or_hash()
         except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
-            if self.use_git:
+            if self.execution_mode == ExecutionMode.USE_GIT:
                 raise
             # if we are not using git - simply move on.
             else:
@@ -249,6 +248,23 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
+        if os.getenv("CONTRIB_BRANCH"):
+            """
+            If this command runs on a build triggered by an external contribution PR,
+            the relevant modified files would have an "untracked" status in git.
+            The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
+            and adds them to `modified_files`. See CIAC-10490 for more info.
+            """
+            # filter out a string list of untracked files with a path that starts with "Packs/"
+            untracked_files_list = filter(
+                lambda f: f.startswith("Packs/"), self.git_util.repo.untracked_files
+            )
+            logger.info(
+                f"\n[cyan]Running on untracked files: {untracked_files_list}[/cyan]"
+            )
+            # convert the string list of untracked files to a set of Path object
+            untracked_files_paths = set(map(Path, untracked_files_list))
+            modified_files = modified_files.union(untracked_files_paths)
 
         return modified_files, added_files, renamed_files
 
@@ -311,13 +327,13 @@ class Initializer:
         content_objects_to_run: Set[BaseContent] = set()
         invalid_content_items: Set[Path] = set()
         non_content_items: Set[Path] = set()
-        if self.use_git:
+        if self.execution_mode == ExecutionMode.USE_GIT:
             (
                 content_objects_to_run,
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
-        elif self.file_path:
+        elif self.execution_mode == ExecutionMode.SPECIFIC_FILES:
             (
                 content_objects_to_run,
                 invalid_content_items,
@@ -325,21 +341,21 @@ class Initializer:
             ) = self.paths_to_basecontent_set(
                 set(self.load_files(self.file_path.split(",")))
             )
-        elif self.all_files:
+        elif self.execution_mode == ExecutionMode.ALL_FILES:
             logger.info("Running validation on all files.")
             content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)
         else:
-            self.use_git = True
+            self.execution_mode = ExecutionMode.USE_GIT
             self.committed_only = True
             (
                 content_objects_to_run,
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
-        if not self.use_git:
+        if self.execution_mode != ExecutionMode.USE_GIT:
             content_objects_to_run_with_packs: Set[
                 BaseContent
             ] = self.get_items_from_packs(content_objects_to_run)
@@ -431,7 +447,6 @@ class Initializer:
     def paths_to_basecontent_set(
         self, files_set: Set[Path]
     ) -> Tuple[Set[BaseContent], Set[Path], Set[Path]]:
-
         """Attempting to convert the given paths to a set of BaseContent.
 
         Args:

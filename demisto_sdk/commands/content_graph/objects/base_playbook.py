@@ -175,6 +175,7 @@ class TaskConfig(BaseModel):
 class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
     version: Optional[int] = 0
     tasks: Dict[str, TaskConfig] = Field([], exclude=True)
+    quiet: bool = Field(False)
 
     def summary(
         self,

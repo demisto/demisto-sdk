@@ -46,13 +46,16 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not (
-                rn_stripped_content := self.strip_exclusion_tag(
-                    content_item.release_note.file_content
+            if content_item.release_note.exist
+            and (
+                not (
+                    rn_stripped_content := self.strip_exclusion_tag(
+                        content_item.release_note.file_content
+                    )
                 )
-            )
-            or any(
-                note in rn_stripped_content
-                for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+                or any(
+                    note in rn_stripped_content
+                    for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+                )
             )
         ]

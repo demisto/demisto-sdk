@@ -21,6 +21,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme
 from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
     IsContainDemistoWordValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM107_is_template_sentence_in_readme import (
+    IsTemplateInReadmeValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_integration_image_path_valid import (
     IntegrationRelativeImagePathValidator,
 )
@@ -542,3 +545,70 @@ def test_ImagePathOnlyReadMeValidator_is_valid_invalid_case():
 
     result = ReadmeRelativeImagePathValidator().is_valid(content_items)
     assert result[0].message == expected
+
+
+def test_VerifyTemplateInReadmeValidator_valid_case(repo):
+    """
+    Given
+    content_items.
+    - Integration with readme that contains %%FILL HERE%% template substring.
+    - Script with readme that contains %%FILL HERE%% template substring.
+    - Playbook with readme that contains %%FILL HERE%% template substring.
+    - Pack with readme that contains %%FILL HERE%% template substring.
+    When
+    - Calling the IsTemplateInReadmeValidator is_valid function.
+
+    Then
+    - Make sure that the validator return the list of the content items, which has %%FILL HERE%% in the readme file.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+        create_script_object(
+            readme_content="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+        create_playbook_object(
+            readme_content="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+        create_pack_object(
+            readme_text="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+    ]
+
+    expected_error_message = "The template '%%FILL HERE%%' exists in the following lines of the README content: 1."
+    validator_results = IsTemplateInReadmeValidator().is_valid(content_items)
+    assert validator_results
+    for validator_result in validator_results:
+        assert validator_result.message == expected_error_message
+
+
+def test_VerifyTemplateInReadmeValidator_invalid_case(repo):
+    """
+    Given
+    content_items.
+    - Integration with readme without %%FILL HERE%% template substring.
+    - Script with readme without %%FILL HERE%% template substring.
+    - Playbook with readme without %%FILL HERE%% template substring.
+    - Pack with readme without %%FILL HERE%% template substring.
+    When
+    - Calling the IsTemplateInReadmeValidator is_valid function.
+
+    Then
+    - Make sure that the validator return empty list.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="The specific template substring is not in the README.",
+        ),
+        create_script_object(
+            readme_content="The specific template substring is not in the README.",
+        ),
+        create_playbook_object(
+            readme_content="The specific template substring is not in the README.",
+        ),
+        create_pack_object(
+            readme_text="The specific template substring is not in the README.",
+        ),
+    ]
+    assert not IsTemplateInReadmeValidator().is_valid(content_items)

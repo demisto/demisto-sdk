@@ -30,7 +30,11 @@ SCHEMA_TYPE_BOOLEAN = "Boolean"
 
 @app.command(
     no_args_is_help=True,
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    context_settings={
+        "allow_extra_args": True,
+        "ignore_unknown_options": True,
+        "help_option_names": ["-h", "--help"],
+    },
 )
 def generate_modeling_rules(
     ctx: typer.Context,

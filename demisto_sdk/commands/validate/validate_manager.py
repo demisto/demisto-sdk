@@ -26,13 +26,12 @@ class ValidateManager:
         validation_results: ResultWriter,
         config_reader: ConfigReader,
         initializer: Initializer,
-        validate_all=False,
         file_path=None,
         allow_autofix=False,
         ignore_support_level=False,
         ignore: Optional[List[str]] = None,
     ):
-        self.validate_all = validate_all
+        self.ignore_support_level = ignore_support_level
         self.file_path = file_path
         self.allow_autofix = allow_autofix
         self.validation_results = validation_results
@@ -46,8 +45,8 @@ class ValidateManager:
         ) = self.initializer.gather_objects_to_run_on()
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = self.config_reader.read(
-            use_git=self.initializer.use_git,
             ignore_support_level=ignore_support_level,
+            mode=self.initializer.execution_mode,
             codes_to_ignore=ignore,
         )
         self.validators = self.filter_validators()
@@ -66,9 +65,10 @@ class ValidateManager:
             if filtered_content_objects_for_validator := list(
                 filter(
                     lambda content_object: validator.should_run(
-                        content_object,
-                        self.configured_validations.ignorable_errors,
-                        self.configured_validations.support_level_dict,
+                        content_item=content_object,
+                        ignorable_errors=self.configured_validations.ignorable_errors,
+                        support_level_dict=self.configured_validations.support_level_dict,
+                        running_execution_mode=self.initializer.execution_mode,
                     ),
                     self.objects_to_run,
                 )
@@ -104,7 +104,7 @@ class ValidateManager:
             BaseValidator.graph_interface.close()
         self.add_invalid_content_items()
         return self.validation_results.post_results(
-            only_throw_warning=self.configured_validations.only_throw_warnings
+            only_throw_warning=self.configured_validations.warning
         )
 
     def filter_validators(self) -> List[BaseValidator]:
@@ -118,7 +118,7 @@ class ValidateManager:
         return [
             validator
             for validator in get_all_validators()
-            if validator.error_code in self.configured_validations.validations_to_run
+            if validator.error_code in self.configured_validations.select
         ]
 
     def add_invalid_content_items(self):

@@ -19,6 +19,7 @@ from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     DIRS_ALLOWING_SPACE_IN_FILENAMES,
+    MODELING_RULES_DIR,
     XSIAM_REPORTS_DIR,
     ZERO_DEPTH_FILES,
     InvalidClassifier,
@@ -29,6 +30,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidIntegrationScriptFileName,
     InvalidIntegrationScriptFileType,
     InvalidLayoutFileName,
+    InvalidModelingRuleFileName,
     InvalidSuffix,
     InvalidXDRCTemplatesFileName,
     InvalidXSIAMReportFileName,
@@ -174,9 +176,11 @@ def test_depth_one_pass(folder: str):
         InvalidIntegrationScriptFileType,
         InvalidIntegrationScriptFileName,
         InvalidXDRCTemplatesFileName,
+        InvalidModelingRuleFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
+        # InvalidModelingRuleFileName will be raised but it is irrelevant for this test.
         pass
 
 
@@ -442,3 +446,33 @@ def test_exotic_suffix_test_data(folder: str, suffix: str):
 def test_exotic_suffix_doc_data(folder: str, suffix: str):
     # should NOT raise InvalidSuffix
     _validate((DUMMY_PACK_PATH / folder / "file").with_suffix(f".{suffix}"))
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "RuleEventCollector_1_2.yml",
+        "RuleEventCollector_1_2.xif",
+        "RuleEventCollector_1_2_schema.json",
+        "RuleEventCollector_1_2_testdata.json",
+    ],
+)
+def test_modeling_rule_file_valid(file_name: str):
+    folder = "RuleEventCollector_1_2"
+    _validate(DUMMY_PACK_PATH / MODELING_RULES_DIR / folder / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "RuleEventCollector_1_3.yml",
+        "RuleEventCollector1_1_2.xif",
+        "RuleEventColector_1_2_schema.json",
+        "RuleEventCollector_1_2.json",  # json without schema
+        "RuleEventCollector_1_2_3.yml",
+    ],
+)
+def test_modeling_rule_file_invalid(file_name: str):
+    folder = "RuleEventCollector_1_2"
+    with pytest.raises(InvalidModelingRuleFileName):
+        _validate(DUMMY_PACK_PATH / MODELING_RULES_DIR / folder / file_name)

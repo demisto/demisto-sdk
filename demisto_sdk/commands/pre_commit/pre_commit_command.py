@@ -662,12 +662,31 @@ def preprocess_files(
         raw_files = git_util._get_all_changed_files(prev_version)
         if not commited_only:
             raw_files = raw_files.union(staged_files)
+        if os.getenv("CONTRIB_BRANCH"):
+            """
+            If this command runs on a build triggered by an external contribution PR,
+            the relevant modified files would have an "untracked" status in git.
+            The following code segment retrieves all relevant untracked file paths that were changed in the external contribution PR
+            and adds them to `raw_files`. See CIAC-10490 for more info.
+            """
+            # filter out a string list of untracked files with a path that starts with "Packs/"
+            # The file paths in the build machine are relative.
+            untracked_files_list = filter(
+                lambda f: f.startswith("Packs/"), git_util.repo.untracked_files
+            )
+            logger.info(
+                f"\n[cyan]Running on untracked files: {untracked_files_list}[/cyan]"
+            )
+            # convert the string list of untracked files to a set of Path object
+            untracked_files_paths = set(map(Path, untracked_files_list))
+            raw_files = raw_files.union(untracked_files_paths)
     elif all_files:
         raw_files = all_git_files
     else:
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."
         )
+
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():

@@ -4,6 +4,7 @@ from typing import Dict, List, NamedTuple, Optional
 
 import toml
 
+from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.common.logger import logger
 
 USE_GIT = "use_git"
@@ -25,28 +26,41 @@ class ConfigReader:
         self,
         path: Optional[Path] = None,
         category: Optional[str] = None,
+        explicitly_selected: Optional[List[str]] = None,
     ):
+        self.category_to_run = category
+        self.explicitly_selected = explicitly_selected
+
         if path is None:
             path = Path(CONFIG_FILE_PATH)
 
         if not path.exists():
             logger.error(f"Config file {path} does not exist.")
             exit(1)
-
         self.config_file_content: dict = toml.load(path)
-        self.category_to_run = category
 
     def read(
         self,
-        use_git: bool,
+        mode: Optional[ExecutionMode],
         ignore_support_level: Optional[bool] = False,
         codes_to_ignore: Optional[List[str]] = None,
     ) -> ConfiguredValidations:
-        """Extract the relevant information from the relevant category in the config file."""
-        flag = self.category_to_run or (USE_GIT if use_git else PATH_BASED_VALIDATIONS)
-        section = self.config_file_content.get(flag, {})
+        """Extract the relevant information from the relevant category in the config file.
 
-        select = sorted(section.get("select", []))
+        Args:
+            use_git (bool): The use_git flag.
+
+        Returns:
+            Tuple[List, List, List, dict]: the select, warning, and ignorable errors sections from the given category,
+            and the support_level dict with errors to ignore.
+        """
+        flag = self.category_to_run or (
+            USE_GIT if mode == ExecutionMode.USE_GIT else PATH_BASED_VALIDATIONS
+        )
+        section = self.config_file_content.get(flag, {})
+        explicitly_selected = sorted(filter(None, self.explicitly_selected or ()))
+
+        select = explicitly_selected or sorted(section.get("select", []))
         warning = sorted(section.get("warning", []))
         ignorable = sorted(self.config_file_content.get("ignorable_errors", []))
         support_level_dict = (
@@ -61,7 +75,7 @@ class ConfigReader:
             warning = remove_ignored(warning, "warning", codes_to_ignore)
 
         return ConfiguredValidations(
-            select=select,
+            select=explicitly_selected or select,
             warning=warning,
             ignorable_errors=ignorable,
             support_level_dict=support_level_dict,
@@ -70,8 +84,8 @@ class ConfigReader:
 
 def check_ignored_are_ignorable(
     codes_to_ignore: Optional[List[str]], ignorable: List[str]
-):
-    if not codes_to_ignore:
+) -> None:
+    if not codes_to_ignore:  # nothing to check
         return
 
     if cannot_be_ignored := set(codes_to_ignore).difference(ignorable):

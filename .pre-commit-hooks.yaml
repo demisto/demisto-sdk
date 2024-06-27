@@ -79,7 +79,7 @@
 
 - id: validate-xsoar-config
   name: validate-xsoar-config
-  entry: validate-xsoar-configx
+  entry: validate-xsoar-config
   language: python
   pass_filenames: true
 

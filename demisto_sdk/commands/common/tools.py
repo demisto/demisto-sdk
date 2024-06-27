@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import fcntl
 import glob
 import os
 import re
@@ -4556,3 +4557,39 @@ def find_regex_on_data(data: str, regex: str):
         data,
         re.IGNORECASE,
     )
+
+
+def run_sync(
+    lock_file_path: str,
+    exclusive_function: Callable,
+    exclusive_function_kwargs: dict = {},
+):
+    """Uses a given lock file path to run a method synchronously.
+
+    Args:
+        lock_file_path (str): The lock file path.
+        exclusive_function (Callable): The function we want to run exclusivly.
+        exclusive_function_kwargs (dict, optional): The kwargs we wish to pass to the exclusive_function. Defaults to {}.
+    """
+    try:
+        # Open (or create) the lock file
+        lock_file = open(lock_file_path, "w")
+
+        # Wait until the lock is acquired
+        while True:
+            try:
+                # Try to acquire an exclusive lock
+                fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                logger.debug("Resource is busy, waiting...")
+                time.sleep(0.1)  # Wait for 0.1 seconds before retrying
+
+        # If lock is acquired, call the exclusive function
+        exclusive_function(**exclusive_function_kwargs)
+
+    finally:
+        if lock_file:
+            # Release the lock and close the file
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+            lock_file.close()

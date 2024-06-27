@@ -824,10 +824,7 @@ class BuildContext:
 
     def _extract_filtered_tests(self) -> dict:
         """
-        Reads the content from packs_to_install_by_machine.json and parses it into a list of test playbook IDs that should be run
-        in the current build
-        Returns:
-            A list of playbook IDs that should be run in the current build
+        Reads the content from packs_to_install_by_machine.json
         """
         with open(self.packs_to_install_by_machine_path) as packs_to_install_by_machine:
             return json.loads(packs_to_install_by_machine.read())
@@ -1287,6 +1284,8 @@ class CloudServerContext(ServerContext):
         self.filtered_tests = self.build_context.machine_assignment_json.get(
             cloud_machine, {}
         ).get("playbooks_to_run")
+        self.build_context.logging_module.info(f"{self.filtered_tests=}")
+        self.build_context.logging_module.info(f"{self.build_context.machine_assignment_json=}")
 
     def reset_containers(self):
         self.build_context.logging_module.info(
@@ -1472,6 +1471,8 @@ class OnPremServerContext(ServerContext):
         self.filtered_tests = self.build_context.machine_assignment_json.get(
             "xsoar-machine", {}
         ).get("playbooks_to_run")
+        self.build_context.logging_module.info(f"{self.filtered_tests=}")
+        self.build_context.logging_module.info(f"{self.build_context.machine_assignment_json=}")
 
     def reset_containers(self):
         self.build_context.logging_module.info("Resetting containers\n", real_time=True)

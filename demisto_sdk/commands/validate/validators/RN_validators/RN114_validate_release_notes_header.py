@@ -6,10 +6,10 @@ from typing import Any, Dict, Iterable, List, Set, Tuple, Union
 from demisto_sdk.commands.common.constants import (
     RN_HEADER_BY_FILE_TYPE,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -66,17 +66,19 @@ CONTENT_ITEM_SECTION_REGEX = (
     r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
 )
 
+
 def remove_none_values(ls: Union[List[Any], Tuple[Any, ...]]) -> List[Any]:
-        """
-        Filters out None values from a list or tuple.
+    """
+    Filters out None values from a list or tuple.
 
-        Args:
-            ls (List or Tuple): The list or tuple to filter.
+    Args:
+        ls (List or Tuple): The list or tuple to filter.
 
-        Returns:
-            List: Filtered list with None values removed.
-        """
-        return list(filter(None, ls))
+    Returns:
+        List: Filtered list with None values removed.
+    """
+    return list(filter(None, ls))
+
 
 class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"
@@ -104,9 +106,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             if content_item.pack_metadata_dict and content_item.pack_metadata_dict.get(
                 "hidden"
             ):
-                logger.debug(
-                    f"Content item {content_item.id} is marked as hidden. Skipping."
-                )
+                logger.debug("Content item is marked as hidden. Skipping.")
                 continue
             (
                 invalid_headers_content_type,
@@ -175,7 +175,9 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             for content_type_section in content_type_sections_ls:
                 content_type_section = remove_none_values(ls=content_type_section)
                 if content_type_section:
-                    logger.debug(f'removing New: " if "New:" in {content_type_section[0]} else "" ')
+                    logger.debug(
+                        f'removing New: " if "New:" in {content_type_section[0]} else "" '
+                    )
                     header = (
                         content_type_section[0].rstrip()
                         if ("New: " not in content_type_section[0])

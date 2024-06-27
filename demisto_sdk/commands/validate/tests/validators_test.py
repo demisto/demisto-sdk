@@ -808,5 +808,3 @@ def test_check_metadata_version_bump_on_content_changes(mocker, repo):
 
     # Assert the PA114 validation will run
     assert version_bump_validator
-    # Assert external args were propagated correctly.
-    assert version_bump_validator.external_args["prev_ver"] == "some_prev_ver"

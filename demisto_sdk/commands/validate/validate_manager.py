@@ -50,7 +50,6 @@ class ValidateManager:
             )
         )
         self.validators = self.filter_validators()
-        self.update_validators_external_args()
 
     def run_validations(self) -> int:
         """
@@ -121,14 +120,6 @@ class ValidateManager:
             for validator in get_all_validators()
             if validator.error_code in self.configured_validations.validations_to_run
         ]
-
-    def update_validators_external_args(self):
-        """Update the validators with args from the initializer."""
-        for validator in self.validators:
-            if validator.external_args:
-                for external_arg_name in validator.external_args.keys():
-                    external_arg_value = getattr(self.initializer, external_arg_name)
-                    validator.external_args[external_arg_name] = external_arg_value
 
     def add_invalid_content_items(self):
         """Create results for all the invalid_content_items.

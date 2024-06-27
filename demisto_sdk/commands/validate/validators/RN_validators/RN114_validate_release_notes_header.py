@@ -65,6 +65,7 @@ CONTENT_ITEM_SECTION_REGEX = (
     r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
 )
 
+
 class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"
     description = (

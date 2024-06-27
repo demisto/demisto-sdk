@@ -160,7 +160,6 @@ class TestValidateFileChangePermissions:
             in actual_output[2]
         )
 
-
     def test_set_executable_not_pack(self, git_repo: Repo, mocker: MockerFixture):
         """
         Test a scenario where we modify a file's permission

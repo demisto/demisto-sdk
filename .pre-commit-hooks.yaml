@@ -89,4 +89,3 @@
   entry: validate-file-permission-changes
   language: python
   files: ^Packs/
-  fails_fast: true

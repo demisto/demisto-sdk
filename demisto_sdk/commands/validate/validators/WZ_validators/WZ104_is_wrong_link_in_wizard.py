@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Iterable, List
+
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -21,13 +22,15 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
 
     def integrations_without_playbook(self, content_item: ContentTypes) -> List[str]:
         content_item_json = json.loads(content_item.text)
-        wizard_json_object = content_item_json.get('wizard', {})
+        wizard_json_object = content_item_json.get("wizard", {})
         set_playbooks = wizard_json_object.get("set_playbook", [])
-        playbooks_link_to_integration = {playbook.get("name", ""): playbook.get("link_to_integration") for playbook in
-                                         set_playbooks}
+        playbooks_link_to_integration = {
+            playbook.get("name", ""): playbook.get("link_to_integration")
+            for playbook in set_playbooks
+        }
         integrations = []
-        for integration in wizard_json_object.get('fetching_integrations', []):
-            integrations.append(integration.get('name'))
+        for integration in wizard_json_object.get("fetching_integrations", []):
+            integrations.append(integration.get("name"))
 
         integrations_without_playbook = []
         for link in playbooks_link_to_integration.values():
@@ -44,11 +47,15 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(", ".join(integrations_without_playbook)),
+                message=self.error_message.format(
+                    ", ".join(integrations_without_playbook)
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
             if (
-                integrations_without_playbook := self.integrations_without_playbook(content_item)
+                integrations_without_playbook := self.integrations_without_playbook(
+                    content_item
+                )
             )
         ]

@@ -13,10 +13,10 @@ json = JSON_Handler()
 
 class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
     def __init__(
-            self,
-            path: Path,
-            pack_marketplaces: List[MarketplaceVersions],
-            git_sha: Optional[str] = None,
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.dependency_packs: str = json.dumps(
@@ -45,7 +45,7 @@ class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
         integrations: List[str] = []
         for integration_type in ["fetching_integrations", "supporting_integrations"]:
             for integration in self.json_data.get("wizard", {}).get(
-                    integration_type, []
+                integration_type, []
             ):
                 integrations.append(integration.get("name"))
         return integrations

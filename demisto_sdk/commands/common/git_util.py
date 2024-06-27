@@ -1080,7 +1080,7 @@ class GitUtil:
 
     def has_file_permissions_changed(
         self, file_path: Union[Path, str]
-    ) -> tuple[bool, str | None, str | None]:
+    ) -> Tuple[bool, str | None, str | None]:
         """
         Check whether the supplied file permissions have changed.
 

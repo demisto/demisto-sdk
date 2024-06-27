@@ -147,6 +147,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         for section in rn_sections:
             section = remove_none_values(ls=section)
             if not section:
+                logger.debug("No content items found under content type section.")
                 continue
 
             content_type = section[0]

@@ -13,10 +13,10 @@ ContentTypes = Wizard
 
 class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
     error_code = "WZ104"
-    description = ""
-    rationale = ""
-    error_message = "{0}"
-    related_field = ""
+    description = "Checks if all fetch integrations have playbook."
+    rationale = "Ensuring all integrations linked to playbook."
+    error_message = "The Following integrations has not linked playbook: {0}"
+    related_field = "fetching_integrations"
     is_auto_fixable = False
 
     def integrations_without_playbook(self, content_item: ContentTypes) -> List[str]:

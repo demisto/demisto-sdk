@@ -25,6 +25,7 @@ def test_IsWrongLinkInWizardValidator_invalid_case():
     results = IsWrongLinkInWizardValidator().is_valid([wizard])
     expected_error_messages = ['CrowdstrikeFalcon', 'Microsoft Defender Advanced Threat Protection']
     assert results
-    result_error_messages = results[0].message.split(', ')
+    integrations_without_playbook_from_error_message = results[0].message.split(': ')[1]
+    result_error_messages = integrations_without_playbook_from_error_message.split(', ')
     for result_error_message, expected_error_message in zip(result_error_messages, expected_error_messages):
         assert result_error_message == expected_error_message

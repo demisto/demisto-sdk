@@ -82,12 +82,8 @@ def remove_none_values(ls: Union[List[Any], Tuple[Any, ...]]) -> List[Any]:
 
 class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"
-    description = (
-        "Validate the content items mentioned in second-level headers (##), exist in the pack."
-    )
-    rationale = (
-        "Providing documentation with accurate headers, and avoid confusion."
-    )
+    description = "Validate the content items mentioned in second-level headers (##), exist in the pack."
+    rationale = "Providing documentation with accurate headers, and avoid confusion."
     error_message = (
         "The following invalid headers were found in:\n"
         "{content_type_message}\n{content_item_message}\n"
@@ -110,13 +106,11 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             ) = self.validate_release_notes_headers(content_item)
             content_type_message = (
                 f"Headers Content Types: {', '.join(invalid_headers_content_type)}\n"
-                )
                 if invalid_headers_content_type
                 else ""
             )
             content_item_message = (
                 f"Headers Content Items: {', '.join(invalid_headers_content_item)}\n"
-                )
                 if invalid_headers_content_item
                 else ""
             )

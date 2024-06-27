@@ -33,10 +33,13 @@ class ConfigReader:
 
         if path is None:
             path = Path(CONFIG_FILE_PATH)
+        elif isinstance(path, str):
+            path = Path(path)
 
         if not path.exists():
             logger.error(f"Config file {path} does not exist.")
             exit(1)
+
         self.config_file_content: dict = toml.load(path)
 
     def read(

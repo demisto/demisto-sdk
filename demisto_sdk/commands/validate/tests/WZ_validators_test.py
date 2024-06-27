@@ -8,11 +8,27 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 
 
 def test_IsWrongLinkInWizardValidator_valid_case():
+    """
+    Given
+        content_item as Wizard object. Each integration of the Wizard object has linked playbook.
+    When
+        Calling the IsWrongLinkInWizardValidator is_valid function.
+    Then
+        Make sure that the validator return empty list.
+    """
     wizard = create_wizard_object()
     assert not IsWrongLinkInWizardValidator().is_valid([wizard])
 
 
 def test_IsWrongLinkInWizardValidator_invalid_case():
+    """
+    Given
+        content_item as Wizard object. The object.text is missing wizard.fetching_integrations
+    When
+        Calling the IsWrongLinkInWizardValidator is_valid function.
+    Then
+        Make sure that the validator return list of integrations that doesn't have playbook.'
+    """
     wizard = create_wizard_object(dict_to_update={'wizard': {'fetching_integrations': [], "set_playbook": [
         {"name": "Endpoint Malware Investigation - Generic V2", "link_to_integration": "CrowdstrikeFalcon"},
         {"name": "Endpoint_2 Malware Investigation - Generic V2",

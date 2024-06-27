@@ -69,10 +69,27 @@ class ConfigReader:
             else {}
         )
 
+        def _ignore_errors(
+            codes: Iterable[str], category: str, codes_to_ignore: Iterable[str]
+        ) -> List[str]:
+            """
+            Removes the error codes we want to ignore, from a given list of error codes
+            This is an internal method, since it's not supposed to be used elsewhere, and has a potentially-confusing name
+            """
+            codes = set(codes)
+            if removed := codes.intersection(codes_to_ignore):
+                logger.warning(
+                    f"{category}: Removed ignored codes {','.join(sorted(removed))}"
+                )
+                return sorted(codes.difference(removed))
+            else:
+                logger.debug(f"{category}: nothing to filter out, using it as is")
+                return sorted(codes)
+
         if codes_to_ignore:
             check_ignored_are_ignorable(codes_to_ignore, ignorable)
-            select = remove_ignored(select, "select", codes_to_ignore)
-            warning = remove_ignored(warning, "warning", codes_to_ignore)
+            select = _ignore_errors(select, "select", codes_to_ignore)
+            warning = _ignore_errors(warning, "warning", codes_to_ignore)
 
         return ConfiguredValidations(
             select=explicitly_selected or select,
@@ -93,15 +110,3 @@ def check_ignored_are_ignorable(
             f"{','.join(sorted(cannot_be_ignored))} are not under `ignorable_errors` in the config file, cannot be ignored."
         )
         exit(1)
-
-
-def remove_ignored(
-    codes: Iterable[str], category: str, codes_to_ignore: Iterable[str]
-) -> List[str]:
-    codes = set(codes)
-    if removed := codes.intersection(codes_to_ignore):
-        logger.warning(f"{category}: Removed ignored codes {','.join(sorted(removed))}")
-        return sorted(codes.difference(removed))
-    else:
-        logger.debug(f"{category}: nothing to filter out, using it as is")
-        return sorted(codes)

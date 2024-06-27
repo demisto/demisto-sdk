@@ -16,8 +16,8 @@ ContentTypes = IncidentField
 def select_values_do_not_contain_empty_values_in_multi_select_types(
     content_item: ContentTypes,
 ) -> bool:
-    if content_item.data.get("type") == IncidentFieldType.MULTI_SELECT:
-        select_values = content_item.data.get("selectValues") or []
+    if content_item.field_type == IncidentFieldType.MULTI_SELECT:
+        select_values = content_item.select_values or []
         if "" in select_values:
             return False
     return True

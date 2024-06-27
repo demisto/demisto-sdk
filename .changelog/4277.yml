@@ -1,4 +1,4 @@
 changes:
-- description: Refactored validation IF119, Check whether a selectValue key in an incidentField of type singleSelect do not contain multiple or only empty options.
+- description: Added support for validation IF119 - "check whether a selectValue key in an incidentField of type singleSelect do not contain multiple or only empty options." for new validate flow.
   type: feature
 pr_number: 4277

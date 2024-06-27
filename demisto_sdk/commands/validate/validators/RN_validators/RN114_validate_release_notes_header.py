@@ -170,7 +170,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                     header = (
                         content_type_section[0].rstrip()
                         if ("New: " not in content_type_section[0])
-                        else content_type_section[0][5:]
+                        else content_type_section[0][len("New: "):]
                     )
                     headers.setdefault(content_type, []).append(header)
         return headers

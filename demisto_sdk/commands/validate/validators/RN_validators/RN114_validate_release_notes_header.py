@@ -93,8 +93,6 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_message = (
         "The following invalid headers were found in:\n"
         "{content_type_message}\n{content_item_message}\n"
-        "For common troubleshooting steps, please review the documentation found here: "
-        "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
     )
     related_field = "release_note"
     is_auto_fixable = False

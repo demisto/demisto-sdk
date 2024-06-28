@@ -66,7 +66,7 @@ def test_IsDashboardContainNecessaryFieldsValidator_is_valid():
 
     # not valid
     del dashboard.data_dict["fromDate"]
-    del dashboard.layout[0]["widget"]['dateRange']['toDate']
+    del dashboard.layout[0]["widget"]["dateRange"]["toDate"]
     result = IsDashboardContainNecessaryFieldsValidator().is_valid([dashboard])
 
     assert (
@@ -89,10 +89,11 @@ def test_fix_IsDashboardContainForbiddenFieldsValidator():
         - Remove the forbidden fields.
     """
     dashboard = create_dashboard_object(
-        ["system", "isCommon", "shared", "owner"],
-        [None] * 4
+        ["system", "isCommon", "shared", "owner"], [None] * 4
     )
 
     res = IsDashboardContainForbiddenFieldsValidator().fix(dashboard)
 
-    assert not IsDashboardContainForbiddenFieldsValidator().is_valid([res.content_object])
+    assert not IsDashboardContainForbiddenFieldsValidator().is_valid(
+        [res.content_object]
+    )

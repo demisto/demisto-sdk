@@ -30,8 +30,12 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
     description = "Validate that the dashboard excludes all the unnecessary fields."
     rationale = "The Dashboard should contain only the required fields."
     dashboard_error_message = "The '{0}' fields need to be removed from {1}."
-    widgets_error_message = "The '{0}' fields need to be removed from {1} Widget listed under {2}."
-    fix_message = 'Removed all unnecessary fields from {}: ' + ", ".join(FIELDS_TO_EXCLUDE)
+    widgets_error_message = (
+        "The '{0}' fields need to be removed from {1} Widget listed under {2}."
+    )
+    fix_message = "Removed all unnecessary fields from {}: " + ", ".join(
+        FIELDS_TO_EXCLUDE
+    )
     related_field = "layout"
     is_auto_fixable = True
 
@@ -39,7 +43,9 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
         results = []
         for content_item in content_items:
             error_messages = []
-            invalid_dashboard_fields = FIELDS_TO_EXCLUDE.intersection(content_item.data_dict)
+            invalid_dashboard_fields = FIELDS_TO_EXCLUDE.intersection(
+                content_item.data_dict
+            )
             invalid_widgets_fields = self.widgets_contain_forbidden_fields(content_item)
 
             if invalid_dashboard_fields:
@@ -86,7 +92,7 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
             new_item = item.get("widget", {})
             for field in FIELDS_TO_EXCLUDE:
                 new_item.pop(field, None)
-            item['widget'] = new_item
+            item["widget"] = new_item
 
         return FixResult(
             validator=self,

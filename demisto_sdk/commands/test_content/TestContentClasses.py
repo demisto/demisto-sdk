@@ -1426,6 +1426,10 @@ class CloudServerContext(ServerContext):
                 f"Starts tests with server url - {get_ui_url(self.server_url)}",
                 real_time=True,
             )
+            self.build_context.logging_module.info(
+                f"Running the following tests: {self.filtered_tests}",
+                real_time=True,
+            )
             self._execute_mockable_tests()
             self.build_context.logging_module.info(
                 "Running mock-disabled tests", real_time=True
@@ -1545,6 +1549,10 @@ class OnPremServerContext(ServerContext):
         try:
             self.build_context.logging_module.info(
                 f"Starts tests with server url - {get_ui_url(self.server_url)}",
+                real_time=True,
+            )
+            self.build_context.logging_module.info(
+                f"Running the following tests: {self.filtered_tests}",
                 real_time=True,
             )
             self._execute_mockable_tests()

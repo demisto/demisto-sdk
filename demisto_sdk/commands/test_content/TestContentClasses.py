@@ -187,6 +187,8 @@ class TestPlaybook:
         """
         self.build_context = build_context
         self.server_context = server_context
+        self.build_context.logging_module.info(f"{self.server_context.filtered_tests=}")
+
         self.configuration: TestConfiguration = test_configuration
         self.is_mockable: bool = (
             self.configuration.playbook_id not in server_context.unmockable_test_ids
@@ -322,6 +324,7 @@ class TestPlaybook:
             """
             Checks if there are a list of filtered tests that the playbook is in them.
             """
+
             if (
                 not self.server_context.filtered_tests
                 or self.configuration.playbook_id
@@ -837,19 +840,23 @@ class BuildContext:
         if self.is_saas_server_type:
             for machine in self.cloud_machines:
                 server_ip = self.env_json.get(machine).get("base_url")
-                servers.add(CloudServerContext(
-                    self,
-                    server_private_ip=server_ip,
-                    cloud_machine=machine,
-                    use_retries_mechanism=self.use_retries_mechanism,
-                ))
+                servers.add(
+                    CloudServerContext(
+                        self,
+                        server_private_ip=server_ip,
+                        cloud_machine=machine,
+                        use_retries_mechanism=self.use_retries_mechanism,
+                    )
+                )
         else:
             for server_ip in self.instances_ips:
-                servers.add(OnPremServerContext(
-                    self,
-                    server_private_ip=server_ip,
-                    use_retries_mechanism=self.use_retries_mechanism,
-                ))
+                servers.add(
+                    OnPremServerContext(
+                        self,
+                        server_private_ip=server_ip,
+                        use_retries_mechanism=self.use_retries_mechanism,
+                    )
+                )
         return servers
 
     def _get_instances_ips(self) -> List[str]:
@@ -1053,13 +1060,8 @@ class ServerContext:
         self.use_retries_mechanism: bool = use_retries_mechanism
         self.unmockable_test_ids: Set[str] = set()
         self.filtered_tests: list[str] = []
-        (
-            self.mockable_tests_to_run,
-            self.unmockable_tests_to_run,
-        ) = self._get_tests_to_run()
         self.test_retries_queue: Queue = Queue()
         self.all_integrations_configurations = self._get_all_integration_config()
-
 
     def _execute_unmockable_tests(self):
         """
@@ -1244,6 +1246,8 @@ class ServerContext:
                 test_configuration=test,
                 server_context=self,
             )
+            self.build_context.logging_module.info(f"{self.filtered_tests=}")
+
             if playbook.should_test_run():
                 queue.put(playbook)
         return queue
@@ -1284,8 +1288,15 @@ class CloudServerContext(ServerContext):
         self.filtered_tests = self.build_context.machine_assignment_json.get(
             cloud_machine, {}
         ).get("playbooks_to_run")
+        (
+            self.mockable_tests_to_run,
+            self.unmockable_tests_to_run,
+        ) = self._get_tests_to_run()
+
         self.build_context.logging_module.info(f"{self.filtered_tests=}")
-        self.build_context.logging_module.info(f"{self.build_context.machine_assignment_json=}")
+        self.build_context.logging_module.info(
+            f"{self.build_context.machine_assignment_json=}"
+        )
 
     def reset_containers(self):
         self.build_context.logging_module.info(
@@ -1471,8 +1482,14 @@ class OnPremServerContext(ServerContext):
         self.filtered_tests = self.build_context.machine_assignment_json.get(
             "xsoar-machine", {}
         ).get("playbooks_to_run")
+        (
+            self.mockable_tests_to_run,
+            self.unmockable_tests_to_run,
+        ) = self._get_tests_to_run()
         self.build_context.logging_module.info(f"{self.filtered_tests=}")
-        self.build_context.logging_module.info(f"{self.build_context.machine_assignment_json=}")
+        self.build_context.logging_module.info(
+            f"{self.build_context.machine_assignment_json=}"
+        )
 
     def reset_containers(self):
         self.build_context.logging_module.info("Resetting containers\n", real_time=True)

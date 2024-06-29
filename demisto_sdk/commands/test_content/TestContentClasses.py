@@ -187,7 +187,6 @@ class TestPlaybook:
         """
         self.build_context = build_context
         self.server_context = server_context
-        self.build_context.logging_module.info(f"{self.server_context.filtered_tests=}")
 
         self.configuration: TestConfiguration = test_configuration
         self.is_mockable: bool = (
@@ -1246,8 +1245,6 @@ class ServerContext:
                 test_configuration=test,
                 server_context=self,
             )
-            self.build_context.logging_module.info(f"{self.filtered_tests=}")
-
             if playbook.should_test_run():
                 queue.put(playbook)
         return queue
@@ -1292,11 +1289,6 @@ class CloudServerContext(ServerContext):
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
         ) = self._get_tests_to_run()
-
-        self.build_context.logging_module.info(f"{self.filtered_tests=}")
-        self.build_context.logging_module.info(
-            f"{self.build_context.machine_assignment_json=}"
-        )
 
     def reset_containers(self):
         self.build_context.logging_module.info(
@@ -1486,10 +1478,6 @@ class OnPremServerContext(ServerContext):
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
         ) = self._get_tests_to_run()
-        self.build_context.logging_module.info(f"{self.filtered_tests=}")
-        self.build_context.logging_module.info(
-            f"{self.build_context.machine_assignment_json=}"
-        )
 
     def reset_containers(self):
         self.build_context.logging_module.info("Resetting containers\n", real_time=True)

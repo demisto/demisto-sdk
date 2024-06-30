@@ -119,4 +119,4 @@ class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
         return validation_results
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return self.is_valid_using_graph()
+        return self.is_valid_using_graph(content_items)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.30.0"
+version = "1.31.0"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -59,7 +59,7 @@ requests = "^2.27.1"
 "ruamel.yaml" = "^0.17.21"
 slack-sdk = "^3.17.0"
 
-tenacity = "^8.2.3"
+tenacity = "^8.4.1"
 tabulate = ">=0.8.9,<0.10.0"
 ujson = "^5.1.0"
 urllib3 = ">=1.26,<3"
@@ -160,6 +160,7 @@ ignore = [
 
 exclude = [
     "demisto_sdk/tests/test_files/",
+    "demisto_sdk/commands/init/tests/test_files",
     "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
     "demisto_sdk/commands/init/templates",
     "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py",

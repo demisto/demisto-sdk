@@ -1,7 +1,9 @@
 import logging
+import os
 from io import BytesIO
 from os.path import join
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
 import demisto_client
@@ -235,11 +237,21 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     pack = repo.setup_one_pack(name="test-pack")
     runner = CliRunner(mix_stderr=False)
     with ChangeCWD(pack.repo_path):
-        result = runner.invoke(
-            main,
-            [UPLOAD_CMD, "-i", pack.path, "-z", "--insecure", "--keep-zip", tmpdir],
-        )
-        assert result.exit_code == SUCCESS_RETURN_CODE
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            result = runner.invoke(
+                main,
+                [
+                    UPLOAD_CMD,
+                    "-i",
+                    str(pack.path),
+                    "-z",
+                    "--insecure",
+                    "--keep-zip",
+                    tmpdir,
+                ],
+            )
+            assert result.exit_code == SUCCESS_RETURN_CODE
 
     with ZipFile(f"{tmpdir}/uploadable_packs.zip") as result_zip:
         with ZipFile(BytesIO(result_zip.read("test-pack.zip"))) as pack_zip:

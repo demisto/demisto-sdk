@@ -1,4 +1,0 @@
-changes:
-- description: Fixed the **update-release-notes** command to support the right template for incident fields, incident types, layouts, generic objects, indicator types, and indicator fields.
-  type: fix
-pr_number: 4304

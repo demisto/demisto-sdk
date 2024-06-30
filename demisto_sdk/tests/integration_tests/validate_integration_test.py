@@ -6180,7 +6180,7 @@ class TestValidationUsingGit:
                     "--no-conf-json",
                     "--skip-pack-release-notes",
                     "-i",
-                    pack_1.path,
+                    str(pack_1.path),
                 ],
                 catch_exceptions=False,
             )

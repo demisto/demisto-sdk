@@ -47,4 +47,4 @@ repos:
   rev: v0.2.0
   hooks:
   - id: prevent-poetry-downgrade
-  - args: --prev-ver=master
+    args: --prev-ver=master

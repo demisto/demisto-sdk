@@ -1,34 +1,34 @@
 # Changelog
 ## 1.31.1
-* Added the option to specify a marketplace for certain playbook fields:
-* All input fields: *key*, *value*, *description*, *required*, *playbookInputKey*).
-* The following task fields: *scriptId*, *scriptarguments*, *loop.scriptArguments*, *message*, *form*.
-* The task id mappings (for example the first task can be converted by "0" -> "0:xsoar").
-* The *left* and *right* options of *condition*/*builtincondition* task fields (and their nested fields). [#4375](https://github.com/demisto/demisto-sdk/pull/4375)
-* Added the `-h` option as a short option for the `--help` flag in `typer`-based commands. [#4350](https://github.com/demisto/demisto-sdk/pull/4350)
-* Changed the **error-code** command to show information using the new BaseValidator standard. When such isn't available, defaults to legacy-style inforamtion. [#4374](https://github.com/demisto/demisto-sdk/pull/4374)
+* Added an option to specify a marketplace for certain playbook fields:
+  * All input fields: *key*, *value*, *description*, *required*, *playbookInputKey*.
+  * The following task fields: *scriptId*, *scriptarguments*, *loop.scriptArguments*, *message*, *form*.
+  * The task id mappings (for example the first task can be converted by "0" -> "0:xsoar").
+  * The *left* and *right* options of *condition*/*builtincondition* task fields (and their nested fields). [#4375](https://github.com/demisto/demisto-sdk/pull/4375)
+* Added the *-h* option as a short option for the *--help* flag in ***typer***-based commands. [#4350](https://github.com/demisto/demisto-sdk/pull/4350)
+* Modified the **error-code** command to show information using the new BaseValidator standard. When such isn't available, defaults to legacy-style inforamtion. [#4374](https://github.com/demisto/demisto-sdk/pull/4374)
 * Added support to **run-specific-validations** flag to the new validate format. [#4380](https://github.com/demisto/demisto-sdk/pull/4380)
-* Updated PA107 to fail when the key **marketplaces** is missing from the pack_metadata.json file. [#4379](https://github.com/demisto/demisto-sdk/pull/4379)
-* Added a the --fix option to DA100 and fixed the incorrect check in DA101. [#4381](https://github.com/demisto/demisto-sdk/pull/4381)
+* Modified PA107 to fail when the key **marketplaces** is missing from the pack_metadata.json file. [#4379](https://github.com/demisto/demisto-sdk/pull/4379)
+* Added a *--fix* option to DA100 and fixed the incorrect check in DA101. [#4381](https://github.com/demisto/demisto-sdk/pull/4381)
 * Fixed an issue where **pre-commit** and **validate** commands ignored changed files when running on an external contribution PR. [#4351](https://github.com/demisto/demisto-sdk/pull/4351)
 * Fixed an issue where RN103 failed on newly added packs due to missing release notes. [#4383](https://github.com/demisto/demisto-sdk/pull/4383)
-* Added a fix where the `auto_update_docker_image` field was not updated correctly in the the content-graph. [#4287](https://github.com/demisto/demisto-sdk/pull/4287)
-* Modified the PB125 validation to follow the new validation format. The validation checks that a playbook condition task doesn't has only a default nexttask. [#4365](https://github.com/demisto/demisto-sdk/pull/4365)
-* Moved PB114, PB119 to the new validate infrastructure. [#4348](https://github.com/demisto/demisto-sdk/pull/4348)
-* Support for different validation modes (-i, -a, -g) was added to the new validate command. [#4301](https://github.com/demisto/demisto-sdk/pull/4301)
-* Converted PB115 validation to new validation format. The validation checks if the 'quietmode' field of all tasks in playbook are not in default value. [#4366](https://github.com/demisto/demisto-sdk/pull/4366)
-* Moved PB116 validation to the new format. The validation checks that indicator playbooks stop on error. [#4364](https://github.com/demisto/demisto-sdk/pull/4364)
+* Fixed an issue where the *auto_update_docker_image* field was not updated correctly in the the content-graph. [#4287](https://github.com/demisto/demisto-sdk/pull/4287)
+* Moved PB125 to the new validation format. The validation checks that a playbook condition task doesn't has only a default nexttask. [#4365](https://github.com/demisto/demisto-sdk/pull/4365)
+* Moved PB114, PB119 to the new validation format. [#4348](https://github.com/demisto/demisto-sdk/pull/4348)
+* Added support for different validation modes (-i, -a, -g) was added to the new validate command. [#4301](https://github.com/demisto/demisto-sdk/pull/4301)
+* Moved PB115 to the new validation format. The validation checks if the 'quietmode' field of all tasks in playbook are not in default value. [#4366](https://github.com/demisto/demisto-sdk/pull/4366)
+* Moved PB116 to the new format. The validation checks that indicator playbooks stop on error. [#4364](https://github.com/demisto/demisto-sdk/pull/4364)
 * Moved PB109 to the new validate format. The validation checks that taskid field and id field under task field contains equal values. [#4358](https://github.com/demisto/demisto-sdk/pull/4358)
-* Moved DS108 into the new validation format. The validation ensures that there's a dot at the end of each description line. [#4339](https://github.com/demisto/demisto-sdk/pull/4339)
-* Added PB122 to the new validation format. Validate whether branches of built-in conditional tasks are handled properly. [#4363](https://github.com/demisto/demisto-sdk/pull/4363)
-* Converted the MR103 to a path validation. Validates that the file names are the same as its folder. [#4376](https://github.com/demisto/demisto-sdk/pull/4376)
-* Combined MR101 and MR102 into the new validation format. Validates that the modeling rule yml file contains the schema and rules keys and that they are empty. [#4368](https://github.com/demisto/demisto-sdk/pull/4368)
-* Added RM107 to the new validation format. The validation checks that all placeholders are removed and all sections are filled in the readme files. [#4373](https://github.com/demisto/demisto-sdk/pull/4373)
-* Make IMAGES_BATCH variable to be configurable per environment. [#4382](https://github.com/demisto/demisto-sdk/pull/4382)
-* Converted PB106 validation to new validation format. The validation checks if the playbook uses a specific instance. [#4360](https://github.com/demisto/demisto-sdk/pull/4360)
-* Modified the RP102 validation to support the new validate format. The validation checks wether the id field equals the details field in an indicator type [#4355](https://github.com/demisto/demisto-sdk/pull/4355)
-* Converted MR106 validation to new validation format. The validation verifies the types in schema files of modeling rules. [#4372](https://github.com/demisto/demisto-sdk/pull/4372)
-* Added RP103 to the new validation format. The validation make sure the indicator type id is valid. (can include letters, numbers whitespaces, ampersands and underscores.) [#4361](https://github.com/demisto/demisto-sdk/pull/4361)
+* Moved DS108 to the new validation format. The validation ensures that there's a dot at the end of each description line. [#4339](https://github.com/demisto/demisto-sdk/pull/4339)
+* Moved PB122 to the new validation format. Validate whether branches of built-in conditional tasks are handled properly. [#4363](https://github.com/demisto/demisto-sdk/pull/4363)
+* Modified MR103 to a path validation. Validates that the file names are the same as its folder. [#4376](https://github.com/demisto/demisto-sdk/pull/4376)
+* Moved MR101 to the new validation format and combined it with MR102. Validates that the modeling rule yml file contains the schema and rules keys and that they are empty. [#4368](https://github.com/demisto/demisto-sdk/pull/4368)
+* Moved RM107 to the new validation format. The validation checks that all placeholders are removed and all sections are filled in the readme files. [#4373](https://github.com/demisto/demisto-sdk/pull/4373)
+* Modified IMAGES_BATCH variable to be configurable per environment. [#4382](https://github.com/demisto/demisto-sdk/pull/4382)
+* Moved PB106 to new validation format. The validation checks if the playbook uses a specific instance. [#4360](https://github.com/demisto/demisto-sdk/pull/4360)
+* Moved the RP102 to the new validation format. The validation checks wether the id field equals the details field in an indicator type [#4355](https://github.com/demisto/demisto-sdk/pull/4355)
+* Moved MR106 to the new validation format. The validation verifies the types in schema files of modeling rules. [#4372](https://github.com/demisto/demisto-sdk/pull/4372)
+* Moved RP103 to the new validation format. The validation make sure the indicator type id is valid. (can include letters, numbers whitespaces, ampersands and underscores.) [#4361](https://github.com/demisto/demisto-sdk/pull/4361)
 
 ## 1.31.0
 * Fixed an issue where the logic for retrieving the latest Docker image was based on the entire tag (x.y.z.abcde) instead of just the last part of the image tag (_._._.abcde). Only the last part will now be used, per demisto/dockerfiles convention. [#4294](https://github.com/demisto/demisto-sdk/pull/4294)

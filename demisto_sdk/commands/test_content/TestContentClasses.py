@@ -1061,6 +1061,9 @@ class ServerContext:
         self.filtered_tests: list[str] = []
         self.test_retries_queue: Queue = Queue()
         self.all_integrations_configurations = self._get_all_integration_config()
+        self.mockable_tests_to_run: Queue = Queue()
+        self.unmockable_tests_to_run: Queue = Queue()
+
 
     def _execute_unmockable_tests(self):
         """

@@ -1,14 +1,14 @@
-from TestSuite.repo import Repo
-
+from demisto_sdk.commands.content_graph.commands.create import create_content_graph
+from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
     GR104_is_pack_display_name_already_exists,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place import (
-    MarketplacesFieldValidator
+    MarketplacesFieldValidator,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
-    MarketplacesFieldValidatorAllFiles
+    MarketplacesFieldValidatorAllFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_all_files import (
     IsPackDisplayNameAlreadyExistsValidatorAllFiles,
@@ -16,11 +16,7 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_displa
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_list_files import (
     IsPackDisplayNameAlreadyExistsValidatorListFiles,
 )
-
-from demisto_sdk.commands.content_graph.commands.create import create_content_graph
-from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
-
-from demisto_sdk.commands.validate.tests.test_graph_tools import setup, repository
+from TestSuite.repo import Repo
 
 
 def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
@@ -48,7 +44,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
         }
     )
 
-    graph_repo.create_pack(name="pack3");
+    graph_repo.create_pack(name="pack3")
 
     BaseValidator.graph_interface = graph_repo.create_graph()
 

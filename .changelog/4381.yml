@@ -1,4 +1,0 @@
-changes:
-- description: Added a the --fix option to DA100 and fixed the incorrect check in DA101.
-  type: fix
-pr_number: 4381

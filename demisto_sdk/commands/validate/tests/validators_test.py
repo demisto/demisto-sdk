@@ -1,4 +1,5 @@
 import logging
+import os
 import tempfile
 from pathlib import Path
 from typing import Set
@@ -14,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     GitStatuses,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
@@ -682,3 +684,82 @@ def test_description():
     assert not [
         validator for validator in get_all_validators() if not validator.description
     ]
+
+
+@pytest.mark.parametrize(
+    "untracked_files, modified_files, expected_output",
+    [
+        (
+            ["Packs/untracked.txt"],
+            set({Path("Packs/modified.txt")}),
+            set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
+        ),
+        (
+            [
+                "Packs/untracked_1.txt",
+                "Packs/untracked_2.txt",
+                "invalid/path/untracked.txt",
+                "another/invalid/path/untracked.txt",
+            ],
+            set({Path("Packs/modified.txt")}),
+            set(
+                [
+                    Path("Packs/modified.txt"),
+                    Path("Packs/untracked_1.txt"),
+                    Path("Packs/untracked_2.txt"),
+                ]
+            ),
+        ),
+        (
+            [
+                "Packs/untracked_1.txt",
+                "Packs/untracked_2.txt",
+                "invalid/path/untracked.txt",
+                "another/invalid/path/untracked.txt",
+            ],
+            set(),
+            set(
+                [
+                    Path("Packs/untracked_1.txt"),
+                    Path("Packs/untracked_2.txt"),
+                ]
+            ),
+        ),
+    ],
+    ids=[
+        "Valid untracked and modified files",
+        "Invalid untracked, valid untracked and modified files",
+        "No modified files, invalid and valid untracked files only",
+    ],
+)
+def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
+    mocker, untracked_files, modified_files, expected_output
+):
+    """
+    This UT verifies changes made to validate command to support collection of
+    untracked files when running the build on an external contribution PR.
+
+    Given:
+        - A content build is running on external contribution PR, meaning:
+            - `CONTRIB_BRANCH` environment variable exists.
+            - validate command is running in context of an external contribution PR
+    When:
+        Case 1: All untracked files have a "Pack/..." path, regular modified files are also exist.
+        Case 2: Not all untracked files have a "Pack/..." path, irrelevant untracked files exist which validate shouldn't run on.
+                Regular modified files are also exist.
+        Case 3: Not all untracked files have a "Pack/..." path, irrelevant untracked files also exist, regular modified files are also exist, No modified files.
+
+    Then:
+        - Collect all files within "Packs/" path and run the pre commit on them along with regular modified files if exist.
+    """
+    initializer = Initializer()
+    initializer.validate_git_installed()
+    mocker.patch.object(GitUtil, "modified_files", return_value=modified_files)
+    mocker.patch.dict(os.environ, {"CONTRIB_BRANCH": "true"})
+    mocker.patch.object(GitUtil, "added_files", return_value={})
+    mocker.patch.object(GitUtil, "renamed_files", return_value={})
+    mocker.patch(
+        "git.repo.base.Repo._get_untracked_files", return_value=untracked_files
+    )
+    output = initializer.get_unfiltered_changed_files_from_git()
+    assert output[0] == expected_output

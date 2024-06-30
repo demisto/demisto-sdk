@@ -38,7 +38,7 @@ repos:
   hooks:
   - id: prevent-poetry-downgrade
     args: 
-    - --prev-ref=master
+    - --prev-ref=origin/master
 - repo: https://github.com/psf/black
   rev: 22.12.0
   hooks:

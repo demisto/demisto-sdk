@@ -476,7 +476,7 @@ def test_MarketplacesFieldValidator_is_valid(repository):
 
 
 @pytest.mark.usefixtures("setup")
-def test_MarketplacesFieldValidatorAllFiles_is_valid(setup, repository):
+def test_MarketplacesFieldValidatorAllFiles_is_valid(repository):
     """
     Given
     - A content repo.

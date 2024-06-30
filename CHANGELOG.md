@@ -1,10 +1,6 @@
 # Changelog
 ## 1.31.1
-* Added an option to specify a marketplace for certain playbook fields:
-  * All input fields: *key*, *value*, *description*, *required*, *playbookInputKey*.
-  * The following task fields: *scriptId*, *scriptarguments*, *loop.scriptArguments*, *message*, *form*.
-  * The task id mappings (for example the first task can be converted by "0" -> "0:xsoar").
-  * The *left* and *right* options of *condition*/*builtincondition* task fields (and their nested fields). [#4375](https://github.com/demisto/demisto-sdk/pull/4375)
+* Added an option to specify a marketplace for certain playbook fields: All input fields: *key*, *value*, *description*, *required*, *playbookInputKey*. The following task fields: *scriptId*, *scriptarguments*, *loop.scriptArguments*, *message*, *form*. The task id mappings (for example the first task can be converted by "0" -> "0:xsoar"). The *left* and *right* options of *condition*/*builtincondition* task fields (and their nested fields). [#4375](https://github.com/demisto/demisto-sdk/pull/4375)
 * Added the *-h* option as a short option for the *--help* flag in ***typer***-based commands. [#4350](https://github.com/demisto/demisto-sdk/pull/4350)
 * Modified the **error-code** command to show information using the new BaseValidator standard. When such isn't available, defaults to legacy-style inforamtion. [#4374](https://github.com/demisto/demisto-sdk/pull/4374)
 * Added support to **run-specific-validations** flag to the new validate format. [#4380](https://github.com/demisto/demisto-sdk/pull/4380)

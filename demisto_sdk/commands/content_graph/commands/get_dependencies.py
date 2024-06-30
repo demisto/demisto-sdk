@@ -27,7 +27,11 @@ COMMAND_OUTPUTS_FILENAME = "get_dependencies_outputs.json"
 
 @app.command(
     no_args_is_help=True,
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    context_settings={
+        "allow_extra_args": True,
+        "ignore_unknown_options": True,
+        "help_option_names": ["-h", "--help"],
+    },
 )
 def get_dependencies(
     ctx: typer.Context,

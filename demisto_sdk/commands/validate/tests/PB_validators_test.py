@@ -28,6 +28,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB108_is_valid_task_
 from demisto_sdk.commands.validate.validators.PB_validators.PB109_is_taskid_equals_id import (
     IsTaskidDifferentFromidValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB114_playbook_quiet_mode import (
+    PlaybookQuietModeValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB115_is_tasks_quiet_mode import (
     IsTasksQuietModeValidator,
 )
@@ -36,6 +39,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB116_is_stopping_on
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB119_check_inputs_used import (
+    CheckInputsUsedExist,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB122_does_playbook_have_unhandled_conditions import (
     DoesPlaybookHaveUnhandledConditionsValidator,
@@ -112,6 +118,80 @@ def test_is_valid_all_inputs_in_use(content_item, expected_result):
         result == expected_result
         if isinstance(expected_result, list)
         else result[0].message == expected_result
+    )
+
+
+def test_using_input_not_provided():
+    """
+    Given:
+        inputs 2 and
+    When:
+        using input 3
+    Then:
+        Will fail on input 3 (Comments, File, ReportFileType, Systems, Timeout are from the default test config)
+
+    """
+    playbook = create_playbook_object(
+        paths=["inputs", "tasks.0.task.key"],
+        values=[
+            [
+                {"key": "input_name1", "value": "input_value1"},
+                {"key": "input_name2", "value": "input_value2"},
+            ],
+            {"first_input": "inputs.input_name1", "another 1 ": "inputs.input_name3"},
+        ],
+    )
+    result = CheckInputsUsedExist().is_valid([playbook])
+    assert len(result) == 1
+    assert (
+        result[0].message
+        == "Inputs [Comments, File, ReportFileType, Systems, Timeout, input_name3] were used but not provided for this playbook."
+    )
+
+
+def test_playbook_quiet_mode_regular_playbook_pass():
+    """
+    Given:
+        A regular pb with quiet mode false
+    When:
+        Calling Validate
+    Then:
+        The validation shouldnt fail
+
+    """
+    playbook = create_playbook_object(["quiet"], [False])
+    assert PlaybookQuietModeValidator().is_valid([playbook]) == []
+
+
+def test_indicator_pb_must_be_quiet():
+    """
+    Given:
+        A pb with queryEntity indicators
+    When:
+        not in quiet mode
+    Then:
+        The validation should fail
+
+    """
+    playbook = create_playbook_object(
+        ["inputs", "quiet"],
+        [
+            [
+                {
+                    "value": {},
+                    "required": False,
+                    "description": "",
+                    "playbookInputQuery": {"query": "", "queryEntity": "indicators"},
+                }
+            ],
+            False,
+        ],
+    )
+    result = PlaybookQuietModeValidator().is_valid([playbook])
+    assert len(result) == 1
+    assert (
+        result[0].message
+        == "Playbooks with a playbookInputQuery for indicators should be on quiet mode."
     )
 
 

@@ -2799,12 +2799,12 @@ def test_create_md_if_currentversion_is_higher(
         added_files=set(),
     )
     client.execute_update()
-    updated_rn_folder = glob.glob(pack.path + "/ReleaseNotes/*")
+    updated_rn_folder = glob.glob(str(pack.path) + "/ReleaseNotes/*")
     updated_versions_list = [rn[rn.rindex("/") + 1 : -3] for rn in updated_rn_folder]
     assert Counter(first_expected_results) == Counter(updated_versions_list)
     pack.pack_metadata.write_json({"currentVersion": "0.0.3"})
     client.execute_update()
-    updated_rn_folder = glob.glob(pack.path + "/ReleaseNotes/*")
+    updated_rn_folder = glob.glob(str(pack.path) + "/ReleaseNotes/*")
     updated_versions_list = [rn[rn.rindex("/") + 1 : -3] for rn in updated_rn_folder]
     assert Counter(second_expected_results) == Counter(updated_versions_list)
 

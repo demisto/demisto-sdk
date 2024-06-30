@@ -49,10 +49,10 @@ def mock_pack(name, marketplaces, hidden=False):
 
 
 def mock_playbook(
-        name,
-        marketplaces=[MarketplaceVersions.XSOAR],
-        fromversion="5.0.0",
-        toversion="99.99.99",
+    name,
+    marketplaces=[MarketplaceVersions.XSOAR],
+    fromversion="5.0.0",
+    toversion="99.99.99",
 ):
     return Playbook(
         id=name,
@@ -132,7 +132,7 @@ def mock_classifier(name: str = "SampleClassifier"):
 
 @pytest.fixture
 def setup(mocker, tmp_path_factory):
-    """ Setup mocks for graph validators' tests"""
+    """Setup mocks for graph validators' tests"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
     from demisto_sdk.commands.common.files.file import File
 

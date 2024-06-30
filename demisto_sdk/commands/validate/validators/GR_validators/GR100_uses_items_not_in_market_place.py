@@ -91,14 +91,18 @@ class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
     expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
 
     def is_valid_using_graph(
-            self, content_items: Iterable[ContentTypes], validate_all_files=False
+        self, content_items: Iterable[ContentTypes], validate_all_files=False
     ) -> List[ValidationResult]:
         validation_results = []
 
-        pack_ids_to_validate = [item.pack_id for item in content_items] if not validate_all_files else []
+        pack_ids_to_validate = (
+            [item.pack_id for item in content_items] if not validate_all_files else []
+        )
 
         # The content items that use content items with invalid marketplaces.
-        invalid_content_items = self.graph.find_uses_paths_with_invalid_marketplaces(pack_ids_to_validate)
+        invalid_content_items = self.graph.find_uses_paths_with_invalid_marketplaces(
+            pack_ids_to_validate
+        )
         for content_item in invalid_content_items:
             uses_content_items = [
                 item.content_item_to.object_id

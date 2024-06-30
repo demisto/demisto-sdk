@@ -74,7 +74,9 @@ ContentTypes = Union[
 ]
 
 
-class MarketplacesFieldValidatorAllFiles(MarketplacesFieldValidator, BaseValidator[ContentTypes]):
+class MarketplacesFieldValidatorAllFiles(
+    MarketplacesFieldValidator, BaseValidator[ContentTypes]
+):
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

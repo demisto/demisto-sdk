@@ -18,6 +18,8 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_displa
 )
 from TestSuite.repo import Repo
 
+from demisto_sdk.commands.validate.tests.graph_test_tools import setup, repository
+
 
 def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
     mocker, graph_repo: Repo
@@ -143,7 +145,9 @@ def test_MarketplacesFieldValidatorAllFiles_is_valid(setup, repository):
         "content items: 'SampleClassifier2' which are not supported in all of the marketplaces of 'SampleIntegration'.",
     }
     packs_to_validate = repository.packs[:2]
-    validation_results = MarketplacesFieldValidatorAllFiles().is_valid(packs_to_validate)
+    validation_results = MarketplacesFieldValidatorAllFiles().is_valid(
+        packs_to_validate
+    )
     assert len(validation_results) == len(expected_validation_results_messages)
     for validation_result in validation_results:
         assert validation_result.message in expected_validation_results_messages

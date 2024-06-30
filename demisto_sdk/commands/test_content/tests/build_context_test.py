@@ -200,10 +200,7 @@ def get_mocked_build_context(
 
     filtered_tests_path = tmp_file / "filtered_tests_path"
     filtered_tests_path.write_text("\n".join(filtered_tests_content or []))
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.FILTER_CONF",
-        str(filtered_tests_path),
-    )
+
 
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.BuildContext._retrieve_slack_user_id",
@@ -265,10 +262,6 @@ def create_xsiam_build(
 
     filtered_tests_path = tmp_file / "filtered_tests_path"
     filtered_tests_path.write_text("\n".join(filtered_tests_content or []) or "[]")
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.FILTER_CONF",
-        str(filtered_tests_path),
-    )
 
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.BuildContext._retrieve_slack_user_id",

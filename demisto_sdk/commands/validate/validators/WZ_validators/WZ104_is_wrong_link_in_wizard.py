@@ -28,9 +28,7 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
             playbook.get("name", ""): playbook.get("link_to_integration")
             for playbook in set_playbooks
         }
-        integrations = []
-        for integration in wizard_json_object.get("fetching_integrations", []):
-            integrations.append(integration.get("name"))
+        integrations = {integration.get("name") for integration in wizard_json_object.get("fetching_integrations", [])}
 
         integrations_without_playbook = []
         for link in playbooks_link_to_integration.values():

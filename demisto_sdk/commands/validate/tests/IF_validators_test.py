@@ -434,7 +434,7 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
     assert results
     assert (
         results[0].message
-        == "singleSelect types cannot contain more than one or only empty values in the selectValues field."
+        == "singleSelect types cannot contain more than one empty values in the selectValues field."
     )
 
 

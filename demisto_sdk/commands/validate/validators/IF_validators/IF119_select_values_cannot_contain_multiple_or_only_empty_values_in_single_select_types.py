@@ -18,7 +18,7 @@ class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValid
     error_code = "IF119"
     description = "We do not allow for incidentFields with singleSelect types to have in the selectValues more than one or only emtpy option"
     rationale = "Due to UI issues, we cannot allow more than one or only empty values for selectValues field"
-    error_message = ""
+    error_message = "singleSelect type cannot contain"
     fix_message = "Removed all redundant empty values in the selectValues field."
     related_field = "singleSelect, selectValues"
     is_auto_fixable = True
@@ -33,10 +33,9 @@ class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValid
             if empty_string_count == 0 or (empty_string_count == 1 and len(select_values) > 1):
                 return False
             if empty_string_count == 1:
-                self.error_message = "singleSelect types cannot contain only empty values in the selectValues field.\n"
+                self.error_message += " only empty values in the selectValues field."
             if empty_string_count > 1:
-                self.error_message = ("singleSelect types cannot contain more than one empty values "
-                                      "in the selectValues field.\n")
+                self.error_message += " more than one empty values in the selectValues field."
             return True
 
         return False

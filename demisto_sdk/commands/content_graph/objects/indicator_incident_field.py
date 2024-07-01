@@ -13,7 +13,7 @@ class IndicatorIncidentField(ContentItem):
     cli_name: str = Field(alias="cliName")
     object_id: str = Field(alias="id")
     field_type: str = Field(alias="type")
-    select_values: list = Field(alias="selectValues")
+    select_values: list = Field(None, alias="selectValues")
     content: bool = Field(None, exclude=True)
     system: bool = Field(None, exclude=True)
     group: int = Field(None, exclude=True)

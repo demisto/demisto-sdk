@@ -402,7 +402,7 @@ def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
         - run fix method.
     Then:
         - Ensure the fix message is as expected.
-        - Ensure there is there is no emtpy values in the selectValues field.
+        - Ensure here is no emtpy values in the selectValues field.
     """
     incident_field = create_incident_field_object(
         ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
@@ -411,7 +411,7 @@ def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
         incident_field
     )
     assert result.message == "Removed all empty values in the selectValues field."
-    assert result.content_object.data["selectValues"] == ["test"]
+    assert result.content_object.select_values == ["test"]
 
 
 def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_multiple_empty_values_invalid():
@@ -456,7 +456,7 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
     assert results
     assert (
         results[0].message
-        == "singleSelect types cannot contain more than one or only empty values in the selectValues field."
+        == "singleSelect types cannot contain only empty values in the selectValues field."
     )
 
 
@@ -519,4 +519,4 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
         result.message
         == "Removed all redundant empty values in the selectValues field."
     )
-    assert result.content_object.data["selectValues"] == ["test", ""]
+    assert result.content_object.select_values == ["test", ""]

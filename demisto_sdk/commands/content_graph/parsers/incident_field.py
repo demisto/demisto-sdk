@@ -21,6 +21,7 @@ class IncidentFieldParser(
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.field_type = self.json_data.get("type")
+        self.select_values = self.json_data.get("selectValues")
         self.associated_to_all = self.json_data.get("associatedToAll")
         self.content = self.json_data.get("content")
         self.system = self.json_data.get("system")

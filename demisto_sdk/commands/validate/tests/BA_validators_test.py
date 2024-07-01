@@ -57,6 +57,12 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA108_is_folder_name_has_separators import (
+    IsFolderNameHasSeparatorsValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA109_file_name_has_separators import (
+    FileNameHasSeparatorsValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
     IsEntityTypeInEntityNameValidator,
 )
@@ -81,6 +87,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_versio
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA119_is_py_file_contain_copy_right_section import (
     IsPyFileContainCopyRightSectionValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA125_customer_facing_docs_disallowed_terms import (
+    CustomerFacingDocsDisallowedTermsValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
@@ -1571,6 +1580,76 @@ def test_ValidPackNameValidator_is_valid(
 
 
 @pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_error_message",
+    [
+        pytest.param([create_integration_object()], 0, "", id="valid: integration"),
+        pytest.param(
+            [create_integration_object(readme_content="test-module")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_233/Integrations/integration_0/README.md",
+            id="invalid: integration readme",
+        ),
+        pytest.param(
+            [create_integration_object(description_content="test-module")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_234/Integrations/integration_0/integration_0_description.md",
+            id="invalid: integration description",
+        ),
+        pytest.param([create_script_object()], 0, "", id="valid: script"),
+        pytest.param(
+            [create_script_object(readme_content="test-module ")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_236/Scripts/script0/README.md",
+            id="invalid: script readme",
+        ),
+        pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
+        pytest.param(
+            [create_playbook_object(readme_content="test-module ")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_238/Playbooks/playbook-0_README.md",
+            id="invalid: playbook readme",
+        ),
+        pytest.param([create_pack_object()], 0, "", id="valid: pack"),
+        pytest.param(
+            [create_pack_object(readme_text="test-module ")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_240/README.md",
+            id="invalid: pack readme",
+        ),
+        pytest.param(
+            [
+                create_pack_object(
+                    ["version"], ["1.0.1"], release_note_content="test-module"
+                )
+            ],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_241/ReleaseNotes/1_0_1.md",
+            id="invalid: pack release note",
+        ),
+    ],
+)
+def test_CustomerFacingDocsDisallowedTermsValidator(
+    content_items, expected_number_of_failures, expected_error_message
+):
+    """
+    Given
+    - Case 1: Content items containing disallowed terms in their related files.
+    - Case 2: Content items containing only valid terms in their related files.
+    When
+    - Running the CustomerFacingDocsDisallowedTermsValidator validation.
+    Then
+    - Case 1: Fail the validation with a relevant message containing the found disallowed terms.
+    - Case 2: Don't fail the validation.
+    """
+    results = CustomerFacingDocsDisallowedTermsValidator().is_valid(
+        content_items=content_items
+    )
+    assert len(results) == expected_number_of_failures
+    if results:
+        assert results[0].message == expected_error_message
+
+
+@pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         ([create_script_object(), create_integration_object()], 0, []),
@@ -1867,3 +1946,105 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         results.message
         == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {VALUE_WITH_TRAILING_SPACE.rstrip()}"
     )
+
+
+@pytest.mark.parametrize(
+    "content_item, expected_number_of_failures, expected_messages",
+    [
+        pytest.param(
+            create_integration_object(name="Test-Integration"),
+            1,
+            "The Integration files should be named without any separators in the base name:\n'Test-Integration.py' should be named 'TestIntegration.py'\n'Test-Integration.yml' should be named 'TestIntegration.yml'\n'Test-Integration_description.md' should be named 'TestIntegration_description.md'\n'Test-Integration_image.png' should be named 'TestIntegration_image.png'\n'Test-Integration_test.py' should be named 'TestIntegration_test.py'",
+            id="invalid integration",
+        ),
+        pytest.param(
+            create_integration_object(name="TestIntegration"),
+            0,
+            [""],
+            id="valid integration",
+        ),
+        pytest.param(
+            create_script_object(name="Test-Script"),
+            1,
+            "The Script files should be named without any separators in the base name:\n'Test-Script.py' should be named 'TestScript.py'\n'Test-Script.yml' should be named 'TestScript.yml'\n'Test-Script_description.md' should be named 'TestScript_description.md'\n'Test-Script_image.png' should be named 'TestScript_image.png'\n'Test-Script_test.py' should be named 'TestScript_test.py'",
+            id="invalid script",
+        ),
+        pytest.param(
+            create_script_object(name="TestScript"),
+            0,
+            [""],
+            id="valid script",
+        ),
+    ],
+)
+def test_FileNameHasSeparatorsValidator_is_valid(
+    content_item, expected_number_of_failures, expected_messages
+):
+    """
+    Test validate BA109 FileNameHasSeparatorsValidator - File names with separators
+
+    Given:
+        A content item with a name that contains separators (e.g., hyphens) or not.
+
+    When:
+        The FileNameHasSeparatorsValidator's is_valid method is called.
+
+    Then:
+        The method should return the expected number of validation failures and messages.
+        Failure with an appropriate message if the name contains separators.
+    """
+    validator = FileNameHasSeparatorsValidator()
+    ValidationResultList = validator.is_valid([content_item])
+
+    assert len(ValidationResultList) == expected_number_of_failures
+
+    if ValidationResultList:
+        assert ValidationResultList[0].message == expected_messages
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msg",
+    [
+        pytest.param(
+            [
+                create_integration_object(name="invalid_integration_name"),
+            ],
+            1,
+            "The folder name 'invalid_integration_name' should not contain any of the following separators: '_', '-'",
+            id="an invalid integration name",
+        ),
+        pytest.param(
+            [
+                create_integration_object(name="invalidIntegrationName"),
+            ],
+            0,
+            "",
+            id="a valid integration name.",
+        ),
+        pytest.param(
+            [
+                create_script_object(name="invalid-script-name"),
+            ],
+            1,
+            "The folder name 'invalid-script-name' should not contain any of the following separators: '_', '-'",
+            id="an invalid script name",
+        ),
+        pytest.param(
+            [
+                create_script_object(name="invalidScriptName"),
+            ],
+            0,
+            "",
+            id="a valid script name",
+        ),
+    ],
+)
+def test_IsFolderNameHasSeparatorsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msg
+):
+    result = IsFolderNameHasSeparatorsValidator().is_valid(content_items)
+
+    assert len(result) == expected_number_of_failures
+
+    if result:
+        assert result[0].message == expected_msg

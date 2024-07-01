@@ -1364,7 +1364,7 @@ class Downloader:
                 except Exception as e:
                     failed_downloads_count += 1
                     logger.error(
-                        f"Failed to download content item '{content_item_name}': {e}"
+                        f"Failed to download content item '{content_item_name}': {str(e)}"
                     )
                     logger.debug(traceback.format_exc())
                     continue
@@ -1377,6 +1377,7 @@ class Downloader:
                             input=str(downloaded_file),
                             no_validate=False,
                             assume_answer=False,
+                            clear_cache=True,
                         )
 
         summary_log = ""

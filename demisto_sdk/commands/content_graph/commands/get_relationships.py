@@ -1,4 +1,3 @@
-from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -11,6 +10,7 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -24,7 +24,7 @@ app = typer.Typer()
 COMMAND_OUTPUTS_FILENAME = "get_relationships_outputs.json"
 
 
-class Direction(str, Enum):
+class Direction(StrEnum):
     SOURCES = "sources"
     TARGETS = "targets"
     BOTH = "both"
@@ -32,7 +32,11 @@ class Direction(str, Enum):
 
 @app.command(
     no_args_is_help=True,
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    context_settings={
+        "allow_extra_args": True,
+        "ignore_unknown_options": True,
+        "help_option_names": ["-h", "--help"],
+    },
 )
 def get_relationships(
     ctx: typer.Context,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import fcntl
 import glob
 import os
 import re
@@ -1807,6 +1808,9 @@ def find_type(
         FileType | None: Enum representation of the content file type, None otherwise.
     """
     from demisto_sdk.commands.content_graph.objects import (
+        CaseField,
+        CaseLayout,
+        CaseLayoutRule,
         Classifier,
         CorrelationRule,
         Dashboard,
@@ -1838,7 +1842,7 @@ def find_type(
         XSIAMDashboard,
         XSIAMReport,
     )
-    from demisto_sdk.commands.content_graph.objects import List as List_obj
+    from demisto_sdk.commands.content_graph.objects import List as ListObject
 
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1981,7 +1985,16 @@ def find_type(
     if LayoutRule.match(_dict, Path(path)):
         return FileType.LAYOUT_RULE
 
-    if List_obj.match(_dict, Path(path)):
+    if CaseField.match(_dict, Path(path)):
+        return FileType.CASE_FIELD
+
+    if CaseLayout.match(_dict, Path(path)):
+        return FileType.CASE_LAYOUT
+
+    if CaseLayoutRule.match(_dict, Path(path)):
+        return FileType.CASE_LAYOUT_RULE
+
+    if ListObject.match(_dict, Path(path)):
         return FileType.LISTS
 
     # When using it for all files validation- sometimes 'id' can be integer
@@ -2031,6 +2044,26 @@ def is_external_repository() -> bool:
         private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
         return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
+        return True
+
+
+def is_external_repo() -> bool:
+    """
+    Returns True if script executed from an external repository (use this instead of is_external_repository)
+
+    """
+    try:
+        remote = GitUtil().repo.remote()
+        return (
+            not remote
+            or (not (parsed_url := giturlparse.parse(remote.url)))
+            or (
+                f"{parsed_url.owner}/{parsed_url.name}"
+                not in ("cortex-xdr/content", "demisto/content")
+            )
+        )
+    except Exception as e:
+        logger.debug(f"failed to get repo information, {str(e)}")
         return True
 
 
@@ -4069,7 +4102,7 @@ def find_correct_key(data: dict, keys: List[str]) -> str:
 
 def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
     """Updating a data object with given value in the given key.
-    If a list of keys is given, will find the right path to update based on which path acctually has a value.
+    If a list of keys is given, will find the right path to update based on which path actually has a value.
     Args:
         data (dict): the data object to update.
         keys (Union[str,List[str]]): the path or list of possible paths to update.
@@ -4372,31 +4405,47 @@ def is_str_bool(input_: str) -> bool:
         return False
 
 
-def check_text_content_contain_sub_text(
-    sub_text_list: List[str],
-    is_lower: bool = False,
-    to_split: bool = False,
-    text: str = "",
+def search_substrings_by_line(
+    phrases_to_search: List[str],
+    text: str,
+    ignore_case: bool = False,
+    search_whole_word: bool = False,
+    exceptionally_allowed_substrings: Optional[list[str]] = None,
 ) -> List[str]:
     """
-    Args:
-        sub_text_list (List[str]): list of words/sentences to search in line content.
-        is_lower (bool): True to check when line is lower cased.
-        to_split (bool): True to split the line in order to search specific word
-        text (str): The readme content to search.
-
-    Returns:
-        list of lines which contains the given text.
+    Returns the list of line indices (as strings) in text,
+    where the searched phrases are found
     """
     invalid_lines = []
 
+    if ignore_case:
+        text = text.casefold()
+        exceptionally_allowed_substrings = [
+            allowed_phrase.casefold()
+            for allowed_phrase in (exceptionally_allowed_substrings or ())
+        ]
+
     for line_num, line in enumerate(text.split("\n")):
-        if is_lower:
-            line = line.lower()
-        if to_split:
-            line = line.split()  # type: ignore
-        for text in sub_text_list:
-            if text in line:
+        if ignore_case:
+            line = line.casefold()
+
+        if search_whole_word:
+            line = line.split()  # type: ignore[assignment]
+
+        for phrase_to_search in phrases_to_search:
+            if phrase_to_search in line:
+                if exceptionally_allowed_substrings and any(
+                    (allowed in line and phrase_to_search in allowed)
+                    for allowed in exceptionally_allowed_substrings
+                ):
+                    """
+                    example: we want to catch 'demisto', but not when it's in a URL.
+                        phrase = 'demisto'
+                        allowed = '/demisto/'
+                        line = 'foo/demisto/bar'
+                    we'll skip this line only iff 'demisto' in '/demisto/' and '/demisto/' in foo/demisto/bar
+                    """
+                    continue
                 invalid_lines.append(str(line_num + 1))
 
     return invalid_lines
@@ -4470,3 +4519,77 @@ def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
     if file_path.is_absolute():
         file_path = file_path.relative_to(relative_to)
     return file_path
+
+
+def convert_path_to_str(data: Union[dict, list]):
+    """This converts recursively all Path objects to strings in the given data.
+
+    Args:
+        data (Union[dict, list]): The data to convert.
+    """
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, (dict, list)):
+                convert_path_to_str(value)
+            elif isinstance(value, Path):
+                data[key] = str(value)
+    elif isinstance(data, list):
+        for index, item in enumerate(data):
+            if isinstance(item, (dict, list)):
+                convert_path_to_str(item)
+            elif isinstance(item, Path):
+                data[index] = str(item)
+
+
+def find_regex_on_data(data: str, regex: str):
+    """
+    Finds all matches of a given regex pattern in the provided data.
+
+    Args:
+        data (str): The string data to search within.
+        regex (str): The regex pattern to use for finding matches.
+
+    Returns:
+        List[str]: A list of all matches found in the data. If no matches are found, returns an empty list.
+    """
+    return re.findall(
+        regex,
+        data,
+        re.IGNORECASE,
+    )
+
+
+def run_sync(
+    lock_file_path: str,
+    exclusive_function: Callable,
+    exclusive_function_kwargs: dict = {},
+):
+    """Uses a given lock file path to run a method synchronously.
+
+    Args:
+        lock_file_path (str): The lock file path.
+        exclusive_function (Callable): The function we want to run exclusivly.
+        exclusive_function_kwargs (dict, optional): The kwargs we wish to pass to the exclusive_function. Defaults to {}.
+    """
+    try:
+        # Open (or create) the lock file
+        lock_file = open(lock_file_path, "w")
+
+        # Wait until the lock is acquired
+        while True:
+            try:
+                # Try to acquire an exclusive lock
+                fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                logger.debug("Resource is busy, waiting...")
+                time.sleep(0.1)  # Wait for 0.1 seconds before retrying
+
+        # If lock is acquired, call the exclusive function
+        exclusive_function(**exclusive_function_kwargs)
+
+    finally:
+        if lock_file:
+            # Release the lock and close the file
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+            lock_file.close()

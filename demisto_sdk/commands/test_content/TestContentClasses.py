@@ -19,6 +19,7 @@ import prettytable
 import requests
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
+from google.cloud import storage  # type: ignore[attr-defined]
 from junitparser import JUnitXml, TestCase, TestSuite
 from junitparser.junitparser import Failure, Result, Skipped
 from packaging.version import Version
@@ -309,8 +310,12 @@ class TestPlaybook:
             "instances_ips", ",".join(self.build_context.instances_ips)
         )
 
-        self.test_suite.add_property("playbook.is_mockable", self.is_mockable)
-        self.test_suite.add_property("is_mockable", self.configuration.is_mockable)
+        self.test_suite.add_property(
+            "playbook.is_mockable", self.is_mockable  # type:ignore[arg-type]
+        )
+        self.test_suite.add_property(
+            "is_mockable", self.configuration.is_mockable  # type:ignore[arg-type]
+        )
         self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
         self.test_suite.add_property("from_version", self.configuration.from_version)
         self.test_suite.add_property("to_version", self.configuration.to_version)
@@ -335,7 +340,7 @@ class TestPlaybook:
         )
         self.test_suite.add_property(
             "runnable_on_docker_only",
-            self.configuration.runnable_on_docker_only,
+            self.configuration.runnable_on_docker_only,  # type:ignore[arg-type]
         )
 
     def close_test_suite(self, results: Optional[List[Result]] = None):
@@ -348,7 +353,7 @@ class TestPlaybook:
         )
         test_case.system_out = "\n".join(self.test_suite_system_out)
         test_case.system_err = "\n".join(self.test_suite_system_err)
-        test_case.result += results
+        test_case.result += results  # type:ignore[arg-type]
         self.test_suite.add_testcase(test_case)
         self.build_context.tests_data_keeper.test_results_xml_file.add_testsuite(
             self.test_suite
@@ -852,7 +857,10 @@ class BuildContext:
         self.instances_ips = self._get_instances_ips()
         self.filtered_tests = self._extract_filtered_tests()
         self.tests_data_keeper = TestResults(
-            self.conf.unmockable_integrations, kwargs["artifacts_path"]
+            self.conf.unmockable_integrations,
+            kwargs["artifacts_path"],
+            kwargs.get("service_account"),
+            kwargs.get("artifacts_bucket"),
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()
@@ -1188,7 +1196,13 @@ class BuildContext:
 
 
 class TestResults:
-    def __init__(self, unmockable_integrations, artifacts_path: str):
+    def __init__(
+        self,
+        unmockable_integrations,
+        artifacts_path: str,
+        service_account: str = None,
+        artifacts_bucket: str = None,
+    ):
         self.succeeded_playbooks: List[str] = []
         self.failed_playbooks: Set[str] = set()
         self.playbook_report: Dict[str, List[Dict[Any, Any]]] = {}
@@ -1200,6 +1214,8 @@ class TestResults:
         self.unmockable_integrations = unmockable_integrations
         self.playbook_skipped_integration: Set[str] = set()
         self.artifacts_path = Path(artifacts_path)
+        self.service_account = service_account
+        self.artifacts_bucket = artifacts_bucket
 
     def add_proxy_related_test_data(self, proxy):
         # Using multiple appends and not extend since append is guaranteed to be thread safe
@@ -1338,6 +1354,34 @@ class TestResults:
             row = [index, record, table_data[record]]
             table.add_row(row)
         logging_method(f"{table_name}:\n{table}", real_time=True)
+
+    def upload_playbook_result_json_to_bucket(
+        self,
+        repository_name: str,
+        file_name,
+        logging_module: Union[Any, ParallelLoggingManager] = logging,
+    ):
+        """Uploads a JSON object to a specified path in the GCP bucket.
+
+        Args:
+          repository_name: The name of the repository within the bucket.
+          file_name: The desired filename for the uploaded JSON data.
+          logging_module: Logging module to use for upload_playbook_result_json_to_bucket.
+        """
+        logging_module.info("Start uploading playbook results file to bucket")
+
+        storage_client = storage.Client.from_service_account_json(self.service_account)
+        storage_bucket = storage_client.bucket(self.artifacts_bucket)
+
+        blob = storage_bucket.blob(
+            f"content-playbook-reports/{repository_name}/{file_name}"
+        )
+        blob.upload_from_filename(
+            self.artifacts_path / "test_playbooks_report.xml",
+            content_type="application/xml",
+        )
+
+        logging_module.info("Finished uploading playbook results file to bucket")
 
 
 class Integration:

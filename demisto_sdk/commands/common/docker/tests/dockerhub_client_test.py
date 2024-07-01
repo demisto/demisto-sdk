@@ -15,6 +15,7 @@ def dockerhub_client() -> DockerHubClient:
     dockerhub_client = DockerHubClient(username="test", password="test")
     dockerhub_client.do_registry_get_request.cache_clear()
     dockerhub_client.do_docker_hub_get_request.cache_clear()
+    dockerhub_client._docker_hub_auth_tokens = {}
     return dockerhub_client
 
 
@@ -71,6 +72,35 @@ def test_get_token_with_existing_not_expired_token(
     assert not requests_mock.called
 
 
+def test_get_token_ratelimit_with_username_password(
+    mocker, dockerhub_client: DockerHubClient
+):
+    """
+    Given:
+        - no token from at the cache
+        - rate-limit error with username/password
+        - successful response without username/password
+
+    When:
+        - running get_token method
+
+    Then:
+        - ensure that the token is returned successfully
+    """
+    rate_limit_response = Response()
+    rate_limit_response.status_code = 429
+    rate_limit_response._content = b""
+    valid_response = Response()
+    valid_response.status_code = 200
+    valid_response._content = json.dumps(
+        {"token": "token_from_api", "issued_at": "1234", "expires_in": 300}
+    ).encode("utf-8")
+    mocker.patch.object(
+        Session, "get", side_effect=[rate_limit_response, valid_response]
+    )
+    assert dockerhub_client.get_token(repo="test") == "token_from_api"
+
+
 @freeze_time("2024-01-01 12:00:00")
 def test_get_token_with_existing_expired_token(
     requests_mock, dockerhub_client: DockerHubClient
@@ -124,16 +154,21 @@ def test_get_token_with_existing_expired_token(
             "3.10.13.81631",
         ),
         (["1.0.0.81877", "1.0.0.78900", "1.0.0.72295"], "1.0.0.81877"),
-        (["1.0.0.81877", "1.0.0.78900", "2.0.0.72295"], "2.0.0.72295"),
+        (["1.0.0.61877", "1.0.0.78900", "2.0.0.79295"], "2.0.0.79295"),
+        (["2.0.0.81877", "2.0.0.78900", "1.0.0.99295"], "1.0.0.99295"),
+        (
+            ["0.110.3.93571", "1.0.0.93128"],
+            "0.110.3.93571",
+        ),  # Important example of fastapi docker image.
         (
             [
                 "invalid_value",
-                "7.4.0.80528",
+                "7.4.0.80530",
                 "1.5.0.80528",
                 "2.5.0.80528",
                 "2.5.0.80529",
             ],
-            "7.4.0.80528",
+            "7.4.0.80530",
         ),
     ],
 )
@@ -151,7 +186,9 @@ def test_get_latest_docker_image_tag(
         - running get_latest_docker_image_tag method
 
     Then:
-        - ensure that the latest tag is returned always
+        - ensure that the latest tag is always returned. (decided by the build number showing up in the last place of
+         the version tag e.g. 1.2.3.45 --> 45)
+
     """
     requests_mock.get(
         "https://auth.docker.io/token",

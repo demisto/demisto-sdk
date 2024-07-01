@@ -1,4 +1,0 @@
-changes:
-- description: Added the `--template-path` argument to the **pre-commit** command.
-  type: feature
-pr_number: 4184

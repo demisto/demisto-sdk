@@ -1,80 +1,63 @@
-import logging
-
-from click.testing import CliRunner
-
-from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.content.content import Content
-from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.integration import (
-    IntegrationValidator,
-)
-from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from demisto_sdk.commands.common.constants import DEMISTO_SDK_CONFIG_FILE
+from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
-def test_conf_file_custom(mocker, monkeypatch, repo):
+def test_conf_file_override_default_command_arguments(repo: Repo):
     """
-    Given
-    - a content repo with a pack and integration.
-    - a demisto-sdk-conf file that instructs validate to run on all files and is created mid way in the test.
+    Given:
+        argument1: has default value of True, but in the config value of false
+        argument2: has a default value of False, but in the config value of true
+        argument3: has a default value = "default_value", but in the config value = "config_value"
 
-    When
-    - Running validate on the integration file twice - before and after the demisto-sdk-conf file creation.
+    When:
+        Calling update_command_args_from_config_file function
 
-    Then
-    - Ensure validate runs on the specific file when the conf file is not in place.
-    - Ensure validate runs on all files after the conf file is in place.
+    Then:
+        Validate that the arguments are being updated with the arguments from the config.
+
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
+    from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-    mocker.patch.object(tools, "is_external_repository", return_value=True)
-    mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
-    mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(Content, "git_util", return_value=GitUtil())
-    mocker.patch.object(
-        OldValidateManager, "setup_prev_ver", return_value="origin/master"
+    command_args = {"argument1": True, "argument2": False, "argument3": "default_value"}
+    command_name = "validate"
+    repo.make_file(
+        DEMISTO_SDK_CONFIG_FILE,
+        file_content=f"[{command_name}]\nargument1=false\nargument2=true\nargument3=config_value",
     )
-    mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
-    pack = repo.create_pack("tempPack")
-    integration = pack.create_integration("myInt")
-    integration.create_default_integration()
-    test_playbook = pack.create_test_playbook("myInt_test_playbook")
-    test_playbook.create_default_playbook()
-    integration.yml.update({"tests": ["myInt_test_playbook"]})
+    with ChangeCWD(repo.path):
+        update_command_args_from_config_file(command_name, command_args)
 
-    with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        # pre-conf file - see validate fail on docker related issue
-        runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert all(
-            [
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "================= Validating file ",
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "DO106",
-                ),
-            ]
-        )
+    assert command_args["argument1"] is False
+    assert command_args["argument2"] is True
+    assert command_args["argument3"] == "config_value"
 
-    repo.make_file(".demisto-sdk-conf", "[validate]\nno_docker_checks=True")
-    with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        # post-conf file - see validate not fail on docker related issue as we are skipping
-        runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert all(
-            [
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "================= Validating file ",
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "DO106",
-                ),
-            ]
-        )
+
+def test_conf_file_add_command_arguments(repo: Repo):
+    """
+    Given:
+        argument1: does not have any default value, but in the config value of false
+        argument2: does not have any default value, but in the config value of true
+        argument3: does not have any default value, but in the config value = "config_value"
+
+    When:
+        Calling update_command_args_from_config_file function
+
+    Then:
+        Validate that the arguments are being updated with the arguments from the config.
+
+    """
+    from demisto_sdk.utils.utils import update_command_args_from_config_file
+
+    command_args = {}
+    command_name = "format"
+    repo.make_file(
+        DEMISTO_SDK_CONFIG_FILE,
+        file_content=f"[{command_name}]\nargument1=false\nargument2=true\nargument3=config_value",
+    )
+    with ChangeCWD(repo.path):
+        update_command_args_from_config_file(command_name, command_args)
+
+    assert command_args["argument1"] is False
+    assert command_args["argument2"] is True
+    assert command_args["argument3"] == "config_value"

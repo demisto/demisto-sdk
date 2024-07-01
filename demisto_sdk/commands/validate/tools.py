@@ -1,4 +1,5 @@
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
@@ -147,3 +148,27 @@ def find_command(commands: List[Command], command_to_find: str) -> Optional[Comm
         if command.name == command_to_find:
             return command
     return None
+
+
+def compare_lists(sub_list: List[str], main_list: List[str]) -> List[str]:
+    """
+    Compares two lists and returns the elements that are in the sub list but not in the main list, including duplicates.
+    for example:
+    compare_lists(['a', 'b', 'c', 'c', 'd'], ['a', 'b', 'c']) -> ['c', 'd']
+    Args:
+        sub_list: list of elements to compare if they are a subset of main_list
+        main_list: the list to compare against
+    Returns:
+        List the elements that appear in the sublist but not in the main list, including duplicates if they are not all present in the main list.
+    """
+    return list((Counter(sub_list) - Counter(main_list)).elements())
+
+
+def is_indicator_pb(playbook: Playbook):
+    """
+    Check if the playbook has indicators as input query.
+    """
+    return any(
+        (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators"
+        for i in playbook.data.get("inputs", {})
+    )

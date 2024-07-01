@@ -3,27 +3,24 @@ demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk @YuvHa
 demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun
 
 # VS Code plugin
-.vscode/ @ilaner
-.devcontainer/ @ilaner
-
-# CircleCI
-.circleci/ @GuyAfik
+.vscode/ @anas-yousef
+.devcontainer/ @anas-yousef
 
 # Github Actions
-.github/workflows @GuyAfik
+.github/workflows @samuelFain
 
 # Dependencies
-Pipfile* @GuyAfik
-pyproject.toml @GuyAfik
+Pipfile* @samuelFain
+pyproject.toml @samuelFain
 
 # Pytest.ini
-pytest.ini @GuyAfik
+pytest.ini @samuelFain
 
 # Content graph
-demisto_sdk/commands/content_graph/** @dantavori @ilaner
+demisto_sdk/commands/content_graph/** @dantavori @RosenbergYehuda
 
 # Modeling rules
 demisto_sdk/commands/test_content/test_modeling_rule/ @AradCarmi
 
 # Misc
-demisto_sdk/__main__.py @GuyAfik
+demisto_sdk/__main__.py @samuelFain

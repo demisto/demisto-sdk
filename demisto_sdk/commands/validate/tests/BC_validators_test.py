@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import List
 
 import pytest
@@ -8,6 +9,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Command, Outp
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_incident_field_object,
     create_incident_type_object,
     create_incoming_mapper_object,
     create_integration_object,
@@ -24,6 +26,12 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC101_is_breaking_co
 from demisto_sdk.commands.validate.validators.BC_validators.BC102_is_context_path_changed import (
     IsContextPathChangedValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC103_args_name_change import (
+    ArgsNameChangeValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC104_have_commands_or_args_name_changed import (
+    HaveCommandsOrArgsNameChangedValidator,
+)
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
 )
@@ -36,6 +44,15 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_tover
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC110_new_required_argument_integration import (
+    NewRequiredArgumentIntegrationValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC111_new_required_argument_script import (
+    NewRequiredArgumentScriptValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC112_no_removed_integration_parameters import (
+    NoRemovedIntegrationParametersValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 ALL_MARKETPLACES = list(MarketplaceVersions)
@@ -44,6 +61,54 @@ ALL_MARKETPLACES_FOR_IN_PACK = [marketplace.value for marketplace in ALL_MARKETP
 XSIAM_MARKETPLACE_FOR_IN_PACK = [ALL_MARKETPLACES_FOR_IN_PACK[1]]
 XSOAR_MARKETPLACE = [ALL_MARKETPLACES[0]]
 XSOAR_MARKETPLACE_FOR_IN_PACK = [ALL_MARKETPLACES_FOR_IN_PACK[0]]
+
+
+# Create a new content item with 3 commands with unique names. all commands have only 1 argument except the third command which has 2 arguments.
+
+GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS = create_integration_object(
+    paths=["script.commands"],
+    values=[
+        [
+            {
+                "name": "command_1",
+                "description": "test",
+                "arguments": [
+                    {
+                        "name": "arg_1_command_1",
+                        "description": "nothing description.",
+                    }
+                ],
+                "outputs": [],
+            },
+            {
+                "name": "command_2",
+                "description": "test",
+                "arguments": [
+                    {
+                        "name": "arg_1_command_2",
+                        "description": "nothing description.",
+                    }
+                ],
+                "outputs": [],
+            },
+            {
+                "name": "command_3",
+                "description": "test",
+                "arguments": [
+                    {
+                        "name": "arg_1_command_3",
+                        "description": "nothing description.",
+                    },
+                    {
+                        "name": "arg_2_command_3",
+                        "description": "nothing description.",
+                    },
+                ],
+                "outputs": [],
+            },
+        ]
+    ],
+)
 
 
 @pytest.mark.parametrize(
@@ -789,6 +854,17 @@ def test_IsBreakingContextOutputBackwardsValidator_is_valid(
             ],
             id="Case 4: mapper - fromversion changed",
         ),
+        pytest.param(
+            [
+                create_incident_field_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incident_field_object(paths=["fromVersion"], values=["6.0.0"]),
+            ],
+            [
+                create_incident_field_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incident_field_object(paths=["fromVersion"], values=["5.0.0"]),
+            ],
+            id="Case 5: incident field - fromversion changed",
+        ),
     ],
 )
 def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
@@ -941,3 +1017,363 @@ def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content
         and result[0].message
         == "Changing the maximal supported version field `toversion` is not allowed. Please undo, or request a force merge."
     )
+
+
+def test_args_name_change_validator__fails():
+    """
+    Given:
+        - Script content item with a changed argument name.
+        - Old Script content item with the old argument name.
+
+    When:
+        - Calling the `HaveTheArgsChangedValidator` function.
+
+    Then:
+        - Ensure the results are as expected with the changed argument name in the message.
+    """
+    modified_content_items = [
+        create_script_object(paths=["args[0].name"], values=["new_arg"])
+    ]
+    old_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+
+    create_old_file_pointers(modified_content_items, old_content_items)
+
+    results = ArgsNameChangeValidator().is_valid(modified_content_items)
+    assert "old_arg." in results[0].message
+
+
+def test_args_name_change_validator__passes():
+    """
+    Given:
+        - Script content item with a new argument name, and an existing argument name.
+        - Old Script content item with the existing argument name.
+    When:
+        - Calling the `HaveTheArgsChangedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Should pass the validation since the user didn't change existing argument names, only added new ones.
+    """
+    modified_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+    new_arg = create_script_object(paths=["args[0].name"], values=["new_arg"]).args[0]
+    modified_content_items[0].args.append(new_arg)
+    old_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+
+    create_old_file_pointers(modified_content_items, old_content_items)
+    assert not ArgsNameChangeValidator().is_valid(modified_content_items)
+
+
+def test_HaveCommandsOrArgsNameChangedValidator__fails():
+    """
+    Given
+        - A new content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
+        - An old content item with the same structure as the new content item, but with different command and argument names.
+    When
+        - Calling the HaveCommandsOrArgsNameChangedValidator.
+    Then
+        - Make sure the validation fails and the right error message is returned notifying only on changes in the second command name, and third command argument name.
+            - The first command has no changes.
+            - The second command name has changed from 'old_command_1' to 'command_1', and its arg name has changed from 'old_arg_1_command_1' to 'arg_1_command_1.
+                (the args change souled be ignored since we reported on its command name change.)
+            - The third command name has not changed, but one of its arguments name has changed from 'old_arg_1_command_2' to 'arg_1_command_2'.
+
+    """
+    # Setup new content item with changes in command and argument names
+    new_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
+
+    # Setup old content item with original command and argument names
+    old_content_item = deepcopy(new_content_item)
+    old_content_item.commands[1].name = "old_command_1"
+    old_content_item.commands[1].args[0].name = "old_arg_1_command_1"
+    old_content_item.commands[2].args[0].name = "old_arg_1_command_2"
+
+    # Create old file pointers and validate
+    create_old_file_pointers([new_content_item], [old_content_item])
+    results = HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])
+
+    assert (
+        'changes to the names of the following existing commands:"old_command_1". In addition, you have made changes to the names of existing arguments: In command "command_3" the following arguments have been changed: "old_arg_1_command_2".'
+        in results[0].message
+    )
+
+
+def test_HaveCommandsOrArgsNameChangedValidator__passes():
+    """
+    Given
+    - An old content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
+    - A new content item with the same structure as the old content item, but with addition of a new argument to the third command, and a new command as well.
+    When
+    - Calling the HaveCommandsOrArgsNameChangedValidator.
+    Then
+    - Make sure the validation passes and no error messages are returned, since adding new commands or arguments is allowed.
+    """
+    # Setup new content item with changes in command and argument names
+    old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
+    new_content_item = deepcopy(old_content_item)
+
+    new_content_item.commands.append(
+        create_integration_object(
+            paths=["script.commands"], values=[[{"name": "command_4"}]]
+        ).commands[0]
+    )
+    # add a new argument to the third command
+    new_content_item.commands[2].args.append(
+        create_integration_object(
+            paths=[
+                "script.commands",
+            ],
+            values=[
+                [
+                    {
+                        "name": "command_1",
+                        "description": "test",
+                        "arguments": [
+                            {
+                                "name": "arg_3_command_1",
+                            }
+                        ],
+                        "outputs": [],
+                    }
+                ]
+            ],
+        )
+        .commands[0]
+        .args[0]
+    )
+
+    # Setup old content item with original command and argument names
+    old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    assert not HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])
+
+
+def test_NewRequiredArgumentValidator__fails():
+    """
+    Given
+    - A old content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
+    - A new content item with the same structure as the old content item, but with changes in the second command argument to be required and a new required argument in the third command.
+    When
+    - Calling the NewRequiredArgumentValidator.
+    Then
+    - Make sure the validation fails and the right error message is returned notifying on the new required argument in the second command and the third command.
+    """
+    old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
+    new_content_item = deepcopy(old_content_item)
+    # add new required arg
+    new_content_item.commands[2].args.append(
+        create_integration_object(
+            paths=[
+                "script.commands",
+            ],
+            values=[
+                [
+                    {
+                        "name": "test_command",
+                        "arguments": [
+                            {
+                                "name": "arg_3_command_3",
+                                "required": True,
+                            }
+                        ],
+                    }
+                ]
+            ],
+        )
+        .commands[0]
+        .args[0]
+    )
+
+    # change existing arg to be required
+    new_content_item.commands[1].args[0].required = True
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    res = NewRequiredArgumentIntegrationValidator().is_valid([new_content_item])
+
+    assert (
+        "added the following new *required* arguments: in command 'command_2' you have added a new required argument:'arg_1_command_2'. in command 'command_3' you have added a new required argument:'arg_3_command_3'."
+        in res[0].message
+    )
+
+
+def test_NewRequiredArgumentValidator__passes():
+    """
+    Given
+    - A old content item with 3 commands. all commands have only 1 argument except the third command which has 2 arguments.
+    - A new content item with the same structure as the old content item, but with changes in the second command argument to be required and a new required argument in the new forth command with a required argument.
+    When
+    - Calling the NewRequiredArgumentValidator.
+    Then
+    - Make sure the validation passes and no error messages are returned, since adding new required arguments is allowed
+        if the new required argument is in a new command or if it has a default value.
+    """
+    new_content_item = deepcopy(GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS)
+    # change existing arg to be required but add a default value
+    new_content_item.commands[1].args[0].required = True
+    new_content_item.commands[1].args[0].defaultvalue = "test"
+    # add new command with required arg without a default value
+    new_content_item.commands.append(
+        create_integration_object(
+            paths=[
+                "script.commands",
+            ],
+            values=[
+                [
+                    {
+                        "name": "command_4",
+                        "arguments": [
+                            {
+                                "name": "arg_1_command_4",
+                                "required": True,
+                            }
+                        ],
+                    }
+                ]
+            ],
+        ).commands[0]
+    )
+    old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
+    create_old_file_pointers([new_content_item], [old_content_item])
+
+    assert not NewRequiredArgumentIntegrationValidator().is_valid([new_content_item])
+
+
+@pytest.mark.parametrize(
+    "new_args, breaking_arg",
+    [
+        pytest.param(
+            [{"name": "arg1", "required": False}, {"name": "arg2", "required": True}],
+            "arg2",
+            id="new required arg",
+        ),
+        pytest.param(
+            [
+                {"name": "arg1", "required": True},
+            ],
+            "arg1",
+            id="changed to required",
+        ),
+    ],
+)
+def test_NewRequiredArgumentScriptValidator__fails(new_args, breaking_arg):
+    """
+    Given:
+        - An older version of a script that has one non-required argument.
+        - A newer version of the same script where an argument is now required. This can occur in two cases:
+            Case 1: The required argument is a new addition to the script.
+            Case 2: An existing argument from the older version has been updated to be required in the new version.
+    When:
+        - The NewRequiredArgumentScriptValidator is invoked to validate the changes in the script.
+    Then:
+        - The validation should fail because a non-required argument has been made required. The error message should correctly identify the argument that caused the validation to fail.
+    """
+    new_content_item = create_script_object(
+        paths=["args"],
+        values=[new_args],
+    )
+    old_content_item = create_script_object(paths=["args"], values=[[{"name": "arg1"}]])
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    res = NewRequiredArgumentScriptValidator().is_valid([new_content_item])
+    assert breaking_arg in res[0].message
+
+
+@pytest.mark.parametrize(
+    "new_args",
+    [
+        pytest.param(
+            [
+                {"name": "arg1", "required": False},
+                {"name": "arg2", "required": False},
+            ],
+            id="non required args",
+        ),
+        pytest.param(
+            [
+                {"name": "arg1", "required": True},
+                {"name": "arg2", "required": True, "defaultvalue": "test"},
+            ],
+            id="required with default value",
+        ),
+    ],
+)
+def test_NewRequiredArgumentScriptValidator__passes(new_args):
+    """
+    Given:
+        - An older version of a script that has two arguments: one required and one not required.
+        - A newer version of the same script in two cases:
+            Case 1: Both arguments are not required.
+            Case 2: Both arguments are required, but the second one has a default value.
+    When:
+        - The NewRequiredArgumentScriptValidator is invoked to validate the changes in the script.
+    Then:
+        - The validation should pass in both cases:
+            Case 1: The first argument was changed to be not required, which is allowed.
+            Case 2: The first argument did not change, and the second argument was changed to be required but has a default value, which is allowed.
+    """
+    new_content_item = create_script_object(
+        paths=["args"],
+        values=[new_args],
+    )
+    old_content_item = create_script_object(
+        paths=["args"], values=[[{"name": "arg1", "required": True}, {"name": "arg2"}]]
+    )
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    assert not NewRequiredArgumentScriptValidator().is_valid([new_content_item])
+
+
+def test_has_removed_integration_parameters_with_changed_params():
+    """
+    Given
+    - integration configuration with changed parameters.
+
+    When
+    - running the validation no_removed_integration_parameters.
+
+    Then
+    - return a ValidationResult with a list of missing parameters.
+    """
+    new_item = create_integration_object(
+        paths=["configuration"], values=[[{"name": "param_3"}, {"name": "param_4"}]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["configuration"],
+        values=[[{"name": "param_1"}, {"name": "param_2"}, {"name": "param_3"}]],
+    )
+
+    res = NoRemovedIntegrationParametersValidator().is_valid([new_item])
+
+    assert (
+        res[0].message
+        == "Parameters have been removed from the integration, the removed parameters are: 'param_1', 'param_2'."
+    )
+
+
+def test_has_removed_integration_parameters_without_changed_params():
+    """
+    Given
+    - integration configuration with no changed parameters.
+
+    When
+    - running the validation no_removed_integration_parameters.
+
+    Then
+    - return an empty list.
+    """
+    new_item = create_integration_object(
+        paths=["configuration"], values=[[{"name": "param_1"}, {"name": "param_2"}]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["configuration"], values=[[{"name": "param_1"}, {"name": "param_2"}]]
+    )
+
+    res = NoRemovedIntegrationParametersValidator().is_valid([new_item])
+
+    assert res == []

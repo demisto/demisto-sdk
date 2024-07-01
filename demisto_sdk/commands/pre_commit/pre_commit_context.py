@@ -24,6 +24,9 @@ IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
 PRECOMMIT_TEMPLATE_NAME = ".pre-commit-config_template.yaml"
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
+PATH = Path(__file__).parents[0].resolve()
+DEFAULT_PRE_COMMIT_TEMPLATE_PATH = PATH / PRECOMMIT_TEMPLATE_NAME
+
 PRECOMMIT_FOLDER = CACHE_DIR / "pre-commit"
 PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
 PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
@@ -46,6 +49,8 @@ class PreCommitContext:
     run_hook: Optional[str] = None
     skipped_hooks: Set[str] = field(default_factory=set)
     run_docker_hooks: bool = True
+    image_ref: Optional[str] = None
+    docker_image: Optional[str] = None
     dry_run: bool = False
     pre_commit_template_path: Path = PRECOMMIT_TEMPLATE_PATH
 

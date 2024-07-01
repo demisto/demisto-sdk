@@ -42,6 +42,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF113_name_field_pre
 from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_key import (
     UnsearchableKeyValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import (
+    SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator,
+)
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -323,10 +326,7 @@ def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
         assert not NameFieldPrefixValidator().is_valid([content_item])
 
 
-@pytest.mark.parametrize(
-    "special_pack",
-    PACKS_IGNORE
-)
+@pytest.mark.parametrize("special_pack", PACKS_IGNORE)
 def test_NameFieldPrefixValidator_is_valid_with_special_packs(special_pack: str):
     """
     Given:
@@ -337,9 +337,7 @@ def test_NameFieldPrefixValidator_is_valid_with_special_packs(special_pack: str)
         - Ensure that no ValidationResult returned
     """
     with ChangeCWD(REPO.path):
-        content_item = create_incident_field_object(
-            pack_info={"name": special_pack}
-        )
+        content_item = create_incident_field_object(pack_info={"name": special_pack})
         assert not NameFieldPrefixValidator().is_valid([content_item])
 
 
@@ -508,3 +506,71 @@ def test_IsFieldTypeChangedValidator_fix():
     results = IsFieldTypeChangedValidator().fix(content_item)
     assert content_item.field_type == "short text"
     assert results.message == "Changed the `type` field back to `short text`."
+
+
+def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_valid():
+    """
+    Given:
+        - valid IncidentField of type multySelect with no empty strings in selectValues key.
+    When:
+        - run is_valid method.
+    Then:
+        - Ensure that ValidationResult returned as expected.
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(
+            ["type", "selectValues"], ["multiSelect", ["blabla", "test"]]
+        )
+    ]
+    results = (
+        SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().is_valid(
+            content_items
+        )
+    )
+    assert not results
+
+
+def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_invalid():
+    """
+    Given:
+        - invalid IncidentField of type multySelect with empty strings in selectValues key.
+    When:
+        - run is_valid method.
+    Then:
+        - Ensure that ValidationResult returned as expected.
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(
+            ["type", "selectValues"], ["multiSelect", ["", "test"]]
+        )
+    ]
+    results = (
+        SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().is_valid(
+            content_items
+        )
+    )
+    assert results
+    assert (
+        results[0].message
+        == "multiSelect types cannot contain empty values in the selectValues field."
+    )
+
+
+def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
+    """
+    Given:
+        - invalid IncidentField of type multySelect with empty strings in selectValues key.
+    When:
+        - run fix method.
+    Then:
+        - Ensure the fix message is as expected.
+        - Ensure there is there is no emtpy values in the selectValues field.
+    """
+    incident_field = create_incident_field_object(
+        ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
+    )
+    result = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().fix(
+        incident_field
+    )
+    assert result.message == "Removed all empty values in the selectValues field."
+    assert result.content_object.data["selectValues"] == ["test"]

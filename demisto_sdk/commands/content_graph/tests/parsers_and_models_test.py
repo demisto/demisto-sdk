@@ -5,8 +5,8 @@ import pytest
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -19,6 +19,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
+from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -34,7 +35,7 @@ from TestSuite.repo import Repo
 
 
 def content_items_to_node_ids(
-    content_items_dict: Dict[ContentType, List[str]]
+    content_items_dict: Dict[ContentType, List[str]],
 ) -> Set[str]:
     """A helper method that converts a dict of content items to a set of their node ids."""
     return {
@@ -378,7 +379,7 @@ class TestParsersAndModels:
             expected_name="correlation_rule_name",
             expected_path=colrrelation_rule_path,
             expected_content_type=ContentType.CORRELATION_RULE,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            expected_fromversion=MINIMUM_XSOAR_SAAS_VERSION,
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
@@ -695,7 +696,7 @@ class TestParsersAndModels:
         ContentItemModelVerifier.run(
             model,
             expected_id="urlRep",
-            expected_name="URL",
+            expected_name="urlRep",
             expected_path=indicator_type_path,
             expected_content_type=ContentType.INDICATOR_TYPE,
             expected_fromversion="5.5.0",
@@ -1271,7 +1272,14 @@ class TestParsersAndModels:
 
     @pytest.mark.parametrize(
         "raw_value, expected_value",
-        [("false", False), ("true", True), ("tRue", True), ("something", True)],
+        [
+            (False, False),
+            (True, True),
+            ("true", True),
+            ("false", False),
+            ("tRue", True),
+            ("faLse", False),
+        ],
     )
     def test_script_parser_set_autoupdate(self, raw_value, expected_value, pack: Pack):
         """
@@ -1400,6 +1408,110 @@ class TestParsersAndModels:
             expected_content_type=ContentType.LAYOUT_RULE,
             expected_fromversion="6.10.0",
         )
+
+    def test_case_layout_rule_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with a case layout rule.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify all relationships of the content item are collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects.case_layout_rule import (
+            CaseLayoutRule,
+        )
+        from demisto_sdk.commands.content_graph.parsers.case_layout_rule import (
+            CaseLayoutRuleParser,
+        )
+
+        rule = pack.create_case_layout_rule("case_rule_test")
+        rule_path = Path(rule.path)
+        parser = CaseLayoutRuleParser(rule_path, list(MarketplaceVersions))
+        RelationshipsVerifier.run(
+            parser.relationships,
+            dependency_ids={
+                "test_layout": ContentType.CASE_LAYOUT,
+            },
+        )
+        model = CaseLayoutRule.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="case_rule_test",
+            expected_name="case_rule_test",
+            expected_path=rule_path,
+            expected_content_type=ContentType.CASE_LAYOUT_RULE,
+            expected_fromversion="8.7.0",
+        )
+
+    def test_case_layout_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with a case layout.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify all relationships of the content item are collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects import CaseLayout
+        from demisto_sdk.commands.content_graph.parsers.case_layout import (
+            CaseLayoutParser,
+        )
+
+        case_layout = pack.create_case_layout("TestCaseLayout")
+        case_layout_path = Path(case_layout.path)
+        parser = CaseLayoutParser(case_layout_path, list(MarketplaceVersions))
+        model = CaseLayout.from_orm(parser)
+
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="TestCaseLayout",
+            expected_name="TestCaseLayout",
+            expected_path=case_layout_path,
+            expected_content_type=ContentType.CASE_LAYOUT,
+            expected_fromversion="8.7.0",
+        )
+        assert model.group == "case"
+
+    def test_case_field_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with a case field.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify all relationships of the content item are collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects.case_field import (
+            CaseField,
+        )
+        from demisto_sdk.commands.content_graph.parsers.case_field import (
+            CaseFieldParser,
+        )
+
+        case_field = pack.create_case_field(
+            "TestCaseField", load_json("case_field.json")
+        )
+        case_field_path = Path(case_field.path)
+        parser = CaseFieldParser(case_field_path, list(MarketplaceVersions))
+        model = CaseField.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="testcasefield",
+            expected_name="Test case Field",
+            expected_path=case_field_path,
+            expected_content_type=ContentType.CASE_FIELD,
+            expected_fromversion="8.7.0",
+        )
+        assert model.cli_name == "testcasefield"
+        assert model.field_type == "html"
+        assert not model.associated_to_all
 
     def test_widget_parser(self, pack: Pack):
         """
@@ -2804,16 +2916,19 @@ def test_fix_layout_incident_to_alert(
             {MarketplaceVersions.XSOAR},
             {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_SAAS},
         ),
+        (
+            {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_ON_PREM},
+            {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_SAAS},
+        ),
         ({MarketplaceVersions.MarketplaceV2}, {MarketplaceVersions.MarketplaceV2}),
         ({MarketplaceVersions.XPANSE}, {MarketplaceVersions.XPANSE}),
         (
             {MarketplaceVersions.XSOAR_ON_PREM},
-            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR},
+            {MarketplaceVersions.XSOAR},
         ),
         (
             {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR_SAAS},
             {
-                MarketplaceVersions.XSOAR_ON_PREM,
                 MarketplaceVersions.XSOAR_SAAS,
                 MarketplaceVersions.XSOAR,
             },
@@ -2821,7 +2936,6 @@ def test_fix_layout_incident_to_alert(
         (
             {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.MarketplaceV2},
             {
-                MarketplaceVersions.XSOAR_ON_PREM,
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.XSOAR,
             },
@@ -2851,13 +2965,9 @@ def test_updated_marketplaces_set(marketplace, expected_market_place_set):
         - remains empty
 
     """
-    from demisto_sdk.commands.content_graph.parsers.content_item import (
-        ContentItemParser,
-    )
-
     assert (
         expected_market_place_set
-        == ContentItemParser.update_marketplaces_set_with_xsoar_values(marketplace)
+        == BaseContentParser.update_marketplaces_set_with_xsoar_values(marketplace)
     )
 
 

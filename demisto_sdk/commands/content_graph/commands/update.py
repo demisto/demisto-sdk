@@ -161,7 +161,7 @@ def update_content_graph(
             return
         packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
 
-    packs_str = "\n".join([f"- {p}" for p in packs_to_update])
+    packs_str = "\n".join([f"- {p}" for p in sorted(packs_to_update)])
     logger.info(f"Updating the following packs:\n{packs_str}")
 
     builder.update_graph(tuple(packs_to_update) if packs_to_update else None)
@@ -179,7 +179,11 @@ def update_content_graph(
 
 @app.command(
     no_args_is_help=True,
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    context_settings={
+        "allow_extra_args": True,
+        "ignore_unknown_options": True,
+        "help_option_names": ["-h", "--help"],
+    },
 )
 def update(
     ctx: typer.Context,

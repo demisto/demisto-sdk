@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 import zipfile
 from io import BytesIO
@@ -897,10 +898,8 @@ class TestZippedPackUpload:
                     "metadata.json",
                     "pack_metadata.json",
                     "XSIAMDashboards/",
-                    "XSIAMDashboards/xsiamdashboard-MyDashboard.json",
                     "XSIAMDashboards/external-xsiamdashboard-MyDashboard.json",
                     "Triggers/",
-                    "Triggers/trigger-MyTrigger.json",
                     "Triggers/external-trigger-MyTrigger.json",
                 },
             ),
@@ -930,6 +929,7 @@ class TestZippedPackUpload:
         mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
             click.Context(command=upload).invoke(
                 upload,
                 marketplace=marketplace,
@@ -1108,11 +1108,13 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     zipped_pack_path = tmp_path / "zipped.zip"
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
-    zip_multiple_packs(
-        [pack0.path, pack1.path, zipped_pack_path],
-        MarketplaceVersions.XSOAR,
-        tmp_path,
-    )
+    with TemporaryDirectory() as dir:
+        mocker.patch.object(os, "getenv", return_value=dir)
+        zip_multiple_packs(
+            [pack0.path, pack1.path, zipped_pack_path],
+            MarketplaceVersions.XSOAR,
+            tmp_path,
+        )
 
     assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
     folder_path = tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_STEM

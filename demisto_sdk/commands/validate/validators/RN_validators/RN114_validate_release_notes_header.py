@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Iterable, List, Set, Tuple, Union
+from collections import defaultdict
+from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
 from demisto_sdk.commands.common.constants import (
     RN_HEADER_BY_FILE_TYPE,
@@ -19,6 +20,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Pack
+NEW_HEADER_PREFIX = "New: "
 RN_HEADER_BY_CONTENT_TYPE = {
     ContentType.PLAYBOOK: "Playbooks",
     ContentType.INTEGRATION: "Integrations",
@@ -59,15 +61,16 @@ CONTENT_TYPE_BY_RN_HEADER = {
 }
 
 # Release note regex
-CONTENT_TYPE_SECTION_REGEX = (
-    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)"
+CONTENT_TYPE_SECTION_RE = re.compile(
+    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
 )
-CONTENT_ITEM_SECTION_REGEX = (
-    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
+CONTENT_ITEM_SECTION_RE = re.compile(
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$",
+    re.M,
 )
 
 
-def remove_none_values(ls: Union[List[Any], Tuple[Any, ...]]) -> List[Any]:
+def remove_none_values(ls: Sequence) -> List:
     """
     Filters out None values from a list or tuple.
 
@@ -95,15 +98,17 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         validator_results: List[ValidationResult] = []
         for content_item in content_items:
-            if content_item.pack_metadata_dict and content_item.pack_metadata_dict.get(
-                "hidden"
-            ):
-                logger.debug("Content item is marked as hidden. Skipping.")
+            if content_item.hidden:
+                logger.debug(
+                    f"Pack {content_item.name} is marked as hidden. "
+                    f"Skipping {self.error_code} validation."
+                )
                 continue
             (
                 invalid_headers_content_type,
                 invalid_headers_content_item,
             ) = self.validate_release_notes_headers(content_item)
+
             content_type_message = (
                 f"Headers Content Types: {', '.join(invalid_headers_content_type)}\n"
                 if invalid_headers_content_type
@@ -138,12 +143,10 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             Dict[str, List[str]]: A dictionary representation of the release notes file that maps
                                   content types' headers to their corresponding content items' headers.
         """
-        headers: Dict[str, List[str]] = {}
-        content_type_section_pattern = re.compile(CONTENT_TYPE_SECTION_REGEX, re.M)
-        content_item_section_pattern = re.compile(CONTENT_ITEM_SECTION_REGEX, re.M)
+        headers: Dict[str, List[str]] = defaultdict(list)
 
         # Get all sections from the release notes using regex
-        rn_sections = content_type_section_pattern.findall(release_note_content)
+        rn_sections = CONTENT_TYPE_SECTION_RE.findall(release_note_content)
         for section in rn_sections:
             section = remove_none_values(ls=section)
             if not section:
@@ -151,28 +154,24 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 continue
 
             content_type = section[0]
-            content_type_sections_str = section[1]
-            content_type_sections_ls = content_item_section_pattern.findall(
-                content_type_sections_str
+            type_sections: List[str] = remove_none_values(
+                CONTENT_ITEM_SECTION_RE.findall(section[1])
             )
 
-            if not content_type_sections_ls:
+            if not type_sections:
                 # Did not find content items headers under content type - might be due to invalid format.
                 # Will raise error in rn_valid_header_format.
                 headers[content_type] = []
 
-            for content_type_section in content_type_sections_ls:
-                content_type_section = remove_none_values(ls=content_type_section)
-                if content_type_section:
-                    logger.debug(
-                        f'removing New: " if "New:" in {content_type_section[0]} else "" '
-                    )
-                    header = (
-                        content_type_section[0].rstrip()
-                        if ("New: " not in content_type_section[0])
-                        else content_type_section[0][len("New: ") :]
-                    )
-                    headers.setdefault(content_type, []).append(header)
+            # now we know we have a section
+            for type_section in type_sections:
+                if (raw_header := type_section[0].rstrip()).startswith(
+                    NEW_HEADER_PREFIX
+                ):
+                    header = raw_header[len(NEW_HEADER_PREFIX) :]
+                else:
+                    header = raw_header.rstrip()
+                headers[content_type].append(header)
         return headers
 
     def validate_content_type_header(self, header: str) -> bool:

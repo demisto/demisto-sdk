@@ -515,9 +515,11 @@ def test_DescriptionEndsWithDotValidator_fix(
         pytest.param(True, False, 0, id="Case 1"),
         pytest.param(False, True, 0, id="Case 2"),
         pytest.param(False, False, 1, id="Case 3"),
-    ]
+    ],
 )
-def test_NoDescriptionFileValidator_is_valid(description_file_exist, is_unified, expected_len_errors):
+def test_NoDescriptionFileValidator_is_valid(
+    description_file_exist, is_unified, expected_len_errors
+):
     """
     Given:
         - Case 1: Description file exists in the integration folder, integration is not unified.

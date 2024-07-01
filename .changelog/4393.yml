@@ -1,0 +1,4 @@
+changes:
+- description: Added DS104 to the new validation format.
+  type: internal
+pr_number: 4393

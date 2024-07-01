@@ -1038,7 +1038,12 @@ class ServerContext:
         self.api_key = None
         self.server_ip = server_private_ip
         self.build_context = build_context
-        self.server_url: str = ""
+        if self.build_context.is_saas_server_type:
+            self.server_url = self.server_ip
+            # we use client without demisto username
+            os.environ.pop("DEMISTO_USERNAME", None)
+        else:
+            self.server_url = f"https://{self.server_ip}"
         self.proxy: Optional[MITMProxy] = None
         self.cloud_ui_path = None
         self.client: Optional[DefaultApi] = None
@@ -1265,9 +1270,6 @@ class CloudServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
-        self.server_url = self.server_ip
-        # we use client without demisto username
-        os.environ.pop("DEMISTO_USERNAME", None)
         # In XSIAM or XSOAR SAAS - We're running without proxy. This code won't be executed on SaaS servers.
         self.proxy = None
         if self.build_context.server_type == XSIAM_SERVER_TYPE:
@@ -1463,7 +1465,6 @@ class OnPremServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
-        self.server_url = f"https://{self.server_ip}"
         self.proxy = MITMProxy(
             server_private_ip,
             self.build_context.logging_module,

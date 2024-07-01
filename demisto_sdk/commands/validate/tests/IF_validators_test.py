@@ -402,7 +402,7 @@ def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
         - run fix method.
     Then:
         - Ensure the fix message is as expected.
-        - Ensure here is no emtpy values in the selectValues field.
+        - Ensure there is no emtpy values in the selectValues field.
     """
     incident_field = create_incident_field_object(
         ["type", "selectValues"], ["singleSelect", ["", "", "test"]]

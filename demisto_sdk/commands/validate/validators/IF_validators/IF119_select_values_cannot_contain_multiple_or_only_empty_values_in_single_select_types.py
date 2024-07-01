@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Any
+from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses, IncidentFieldType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
@@ -14,13 +14,15 @@ ContentTypes = IncidentField
 
 
 def select_values_contain_multiple_or_only_empty_values_in_single_select_types(
-        content_item: ContentTypes,
+    content_item: ContentTypes,
 ) -> str:
     if content_item.field_type == IncidentFieldType.SINGLE_SELECT:
         select_values = content_item.select_values or []
         empty_string_count = sum(select_value == "" for select_value in select_values)
 
-        if empty_string_count == 0 or (empty_string_count == 1 and len(select_values) > 1):
+        if empty_string_count == 0 or (
+            empty_string_count == 1 and len(select_values) > 1
+        ):
             return ""
 
         if empty_string_count == 1:
@@ -46,7 +48,9 @@ class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValid
         validation_results: List[ValidationResult] = []
 
         for content_item in content_items:
-            error_message = select_values_contain_multiple_or_only_empty_values_in_single_select_types(content_item)
+            error_message = select_values_contain_multiple_or_only_empty_values_in_single_select_types(
+                content_item
+            )
 
             if error_message:
                 validation_results.append(
@@ -69,7 +73,9 @@ class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValid
             filter(lambda select_value: select_value != "", select_values)
         )  # First remove all empty values
         new_select_values.append("")  # Add back one empty value.
-        content_item.data["selectValues"] = content_item.select_values = new_select_values
+        content_item.data[
+            "selectValues"
+        ] = content_item.select_values = new_select_values
 
         return FixResult(
             validator=self,

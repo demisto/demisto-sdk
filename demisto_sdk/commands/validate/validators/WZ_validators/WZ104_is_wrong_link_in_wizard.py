@@ -24,14 +24,14 @@ class IsWrongLinkInWizardValidator(BaseValidator[ContentTypes]):
         content_item_json = json.loads(content_item.text)
         wizard_json_object = content_item_json.get("wizard", {})
         set_playbooks = wizard_json_object.get("set_playbook", [])
-        playbooks_link_to_integration = {
+        playbook_to_integration = {
             playbook.get("name", ""): playbook.get("link_to_integration")
             for playbook in set_playbooks
         }
         integrations = {integration.get("name") for integration in wizard_json_object.get("fetching_integrations", [])}
 
         integrations_without_playbook = []
-        for link in playbooks_link_to_integration.values():
+        for link in playbook_to_integration.values():
             if not link:  # handle case that a playbook was mapped to all integration
                 break
             if link not in integrations:

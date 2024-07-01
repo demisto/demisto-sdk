@@ -29,6 +29,7 @@ def test_execute_tests(mocker, tmp_path):
         - Ensure the mockable and unmockable tests queues were emptied
         - Ensure no test has failed during that test
     """
+
     # Setting up the build context
     filtered_tests = [
         "playbook_without_integrations",
@@ -36,6 +37,9 @@ def test_execute_tests(mocker, tmp_path):
         "playbook_with_unmockable_integration",
         "skipped_playbook",
     ]
+
+    machine_assignment_content = {"qa2-test-111111": {"packs_to_install": ["TEST"],
+                                                            "playbooks_to_run": filtered_tests}}
     # Setting up the content conf.json
     tests = [
         generate_test_configuration(playbook_id="playbook_without_integrations"),
@@ -68,7 +72,7 @@ def test_execute_tests(mocker, tmp_path):
         tmp_path,
         content_conf_json=content_conf_json,
         secret_conf_json=secret_test_conf,
-        filtered_tests_content=filtered_tests,
+        machine_assignment_content=machine_assignment_content,
     )
     # Setting up the client
     mocked_demisto_client = DemistoClientMock(integrations=integration_names)

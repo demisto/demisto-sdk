@@ -275,7 +275,16 @@ class ContentType(StrEnum):
                 if content_type_obj.match(_dict, path):
                     return content_type
         raise ValueError(f"Could not find content type in path {path}")
-
+    
+    @property
+    def release_notes_header(self) -> str:
+        if self == ContentType.MAPPER:
+            return f"{ContentType.CLASSIFIER}s"
+        elif ContentType.PREPROCESS_RULE:
+            return f"{ContentType.PREPROCESS_RULE}s"
+        elif ContentType.TRIGGER:
+            return "Triggers Recommendations"  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+        return f"{self.value}s"
 
 class Relationship(BaseModel):
     relationship: Optional[RelationshipType] = None
@@ -466,3 +475,4 @@ CONTENT_PRIVATE_ITEMS: dict = {
         "MITRE Layout",
     ],
 }
+

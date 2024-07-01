@@ -1,9 +1,13 @@
-from typing import List
+from typing import List, Optional, Union
 
 import pytest
 
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
-from demisto_sdk.commands.validate.tests.test_tools import create_incident_field_object
+from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
+    create_incident_field_object,
+    create_old_file_pointers,
+)
 from demisto_sdk.commands.validate.validators.IF_validators.IF100_is_valid_name_and_cli_name import (
     IsValidNameAndCliNameValidator,
 )
@@ -28,9 +32,20 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     INCIDENT_PROHIBITED_CLI_NAMES,
     IsCliNameReservedWordValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF111_is_field_type_changed import (
+    IsFieldTypeChangedValidator,
+)
+from demisto_sdk.commands.validate.validators.IF_validators.IF113_name_field_prefix import (
+    PACKS_IGNORE,
+    NameFieldPrefixValidator,
+)
+from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_key import (
+    UnsearchableKeyValidator,
+)
 from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import (
     SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator,
 )
+from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.mark.parametrize(
@@ -193,6 +208,143 @@ def test_IsCliNameReservedWordValidator_not_valid(reserved_word):
     )
 
 
+def test_IsFieldTypeChangedValidator_is_valid():
+    """
+    Given:
+        - IncidentFiled content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'type' field has changed
+        - Ensure that no ValidationResult returned when 'type' field has not changed
+    """
+    old_type = "short text"
+    new_type = "html"
+
+    # not valid
+    content_item = create_incident_field_object(["type"], [new_type])
+    old_content_items = [create_incident_field_object(["type"], [old_type])]
+    create_old_file_pointers([content_item], old_content_items)
+    assert IsFieldTypeChangedValidator().is_valid([content_item])
+
+    # valid
+    content_item.field_type = old_type
+    assert not IsFieldTypeChangedValidator().is_valid([content_item])
+
+
+@pytest.mark.parametrize("unsearchable", (False, None))
+def test_UnsearchableKeyValidator_is_valid(unsearchable: bool):
+    """
+    Given:
+        - IncidentFiled content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'unsearchable' field is set to false or not or undefined
+        - Ensure that no ValidationResult returned when unsearchable set to true
+    """
+    # not valid
+    content_item = create_incident_field_object(
+        paths=["unsearchable"], values=[unsearchable]
+    )
+    assert UnsearchableKeyValidator().is_valid([content_item])
+
+    # valid
+    content_item.unsearchable = True
+    assert not UnsearchableKeyValidator().is_valid([content_item])
+
+
+def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose prefix name that not start with relevant pack name
+    """
+    # not valid
+    pack_name = "Foo"
+    with ChangeCWD(REPO.path):
+        content_item = create_incident_field_object(pack_info={"name": pack_name})
+        results = NameFieldPrefixValidator().is_valid([content_item])
+        assert results
+        assert results[0].message == (
+            "Field name must start with the relevant pack name or one of the item prefixes found in pack metadata."
+            "\nFollowing prefixes are allowed for this IncidentField:"
+            f"\n{pack_name}"
+        )
+
+        # valid
+        content_item.name = "Foo CVE"
+        assert not NameFieldPrefixValidator().is_valid([content_item])
+
+
+@pytest.mark.parametrize(
+    "item_prefix, valid_prefix, expected_allowed_prefixes",
+    [
+        pytest.param(
+            ["Foo test", "Test Incident"],
+            "Foo test CVE",
+            ["Foo", "Foo test", "Test Incident"],
+            id="itemPrefix is a list",
+        ),
+        pytest.param(
+            "Foo test", "Foo test CVE", ["Foo", "Foo test"], id="itemPrefix is a str"
+        ),
+        pytest.param(None, "Foo CVE", ["Foo"], id="no itemPrefix exists"),
+    ],
+)
+def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
+    item_prefix: Optional[Union[List[str], str]],
+    valid_prefix: str,
+    expected_allowed_prefixes: List[str],
+):
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose prefix name is not in `itemPrefix`
+          which is in pack_metadata
+        - Ensure that no ValidationResult returned when prefix name
+          is in itemPrefix which is in pack_metadata
+    """
+    # not valid
+    with ChangeCWD(REPO.path):
+        content_item = create_incident_field_object(
+            pack_info={"name": "Foo", "itemPrefix": item_prefix}
+        )
+        results = NameFieldPrefixValidator().is_valid([content_item])
+        assert results
+        for prefix in expected_allowed_prefixes:
+            assert prefix in results[0].message
+
+        # valid
+        content_item.name = valid_prefix
+        assert not NameFieldPrefixValidator().is_valid([content_item])
+
+
+@pytest.mark.parametrize("special_pack", PACKS_IGNORE)
+def test_NameFieldPrefixValidator_is_valid_with_special_packs(special_pack: str):
+    """
+    Given:
+        - IncidentField content item whose pack name is one of the special packs
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    with ChangeCWD(REPO.path):
+        content_item = create_incident_field_object(pack_info={"name": special_pack})
+        assert not NameFieldPrefixValidator().is_valid([content_item])
+
+
 def test_IsValidContentFieldValidator_valid():
     """
     Given:
@@ -341,6 +493,25 @@ def test_IsValidGroupFieldValidator_fix():
     result = IsValidGroupFieldValidator().fix(incident_field)
     assert result.message == f"`group` field is set to {REQUIRED_GROUP_VALUE}."
     assert incident_field.group == REQUIRED_GROUP_VALUE
+
+
+def test_IsFieldTypeChangedValidator_fix():
+    """
+    Given:
+        - IncidentField that its `type` field has changed
+    When:
+        - run fix method
+    Then:
+        - Ensure the field `type` has changed back
+    """
+    old_type = "short text"
+    new_type = "html"
+    content_item = create_incident_field_object(["type"], [new_type])
+    old_content_items = [create_incident_field_object(["type"], [old_type])]
+    create_old_file_pointers([content_item], old_content_items)
+    results = IsFieldTypeChangedValidator().fix(content_item)
+    assert content_item.field_type == old_type
+    assert results.message == f"Changed the `type` field back to `{old_type}`."
 
 
 def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_valid():

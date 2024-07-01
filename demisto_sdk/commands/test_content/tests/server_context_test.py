@@ -1,6 +1,7 @@
 from demisto_sdk.commands.test_content.mock_server import MITMProxy
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext,
+    OnPremServerContext,
     ServerContext,
 )
 from demisto_sdk.commands.test_content.tests.build_context_test import (
@@ -39,7 +40,7 @@ def test_execute_tests(mocker, tmp_path):
     ]
 
     machine_assignment_content = {
-        "qa2-test-111111": {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": filtered_tests,
         }
@@ -90,8 +91,8 @@ def test_execute_tests(mocker, tmp_path):
         assert test in server_context.executed_tests
 
     # Validating all queues were emptied
-    assert build_context.mockable_tests_to_run.all_tasks_done
-    assert build_context.unmockable_tests_to_run.all_tasks_done
+    assert next(iter(build_context.servers)).mockable_tests_to_run.all_tasks_done
+    assert next(iter(build_context.servers)).unmockable_tests_to_run.all_tasks_done
 
     # Validating no failed playbooks
     assert not build_context.tests_data_keeper.failed_playbooks
@@ -142,6 +143,6 @@ def generate_mocked_server_context(
     mocker.patch.object(MITMProxy, "__init__", lambda *args, **kwargs: None)
     mocker.patch("time.sleep")
     # Executing the test
-    server_context = ServerContext(build_context, "1.1.1.1")
+    server_context = OnPremServerContext(build_context, "1.1.1.1")
     server_context.proxy = mocker.MagicMock()
     return server_context

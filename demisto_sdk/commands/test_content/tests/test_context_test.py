@@ -33,7 +33,9 @@ def playbook(mocker):
         ),
         default_test_timeout=30,
     )
-    pb_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    pb_instance = TestPlaybook(
+        mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+    )
     pb_instance.build_context.logging_module = mocker.MagicMock()
     return pb_instance
 
@@ -99,7 +101,7 @@ def init_server_context(mocker, tmp_path, mockable=False):
 
     filtered_tests = [playbook_type]
     machine_assignment_content = {
-        "qa2-test-111111": {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": filtered_tests,
         }
@@ -676,7 +678,7 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
     # Setting up the build context
     filtered_tests = ["playbook_integration", "playbook_second_integration"]
     machine_assignment_content = {
-        "qa2-test-111111": {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": filtered_tests,
         }
@@ -728,13 +730,21 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
     )
 
     integration = Integration(
-        build_context, "integration_with_placeholders", ["instance"], playbook
+        build_context,
+        "integration_with_placeholders",
+        ["instance"],
+        playbook,
+        mocker.MagicMock(),
     )
     integration._set_integration_params(
         server_url="1.1.1.1", playbook_id="playbook_integration", is_mockable=False
     )
     integration = Integration(
-        build_context, "integration_with_placeholders", ["instance"], playbook
+        build_context,
+        "integration_with_placeholders",
+        ["instance"],
+        playbook,
+        mocker.MagicMock(),
     )
     integration._set_integration_params(
         server_url="1.2.3.4", playbook_id="playbook_integration", is_mockable=False

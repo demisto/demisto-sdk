@@ -49,7 +49,7 @@ rm -rf $(pyenv root)/plugins/pyenv-virtualenvwrapper
 command git clone https://github.com/pyenv/pyenv-virtualenvwrapper.git $(pyenv root)/plugins/pyenv-virtualenvwrapper
 
 if [ $? -eq 0 ]; then
-   printf "pyenv-virtualenvwrapper installed ${GREEN}succefully${NC}\n"
+   printf "pyenv-virtualenvwrapper installed ${GREEN}successfully${NC}\n"
 else
    printf "${RED}pyenv-virtualenvwrapper can't installed using brew$\nAdditional error details:\n${output}${NC}"
    exit 1

@@ -56,7 +56,7 @@ INTEGRATION.path = Path(
 
 def get_validate_manager(mocker):
     validation_results = ResultWriter()
-    config_reader = ConfigReader(category_to_run="test")
+    config_reader = ConfigReader(category="test")
     initializer = Initializer()
     mocker.patch.object(Initializer, "gather_objects_to_run_on", return_value=({}, {}))
     return ValidateManager(
@@ -230,10 +230,8 @@ def test_gather_validations_from_conf(
         - Case 6: Make sure the retrieved results contains only the specific validations section.
     """
     mocker.patch.object(toml, "load", return_value=config_file_content)
-    config_reader = ConfigReader(
-        category_to_run=category_to_run, specific_validations=specific_validations
-    )
-    results: ConfiguredValidations = config_reader.gather_validations_from_conf(
+    config_reader = ConfigReader(category=category_to_run)
+    results: ConfiguredValidations = config_reader.read(
         execution_mode=execution_mode, ignore_support_level=ignore_support_level
     )
     assert results.validations_to_run == expected_results.validations_to_run

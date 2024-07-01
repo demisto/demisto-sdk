@@ -199,8 +199,9 @@ def get_mocked_build_context(
     )
 
     machine_assignment_path = tmp_file / "packs_to_install_by_machine.json"
-    machine_assignment_path.write_text(json.dumps(machine_assignment_content or {}) or "{}")
-
+    machine_assignment_path.write_text(
+        json.dumps(machine_assignment_content or {}) or "{}"
+    )
 
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.BuildContext._retrieve_slack_user_id",
@@ -229,7 +230,7 @@ def get_mocked_build_context(
         "service_account": "test",
         "artifacts_bucket": "test",
         "machine_assignment": machine_assignment_path,
-        "cloud_machine_ids": "qa2-test-222222,qa2-test-111111"
+        "cloud_machine_ids": "qa2-test-222222,qa2-test-111111",
     }
     return BuildContext(kwargs, logging_manager)
 
@@ -263,7 +264,9 @@ def create_xsiam_build(
     )
 
     machine_assignment_path = tmp_file / "packs_to_install_by_machine.json"
-    machine_assignment_path.write_text("\n".join(machine_assignment_content or {}) or "{}")
+    machine_assignment_path.write_text(
+        "\n".join(machine_assignment_content or {}) or "{}"
+    )
 
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.BuildContext._retrieve_slack_user_id",
@@ -294,7 +297,7 @@ def create_xsiam_build(
         "product_type": "xsoar",
         "service_account": "test",
         "artifacts_bucket": "test",
-        "machine_assignment": machine_assignment_path
+        "machine_assignment": machine_assignment_path,
     }
     return BuildContext(kwargs, logging_manager)
 
@@ -323,8 +326,12 @@ def test_non_filtered_tests_are_skipped(mocker, tmp_path):
         - Ensure that all tests that are not in filtered tests are skipped
         - Ensure that the test that was in  filtered tests is not skipped
     """
-    machine_assignment_content_xsiam = {"qa2-test-111111": {"packs_to_install": ["TEST"],
-                                                            "playbooks_to_run": ["test_that_should_run"]}}
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": ["test_that_should_run"],
+        }
+    }
     tests = [
         generate_test_configuration(playbook_id="test_that_should_run"),
         generate_test_configuration(playbook_id="test_that_should_be_skipped"),
@@ -354,8 +361,10 @@ def test_no_tests_are_executed_when_filtered_tests_is_empty(mocker, tmp_path):
     tests = [generate_test_configuration(playbook_id="test_that_should_be_skipped")]
     content_conf_json = generate_content_conf_json(tests=tests)
     build_context = get_mocked_build_context(
-        mocker, tmp_path, content_conf_json=content_conf_json, machine_assignment_content=
-        {"qa2-test-111111": {"packs_to_install": ["TEST"]}}
+        mocker,
+        tmp_path,
+        content_conf_json=content_conf_json,
+        machine_assignment_content={"qa2-test-111111": {"packs_to_install": ["TEST"]}},
     )
     assert (
         "test_that_should_be_skipped" in build_context.tests_data_keeper.skipped_tests
@@ -372,8 +381,12 @@ def test_playbook_with_skipped_integrations_is_skipped(mocker, tmp_path):
     Then:
         - Ensure that the playbook with the skipped integrations is skipped
     """
-    machine_assignment_content_xsiam = {"qa2-test-111111": {"packs_to_install": ["TEST"],
-                                                            "playbooks_to_run": ["test_with_skipped_integrations"]}}
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": ["test_with_skipped_integrations"],
+        }
+    }
 
     tests = [
         generate_test_configuration(
@@ -406,8 +419,12 @@ def test_nightly_playbook_skipping(mocker, tmp_path):
         - Ensure that the nightly playbook is skipped on non nightly build
         - Ensure that the nightly playbook is not skipped on nightly build
     """
-    machine_assignment_content_xsiam = {"qa2-test-111111": {"packs_to_install": ["TEST"],
-                                                            "playbooks_to_run": ["nightly_playbook"]}}
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": ["nightly_playbook"],
+        }
+    }
 
     tests = [generate_test_configuration(playbook_id="nightly_playbook", nightly=True)]
     content_conf_json = generate_content_conf_json(tests=tests)
@@ -437,8 +454,12 @@ def test_playbook_with_integration(mocker, tmp_path):
     Then:
         - Ensure that the playbook with the integration is not skipped on nightly build
     """
-    machine_assignment_content_xsiam = {"qa2-test-111111": {"packs_to_install": ["TEST"],
-                                                            "playbooks_to_run": ["playbook_with_integration"]}}
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": ["playbook_with_integration"],
+        }
+    }
 
     tests = [
         generate_test_configuration(
@@ -467,8 +488,12 @@ def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
     Then:
         - Ensure that the playbook with version mismatch is skipped
     """
-    machine_assignment_content_xsiam = {"qa2-test-111111": {"packs_to_install": ["TEST"],
-                                                            "playbooks_to_run": ["playbook_with_version_mismatch"]}}
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": ["playbook_with_version_mismatch"],
+        }
+    }
 
     tests = [
         generate_test_configuration(
@@ -498,11 +523,18 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
         - Ensure that the playbook with marketplaces mismatch is skipped
         - Ensure that the playbook with the marketplaces match is not skipped
     """
-    machine_assignment_content_xsiam = {"qa2-test-111111": {"packs_to_install": ["TEST"],
-                                                            "playbooks_to_run":
-                                                                ["xsiam_playbook_with_marketplaces_mismatch"]}}
-    machine_assignment_content_xsoar = {"xsoar-machine": {"packs_to_install": ["TEST"], "playbooks_to_run":
-                                                                ["xsoar_playbook_with_marketplaces_mismatch"]}}
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": ["xsiam_playbook_with_marketplaces_mismatch"],
+        }
+    }
+    machine_assignment_content_xsoar = {
+        "xsoar-machine": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": ["xsoar_playbook_with_marketplaces_mismatch"],
+        }
+    }
 
     tests = [
         generate_test_configuration(
@@ -556,8 +588,12 @@ def test_unmockable_playbook_configuration(mocker, tmp_path):
     Then:
         - Ensure that the unmockable test configuration is in the unmockable_test_ids
     """
-    machine_assignment_content_xsiam = {"qa2-test-111111": {"packs_to_install": ["TEST"],
-                                                            "playbooks_to_run": ["unmockable_playbook"]}}
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": ["unmockable_playbook"],
+        }
+    }
 
     tests = [
         generate_test_configuration(
@@ -583,8 +619,12 @@ def test_mockable_playbook_configuration(mocker, tmp_path):
     Then:
         - Ensure that the mockable test configuration is not in the unmockable_test_ids
     """
-    machine_assignment_content_xsiam = {"qa2-test-111111": {"packs_to_install": ["TEST"],
-                                                            "playbooks_to_run": ["mockable_playbook"]}}
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": ["mockable_playbook"],
+        }
+    }
 
     tests = [
         generate_test_configuration(

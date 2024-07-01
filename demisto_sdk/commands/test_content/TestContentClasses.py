@@ -1064,7 +1064,6 @@ class ServerContext:
         self.mockable_tests_to_run: Queue = Queue()
         self.unmockable_tests_to_run: Queue = Queue()
 
-
     def _execute_unmockable_tests(self):
         """
         Iterates the mockable tests queue and executes them as long as there are tests to execute
@@ -1308,7 +1307,7 @@ class CloudServerContext(ServerContext):
         Returns:
             A dict containing the configuration for the integration if found, else empty list
         """
-        if not self.build_context.is_nightly: # todo
+        if not self.build_context.is_nightly:
             return []
 
         # In XSIAM or XSOAR SAAS - We don't use demisto username

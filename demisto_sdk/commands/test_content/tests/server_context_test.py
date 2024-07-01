@@ -38,8 +38,12 @@ def test_execute_tests(mocker, tmp_path):
         "skipped_playbook",
     ]
 
-    machine_assignment_content = {"qa2-test-111111": {"packs_to_install": ["TEST"],
-                                                            "playbooks_to_run": filtered_tests}}
+    machine_assignment_content = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": filtered_tests,
+        }
+    }
     # Setting up the content conf.json
     tests = [
         generate_test_configuration(playbook_id="playbook_without_integrations"),

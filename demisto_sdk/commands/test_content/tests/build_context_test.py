@@ -1,9 +1,7 @@
 from typing import Union
-import demisto_client
-from demisto_client.demisto_api import DefaultApi
-from demisto_sdk.commands.test_content.mock_server import MITMProxy
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.test_content.mock_server import MITMProxy
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
 )
@@ -622,7 +620,9 @@ def test_unmockable_playbook_configuration(mocker, tmp_path):
         content_conf_json=content_conf_json,
         machine_assignment_content=machine_assignment_content,
     )
-    assert "unmockable_playbook" in next(iter(build_context.servers)).unmockable_test_ids
+    assert (
+        "unmockable_playbook" in next(iter(build_context.servers)).unmockable_test_ids
+    )
 
 
 def test_mockable_playbook_configuration(mocker, tmp_path):
@@ -653,7 +653,9 @@ def test_mockable_playbook_configuration(mocker, tmp_path):
         content_conf_json=content_conf_json,
         machine_assignment_content=machine_assignment_content,
     )
-    assert "mockable_playbook" not in next(iter(build_context.servers)).unmockable_test_ids
+    assert (
+        "mockable_playbook" not in next(iter(build_context.servers)).unmockable_test_ids
+    )
 
 
 def test_get_instances_ips(mocker, tmp_path):

@@ -786,7 +786,7 @@ class BuildContext:
 
         # --------------------------- Machine preparation -------------------------------
 
-        self.cloud_machines = kwargs.get("cloud_machine_ids").split(",")
+        self.cloud_machines = kwargs.get("cloud_machine_ids", "").split(",")
         self.cloud_servers_path = kwargs.get("cloud_servers_path")
         self.cloud_servers_api_keys_path = kwargs.get("cloud_servers_api_keys")
         self.use_retries_mechanism = kwargs.get("use_retries", False)
@@ -838,7 +838,7 @@ class BuildContext:
         servers: set = set()
         if self.is_saas_server_type:
             for machine in self.cloud_machines:
-                server_ip = self.env_json.get(machine).get("base_url")
+                server_ip = self.env_json.get(machine, {}).get("base_url", "")
                 servers.add(
                     CloudServerContext(
                         self,
@@ -1038,14 +1038,8 @@ class ServerContext:
         self.api_key = None
         self.server_ip = server_private_ip
         self.build_context = build_context
-        if self.build_context.is_saas_server_type:
-            self.server_url = self.server_ip
-            # we use client without demisto username
-            os.environ.pop("DEMISTO_USERNAME", None)
-        else:
-            self.server_url = f"https://{self.server_ip}"
-
-        self.proxy = None
+        self.server_url: str = ""
+        self.proxy: Optional[MITMProxy] = None
         self.cloud_ui_path = None
         self.client: Optional[DefaultApi] = None
         self.configure_new_client()
@@ -1058,7 +1052,7 @@ class ServerContext:
 
         self.use_retries_mechanism: bool = use_retries_mechanism
         self.unmockable_test_ids: Set[str] = set()
-        self.filtered_tests: list[str] = []
+        self.filtered_tests: List[str] = []
         self.test_retries_queue: Queue = Queue()
         self.all_integrations_configurations = self._get_all_integration_config()
         self.mockable_tests_to_run: Queue = Queue()
@@ -1271,7 +1265,9 @@ class CloudServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
-
+        self.server_url = self.server_ip
+        # we use client without demisto username
+        os.environ.pop("DEMISTO_USERNAME", None)
         # In XSIAM or XSOAR SAAS - We're running without proxy. This code won't be executed on SaaS servers.
         self.proxy = None
         if self.build_context.server_type == XSIAM_SERVER_TYPE:
@@ -1467,6 +1463,7 @@ class OnPremServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.server_url = f"https://{self.server_ip}"
         self.proxy = MITMProxy(
             server_private_ip,
             self.build_context.logging_module,

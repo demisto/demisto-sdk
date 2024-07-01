@@ -1,10 +1,14 @@
 from typing import Union
+import demisto_client
+from demisto_client.demisto_api import DefaultApi
+from demisto_sdk.commands.test_content.mock_server import MITMProxy
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
 )
 from demisto_sdk.commands.test_content.TestContentClasses import BuildContext
+from demisto_sdk.commands.test_content.tests.DemistoClientMock import DemistoClientMock
 
 
 def generate_test_configuration(
@@ -180,7 +184,13 @@ def get_mocked_build_context(
         nightly: Indicates whether this build is a nightly build
         server_version: The server version to run the instance on
     """
+    mocker.patch.object(MITMProxy, "__init__", lambda *args, **kwargs: None)
     logging_manager = ParallelLoggingManager(tmp_file / "log_file.log")
+    mocked_demisto_client = DemistoClientMock()
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.demisto_client",
+        mocked_demisto_client,
+    )
     conf_path = tmp_file / "conf_path"
     conf_path.write_text(json.dumps(content_conf_json or generate_content_conf_json()))
 
@@ -241,6 +251,11 @@ def create_xsiam_build(
     content_conf_json: dict = None,
     machine_assignment_content: dict = None,
 ):
+    mocked_demisto_client = DemistoClientMock()
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.demisto_client",
+        mocked_demisto_client,
+    )
     logging_manager = ParallelLoggingManager(tmp_file / "log_file.log")
     conf_path = tmp_file / "conf_path"
     conf_path.write_text(json.dumps(content_conf_json or generate_content_conf_json()))
@@ -265,7 +280,7 @@ def create_xsiam_build(
 
     machine_assignment_path = tmp_file / "packs_to_install_by_machine.json"
     machine_assignment_path.write_text(
-        "\n".join(machine_assignment_content or {}) or "{}"
+        json.dumps(machine_assignment_content or {}) or "{}"
     )
 
     mocker.patch(
@@ -292,7 +307,7 @@ def create_xsiam_build(
         "server_type": "XSIAM",
         "cloud_servers_path": cloud_servers_path,
         "cloud_machine_ids": "qa2-test-111111",
-        "cloud_servers_api_keys_path": xsiam_api_keys_path,
+        "cloud_servers_api_keys": xsiam_api_keys_path,
         "artifacts_path": tmp_file,
         "product_type": "xsoar",
         "service_account": "test",
@@ -313,7 +328,7 @@ def test_build_creation(mocker, tmp_path):
     """
     build_contex = create_xsiam_build(mocker, tmp_path)
     assert build_contex.is_saas_server_type
-    assert build_contex.auth_id == 1
+    assert build_contex.servers
 
 
 def test_non_filtered_tests_are_skipped(mocker, tmp_path):
@@ -326,8 +341,8 @@ def test_non_filtered_tests_are_skipped(mocker, tmp_path):
         - Ensure that all tests that are not in filtered tests are skipped
         - Ensure that the test that was in  filtered tests is not skipped
     """
-    machine_assignment_content_xsiam = {
-        "qa2-test-111111": {
+    machine_assignment_content = {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": ["test_that_should_run"],
         }
@@ -341,7 +356,7 @@ def test_non_filtered_tests_are_skipped(mocker, tmp_path):
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content_xsiam,
+        machine_assignment_content=machine_assignment_content,
     )
     assert (
         "test_that_should_be_skipped" in build_context.tests_data_keeper.skipped_tests
@@ -364,7 +379,7 @@ def test_no_tests_are_executed_when_filtered_tests_is_empty(mocker, tmp_path):
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        machine_assignment_content={"qa2-test-111111": {"packs_to_install": ["TEST"]}},
+        machine_assignment_content={"xsoar-machine": {"packs_to_install": ["TEST"]}},
     )
     assert (
         "test_that_should_be_skipped" in build_context.tests_data_keeper.skipped_tests
@@ -381,8 +396,8 @@ def test_playbook_with_skipped_integrations_is_skipped(mocker, tmp_path):
     Then:
         - Ensure that the playbook with the skipped integrations is skipped
     """
-    machine_assignment_content_xsiam = {
-        "qa2-test-111111": {
+    machine_assignment_content = {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": ["test_with_skipped_integrations"],
         }
@@ -401,7 +416,7 @@ def test_playbook_with_skipped_integrations_is_skipped(mocker, tmp_path):
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content_xsiam,
+        machine_assignment_content=machine_assignment_content,
     )
     assert (
         "test_with_skipped_integrations"
@@ -419,8 +434,8 @@ def test_nightly_playbook_skipping(mocker, tmp_path):
         - Ensure that the nightly playbook is skipped on non nightly build
         - Ensure that the nightly playbook is not skipped on nightly build
     """
-    machine_assignment_content_xsiam = {
-        "qa2-test-111111": {
+    machine_assignment_content = {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": ["nightly_playbook"],
         }
@@ -432,14 +447,14 @@ def test_nightly_playbook_skipping(mocker, tmp_path):
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content_xsiam,
+        machine_assignment_content=machine_assignment_content,
     )
     assert "nightly_playbook" in build_context.tests_data_keeper.skipped_tests
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content_xsiam,
+        machine_assignment_content=machine_assignment_content,
         nightly=True,
     )
     assert "nightly_playbook" not in build_context.tests_data_keeper.skipped_tests
@@ -454,8 +469,8 @@ def test_playbook_with_integration(mocker, tmp_path):
     Then:
         - Ensure that the playbook with the integration is not skipped on nightly build
     """
-    machine_assignment_content_xsiam = {
-        "qa2-test-111111": {
+    machine_assignment_content = {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": ["playbook_with_integration"],
         }
@@ -471,7 +486,7 @@ def test_playbook_with_integration(mocker, tmp_path):
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content_xsiam,
+        machine_assignment_content=machine_assignment_content,
         nightly=True,
     )
     assert (
@@ -488,8 +503,8 @@ def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
     Then:
         - Ensure that the playbook with version mismatch is skipped
     """
-    machine_assignment_content_xsiam = {
-        "qa2-test-111111": {
+    machine_assignment_content = {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": ["playbook_with_version_mismatch"],
         }
@@ -505,7 +520,7 @@ def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content_xsiam,
+        machine_assignment_content=machine_assignment_content,
     )
     assert (
         "playbook_with_version_mismatch"
@@ -588,8 +603,8 @@ def test_unmockable_playbook_configuration(mocker, tmp_path):
     Then:
         - Ensure that the unmockable test configuration is in the unmockable_test_ids
     """
-    machine_assignment_content_xsiam = {
-        "qa2-test-111111": {
+    machine_assignment_content = {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": ["unmockable_playbook"],
         }
@@ -605,9 +620,9 @@ def test_unmockable_playbook_configuration(mocker, tmp_path):
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content_xsiam,
+        machine_assignment_content=machine_assignment_content,
     )
-    assert "unmockable_playbook" in build_context.unmockable_test_ids
+    assert "unmockable_playbook" in next(iter(build_context.servers)).unmockable_test_ids
 
 
 def test_mockable_playbook_configuration(mocker, tmp_path):
@@ -619,8 +634,8 @@ def test_mockable_playbook_configuration(mocker, tmp_path):
     Then:
         - Ensure that the mockable test configuration is not in the unmockable_test_ids
     """
-    machine_assignment_content_xsiam = {
-        "qa2-test-111111": {
+    machine_assignment_content = {
+        "xsoar-machine": {
             "packs_to_install": ["TEST"],
             "playbooks_to_run": ["mockable_playbook"],
         }
@@ -636,9 +651,9 @@ def test_mockable_playbook_configuration(mocker, tmp_path):
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content_xsiam,
+        machine_assignment_content=machine_assignment_content,
     )
-    assert "mockable_playbook" not in build_context.unmockable_test_ids
+    assert "mockable_playbook" not in next(iter(build_context.servers)).unmockable_test_ids
 
 
 def test_get_instances_ips(mocker, tmp_path):

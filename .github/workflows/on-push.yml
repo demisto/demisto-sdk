@@ -25,7 +25,7 @@ jobs:
       - name: Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Validate Changelog
         env:
@@ -53,13 +53,13 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Cache pre-commit
         uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
-          key: pre-commit-3|3.11|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}
+          key: pre-commit-3|3.12|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}
 
       - name: Run pre-commit
         run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     defaults:
       run:
@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     defaults:
       run:
@@ -156,7 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     defaults:
       run:
@@ -199,7 +199,7 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Download all artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
@@ -238,9 +238,10 @@ jobs:
       - name: Checkout Content
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           repository: demisto/content
           path: content
+          ref: ds-sdk-py311
+          fetch-depth: 0
 
       - name: Cache Pre commit
         id: cache-pre-commit
@@ -322,7 +323,7 @@ jobs:
         if: steps.files-changed.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Validate content master paths
         if: steps.files-changed.outputs.any_changed == 'true'
@@ -341,7 +342,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Checkout content
         uses: actions/checkout@v4
@@ -427,7 +428,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -446,7 +447,7 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Generate Docs
         run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md

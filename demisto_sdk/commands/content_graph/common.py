@@ -57,6 +57,9 @@ class RelationshipType(StrEnum):
     USES_COMMAND_OR_SCRIPT = "USES_COMMAND_OR_SCRIPT"
     USES_PLAYBOOK = "USES_PLAYBOOK"
 
+    def __str__(self) -> str:
+        return self.value
+
 
 class ContentType(StrEnum):
     BASE_CONTENT = "BaseContent"
@@ -102,6 +105,9 @@ class ContentType(StrEnum):
     CASE_LAYOUT_RULE = "CaseLayoutRule"
     CASE_FIELD = "CaseField"
     CASE_LAYOUT = "CaseLayout"
+
+    def __str__(self) -> str:
+        return self.value
 
     @property
     def labels(self) -> List[str]:

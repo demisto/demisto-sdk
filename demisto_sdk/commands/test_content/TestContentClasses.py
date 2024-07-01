@@ -1308,7 +1308,7 @@ class CloudServerContext(ServerContext):
         Returns:
             A dict containing the configuration for the integration if found, else empty list
         """
-        if not self.build_context.is_nightly:
+        if not self.build_context.is_nightly: # todo
             return []
 
         # In XSIAM or XSOAR SAAS - We don't use demisto username

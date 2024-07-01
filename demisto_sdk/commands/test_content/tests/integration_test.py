@@ -123,7 +123,7 @@ def test_create_module(mocker, playbook, incident_configuration, expected):
     mocker.patch.object(BuildContext, "_get_unmockable_tests_from_conf")
     mocker.patch.object(BuildContext, "_get_tests_to_run", return_value=("", ""))
     mocker.patch.object(BuildContext, "_retrieve_slack_user_id")
-    mocker.patch.object(BuildContext, "_get_all_integration_config")
+    mocker.patch.object(ServerContext, "_get_all_integration_config")
 
     test_integration = Integration(
         BuildContext(test_build_params, ParallelLoggingManager("temp_log")),

@@ -207,7 +207,7 @@ def get_mocked_build_context(
         return_value="some_user_id",
     )
     mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.BuildContext._get_all_integration_config",
+        "demisto_sdk.commands.test_content.TestContentClasses.ServerContext._get_all_integration_config",
         return_value=[],
     )
     kwargs = {
@@ -268,7 +268,7 @@ def create_xsiam_build(
         return_value="some_user_id",
     )
     mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.BuildContext._get_all_integration_config",
+        "demisto_sdk.commands.test_content.TestContentClasses.ServerContext._get_all_integration_config",
         return_value=[],
     )
     kwargs = {

@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where **pre-commit** and **validate** commands ignored changed files when running on an external contribution PR.
-  type: fix
-pr_number: 4351

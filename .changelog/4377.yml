@@ -1,4 +1,4 @@
 changes:
-  - description: Modified the WZ104 validation to follow the new validation format. The validation checks that for given Wizard, if all fetch integrations have playbook.
+  - description: Modified the WZ104 validation to follow the new validation format. The validation checks that for a given wizard, all fetching integrations have a playbook.
     type: internal
 pr_number: 4128

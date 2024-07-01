@@ -1870,6 +1870,12 @@ def find_type(
 
     if (
         (file_type == "yml" or path.lower().endswith(".yml"))
+        and not _dict
+    ):
+        logger.info(f"{path=}")
+        return None
+    if (
+        (file_type == "yml" or path.lower().endswith(".yml"))
         and "category" in _dict
         and _dict.get("beta")
         and not ignore_sub_categories

@@ -219,14 +219,17 @@ def test_IsFieldTypeChangedValidator_is_valid():
           for the IncidentField whose 'type' field has changed
         - Ensure that no ValidationResult returned when 'type' field has not changed
     """
+    old_type = "short text"
+    new_type = "html"
+
     # not valid
-    content_item = create_incident_field_object(["type"], ["html"])
-    old_content_items = [create_incident_field_object(["type"], ["short text"])]
+    content_item = create_incident_field_object(["type"], [new_type])
+    old_content_items = [create_incident_field_object(["type"], [old_type])]
     create_old_file_pointers([content_item], old_content_items)
     assert IsFieldTypeChangedValidator().is_valid([content_item])
 
     # valid
-    content_item.field_type = "short text"
+    content_item.field_type = old_type
     assert not IsFieldTypeChangedValidator().is_valid([content_item])
 
 
@@ -264,14 +267,15 @@ def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
           for the IncidentField whose prefix name that not start with relevant pack name
     """
     # not valid
+    pack_name = "Foo"
     with ChangeCWD(REPO.path):
-        content_item = create_incident_field_object(pack_info={"name": "Foo"})
+        content_item = create_incident_field_object(pack_info={"name": pack_name})
         results = NameFieldPrefixValidator().is_valid([content_item])
         assert results
         assert results[0].message == (
             "Field name must start with the relevant pack name or one of the item prefixes found in pack metadata."
             "\nFollowing prefixes are allowed for this IncidentField:"
-            "\nFoo"
+            f"\n{pack_name}"
         )
 
         # valid
@@ -297,7 +301,7 @@ def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
 def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
     item_prefix: Optional[Union[List[str], str]],
     valid_prefix: str,
-    expected_allowed_prefixes: str,
+    expected_allowed_prefixes: List[str],
 ):
     """
     Given:
@@ -500,12 +504,14 @@ def test_IsFieldTypeChangedValidator_fix():
     Then:
         - Ensure the field `type` has changed back
     """
-    content_item = create_incident_field_object(["type"], ["html"])
-    old_content_items = [create_incident_field_object(["type"], ["short text"])]
+    old_type = "short text"
+    new_type = "html"
+    content_item = create_incident_field_object(["type"], [new_type])
+    old_content_items = [create_incident_field_object(["type"], [old_type])]
     create_old_file_pointers([content_item], old_content_items)
     results = IsFieldTypeChangedValidator().fix(content_item)
-    assert content_item.field_type == "short text"
-    assert results.message == "Changed the `type` field back to `short text`."
+    assert content_item.field_type == old_type
+    assert results.message == f"Changed the `type` field back to `{old_type}`."
 
 
 def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_valid():

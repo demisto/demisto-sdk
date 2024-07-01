@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from more_itertools import always_iterable
+
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -37,19 +39,19 @@ class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 content_item.pack_name not in PACKS_IGNORE
-                and not name_include_allowed_prefix(content_item)
+                and not is_name_using_allowed_prefix(content_item)
             )
         ]
 
 
-def name_include_allowed_prefix(content_item: ContentTypes) -> bool:
+def is_name_using_allowed_prefix(content_item: ContentTypes) -> bool:
     """
     Check if the IncidentField name begins with any of the allowed prefixes.
     """
-    for prefix in allowed_prefixes(content_item):
-        if content_item.name.startswith(prefix):
-            return True
-    return False
+    return any(
+        content_item.name.startswith(prefix)
+        for prefix in allowed_prefixes(content_item)
+    )
 
 
 def allowed_prefixes(content_item: ContentTypes) -> set:
@@ -63,9 +65,4 @@ def allowed_prefixes(content_item: ContentTypes) -> set:
     metadata = content_item.in_pack.pack_metadata_dict or {}
     item_prefix = metadata.get("itemPrefix")
 
-    if not item_prefix:
-        return prefixes
-    elif isinstance(item_prefix, list):
-        return prefixes | set(item_prefix)
-    else:
-        return prefixes | {item_prefix}
+    return prefixes | set(always_iterable(item_prefix))

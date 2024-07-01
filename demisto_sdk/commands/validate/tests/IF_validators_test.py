@@ -31,6 +31,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
 from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import (
     SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF119_select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types import (
+    SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -399,7 +402,7 @@ def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
         - run fix method.
     Then:
         - Ensure the fix message is as expected.
-        - Ensure there is there is no emtpy values in the selectValues field.
+        - Ensure there is no emtpy values in the selectValues field.
     """
     incident_field = create_incident_field_object(
         ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
@@ -408,4 +411,112 @@ def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
         incident_field
     )
     assert result.message == "Removed all empty values in the selectValues field."
-    assert result.content_object.data["selectValues"] == ["test"]
+    assert result.content_object.select_values == ["test"]
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_multiple_empty_values_invalid():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with multiple emtpy values in the selectValues filed.
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that ValidationResult runs as expected
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(
+            ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
+        )
+    ]
+    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().is_valid(
+        content_items
+    )
+    assert results
+    assert (
+        results[0].message
+        == "singleSelect types cannot contain more than one empty values in the selectValues field."
+    )
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_only_empty_values_invalid():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with only one emtpy value in the selectValues filed.
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that ValidationResult runs as expected
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["type", "selectValues"], ["singleSelect", [""]])
+    ]
+    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().is_valid(
+        content_items
+    )
+    assert results
+    assert (
+        results[0].message
+        == "singleSelect types cannot contain only empty values in the selectValues field."
+    )
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_only_one_empty_value_valid():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with one emtpy value in the selectValues filed.
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that ValidationResult runs as expected
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(
+            ["type", "selectValues"], ["singleSelect", ["", "test"]]
+        )
+    ]
+    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().is_valid(
+        content_items
+    )
+    assert not results
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_fix_only_empty_value():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with only emtpy value in the selectValues filed.
+    When:
+        - run fix method.
+    Then:
+        - Ensure the fix returns an exception.
+    """
+    incident_field = create_incident_field_object(
+        ["type", "selectValues"], ["singleSelect", [""]]
+    )
+    with pytest.raises(Exception) as exc_info:
+        SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().fix(
+            incident_field
+        )
+        assert exc_info
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_fix_multiple_empty_values():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with multiple emtpy values in the selectValues filed.
+    When:
+        - run fix method.
+    Then:
+        - Ensure the fix message as expected
+        - Ensure there is only one emtpy value in the selectValues field.
+    """
+    incident_field = create_incident_field_object(
+        ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
+    )
+    result = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().fix(
+        incident_field
+    )
+    assert (
+        result.message
+        == "Removed all redundant empty values in the selectValues field."
+    )
+    assert result.content_object.select_values == ["test", ""]

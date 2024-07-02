@@ -1,3 +1,5 @@
+import os
+import subprocess
 from pathlib import Path
 
 import typer
@@ -7,7 +9,15 @@ app = typer.Typer()
 
 @app.command("run")
 def run(path: Path = Path.cwd()):
-    print(list(path.iterdir()))
+    os.chdir(path)
+    # python_files =
+    subprocess.run(["pytest", "/src/Tests/scripts/script_runner.py", "--monkeytype-output=./monkeytype.sqlite3"], check=True)
+    (path/"runner.py").write_text("\n".join(f"import {module}" for module in modules))
+    modules = subprocess.run(["monkeytype", "list-modules"], text=True, check=True, capture_output=True).stdout.splitlines()
+    filtered_modules = set(modules).difference(("demistomock", "CommonServerPython"))
+    for module in filtered_modules:
+        subprocess.run(["monkeytype", "-v", "stub", module], check=True)
+        subprocess.run(["monkeytype", "-v", "apply", module], check=True)
 
 
 def main():

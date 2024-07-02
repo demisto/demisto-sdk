@@ -4571,6 +4571,7 @@ def run_sync(
         exclusive_function (Callable): The function we want to run exclusivly.
         exclusive_function_kwargs (dict, optional): The kwargs we wish to pass to the exclusive_function. Defaults to {}.
     """
+    lock_file = None
     try:
         # Open (or create) the lock file
         lock_file = open(lock_file_path, "w")

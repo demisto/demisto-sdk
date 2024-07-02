@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -255,15 +256,20 @@ class Initializer:
             The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
             and adds them to `modified_files`. See CIAC-10490 for more info.
             """
-            # filter out a string list of untracked files with a path that starts with "Packs/"
-            untracked_files_list = filter(
-                lambda f: f.startswith("Packs/"), self.git_util.repo.untracked_files
-            )
             logger.info(
-                f"\n[cyan]Running on untracked files: {untracked_files_list}[/cyan]"
+                "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
+            )
+            # filter out a string list of untracked files with a path thats inside the build machine's content repository
+            # The file paths in the build machine are relative so we use abspath() to make sure the files are in content.
+            untracked_files_list = filter(
+                lambda f: str(CONTENT_PATH) in os.path.abspath(f),
+                self.git_util.repo.untracked_files,
             )
             # convert the string list of untracked files to a set of Path object
             untracked_files_paths = set(map(Path, untracked_files_list))
+            logger.info(
+                f"\n######## - Modified untracked: {untracked_files_paths}"
+            )
             modified_files = modified_files.union(untracked_files_paths)
 
         return modified_files, added_files, renamed_files

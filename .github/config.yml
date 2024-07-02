@@ -1,0 +1,8 @@
+newPRWelcomeComment: |
+  Thanks for opening your first pull request. You are awesome!
+  # ----------- some message -----------
+  Good luck to us all!
+
+firstPRMergeComment: >
+  Congrats on merging your first pull request! :tada: How awesome!
+

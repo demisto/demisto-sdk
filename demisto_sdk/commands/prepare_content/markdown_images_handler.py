@@ -50,9 +50,7 @@ def safe_init_json_file(file_path: str):
     if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
         artifacts_folder
     ).exists():
-        lock_file_path = (
-            f"{artifacts_folder}/{file_path.replace('json', 'lock')}"
-        )
+        lock_file_path = f"{artifacts_folder}/{file_path.replace('json', 'lock')}"
         run_sync(
             lock_file_path,
             init_json_file,

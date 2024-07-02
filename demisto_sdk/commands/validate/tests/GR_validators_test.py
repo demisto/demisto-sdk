@@ -18,11 +18,11 @@ from demisto_sdk.commands.validate.validators.base_validator import BaseValidato
 from demisto_sdk.commands.validate.validators.GR_validators import (
     GR104_is_pack_display_name_already_exists,
 )
-from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place import (
-    MarketplacesFieldValidator,
-)
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_list_files import (
+    MarketplacesFieldValidatorListFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_all_files import (
     IsPackDisplayNameAlreadyExistsValidatorAllFiles,
@@ -447,12 +447,12 @@ def repository(mocker) -> ContentDTO:
 
 
 @pytest.mark.usefixtures("setup")
-def test_MarketplacesFieldValidator_is_valid(repository):
+def test_MarketplacesFieldValidatorListFiles_is_valid(repository):
     """
     Given
     - A content repo.
     When
-    - Running MarketplacesFieldValidator is_valid() function.
+    - Running MarketplacesFieldValidatorListFiles is_valid() function.
     Then
     - Validate the existence of invalid marketplaces usages.
     - A single invalid content items shall be found, with expected error message listed in
@@ -469,7 +469,9 @@ def test_MarketplacesFieldValidator_is_valid(repository):
     }
     # T
     packs_to_validate = repository.packs[:2]
-    validation_results = MarketplacesFieldValidator().is_valid(packs_to_validate)
+    validation_results = MarketplacesFieldValidatorListFiles().is_valid(
+        packs_to_validate
+    )
     assert len(validation_results) == len(expected_validation_results_messages)
     for validation_result in validation_results:
         assert validation_result.message in expected_validation_results_messages

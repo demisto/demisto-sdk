@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.objects import (
     Classifier,
@@ -88,8 +87,6 @@ class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
     related_field = "marketplaces"
     is_auto_fixable = False
 
-    expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
-
     def is_valid_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files=False
     ) -> List[ValidationResult]:
@@ -121,6 +118,3 @@ class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
                 )
             )
         return validation_results
-
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return self.is_valid_using_graph(content_items)

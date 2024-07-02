@@ -268,7 +268,7 @@ class Initializer:
             # convert the string list of untracked files to a set of Path object
             untracked_files_paths = set(map(Path, untracked_files_list))
             logger.info(
-                f"\n######## - Modified untracked: {untracked_files_paths}"
+                f"\n######## - Modified untracked:\n{untracked_files_paths}"
             )
             modified_files = modified_files.union(untracked_files_paths)
 

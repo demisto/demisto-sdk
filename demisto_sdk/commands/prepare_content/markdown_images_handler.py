@@ -47,14 +47,17 @@ def safe_init_json_file(file_path: str):
     Args:
         file_path (str): The json file path to init
     """
-    lock_file_path = (
-        f"{os.getenv('ARTIFACTS_FOLDER')}/{file_path.replace('json', 'lock')}"
-    )
-    run_sync(
-        lock_file_path,
-        init_json_file,
-        {"markdown_images_file_name": file_path},
-    )
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+        artifacts_folder
+    ).exists():
+        lock_file_path = (
+            f"{artifacts_folder}/{file_path.replace('json', 'lock')}"
+        )
+        run_sync(
+            lock_file_path,
+            init_json_file,
+            {"markdown_images_file_name": file_path},
+        )
 
 
 def replace_markdown_urls_and_update_markdown_images(
@@ -143,16 +146,19 @@ def safe_update_markdown_images_file_links(
         file_type (ImagesFolderNames): The markdown file the pics was obtained from.
         image_file_path (str): The json file path to update
     """
-    run_sync(
-        f"{os.getenv('ARTIFACTS_FOLDER')}/{image_file_path.replace('json', 'lock')}",
-        update_markdown_images_file_links,
-        {
-            "images_dict": images_dict,
-            "pack_name": pack_name,
-            "file_type": file_type,
-            "markdown_images_file_name": image_file_path,
-        },
-    )
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+        artifacts_folder
+    ).exists():
+        run_sync(
+            f"{artifacts_folder}/{image_file_path.replace('json', 'lock')}",
+            update_markdown_images_file_links,
+            {
+                "images_dict": images_dict,
+                "pack_name": pack_name,
+                "file_type": file_type,
+                "markdown_images_file_name": image_file_path,
+            },
+        )
 
 
 def collect_images_from_markdown_and_replace_with_storage_path(

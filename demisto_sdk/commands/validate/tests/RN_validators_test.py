@@ -1,10 +1,14 @@
 import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
+    create_integration_object,
     create_pack_object,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
     IsReleaseNotesFilledOutValidator,
+)
+from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
+    ReleaseNoteHeaderValidator,
 )
 
 
@@ -77,3 +81,64 @@ def test_release_note_filled_out_validator(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_release_note_header_validator_valid():
+    """
+    Given:
+    - content_items.
+        pack_metadata: pack with valid release note headers.
+
+    When:
+    - Calling the ReleaseNoteHeaderValidator is_valid function.
+
+    Then:
+    - Make sure the validation passes.
+    """
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Integrations\n"
+        "##### TestIntegration\n"
+        "This is an exemple\n\n",
+    )
+    integrations = [
+        create_integration_object(["name"], ["TestIntegration"]),
+    ]
+    pack.content_items.integration.extend(integrations)
+    results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
+    assert len(results) == 0
+
+
+def test_release_note_header_validator_invalid():
+    """
+    Given:
+    - content_items.
+        pack_metadata: pack with invalid release note headers.
+
+    When:
+    - Calling the ReleaseNoteHeaderValidator is_valid function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+    """
+    expected_error = (
+        "The following invalid headers were found in:\n"
+        "Headers Content Types: InvalidHeader\n\n"
+        "Headers Content Items: Integrations: Not exist content item\n\n"
+    )
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Integrations\n"
+        "##### Not exist content item\n"
+        "This is an example\n"
+        "#### InvalidHeader\n"
+        "##### playbook A\n",
+    )
+    integrations = [
+        create_integration_object(),
+    ]
+    pack.content_items.integration.extend(integrations)
+    results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
+    assert expected_error == results[0].message

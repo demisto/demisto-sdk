@@ -1,4 +1,0 @@
-changes:
-- description: Updated PA107 to fail when the key **marketplaces** is missing from the pack_metadata.json file.
-  type: feature
-pr_number: 4379

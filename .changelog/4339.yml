@@ -1,4 +1,0 @@
-changes:
-- description: Moved DS108 into the new validation format. The validation ensures that there's a dot at the end of each description line.
-  type: internal
-pr_number: 4339

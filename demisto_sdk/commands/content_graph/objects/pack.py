@@ -130,7 +130,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
-    pack_metadata_dict: dict = Field({}, exclude=True)
+    pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
 
     @classmethod
     def from_orm(cls, obj) -> "Pack":

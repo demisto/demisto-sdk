@@ -84,7 +84,7 @@
   pass_filenames: true
 
 - id: validate-file-permission-changes
-  name: Validate File Permission Changes
+  name: validate-file-permission-changes
   description: Validate that file permissions haven't been changed.
   entry: validate-file-permission-changes
   language: python

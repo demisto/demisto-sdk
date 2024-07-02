@@ -77,4 +77,4 @@ mapping:
     type: seq
     sequence:
     - type: str
-      enum: ['xsoar', 'marketplacev2', 'xsoar_saas', 'xsoar_on_prem']
+      enum: ['xsoar', 'xsoar_saas', 'xsoar_on_prem']

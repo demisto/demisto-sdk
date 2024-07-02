@@ -1,0 +1,4 @@
+changes:
+- description: Modified the **test-content** command which would previously behave incorrectly under certain conditions.
+  type: internal
+pr_number: 4321

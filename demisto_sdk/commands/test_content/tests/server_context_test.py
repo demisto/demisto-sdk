@@ -1,6 +1,7 @@
 from demisto_sdk.commands.test_content.mock_server import MITMProxy
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext,
+    OnPremServerContext,
     ServerContext,
 )
 from demisto_sdk.commands.test_content.tests.build_context_test import (
@@ -29,6 +30,7 @@ def test_execute_tests(mocker, tmp_path):
         - Ensure the mockable and unmockable tests queues were emptied
         - Ensure no test has failed during that test
     """
+
     # Setting up the build context
     filtered_tests = [
         "playbook_without_integrations",
@@ -36,6 +38,13 @@ def test_execute_tests(mocker, tmp_path):
         "playbook_with_unmockable_integration",
         "skipped_playbook",
     ]
+
+    machine_assignment_content = {
+        "xsoar-machine": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": filtered_tests,
+        }
+    }
     # Setting up the content conf.json
     tests = [
         generate_test_configuration(playbook_id="playbook_without_integrations"),
@@ -68,7 +77,7 @@ def test_execute_tests(mocker, tmp_path):
         tmp_path,
         content_conf_json=content_conf_json,
         secret_conf_json=secret_test_conf,
-        filtered_tests_content=filtered_tests,
+        machine_assignment_content=machine_assignment_content,
     )
     # Setting up the client
     mocked_demisto_client = DemistoClientMock(integrations=integration_names)
@@ -82,8 +91,8 @@ def test_execute_tests(mocker, tmp_path):
         assert test in server_context.executed_tests
 
     # Validating all queues were emptied
-    assert build_context.mockable_tests_to_run.all_tasks_done
-    assert build_context.unmockable_tests_to_run.all_tasks_done
+    assert next(iter(build_context.servers)).mockable_tests_to_run.all_tasks_done
+    assert next(iter(build_context.servers)).unmockable_tests_to_run.all_tasks_done
 
     # Validating no failed playbooks
     assert not build_context.tests_data_keeper.failed_playbooks
@@ -134,6 +143,6 @@ def generate_mocked_server_context(
     mocker.patch.object(MITMProxy, "__init__", lambda *args, **kwargs: None)
     mocker.patch("time.sleep")
     # Executing the test
-    server_context = ServerContext(build_context, "1.1.1.1")
+    server_context = OnPremServerContext(build_context, "1.1.1.1")
     server_context.proxy = mocker.MagicMock()
     return server_context

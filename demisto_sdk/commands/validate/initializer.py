@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_DIR,
     RELEASE_NOTES_DIR,
     SCRIPTS_DIR,
+    SKIP_RELEASE_NOTES_FOR_TYPES,
     ExecutionMode,
     GitStatuses,
     PathLevel,
@@ -28,6 +29,7 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
+    find_type,
     get_file_by_status,
     get_relative_path_from_packs_dir,
     is_external_repo,
@@ -355,12 +357,14 @@ class Initializer:
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
+
         if self.execution_mode != ExecutionMode.USE_GIT:
             content_objects_to_run_with_packs: Set[
                 BaseContent
             ] = self.get_items_from_packs(content_objects_to_run)
         else:
             content_objects_to_run_with_packs = content_objects_to_run
+
         for non_content_item in non_content_items:
             logger.warning(
                 f"Invalid content path provided: {str(non_content_item)}. Please provide a valid content item or pack path."
@@ -504,7 +508,7 @@ class Initializer:
                 if obj:
                     obj.git_status = git_status
                     # Check if the file exists
-                    if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
+                    if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED, None):
                         try:
                             obj.old_base_content_object = BaseContent.from_path(
                                 old_path, git_sha=git_sha, raise_on_exception=True
@@ -571,12 +575,22 @@ class Initializer:
                     statuses_dict[path] = git_status
             elif PACKS_PACK_META_FILE_NAME in path_str:
                 statuses_dict[path] = git_status
-            elif self.is_pack_item(path_str):
+            if (
+                self.is_pack_item(path_str)
+                or find_type(path_str) not in SKIP_RELEASE_NOTES_FOR_TYPES
+            ):
                 metadata_path = self.obtain_metadata_path(path)
                 if metadata_path not in statuses_dict:
                     statuses_dict[metadata_path] = None
             else:
                 statuses_dict[path] = git_status
+
+        all_collected_files = set(statuses_dict.keys())
+        git_only_files = set(file_by_status_dict.keys())
+        related_files = all_collected_files.difference(git_only_files)
+        if related_files:
+            logger.info("Running on related files:")
+            logger.info(f"{[str(path) for path in related_files]}")
 
         return statuses_dict
 

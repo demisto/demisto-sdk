@@ -1,16 +1,21 @@
 from pathlib import Path
 
 import typer
+
 app = typer.Typer()
 
 
 @app.command("run")
-def run(path: Path):
+def run(path: Path = Path.cwd()):
     print(list(path.iterdir()))
 
 
-if __name__ == '__main__':
+def main():
     app()
+
+
+if __name__ == '__main__':
+    main()
 """pip install pytest-monkeytype
 
 # Generate annotations by running your pytest tests as usual:

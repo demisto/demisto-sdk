@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
@@ -71,7 +72,7 @@ ContentTypes = Union[
 ]
 
 
-class MarketplacesFieldValidator(BaseValidator[ContentTypes]):
+class MarketplacesFieldValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR100"
     description = (
         "Detect content items that attempt to use other content items which are not supported in all of the "

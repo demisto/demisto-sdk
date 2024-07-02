@@ -680,13 +680,9 @@ def preprocess_files(
             )
             # convert the string list of untracked files to a set of Path object
             untracked_files_paths = set(map(Path, untracked_files_list))
-            logger.info(
-                f"\n######## - Modified untracked:\n{untracked_files_paths}"
-            )
+            logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
             raw_files = raw_files.union(untracked_files_paths)
-            logger.info(
-                f"\n######## - Running on collected files:\n{raw_files}"
-            )
+            logger.info(f"\n######## - Running on collected files:\n{raw_files}")
     elif all_files:
         raw_files = all_git_files
     else:

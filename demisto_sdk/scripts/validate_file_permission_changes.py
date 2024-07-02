@@ -23,7 +23,7 @@ def str_to_bool(s: str) -> bool:
     - `bool` representation of a string.
     """
 
-    return s.lower() in ("yes", "true", "t", "1")
+    return s.lower() in ("yes", "true", "t", "1") if s else False
 
 
 def split_files(files_str: str) -> List[str]:
@@ -38,7 +38,7 @@ def split_files(files_str: str) -> List[str]:
     - `List[str]` containing a list of strings.
     """
 
-    return files_str.split()
+    return files_str.split() if files_str else []
 
 
 @main.command(help="Validate that file modes were not changed")
@@ -65,6 +65,8 @@ def validate_changed_files_permissions(
 
     logging_setup()
     git_util = GitUtil.from_content_path()
+
+    logger.info(f"Running in CI environment: {ci}")
 
     if changed_files:
         logger.debug(f"Got {changed_files:=} as input...")

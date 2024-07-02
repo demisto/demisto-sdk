@@ -259,18 +259,25 @@ class Initializer:
             logger.info(
                 "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
             )
-            # filter out a string list of untracked files with a path thats inside the build machine's content repository
-            # The file paths in the build machine are relative so we use abspath() to make sure the files are in content.
-            untracked_files_list = filter(
-                lambda f: str(CONTENT_PATH) in os.path.abspath(f),
-                self.git_util.repo.untracked_files,
-            )
-            # convert the string list of untracked files to a set of Path object
-            untracked_files_paths = set(map(Path, untracked_files_list))
-            logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
-            modified_files = modified_files.union(untracked_files_paths)
+            valid_untracked_files_paths = self.get_untracked_files_in_content()
+            modified_files = modified_files.union(valid_untracked_files_paths)
 
         return modified_files, added_files, renamed_files
+
+    def get_untracked_files_in_content(self) -> Set[Path]:
+        """
+        Filter out a string list of untracked files with a path thats inside the build machine's content repository.
+        The file paths in the build machine are relative so we use abspath() to make sure the files are in content.
+        """
+        untracked_files_list = filter(
+            lambda f: str(CONTENT_PATH) in os.path.abspath(f),
+            self.git_util.repo.untracked_files,
+        )
+        # convert the string list of untracked files to a set of Path object
+        untracked_files_paths = set(map(Path, untracked_files_list))
+        logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
+        return untracked_files_paths
+
 
     def specify_files_by_status(
         self,

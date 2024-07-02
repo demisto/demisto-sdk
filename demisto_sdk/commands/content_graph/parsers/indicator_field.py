@@ -21,6 +21,7 @@ class IndicatorFieldParser(
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.associated_to_all = self.json_data.get("associatedToAll")
+        self.select_values = self.json_data.get("selectValues")
 
         self.connect_to_dependencies()
 

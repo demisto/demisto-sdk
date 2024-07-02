@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.31.0"
+version = "1.31.1"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -161,6 +161,7 @@ ignore = [
 
 exclude = [
     "demisto_sdk/tests/test_files/",
+    "demisto_sdk/commands/init/tests/test_files",
     "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
     "demisto_sdk/commands/init/templates",
     "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py",

@@ -672,16 +672,8 @@ def preprocess_files(
             logger.info(
                 "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
             )
-            # filter out a string list of untracked files with a path thats inside the build machine's content repository
-            # The file paths in the build machine are relative so we use abspath() to make sure the files are in content.
-            untracked_files_list = filter(
-                lambda f: str(CONTENT_PATH) in os.path.abspath(f),
-                git_util.repo.untracked_files,
-            )
-            # convert the string list of untracked files to a set of Path object
-            untracked_files_paths = set(map(Path, untracked_files_list))
-            logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
-            raw_files = raw_files.union(untracked_files_paths)
+            valid_untracked_files_paths = get_untracked_files_in_content(git_util)
+            raw_files = raw_files.union(valid_untracked_files_paths)
             logger.info(f"\n######## - Running on collected files:\n{raw_files}")
     elif all_files:
         raw_files = all_git_files
@@ -703,3 +695,16 @@ def preprocess_files(
     }
     # filter out files that are not in the content git repo (e.g in .gitignore)
     return relative_paths & all_git_files
+
+def get_untracked_files_in_content(git_util) -> Set[Path]:
+    """
+    Filter out a string list of untracked files with a path thats inside the build machine's content repository.
+    The file paths in the build machine are relative so we use abspath() to make sure the files are in content.
+    """
+    untracked_files_list = filter(
+        lambda f: str(CONTENT_PATH) in os.path.abspath(f), git_util.repo.untracked_files
+    )
+    # convert the string list of untracked files to a set of Path object
+    untracked_files_paths = set(map(Path, untracked_files_list))
+    logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
+    return untracked_files_paths

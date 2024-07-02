@@ -669,16 +669,20 @@ def preprocess_files(
             The following code segment retrieves all relevant untracked file paths that were changed in the external contribution PR
             and adds them to `raw_files`. See CIAC-10490 for more info.
             """
-            # filter out a string list of untracked files with a path that starts with "Packs/"
-            # The file paths in the build machine are relative.
-            untracked_files_list = filter(
-                lambda f: f.startswith("Packs/"), git_util.repo.untracked_files
-            )
             logger.info(
-                f"\n[cyan]Running on untracked files: {untracked_files_list}[/cyan]"
+                "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
+            )
+            # filter out a string list of untracked files with a path thats inside the build machine's content repository
+            # The file paths in the build machine are relative so we use abspath() to make sure the files are in content.
+            untracked_files_list = filter(
+                lambda f: str(CONTENT_PATH) in os.path.abspath(f),
+                git_util.repo.untracked_files,
             )
             # convert the string list of untracked files to a set of Path object
             untracked_files_paths = set(map(Path, untracked_files_list))
+            logger.info(
+                f"\n[cyan]Collected untracked files: {untracked_files_paths}[/cyan]"
+            )
             raw_files = raw_files.union(untracked_files_paths)
     elif all_files:
         raw_files = all_git_files

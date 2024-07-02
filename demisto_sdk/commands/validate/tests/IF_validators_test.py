@@ -269,6 +269,7 @@ def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
     # not valid
     pack_name = "Foo"
     with ChangeCWD(REPO.path):
+        # Create an Incident field so that there is no prefix name of the pack in the name field
         content_item = create_incident_field_object(pack_info={"name": pack_name})
         results = NameFieldPrefixValidator().is_valid([content_item])
         assert results
@@ -322,8 +323,7 @@ def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
         )
         results = NameFieldPrefixValidator().is_valid([content_item])
         assert results
-        for prefix in expected_allowed_prefixes:
-            assert prefix in results[0].message
+        assert all(prefix in results[0].message for prefix in expected_allowed_prefixes)
 
         # valid
         content_item.name = valid_prefix

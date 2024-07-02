@@ -12,20 +12,6 @@ from demisto_sdk.commands.common.logger import logger, logging_setup
 main = typer.Typer()
 
 
-def str_to_bool(s: str) -> bool:
-    """
-    Helper function to convert a string input to a boolean.
-
-    Args:
-    - `s` (``str``): The string to convert.
-
-    Returns:
-    - `bool` representation of a string.
-    """
-
-    return s.lower() in ("yes", "true", "t", "1") if s else False
-
-
 def split_files(files_str: str) -> List[str]:
     """
     Helper function to return a `list` of `str`
@@ -46,10 +32,8 @@ def validate_changed_files_permissions(
     changed_files: List[str] = typer.Argument(
         default=None, help="The files to check, e.g. f1 f2 f3.py", callback=split_files
     ),
-    ci: bool = typer.Argument(
-        default=False,
-        help="Whether we're running in a CI environment or not, e.g. 'true'",
-        callback=str_to_bool,
+    ci: bool = typer.Option(
+        False, "--ci", help="Whether we're running in a CI environment or not."
     ),
 ) -> None:
     """

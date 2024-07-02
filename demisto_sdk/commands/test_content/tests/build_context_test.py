@@ -229,6 +229,8 @@ def get_mocked_build_context(
         "server_type": "XSOAR",
         "artifacts_path": tmp_file,
         "product_type": "xsoar",
+        "service_account": "test",
+        "artifacts_bucket": "test",
     }
     return BuildContext(kwargs, logging_manager)
 
@@ -295,6 +297,8 @@ def create_xsiam_build(
         "xsiam_servers_api_keys_path": xsiam_api_keys_path,
         "artifacts_path": tmp_file,
         "product_type": "xsoar",
+        "service_account": "test",
+        "artifacts_bucket": "test",
     }
     return BuildContext(kwargs, logging_manager)
 

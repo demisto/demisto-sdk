@@ -1,4 +1,0 @@
-changes:
-- description: Fixed the logic for retrieving the latest Docker image tag in the latest docker image validators to be determined only by the tag revision.
-  type: breaking
-pr_number: 4294

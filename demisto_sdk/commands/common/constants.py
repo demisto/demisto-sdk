@@ -821,6 +821,8 @@ INCIDENT_FIELD_FILE_NAME_REGEX = r"incidentfield-.*\.json"
 
 LAYOUT_FILE_NAME__REGEX = r"layout.*\.json"
 
+VALID_INDICATOR_TYPE_REGEX = "^[A-Za-z0-9_& ]*$"
+
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
@@ -868,6 +870,7 @@ MANDATORY_PACK_METADATA_FIELDS = (
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
     PACK_METADATA_KEYWORDS,
+    MARKETPLACE_KEY_PACK_METADATA,
 )
 PACK_METADATA_MANDATORY_FILLED_FIELDS = [
     PACK_METADATA_KEYWORDS,
@@ -1280,6 +1283,12 @@ class GitStatuses(StrEnum):
     MODIFIED = "M"
     ADDED = "A"
     DELETED = "D"
+
+
+class ExecutionMode(StrEnum):
+    ALL_FILES = "-a"
+    USE_GIT = "-g"
+    SPECIFIC_FILES = "-i"
 
 
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
@@ -2134,6 +2143,7 @@ XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
 XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
+MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 STRING_TO_BOOL_MAP = {
@@ -2150,6 +2160,8 @@ STRING_TO_BOOL_MAP = {
     "t": True,
     "f": False,
 }
+
+SCHEMA_FILE_VALID_ATTRIBUTES_TYPE = {"string", "int", "float", "datetime", "boolean"}
 
 
 #  date formats:
@@ -2175,6 +2187,17 @@ class IncidentState(StrEnum):
     IN_PROGRESS = "IN_PROGRESS"
     CLOSED = "CLOSED"
     ACKNOWLEDGED = "ACKNOWLEDGED"
+
+
+class PlaybookTaskType(StrEnum):
+    REGULAR = "regular"
+    PLAYBOOK = "playbook"
+    CONDITION = "condition"
+    START = "start"
+    TITLE = "title"
+    SECTION = "section"
+    STANDARD = "standard"
+    COLLECTION = "collection"
 
 
 # Used to format the writing of the yml/json file

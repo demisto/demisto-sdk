@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import fcntl
 import glob
 import os
 import re
@@ -4404,31 +4405,47 @@ def is_str_bool(input_: str) -> bool:
         return False
 
 
-def check_text_content_contain_sub_text(
-    sub_text_list: List[str],
-    is_lower: bool = False,
-    to_split: bool = False,
-    text: str = "",
+def search_substrings_by_line(
+    phrases_to_search: List[str],
+    text: str,
+    ignore_case: bool = False,
+    search_whole_word: bool = False,
+    exceptionally_allowed_substrings: Optional[list[str]] = None,
 ) -> List[str]:
     """
-    Args:
-        sub_text_list (List[str]): list of words/sentences to search in line content.
-        is_lower (bool): True to check when line is lower cased.
-        to_split (bool): True to split the line in order to search specific word
-        text (str): The readme content to search.
-
-    Returns:
-        list of lines which contains the given text.
+    Returns the list of line indices (as strings) in text,
+    where the searched phrases are found
     """
     invalid_lines = []
 
+    if ignore_case:
+        text = text.casefold()
+        exceptionally_allowed_substrings = [
+            allowed_phrase.casefold()
+            for allowed_phrase in (exceptionally_allowed_substrings or ())
+        ]
+
     for line_num, line in enumerate(text.split("\n")):
-        if is_lower:
-            line = line.lower()
-        if to_split:
-            line = line.split()  # type: ignore
-        for text in sub_text_list:
-            if text in line:
+        if ignore_case:
+            line = line.casefold()
+
+        if search_whole_word:
+            line = line.split()  # type: ignore[assignment]
+
+        for phrase_to_search in phrases_to_search:
+            if phrase_to_search in line:
+                if exceptionally_allowed_substrings and any(
+                    (allowed in line and phrase_to_search in allowed)
+                    for allowed in exceptionally_allowed_substrings
+                ):
+                    """
+                    example: we want to catch 'demisto', but not when it's in a URL.
+                        phrase = 'demisto'
+                        allowed = '/demisto/'
+                        line = 'foo/demisto/bar'
+                    we'll skip this line only iff 'demisto' in '/demisto/' and '/demisto/' in foo/demisto/bar
+                    """
+                    continue
                 invalid_lines.append(str(line_num + 1))
 
     return invalid_lines
@@ -4540,3 +4557,39 @@ def find_regex_on_data(data: str, regex: str):
         data,
         re.IGNORECASE,
     )
+
+
+def run_sync(
+    lock_file_path: str,
+    exclusive_function: Callable,
+    exclusive_function_kwargs: dict = {},
+):
+    """Uses a given lock file path to run a method synchronously.
+
+    Args:
+        lock_file_path (str): The lock file path.
+        exclusive_function (Callable): The function we want to run exclusivly.
+        exclusive_function_kwargs (dict, optional): The kwargs we wish to pass to the exclusive_function. Defaults to {}.
+    """
+    try:
+        # Open (or create) the lock file
+        lock_file = open(lock_file_path, "w")
+
+        # Wait until the lock is acquired
+        while True:
+            try:
+                # Try to acquire an exclusive lock
+                fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                logger.debug("Resource is busy, waiting...")
+                time.sleep(0.1)  # Wait for 0.1 seconds before retrying
+
+        # If lock is acquired, call the exclusive function
+        exclusive_function(**exclusive_function_kwargs)
+
+    finally:
+        if lock_file:
+            # Release the lock and close the file
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+            lock_file.close()

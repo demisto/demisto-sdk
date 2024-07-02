@@ -21,6 +21,15 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme
 from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
     IsContainDemistoWordValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM107_is_template_sentence_in_readme import (
+    IsTemplateInReadmeValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_integration_image_path_valid import (
+    IntegrationRelativeImagePathValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_readme_image_path_valid import (
+    ReadmeRelativeImagePathValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
 )
@@ -434,3 +443,172 @@ def test_IsContainDemistoWordValidator_is_invalid():
     results = IsContainDemistoWordValidator().is_valid(content_items)
     assert len(results) == 1
     assert results[0].message == expected_msg
+
+
+def test_ImagePathIntegrationValidator_is_valid_valid_case():
+    """
+    Given
+    content_items.
+    - Pack with valid readme and valid description contain only relative paths.
+    When
+    - Calling the ImagePathIntegrationValidator is_valid function.
+    Then
+    - Make sure that the pack isn't failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="![Example Image](../doc_files/image.png)",
+            description_content="valid description ![Example Image](../doc_files/image.png)",
+        ),
+    ]
+    assert not IntegrationRelativeImagePathValidator().is_valid(content_items)
+
+
+def test_ImagePathIntegrationValidator_is_valid_invalid_case():
+    """
+        Given
+        content_items.
+        - Pack with:
+            1. invalid readme that contains absolute path.
+            2. description contains relative path that saved not under dec_files.
+    demisto_sdk/commands/validate/sdk_validation_config.toml
+
+        When
+        - Calling the ImagePathIntegrationValidator is_valid function.
+        Then
+        - Make sure that the pack is failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
+            " ![Example Image](https://www.example.com/images/example_image.jpg)",
+            description_content="valid description ![Example Image](../../content/image.jpg)",
+        ),
+    ]
+    expected = (
+        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links "
+        "provided below.:\nhttps://www.example.com/images/example_image.jpg\n\nRelative image paths have been"
+        " identified outside the pack's 'doc_files' directory. Please relocate the following images to the"
+        " 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add"
+        " images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    )
+    result = IntegrationRelativeImagePathValidator().is_valid(content_items)
+    assert result[0].message == expected
+
+
+def test_ImagePathOnlyReadMeValidator_is_valid_valid_case():
+    """
+    Given
+    content_items.
+    - Pack with valid readme contains only relative paths.
+    When
+    - Calling the ImagePathIntegrationValidator is_valid function.
+    Then
+    - Make sure that the pack isn't failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="![Example Image](../doc_files/image.png)",
+        ),
+    ]
+    assert not ReadmeRelativeImagePathValidator().is_valid(content_items)
+
+
+def test_ImagePathOnlyReadMeValidator_is_valid_invalid_case():
+    """
+    Given
+    content_items.
+    - Pack with:
+        1. invalid readme that contains absolute path and contains
+         relative path that saved not under dec_files.
+
+    When
+    - Calling the ImagePathOnlyReadMeValidator is_valid function.
+
+    Then
+    - Make sure that the pack is failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
+            " ![Example Image](https://www.example.com/images/example_image.jpg)"
+            " ![Example Image](../../content/image.jpg)",
+        ),
+    ]
+    expected = (
+        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links"
+        " provided below.:\nhttps://www.example.com/images/example_image.jpg\n\nRelative image paths have been"
+        " identified outside the pack's 'doc_files' directory. Please relocate the following images to the"
+        " 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add"
+        " images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    )
+
+    result = ReadmeRelativeImagePathValidator().is_valid(content_items)
+    assert result[0].message == expected
+
+
+def test_VerifyTemplateInReadmeValidator_valid_case(repo):
+    """
+    Given
+    content_items.
+    - Integration with readme that contains %%FILL HERE%% template substring.
+    - Script with readme that contains %%FILL HERE%% template substring.
+    - Playbook with readme that contains %%FILL HERE%% template substring.
+    - Pack with readme that contains %%FILL HERE%% template substring.
+    When
+    - Calling the IsTemplateInReadmeValidator is_valid function.
+
+    Then
+    - Make sure that the validator return the list of the content items, which has %%FILL HERE%% in the readme file.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+        create_script_object(
+            readme_content="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+        create_playbook_object(
+            readme_content="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+        create_pack_object(
+            readme_text="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+    ]
+
+    expected_error_message = "The template '%%FILL HERE%%' exists in the following lines of the README content: 1."
+    validator_results = IsTemplateInReadmeValidator().is_valid(content_items)
+    assert validator_results
+    for validator_result in validator_results:
+        assert validator_result.message == expected_error_message
+
+
+def test_VerifyTemplateInReadmeValidator_invalid_case(repo):
+    """
+    Given
+    content_items.
+    - Integration with readme without %%FILL HERE%% template substring.
+    - Script with readme without %%FILL HERE%% template substring.
+    - Playbook with readme without %%FILL HERE%% template substring.
+    - Pack with readme without %%FILL HERE%% template substring.
+    When
+    - Calling the IsTemplateInReadmeValidator is_valid function.
+
+    Then
+    - Make sure that the validator return empty list.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="The specific template substring is not in the README.",
+        ),
+        create_script_object(
+            readme_content="The specific template substring is not in the README.",
+        ),
+        create_playbook_object(
+            readme_content="The specific template substring is not in the README.",
+        ),
+        create_pack_object(
+            readme_text="The specific template substring is not in the README.",
+        ),
+    ]
+    assert not IsTemplateInReadmeValidator().is_valid(content_items)

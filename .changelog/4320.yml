@@ -1,4 +1,0 @@
-changes:
-- description: Fix an issue in `generate-docs` when integration commands arguments are missing descriptions.
-  type: fix
-pr_number: 4320

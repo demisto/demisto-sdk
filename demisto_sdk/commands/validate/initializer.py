@@ -278,7 +278,6 @@ class Initializer:
         logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
         return untracked_files_paths
 
-
     def specify_files_by_status(
         self,
         modified_files: Set,

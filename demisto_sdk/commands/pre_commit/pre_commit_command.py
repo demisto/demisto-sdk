@@ -696,6 +696,7 @@ def preprocess_files(
     # filter out files that are not in the content git repo (e.g in .gitignore)
     return relative_paths & all_git_files
 
+
 def get_untracked_files_in_content(git_util) -> Set[Path]:
     """
     Filter out a string list of untracked files with a path thats inside the build machine's content repository.

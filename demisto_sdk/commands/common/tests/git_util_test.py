@@ -49,3 +49,13 @@ def test_find_primary_branch():
     refs_other.refs = ["a", "b"]
     repo_with_remotes_refs_other.remotes.append(refs_other)
     assert not GitUtil.find_primary_branch(repo_with_remotes_refs_other)
+
+
+def test_GitUtil(tmp_path, mocker):
+    from demisto_sdk.commands.common.git_util import GitUtil
+    from git import Repo
+
+    repo = Repo()
+
+    git_util = GitUtil(repo)
+    assert git_util.repo is not None

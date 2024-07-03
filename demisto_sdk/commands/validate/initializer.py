@@ -267,7 +267,7 @@ class Initializer:
     def get_untracked_files_in_content(self) -> Set[Path]:
         """
         Filter out a string list of untracked files with a path thats inside the build machine's content repository.
-        The file paths in the build machine are relative so we use abspath() to make sure the files are in content.
+        The file paths in the build machine are relative so we use absolute path (resolve) to make sure the files are in content.
         """
         untracked_files_list = filter(
             lambda f: Path(f).resolve().is_relative_to(CONTENT_PATH),

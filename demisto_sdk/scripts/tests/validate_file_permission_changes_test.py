@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 import typer
-from git import Blob
+from git import Blob, Remote
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
@@ -191,7 +191,9 @@ class TestValidateFileChangePermissionsCI:
     Test class for validation running in a CI environment.
     """
 
-    def test_unchanged_permission(self, git_repo: Repo, mocker: MockerFixture):
+    def test_unchanged_permission(
+        self, git_repo: Repo, mocker: MockerFixture, tmp_path: Path
+    ):
         """
         Test `validate_file_permission_changes` exit code when
         no file permissions are modified.
@@ -208,23 +210,33 @@ class TestValidateFileChangePermissionsCI:
         - `validate_file_permission_changes` exit code is 0.
         """
 
-        from demisto_sdk.commands.common.git_util import Repo as GitRepo
         from demisto_sdk.scripts.validate_deleted_files import GitUtil
         from demisto_sdk.scripts.validate_file_permission_changes import main
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
         mocker.patch.dict(os.environ, {CI_ENV_VAR: "true"})
-        mocker.patch.object(GitRepo, "remote", return_value="")
         mocker.patch.object(GitUtil, "fetch", return_value=None)
 
+        # Set up 'local' remote
+
+        GitUtil.REPO_CLS.init(str(tmp_path), bare=True)
+        origin_remote = Remote(git_repo.git_util.repo, "origin")
+        git_repo.git_util.repo.delete_remote(origin_remote)
+        git_repo.git_util.repo.create_remote("origin", str(tmp_path))
+
+        # Initialize Pack
         git_repo.create_pack(name="TestPack").create_integration(name="TestIntegration")
         git_repo.git_util.commit_files("Added a new Pack and Integration")
+        origin_remote.push(refspec="master:master")
 
-        git_repo.git_util.repo.git.checkout("-b", "add-integration-code")
+        # Make changes, commit and push to remote
+        branch = "add-integration-code"
+        git_repo.git_util.repo.git.checkout("-b", branch)
         py_file_str_path = git_repo.packs[0].integrations[0].code.path
         py_file_path = Path(py_file_str_path)
         py_file_path.write_text("print('some added code')")
         git_repo.git_util.commit_files("Added some code")
+        origin_remote.push(refspec=f"{branch}:{branch}")
 
         runner = CliRunner()
 
@@ -234,7 +246,7 @@ class TestValidateFileChangePermissionsCI:
         assert result.exit_code == 0
 
     def test_unchanged_permission_input_files_supplied(
-        self, git_repo: Repo, mocker: MockerFixture
+        self, git_repo: Repo, mocker: MockerFixture, tmp_path: Path
     ):
         """
         Test `validate_file_permission_changes` exit code when
@@ -253,23 +265,32 @@ class TestValidateFileChangePermissionsCI:
         - `validate_file_permission_changes` exit code is 0.
         """
 
-        from demisto_sdk.commands.common.git_util import Repo as GitRepo
         from demisto_sdk.scripts.validate_deleted_files import GitUtil
         from demisto_sdk.scripts.validate_file_permission_changes import main
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
         mocker.patch.dict(os.environ, {CI_ENV_VAR: "true"})
-        mocker.patch.object(GitRepo, "remote", return_value="")
         mocker.patch.object(GitUtil, "fetch", return_value=None)
 
+        # Set up 'local' remote
+        GitUtil.REPO_CLS.init(str(tmp_path), bare=True)
+        origin_remote = Remote(git_repo.git_util.repo, "origin")
+        git_repo.git_util.repo.delete_remote(origin_remote)
+        git_repo.git_util.repo.create_remote("origin", str(tmp_path))
+
+        # Initialize Pack
         git_repo.create_pack(name="TestPack").create_integration(name="TestIntegration")
         git_repo.git_util.commit_files("Added a new Pack and Integration")
-        git_repo.git_util.repo.git.checkout("-b", "add-integration-code")
+        origin_remote.push(refspec="master:master")
 
+        # Make changes, commit and push to remote
+        branch = "add-integration-code"
+        git_repo.git_util.repo.git.checkout("-b", branch)
         py_file_str_path = git_repo.packs[0].integrations[0].code.path
         py_file_path = Path(py_file_str_path)
         py_file_path.write_text("print('some added code')")
         git_repo.git_util.commit_files("Added some code")
+        origin_remote.push(refspec=f"{branch}:{branch}")
 
         runner = CliRunner()
 
@@ -278,7 +299,9 @@ class TestValidateFileChangePermissionsCI:
 
         assert result.exit_code == 0
 
-    def test_set_executable(self, git_repo: Repo, mocker: MockerFixture):
+    def test_set_executable(
+        self, git_repo: Repo, mocker: MockerFixture, tmp_path: Path
+    ):
         """
         Test `validate_file_permission_changes` exit code when
         file permissions are modified.
@@ -295,23 +318,31 @@ class TestValidateFileChangePermissionsCI:
         - The output includes the command how to revert the change.
         """
 
-        from demisto_sdk.commands.common.git_util import Repo as GitRepo
         from demisto_sdk.scripts.validate_deleted_files import GitUtil
         from demisto_sdk.scripts.validate_file_permission_changes import main
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
         mocker.patch.dict(os.environ, {CI_ENV_VAR: "true"})
-        mocker.patch.object(GitRepo, "remote", return_value="")
         mocker.patch.object(GitUtil, "fetch", return_value=None)
 
+        # Set up 'local' remote
+        GitUtil.REPO_CLS.init(str(tmp_path), bare=True)
+        origin_remote = Remote(git_repo.git_util.repo, "origin")
+        git_repo.git_util.repo.delete_remote(origin_remote)
+        git_repo.git_util.repo.create_remote("origin", str(tmp_path))
+
+        # Initialize Pack
         git_repo.create_pack(name="TestPack").create_integration(name="TestIntegration")
         git_repo.git_util.commit_files("Added a new Pack and Integration")
-        git_repo.git_util.repo.git.checkout("-b", "set-integration-executable")
+        origin_remote.push(refspec="master:master")
 
+        branch = "set-integration-executable"
+        git_repo.git_util.repo.git.checkout("-b", branch)
         py_file_str_path = git_repo.packs[0].integrations[0].code.path
         py_file_path = Path(py_file_str_path)
         py_file_path.chmod(py_file_path.stat().st_mode | stat.S_IEXEC)
         git_repo.git_util.commit_files(f"Set {py_file_str_path} executable")
+        origin_remote.push(refspec=f"{branch}:{branch}")
 
         runner = CliRunner()
 
@@ -330,7 +361,7 @@ class TestValidateFileChangePermissionsCI:
             in actual_output
         )
 
-    def test_set_not_executable(self, git_repo: Repo, mocker: MockerFixture):
+    def test_set_not_executable(self, git_repo: Repo, mocker: MockerFixture, tmp_path):
         """
         Test `validate_file_permission_changes` exit code when
         file permissions are modified.
@@ -347,30 +378,37 @@ class TestValidateFileChangePermissionsCI:
         - The output includes the command how to revert the change.
         """
 
-        from demisto_sdk.commands.common.git_util import Repo as GitRepo
         from demisto_sdk.scripts.validate_deleted_files import GitUtil
         from demisto_sdk.scripts.validate_file_permission_changes import main
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
         mocker.patch.dict(os.environ, {CI_ENV_VAR: "true"})
-        mocker.patch.object(GitRepo, "remote", return_value="")
         mocker.patch.object(GitUtil, "fetch", return_value=None)
 
-        git_repo.create_pack(name="TestPack").create_integration(name="TestIntegration")
+        # Set up 'local' remote
+        GitUtil.REPO_CLS.init(str(tmp_path), bare=True)
+        origin_remote = Remote(git_repo.git_util.repo, "origin")
+        git_repo.git_util.repo.delete_remote(origin_remote)
+        git_repo.git_util.repo.create_remote("origin", str(tmp_path))
 
-        # Set python file as executable
+        # Initialize Pack
+        git_repo.create_pack(name="TestPack").create_integration(name="TestIntegration")
         py_file_str_path = git_repo.packs[0].integrations[0].code.path
         py_file_path = Path(py_file_str_path)
+
+        # Set Python file as executable
         py_file_path.chmod(py_file_path.stat().st_mode | stat.S_IEXEC)
-
         git_repo.git_util.commit_files("Added a new Pack and Integration")
-        git_repo.git_util.repo.git.checkout("-b", "set-integration-not-executable")
+        origin_remote.push(refspec="master:master")
 
-        # Unset python file as executable
+        branch = "set-integration-not-executable"
+        git_repo.git_util.repo.git.checkout("-b", branch)
+        # Unset Python file as executable
         py_file_path.chmod(
             py_file_path.stat().st_mode & ~stat.S_IXUSR & ~stat.S_IXGRP & ~stat.S_IXOTH
         )
         git_repo.git_util.commit_files(f"Set {py_file_str_path} not executable")
+        origin_remote.push(refspec=f"{branch}:{branch}")
 
         runner = CliRunner()
 
@@ -390,7 +428,7 @@ class TestValidateFileChangePermissionsCI:
         )
 
     def test_unchanged_permission_valid_input_file(
-        self, git_repo: Repo, mocker: MockerFixture
+        self, git_repo: Repo, mocker: MockerFixture, tmp_path: Path
     ):
         """
         Test the behavior when we don't change a permission and supply the input file.
@@ -406,23 +444,32 @@ class TestValidateFileChangePermissionsCI:
         - `validate_file_permission_changes` exit code is 0.
         """
 
-        from demisto_sdk.commands.common.git_util import Repo as GitRepo
         from demisto_sdk.scripts.validate_deleted_files import GitUtil
         from demisto_sdk.scripts.validate_file_permission_changes import main
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
         mocker.patch.dict(os.environ, {CI_ENV_VAR: "true"})
-        mocker.patch.object(GitRepo, "remote", return_value="")
         mocker.patch.object(GitUtil, "fetch", return_value=None)
 
+        # Set up 'local' remote
+        GitUtil.REPO_CLS.init(str(tmp_path), bare=True)
+        origin_remote = Remote(git_repo.git_util.repo, "origin")
+        git_repo.git_util.repo.delete_remote(origin_remote)
+        git_repo.git_util.repo.create_remote("origin", str(tmp_path))
+
+        # Initialize Pack
         git_repo.create_pack(name="TestPack").create_integration(name="TestIntegration")
         git_repo.git_util.commit_files("Added a new Pack and Integration")
+        origin_remote.push(refspec="master:master")
 
-        git_repo.git_util.repo.git.checkout("-b", "add-integration-code")
+        # Make changes, commit and push to remote
+        branch = "add-integration-code"
+        git_repo.git_util.repo.git.checkout("-b", branch)
         py_file_str_path = git_repo.packs[0].integrations[0].code.path
         py_file_path = Path(py_file_str_path)
         py_file_path.write_text("print('some added code')")
         git_repo.git_util.commit_files("Added some code")
+        origin_remote.push(refspec=f"{branch}:{branch}")
 
         runner = CliRunner()
 

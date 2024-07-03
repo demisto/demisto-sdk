@@ -234,3 +234,47 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 or self.is_fetch_samples
             )
         )
+
+
+class StrictCommand(Command, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
+    name: str
+
+    # From HAS_COMMAND relationship
+    args: List[Argument] = Field(..., exclude=True)
+    outputs: List[IntegrationOutput] = Field(..., exclude=True)
+
+    deprecated: bool = Field(False)
+    description: str = Field("")
+
+    # missing attributes in DB
+    node_id: str = Field("", exclude=True)
+    object_id: str = Field("", alias="id", exclude=True)
+    marketplaces: List[MarketplaceVersions] = Field([], exclude=True)
+
+    @classmethod
+    def cast(cls, to_be_casted_obj):
+        casted_obj = cls()
+        casted_obj.__dict__ = to_be_casted_obj.__dict__
+        return casted_obj
+
+
+class StrictIntegration(Integration, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
+    is_fetch: bool = Field(..., alias="isfetch")
+    is_fetch_events: bool = Field(..., alias="isfetchevents")
+    is_fetch_assets: bool = Field(..., alias="isfetchassets")
+    is_fetch_events_and_assets: bool
+    is_fetch_samples: bool
+    is_feed: bool
+    is_beta: bool
+    is_remote_sync_in: bool
+    is_mappable: bool
+    long_running: bool
+    category: str
+    commands: List[StrictCommand] = []
+    params: List[Parameter] = Field(..., exclude=True)  # TODO StrictParameter - which fields can be None or default
+
+    @classmethod
+    def cast(cls, to_be_casted_obj):
+        casted_obj = cls()
+        casted_obj.__dict__ = to_be_casted_obj.__dict__
+        return casted_obj

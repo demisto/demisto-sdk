@@ -1,6 +1,7 @@
+import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import typer
 from git import Blob
@@ -11,30 +12,65 @@ from demisto_sdk.commands.common.logger import logger, logging_setup
 
 main = typer.Typer()
 
+HELP_CHANGED_FILES = "The files to check, e.g. dir/f1 f2 f3.py"
+HELP_CI = "Whether we're running in a CI environment or not. If not specified, we check the presence of the `CI` env var."
+ERROR_IS_CI_INVALID = "Invalid value for CI env var: {env_var_str}"
+ERROR_INPUT_FILES_INVALID = "Invalid value for input files: {input}"
+CI_ENV_VAR = "CI"
 
-def split_files(files_str: str) -> List[str]:
+
+def split_files(files_str: Union[str, List[str]]) -> List[str]:
     """
     Helper function to return a `list` of `str`
     from an input string.
 
     Args:
-    - `files_str` (``str``): The input string.
+    - `files_str` (``str | List[str]``): The input files.
 
-    Returns:
+    Returns
     - `List[str]` containing a list of strings.
     """
 
-    return files_str.split() if files_str else []
+    if isinstance(files_str, list):
+        return files_str
+    elif isinstance(files_str, str):
+        return files_str.split() if files_str else []
+    else:
+        raise typer.BadParameter(ERROR_INPUT_FILES_INVALID.format(input=files_str))
+
+
+def is_ci(flag: bool = False) -> bool:
+    """
+    Helper function to detect whether we're running
+    in a CI environment. To detect this, we first check if the `--ci`
+    flag is specified. If it's not specified, we rely on the CI env var.
+
+    Returns:
+    - `True` if we're in a CI environment, `False` otherwise.
+    """
+
+    if flag:
+        return flag
+    elif os.getenv(CI_ENV_VAR):
+        env_var_str = os.getenv(CI_ENV_VAR, "false").lower()
+        if env_var_str in {"true", "1", "yes"}:
+            return True
+        elif env_var_str in {"false", "0", "no"}:
+            return False
+        else:
+            raise typer.BadParameter(
+                ERROR_IS_CI_INVALID.format(env_var_str=env_var_str)
+            )
+    else:
+        return False
 
 
 @main.command(help="Validate that file modes were not changed")
 def validate_changed_files_permissions(
     changed_files: List[str] = typer.Argument(
-        default=None, help="The files to check, e.g. f1 f2 f3.py", callback=split_files
+        default=None, help=HELP_CHANGED_FILES, callback=split_files
     ),
-    ci: bool = typer.Option(
-        False, "--ci", help="Whether we're running in a CI environment or not."
-    ),
+    ci: bool = typer.Option(False, "--ci", help=HELP_CI, callback=is_ci),
 ) -> None:
     """
     Validate whether the file mode was modified. Exit code 0 if no files
@@ -50,10 +86,12 @@ def validate_changed_files_permissions(
     logging_setup()
     git_util = GitUtil.from_content_path()
 
+    ci = is_ci(ci)
+
     logger.info(f"Running in CI environment: {ci}")
 
     if changed_files:
-        logger.debug(f"Got {changed_files:=} as input...")
+        logger.debug(f"Got {','.join(changed_files)} as input...")
     else:
         logger.info(
             f"Getting changed files from git branch '{DEMISTO_GIT_PRIMARY_BRANCH}'..."
@@ -63,11 +101,9 @@ def validate_changed_files_permissions(
             for path in git_util.get_all_changed_files(DEMISTO_GIT_PRIMARY_BRANCH)
         ]
 
-    logger.info(f"Running on {changed_files:=}...")
-
     if changed_files:
 
-        logger.debug(
+        logger.info(
             f"The following changed files were found comparing '{DEMISTO_GIT_PRIMARY_BRANCH}': {', '.join(changed_files)}"
         )
 
@@ -109,9 +145,9 @@ def get_revert_permission_message(file_path: Path, new_permission: str) -> str:
 
     try:
         if new_permission == oct(Blob.file_mode)[2:]:
-            cmd = f"chmod +x {file_path.absolute()}'"
+            cmd = f"chmod +x {file_path.absolute()}"
         elif new_permission == oct(Blob.executable_mode)[2:]:
-            cmd = f"chmod -x {file_path.absolute()}'"
+            cmd = f"chmod -x {file_path.absolute()}"
         else:
             cmd = f"chmod +||- {file_path.absolute()}"
         message = f"Please revert the file permissions using the command '{cmd}'"

@@ -88,12 +88,12 @@ def validate_changed_files_permissions(
 
     ci = is_ci(ci)
 
-    logger.info(f"Running in CI environment: {ci}")
+    logger.debug(f"Running in CI environment: {ci}")
 
     if changed_files:
         logger.debug(f"Got {','.join(changed_files)} as input...")
     else:
-        logger.info(
+        logger.debug(
             f"Getting changed files from git branch '{DEMISTO_GIT_PRIMARY_BRANCH}'..."
         )
         changed_files = [
@@ -103,7 +103,7 @@ def validate_changed_files_permissions(
 
     if changed_files:
 
-        logger.info(
+        logger.debug(
             f"The following changed files were found comparing '{DEMISTO_GIT_PRIMARY_BRANCH}': {', '.join(changed_files)}"
         )
 

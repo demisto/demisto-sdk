@@ -702,11 +702,10 @@ def get_untracked_files_in_content(git_util) -> Set[Path]:
     Filter out a string list of untracked files with a path thats inside the build machine's content repository.
     The file paths in the build machine are relative so we use absolute path (resolve) to make sure the files are in content.
     """
-    untracked_files_list = filter(
-        lambda f: lambda f: Path(f).resolve().is_relative_to(CONTENT_PATH),
-        git_util.repo.untracked_files,
-    )
-    # convert the string list of untracked files to a set of Path object
-    untracked_files_paths = set(map(Path, untracked_files_list))
+    untracked_files_paths = {
+        Path(f)
+        for f in git_util.repo.untracked_files
+        if Path(f).resolve().is_relative_to(CONTENT_PATH)
+    }
     logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
     return untracked_files_paths

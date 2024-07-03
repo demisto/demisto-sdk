@@ -1099,8 +1099,11 @@ class GitUtil:
         """
 
         if ci:
+            branch = os.getenv("BRANCH_NAME", self.get_current_git_branch_or_hash())
             summary_output = self.repo.git.diff(
-                "--summary", f"{DEMISTO_GIT_PRIMARY_BRANCH}..", file_path
+                "--summary",
+                f"{DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}...{DEMISTO_GIT_UPSTREAM}/{branch}",
+                file_path,
             )
         else:
             summary_output = self.repo.git.diff("--summary", "--staged", file_path)

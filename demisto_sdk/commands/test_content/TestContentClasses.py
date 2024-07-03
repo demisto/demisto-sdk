@@ -1040,7 +1040,6 @@ class ServerContext:
         self.proxy: Optional[MITMProxy] = None
         self.cloud_ui_path = None
         self.client: Optional[DefaultApi] = None
-        self.configure_new_client()
         self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
@@ -1264,17 +1263,16 @@ class CloudServerContext(ServerContext):
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.server_url = self.server_ip
-        # we use client without demisto username
-        os.environ.pop("DEMISTO_USERNAME", None)
-        # In XSIAM or XSOAR SAAS - We're running without proxy. This code won't be executed on SaaS servers.
-        if self.build_context.server_type == XSIAM_SERVER_TYPE:
-            self.check_if_can_create_manual_alerts()
-        self.all_integrations_configurations = self._get_all_integration_config()
-
         self.api_key = self.build_context.api_key.get(cloud_machine)
         self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(
             "x-xdr-auth-id"
         )
+        os.environ.pop(
+            "DEMISTO_USERNAME", None
+        )  # we use client without demisto username
+        self.configure_new_client()
+        if self.build_context.server_type == XSIAM_SERVER_TYPE:
+            self.check_if_can_create_manual_alerts()
         self.cloud_ui_path = self.build_context.env_json.get(cloud_machine, {}).get(
             "ui_url"
         )
@@ -1285,6 +1283,7 @@ class CloudServerContext(ServerContext):
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
         ) = self._get_tests_to_run()
+        self.all_integrations_configurations = self._get_all_integration_config()
 
     def reset_containers(self):
         self.build_context.logging_module.info(
@@ -1462,14 +1461,15 @@ class OnPremServerContext(ServerContext):
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.server_url = f"https://{self.server_ip}"
+        self.api_key = build_context.api_key
+        self.configure_new_client()
+
         self.proxy = MITMProxy(
             server_private_ip,
             self.build_context.logging_module,
             build_number=self.build_context.build_number,
             branch_name=self.build_context.build_name,
         )
-        self.all_integrations_configurations = self._get_all_integration_config()
-        self.api_key = build_context.api_key
         self.filtered_tests = self.build_context.machine_assignment_json.get(
             "xsoar-machine", {}
         ).get("playbooks_to_run")
@@ -1477,6 +1477,7 @@ class OnPremServerContext(ServerContext):
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
         ) = self._get_tests_to_run()
+        self.all_integrations_configurations = self._get_all_integration_config()
 
     def reset_containers(self):
         self.build_context.logging_module.info("Resetting containers\n", real_time=True)

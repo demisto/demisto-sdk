@@ -272,10 +272,22 @@ class Initializer:
         untracked_files_paths = {
             Path(f)
             for f in self.git_util.repo.untracked_files
-            if Path(f).resolve().is_relative_to(CONTENT_PATH)
+            if self.is_relative_to(path=Path(f).resolve(), base=CONTENT_PATH)
         }
         logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
         return untracked_files_paths
+
+    def is_relative_to(self, path: Path, base: Path) -> bool:
+        """
+        The Path class in Python's pathlib module got the native is_relative_to method starting
+        from Python 3.9, so it fails on python 3.8.
+        This is a custom implementation for the is_relative_to method.
+        """
+        try:
+            path.relative_to(base)
+            return True
+        except ValueError:
+            return False
 
     def specify_files_by_status(
         self,

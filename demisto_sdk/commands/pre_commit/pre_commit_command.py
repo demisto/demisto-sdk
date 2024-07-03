@@ -710,6 +710,7 @@ def get_untracked_files_in_content(git_util) -> Set[Path]:
     logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
     return untracked_files_paths
 
+
 def is_relative_to(path: Path, base: Path) -> bool:
     """
     The Path class in Python's pathlib module got the native is_relative_to method starting

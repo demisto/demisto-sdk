@@ -1096,7 +1096,7 @@ class GitUtil:
         """
 
         if ci:
-            branch = self.get_current_working_branch()
+            branch = self.get_current_git_branch_or_hash()
             summary_output = self.repo.git.diff(
                 "--summary", f"{DEMISTO_GIT_PRIMARY_BRANCH}..{branch}", str(file_path)
             )

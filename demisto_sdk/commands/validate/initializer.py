@@ -270,7 +270,7 @@ class Initializer:
         The file paths in the build machine are relative so we use abspath() to make sure the files are in content.
         """
         untracked_files_list = filter(
-            lambda f: str(CONTENT_PATH) in os.path.abspath(f),
+            lambda f: Path(f).resolve().is_relative_to(CONTENT_PATH),
             self.git_util.repo.untracked_files,
         )
         # convert the string list of untracked files to a set of Path object

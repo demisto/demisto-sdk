@@ -1308,8 +1308,12 @@ class IntegrationValidator(ContentEntityValidator):
             marketplaces = get_item_marketplaces(
                 item_path=self.file_path, item_data=self.current_file
             )
-            is_xsoar_marketplace = (
-                not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
+            is_xsoar_marketplace = not marketplaces or any(
+                [
+                    MarketplaceVersions.XSOAR.value in marketplaces,
+                    MarketplaceVersions.XSOAR_SAAS.value in marketplaces,
+                    MarketplaceVersions.XSOAR_ON_PREM.value in marketplaces,
+                ]
             )
             fetch_required_params = (
                 INCIDENT_FETCH_REQUIRED_PARAMS

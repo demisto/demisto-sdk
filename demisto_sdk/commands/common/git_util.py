@@ -1079,13 +1079,16 @@ class GitUtil:
         self.repo.index.commit(commit_message)
 
     def has_file_permissions_changed(
-        self, file_path: Union[Path, str], ci: bool = False
+        self, file_path: str, ci: bool = False
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         Check whether the supplied file permissions have changed.
+        If we're in a CI environment, we check for changes against
+        the base branch. If not, we assume we're running in a local
+        environment the commit was made.
 
         Args:
-        - `file_path` (``Path|str``): The path to the file to check for
+        - `file_path` (``str``): The path to the file to check for
         permission changes.
         - `ci` (``bool``): Whether we're running in a CI environment.
 
@@ -1096,12 +1099,11 @@ class GitUtil:
         """
 
         if ci:
-            branch = self.get_current_git_branch_or_hash()
             summary_output = self.repo.git.diff(
-                "--summary", f"{DEMISTO_GIT_PRIMARY_BRANCH}..{branch}", str(file_path)
+                "--summary", f"{DEMISTO_GIT_PRIMARY_BRANCH}..", file_path
             )
         else:
-            summary_output = self.repo.git.diff("--summary", "--staged", str(file_path))
+            summary_output = self.repo.git.diff("--summary", "--staged", file_path)
 
         pattern = r"mode change (\d{6}) => (\d{6}) (.+)"
 

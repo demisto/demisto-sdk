@@ -182,8 +182,7 @@ class TestPlaybook:
         Args:
             build_context (BuildContext): The build context to use in the build
             test_configuration: The configuration from content conf.json file
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
-
+            server_context (ServerContext): The ServerContext instance in which the TestPlaybook instance is created in
         """
         self.build_context = build_context
         self.server_context = server_context
@@ -521,7 +520,6 @@ class TestPlaybook:
                 client,
                 self.configuration.playbook_id,
                 self.is_mockable,
-                self.server_context,
                 instance_configuration,
             )
             if not instance_created:
@@ -1037,13 +1035,8 @@ class ServerContext:
         self.auth_id = None
         self.api_key = None
         self.server_ip = server_private_ip
+        self.server_url: str = ""
         self.build_context = build_context
-        if self.build_context.is_saas_server_type:
-            self.server_url = self.server_ip
-            # we use client without demisto username
-            os.environ.pop("DEMISTO_USERNAME", None)
-        else:
-            self.server_url = f"https://{self.server_ip}"
         self.proxy: Optional[MITMProxy] = None
         self.cloud_ui_path = None
         self.client: Optional[DefaultApi] = None
@@ -1059,7 +1052,7 @@ class ServerContext:
         self.unmockable_test_ids: Set[str] = set()
         self.filtered_tests: List[str] = []
         self.test_retries_queue: Queue = Queue()
-        self.all_integrations_configurations = self._get_all_integration_config()
+        self.all_integrations_configurations: Optional[List] = []
         self.mockable_tests_to_run: Queue = Queue()
         self.unmockable_tests_to_run: Queue = Queue()
 
@@ -1270,10 +1263,13 @@ class CloudServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.server_url = self.server_ip
+        # we use client without demisto username
+        os.environ.pop("DEMISTO_USERNAME", None)
         # In XSIAM or XSOAR SAAS - We're running without proxy. This code won't be executed on SaaS servers.
-        self.proxy = None
         if self.build_context.server_type == XSIAM_SERVER_TYPE:
             self.check_if_can_create_manual_alerts()
+        self.all_integrations_configurations = self._get_all_integration_config()
 
         self.api_key = self.build_context.api_key.get(cloud_machine)
         self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(
@@ -1465,16 +1461,15 @@ class OnPremServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.server_url = f"https://{self.server_ip}"
         self.proxy = MITMProxy(
             server_private_ip,
             self.build_context.logging_module,
             build_number=self.build_context.build_number,
             branch_name=self.build_context.build_name,
         )
-
+        self.all_integrations_configurations = self._get_all_integration_config()
         self.api_key = build_context.api_key
-        self.auth_id = None
-        self.cloud_ui_path = None
         self.filtered_tests = self.build_context.machine_assignment_json.get(
             "xsoar-machine", {}
         ).get("playbooks_to_run")
@@ -1852,7 +1847,7 @@ class Integration:
             potential_integration_instance_names: A list of instance names, one of those names should be the actual reason,
             but we won't know for sure until we will try to filter it with conf.json.
             playbook: The playbook that triggered the integration configuration.
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
+            server_context (ServerContext): The ServerContext instance in which the Integration instance is created in
 
         """
         self.playbook = playbook
@@ -2043,19 +2038,18 @@ class Integration:
                 )
                 self.delete_integration_instance(client, instance.get("id"))
 
-    def _set_server_keys(self, client: DefaultApi, server_context: "ServerContext"):
+    def _set_server_keys(self, client: DefaultApi):
         """In case the params of the test has 'server_keys' key:
             Resets containers
             Adds server configuration keys using the demisto_client.
 
         Args:
             client (demisto_client): The configured client to use.
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
         """
         if "server_keys" not in self.configuration.params:  # type: ignore
             return
 
-        server_context.reset_containers()
+        self.server_context.reset_containers()
 
         self.playbook.log_debug(f"Setting server keys for integration: {self}")
 
@@ -2070,7 +2064,7 @@ class Integration:
             error_msg="Failed to set server keys",
             logging_manager=self.build_context.logging_module,
         )
-        server_context.prev_system_conf = prev_system_conf
+        self.server_context.prev_system_conf = prev_system_conf
 
     def create_module(
         self,
@@ -2125,7 +2119,6 @@ class Integration:
         client: DefaultApi,
         playbook_id: str,
         is_mockable: bool,
-        server_context: "ServerContext",
         instance_configuration: dict,
     ) -> bool:
         """
@@ -2135,7 +2128,6 @@ class Integration:
             client: The demisto_client instance to use.
             playbook_id: The playbook id for which the instance should be created.
             is_mockable: Indicates whether the integration should be configured with proxy=True or not.
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in.
 
         Returns:
             The integration configuration as it exists on the server after it was configured
@@ -2175,7 +2167,7 @@ class Integration:
 
         # set server keys
         if not self.build_context.is_saas_server_type:
-            self._set_server_keys(client, server_context)
+            self._set_server_keys(client)
 
         # set module params
         for param_conf in module_configuration:

@@ -70,6 +70,10 @@ def test_execute_tests(mocker, tmp_path):
         for integration_name in integration_names
     ]
     secret_test_conf = generate_secret_conf_json(integrations_configurations)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.BuildContext.create_servers",
+        return_value=set(),
+    )
 
     # Setting up the build_context instance
     build_context = get_mocked_build_context(
@@ -84,6 +88,7 @@ def test_execute_tests(mocker, tmp_path):
     server_context = generate_mocked_server_context(
         build_context, mocked_demisto_client, mocker
     )
+    build_context.servers = {server_context}
     server_context.execute_tests()
 
     # Validating all tests were executed

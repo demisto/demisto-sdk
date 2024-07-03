@@ -350,6 +350,11 @@ def test_non_filtered_tests_are_skipped(mocker, tmp_path):
         generate_test_configuration(playbook_id="test_that_should_be_skipped"),
     ]
     content_conf_json = generate_content_conf_json(tests=tests)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
+
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -373,6 +378,10 @@ def test_no_tests_are_executed_when_filtered_tests_is_empty(mocker, tmp_path):
     """
     tests = [generate_test_configuration(playbook_id="test_that_should_be_skipped")]
     content_conf_json = generate_content_conf_json(tests=tests)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -410,6 +419,10 @@ def test_playbook_with_skipped_integrations_is_skipped(mocker, tmp_path):
     content_conf_json = generate_content_conf_json(
         tests=tests, skipped_integrations={"skipped_integration": ""}
     )
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -441,6 +454,10 @@ def test_nightly_playbook_skipping(mocker, tmp_path):
 
     tests = [generate_test_configuration(playbook_id="nightly_playbook", nightly=True)]
     content_conf_json = generate_content_conf_json(tests=tests)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -448,6 +465,7 @@ def test_nightly_playbook_skipping(mocker, tmp_path):
         machine_assignment_content=machine_assignment_content,
     )
     assert "nightly_playbook" in build_context.tests_data_keeper.skipped_tests
+
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -480,6 +498,10 @@ def test_playbook_with_integration(mocker, tmp_path):
         )
     ]
     content_conf_json = generate_content_conf_json(tests=tests)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -514,6 +536,10 @@ def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
         )
     ]
     content_conf_json = generate_content_conf_json(tests=tests)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -560,7 +586,10 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
         ),
     ]
     content_conf_json = generate_content_conf_json(tests=tests)
-
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     xsoar_build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -614,6 +643,10 @@ def test_unmockable_playbook_configuration(mocker, tmp_path):
         )
     ]
     content_conf_json = generate_content_conf_json(tests=tests)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -647,6 +680,10 @@ def test_mockable_playbook_configuration(mocker, tmp_path):
         )
     ]
     content_conf_json = generate_content_conf_json(tests=tests)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -667,5 +704,9 @@ def test_get_instances_ips(mocker, tmp_path):
     Then:
         - Ensure that the instance ips are returnd.
     """
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     build_context = get_mocked_build_context(mocker, tmp_path)
     assert build_context.instances_ips == ["1.1.1.1"]

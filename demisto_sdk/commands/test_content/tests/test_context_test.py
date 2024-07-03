@@ -118,6 +118,10 @@ def init_server_context(mocker, tmp_path, mockable=False):
     content_conf_json = generate_content_conf_json(
         tests=tests, unmockable_integrations=unmockable_integration
     )
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.BuildContext.create_servers",
+        return_value=set(),
+    )
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -129,6 +133,7 @@ def init_server_context(mocker, tmp_path, mockable=False):
     server_context = generate_mocked_server_context(
         build_context, mocked_demisto_client, mocker
     )
+    build_context.servers = {server_context}
     mocker.patch.object(server_context, mock_func, return_value=None)
 
     return build_context, server_context
@@ -719,7 +724,10 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
         mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
     )
     playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
-
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     # Setting up the build_context instance
     build_context = get_mocked_build_context(
         mocker,

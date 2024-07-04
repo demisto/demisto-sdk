@@ -1,4 +1,0 @@
-changes:
-- description: Moved PB109 to the new validate format. The validation checks that taskid field and id field under task field contains equal values.
-  type: internal
-pr_number: 4358

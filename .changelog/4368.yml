@@ -1,4 +1,0 @@
-changes:
-- description: Combined MR101 and MR102 into the new validation format. Validates that the modeling rule yml file contains the schema and rules keys and that they are empty.
-  type: internal
-pr_number: 4368

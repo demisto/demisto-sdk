@@ -1625,7 +1625,7 @@ def test_PackFilesValidator_fix(file_attribute: str):
     [("1.0.0", "1.0.1", 0), ("1.0.0", "1.0.0", 1), ("1.1.0", "1.0.1", 1)],
 )
 def test_PackMetadataVersionShouldBeRaisedValidator(
-    mocker, old_version, current_version, expected_invalid
+    old_version, current_version, expected_invalid
 ):
     """
     Given: A previous pack version and a current pack version.

@@ -1084,7 +1084,7 @@ class GitUtil:
         """
         Check whether the supplied file permissions have changed.
         If we're in a CI environment, we check for changes against
-        the base branch. If not, we assume we're running in a local
+        the remote base branch. If not, we assume we're running in a local
         environment the commit was made.
 
         Args:
@@ -1098,11 +1098,22 @@ class GitUtil:
         - `str` with the new permissions.
         """
 
+        # If we're in a CI environment, we want need to get the
+        # remote (e.g. origin), base branch and current branch since
+        # the local branches are unavailable
         if ci:
             branch = os.getenv("BRANCH_NAME", self.get_current_git_branch_or_hash())
+            base_branch = (
+                self.find_primary_branch(self.repo)
+                if self.find_primary_branch(self.repo)
+                else DEMISTO_GIT_PRIMARY_BRANCH
+            )
+            upstream = (
+                self.repo.remote().name if self.repo.remote() else DEMISTO_GIT_UPSTREAM
+            )
             summary_output = self.repo.git.diff(
                 "--summary",
-                f"{DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}...{DEMISTO_GIT_UPSTREAM}/{branch}",
+                f"{upstream}/{base_branch}...{upstream}/{branch}",
                 file_path,
             )
         else:

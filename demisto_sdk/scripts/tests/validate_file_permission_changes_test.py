@@ -30,9 +30,6 @@ class TestValidateFileChangePermissionsLocal(TestBaseClass):
     Test class for validation running in a local environment
     """
 
-    # branch_non_permission = "add-integration-code"
-    # branch_permission = "set-integration-executable"
-
     @pytest.fixture(autouse=True)
     def setup(self, git_repo: Repo, mocker: MockerFixture, tmp_path: Path):
 
@@ -179,6 +176,16 @@ class TestValidateFileChangePermissionsCI(TestBaseClass):
 
     @pytest.fixture(autouse=True)
     def setup(self, git_repo: Repo, mocker: MockerFixture, tmp_path: Path):
+        """
+        Setup method for the class tests.
+
+        - Set CI=true env var.
+        - Set content path.
+        - Create local remote git repo and add it as remote to content repo.
+        - Create a Pack and Integration.
+        - Push changes to remote.
+        """
+
         from demisto_sdk.scripts.validate_deleted_files import GitUtil
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
@@ -428,42 +435,10 @@ class TestIsCI:
     valid_false = "false"
     invalid_false = "fale"
 
-    def test_flag_true_supplied(self):
+    def test_valid_true_env_var_supplied(self, mocker: MockerFixture):
         """
         Given:
-        - The `--ci` flag is supplied.
-
-        When:
-        - The `--ci` flag supplied is `True`.
-
-        Then:
-        - `is_ci` returns `True`
-        """
-
-        actual = is_ci(flag=True)
-
-        assert actual
-
-    def test_flag_false_supplied(self):
-        """
-        Given:
-        - The `--ci` flag is supplied.
-
-        When:
-        - The `--ci` flag supplied is `False`.
-
-        Then:
-        - `is_ci` returns `False`
-        """
-
-        actual = is_ci(flag=False)
-
-        assert not actual
-
-    def test_flag_not_supplied_valid_true_env_var_supplied(self, mocker: MockerFixture):
-        """
-        Given:
-        - No `--ci` flag is not supplied.
+        - The `CI` environmental variable.
 
         When:
         - The `CI` environmental variable is set to 'true'.
@@ -478,12 +453,10 @@ class TestIsCI:
 
         assert actual
 
-    def test_flag_not_supplied_valid_false_env_var_supplied(
-        self, mocker: MockerFixture
-    ):
+    def test_valid_false_env_var_supplied(self, mocker: MockerFixture):
         """
         Given:
-        - No `--ci` flag is not supplied.
+        - `CI` environmental variable.
 
         When:
         - The `CI` environmental variable is set to 'false'.
@@ -498,10 +471,10 @@ class TestIsCI:
 
         assert not actual
 
-    def test_flag_not_supplied_invalid_env_var_supplied(self, mocker: MockerFixture):
+    def test_invalid_env_var_supplied(self, mocker: MockerFixture):
         """
         Given:
-        - No `--ci` flag is not supplied.
+        - `CI` environmental variable.
 
         When:
         - The `CI` environmental variable is set to an invalid value 'fale'.
@@ -519,10 +492,10 @@ class TestIsCI:
             env_var_str=self.invalid_false
         )
 
-    def test_flag_not_supplied_env_var_not_supplied(self):
+    def test_env_var_not_supplied(self):
         """
         Given:
-        - No `--ci` flag is not supplied.
+        - `CI` environmental variable.
 
         When:
         - The `CI` environmental variable is not set.

@@ -42,16 +42,13 @@ def split_files(files_str: Union[str, List[str]]) -> List[str]:
 def is_ci(flag: bool = False) -> bool:
     """
     Helper function to detect whether we're running
-    in a CI environment. To detect this, we first check if the `--ci`
-    flag is specified. If it's not specified, we rely on the CI env var.
+    in a CI environment. To detect this, we rely on the CI env var.
 
     Returns:
     - `True` if we're in a CI environment, `False` otherwise.
     """
 
-    if flag:
-        return flag
-    elif os.getenv(CI_ENV_VAR):
+    if os.getenv(CI_ENV_VAR):
         env_var_str = os.getenv(CI_ENV_VAR, "false").lower()
         if env_var_str in {"true", "1", "yes"}:
             return True
@@ -69,8 +66,7 @@ def is_ci(flag: bool = False) -> bool:
 def validate_changed_files_permissions(
     changed_files: List[str] = typer.Argument(
         default=None, help=HELP_CHANGED_FILES, callback=split_files
-    ),
-    ci: bool = typer.Option(False, "--ci", help=HELP_CI, callback=is_ci),
+    )
 ) -> None:
     """
     Validate whether the file mode was modified. Exit code 0 if no files
@@ -86,7 +82,7 @@ def validate_changed_files_permissions(
     logging_setup()
     git_util = GitUtil.from_content_path()
 
-    ci = is_ci(ci)
+    ci = is_ci()
 
     logger.debug(f"Running in CI environment: {ci}")
 

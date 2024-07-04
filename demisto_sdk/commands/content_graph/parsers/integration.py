@@ -53,7 +53,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_tests()
-        self.structure_error = self.validate_structure()
+        self.structure_errors = self.validate_structure()
 
     def validate_structure(self) -> Optional[list[dict]]:
         try:

@@ -219,7 +219,7 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     if any(return_codes):  # An error was found
         errors = list(filter(None, errors))
         
-        if os.getenv("GITHUB_ACTIONS") or True:
+        if os.getenv("GITHUB_ACTIONS"):
             print_errors_github_action(errors)
             
         errors_str = "\n".join(errors)

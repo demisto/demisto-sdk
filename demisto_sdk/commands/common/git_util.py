@@ -49,12 +49,14 @@ class GitUtil:
 
     def __init__(
         self,
-        path: Optional[Union[str, Path]] = None,
+        path: Optional[Union[str, Path, Repo]] = None,
         search_parent_directories: bool = True,
     ):
 
         if isinstance(path, str):
             repo_path = Path(path)
+        elif isinstance(path, self.REPO_CLS):
+            repo_path = path.working_dir  # type: ignore
         else:
             repo_path = path or Path.cwd()
 

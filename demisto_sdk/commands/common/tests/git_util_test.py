@@ -125,3 +125,23 @@ class TestHasFilePermissionsChanged:
         assert actual_has_changed
         assert actual_old_file_permission == oct(Blob.file_mode)[2:]
         assert actual_new_file_permission == oct(Blob.executable_mode)[2:]
+
+
+def test_git_util_with_repo():
+    """
+    Given
+        - A Git repo.
+
+    When
+        - Creating GitUtil object with git.Repo object.
+
+    Then
+        - Ensure the GitUtil repo path equals to the repo path.
+    """
+    from demisto_sdk.commands.common.git_util import GitUtil
+
+    repo = GitUtil.REPO_CLS()
+
+    git_util = GitUtil(repo)
+    assert git_util.repo is not None
+    assert git_util.repo.working_dir == repo.working_dir

@@ -55,7 +55,7 @@ class GitUtil:
 
         if isinstance(path, str):
             repo_path = Path(path)
-        elif isinstance(path, Repo):
+        elif isinstance(path, self.REPO_CLS):
             repo_path = path.working_dir
         else:
             repo_path = path or Path.cwd()

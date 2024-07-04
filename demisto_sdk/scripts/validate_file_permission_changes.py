@@ -122,7 +122,7 @@ def validate_changed_files_permissions(
                 logger.info(msg)
                 exit_code = 1
 
-    typer.Exit(code=exit_code)
+    raise typer.Exit(code=exit_code)
 
 
 def get_revert_permission_message(file_path: Path, new_permission: str) -> str:

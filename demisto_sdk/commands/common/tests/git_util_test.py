@@ -60,7 +60,7 @@ def test_git_util_with_repo():
         - Creating GitUtil object with git.Repo object.
 
     Then
-        - Ensure the GitUtil repo path is not None.
+        - Ensure the GitUtil repo path equals to the repo path.
     """
     from demisto_sdk.commands.common.git_util import GitUtil
 
@@ -68,3 +68,4 @@ def test_git_util_with_repo():
 
     git_util = GitUtil(repo)
     assert git_util.repo is not None
+    assert git_util.repo.working_dir == repo.working_dir

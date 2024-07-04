@@ -235,5 +235,5 @@ def print_errors_github_action(errors: list[str]) -> None:
             continue
 
         print(  # noqa: T201
-            f"::error file={match.group('path')},line={match.group('line')},endLine=1,title=Validation Error {match.group('error_code')}::{match.group('error_message')}"
+            f"::error file={match.group('path')},line={match.group('line')},col={match.group('col')},title=XSOAR Linter {match.group('error_code')}::{match.group('error_message')}"
         )

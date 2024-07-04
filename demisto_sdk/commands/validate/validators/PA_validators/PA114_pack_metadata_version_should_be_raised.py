@@ -29,8 +29,6 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         "generate them according to the new standard."
     )
     related_field = "currentVersion, name"
-    is_auto_fixable = False
-    # Validate manager should populate the external args for the validation.
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         validation_results = []

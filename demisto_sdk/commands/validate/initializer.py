@@ -531,9 +531,9 @@ class Initializer:
                 if obj:
                     obj.git_status = git_status
                     # Check if the file exists
-                    if (
-                        git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED)
-                        or find_type_by_path(file_path) == FileType.METADATA
+                    if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED) or (
+                        not git_status
+                        and find_type_by_path(file_path) == FileType.METADATA
                     ):
                         try:
                             obj.old_base_content_object = BaseContent.from_path(

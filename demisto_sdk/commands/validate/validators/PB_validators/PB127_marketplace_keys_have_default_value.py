@@ -31,7 +31,9 @@ class MarketplaceKeysHaveDefaultValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         validation_results = []
         for content_item in content_items:
-            marketplace_keys_with_no_default = self.check_recursively(content_item.data)
+            marketplace_keys_with_no_default = self.check_recursively(
+                content_item.data, bad_keys=[]
+            )
             if marketplace_keys_with_no_default:
                 validation_results.append(
                     ValidationResult(
@@ -52,7 +54,9 @@ class MarketplaceKeysHaveDefaultValidator(BaseValidator[ContentTypes]):
                 bad_inner_keys = self.check_recursively(
                     item, path=f"{path}.[{index}]", bad_keys=bad_keys, fix=fix
                 )
-                bad_keys = list(set(bad_keys + bad_inner_keys))
+                bad_keys.extend(
+                    bad_key for bad_key in bad_inner_keys if bad_key not in bad_keys
+                )
             return bad_keys
 
         # If the datum is a dictionary, iterate over its keys.
@@ -64,7 +68,9 @@ class MarketplaceKeysHaveDefaultValidator(BaseValidator[ContentTypes]):
                     bad_inner_keys = self.check_recursively(
                         value, path=f"{path}.{key}", bad_keys=bad_keys, fix=fix
                     )
-                    bad_keys = list(set(bad_keys + bad_inner_keys))
+                    bad_keys.extend(
+                        bad_key for bad_key in bad_inner_keys if bad_key not in bad_keys
+                    )
                 if isinstance(key, str) and SEPARATOR in str(key):
                     for suffix in self.marketplace_suffixes:
                         if key.casefold().endswith(suffix):

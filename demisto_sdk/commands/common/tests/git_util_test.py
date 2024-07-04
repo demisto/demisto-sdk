@@ -49,3 +49,23 @@ def test_find_primary_branch():
     refs_other.refs = ["a", "b"]
     repo_with_remotes_refs_other.remotes.append(refs_other)
     assert not GitUtil.find_primary_branch(repo_with_remotes_refs_other)
+
+
+def test_git_util_with_repo():
+    """
+    Given
+        - A Git repo.
+
+    When
+        - Creating GitUtil object with git.Repo object.
+
+    Then
+        - Ensure the GitUtil repo path equals to the repo path.
+    """
+    from demisto_sdk.commands.common.git_util import GitUtil
+
+    repo = GitUtil.REPO_CLS()
+
+    git_util = GitUtil(repo)
+    assert git_util.repo is not None
+    assert git_util.repo.working_dir == repo.working_dir

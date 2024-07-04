@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
@@ -13,8 +12,9 @@ from demisto_sdk.commands.common.logger import logger, logging_setup
 main = typer.Typer()
 
 HELP_CHANGED_FILES = "The files to check, e.g. dir/f1 f2 f3.py"
-HELP_CI = "Whether we're running in a CI environment or not. If not specified, we check the presence of the `CI` env var."
-ERROR_IS_CI_INVALID = "Invalid value for CI env var: {env_var_str}"
+ERROR_IS_CI_INVALID = (
+    "Invalid value for CI env var. Expected 'true' or 'false', actual '{env_var_str}'"
+)
 ERROR_INPUT_FILES_INVALID = "Invalid value for input files: {input}"
 CI_ENV_VAR = "CI"
 
@@ -42,7 +42,7 @@ def split_files(files_str: Union[str, List[str]]) -> List[str]:
 def is_ci() -> bool:
     """
     Helper function to detect whether we're running
-    in a CI environment. To detect this, we rely on the CI env var.
+    in a CI environment. To detect this, we rely on the `CI` env var.
 
     Returns:
     - `True` if we're in a CI environment, `False` otherwise.
@@ -74,7 +74,6 @@ def validate_changed_files_permissions(
 
     Args:
     - `changed_files` (``List[str]``): The files to check, e.g. 'test/f1 f2 f3.py'.
-    - `ci` (``bool``): Whether we're running in a CI environment or not. Default is False.
     """
 
     exit_code = 0
@@ -123,7 +122,7 @@ def validate_changed_files_permissions(
                 logger.info(msg)
                 exit_code = 1
 
-    sys.exit(exit_code)
+    typer.Exit(code=exit_code)
 
 
 def get_revert_permission_message(file_path: Path, new_permission: str) -> str:

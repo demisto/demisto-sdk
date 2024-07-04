@@ -694,11 +694,12 @@ def test_description():
 
 
 @pytest.mark.parametrize(
-    "untracked_files, modified_files, expected_output",
+    "untracked_files, modified_files, untracked_files_in_content ,expected_output",
     [
         (
             ["Packs/untracked.txt"],
-            set({Path("Packs/modified.txt")}),
+            set([Path("Packs/modified.txt")]),
+            set([Path("Packs/untracked.txt")]),
             set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
         ),
         (
@@ -708,7 +709,13 @@ def test_description():
                 "invalid/path/untracked.txt",
                 "another/invalid/path/untracked.txt",
             ],
-            set({Path("Packs/modified.txt")}),
+            set([Path("Packs/modified.txt")]),
+            set(
+                [
+                    Path("Packs/untracked_1.txt"),
+                    Path("Packs/untracked_2.txt"),
+                ]
+            ),
             set(
                 [
                     Path("Packs/modified.txt"),
@@ -731,6 +738,12 @@ def test_description():
                     Path("Packs/untracked_2.txt"),
                 ]
             ),
+            set(
+                [
+                    Path("Packs/untracked_1.txt"),
+                    Path("Packs/untracked_2.txt"),
+                ]
+            ),
         ),
     ],
     ids=[
@@ -740,7 +753,11 @@ def test_description():
     ],
 )
 def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
-    mocker, untracked_files, modified_files, expected_output
+    mocker,
+    untracked_files,
+    modified_files,
+    untracked_files_in_content,
+    expected_output,
 ):
     """
     This UT verifies changes made to validate command to support collection of
@@ -767,6 +784,11 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
     mocker.patch.object(GitUtil, "renamed_files", return_value={})
     mocker.patch(
         "git.repo.base.Repo._get_untracked_files", return_value=untracked_files
+    )
+    mocker.patch.object(
+        initializer,
+        "get_untracked_files_in_content",
+        return_value=untracked_files_in_content,
     )
     output = initializer.get_unfiltered_changed_files_from_git()
     assert output[0] == expected_output

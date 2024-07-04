@@ -1,4 +1,0 @@
-changes:
-- description: Make IMAGES_BATCH variable to be configurable per environment.
-  type: internal
-pr_number: 4382

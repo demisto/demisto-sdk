@@ -483,11 +483,12 @@ class TestPreprocessFiles:
         assert output == expected_output
 
     @pytest.mark.parametrize(
-        "untracked_files, modified_files, expected_output",
+        "untracked_files, modified_files, untracked_files_in_content ,expected_output",
         [
             (
                 ["Packs/untracked.txt"],
                 set([Path("Packs/modified.txt")]),
+                set([Path("Packs/untracked.txt")]),
                 set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
             ),
             (
@@ -498,6 +499,12 @@ class TestPreprocessFiles:
                     "another/invalid/path/untracked.txt",
                 ],
                 set([Path("Packs/modified.txt")]),
+                set(
+                    [
+                        Path("Packs/untracked_1.txt"),
+                        Path("Packs/untracked_2.txt"),
+                    ]
+                ),
                 set(
                     [
                         Path("Packs/modified.txt"),
@@ -520,6 +527,12 @@ class TestPreprocessFiles:
                         Path("Packs/untracked_2.txt"),
                     ]
                 ),
+                set(
+                    [
+                        Path("Packs/untracked_1.txt"),
+                        Path("Packs/untracked_2.txt"),
+                    ]
+                ),
             ),
         ],
         ids=[
@@ -529,7 +542,12 @@ class TestPreprocessFiles:
         ],
     )
     def test_preprocess_files_in_external_pr_use_case(
-        self, mocker, untracked_files, modified_files, expected_output
+        self,
+        mocker,
+        untracked_files,
+        modified_files,
+        untracked_files_in_content,
+        expected_output,
     ):
         """
         This UT verifies changes made to pre commit command to support collection of
@@ -558,6 +576,12 @@ class TestPreprocessFiles:
             "git.repo.base.Repo._get_untracked_files",
             return_value=untracked_files,
         )
+        mocker.patch.object(
+            pre_commit_command,
+            "get_untracked_files_in_content",
+            return_value=untracked_files_in_content,
+        )
+
         output = preprocess_files(use_git=True)
         assert output == expected_output
 

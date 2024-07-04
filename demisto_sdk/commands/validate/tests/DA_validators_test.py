@@ -44,8 +44,8 @@ def test_IsDashboardContainForbiddenFieldsValidator_is_valid():
     )
 
     # valid
-    dashboard.data_dict["system"] = None
-    dashboard.layout[0]["widget"]["owner"] = None
+    del dashboard.data_dict["system"]
+    del dashboard.layout[0]["widget"]["owner"]
     assert not IsDashboardContainForbiddenFieldsValidator().is_valid([dashboard])
 
 
@@ -65,8 +65,8 @@ def test_IsDashboardContainNecessaryFieldsValidator_is_valid():
     assert not IsDashboardContainNecessaryFieldsValidator().is_valid([dashboard])
 
     # not valid
-    dashboard.data_dict["fromDate"] = None
-    dashboard.layout[0]["widget"]["toDate"] = None
+    del dashboard.data_dict["fromDate"]
+    del dashboard.layout[0]["widget"]["dateRange"]["toDate"]
     result = IsDashboardContainNecessaryFieldsValidator().is_valid([dashboard])
 
     assert (
@@ -76,4 +76,24 @@ def test_IsDashboardContainNecessaryFieldsValidator_is_valid():
     assert (
         "The 'toDate' fields are missing from detcount Widget listed under Confluera Dashboard and need to be added."
         in result[0].message
+    )
+
+
+def test_fix_IsDashboardContainForbiddenFieldsValidator():
+    """
+    Given:
+        - Dashboard content items with forbidden fields.
+    When:
+        - Running validate with the --fix flag.
+    Then:
+        - Remove the forbidden fields.
+    """
+    dashboard = create_dashboard_object(
+        ["system", "isCommon", "shared", "owner"], [None] * 4
+    )
+
+    res = IsDashboardContainForbiddenFieldsValidator().fix(dashboard)
+
+    assert not IsDashboardContainForbiddenFieldsValidator().is_valid(
+        [res.content_object]
     )

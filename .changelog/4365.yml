@@ -1,4 +1,0 @@
-changes:
-- description: Modified the PB125 validation to follow the new validation format. The validation checks that a playbook condition task doesn't has only a default nexttask.
-  type: internal
-pr_number: 4365

@@ -39,7 +39,7 @@ def split_files(files_str: Union[str, List[str]]) -> List[str]:
         raise typer.BadParameter(ERROR_INPUT_FILES_INVALID.format(input=files_str))
 
 
-def is_ci(flag: bool = False) -> bool:
+def is_ci() -> bool:
     """
     Helper function to detect whether we're running
     in a CI environment. To detect this, we rely on the CI env var.

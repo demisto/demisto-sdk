@@ -1098,7 +1098,7 @@ class GitUtil:
         - `str` with the new permissions.
         """
 
-        # If we're in a CI environment, we want need to get the
+        # If we're in a CI environment, we need to get the
         # remote (e.g. origin), base branch and current branch since
         # the local branches are unavailable
         if ci:

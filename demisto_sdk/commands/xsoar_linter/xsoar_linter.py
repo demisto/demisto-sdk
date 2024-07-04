@@ -32,7 +32,10 @@ from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker impo
 )
 
 ENV = os.environ
-ERROR_CODE_REGEX = r"^/[^:\n]+:\d+:\d+: E\d+ .*$"
+ERROR_CODE_PATTERN = re.compile(
+    r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>E\d+)(?P<error_message> .*)$",
+    re.MULTILINE,
+)
 
 
 def build_xsoar_linter_command(
@@ -168,8 +171,7 @@ def process_file(file_path: Path) -> ProcessResults:
             errors_and_warnings_str = log_data.decode("utf-8")
             results.errors_and_warnings = errors_and_warnings_str
             # catch only error codes from the error and warning string
-            pattern = re.compile(ERROR_CODE_REGEX, re.MULTILINE)
-            results.errors += pattern.findall(errors_and_warnings_str)
+            results.errors += ERROR_CODE_PATTERN.findall(errors_and_warnings_str)
         except subprocess.TimeoutExpired:
             results.errors.append(
                 f"Got a timeout while processing the following file: {str(file_path)}"
@@ -213,7 +215,23 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     logger.info(errors_and_warnings_concat)
 
     if any(return_codes):  # An error was found
-        errors_str = "\n".join(error for error in errors if error)
+        errors = list(filter(None, errors))
+        
+        if os.getenv("GITHUB_ACTIONS"):
+            print_errors_github_action(errors)
+            
+        errors_str = "\n".join(errors)
         logger.error(f"Found the following errors: \n{errors_str}")
 
     return int(any(return_codes))
+
+
+def print_errors_github_action(errors: list[str]) -> None:
+    for error in errors:
+        if not (match := ERROR_CODE_PATTERN.match(error)):
+            logger.debug(f"Failed parsing error {error}")
+            continue
+
+        print(  # noqa: T201
+            f"::error file={match.group('path')},line={match.group('line')},endLine=1,title=Validation Error {match.group('error_code')}::{match.group('error_message')}"
+        )

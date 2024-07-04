@@ -51,7 +51,7 @@ def test_find_primary_branch():
     assert not GitUtil.find_primary_branch(repo_with_remotes_refs_other)
 
 
-def test_git_util_with_repo(tmp_path):
+def test_git_util_with_repo():
     """
     Given
         - A Git repo.

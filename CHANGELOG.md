@@ -1,4 +1,11 @@
 # Changelog
+## 1.31.2
+* Added the `marketplaces` field to the widget schema. [#4396](https://github.com/demisto/demisto-sdk/pull/4396)
+* Added support for validation IF119 - "check whether a selectValue key in an incidentField of type singleSelect do not contain multiple or only empty options." for new validate flow. [#4277](https://github.com/demisto/demisto-sdk/pull/4277)
+* Fixed an issue where IN121 in the new validate flow and IN148 in the old validate flow failed when running on content items with XSOAR on prem and XSOAR SAAS Marketplaces. [#4398](https://github.com/demisto/demisto-sdk/pull/4398)
+* Fixed an issue where **upload** command failed locally due to missing lock file. [#4397](https://github.com/demisto/demisto-sdk/pull/4397)
+* Fixed an issue where *pre-commit* and *validate* commands collected invalid untracked files when running on contribution PR. [#4394](https://github.com/demisto/demisto-sdk/pull/4394)
+
 ## 1.31.1
 * Added an option to specify a marketplace for certain playbook fields: All input fields: *key*, *value*, *description*, *required*, *playbookInputKey*. The following task fields: *scriptId*, *scriptarguments*, *loop.scriptArguments*, *message*, *form*. The task id mappings (for example the first task can be converted by "0" -> "0:xsoar"). The *left* and *right* options of *condition*/*builtincondition* task fields (and their nested fields). [#4375](https://github.com/demisto/demisto-sdk/pull/4375)
 * Added the *-h* option as a short option for the *--help* flag in ***typer***-based commands. [#4350](https://github.com/demisto/demisto-sdk/pull/4350)

@@ -51,9 +51,18 @@ def test_find_primary_branch():
     assert not GitUtil.find_primary_branch(repo_with_remotes_refs_other)
 
 
-def test_GitUtil(tmp_path, mocker):
+def test_git_util_with_repo(tmp_path):
+    """
+    Given
+        - A Git repo.
+
+    When
+        - Creating GitUtil object with git.Repo object.
+
+    Then
+        - Ensure the GitUtil repo path is not None.
+    """
     from demisto_sdk.commands.common.git_util import GitUtil
-    from git import Repo
 
     repo = GitUtil.REPO_CLS()
 

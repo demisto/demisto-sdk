@@ -55,7 +55,7 @@ def test_GitUtil(tmp_path, mocker):
     from demisto_sdk.commands.common.git_util import GitUtil
     from git import Repo
 
-    repo = Repo()
+    repo = GitUtil.REPO_CLS()
 
     git_util = GitUtil(repo)
     assert git_util.repo is not None

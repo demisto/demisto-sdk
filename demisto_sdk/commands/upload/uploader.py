@@ -68,6 +68,7 @@ class Uploader:
         override_existing: bool = False,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         zip: bool = False,
+        tpb: bool = False,
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
     ):
@@ -96,6 +97,7 @@ class Uploader:
         self.override_existing = override_existing
         self.marketplace = marketplace
         self.zip = zip  # -z flag
+        self.tpb = tpb #-tpb flag
         self.destination_zip_dir = destination_zip_dir
 
     def _upload_zipped(self, path: Path) -> bool:
@@ -284,6 +286,7 @@ class Uploader:
                 marketplace=self.marketplace,
                 target_demisto_version=Version(str(self.demisto_version)),
                 zip=self.zip,  # only used for Packs
+                tpb=self.tpb,
                 destination_zip_dir=self.destination_zip_dir,  # only used for Packs
             )
 

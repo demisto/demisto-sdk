@@ -394,6 +394,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         target_demisto_version: Version,
         destination_zip_dir: Optional[Path] = None,
         zip: bool = True,
+        tpb: bool = False,
         **kwargs,
     ):
         if destination_zip_dir is None:
@@ -412,6 +413,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 client=client,
                 marketplace=marketplace,
                 target_demisto_version=target_demisto_version,
+                tpb=tpb
             )
 
     def _zip_and_upload(
@@ -465,6 +467,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         client: demisto_client,
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
+        tpb: bool
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(
@@ -473,9 +476,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         upload_failures: List[FailedUploadException] = []
         uploaded_successfully: List[ContentItem] = []
         incompatible_content_items = []
-
+        
+        content_types_excluded_from_upload = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
+        if tpb:
+            content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
+            
         for item in self.content_items:
-            if item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+            if item.content_type in content_types_excluded_from_upload:
                 logger.debug(
                     f"SKIPPING upload of {item.content_type} {item.object_id}: type is skipped"
                 )

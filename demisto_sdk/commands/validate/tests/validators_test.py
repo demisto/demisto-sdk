@@ -797,14 +797,14 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
 def test_check_metadata_version_bump_on_content_changes(mocker, repo):
     """
     Given: pack with newly added integration.
-    When: Initializing ValidateManager using git
+    When: Initializing ValidateManager using git.
     Then: Ensure PackMetadataVersionShouldBeRaisedValidator is initialized and the external args are properly passed.
     """
     pack = create_pack_object(["currentVersion"], ["1.1.1"])
     integration = create_integration_object()
     pack.content_items.integration.extend(integration)
     validation_results = ResultWriter()
-    config_reader = ConfigReader(category_to_run="use_git")
+    config_reader = ConfigReader(specific_validations="PA114")
     mocker.patch.object(
         Initializer,
         "get_files_using_git",
@@ -815,7 +815,9 @@ def test_check_metadata_version_bump_on_content_changes(mocker, repo):
         "from_path",
         return_value=BaseContent.from_path(Path(pack.path), metadata_only=True),
     )
-    initializer = Initializer(prev_ver="some_prev_ver")
+    initializer = Initializer(
+        prev_ver="some_prev_ver", execution_mode=ExecutionMode.USE_GIT
+    )
 
     validate_manager = ValidateManager(
         validation_results=validation_results,

@@ -1640,9 +1640,25 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
     integration = create_integration_object()
     pack.content_items.integration.extend(integration)
 
+    error_message = (
+        "The pack version (currently: {old_version}) needs to be raised - "
+        "make sure you are merged from master and "
+        'update the "currentVersion" field in the '
+        "pack_metadata.json or in case release notes are required run:\n"
+        "`demisto-sdk update-release-notes -i Packs/{pack} -u "
+        "(major|minor|revision|documentation)` to "
+        "generate them according to the new standard."
+    )
+
     class MockOldMetadata:
         current_version = old_version
 
     pack.old_base_content_object = MockOldMetadata()
     version_bump_validator = PackMetadataVersionShouldBeRaisedValidator()
-    assert len(version_bump_validator.is_valid([pack])) == expected_invalid
+    results = version_bump_validator.is_valid([pack])
+    assert len(results) == expected_invalid
+    for result in results:
+        assert (
+            error_message.format(old_version=old_version, pack=pack.name)
+            in result.message
+        )

@@ -3,9 +3,12 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import pydantic
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.objects.integration import StrictIntegration
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
@@ -50,6 +53,14 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_tests()
+        self.structure_error = self.validate_structure()
+
+    def validate_structure(self) -> Optional[list[dict]]:
+        try:
+            StrictIntegration(**self.yml_data)
+        except pydantic.error_wrappers.ValidationError as e:
+            return e.errors()
+        return None
 
     @cached_property
     def field_mapping(self):

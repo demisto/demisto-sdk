@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Optional, Any, Union
-from base_strict_model import BaseStrictModel
 from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions, Auto
 from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseStrictModel
 
 
 class Configuration(BaseStrictModel):
@@ -222,9 +222,9 @@ class StrictIntegration(BaseStrictModel):
     deprecated_xsoar_on_prem: Optional[bool] = Field(None, alias="deprecated:xsoar_on_prem")
 
 
-content_packs = Path("/Users/rshunim/dev/demisto/content/Packs/")
-for file in content_packs.rglob("*/Integrations/*/*.yml"):
-    if "DeprecatedContent" in file.parts:
-        continue
-    print(file)
-    integration = StrictIntegration.parse_obj(get_file(file))
+# content_packs = Path("/Users/rshunim/dev/demisto/content/Packs/")
+# for file in content_packs.rglob("*/Integrations/*/*.yml"):
+#     if "DeprecatedContent" in file.parts:
+#         continue
+#     print(file)
+#     integration = StrictIntegration.parse_obj(get_file(file))

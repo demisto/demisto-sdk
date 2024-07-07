@@ -71,5 +71,5 @@ warning = []
 
 
 [Custom_Categories]
-select = ["DS108"]
+select = ["ST110"]
 warning = []

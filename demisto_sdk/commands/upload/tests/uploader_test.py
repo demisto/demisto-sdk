@@ -404,6 +404,41 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
     assert actual_names == expected_names
     assert mocked_upload_method.call_count == len(expected_names)
 
+def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
+    mocker.patch.object(demisto_client, "configure", return_value="object")
+    mocker.patch.object(
+        IntegrationScript, "get_supported_native_images", return_value=[]
+    )
+    path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack")
+    uploader = Uploader(path, destination_zip_dir=tmpdir, tpb=True)
+    mocker.patch.object(uploader, "client")
+    mocked_upload_method = mocker.patch.object(ContentItem, "upload")
+    assert uploader.upload() == SUCCESS_RETURN_CODE
+
+    expected_names = {
+        "DummyIntegration.yml",
+        "UploadTest.yml",
+        "DummyScriptUnified.yml",
+        "DummyScript.yml",
+        "DummyPlaybook.yml",
+        "DummyTestPlaybook.yml",
+        "incidenttype-Hello_World_Alert.json",
+        "incidentfield-Hello_World_ID.json",
+        "incidentfield-Hello_World_Type.json",
+        "incidentfield-Hello_World_Status.json",
+        "classifier-aws_sns_test_classifier.json",
+        "widget-ActiveIncidentsByRole.json",
+        "layoutscontainer-test.json",
+        "upload_test_dashboard.json",
+        "DummyXDRCTemplate.json",
+    }
+    actual_names = {
+        content_item.path.name
+        for content_item in uploader._successfully_uploaded_content_items
+    }
+
+    assert actual_names == expected_names
+    assert mocked_upload_method.call_count == len(expected_names)
 
 def test_upload_packs_from_configfile(demisto_client_configure, mocker):
     """

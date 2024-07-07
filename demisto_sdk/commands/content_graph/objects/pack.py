@@ -325,7 +325,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         try:
             path.mkdir(exist_ok=True, parents=True)
-            
+
             content_types_excluded_from_upload = (
                 CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
             )
@@ -480,11 +480,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         upload_failures: List[FailedUploadException] = []
         uploaded_successfully: List[ContentItem] = []
         incompatible_content_items = []
-        
+
         content_types_excluded_from_upload = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
         if tpb:
             content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
-            
+
         for item in self.content_items:
             if item.content_type in content_types_excluded_from_upload:
                 logger.debug(

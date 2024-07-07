@@ -404,6 +404,7 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
     assert actual_names == expected_names
     assert mocked_upload_method.call_count == len(expected_names)
 
+
 def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
     """
     Given
@@ -451,6 +452,7 @@ def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
 
     assert actual_names == expected_names
     assert mocked_upload_method.call_count == len(expected_names)
+
 
 def test_upload_packs_from_configfile(demisto_client_configure, mocker):
     """

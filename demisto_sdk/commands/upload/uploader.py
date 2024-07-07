@@ -690,8 +690,8 @@ def parse_uploaded_successfully(
         return iter(
             filter(
                 lambda content_item: (
-                    content_item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD or
-                    (tpb and content_item.content_type == ContentType.TEST_PLAYBOOK)
+                    content_item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
+                    or (tpb and content_item.content_type == ContentType.TEST_PLAYBOOK)
                 ),
                 content_item.content_items,
             )

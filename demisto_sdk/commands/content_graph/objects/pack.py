@@ -318,7 +318,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             path, marketplace, self.object_id, file_type=ImagesFolderNames.README_IMAGES
         )
 
-    def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool):
+    def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool = False):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
@@ -426,7 +426,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         skip_validations: bool,
         marketplace: MarketplaceVersions,
         destination_dir: DirectoryPath,
-        tpb: bool,
+        tpb: bool = False,
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(f"Uploading zipped pack {self.object_id}")
@@ -471,7 +471,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         client: demisto_client,
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
-        tpb: bool,
+        tpb: bool = False,
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(

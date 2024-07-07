@@ -405,6 +405,18 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
     assert mocked_upload_method.call_count == len(expected_names)
 
 def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
+    """
+    Given
+        - A pack called DummyPack
+
+    When
+        - Uploading pack with flag tpb
+
+    Then
+        - Ensure pack is uploaded successfully
+        - Ensure status code is as expected
+        - Check that all expected content entities that appear in the pack are reported as uploaded.
+    """
     mocker.patch.object(demisto_client, "configure", return_value="object")
     mocker.patch.object(
         IntegrationScript, "get_supported_native_images", return_value=[]

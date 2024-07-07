@@ -89,3 +89,10 @@
   entry: validate-file-permission-changes
   language: python
   files: ^Packs/
+
+- id: validate-mypy-global-ignore
+  name: validate-mypy-global-ignore
+  description: Validate the changed Python files don't specify global mypy ignore
+  entry: validate-mypy-global-ignore
+  language: python
+  files: .*Packs/.*/(?:Integrations|Scripts)/.*.py$

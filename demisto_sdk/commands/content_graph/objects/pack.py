@@ -322,6 +322,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         self,
         path: Path,
         marketplace: MarketplaceVersions,
+        tpb: bool
     ):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
@@ -329,9 +330,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         try:
             path.mkdir(exist_ok=True, parents=True)
+            
+            content_types_excluded_from_upload = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
+            if tpb:
+                content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
 
             for content_item in self.content_items:
-                if content_item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+                if content_item.content_type in content_types_excluded_from_upload:
                     logger.debug(
                         f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
                         "whose type was passed in `exclude_content_types`"
@@ -407,6 +412,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 target_demisto_version=target_demisto_version,
                 skip_validations=kwargs.get("skip_validations", False),
                 destination_dir=destination_zip_dir,
+                tpb=tpb
             )
         else:
             self._upload_item_by_item(
@@ -423,6 +429,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         skip_validations: bool,
         marketplace: MarketplaceVersions,
         destination_dir: DirectoryPath,
+        tpb: bool
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(f"Uploading zipped pack {self.object_id}")
@@ -430,7 +437,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         # 1) dump the pack into a temporary file
         with TemporaryDirectory() as temp_dump_dir:
             temp_dir_path = Path(temp_dump_dir)
-            self.dump(temp_dir_path, marketplace=marketplace)
+            self.dump(temp_dir_path, marketplace=marketplace, tpb=tpb)
 
             # 2) zip the dumped pack
             with TemporaryDirectory() as pack_zips_dir:

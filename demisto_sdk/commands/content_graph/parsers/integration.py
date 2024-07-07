@@ -8,10 +8,10 @@ import pydantic
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.integration import StrictIntegration
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.integration import StrictIntegration
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )

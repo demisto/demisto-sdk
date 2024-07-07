@@ -100,7 +100,7 @@ class Uploader:
         self.override_existing = override_existing
         self.marketplace = marketplace
         self.zip = zip  # -z flag
-        self.tpb = tpb # -tpb flag
+        self.tpb = tpb  # -tpb flag
         self.destination_zip_dir = destination_zip_dir
 
     def _upload_zipped(self, path: Path) -> bool:
@@ -289,7 +289,7 @@ class Uploader:
                 marketplace=self.marketplace,
                 target_demisto_version=Version(str(self.demisto_version)),
                 zip=self.zip,  # only used for Packs
-                tpb=self.tpb, # only used for Packs
+                tpb=self.tpb,  # only used for Packs
                 destination_zip_dir=self.destination_zip_dir,  # only used for Packs
             )
 
@@ -689,10 +689,10 @@ def parse_uploaded_successfully(
     if isinstance(content_item, Pack) and not zip:
         return iter(
             filter(
-            lambda content_item: (
-                content_item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD or
-                (tpb and content_item.content_type == ContentType.TEST_PLAYBOOK)
-            ),
+                lambda content_item: (
+                    content_item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD or
+                    (tpb and content_item.content_type == ContentType.TEST_PLAYBOOK)
+                ),
                 content_item.content_items,
             )
         )

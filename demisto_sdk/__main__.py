@@ -1540,7 +1540,7 @@ def format(ctx, **kwargs):
 )
 @click.option(
     "-tpb",
-    help="Adds the test playbook to upload, this flag is relevant only for packs.",
+    help="Adds the test playbook for upload when the -tpb flag is used. This flag is relevant only for packs.",
     is_flag=True,
     default=False,
 )

@@ -1127,10 +1127,6 @@ ERROR_CODE: Dict = {
         "code": "RM111",
         "related_field": "readme",
     },
-    "invalid_readme_relative_url_error": {
-        "code": "RM112",
-        "related_field": "readme",
-    },
     "copyright_section_in_readme_error": {
         "code": "RM113",
         "related_field": "readme",

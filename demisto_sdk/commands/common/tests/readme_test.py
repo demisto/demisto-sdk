@@ -134,50 +134,6 @@ def test_air_gapped_env(tmp_path, mocker):
     assert ReadMeValidator(r).is_mdx_file()
 
 
-def test_relative_url_not_valid(mocker):
-    """
-    Given
-        - A README file with invalid relative urls in it.
-    When
-        - Run validate on README file
-    Then
-        - Ensure:
-            - Validation fails
-            - Both urls were caught correctly
-            - Valid url was not caught
-            - Image url was not caught
-    """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    absolute_urls = [
-        "https://www.good.co.il",
-        "https://example.com",
-        "https://github.com/demisto/content/blob/123",
-        "github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png",
-        "https://hreftesting.com",
-    ]
-    relative_urls = [
-        "relative1.com",
-        "www.relative2.com",
-        "hreftesting.com",
-        "www.hreftesting.com",
-    ]
-    readme_validator = ReadMeValidator(INVALID_MD)
-    result = readme_validator.verify_readme_relative_urls()
-    assert not result
-    for url in absolute_urls:
-        assert not str_in_call_args_list(logger_error.call_args_list, url)
-
-    for url in relative_urls:
-        assert str_in_call_args_list(logger_error.call_args_list, url)
-
-    # no empty links found
-    assert not str_in_call_args_list(
-        logger_error.call_args_list,
-        "[RM112] - Relative urls are not supported within README. If this is not a relative url, please add an "
-        "https:// prefix:\n. ",
-    )
-
-
 def test_is_image_path_valid(mocker):
     """
     Given

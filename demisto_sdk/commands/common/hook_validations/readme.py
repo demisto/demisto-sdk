@@ -345,7 +345,6 @@ class ReadMeValidator(BaseValidator):
         # If there are errors in one of the following validations return False
         if any(
             [
-                self.check_readme_relative_image_paths(),
                 self.check_readme_absolute_image_paths(),
             ]
         ):
@@ -472,65 +471,6 @@ class ReadMeValidator(BaseValidator):
                 f"will run in a docker container"
             )
         return valid
-
-    def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
-        """Validate readme images relative paths.
-            (1) prints an error if relative paths in the pack README are found since they are not supported.
-            (2) Checks if relative paths are valid (in other readme files).
-
-        Arguments:
-            is_pack_readme (bool) - True if the the README file is a pack README, default: False
-
-        Returns:
-            list: List of the errors found
-        """
-        error_list = []
-        error_code: str = ""
-        error_message: str = ""
-        relative_images = re.findall(
-            r"(\!\[.*?\])\(((?!http).*?)\)$",
-            self.readme_content,
-            re.IGNORECASE | re.MULTILINE,
-        )
-        relative_images += re.findall(  # HTML image tag
-            r'(<img.*?src\s*=\s*"((?!http).*?)")',
-            self.readme_content,
-            re.IGNORECASE | re.MULTILINE,
-        )
-
-        for img in relative_images:
-            # striping in case there are whitespaces at the beginning/ending of url.
-            relative_path = img[1].strip()
-
-            if "Insert the link to your image here" in relative_path:
-                # the line is generated automatically in playbooks readme, the user should replace it with
-                # an image or remove the line.
-                error_message, error_code = Errors.invalid_readme_image_error(
-                    relative_path, error_type="insert_image_link_error"
-                )
-            elif is_pack_readme:
-                error_message, error_code = Errors.invalid_readme_image_error(
-                    relative_path,
-                    error_type="pack_readme_relative_error",
-                )
-            else:
-                # generates absolute path from relative and checks for the file existence.
-                if not Path(self.file_path.parent, relative_path).is_file():
-                    error_message, error_code = Errors.invalid_readme_image_error(
-                        relative_path,
-                        error_type="general_readme_relative_error",
-                    )
-            if error_code and error_message:  # error was found
-                formatted_error = self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                )
-                # if error is None it should be ignored
-                if formatted_error:
-                    error_list.append(formatted_error)
-
-        return error_list
 
     def check_readme_absolute_image_paths(self, is_pack_readme: bool = False) -> list:
         """Validate readme images absolute paths - Check if absolute paths are not broken.

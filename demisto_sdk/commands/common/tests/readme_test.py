@@ -780,43 +780,6 @@ def test_verify_readme_image_paths(mocker):
     )
 
 
-def test_check_readme_relative_image_paths(mocker):
-    """
-
-    Given
-        - A README file (not pack README) with invalid relative image
-         paths and invalid absolute image paths in it.
-    When
-        - Run validate on README file and ignoring RM108 error
-    Then
-        - Ensure:
-            - Validation pass.
-            - nothing is printed as error.
-
-    """
-    readme_validator = ReadMeValidator(IMAGES_MD, ignored_errors={IMAGES_MD: "RM108"})
-    mocker.patch.object(
-        GitUtil, "get_current_working_branch", return_value="branch_name"
-    )
-    with requests_mock.Mocker() as m:
-        # Mock get requests
-        m.get(
-            "https://github.com/demisto/test1.png",
-            status_code=404,
-            text="Test1",
-            reason="just because",
-        )
-        m.get(
-            "https://github.com/demisto/content/raw/test2.png",
-            status_code=404,
-            text="Test2",
-        )
-        m.get("https://github.com/demisto/test3.png", status_code=200, text="Test3")
-        formatted_errors = readme_validator.check_readme_relative_image_paths()
-
-    assert not formatted_errors
-
-
 @pytest.mark.parametrize("current, answer", README_INPUTS[:2])
 def test_verify_image_exist(mocker, current, answer):
     from pathlib import Path

@@ -7,23 +7,28 @@ from git import Blob
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger, logging_setup
-from demisto_sdk.scripts.scripts_common import HELP_CHANGED_FILES, is_ci, split_files
 
 main = typer.Typer()
 
 
 @main.command(help="Validate that file modes were not changed")
 def validate_changed_files_permissions(
-    changed_files: List[str] = typer.Argument(
-        default=None, help=HELP_CHANGED_FILES, callback=split_files
-    )
+    changed_files: List[Path] = typer.Argument(
+        default=None,
+        help="The files to check, e.g. dir/f1 f2 f3.py",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+    ),
+    ci: bool = typer.Option(envvar="CI", default=False),
 ) -> None:
     """
     Validate whether the file mode was modified. Exit code 0 if no files
     modes were modified, 1 otherwise.
 
     Args:
-    - `changed_files` (``List[str]``): The files to check, e.g. 'test/f1 f2 f3.py'.
+    - `changed_files` (``List[Path]``): The files to check, e.g. 'test/f1 f2 f3.py'.
+    - `ci` (``bool``): Whether we're in a CI environment or not.
     """
 
     exit_code = 0
@@ -31,36 +36,35 @@ def validate_changed_files_permissions(
     logging_setup()
     git_util = GitUtil.from_content_path()
 
-    ci = is_ci()
-
     logger.debug(f"Running in CI environment: {ci}")
 
-    if changed_files:
-        logger.debug(f"Got {','.join(changed_files)} as input...")
-    else:
+    logger.debug(f"Input {changed_files=}")
+
+    if not changed_files:
         logger.debug(
             f"Getting changed files from git branch '{DEMISTO_GIT_PRIMARY_BRANCH}'..."
         )
+        git_util = GitUtil.from_content_path()
         changed_files = [
-            str(path)
-            for path in git_util.get_all_changed_files(DEMISTO_GIT_PRIMARY_BRANCH)
+            Path(git_util.git_path()) / Path(path)
+            for path in git_util.get_all_changed_files(
+                DEMISTO_GIT_PRIMARY_BRANCH, include_untracked=True
+            )
         ]
 
+    logger.debug(
+        f"Iterating over '{changed_files=}' to check for global mypy type ignore..."
+    )
+
     if changed_files:
-
-        logger.debug(
-            f"The following changed files were found comparing '{DEMISTO_GIT_PRIMARY_BRANCH}': {', '.join(changed_files)}"
-        )
-
-        logger.debug(
-            f"Iterating over {len(changed_files)} changed files to check if their permissions flags have changed..."
-        )
 
         result: Dict[str, Any] = {}
 
         for changed_file in changed_files:
-            result[changed_file] = git_util.has_file_permissions_changed(
-                file_path=changed_file, ci=ci
+            result[
+                str(changed_file.absolute())
+            ] = git_util.has_file_permissions_changed(
+                file_path=str(changed_file), ci=ci
             )
 
         for filename, (is_changed, old_permission, new_permission) in result.items():
@@ -71,6 +75,8 @@ def validate_changed_files_permissions(
                 msg = get_revert_permission_message(Path(filename), new_permission)
                 logger.info(msg)
                 exit_code = 1
+    else:
+        logger.info("No changed files supplied. Terminating...")
 
     raise typer.Exit(code=exit_code)
 

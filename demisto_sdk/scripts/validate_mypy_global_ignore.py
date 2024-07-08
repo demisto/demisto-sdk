@@ -7,7 +7,6 @@ import typer
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger, logging_setup
-from demisto_sdk.scripts.scripts_common import HELP_CHANGED_FILES
 
 MYPY_GLOBAL_IGNORE_PATTERN = re.compile(r"^#\s*type\s*:\s*ignore")
 
@@ -42,7 +41,7 @@ def has_global_type_ignore(file_path: Path) -> Tuple[bool, Union[int, None]]:
 def validate_mypy_global_ignore(
     changed_files: List[Path] = typer.Argument(
         default=None,
-        help=HELP_CHANGED_FILES,
+        help="The files to check, e.g. /dir/f1.py dir/f2.py f3.py",
         exists=True,
         file_okay=True,
         dir_okay=False,
@@ -55,6 +54,7 @@ def validate_mypy_global_ignore(
 
     Args:
     - `changed_files` (``List[Path]``): The files paths to check.
+    - `ci` (``bool``): Whether we're in a CI environment or not.
     """
 
     exit_code = 0
@@ -85,7 +85,7 @@ def validate_mypy_global_ignore(
         result: Dict[str, Any] = {}
 
         for changed_file in changed_files:
-            result[changed_file.absolute().name] = has_global_type_ignore(changed_file)
+            result[str(changed_file.absolute())] = has_global_type_ignore(changed_file)
 
         logger.debug(f"{result=}")
 

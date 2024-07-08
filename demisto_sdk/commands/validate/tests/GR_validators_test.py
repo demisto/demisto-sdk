@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.content_graph.commands.create import create_content_graph
 from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
     mock_test_playbook,
@@ -17,6 +17,7 @@ from demisto_sdk.commands.validate.tests.graph_test_tools import *
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
     GR104_is_pack_display_name_already_exists,
+    GR100_uses_items_not_in_market_place
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
@@ -32,9 +33,22 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_displa
 )
 from TestSuite.repo import Repo
 
+MP_XSOAR = [MarketplaceVersions.XSOAR.value]
+MP_V2 = [MarketplaceVersions.MarketplaceV2.value]
+MP_XPANSE = [MarketplaceVersions.XPANSE.value]
+MP_XSOAR_AND_XPANSE = [
+    MarketplaceVersions.XSOAR.value,
+    MarketplaceVersions.XPANSE.value,
+]
+MP_XSOAR_AND_V2 = [
+    MarketplaceVersions.XSOAR.value,
+    MarketplaceVersions.MarketplaceV2.value,
+]
+MP_XSOAR_V2_XPANSE = MP_XSOAR_AND_V2 + MP_XPANSE
+
 
 def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
-    mocker, graph_repo: Repo
+        mocker, graph_repo: Repo
 ):
     """
     Given
@@ -71,7 +85,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
 
 
 def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(
-    mocker, graph_repo: Repo
+        mocker, graph_repo: Repo
 ):
     """
     Given
@@ -107,403 +121,117 @@ def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(
 
 
 @pytest.fixture
-def setup(mocker, tmp_path_factory):
-    """Setup mocks for graph validators' tests"""
-    import demisto_sdk.commands.content_graph.objects.base_content as bc
-    from demisto_sdk.commands.common.files.file import File
+def prepared_graph_repo(graph_repo: Repo):
+    """
+    Setup mocked content graph for Graph Validators tests.
 
-    bc.CONTENT_PATH = GIT_PATH
-    mocker.patch.object(
-        neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
+    **Note:**
+    Currently, the graph is constructed specifically for 'MarketplaceFieldValidator' test. However,
+    it can be enhanced to serve other graph validator tests as well.
+    """
+
+    sample_pack = graph_repo.create_pack("SamplePack")
+    sample_pack.set_data(marketplaces=MP_XSOAR_AND_V2)
+    sample_pack.create_script(
+        "SampleScript", code='demisto.execute_command("SampleScriptTwo", dArgs)'
+    ).set_data(marketplaces=MP_XSOAR_AND_V2)
+    integration = sample_pack.create_integration(
+        name="SampleIntegration", code="from TestApiModule import *"
     )
-    mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
-    mocker.patch.object(ContentGraphInterface, "export_graph", return_value=None)
-    mocker.patch.object(
-        File,
-        "read_from_github_api",
-        return_value={
-            "docker_images": {
-                "python3": {
-                    "3.10.11.54799": {"python_version": "3.10.11"},
-                    "3.10.12.63474": {"python_version": "3.10.11"},
-                }
-            }
-        },
+    integration.set_commands(["test-command"])
+    integration.set_data(
+        tests=["SampleTestPlaybook"], defaultclassifier="SampleClassifier", marketplaces=MP_XSOAR_AND_V2
     )
 
+    sample_pack_2 = graph_repo.create_pack("SamplePack2")
+    sample_pack_2.set_data(marketplaces=MP_XSOAR_AND_V2)
+    sample_pack_2.create_script(
+        "TestApiModule", code='demisto.execute_command("SampleScriptTwo", dArgs)'
+    ).set_data(marketplaces=MP_XSOAR_AND_V2)
+    sample_pack_2.create_test_playbook("SampleTestPlaybook")
+    sample_pack_2.create_classifier("SampleClassifier")
 
-@pytest.fixture
-def repository(mocker) -> ContentDTO:
-    repository = ContentDTO(
-        path=GIT_PATH,
-        packs=[],
-    )
-    relationships = {
-        RelationshipType.IN_PACK: [
-            mock_relationship(
-                "SampleIntegration",
-                ContentType.INTEGRATION,
-                "SamplePack",
-                ContentType.PACK,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                ],
-            ),
-            mock_relationship(
-                "SampleScript",
-                ContentType.SCRIPT,
-                "SamplePack",
-                ContentType.PACK,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                ],
-            ),
-        ],
-        RelationshipType.HAS_COMMAND: [
-            mock_relationship(
-                "SampleIntegration",
-                ContentType.INTEGRATION,
-                "test-command",
-                ContentType.COMMAND,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                ],
-                name="test-command",
-                description="",
-                deprecated=False,
-            ),
-            mock_relationship(
-                "SampleIntegration",
-                ContentType.INTEGRATION,
-                "deprecated-command",
-                ContentType.COMMAND,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                ],
-                name="deprecated-command",
-                description="",
-                deprecated=True,
-            ),
-        ],
-        RelationshipType.IMPORTS: [
-            mock_relationship(
-                "SampleIntegration",
-                ContentType.INTEGRATION,
-                "TestApiModule",
-                ContentType.SCRIPT,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                ],
-            )
-        ],
-        RelationshipType.TESTED_BY: [
-            mock_relationship(
-                "SampleIntegration",
-                ContentType.INTEGRATION,
-                "SampleTestPlaybook",
-                ContentType.TEST_PLAYBOOK,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                ],
-            )
-        ],
-        RelationshipType.USES_BY_ID: [
-            mock_relationship(
-                "SampleIntegration",
-                ContentType.INTEGRATION,
-                "SampleClassifier",
-                ContentType.CLASSIFIER,
-                mandatorily=True,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                ],
-            ),
-            mock_relationship(
-                "SampleIntegration",
-                ContentType.INTEGRATION,
-                "SampleClassifier2",
-                ContentType.CLASSIFIER,
-                mandatorily=True,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                ],
-            ),
-        ],
-        RelationshipType.DEPENDS_ON: [
-            mock_relationship(
-                "SamplePack",
-                ContentType.PACK,
-                "SamplePack2",
-                ContentType.PACK,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                ],
-            ),
-        ],
-        RelationshipType.USES: [
-            mock_relationship(
-                "SamplePlaybook",
-                ContentType.PLAYBOOK,
-                "DeprecatedIntegration",
-                ContentType.INTEGRATION,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.XPANSE,
-                ],
-                source_fromversion="6.5.0",
-            ),
-            mock_relationship(
-                "SamplePlaybook",
-                ContentType.PLAYBOOK,
-                "deprecated-command",
-                ContentType.COMMAND,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.XPANSE,
-                ],
-                source_fromversion="6.5.0",
-            ),
-        ],
-    }
-    relationship_pack2 = {
-        RelationshipType.IN_PACK: [
-            mock_relationship(
-                "SampleClassifier",
-                ContentType.CLASSIFIER,
-                "SamplePack2",
-                ContentType.PACK,
-            ),
-            mock_relationship(
-                "SampleTestPlaybook",
-                ContentType.TEST_PLAYBOOK,
-                "SamplePack2",
-                ContentType.PACK,
-            ),
-            mock_relationship(
-                "TestApiModule",
-                ContentType.SCRIPT,
-                "SamplePack2",
-                ContentType.PACK,
-                source_marketplaces=[MarketplaceVersions.XSOAR],
-            ),
-            mock_relationship(
-                "SampleClassifier2",
-                ContentType.CLASSIFIER,
-                "SamplePack2",
-                ContentType.PACK,
-            ),
-        ],
-        RelationshipType.USES_BY_ID: [
-            mock_relationship(
-                "TestApiModule",
-                ContentType.SCRIPT,
-                "SampleScript2",
-                ContentType.SCRIPT,
-                mandatorily=True,
-                source_marketplaces=[MarketplaceVersions.XSOAR],
-            ),
-        ],
-    }
-    relationship_pack3 = {
-        RelationshipType.IN_PACK: [
-            mock_relationship(
-                "SamplePlaybook",
-                ContentType.PLAYBOOK,
-                "SamplePack3",
-                ContentType.PACK,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.XPANSE,
-                ],
-                source_fromversion="6.5.0",
-            ),
-            mock_relationship(
-                "SamplePlaybook2",
-                ContentType.PLAYBOOK,
-                "SamplePack3",
-                ContentType.PACK,
-                source_fromversion=GENERAL_DEFAULT_FROMVERSION,
-            ),
-            mock_relationship(
-                "SampleScript2",
-                ContentType.SCRIPT,
-                "SamplePack3",
-                ContentType.PACK,
-            ),
-        ],
-        RelationshipType.USES_BY_ID: [
-            mock_relationship(
-                "SamplePlaybook",
-                ContentType.PLAYBOOK,
-                "SamplePlaybook2",
-                ContentType.PLAYBOOK,
-                mandatorily=True,
-                source_marketplaces=[
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.XPANSE,
-                ],
-                source_fromversion="6.5.0",
-            ),
-        ],
-    }
-    relationship_pack4 = {
-        RelationshipType.IN_PACK: [
-            mock_relationship(
-                "SamplePlaybook", ContentType.PLAYBOOK, "SamplePack4", ContentType.PACK
-            )
-        ]
-    }
-    pack1 = mock_pack(
-        "SamplePack", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
-    )
-    pack2 = mock_pack("SamplePack2", [MarketplaceVersions.XSOAR], hidden=True)
-    pack3 = mock_pack(
-        "SamplePack3",
-        [
-            MarketplaceVersions.XSOAR,
-            MarketplaceVersions.MarketplaceV2,
-            MarketplaceVersions.XPANSE,
-        ],
-    )
-    pack4 = mock_pack("SamplePack4", list(MarketplaceVersions))
-    pack1.relationships = relationships
-    pack2.relationships = relationship_pack2
-    pack3.relationships = relationship_pack3
-    pack4.relationships = relationship_pack4
-    pack1.content_items.integration.append(mock_integration())
-    pack1.content_items.integration.append(
-        mock_integration(name="DeprecatedIntegration", deprecated=True)
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "SampleScript",
-            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-        )
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "setIncident",
-            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-        )
-    )
-    pack2.content_items.script.append(mock_script("TestApiModule"))
-    pack2.content_items.script.append(
-        mock_script(
-            "getIncidents",
-            marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],
-        )
-    )
-    pack2.content_items.classifier.append(mock_classifier("SampleClassifier2"))
-    pack2.content_items.test_playbook.append(mock_test_playbook())
-    pack3.content_items.playbook.append(
-        mock_playbook(
-            "SamplePlaybook",
-            [MarketplaceVersions.XSOAR, MarketplaceVersions.XPANSE],
-            "6.5.0",
-            GENERAL_DEFAULT_FROMVERSION,
-        )
-    )
-    pack3.content_items.playbook.append(
-        mock_playbook(
-            "SamplePlaybook2",
-            [MarketplaceVersions.XSOAR],
-            GENERAL_DEFAULT_FROMVERSION,
-            "6.5.0",
-        )
-    )
-    pack3.content_items.script.append(mock_script("SampleScript2"))
-    pack3.content_items.script.append(
-        mock_script(
-            "setAlert", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
-        )
-    )
-    pack3.content_items.script.append(
-        mock_script(
-            "getAlert", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
-        )
-    )
-    pack3.content_items.script.append(
-        mock_script(
-            "getAlerts", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
-        )
-    )
-    pack4.content_items.playbook.append(mock_playbook("SamplePlaybook"))
-    repository.packs.extend([pack1, pack2, pack3, pack4])
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
-        return_value=repository,
-    )
-    return repository
+    sample_pack_3 = graph_repo.create_pack("SamplePack3")
+    sample_pack_3.set_data(marketplaces=MP_XSOAR)
+    sample_pack_3.create_script("SampleScriptTwo").set_data(marketplaces=MP_XSOAR)
 
+    return graph_repo
 
-@pytest.mark.usefixtures("setup")
-def test_MarketplacesFieldValidatorListFiles_is_valid(repository):
+import pytest
+
+@pytest.mark.parametrize("pack_indices, expected_messages", [
+    (
+        slice(0, 1),  # First pack only.
+        {
+            "Content item 'SampleScript' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+            "of 'SampleScript'."
+        }
+    ),
+    (
+        slice(1, None),  # All packs except the first.
+        {
+            "Content item 'TestApiModule' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+            "of 'TestApiModule'.",
+            "Content item 'SampleScript' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+            "of 'SampleScript'."
+        }
+    ),
+])
+def test_MarketplacesFieldValidatorListFiles_is_valid(prepared_graph_repo: Repo, pack_indices, expected_messages):
     """
     Given
     - A content repo.
     When
-    - Running MarketplacesFieldValidatorListFiles is_valid() function.
+    - Running MarketplacesFieldValidatorListFiles is_valid() function on specific packs.
     Then
     - Validate the existence of invalid marketplaces usages.
-    - A single invalid content items shall be found, with expected error message listed in
-        `expected_validation_results_messages`.
+    - Invalid content items shall be found, searched over specific packs, with expected error messages listed in
+        `expected_messages`.
     """
-
-    graph_interface = ContentGraphInterface()
-    create_content_graph(graph_interface)
+    graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
+    pack_objects = [pack.get_graph_object(graph_interface) for pack in prepared_graph_repo.packs]
 
-    expected_validation_results_messages = {
-        "Content item 'SampleIntegration' can be used in the 'xsoar, marketplacev2' marketplaces, however it uses "
-        "content items: 'SampleClassifier2' which are not supported in all of the marketplaces of 'SampleIntegration'.",
-    }
-    # T
-    packs_to_validate = repository.packs[:2]
-    validation_results = MarketplacesFieldValidatorListFiles().is_valid(
-        packs_to_validate
-    )
-    assert len(validation_results) == len(expected_validation_results_messages)
-    for validation_result in validation_results:
-        assert validation_result.message in expected_validation_results_messages
+    to_validate = pack_objects[pack_indices]
+    validation_results = MarketplacesFieldValidatorListFiles().is_valid(to_validate)
+    assert expected_messages == {result.message for result in validation_results}
 
 
-@pytest.mark.usefixtures("setup")
-def test_MarketplacesFieldValidatorAllFiles_is_valid(repository):
+import pytest
+
+@pytest.mark.parametrize("pack_indices", [
+    slice(0, 1),  # First pack only.
+    slice(1, None),  # All packs except the first.
+    slice(None, None)  # All packs.
+])
+def test_MarketplacesFieldValidatorAllFiles_is_valid(prepared_graph_repo: Repo, pack_indices):
     """
     Given
     - A content repo.
     When
-    - Running MarketplacesFieldValidatorAllFiles is_valid() function.
+    - Running MarketplacesFieldValidatorAllFiles is_valid() function with different pack slices.
     Then
     - Validate the validator ignores the provided specific packs and validates all content items in the content graph.
     - Validate the existence of invalid marketplaces usages.
     - Two invalid content items shall be found, with expected error message listed in
-        `expected_validation_results_messages`.
+     `expected_validation_results_messages`.
     """
-    graph_interface = ContentGraphInterface()
-    create_content_graph(graph_interface)
-    BaseValidator.graph_interface = graph_interface
+    expected_messages = {
+            "Content item 'TestApiModule' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+            "of 'TestApiModule'.",
+            "Content item 'SampleScript' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+            "of 'SampleScript'."
+        }
 
-    expected_validation_results_messages = {
-        "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces, however it uses content items: "
-        "'SamplePlaybook2' which are not supported in all of the marketplaces of 'SamplePlaybook'.",
-        "Content item 'SampleIntegration' can be used in the 'xsoar, marketplacev2' marketplaces, however it uses "
-        "content items: 'SampleClassifier2' which are not supported in all of the marketplaces of 'SampleIntegration'.",
-    }
-    packs_to_validate = repository.packs[:2]
-    validation_results = MarketplacesFieldValidatorAllFiles().is_valid(
-        packs_to_validate
-    )
-    assert len(validation_results) == len(expected_validation_results_messages)
-    for validation_result in validation_results:
-        assert validation_result.message in expected_validation_results_messages
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    pack_objects = [pack.get_graph_object(graph_interface) for pack in prepared_graph_repo.packs]
+
+    to_validate = pack_objects[pack_indices]
+    validation_results = MarketplacesFieldValidatorAllFiles().is_valid(to_validate)
+    assert expected_messages == {result.message for result in validation_results}

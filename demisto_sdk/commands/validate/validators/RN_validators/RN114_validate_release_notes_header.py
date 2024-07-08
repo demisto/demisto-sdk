@@ -58,12 +58,10 @@ CONTENT_TYPE_BY_RN_HEADER = {
     header: content_type for content_type, header in RN_HEADER_BY_CONTENT_TYPE.items()
 }
 
-# Release note regex
-CONTENT_TYPE_SECTION_REGEX = (
-    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)"
-)
-CONTENT_ITEM_SECTION_REGEX = (
-    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$"
+
+CONTENT_TYPE_SECTION = re.compile(r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### |\Z)", re.M)
+CONTENT_ITEM_SECTION = re.compile(
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### |\Z)|^- (?:New: )?$", re.M
 )
 
 
@@ -139,29 +137,25 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                                   content types' headers to their corresponding content items' headers.
         """
         headers: Dict[str, List[str]] = {}
-        content_type_section_pattern = re.compile(CONTENT_TYPE_SECTION_REGEX, re.M)
-        content_item_section_pattern = re.compile(CONTENT_ITEM_SECTION_REGEX, re.M)
 
         # Get all sections from the release notes using regex
-        rn_sections = content_type_section_pattern.findall(release_note_content)
-        for section in rn_sections:
+        content_type_and_item = remove_none_values(
+            CONTENT_TYPE_SECTION.findall(release_note_content)
+        )
+        for section in content_type_and_item:
             section = remove_none_values(ls=section)
             if not section:
                 logger.debug("No content items found under content type section.")
                 continue
 
+            # extract content items type, for example: Integrations, Scripts, Playbooks, etc.
             content_type = section[0]
-            content_type_sections_str = section[1]
-            content_type_sections_ls = content_item_section_pattern.findall(
-                content_type_sections_str
-            )
 
-            if not content_type_sections_ls:
-                # Did not find content items headers under content type - might be due to invalid format.
-                # Will raise error in rn_valid_header_format.
-                headers[content_type] = []
+            # extract content items, for example: HelloWorld, HelloWorldScript, HelloWorldPlaybook, etc.
+            content_items = section[1]
+            content_items_sections_ls = CONTENT_ITEM_SECTION.findall(content_items)
 
-            for content_type_section in content_type_sections_ls:
+            for content_type_section in content_items_sections_ls:
                 content_type_section = remove_none_values(ls=content_type_section)
                 if content_type_section:
                     logger.debug(
@@ -205,7 +199,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         """
         missing_display_names = {}
         for header, display_names in headers_to_display_names.items():
-            content_type = CONTENT_TYPE_BY_RN_HEADER[header]
+            content_type = CONTENT_TYPE_BY_RN_HEADER[header] # release_notes_header
             pack_display_names = {
                 item.display_name for item in pack_items_by_types.get(content_type, [])
             }

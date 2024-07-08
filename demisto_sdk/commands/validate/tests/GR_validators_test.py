@@ -13,7 +13,6 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
     mock_test_playbook,
 )
-from demisto_sdk.commands.validate.tests.graph_test_tools import *
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
     GR104_is_pack_display_name_already_exists,

@@ -6,7 +6,7 @@ import typer
 
 from demisto_sdk.commands.common.logger import logger, logging_setup
 
-MYPY_GLOBAL_IGNORE_PATTERN = re.compile(r"^#\s*type\s*:\s*ignore")
+MYPY_GLOBAL_IGNORE_PATTERN = re.compile(r"^#\s*type\s*:\s*ignore\s*")
 
 main = typer.Typer()
 

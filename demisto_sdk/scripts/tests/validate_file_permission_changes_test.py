@@ -7,7 +7,6 @@ from git import Blob, Remote
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
-from demisto_sdk.scripts.scripts_common import CI_ENV_VAR
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
@@ -107,7 +106,7 @@ class TestValidateFileChangePermissionsLocal(TestBaseClass):
         actual_output = result.stdout.splitlines()
         assert actual_output
         assert (
-            f"\x1b[91mFile '{py_file_path.relative_to(git_repo.path)}' permission was changed from {oct(Blob.file_mode)[2:]} to {oct(Blob.executable_mode)[2:]}\x1b[0m"
+            f"\x1b[91mFile '{py_file_path.absolute()}' permission was changed from {oct(Blob.file_mode)[2:]} to {oct(Blob.executable_mode)[2:]}\x1b[0m"
             in actual_output
         )
         assert (
@@ -155,7 +154,7 @@ class TestValidateFileChangePermissionsLocal(TestBaseClass):
         actual_output = result.stdout.splitlines()
         assert actual_output
         assert (
-            f"\x1b[91mFile '{py_file_path.relative_to(git_repo.path)}' permission was changed from {oct(Blob.executable_mode)[2:]} to {oct(Blob.file_mode)[2:]}\x1b[0m"
+            f"\x1b[91mFile '{py_file_path.absolute()}' permission was changed from {oct(Blob.executable_mode)[2:]} to {oct(Blob.file_mode)[2:]}\x1b[0m"
             in actual_output
         )
         assert (
@@ -184,7 +183,7 @@ class TestValidateFileChangePermissionsCI(TestBaseClass):
         from demisto_sdk.scripts.validate_deleted_files import GitUtil
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
-        mocker.patch.dict(os.environ, {CI_ENV_VAR: "true"})
+        mocker.patch.dict(os.environ, {"CI": "true"})
         mocker.patch.object(GitUtil, "fetch", return_value=None)
 
         # Set up 'local' remote
@@ -301,7 +300,7 @@ class TestValidateFileChangePermissionsCI(TestBaseClass):
         actual_output = result.stdout.splitlines()
         assert actual_output
         assert (
-            f"\x1b[91mFile '{py_file_path.relative_to(git_repo.path)}' permission was changed from {oct(Blob.file_mode)[2:]} to {oct(Blob.executable_mode)[2:]}\x1b[0m"
+            f"\x1b[91mFile '{py_file_path.absolute()}' permission was changed from {oct(Blob.file_mode)[2:]} to {oct(Blob.executable_mode)[2:]}\x1b[0m"
             in actual_output
         )
         assert (
@@ -352,7 +351,7 @@ class TestValidateFileChangePermissionsCI(TestBaseClass):
         actual_output = result.stdout.splitlines()
         assert actual_output
         assert (
-            f"\x1b[91mFile '{py_file_path.relative_to(git_repo.path)}' permission was changed from {oct(Blob.executable_mode)[2:]} to {oct(Blob.file_mode)[2:]}\x1b[0m"
+            f"\x1b[91mFile '{py_file_path.absolute()}' permission was changed from {oct(Blob.executable_mode)[2:]} to {oct(Blob.file_mode)[2:]}\x1b[0m"
             in actual_output
         )
         assert (

@@ -1,45 +1,15 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
-from demisto_sdk.commands.content_graph.objects import (
-    Classifier,
-    CorrelationRule,
-    Dashboard,
-    GenericDefinition,
-    GenericField,
-    GenericModule,
-    GenericType,
-    IncidentField,
-    IncidentType,
-    IndicatorField,
-    IndicatorType,
-    Integration,
-    Job,
-    Layout,
-    LayoutRule,
-    Mapper,
-    ModelingRule,
-    Pack,
-    ParsingRule,
-    Playbook,
-    Report,
-    Script,
-    TestPlaybook,
-    Trigger,
-    Widget,
-    Wizard,
-    XSIAMDashboard,
-    XSIAMReport,
-)
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     ValidationResult,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place import (
     MarketplacesFieldValidator,
 )
+
 
 class MarketplacesFieldValidatorAllFiles(MarketplacesFieldValidator):
     expected_execution_mode = [ExecutionMode.ALL_FILES]

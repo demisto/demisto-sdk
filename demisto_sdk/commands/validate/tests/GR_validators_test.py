@@ -1,22 +1,8 @@
 import pytest
 
-import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.common.constants import (
-    GENERAL_DEFAULT_FROMVERSION,
-    SKIP_PREPARE_SCRIPT_NAME,
-)
-from demisto_sdk.commands.content_graph.commands.create import create_content_graph
-from demisto_sdk.commands.content_graph.common import RelationshipType
-from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
-from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
-    mock_relationship,
-    mock_test_playbook,
-)
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
     GR104_is_pack_display_name_already_exists,
-    GR100_uses_items_not_in_market_place
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
@@ -47,7 +33,7 @@ MP_XSOAR_V2_XPANSE = MP_XSOAR_AND_V2 + MP_XPANSE
 
 
 def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
-        mocker, graph_repo: Repo
+    mocker, graph_repo: Repo
 ):
     """
     Given
@@ -84,7 +70,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
 
 
 def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(
-        mocker, graph_repo: Repo
+    mocker, graph_repo: Repo
 ):
     """
     Given
@@ -139,7 +125,9 @@ def prepared_graph_repo(graph_repo: Repo):
     )
     integration.set_commands(["test-command"])
     integration.set_data(
-        tests=["SampleTestPlaybook"], defaultclassifier="SampleClassifier", marketplaces=MP_XSOAR_AND_V2
+        tests=["SampleTestPlaybook"],
+        defaultclassifier="SampleClassifier",
+        marketplaces=MP_XSOAR_AND_V2,
     )
 
     sample_pack_2 = graph_repo.create_pack("SamplePack2")
@@ -156,30 +144,37 @@ def prepared_graph_repo(graph_repo: Repo):
 
     return graph_repo
 
+
 import pytest
 
-@pytest.mark.parametrize("pack_indices, expected_messages", [
-    (
-        slice(0, 1),  # First pack only.
-        {
-            "Content item 'SampleScript' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
-            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
-            "of 'SampleScript'."
-        }
-    ),
-    (
-        slice(1, None),  # All packs except the first.
-        {
-            "Content item 'TestApiModule' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
-            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
-            "of 'TestApiModule'.",
-            "Content item 'SampleScript' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
-            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
-            "of 'SampleScript'."
-        }
-    ),
-])
-def test_MarketplacesFieldValidatorListFiles_is_valid(prepared_graph_repo: Repo, pack_indices, expected_messages):
+
+@pytest.mark.parametrize(
+    "pack_indices, expected_messages",
+    [
+        (
+            slice(0, 1),  # First pack only.
+            {
+                "Content item 'SampleScript' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+                "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+                "of 'SampleScript'."
+            },
+        ),
+        (
+            slice(1, None),  # All packs except the first.
+            {
+                "Content item 'TestApiModule' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+                "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+                "of 'TestApiModule'.",
+                "Content item 'SampleScript' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+                "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+                "of 'SampleScript'.",
+            },
+        ),
+    ],
+)
+def test_MarketplacesFieldValidatorListFiles_is_valid(
+    prepared_graph_repo: Repo, pack_indices, expected_messages
+):
     """
     Given
     - A content repo.
@@ -192,7 +187,9 @@ def test_MarketplacesFieldValidatorListFiles_is_valid(prepared_graph_repo: Repo,
     """
     graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
-    pack_objects = [pack.get_graph_object(graph_interface) for pack in prepared_graph_repo.packs]
+    pack_objects = [
+        pack.get_graph_object(graph_interface) for pack in prepared_graph_repo.packs
+    ]
 
     to_validate = pack_objects[pack_indices]
     validation_results = MarketplacesFieldValidatorListFiles().is_valid(to_validate)
@@ -201,12 +198,18 @@ def test_MarketplacesFieldValidatorListFiles_is_valid(prepared_graph_repo: Repo,
 
 import pytest
 
-@pytest.mark.parametrize("pack_indices", [
-    slice(0, 1),  # First pack only.
-    slice(1, None),  # All packs except the first.
-    slice(None, None)  # All packs.
-])
-def test_MarketplacesFieldValidatorAllFiles_is_valid(prepared_graph_repo: Repo, pack_indices):
+
+@pytest.mark.parametrize(
+    "pack_indices",
+    [
+        slice(0, 1),  # First pack only.
+        slice(1, None),  # All packs except the first.
+        slice(None, None),  # All packs.
+    ],
+)
+def test_MarketplacesFieldValidatorAllFiles_is_valid(
+    prepared_graph_repo: Repo, pack_indices
+):
     """
     Given
     - A content repo.
@@ -219,17 +222,19 @@ def test_MarketplacesFieldValidatorAllFiles_is_valid(prepared_graph_repo: Repo, 
      `expected_validation_results_messages`.
     """
     expected_messages = {
-            "Content item 'TestApiModule' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
-            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
-            "of 'TestApiModule'.",
-            "Content item 'SampleScript' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
-            "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
-            "of 'SampleScript'."
-        }
+        "Content item 'TestApiModule' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+        "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+        "of 'TestApiModule'.",
+        "Content item 'SampleScript' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "
+        "however it uses content items: 'SampleScriptTwo' which are not supported in all of the marketplaces "
+        "of 'SampleScript'.",
+    }
 
     graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
-    pack_objects = [pack.get_graph_object(graph_interface) for pack in prepared_graph_repo.packs]
+    pack_objects = [
+        pack.get_graph_object(graph_interface) for pack in prepared_graph_repo.packs
+    ]
 
     to_validate = pack_objects[pack_indices]
     validation_results = MarketplacesFieldValidatorAllFiles().is_valid(to_validate)

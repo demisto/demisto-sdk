@@ -72,8 +72,8 @@ def validate_mypy_global_ignore(
     )
 ) -> None:
     """
-    Validate whether the file mode was modified. Exit code 0 if no files
-    modes were modified, 1 otherwise.
+    Validate whether the Python file has a global mypy type ignore set.
+    Exit code 0 if global mypy type ignore is set, 1 otherwise.
 
     Args:
     - `changed_files` (``List[str]``): The files to check, e.g. 'test/f1.py f2.py f3.py'.
@@ -99,9 +99,8 @@ def validate_mypy_global_ignore(
             for path in git_util.get_all_changed_files(DEMISTO_GIT_PRIMARY_BRANCH)
         ]
 
-    if changed_files:
-
-        py_files = get_py_files(changed_files)
+    py_files = get_py_files(changed_files)
+    if py_files:
 
         logger.debug(
             f"Iterating over {len(py_files)} ({''.join(py_files)}) Python changed files to check if they have global mypy ignore comments..."
@@ -118,5 +117,7 @@ def validate_mypy_global_ignore(
                     f"File '{filename}#L{line_number}' sets global mypy ignore. Please remove."
                 )
                 exit_code = 1
+    else:
+        logger.info("No Python changed files supplied. Terminating...")
 
     raise typer.Exit(code=exit_code)

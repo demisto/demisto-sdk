@@ -189,7 +189,6 @@ class ReadMeValidator(BaseValidator):
         """
         return all(
             [
-                self.verify_readme_relative_urls(),
                 self.is_image_path_valid(),
                 self.verify_image_exist(),
                 self.is_mdx_file(),

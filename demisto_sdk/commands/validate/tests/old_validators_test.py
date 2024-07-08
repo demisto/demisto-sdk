@@ -671,9 +671,6 @@ class TestValidators:
             IntegrationValidator, "is_api_token_in_credential_type", return_value=True
         )
         mocker.patch.object(ReadMeValidator, "verify_image_exist", return_value=True)
-        mocker.patch.object(
-            ReadMeValidator, "verify_readme_image_paths", return_value=True
-        )
         mocker.patch.object(OldValidateManager, "is_node_exist", return_value=True)
         validate_manager = OldValidateManager(file_path=file_path, skip_conf_json=True)
         integration_yml = (

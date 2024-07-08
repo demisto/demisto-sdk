@@ -6,6 +6,7 @@ from typing import Iterable, List, Union
 import requests
 from dateparser import parse
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,
@@ -27,9 +28,13 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
     description = "Validate that the given content-item's docker image isn't outdated."
     rationale = "Updated Docker images ensure that the code doesn't use outdated dependencies, including bug fixes and fixed vulnerabilities."
     error_message = "docker image {0}'s tag {1} is outdated. The latest tag is {2}"
-
     fix_message = "docker image {0} has been updated to {1}"
     related_field = "Docker image"
+    expected_git_statuses = [
+        GitStatuses.RENAMED,
+        GitStatuses.MODIFIED,
+        GitStatuses.ADDED,
+    ]
     is_auto_fixable = True
 
     @staticmethod

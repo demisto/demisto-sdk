@@ -41,43 +41,8 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not
     MarketplacesFieldValidator,
 )
 
-ContentTypes = Union[
-    Integration,
-    Script,
-    Playbook,
-    Pack,
-    Dashboard,
-    Classifier,
-    Job,
-    Layout,
-    Mapper,
-    Wizard,
-    CorrelationRule,
-    IncidentField,
-    IncidentType,
-    IndicatorField,
-    IndicatorType,
-    LayoutRule,
-    Layout,
-    ModelingRule,
-    ParsingRule,
-    Report,
-    TestPlaybook,
-    Trigger,
-    Widget,
-    GenericDefinition,
-    GenericField,
-    GenericModule,
-    GenericType,
-    XSIAMDashboard,
-    XSIAMReport,
-]
-
-
-class MarketplacesFieldValidatorAllFiles(
-    MarketplacesFieldValidator, BaseValidator[ContentTypes]
-):
+class MarketplacesFieldValidatorAllFiles(MarketplacesFieldValidator):
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def is_valid(self, content_items: Iterable) -> List[ValidationResult]:
         return self.is_valid_using_graph(content_items, validate_all_files=True)

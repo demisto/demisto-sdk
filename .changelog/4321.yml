@@ -1,4 +1,4 @@
 changes:
-- description: Modified the **test-content** command which would previously behave incorrectly under certain conditions.
+- description: Added support to the (internal) **test-content** command to work properly with multiple cloud servers.
   type: internal
 pr_number: 4321

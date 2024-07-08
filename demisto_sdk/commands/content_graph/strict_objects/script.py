@@ -1,17 +1,19 @@
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from typing import Optional
+
+from demisto_sdk.commands.common.constants import SKIP_PREPARE_SCRIPT_NAME, TYPE_PYTHON3, TYPE_PYTHON2
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseStrictModel, CommonFields, \
     Argument, Output, Important, ScriptType, BaseIntegrationScript
 from pydantic import Field
 
 
 class SkipPrepare(StrEnum):
-    SKIP_PREPARE_SCRIPT_NAME = "script-name-incident-to-alert"
+    SKIP_PREPARE_SCRIPT_NAME
 
 
 class ScriptSubType(StrEnum):
-    TYPE_PYTHON3 = "python3"
-    TYPE_PYTHON2 = "python2"
+    TYPE_PYTHON3
+    TYPE_PYTHON2
 
 
 class ScriptArgument(Argument):

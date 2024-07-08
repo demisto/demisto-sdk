@@ -5,7 +5,7 @@ from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from pydantic import BaseModel, Extra, Field
-from demisto_sdk.commands.common.constants import Auto, MarketplaceVersions
+from demisto_sdk.commands.common.constants import Auto, MarketplaceVersions, TYPE_PWSH, TYPE_PYTHON, TYPE_JS
 
 marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
 
@@ -95,9 +95,9 @@ class Important(BaseStrictModel):
 
 
 class ScriptType(StrEnum):
-    TYPE_PWSH = "powershell"
-    TYPE_PYTHON = "python"
-    TYPE_JS = "javascript"
+    TYPE_PWSH
+    TYPE_PYTHON
+    TYPE_JS
 
 
 name_dynamic_model = create_dynamic_model(field_name="name", type_=Optional[str], default=None)

@@ -7,13 +7,13 @@ import typer
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger, logging_setup
-from demisto_sdk.scripts.common import (
+from demisto_sdk.scripts.scripts_common import (
     HELP_CHANGED_FILES,
     is_ci,
     split_files,
 )
 
-MYPY_GLOBAL_IGNORE_PATTERN = re.compile(r"^\s*#\s*type\s*:\s*ignore")
+MYPY_GLOBAL_IGNORE_PATTERN = re.compile(r"^#\s*type\s*:\s*ignore")
 
 main = typer.Typer()
 

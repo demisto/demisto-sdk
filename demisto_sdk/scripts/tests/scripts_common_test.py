@@ -4,7 +4,7 @@ import pytest
 import typer
 from pytest_mock import MockerFixture
 
-from demisto_sdk.scripts.common import CI_ENV_VAR, ERROR_IS_CI_INVALID, is_ci
+from demisto_sdk.scripts.scripts_common import CI_ENV_VAR, ERROR_IS_CI_INVALID, is_ci
 
 
 class TestIsCI:

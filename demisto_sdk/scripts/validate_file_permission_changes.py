@@ -7,7 +7,7 @@ from git import Blob
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger, logging_setup
-from demisto_sdk.scripts.common import HELP_CHANGED_FILES, is_ci, split_files
+from demisto_sdk.scripts.scripts_common import HELP_CHANGED_FILES, is_ci, split_files
 
 main = typer.Typer()
 

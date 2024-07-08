@@ -7,9 +7,7 @@ from git import Blob, Remote
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
-from demisto_sdk.scripts.validate_file_permission_changes import (
-    CI_ENV_VAR,
-)
+from demisto_sdk.scripts.scripts_common import CI_ENV_VAR
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 

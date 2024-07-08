@@ -38,17 +38,9 @@ class Configuration(BaseStrictModel):
     required_xsoar_on_prem: Optional[bool] = Field(None, alias="required:xsoar_on_prem")
 
 
-class IntegrationImportant(Important):
-    pass
-
-
 class IntegrationOutput(Output):
     important: Optional[bool] = None  # not the Important class
     important_description: Optional[str] = Field(None, alias="importantDescription")
-
-
-class IntegrationArgument(Argument):
-    pass
 
 
 class Command(BaseStrictModel):
@@ -57,9 +49,9 @@ class Command(BaseStrictModel):
     description: str
     deprecated: Optional[bool] = None
     system: Optional[bool] = None
-    arguments: Optional[list[IntegrationArgument]] = None
+    arguments: Optional[list[Argument]] = None
     outputs: Optional[list[IntegrationOutput]] = None
-    important: Optional[list[IntegrationImportant]] = None
+    important: Optional[list[Important]] = None
     timeout: Optional[int] = None
     hidden: Optional[bool] = None
     hidden_x2: Optional[bool] = None

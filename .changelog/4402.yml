@@ -1,4 +1,4 @@
 changes:
-- description: Added a flag -tpb to the demisto-sdk upload that will allow to add with the uploaded pack all its test-pb's
+- description: Added the **-tpb** option to the **upload** command. When provided, all the test playbooks for the given pack will be uploaded.
   type: feature
 pr_number: 4402

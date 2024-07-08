@@ -1,8 +1,5 @@
 from demisto_sdk.commands.common.StrEnum import StrEnum
-from pathlib import Path
 from typing import Optional
-
-from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseStrictModel, CommonFields, \
     Argument, Output, Important, ScriptType, BaseIntegrationScript
 from pydantic import Field
@@ -76,10 +73,3 @@ class StrictScript(BaseIntegrationScript):
         Field(None, alias="contentitemexportablefields")
     polling: Optional[bool] = None
     skip_prepare: Optional[list[SkipPrepare]] = Field(None, alias="skipprepare")
-
-# content_packs = Path("/Users/rshunim/dev/demisto/content/Packs/")
-# for file in content_packs.rglob("*/Scripts/*/*.yml"):
-#     if "DeprecatedContent" in file.parts:
-#         continue
-#     print(file)
-#     script = StrictScript.parse_obj(get_file(file))

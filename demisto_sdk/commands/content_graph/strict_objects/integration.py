@@ -1,10 +1,8 @@
-from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, Type
 from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseStrictModel, CommonFields, \
-    Argument, Output, Important, ScriptType, BaseIntegrationScript
+    Argument, Output, Important, ScriptType, BaseIntegrationScript, create_dynamic_model
 
 
 class Configuration(BaseStrictModel):
@@ -122,7 +120,12 @@ class CommonFieldsIntegration(CommonFields):
     sort_values: Optional[list[str]] = Field(None, alias="sortvalues")
 
 
-class StrictIntegration(BaseIntegrationScript):
+description_dynamic_model = create_dynamic_model(field_name="description", type_=Optional[str], default=None)
+
+dynamic_models_for_integrations: tuple = (description_dynamic_model,)
+
+
+class StrictIntegration(BaseIntegrationScript, *dynamic_models_for_integrations):
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")
     display: str
     beta: Optional[bool] = None
@@ -146,15 +149,3 @@ class StrictIntegration(BaseIntegrationScript):
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
-    description_xsoar: Optional[str] = Field(None, alias="description:xsoar")
-    description_marketplace_v2: Optional[str] = Field(None, alias="description:marketplacev2")
-    description_xpanse: Optional[str] = Field(None, alias="description:xpanse")
-    description_xsoar_saas: Optional[str] = Field(None, alias="description:xsoar_saas")
-    description_xsoar_on_prem: Optional[str] = Field(None, alias="description:xsoar_on_prem")
-
-# content_packs = Path("/Users/rshunim/dev/demisto/content/Packs/")
-# for file in content_packs.rglob("*/Integrations/*/*.yml"):
-#     if "DeprecatedContent" in file.parts:
-#         continue
-#     print(file)
-#     integration = StrictIntegration.parse_obj(get_file(file))

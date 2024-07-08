@@ -16,9 +16,8 @@ class SchemaValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the scheme's structure is valid."
     )
-    error_message = "Field can't contain None, must be valuable."
 
-    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def is_valid(
             self,
@@ -27,10 +26,8 @@ class SchemaValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(
-                    content_item.content_type,
-                    content_item.subtype,
-                ),
+                message="\n".join(f'problematic field: {error.get("loc")} | error message: {error.get("msg")} |'
+                                  f' error type : {error.get("type")}' for error in content_item.structure_errors),
                 content_object=content_item,
             )
             for content_item in content_items

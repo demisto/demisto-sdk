@@ -1,8 +1,26 @@
-from typing import Optional, Any, Union
+from typing import Optional, Any, Union, Type
+
+import pydantic
+from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from pydantic import BaseModel, Extra, Field
 from demisto_sdk.commands.common.constants import Auto, MarketplaceVersions
+
+marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
+
+
+def create_dynamic_model(field_name: str, type_: Type, default: Any = ..., suffixes: list[str] = marketplace_suffixes,
+                         alias: Optional[str] = None):
+    """
+    This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
+    Then the model inherit it.
+    """
+    return pydantic.create_model(
+        f'Dynamic{field_name.title()}Model',
+        **{f'{field_name}_{suffix}': (type_, FieldInfo(default, alias=f'{alias or field_name}:{suffix}'))
+           for suffix in suffixes}, __base__=BaseStrictModel
+    )
 
 
 class BaseStrictModel(BaseModel):
@@ -82,7 +100,13 @@ class ScriptType(StrEnum):
     TYPE_JS = "javascript"
 
 
-class BaseIntegrationScript(BaseStrictModel):
+name_dynamic_model = create_dynamic_model(field_name="name", type_=Optional[str], default=None)
+deprecated_dynamic_model = create_dynamic_model(field_name="deprecated", type_=Optional[bool], default=None)
+dynamic_models_for_integrations_and_scripts: tuple = (name_dynamic_model, deprecated_dynamic_model,)
+
+
+class BaseIntegrationScript(*dynamic_models_for_integrations_and_scripts):
+    # not inheriting from StrictBaseModel since dynamic_models do
     name: str
     deprecated: Optional[bool] = None
     from_version: Optional[str] = Field(None, alias="fromversion")
@@ -91,14 +115,3 @@ class BaseIntegrationScript(BaseStrictModel):
     tests: Optional[list[str]] = None
     auto_update_docker_image: Optional[bool] = Field(None, alias="autoUpdateDockerImage")
     marketplaces: Union[MarketplaceVersions, list[MarketplaceVersions]] = None
-    name_xsoar: Optional[str] = Field(None, alias="name:xsoar")
-    name_marketplace_v2: Optional[str] = Field(None, alias="name:marketplacev2")
-    name_xpanse: Optional[str] = Field(None, alias="name:xpanse")
-    name_xsoar_saas: Optional[str] = Field(None, alias="name:xsoar_saas")
-    name_xsoar_on_prem: Optional[str] = Field(None, alias="name:xsoar_on_prem")
-
-    deprecated_xsoar: Optional[bool] = Field(None, alias="deprecated:xsoar")
-    deprecated_marketplace_v2: Optional[bool] = Field(None, alias="deprecated:marketplacev2")
-    deprecated_xpanse: Optional[bool] = Field(None, alias="deprecated:xpanse")
-    deprecated_xsoar_saas: Optional[bool] = Field(None, alias="deprecated:xsoar_saas")
-    deprecated_xsoar_on_prem: Optional[bool] = Field(None, alias="deprecated:xsoar_on_prem")

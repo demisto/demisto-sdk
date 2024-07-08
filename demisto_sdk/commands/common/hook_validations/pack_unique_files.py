@@ -280,22 +280,6 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
-    def validate_pack_readme_images(self):
-        readme_file_path = os.path.join(self.pack_path, self.readme_file)
-        readme_validator = ReadMeValidator(
-            readme_file_path,
-            ignored_errors=self.ignored_errors,
-            specific_validations=self.specific_validations,
-        )
-        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True)
-        errors += readme_validator.check_readme_absolute_image_paths(
-            is_pack_readme=True
-        )
-        if errors:
-            self._errors.extend(errors)
-            return False
-        return True
-
     @error_codes("RM112")
     def validate_pack_readme_relative_urls(self):
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
@@ -984,7 +968,6 @@ class PackUniqueFilesValidator(BaseValidator):
 
             self.validate_pack_readme_file_is_not_empty()
             self.validate_pack_readme_and_pack_description()
-            self.validate_pack_readme_images()
             self.validate_author_image_exists()
             self.validate_pack_readme_relative_urls()
 

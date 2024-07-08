@@ -1,13 +1,11 @@
 import glob
 import logging
 import os
-import sys
 
 import pytest
 import requests_mock
 
 import demisto_sdk
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
@@ -681,103 +679,6 @@ def test_verify_template_not_in_readme(repo):
         readme_validator = ReadMeValidator(integration.readme.path)
 
         assert not readme_validator.verify_template_not_in_readme()
-
-
-def test_verify_readme_image_paths(mocker):
-    """
-
-    Given
-           - A README file (not pack README) with valid/invalid relative image
-            paths and valid/invalid absolute image paths in it.
-       When
-           - Run validate on README file
-       Then
-           - Ensure:
-               - Validation fails
-               - Image paths were caught correctly
-               - Valid paths are not caught
-    """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    readme_validator = ReadMeValidator(IMAGES_MD)
-    mocker.patch.object(
-        GitUtil, "get_current_working_branch", return_value="branch_name"
-    )
-    mocker.patch("demisto_sdk.commands.common.tools.sleep")
-
-    with requests_mock.Mocker() as m:
-        # Mock get requests
-        m.get(
-            "https://github.com/demisto/test1.png",
-            status_code=404,
-            text="Test1",
-            reason="just because",
-        )
-        m.get(
-            "https://github.com/demisto/content/raw/test2.png",
-            status_code=404,
-            text="Test2",
-        )
-        m.get("https://github.com/demisto/test3.png", status_code=200, text="Test3")
-        m.get(
-            "https://raw.githubusercontent.com/demisto/content/master/Packs/132/some_image.png",
-            status_code=200,
-            text="Test4",
-        )
-        is_valid = readme_validator.verify_readme_image_paths()
-
-    sys.stdout = sys.__stdout__  # reset stdout.
-    assert not is_valid
-    assert all(
-        [
-            str_in_call_args_list(
-                logger_error.call_args_list,
-                "The following image relative path is not valid, please recheck it:\n",
-            ),
-            str_in_call_args_list(
-                logger_error.call_args_list,
-                "../../default.png",
-            ),
-            str_in_call_args_list(
-                logger_error.call_args_list,
-                "Branch name was found in the URL, please change it to the commit hash:\n",
-            ),
-            str_in_call_args_list(
-                logger_error.call_args_list,
-                "\n".join(
-                    (
-                        "[RM108] - Error in readme image: got HTTP response code 404, reason = just because",
-                        "The following image link seems to be broken, please repair it:",
-                        "https://github.com/demisto/test1.png",
-                    )
-                ),
-            ),
-            str_in_call_args_list(
-                logger_error.call_args_list,
-                "\n".join(
-                    (
-                        "[RM108] - Error in readme image: got HTTP response code 404 ",
-                        "The following image link seems to be broken, please repair it:",
-                        "https://github.com/demisto/content/raw/test2.png",
-                    )
-                ),
-            ),
-        ]
-    )
-
-    assert not str_in_call_args_list(
-        logger_error.call_args_list,
-        "The following image relative path is not valid, please recheck it:\n"
-        "default.png",
-    )
-    assert not str_in_call_args_list(
-        logger_error.call_args_list,
-        "Branch name was found in the URL, please change it to the commit hash:\n"
-        "https://raw.githubusercontent.com/demisto/content/123456/Packs/CommonPlaybooks/doc_files/some_image.png",
-    )
-    assert not str_in_call_args_list(
-        logger_error.call_args_list,
-        "please repair it:\n" "https://github.com/demisto/test3.png",
-    )
 
 
 @pytest.mark.parametrize("current, answer", README_INPUTS[:2])

@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
 import typer
 
@@ -11,17 +11,15 @@ MYPY_GLOBAL_IGNORE_PATTERN = re.compile(r"^#\s*type\s*:\s*ignore\s*")
 main = typer.Typer()
 
 
-def has_global_type_ignore(file_path: Path) -> Tuple[bool, Union[int, None]]:
+def has_global_type_ignore(file_path: Path) -> Union[int, None]:
     """
     Helper function to check whether the input file
     has the global mypy ignore set.
 
     Args:
-    - `file_path_str` (``str``): The input Python file.
+    - `file_path` (``Path``): The input Python file path.
 
     Returns:
-    - `True` if the file is globally ignored, `False`
-    otherwise.
     - `int` with the line number where the ignore comment
     was found, `None` if it wasn't found.
     """
@@ -30,9 +28,9 @@ def has_global_type_ignore(file_path: Path) -> Tuple[bool, Union[int, None]]:
 
     for line_num, line in enumerate(lines):
         if MYPY_GLOBAL_IGNORE_PATTERN.fullmatch(line):
-            return True, line_num + 1
+            return line_num + 1
 
-    return False, None
+    return None
 
 
 @main.command(help="Validate the changed Python files don't specify global mypy ignore")
@@ -60,15 +58,15 @@ def validate_mypy_global_ignore(
 
     if changed_files:
 
-        result: Dict[str, Any] = {}
+        result: Dict[str, Union[int, None]] = {}
 
         for changed_file in changed_files:
             result[str(changed_file.absolute())] = has_global_type_ignore(changed_file)
 
         logger.debug(f"{result=}")
 
-        for filename, (has_global_ignore, line_number) in result.items():
-            if has_global_ignore:
+        for filename, line_number in result.items():
+            if line_number:
                 logger.error(
                     f"File '{filename}#L{line_number}' sets global mypy ignore. Please remove."
                 )

@@ -2,8 +2,8 @@ import logging
 import os
 import shutil
 import zipfile
-from io import BytesIO
 from builtins import len
+from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Optional, Set

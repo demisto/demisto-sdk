@@ -1,14 +1,14 @@
-from abc import ABC
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = Integration
+ContentTypes = Union[Integration, Script]
 
 
 class SchemaValidator(BaseValidator[ContentTypes]):
@@ -17,11 +17,12 @@ class SchemaValidator(BaseValidator[ContentTypes]):
         "Validate that the scheme's structure is valid."
     )
     error_message = "Field can't contain None, must be valuable."
+
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def is_valid(
-        self,
-        content_items: Iterable[ContentTypes],
+            self,
+            content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
         return [
             ValidationResult(

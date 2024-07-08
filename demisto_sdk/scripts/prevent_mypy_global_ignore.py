@@ -29,7 +29,7 @@ def has_global_type_ignore(file_path: Path) -> Tuple[bool, Union[int, None]]:
     lines = file_path.read_text().splitlines()
 
     for line_num, line in enumerate(lines):
-        if MYPY_GLOBAL_IGNORE_PATTERN.match(line):
+        if MYPY_GLOBAL_IGNORE_PATTERN.fullmatch(line):
             return True, line_num + 1
 
     return False, None

@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import subprocess
 import sys
 import time
 import urllib.parse
@@ -945,7 +944,6 @@ class BuildContext:
 
         return conf, secret_conf
 
-
     @staticmethod
     def _http_request(url, params_dict=None):
         res = requests.request(
@@ -957,7 +955,6 @@ class BuildContext:
         res.raise_for_status()
 
         return res.json()
-
 
     # --------------------------- Testing logic -------------------------------
 
@@ -2822,7 +2819,6 @@ class TestContext:
             },
         )
 
-
     def _add_to_succeeded_playbooks(self):
         """
         Adds the playbook to the succeeded playbooks list
@@ -2902,7 +2898,6 @@ class TestContext:
             "playbook_name_to_add", playbook_name_to_add
         )
         self.playbook.close_test_suite([Failure(err)])
-
 
     def _incident_and_docker_test(self) -> str:
         """

@@ -30,11 +30,11 @@ class CorrelationRuleParser(
 
     @property
     def execution_mode(self):
-        return get_value(self.yml_data, self.field_mapping.get("execution_mode", ""), "")
+        return get_value(self.yml_data, self.field_mapping.get("execution_mode", ""), None)
 
     @property
     def search_window(self):
-        return get_value(self.yml_data, self.field_mapping.get("search_window", ""), "")
+        return get_value(self.yml_data, self.field_mapping.get("search_window", ""), None)
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

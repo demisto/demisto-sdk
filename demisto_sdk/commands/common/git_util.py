@@ -49,12 +49,14 @@ class GitUtil:
 
     def __init__(
         self,
-        path: Optional[Union[str, Path]] = None,
+        path: Optional[Union[str, Path, Repo]] = None,
         search_parent_directories: bool = True,
     ):
 
         if isinstance(path, str):
             repo_path = Path(path)
+        elif isinstance(path, self.REPO_CLS):
+            repo_path = path.working_dir  # type: ignore
         else:
             repo_path = path or Path.cwd()
 
@@ -1077,3 +1079,73 @@ class GitUtil:
     def commit_files(self, commit_message: str, files: Union[List, str] = "."):
         self.repo.git.add(files)
         self.repo.index.commit(commit_message)
+
+    def has_file_permissions_changed(
+        self, file_path: str, ci: bool = False
+    ) -> Tuple[bool, Optional[str], Optional[str]]:
+        """
+        Check whether the supplied file permissions have changed.
+        If we're in a CI environment, we check for changes against
+        the remote base branch. If not, we assume we're running in a local
+        environment the commit was made.
+
+        Args:
+        - `file_path` (``str``): The path to the file to check for
+        permission changes.
+        - `ci` (``bool``): Whether we're running in a CI environment.
+
+        Returns:
+        - `bool` indicating whether the file permissions have changed.
+        - `str` with the old permissions.
+        - `str` with the new permissions.
+        """
+
+        # If we're in a CI environment, we need to get the
+        # remote (e.g. origin), base branch and current branch since
+        # the local branches are unavailable
+        if ci:
+            branch = os.getenv("BRANCH_NAME", self.get_current_git_branch_or_hash())
+            base_branch = (
+                self.find_primary_branch(self.repo)
+                if self.find_primary_branch(self.repo)
+                else DEMISTO_GIT_PRIMARY_BRANCH
+            )
+            upstream = (
+                self.repo.remote().name if self.repo.remote() else DEMISTO_GIT_UPSTREAM
+            )
+            summary_output = self.repo.git.diff(
+                "--summary",
+                f"{upstream}/{base_branch}...{upstream}/{branch}",
+                file_path,
+            )
+        else:
+            summary_output = self.repo.git.diff("--summary", "--staged", file_path)
+
+        pattern = r"mode change (\d{6}) => (\d{6}) (.+)"
+
+        match = re.search(pattern, summary_output)
+
+        if match:
+            old_permissions = match.group(1)
+            new_permissions = match.group(2)
+
+            return True, old_permissions, new_permissions
+        else:
+            return False, None, None
+
+    def stage_file(self, file_path: Union[Path, str]):
+        """
+        Stage a file.
+
+        Args:
+        - `file_path` (``Path | str``): The file path to add.
+        """
+
+        if isinstance(file_path, str):
+            file_path = Path(file_path)
+
+        if file_path.exists():
+            self.repo.git.add(str(file_path))
+            logger.debug(f"Staged file '{file_path}'")
+        else:
+            logger.error(f"File '{file_path}' doesn't exist. Not adding.")

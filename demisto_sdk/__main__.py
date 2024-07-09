@@ -1539,6 +1539,12 @@ def format(ctx, **kwargs):
     default=True,
 )
 @click.option(
+    "-tpb",
+    help="Adds the test playbook for upload when the -tpb flag is used. This flag is relevant only for packs.",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-x",
     "--xsiam",
     help="Upload the pack to XSIAM server. Must be used together with -z",

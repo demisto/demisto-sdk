@@ -16,11 +16,13 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
         "Validates 'search_window' existence and non-emptiness for 'execution_mode' = 'SCHEDULED'."
     )
     rationale = ""
-    error_message = "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
-    related_field = ""
+    error_message = (
+        "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
+    )
+    related_field = "execution_mode"
     is_auto_fixable = False
         
-    def is_valid(self, content_items: Iterable[CorrelationRule]) -> List[ValidationResult]:
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -29,9 +31,9 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-               ("search_window" not in self.current_file) or (
-                content_item.execution_mode == "SCHEDULED"
-                and not self.search_window)
+               (not content_item.search_window) or 
+                (content_item.execution_mode == "SCHEDULED"
+                and content_item.search_window == "")
             )
         ]
         

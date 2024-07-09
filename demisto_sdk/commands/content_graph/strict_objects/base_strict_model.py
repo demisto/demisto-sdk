@@ -115,10 +115,11 @@ class SturctureError(BaseStrictModel):
 
 name_dynamic_model = create_dynamic_model(field_name="name", type_=Optional[str], default=None)
 deprecated_dynamic_model = create_dynamic_model(field_name="deprecated", type_=Optional[bool], default=None)
-dynamic_models_for_integrations_and_scripts: tuple = (name_dynamic_model, deprecated_dynamic_model,)
+
+dynamic_models: tuple = (name_dynamic_model, deprecated_dynamic_model,)
 
 
-class BaseIntegrationScript(*dynamic_models_for_integrations_and_scripts):
+class BaseIntegrationScript(*dynamic_models):
     # not inheriting from StrictBaseModel since dynamic_models do
     name: str
     deprecated: Optional[bool] = None

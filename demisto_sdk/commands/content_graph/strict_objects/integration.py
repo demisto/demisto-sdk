@@ -2,7 +2,7 @@ from typing import Optional, Any
 from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseStrictModel, CommonFields, \
-    Argument, Output, Important, ScriptType, BaseIntegrationScript, create_dynamic_model
+    Argument, Output, Important, ScriptType, BaseIntegrationScript, create_dynamic_model, DESCRIPTION_DYNAMIC_MODEL
 
 
 class Configuration(BaseStrictModel):
@@ -110,9 +110,7 @@ class CommonFieldsIntegration(CommonFields):
     sort_values: Optional[list[str]] = Field(None, alias="sortvalues")
 
 
-description_dynamic_model = create_dynamic_model(field_name="description", type_=Optional[str], default=None)
-
-dynamic_models_for_integrations: tuple = (description_dynamic_model,)
+dynamic_models_for_integrations: tuple = (DESCRIPTION_DYNAMIC_MODEL,)
 
 
 class StrictIntegration(BaseIntegrationScript, *dynamic_models_for_integrations):

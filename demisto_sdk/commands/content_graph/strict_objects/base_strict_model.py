@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.constants import Auto, MarketplaceVersions, TYP
 
 marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
 
-
 def create_dynamic_model(field_name: str, type_: Type, default: Any = ..., suffixes: list[str] = marketplace_suffixes,
                          alias: Optional[str] = None):
     """
@@ -27,6 +26,12 @@ def create_dynamic_model(field_name: str, type_: Type, default: Any = ..., suffi
         **{f'{field_name}_{suffix}': (type_, FieldInfo(default, alias=f'{alias or field_name}:{suffix}'))
            for suffix in suffixes}, __base__=BaseStrictModel
     )
+
+
+DESCRIPTION_DYNAMIC_MODEL = create_dynamic_model(field_name="description", type_=Optional[str], default=None)
+NAME_DYNAMIC_MODEL = create_dynamic_model(field_name="name", type_=Optional[str], default=None)
+DEPRECATED_DYNAMIC_MODEL = deprecated_dynamic_model =\
+    create_dynamic_model(field_name="deprecated", type_=Optional[bool], default=None)
 
 
 class BaseStrictModel(BaseModel):
@@ -92,8 +97,8 @@ class Output(BaseStrictModel):
     type: Optional[str] = None
 
 
-description_dynamic_model = create_dynamic_model(field_name="description", type_=Optional[str], default=None)
-dynamic_models_for_important: tuple = (description_dynamic_model,)
+dynamic_models_for_important: tuple = (DESCRIPTION_DYNAMIC_MODEL,)
+
 
 class Important(*dynamic_models_for_important):
     # not inheriting from StrictBaseModel since dynamic_models do
@@ -120,10 +125,7 @@ class SturctureError(BaseStrictModel):
     ctx: Optional[dict] = None
 
 
-name_dynamic_model = create_dynamic_model(field_name="name", type_=Optional[str], default=None)
-deprecated_dynamic_model = create_dynamic_model(field_name="deprecated", type_=Optional[bool], default=None)
-
-dynamic_models: tuple = (name_dynamic_model, deprecated_dynamic_model,)
+dynamic_models: tuple = (NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL,)
 
 
 class BaseIntegrationScript(*dynamic_models):

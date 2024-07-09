@@ -24,17 +24,25 @@ class CorrelationRuleParser(
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(
-            {"object_id": "global_rule_id", "execution_mode": "execution_mode", "search_window" : "search_window"}
+            {
+                "object_id": "global_rule_id",
+                "execution_mode": "execution_mode",
+                "search_window" : "search_window"
+            }
         )
         return super().field_mapping
 
     @property
     def execution_mode(self):
-        return get_value(self.yml_data, self.field_mapping.get("execution_mode", ""), None)
+        return get_value(
+            self.yml_data, self.field_mapping.get("execution_mode", ""), None
+        )
 
     @property
     def search_window(self):
-        return get_value(self.yml_data, self.field_mapping.get("search_window", ""), None)
+        return get_value(
+            self.yml_data, self.field_mapping.get("search_window", ""), None
+        )
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

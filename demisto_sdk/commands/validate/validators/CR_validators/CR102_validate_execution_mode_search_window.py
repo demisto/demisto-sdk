@@ -16,7 +16,7 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
     description = "Validates 'search_window' existence and non-emptiness for 'execution_mode' = 'SCHEDULED'."
     rationale = ""
     error_message = "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
-    related_field = "execution_mode"
+    related_field = "search_window"
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

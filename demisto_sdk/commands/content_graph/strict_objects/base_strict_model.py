@@ -89,7 +89,11 @@ class Output(BaseStrictModel):
     type: Optional[str] = None
 
 
-class Important(BaseStrictModel):
+description_dynamic_model = create_dynamic_model(field_name="description", type_=Optional[str], default=None)
+dynamic_models_for_important: tuple = (description_dynamic_model,)
+
+class Important(*dynamic_models_for_important):
+    # not inheriting from StrictBaseModel since dynamic_models do
     context_path: str = Field(..., alias="contextPath")
     description: str
     related: Optional[str] = None

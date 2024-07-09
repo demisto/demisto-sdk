@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 
 class CorrelationRule(ContentItemXSIAM, content_type=ContentType.CORRELATION_RULE):  # type: ignore[call-arg]
     execution_mode: Optional[str] = Field(None)
-    search_window: Optional[str]  = Field(None)
+    search_window: Optional[str] = Field(None)
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

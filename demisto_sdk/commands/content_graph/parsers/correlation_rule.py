@@ -27,7 +27,7 @@ class CorrelationRuleParser(
             {
                 "object_id": "global_rule_id",
                 "execution_mode": "execution_mode",
-                "search_window" : "search_window"
+                "search_window": "search_window"
             }
         )
         return super().field_mapping

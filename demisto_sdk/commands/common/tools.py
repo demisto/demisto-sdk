@@ -1583,6 +1583,7 @@ def get_dict_from_file(
     raises_error: bool = True,
     clear_cache: bool = False,
     keep_order: bool = True,
+    git_sha: Optional[str] = None
 ) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
@@ -1599,11 +1600,11 @@ def get_dict_from_file(
         if path:
             if path.endswith(".yml"):
                 return (
-                    get_yaml(path, cache_clear=clear_cache, keep_order=keep_order),
+                    get_yaml(path, cache_clear=clear_cache, keep_order=keep_order, git_sha=git_sha),
                     "yml",
                 )
             elif path.endswith(".json"):
-                res = get_json(path, cache_clear=clear_cache)
+                res = get_json(path, cache_clear=clear_cache, git_sha=git_sha)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
                     return res[0], "json"
                 else:

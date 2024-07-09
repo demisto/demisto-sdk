@@ -207,8 +207,7 @@ def test_MarketplacesFieldValidatorAllFiles_is_valid(
     Then
     - Validate the validator ignores the provided specific packs and validates all content items in the content graph.
     - Validate the existence of invalid marketplaces usages.
-    - Two invalid content items shall be found, with expected error message listed in
-     `expected_validation_results_messages`.
+    - Two invalid content items shall be found, with expected error message listed in `expected__messages`.
     """
     expected_messages = {
         "Content item 'TestApiModule' can be used in the 'marketplacev2, xsoar, xsoar_saas' marketplaces, "

@@ -31,7 +31,7 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
                 (not content_item.search_window)
                 or (
                     content_item.execution_mode == "SCHEDULED"
-                    and content_item.search_window == ""
+                    and not content_item.search_window
                 )
             )
         ]

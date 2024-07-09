@@ -57,6 +57,11 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.structure_errors = self.validate_structure()
 
     def validate_structure(self) -> Optional[list[SturctureError]]:
+        """
+        The method uses the parsed data and attempts to build a Pydantic Integration object from it.
+        Whenever yml_data is invalid by the schema, we store the error in the 'structure_errors' attribute,
+        It will fail validation (ST110).
+        """
         try:
             StrictIntegration(**self.yml_data)
         except pydantic.error_wrappers.ValidationError as e:

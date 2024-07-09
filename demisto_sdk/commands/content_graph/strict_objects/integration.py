@@ -1,4 +1,4 @@
-from typing import Optional, Any, Type
+from typing import Optional, Any
 from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseStrictModel, CommonFields, \

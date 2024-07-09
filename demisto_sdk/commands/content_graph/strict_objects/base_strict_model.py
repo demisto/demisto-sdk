@@ -31,6 +31,7 @@ def create_dynamic_model(
         default: Any = ...,
         suffixes: list[str] = marketplace_suffixes,
         alias: Optional[str] = None,
+        include_without_suffix: bool = False,
 ):
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
@@ -42,15 +43,18 @@ def create_dynamic_model(
     description_xsoar: Optional[str] = Field(None, alias="description:xsoar")
     description_marketplace_v2: Optional[str] = Field(None, alias="description:marketplacev2")
     """
-    return pydantic.create_model(
-        f"Dynamic{field_name.title()}Model",
-        **{
+    suffixed_fields = {
             f"{field_name}_{suffix}": (
                 type_,
                 FieldInfo(default, alias=f"{alias or field_name}:{suffix}"),
             )
             for suffix in suffixes
-        },
+        }
+    non_suffixed_fields = {field_name: (type_, FieldInfo(default, alias=f"{alias or field_name}"))}
+    fields = suffixed_fields | (non_suffixed_fields if include_without_suffix else {})
+    return pydantic.create_model(
+        f"Dynamic{field_name.title()}Model",
+        **fields,
         __base__=BaseStrictModel,
     )
 
@@ -67,6 +71,9 @@ DEPRECATED_DYNAMIC_MODEL = deprecated_dynamic_model = create_dynamic_model(
 REQUIRED_DYNAMIC_MODEL = create_dynamic_model(
     field_name="required", type_=Optional[bool], default=None
 )
+DEFAULT_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="defaultValue", type_=Optional[Any], default=None, include_without_suffix=True
+)
 
 
 class CommonFields(BaseStrictModel):
@@ -79,7 +86,7 @@ class CommonFields(BaseStrictModel):
 
 
 dynamic_models_for_argument: tuple = (NAME_DYNAMIC_MODEL, REQUIRED_DYNAMIC_MODEL, DESCRIPTION_DYNAMIC_MODEL,
-                                      DEPRECATED_DYNAMIC_MODEL,)
+                                      DEPRECATED_DYNAMIC_MODEL, DEFAULT_DYNAMIC_MODEL, )
 
 
 class Argument(*dynamic_models_for_argument):
@@ -91,23 +98,10 @@ class Argument(*dynamic_models_for_argument):
     auto: Optional[Auto] = None
     predefined: Optional[list[str]] = None
     is_array: Optional[bool] = Field(None, alias="isArray")
-    default_value: Optional[Any] = Field(None, alias="defaultValue")
     secret: Optional[bool] = None
     deprecated: Optional[bool] = None
     type: Optional[str] = None
     hidden: Optional[bool] = None
-
-    default_value_xsoar: Optional[Any] = Field(None, alias="defaultValue:xsoar")
-    default_value_marketplace_v2: Optional[Any] = Field(
-        None, alias="defaultValue:marketplacev2"
-    )
-    default_value_xpanse: Optional[Any] = Field(None, alias="defaultValue:xpanse")
-    default_value_xsoar_saas: Optional[Any] = Field(
-        None, alias="defaultValue:xsoar_saas"
-    )
-    default_value_xsoar_on_prem: Optional[Any] = Field(
-        None, alias="defaultValue:xsoar_on_prem"
-    )
 
 
 class Output(BaseStrictModel):
@@ -142,7 +136,7 @@ class ScriptType(StrEnum):
     JS = TYPE_JS
 
 
-class SturctureError(BaseStrictModel):
+class StructureError(BaseStrictModel):
     field_name: Optional[tuple] = Field(
         None, alias="loc"
     )  # the api returns here tuple, not str for this key

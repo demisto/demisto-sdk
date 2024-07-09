@@ -12,7 +12,7 @@ from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    SturctureError,
+    StructureError,
 )
 from demisto_sdk.commands.content_graph.strict_objects.integration import (
     StrictIntegration,
@@ -60,7 +60,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_tests()
         self.structure_errors = self.validate_structure()
 
-    def validate_structure(self) -> Optional[list[SturctureError]]:
+    def validate_structure(self) -> Optional[list[StructureError]]:
         """
         The method uses the parsed data and attempts to build a Pydantic Integration object from it.
         Whenever yml_data is invalid by the schema, we store the error in the 'structure_errors' attribute,
@@ -69,7 +69,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         try:
             StrictIntegration(**self.yml_data)
         except pydantic.error_wrappers.ValidationError as e:
-            return [SturctureError(**error) for error in e.errors()]
+            return [StructureError(**error) for error in e.errors()]
         return None
 
     @cached_property

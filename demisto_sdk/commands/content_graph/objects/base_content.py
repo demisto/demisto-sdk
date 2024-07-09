@@ -45,7 +45,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    SturctureError,
+    StructureError,
 )
 
 if TYPE_CHECKING:
@@ -201,7 +201,7 @@ class BaseContent(BaseNode):
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
-    structure_errors: Optional[list[SturctureError]] = Field(None, exclude=True)
+    structure_errors: Optional[list[StructureError]] = Field(None, exclude=True)
 
     def _save(
         self,

@@ -1,27 +1,24 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = CorrelationRule
+
+
 class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
     error_code = "CR102"
-    description = (
-        "Validates 'search_window' existence and non-emptiness for 'execution_mode' = 'SCHEDULED'."
-    )
+    description = "Validates 'search_window' existence and non-emptiness for 'execution_mode' = 'SCHEDULED'."
     rationale = ""
-    error_message = (
-        "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
-    )
+    error_message = "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
     related_field = "execution_mode"
     is_auto_fixable = False
-        
+
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -31,11 +28,10 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-               (not content_item.search_window) or
-                (content_item.execution_mode == "SCHEDULED"
-                and content_item.search_window == "")
+                (not content_item.search_window)
+                or (
+                    content_item.execution_mode == "SCHEDULED"
+                    and content_item.search_window == ""
+                )
             )
         ]
-        
-
-    

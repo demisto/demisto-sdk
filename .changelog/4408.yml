@@ -1,0 +1,4 @@
+changes:
+- description: Removed RM108 & RM112 from the old validate.
+  type: breaking
+pr_number: 4408

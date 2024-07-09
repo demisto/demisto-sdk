@@ -140,9 +140,6 @@ def prepared_graph_repo(graph_repo: Repo):
     return graph_repo
 
 
-import pytest
-
-
 @pytest.mark.parametrize(
     "pack_indices, expected_messages",
     [
@@ -189,9 +186,6 @@ def test_MarketplacesFieldValidatorListFiles_is_valid(
     to_validate = pack_objects[pack_indices]
     validation_results = MarketplacesFieldValidatorListFiles().is_valid(to_validate)
     assert expected_messages == {result.message for result in validation_results}
-
-
-import pytest
 
 
 @pytest.mark.parametrize(

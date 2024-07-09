@@ -18,6 +18,10 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseStrictModel,
+    StructureError,
+)
 
 
 class NotAContentItemException(Exception):
@@ -88,6 +92,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         super().__init__(path)
         self.relationships: Relationships = Relationships()
         self.git_sha: Optional[str] = git_sha
+        self.structure_errors: Optional[
+            List[StructureError]
+        ] = None  # TODO - remove when all ST validations are done
 
     @staticmethod
     def from_path(
@@ -388,3 +395,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target_type=ContentType.COMMAND_OR_SCRIPT,
             mandatorily=is_mandatory,
         )
+
+    # TODO - make it abstract
+    @property
+    def strict_obj(self) -> Optional[Type[BaseStrictModel]]:
+        return None

@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type, Union
+from typing import Any, List, Optional, Type, Union
 
 import pydantic
 from pydantic import BaseModel, Extra, Field
@@ -26,12 +26,12 @@ class BaseStrictModel(BaseModel):
 
 
 def create_dynamic_model(
-        field_name: str,
-        type_: Type,
-        default: Any = ...,
-        suffixes: list[str] = marketplace_suffixes,
-        alias: Optional[str] = None,
-        include_without_suffix: bool = False,
+    field_name: str,
+    type_: Type,
+    default: Any = ...,
+    suffixes: List[str] = marketplace_suffixes,
+    alias: Optional[str] = None,
+    include_without_suffix: bool = False,
 ):
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
@@ -44,13 +44,15 @@ def create_dynamic_model(
     description_marketplace_v2: Optional[str] = Field(None, alias="description:marketplacev2")
     """
     suffixed_fields = {
-            f"{field_name}_{suffix}": (
-                type_,
-                FieldInfo(default, alias=f"{alias or field_name}:{suffix}"),
-            )
-            for suffix in suffixes
-        }
-    non_suffixed_fields = {field_name: (type_, FieldInfo(default, alias=f"{alias or field_name}"))}
+        f"{field_name}_{suffix}": (
+            type_,
+            FieldInfo(default, alias=f"{alias or field_name}:{suffix}"),
+        )
+        for suffix in suffixes
+    }
+    non_suffixed_fields = {
+        field_name: (type_, FieldInfo(default, alias=f"{alias or field_name}"))
+    }
     fields = suffixed_fields | (non_suffixed_fields if include_without_suffix else {})
     return pydantic.create_model(
         f"Dynamic{field_name.title()}Model",
@@ -72,7 +74,10 @@ REQUIRED_DYNAMIC_MODEL = create_dynamic_model(
     field_name="required", type_=Optional[bool], default=None
 )
 DEFAULT_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="defaultValue", type_=Optional[Any], default=None, include_without_suffix=True
+    field_name="defaultValue",
+    type_=Optional[Any],
+    default=None,
+    include_without_suffix=True,
 )
 
 
@@ -85,18 +90,20 @@ class CommonFields(BaseStrictModel):
     id_xsoar_on_prem: str = Field(None, alias="id:xsoar_on_prem")
 
 
-dynamic_models_for_argument: tuple = (NAME_DYNAMIC_MODEL, REQUIRED_DYNAMIC_MODEL, DESCRIPTION_DYNAMIC_MODEL,
-                                      DEPRECATED_DYNAMIC_MODEL, DEFAULT_DYNAMIC_MODEL, )
-
-
-class Argument(*dynamic_models_for_argument):
+class Argument(
+    NAME_DYNAMIC_MODEL,
+    REQUIRED_DYNAMIC_MODEL,
+    DESCRIPTION_DYNAMIC_MODEL,
+    DEPRECATED_DYNAMIC_MODEL,
+    DEFAULT_DYNAMIC_MODEL,
+):
     # not inheriting from StrictBaseModel since dynamic_models do
     name: str
     required: Optional[bool] = None
     default: Optional[bool] = None
     description: str
     auto: Optional[Auto] = None
-    predefined: Optional[list[str]] = None
+    predefined: Optional[List[str]] = None
     is_array: Optional[bool] = Field(None, alias="isArray")
     secret: Optional[bool] = None
     deprecated: Optional[bool] = None
@@ -111,10 +118,7 @@ class Output(BaseStrictModel):
     type: Optional[str] = None
 
 
-dynamic_models_for_important: tuple = (DESCRIPTION_DYNAMIC_MODEL,)
-
-
-class Important(*dynamic_models_for_important):
+class Important(DESCRIPTION_DYNAMIC_MODEL):
     # not inheriting from StrictBaseModel since dynamic_models do
     context_path: str = Field(..., alias="contextPath")
     description: str
@@ -145,21 +149,15 @@ class StructureError(BaseStrictModel):
     ctx: Optional[dict] = None
 
 
-dynamic_models: tuple = (
-    NAME_DYNAMIC_MODEL,
-    DEPRECATED_DYNAMIC_MODEL,
-)
-
-
-class BaseIntegrationScript(*dynamic_models):
+class BaseIntegrationScript(NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL):
     # not inheriting from StrictBaseModel since dynamic_models do
     name: str
     deprecated: Optional[bool] = None
     from_version: Optional[str] = Field(None, alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")
     system: Optional[bool] = None
-    tests: Optional[list[str]] = None
+    tests: Optional[List[str]] = None
     auto_update_docker_image: Optional[bool] = Field(
         None, alias="autoUpdateDockerImage"
     )
-    marketplaces: Union[MarketplaceVersions, list[MarketplaceVersions]] = None
+    marketplaces: Union[MarketplaceVersions, List[MarketplaceVersions]] = None

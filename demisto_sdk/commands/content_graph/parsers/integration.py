@@ -1,9 +1,7 @@
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
-import pydantic
+from typing import Any, Dict, List, Optional, Type
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
@@ -12,7 +10,7 @@ from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    StructureError,
+    BaseStrictModel,
 )
 from demisto_sdk.commands.content_graph.strict_objects.integration import (
     StrictIntegration,
@@ -60,17 +58,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_tests()
         self.structure_errors = self.validate_structure()
 
-    def validate_structure(self) -> Optional[list[StructureError]]:
-        """
-        The method uses the parsed data and attempts to build a Pydantic Integration object from it.
-        Whenever yml_data is invalid by the schema, we store the error in the 'structure_errors' attribute,
-        It will fail validation (ST110).
-        """
-        try:
-            StrictIntegration(**self.yml_data)
-        except pydantic.error_wrappers.ValidationError as e:
-            return [StructureError(**error) for error in e.errors()]
-        return None
+    @property
+    def strict_obj(self) -> Type[BaseStrictModel]:
+        return StrictIntegration
 
     @cached_property
     def field_mapping(self):

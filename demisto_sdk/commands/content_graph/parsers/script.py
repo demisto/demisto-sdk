@@ -1,9 +1,13 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Type
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseStrictModel,
+)
+from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
 
 
 class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
@@ -19,3 +23,6 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             is_test_script=False,
             git_sha=git_sha,
         )
+
+    def strict_obj(self) -> Type[BaseStrictModel]:
+        return StrictScript

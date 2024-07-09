@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Type
 
 import pydantic
 
@@ -13,9 +13,9 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseStrictModel,
     StructureError,
 )
-from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -34,14 +34,19 @@ class IntegrationScriptParser(YAMLContentItemParser):
         self.connect_to_api_modules()
         self.structure_errors = self.validate_structure()
 
-    def validate_structure(self) -> Optional[list[StructureError]]:
+    @property
+    @abstractmethod
+    def strict_obj(self) -> Type[BaseStrictModel]:
+        ...
+
+    def validate_structure(self) -> Optional[List[StructureError]]:
         """
         The method uses the parsed data and attempts to build a Pydantic Script object from it.
         Whenever yml_data is invalid by the schema, we store the error in the 'structure_errors' attribute,
         It will fail validation (ST110).
         """
         try:
-            StrictScript(**self.yml_data)
+            self.strict_obj(**self.yml_data)
         except pydantic.error_wrappers.ValidationError as e:
             return [StructureError(**error) for error in e.errors()]
         return None

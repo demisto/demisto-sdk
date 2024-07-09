@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -65,21 +65,21 @@ class StrictScript(BaseIntegrationScript):
     name_x2: Optional[str] = None
     script: str
     type_: ScriptType = Field(..., alias="type")
-    tags: Optional[list[str]] = None
+    tags: Optional[List[str]] = None
     comment: Optional[str] = None
     comment_marketplace_v2: Optional[str] = Field(None, alias="comment:marketplacev2")
     enabled: Optional[bool] = None
-    args: Optional[list[ScriptArgument]] = None
+    args: Optional[List[ScriptArgument]] = None
     script_target: Optional[int] = Field(None, alias="scripttarget")
     timeout: Optional[str] = None
     depends_on: dict = Field({}, alias="dependson")
     depends_on_x2: dict = Field({}, alias="dependson_x2")
-    outputs: Optional[list[ScriptOutput]] = None
-    important: Optional[list[ScriptImportant]] = None
+    outputs: Optional[List[ScriptOutput]] = None
+    important: Optional[List[ScriptImportant]] = None
     docker_image: str = Field(None, alias="dockerimage")
     docker_image_45: str = Field(None, alias="dockerimage45")
-    alt_docker_images: Optional[list[str]] = Field(None, alias="alt_dockerimages")
-    native_image: Optional[list[str]] = Field(None, alias="nativeImage")
+    alt_docker_images: Optional[List[str]] = Field(None, alias="alt_dockerimages")
+    native_image: Optional[List[str]] = Field(None, alias="nativeImage")
     runonce: Optional[bool] = None
     sensitive: Optional[bool] = None
     run_as: Optional[str] = Field(None, alias="runas")
@@ -89,4 +89,4 @@ class StrictScript(BaseIntegrationScript):
         None, alias="contentitemexportablefields"
     )
     polling: Optional[bool] = None
-    skip_prepare: Optional[list[SkipPrepare]] = Field(None, alias="skipprepare")
+    skip_prepare: Optional[List[SkipPrepare]] = Field(None, alias="skipprepare")

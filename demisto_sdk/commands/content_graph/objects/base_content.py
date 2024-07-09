@@ -201,7 +201,7 @@ class BaseContent(BaseNode):
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
-    structure_errors: Optional[list[StructureError]] = Field(None, exclude=True)
+    structure_errors: Optional[List[StructureError]] = Field(None, exclude=True)
 
     def _save(
         self,

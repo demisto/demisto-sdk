@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from pydantic import Field
 
@@ -24,7 +24,7 @@ class Configuration(BaseStrictModel):
     type: int
     required: Optional[bool] = None
     hidden: Optional[Any] = None
-    options: Optional[list[str]] = None
+    options: Optional[List[str]] = None
     additional_info: Optional[str] = Field(None, alias="additionalinfo")
     display_password: Optional[str] = Field(None, alias="displaypassword")
     hidden_username: Optional[bool] = Field(None, alias="hiddenusername")
@@ -64,9 +64,9 @@ class Command(BaseStrictModel):
     description: str
     deprecated: Optional[bool] = None
     system: Optional[bool] = None
-    arguments: Optional[list[Argument]] = None
-    outputs: Optional[list[IntegrationOutput]] = None
-    important: Optional[list[Important]] = None
+    arguments: Optional[List[Argument]] = None
+    outputs: Optional[List[IntegrationOutput]] = None
+    important: Optional[List[Important]] = None
     timeout: Optional[int] = None
     hidden: Optional[bool] = None
     polling: Optional[bool] = None
@@ -100,8 +100,8 @@ class Script(BaseStrictModel):
     type_: ScriptType = Field(..., alias="type")
     docker_image: str = Field(None, alias="dockerimage")
     docker_image_45: str = Field(None, alias="dockerimage45")
-    alt_docker_images: Optional[list[str]] = Field(None, alias="alt_dockerimages")
-    native_image: Optional[list[str]] = Field(None, alias="nativeImage")
+    alt_docker_images: Optional[List[str]] = Field(None, alias="alt_dockerimages")
+    native_image: Optional[List[str]] = Field(None, alias="nativeImage")
     is_fetch: Optional[bool] = Field(None, alias="isfetch")
     is_fetch_events: Optional[bool] = Field(None, alias="isfetchevents")
     is_fetch_assets: Optional[bool] = Field(None, alias="isfetchassets")
@@ -112,7 +112,7 @@ class Script(BaseStrictModel):
     is_remote_sync_in_x2: Optional[bool] = Field(None, alias="isremotesyncin_x2")
     is_remote_sync_out: Optional[bool] = Field(None, alias="isremotesyncout")
     is_remote_sync_out_x2: Optional[bool] = Field(None, alias="isremotesyncout_x2")
-    commands: Optional[list[Command]] = None
+    commands: Optional[List[Command]] = None
     run_once: Optional[bool] = Field(None, alias="runonce")
     sub_type: Optional[str] = Field(["python2", "python3"], alias="subtype")
     feed: Optional[bool] = None
@@ -137,7 +137,7 @@ class Script(BaseStrictModel):
 
 
 class CommonFieldsIntegration(CommonFields):
-    sort_values: Optional[list[str]] = Field(None, alias="sortvalues")
+    sort_values: Optional[List[str]] = Field(None, alias="sortvalues")
 
 
 dynamic_models_for_integrations: tuple = (DESCRIPTION_DYNAMIC_MODEL,)
@@ -148,8 +148,8 @@ class StrictIntegration(BaseIntegrationScript, *dynamic_models_for_integrations)
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order_1: Optional[list[str]] = Field(None, alias="sectionOrder")
-    section_order_2: Optional[list[str]] = Field(None, alias="sectionorder")
+    section_order_1: Optional[List[str]] = Field(None, alias="sectionOrder")
+    section_order_2: Optional[List[str]] = Field(None, alias="sectionorder")
     image: Optional[str] = None
     description: str
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
@@ -159,10 +159,10 @@ class StrictIntegration(BaseIntegrationScript, *dynamic_models_for_integrations)
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
     support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
-    configuration: list[Configuration]
+    configuration: List[Configuration]
     script: Script
     hidden: Optional[bool] = None
-    videos: Optional[list[str]] = None
+    videos: Optional[List[str]] = None
     versioned_fields: dict = Field(None, alias="versionedfields")
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")

@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import SturctureError
 from demisto_sdk.commands.content_graph.strict_objects.integration import StrictIntegration
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -55,11 +56,11 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_tests()
         self.structure_errors = self.validate_structure()
 
-    def validate_structure(self) -> Optional[list[dict]]:
+    def validate_structure(self) -> Optional[list[SturctureError]]:
         try:
             StrictIntegration(**self.yml_data)
         except pydantic.error_wrappers.ValidationError as e:
-            return e.errors()
+            return [SturctureError(**error) for error in e.errors()]
         return None
 
     @cached_property

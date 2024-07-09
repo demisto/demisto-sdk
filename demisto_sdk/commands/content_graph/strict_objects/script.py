@@ -8,12 +8,12 @@ from pydantic import Field
 
 
 class SkipPrepare(StrEnum):
-    SKIP_PREPARE_SCRIPT_NAME
+    SCRIPT_NAME = SKIP_PREPARE_SCRIPT_NAME
 
 
 class ScriptSubType(StrEnum):
-    TYPE_PYTHON3
-    TYPE_PYTHON2
+    PYTHON3 = TYPE_PYTHON3
+    PYTHON2 = TYPE_PYTHON2
 
 
 class ScriptArgument(Argument):

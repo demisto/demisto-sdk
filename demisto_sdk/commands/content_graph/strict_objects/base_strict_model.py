@@ -95,9 +95,16 @@ class Important(BaseStrictModel):
 
 
 class ScriptType(StrEnum):
-    TYPE_PWSH
-    TYPE_PYTHON
-    TYPE_JS
+    PWSH = TYPE_PWSH
+    PYTHON = TYPE_PYTHON
+    JS = TYPE_JS
+
+
+class SturctureError(BaseStrictModel):
+    field_name: Optional[tuple] = Field(None, alias="loc")  # the api returns here tuple, not str for this key
+    error_message: Optional[str] = Field(None, alias="msg")
+    error_type: Optional[str] = Field(None, alias="type")
+    ctx: Optional[dict] = None
 
 
 name_dynamic_model = create_dynamic_model(field_name="name", type_=Optional[str], default=None)

@@ -26,8 +26,8 @@ class SchemaValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message="\n".join(f'problematic field: {error.get("loc")} | error message: {error.get("msg")} |'
-                                  f' error type : {error.get("type")}' for error in content_item.structure_errors),
+                message="\n".join(f'problematic field: {error.field_name} | error message: {error.error_message} |'
+                                  f' error type : {error.error_type}' for error in content_item.structure_errors),
                 content_object=content_item,
             )
             for content_item in content_items

@@ -12,6 +12,7 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import SturctureError
 from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -31,11 +32,11 @@ class IntegrationScriptParser(YAMLContentItemParser):
         self.connect_to_api_modules()
         self.structure_errors = self.validate_structure()
 
-    def validate_structure(self) -> Optional[list[dict]]:
+    def validate_structure(self) -> Optional[list[SturctureError]]:
         try:
             StrictScript(**self.yml_data)
         except pydantic.error_wrappers.ValidationError as e:
-            return e.errors()
+            return [SturctureError(**error) for error in e.errors()]
         return None
 
     @cached_property

@@ -1,4 +1,5 @@
-from typing import Any, List, Optional, Type, Union
+from abc import ABC
+from typing import Any, List, Optional, Tuple, Type, Union
 
 import pydantic
 from pydantic import BaseModel, Extra, Field
@@ -16,7 +17,7 @@ from demisto_sdk.commands.common.StrEnum import StrEnum
 marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
 
 
-class BaseStrictModel(BaseModel):
+class BaseStrictModel(BaseModel, ABC):
     class Config:
         """
         This is the definition of not allowing extra fields except those defined by the schema.
@@ -27,12 +28,12 @@ class BaseStrictModel(BaseModel):
 
 def create_dynamic_model(
     field_name: str,
-    type_: Type,
+    type_: Any,  # TODO try and find a solution for passing some type, incl. `Optional`
     default: Any = ...,
     suffixes: List[str] = marketplace_suffixes,
     alias: Optional[str] = None,
     include_without_suffix: bool = False,
-):
+) -> Type[BaseStrictModel]:
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
     (we have fields that are almost identical, except for the suffix.
@@ -43,21 +44,20 @@ def create_dynamic_model(
     description_xsoar: Optional[str] = Field(None, alias="description:xsoar")
     description_marketplace_v2: Optional[str] = Field(None, alias="description:marketplacev2")
     """
-    suffixed_fields = {
+    fields = {
         f"{field_name}_{suffix}": (
             type_,
             FieldInfo(default, alias=f"{alias or field_name}:{suffix}"),
         )
         for suffix in suffixes
     }
-    non_suffixed_fields = {
-        field_name: (type_, FieldInfo(default, alias=f"{alias or field_name}"))
-    }
-    fields = suffixed_fields | (non_suffixed_fields if include_without_suffix else {})
+    if include_without_suffix:
+        fields[field_name] = (type_, FieldInfo(default, alias=f"{alias or field_name}"))
+
     return pydantic.create_model(
         f"Dynamic{field_name.title()}Model",
-        **fields,
         __base__=BaseStrictModel,
+        field_definitions=fields,
     )
 
 
@@ -90,14 +90,15 @@ class CommonFields(BaseStrictModel):
     id_xsoar_on_prem: str = Field(None, alias="id:xsoar_on_prem")
 
 
-class Argument(
-    NAME_DYNAMIC_MODEL,
-    REQUIRED_DYNAMIC_MODEL,
-    DESCRIPTION_DYNAMIC_MODEL,
-    DEPRECATED_DYNAMIC_MODEL,
-    DEFAULT_DYNAMIC_MODEL,
-):
-    # not inheriting from StrictBaseModel since dynamic_models do
+class Argument(BaseModel):
+    __base__ = (
+        BaseStrictModel,
+        NAME_DYNAMIC_MODEL,
+        REQUIRED_DYNAMIC_MODEL,
+        DESCRIPTION_DYNAMIC_MODEL,
+        DEPRECATED_DYNAMIC_MODEL,
+        DEFAULT_DYNAMIC_MODEL,
+    )
     name: str
     required: Optional[bool] = None
     default: Optional[bool] = None
@@ -118,7 +119,8 @@ class Output(BaseStrictModel):
     type: Optional[str] = None
 
 
-class Important(DESCRIPTION_DYNAMIC_MODEL):
+class Important(BaseModel):
+    __base__ = (DESCRIPTION_DYNAMIC_MODEL,)
     # not inheriting from StrictBaseModel since dynamic_models do
     context_path: str = Field(..., alias="contextPath")
     description: str
@@ -149,8 +151,8 @@ class StructureError(BaseStrictModel):
     ctx: Optional[dict] = None
 
 
-class BaseIntegrationScript(NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL):
-    # not inheriting from StrictBaseModel since dynamic_models do
+class BaseIntegrationScript(BaseStrictModel):
+    __base__ = (NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL)
     name: str
     deprecated: Optional[bool] = None
     from_version: Optional[str] = Field(None, alias="fromversion")
@@ -160,4 +162,4 @@ class BaseIntegrationScript(NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL):
     auto_update_docker_image: Optional[bool] = Field(
         None, alias="autoUpdateDockerImage"
     )
-    marketplaces: Union[MarketplaceVersions, List[MarketplaceVersions]] = None
+    marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None

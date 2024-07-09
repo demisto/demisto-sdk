@@ -140,10 +140,8 @@ class CommonFieldsIntegration(CommonFields):
     sort_values: Optional[List[str]] = Field(None, alias="sortvalues")
 
 
-dynamic_models_for_integrations: tuple = (DESCRIPTION_DYNAMIC_MODEL,)
-
-
-class StrictIntegration(BaseIntegrationScript, *dynamic_models_for_integrations):
+class StrictIntegration(BaseIntegrationScript):
+    __base__ = (DESCRIPTION_DYNAMIC_MODEL,)
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")
     display: str
     beta: Optional[bool] = None

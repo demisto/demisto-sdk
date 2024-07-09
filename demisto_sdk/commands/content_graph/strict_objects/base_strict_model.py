@@ -16,6 +16,15 @@ from demisto_sdk.commands.common.StrEnum import StrEnum
 marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
 
 
+class BaseStrictModel(BaseModel):
+    class Config:
+        """
+        This is the definition of not allowing extra fields except those defined by the schema.
+        """
+
+        extra = Extra.forbid
+
+
 def create_dynamic_model(
     field_name: str,
     type_: Type,

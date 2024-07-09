@@ -92,7 +92,7 @@
 
 - id: prevent-mypy-global-ignore
   name: prevent-mypy-global-ignore
-  description: Validate the changed Python files don't specify global mypy ignore
+  description: Prevent Python files from setting global mypy ignore
   entry: prevent-mypy-global-ignore
   language: python
   files: .*Packs/.*/(?:Integrations|Scripts)/.*.py$

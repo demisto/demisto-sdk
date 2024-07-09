@@ -33,8 +33,8 @@ def has_global_type_ignore(file_path: Path) -> Union[int, None]:
     return None
 
 
-@main.command(help="Validate the changed Python files don't specify global mypy ignore")
-def validate_mypy_global_ignore(
+@main.command(help="Prevent the changed Python files don't specify global mypy ignore")
+def prevent_mypy_global_ignore(
     changed_files: List[Path] = typer.Argument(
         default=...,
         help="The files to check, e.g. /dir/f1.py dir/f2.py f3.py",
@@ -45,11 +45,10 @@ def validate_mypy_global_ignore(
 ) -> None:
     """
     Validate whether the Python file has a global mypy type ignore set.
-    Exit code 0 if global mypy type ignore is set, 1 otherwise.
+    Exit code 0 if global mypy type ignore is not set, 1 otherwise.
 
     Args:
     - `changed_files` (``List[Path]``): The files paths to check.
-    - `ci` (``bool``): Whether we're in a CI environment or not.
     """
 
     exit_code = 0

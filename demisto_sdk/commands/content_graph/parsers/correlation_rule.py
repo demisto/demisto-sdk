@@ -28,7 +28,7 @@ class CorrelationRuleParser(
         )
         return super().field_mapping
 
-    @property
+    @cached_property
     def execution_mode(self):
         return get_value(self.yml_data, self.field_mapping.get("execution_mode", ""), None)
 

@@ -69,15 +69,6 @@ REQUIRED_DYNAMIC_MODEL = create_dynamic_model(
 )
 
 
-class BaseStrictModel(BaseModel):
-    class Config:
-        """
-        This is the definition of not allowing extra fields except those defined by the schema.
-        """
-
-        extra = Extra.forbid
-
-
 class CommonFields(BaseStrictModel):
     id_: str = Field(..., alias="id")
     version: int
@@ -91,7 +82,8 @@ dynamic_models_for_argument: tuple = (NAME_DYNAMIC_MODEL, REQUIRED_DYNAMIC_MODEL
                                       DEPRECATED_DYNAMIC_MODEL,)
 
 
-class Argument(BaseStrictModel, *dynamic_models_for_argument):
+class Argument(*dynamic_models_for_argument):
+    # not inheriting from StrictBaseModel since dynamic_models do
     name: str
     required: Optional[bool] = None
     default: Optional[bool] = None

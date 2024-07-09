@@ -26,11 +26,11 @@ class BaseStrictModel(BaseModel):
 
 
 def create_dynamic_model(
-    field_name: str,
-    type_: Type,
-    default: Any = ...,
-    suffixes: list[str] = marketplace_suffixes,
-    alias: Optional[str] = None,
+        field_name: str,
+        type_: Type,
+        default: Any = ...,
+        suffixes: list[str] = marketplace_suffixes,
+        alias: Optional[str] = None,
 ):
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
@@ -64,6 +64,9 @@ NAME_DYNAMIC_MODEL = create_dynamic_model(
 DEPRECATED_DYNAMIC_MODEL = deprecated_dynamic_model = create_dynamic_model(
     field_name="deprecated", type_=Optional[bool], default=None
 )
+REQUIRED_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="required", type_=Optional[bool], default=None
+)
 
 
 class BaseStrictModel(BaseModel):
@@ -84,7 +87,11 @@ class CommonFields(BaseStrictModel):
     id_xsoar_on_prem: str = Field(None, alias="id:xsoar_on_prem")
 
 
-class Argument(BaseStrictModel):
+dynamic_models_for_argument: tuple = (NAME_DYNAMIC_MODEL, REQUIRED_DYNAMIC_MODEL, DESCRIPTION_DYNAMIC_MODEL,
+                                      DEPRECATED_DYNAMIC_MODEL,)
+
+
+class Argument(BaseStrictModel, *dynamic_models_for_argument):
     name: str
     required: Optional[bool] = None
     default: Optional[bool] = None
@@ -97,24 +104,7 @@ class Argument(BaseStrictModel):
     deprecated: Optional[bool] = None
     type: Optional[str] = None
     hidden: Optional[bool] = None
-    name_xsoar: Optional[str] = Field(None, alias="name:xsoar")
-    name_marketplacev2: Optional[str] = Field(None, alias="name:marketplacev2")
-    name_xpanse: Optional[str] = Field(None, alias="name:xpanse")
-    name_xsoar_saas: Optional[str] = Field(None, alias="name:xsoar_saas")
-    name_xsoar_on_prem: Optional[str] = Field(None, alias="name:xsoar_on_prem")
-    required_xsoar: Optional[bool] = Field(None, alias="required:xsoar")
-    required_marketplacev2: Optional[bool] = Field(None, alias="required:marketplacev2")
-    required_xsoar_saas: Optional[bool] = Field(None, alias="required:xsoar_saas")
-    required_xsoar_on_prem: Optional[bool] = Field(None, alias="required:xsoar_on_prem")
-    description_xsoar: Optional[str] = Field(None, alias="description:xsoar")
-    description_marketplace_v2: Optional[str] = Field(
-        None, alias="description:marketplacev2"
-    )
-    description_xpanse: Optional[str] = Field(None, alias="description:xpanse")
-    description_xsoar_saas: Optional[str] = Field(None, alias="description:xsoar_saas")
-    description_xsoar_on_prem: Optional[str] = Field(
-        None, alias="description:xsoar_on_prem"
-    )
+
     default_value_xsoar: Optional[Any] = Field(None, alias="defaultValue:xsoar")
     default_value_marketplace_v2: Optional[Any] = Field(
         None, alias="defaultValue:marketplacev2"
@@ -125,15 +115,6 @@ class Argument(BaseStrictModel):
     )
     default_value_xsoar_on_prem: Optional[Any] = Field(
         None, alias="defaultValue:xsoar_on_prem"
-    )
-    deprecated_xsoar: Optional[bool] = Field(None, alias="deprecated:xsoar")
-    deprecated_marketplace_v2: Optional[bool] = Field(
-        None, alias="deprecated:marketplacev2"
-    )
-    deprecated_xpanse: Optional[bool] = Field(None, alias="deprecated:xpanse")
-    deprecated_xsoar_saas: Optional[bool] = Field(None, alias="deprecated:xsoar_saas")
-    deprecated_xsoar_on_prem: Optional[bool] = Field(
-        None, alias="deprecated:xsoar_on_prem"
     )
 
 

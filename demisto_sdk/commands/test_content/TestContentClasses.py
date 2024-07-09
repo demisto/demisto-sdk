@@ -771,7 +771,6 @@ class BuildContext:
         ]
         self.is_nightly = kwargs["nightly"]
         self.slack_client = SlackClient(kwargs["slack"])
-        self.circleci_token = kwargs["circleci"]
         self.build_number = kwargs["build_number"]
         self.build_name = kwargs["branch_name"]
         self.isAMI = False if self.is_saas_server_type else kwargs["is_ami"]
@@ -811,8 +810,6 @@ class BuildContext:
             kwargs.get("artifacts_bucket"),
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
-
-        self.slack_user_id = self._retrieve_slack_user_id()
         self.packs_to_install_by_machine_path = kwargs["machine_assignment"]
         self.machine_assignment_json = self._extract_filtered_tests()
 
@@ -948,12 +945,6 @@ class BuildContext:
 
         return conf, secret_conf
 
-    def _get_user_name_from_circle(self):
-        url = f"https://circleci.com/api/v1.1/project/github/demisto/content/{self.build_number}"
-        res = self._http_request(url, params_dict={"circle-token": self.circleci_token})
-
-        user_details = res.get("user", {})
-        return user_details.get("name", "")
 
     @staticmethod
     def _http_request(url, params_dict=None):
@@ -967,27 +958,6 @@ class BuildContext:
 
         return res.json()
 
-    def _retrieve_slack_user_id(self):
-        """
-        Gets the user id of the circle user who triggered the current build
-        """
-        user_id = ""
-        try:
-            user_name = (
-                os.getenv("GITLAB_USER_LOGIN") or self._get_user_name_from_circle()
-            )
-            res = self.slack_client.api_call("users.list")
-
-            user_list = res.get("members", [])  # type: ignore
-            for user in user_list:
-                profile = user.get("profile", {})
-                name = profile.get("real_name_normalized", "")
-                if name == user_name:
-                    user_id = user.get("id", "")
-        except Exception as exc:
-            logging.debug(f"failed to retrieve the slack user ID.\nError: {exc}")
-
-        return user_id
 
     # --------------------------- Testing logic -------------------------------
 
@@ -2852,23 +2822,6 @@ class TestContext:
             },
         )
 
-    def _notify_failed_test(self):
-        text = (
-            f"{self.build_context.build_name} - {self.playbook} Failed\n"
-            f"for more details browse into the following link\n"
-            f"{get_ui_url(self.client.api_client.configuration.host)}"
-        )
-        text += f"/#/WorkPlan/{self.incident_id}" if self.incident_id else ""
-        if self.build_context.slack_user_id:
-            self.build_context.slack_client.api_call(
-                "chat.postMessage",
-                json={
-                    "channel": self.build_context.slack_user_id,
-                    "username": "Content CircleCI",
-                    "as_user": "False",
-                    "text": text,
-                },
-            )
 
     def _add_to_succeeded_playbooks(self):
         """
@@ -2950,51 +2903,6 @@ class TestContext:
         )
         self.playbook.close_test_suite([Failure(err)])
 
-    @staticmethod
-    def _get_circle_memory_data() -> Tuple[str, str]:
-        """
-        Checks how many bytes are currently in use in the circle build instance
-        Returns:
-            The number of bytes in use
-        """
-        process = subprocess.Popen(
-            ["cat", "/sys/fs/cgroup/memory/memory.usage_in_bytes"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        stdout, stderr = process.communicate()
-        return stdout.decode(), stderr.decode()
-
-    @staticmethod
-    def _get_circle_processes_data() -> Tuple[str, str]:
-        """
-        Returns some data about the processes currently running in the circle build instance
-        """
-        process = subprocess.Popen(
-            ["ps", "aux"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
-        stdout, stderr = process.communicate()
-        return stdout.decode(), stderr.decode()
-
-    def _send_circle_memory_and_pid_stats_on_slack(self):
-        """
-        Sends a Slack messages with the number of bytes currently in use and the number of processes currently in use
-        """
-        if (
-            self.build_context.is_nightly
-            and self.build_context.memCheck
-            and not self.build_context.is_local_run
-        ):
-            stdout, stderr = self._get_circle_memory_data()
-            text = stderr or f"Memory Usage: {stdout}"
-            self._send_slack_message(
-                SLACK_MEM_CHANNEL_ID, text, "Content CircleCI", "False"
-            )
-            stdout, stderr = self._get_circle_processes_data()
-            text = stderr or stdout
-            self._send_slack_message(
-                SLACK_MEM_CHANNEL_ID, text, "Content CircleCI", "False"
-            )
 
     def _incident_and_docker_test(self) -> str:
         """
@@ -3219,7 +3127,6 @@ class TestContext:
         if updated_status == PB_Status.COMPLETED:
             self._add_to_succeeded_playbooks()
         elif updated_status == PB_Status.FAILED:
-            self._notify_failed_test()
             self._add_to_failed_playbooks(is_second_playback_run=is_second_playback_run)
         return updated_status
 
@@ -3313,7 +3220,6 @@ class TestContext:
         try:
             if not self._is_runnable_on_current_server_instance():
                 return False
-            self._send_circle_memory_and_pid_stats_on_slack()
             return (
                 self._execute_mockable_test(proxy)  # type: ignore[arg-type]
                 if self.playbook.is_mockable

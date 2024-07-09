@@ -14,7 +14,6 @@ class Configuration(BaseStrictModel):
     type: int
     required: Optional[bool] = None
     hidden: Optional[Any] = None
-    hidden_x2: bool = None
     options: Optional[list[str]] = None
     additional_info: Optional[str] = Field(None, alias="additionalinfo")
     display_password: Optional[str] = Field(None, alias="displaypassword")
@@ -54,7 +53,6 @@ class Command(BaseStrictModel):
     important: Optional[list[Important]] = None
     timeout: Optional[int] = None
     hidden: Optional[bool] = None
-    hidden_x2: Optional[bool] = None
     polling: Optional[bool] = None
     name_xsoar: Optional[str] = Field(None, alias="name:xsoar")
     name_marketplacev2: Optional[str] = Field(None, alias="name:marketplacev2")

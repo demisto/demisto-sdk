@@ -21,16 +21,10 @@ from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
 MP_V2 = [MarketplaceVersions.MarketplaceV2.value]
-MP_XPANSE = [MarketplaceVersions.XPANSE.value]
-MP_XSOAR_AND_XPANSE = [
-    MarketplaceVersions.XSOAR.value,
-    MarketplaceVersions.XPANSE.value,
-]
 MP_XSOAR_AND_V2 = [
     MarketplaceVersions.XSOAR.value,
     MarketplaceVersions.MarketplaceV2.value,
 ]
-MP_XSOAR_V2_XPANSE = MP_XSOAR_AND_V2 + MP_XPANSE
 
 
 def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(

@@ -23,7 +23,7 @@ class JSONContentItemParser(ContentItemParser):
         pack_marketplaces: List[MarketplaceVersions],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.path = self.get_path_with_suffix(".json") if not git_sha else self.path
         self.original_json_data: Dict[str, Any] = self.json_data
         if not isinstance(self.json_data, dict):

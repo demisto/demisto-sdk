@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where new validate failed when attempting to parse renamed files.
+  type: fix
+pr_number: 4411

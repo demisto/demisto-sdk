@@ -1,0 +1,4 @@
+changes:
+- description: Added the **-tpb** option to the **upload** command. When provided, all the test playbooks for the given pack will be uploaded.
+  type: feature
+pr_number: 4402

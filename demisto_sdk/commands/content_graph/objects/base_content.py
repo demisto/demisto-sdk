@@ -44,7 +44,9 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import SturctureError
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    SturctureError,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData

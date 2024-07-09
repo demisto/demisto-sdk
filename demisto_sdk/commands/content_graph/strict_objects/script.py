@@ -1,10 +1,22 @@
-from demisto_sdk.commands.common.StrEnum import StrEnum
 from typing import Optional
 
-from demisto_sdk.commands.common.constants import SKIP_PREPARE_SCRIPT_NAME, TYPE_PYTHON3, TYPE_PYTHON2
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseStrictModel, CommonFields, \
-    Argument, Output, Important, ScriptType, BaseIntegrationScript
 from pydantic import Field
+
+from demisto_sdk.commands.common.constants import (
+    SKIP_PREPARE_SCRIPT_NAME,
+    TYPE_PYTHON2,
+    TYPE_PYTHON3,
+)
+from demisto_sdk.commands.common.StrEnum import StrEnum
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    Argument,
+    BaseIntegrationScript,
+    BaseStrictModel,
+    CommonFields,
+    Important,
+    Output,
+    ScriptType,
+)
 
 
 class SkipPrepare(StrEnum):
@@ -43,7 +55,9 @@ class ContentItemFields(BaseStrictModel):
 
 
 class ContentItemExportableFields(BaseStrictModel):
-    content_item_fields: Optional[ContentItemFields] = Field(None, alias="contentitemfields")
+    content_item_fields: Optional[ContentItemFields] = Field(
+        None, alias="contentitemfields"
+    )
 
 
 class StrictScript(BaseIntegrationScript):
@@ -71,7 +85,8 @@ class StrictScript(BaseIntegrationScript):
     run_as: Optional[str] = Field(None, alias="runas")
     sub_type: Optional[ScriptSubType] = Field(None, alias="subtype")
     engine_info: Optional[EngineInfo] = Field(None, alias="engineinfo")
-    content_item_exportable_fields: Optional[ContentItemExportableFields] = \
-        Field(None, alias="contentitemexportablefields")
+    content_item_exportable_fields: Optional[ContentItemExportableFields] = Field(
+        None, alias="contentitemexportablefields"
+    )
     polling: Optional[bool] = None
     skip_prepare: Optional[list[SkipPrepare]] = Field(None, alias="skipprepare")

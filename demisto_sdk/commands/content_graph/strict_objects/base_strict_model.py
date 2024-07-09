@@ -1,16 +1,28 @@
-from typing import Optional, Any, Union, Type
+from typing import Any, Optional, Type, Union
 
 import pydantic
+from pydantic import BaseModel, Extra, Field
 from pydantic.fields import FieldInfo
 
+from demisto_sdk.commands.common.constants import (
+    TYPE_JS,
+    TYPE_PWSH,
+    TYPE_PYTHON,
+    Auto,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.StrEnum import StrEnum
-from pydantic import BaseModel, Extra, Field
-from demisto_sdk.commands.common.constants import Auto, MarketplaceVersions, TYPE_PWSH, TYPE_PYTHON, TYPE_JS
 
 marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
 
-def create_dynamic_model(field_name: str, type_: Type, default: Any = ..., suffixes: list[str] = marketplace_suffixes,
-                         alias: Optional[str] = None):
+
+def create_dynamic_model(
+    field_name: str,
+    type_: Type,
+    default: Any = ...,
+    suffixes: list[str] = marketplace_suffixes,
+    alias: Optional[str] = None,
+):
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
     (we have fields that are almost identical, except for the suffix.
@@ -22,16 +34,27 @@ def create_dynamic_model(field_name: str, type_: Type, default: Any = ..., suffi
     description_marketplace_v2: Optional[str] = Field(None, alias="description:marketplacev2")
     """
     return pydantic.create_model(
-        f'Dynamic{field_name.title()}Model',
-        **{f'{field_name}_{suffix}': (type_, FieldInfo(default, alias=f'{alias or field_name}:{suffix}'))
-           for suffix in suffixes}, __base__=BaseStrictModel
+        f"Dynamic{field_name.title()}Model",
+        **{
+            f"{field_name}_{suffix}": (
+                type_,
+                FieldInfo(default, alias=f"{alias or field_name}:{suffix}"),
+            )
+            for suffix in suffixes
+        },
+        __base__=BaseStrictModel,
     )
 
 
-DESCRIPTION_DYNAMIC_MODEL = create_dynamic_model(field_name="description", type_=Optional[str], default=None)
-NAME_DYNAMIC_MODEL = create_dynamic_model(field_name="name", type_=Optional[str], default=None)
-DEPRECATED_DYNAMIC_MODEL = deprecated_dynamic_model =\
-    create_dynamic_model(field_name="deprecated", type_=Optional[bool], default=None)
+DESCRIPTION_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="description", type_=Optional[str], default=None
+)
+NAME_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="name", type_=Optional[str], default=None
+)
+DEPRECATED_DYNAMIC_MODEL = deprecated_dynamic_model = create_dynamic_model(
+    field_name="deprecated", type_=Optional[bool], default=None
+)
 
 
 class BaseStrictModel(BaseModel):
@@ -39,6 +62,7 @@ class BaseStrictModel(BaseModel):
         """
         This is the definition of not allowing extra fields except those defined by the schema.
         """
+
         extra = Extra.forbid
 
 
@@ -74,20 +98,34 @@ class Argument(BaseStrictModel):
     required_xsoar_saas: Optional[bool] = Field(None, alias="required:xsoar_saas")
     required_xsoar_on_prem: Optional[bool] = Field(None, alias="required:xsoar_on_prem")
     description_xsoar: Optional[str] = Field(None, alias="description:xsoar")
-    description_marketplace_v2: Optional[str] = Field(None, alias="description:marketplacev2")
+    description_marketplace_v2: Optional[str] = Field(
+        None, alias="description:marketplacev2"
+    )
     description_xpanse: Optional[str] = Field(None, alias="description:xpanse")
     description_xsoar_saas: Optional[str] = Field(None, alias="description:xsoar_saas")
-    description_xsoar_on_prem: Optional[str] = Field(None, alias="description:xsoar_on_prem")
+    description_xsoar_on_prem: Optional[str] = Field(
+        None, alias="description:xsoar_on_prem"
+    )
     default_value_xsoar: Optional[Any] = Field(None, alias="defaultValue:xsoar")
-    default_value_marketplace_v2: Optional[Any] = Field(None, alias="defaultValue:marketplacev2")
+    default_value_marketplace_v2: Optional[Any] = Field(
+        None, alias="defaultValue:marketplacev2"
+    )
     default_value_xpanse: Optional[Any] = Field(None, alias="defaultValue:xpanse")
-    default_value_xsoar_saas: Optional[Any] = Field(None, alias="defaultValue:xsoar_saas")
-    default_value_xsoar_on_prem: Optional[Any] = Field(None, alias="defaultValue:xsoar_on_prem")
+    default_value_xsoar_saas: Optional[Any] = Field(
+        None, alias="defaultValue:xsoar_saas"
+    )
+    default_value_xsoar_on_prem: Optional[Any] = Field(
+        None, alias="defaultValue:xsoar_on_prem"
+    )
     deprecated_xsoar: Optional[bool] = Field(None, alias="deprecated:xsoar")
-    deprecated_marketplace_v2: Optional[bool] = Field(None, alias="deprecated:marketplacev2")
+    deprecated_marketplace_v2: Optional[bool] = Field(
+        None, alias="deprecated:marketplacev2"
+    )
     deprecated_xpanse: Optional[bool] = Field(None, alias="deprecated:xpanse")
     deprecated_xsoar_saas: Optional[bool] = Field(None, alias="deprecated:xsoar_saas")
-    deprecated_xsoar_on_prem: Optional[bool] = Field(None, alias="deprecated:xsoar_on_prem")
+    deprecated_xsoar_on_prem: Optional[bool] = Field(
+        None, alias="deprecated:xsoar_on_prem"
+    )
 
 
 class Output(BaseStrictModel):
@@ -106,10 +144,14 @@ class Important(*dynamic_models_for_important):
     description: str
     related: Optional[str] = None
     description_xsoar: Optional[str] = Field(None, alias="contextPath")
-    description_marketplacev2: Optional[str] = Field(None, alias="description:marketplacev2")
+    description_marketplacev2: Optional[str] = Field(
+        None, alias="description:marketplacev2"
+    )
     description_xpanse: Optional[str] = Field(None, alias="description:xpanse")
     description_xsoar_saas: Optional[str] = Field(None, alias="description:xsoar_saas")
-    description_xsoar_on_prem: Optional[str] = Field(None, alias="description:xsoar_on_prem")
+    description_xsoar_on_prem: Optional[str] = Field(
+        None, alias="description:xsoar_on_prem"
+    )
 
 
 class ScriptType(StrEnum):
@@ -119,13 +161,18 @@ class ScriptType(StrEnum):
 
 
 class SturctureError(BaseStrictModel):
-    field_name: Optional[tuple] = Field(None, alias="loc")  # the api returns here tuple, not str for this key
+    field_name: Optional[tuple] = Field(
+        None, alias="loc"
+    )  # the api returns here tuple, not str for this key
     error_message: Optional[str] = Field(None, alias="msg")
     error_type: Optional[str] = Field(None, alias="type")
     ctx: Optional[dict] = None
 
 
-dynamic_models: tuple = (NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL,)
+dynamic_models: tuple = (
+    NAME_DYNAMIC_MODEL,
+    DEPRECATED_DYNAMIC_MODEL,
+)
 
 
 class BaseIntegrationScript(*dynamic_models):
@@ -136,5 +183,7 @@ class BaseIntegrationScript(*dynamic_models):
     to_version: Optional[str] = Field(None, alias="toversion")
     system: Optional[bool] = None
     tests: Optional[list[str]] = None
-    auto_update_docker_image: Optional[bool] = Field(None, alias="autoUpdateDockerImage")
+    auto_update_docker_image: Optional[bool] = Field(
+        None, alias="autoUpdateDockerImage"
+    )
     marketplaces: Union[MarketplaceVersions, list[MarketplaceVersions]] = None

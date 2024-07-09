@@ -11,8 +11,12 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import SturctureError
-from demisto_sdk.commands.content_graph.strict_objects.integration import StrictIntegration
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    SturctureError,
+)
+from demisto_sdk.commands.content_graph.strict_objects.integration import (
+    StrictIntegration,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )

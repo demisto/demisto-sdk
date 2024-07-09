@@ -12,7 +12,9 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import SturctureError
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    SturctureError,
+)
 from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -21,10 +23,10 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 class IntegrationScriptParser(YAMLContentItemParser):
     def __init__(
-            self,
-            path: Path,
-            pack_marketplaces: List[MarketplaceVersions],
-            git_sha: Optional[str] = None,
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
@@ -54,8 +56,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
     @cached_property
     def docker_image(self) -> DockerImage:
         docker_image = (
-                get_value(self.yml_data, self.field_mapping.get("docker_image", ""), "")
-                or ""
+            get_value(self.yml_data, self.field_mapping.get("docker_image", ""), "")
+            or ""
         )
         return DockerImage(docker_image)
 

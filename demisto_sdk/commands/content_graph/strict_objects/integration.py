@@ -1,8 +1,18 @@
-from typing import Optional, Any
+from typing import Any, Optional
+
 from pydantic import Field
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseStrictModel, CommonFields, \
-    Argument, Output, Important, ScriptType, BaseIntegrationScript, create_dynamic_model, DESCRIPTION_DYNAMIC_MODEL
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    DESCRIPTION_DYNAMIC_MODEL,
+    Argument,
+    BaseIntegrationScript,
+    BaseStrictModel,
+    CommonFields,
+    Important,
+    Output,
+    ScriptType,
+)
 
 
 class Configuration(BaseStrictModel):
@@ -21,10 +31,16 @@ class Configuration(BaseStrictModel):
     hidden_password: Optional[bool] = Field(None, alias="hiddenpassword")
     from_license: Optional[str] = Field(None, alias="fromlicense")
     default_value_xsoar: Optional[Any] = Field(None, alias="defaultvalue:xsoar")
-    default_value_marketplace_v2: Optional[Any] = Field(None, alias="defaultvalue:marketplacev2")
+    default_value_marketplace_v2: Optional[Any] = Field(
+        None, alias="defaultvalue:marketplacev2"
+    )
     default_value_xpanse: Optional[Any] = Field(None, alias="defaultvalue:xpanse")
-    default_value_xsoar_saas: Optional[Any] = Field(None, alias="defaultvalue:xsoar_saas")
-    default_value_xsoar_on_prem: Optional[Any] = Field(None, alias="defaultvalue:xsoar_on_prem")
+    default_value_xsoar_saas: Optional[Any] = Field(
+        None, alias="defaultvalue:xsoar_saas"
+    )
+    default_value_xsoar_on_prem: Optional[Any] = Field(
+        None, alias="defaultvalue:xsoar_on_prem"
+    )
     name_xsoar: Optional[str] = Field(None, alias="name:xsoar")
     name_marketplacev2: Optional[str] = Field(None, alias="name:marketplacev2")
     name_xpanse: Optional[str] = Field(None, alias="name:xpanse")
@@ -60,15 +76,23 @@ class Command(BaseStrictModel):
     name_xsoar_saas: Optional[str] = Field(None, alias="name:xsoar_saas")
     name_xsoar_on_prem: Optional[str] = Field(None, alias="name:xsoar_on_prem")
     description_xsoar: Optional[str] = Field(None, alias="description:xsoar")
-    description_marketplace_v2: Optional[str] = Field(None, alias="description:marketplacev2")
+    description_marketplace_v2: Optional[str] = Field(
+        None, alias="description:marketplacev2"
+    )
     description_xpanse: Optional[str] = Field(None, alias="description:xpanse")
     description_xsoar_saas: Optional[str] = Field(None, alias="description:xsoar_saas")
-    description_xsoar_on_prem: Optional[str] = Field(None, alias="description:xsoar_on_prem")
+    description_xsoar_on_prem: Optional[str] = Field(
+        None, alias="description:xsoar_on_prem"
+    )
     deprecated_xsoar: Optional[bool] = Field(None, alias="deprecated:xsoar")
-    deprecated_marketplace_v2: Optional[bool] = Field(None, alias="deprecated:marketplacev2")
+    deprecated_marketplace_v2: Optional[bool] = Field(
+        None, alias="deprecated:marketplacev2"
+    )
     deprecated_xpanse: Optional[bool] = Field(None, alias="deprecated:xpanse")
     deprecated_xsoar_saas: Optional[bool] = Field(None, alias="deprecated:xsoar_saas")
-    deprecated_xsoar_on_prem: Optional[bool] = Field(None, alias="deprecated:xsoar_on_prem")
+    deprecated_xsoar_on_prem: Optional[bool] = Field(
+        None, alias="deprecated:xsoar_on_prem"
+    )
 
 
 class Script(BaseStrictModel):
@@ -90,7 +114,7 @@ class Script(BaseStrictModel):
     is_remote_sync_out_x2: Optional[bool] = Field(None, alias="isremotesyncout_x2")
     commands: Optional[list[Command]] = None
     run_once: Optional[bool] = Field(None, alias="runonce")
-    sub_type: Optional[str] = Field(['python2', 'python3'], alias="subtype")
+    sub_type: Optional[str] = Field(["python2", "python3"], alias="subtype")
     feed: Optional[bool] = None
     is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
     reset_context: Optional[bool] = Field(None, alias="resetContext")
@@ -100,10 +124,16 @@ class Script(BaseStrictModel):
     is_fetch_xsoar_saas: Optional[bool] = Field(None, alias="isfetch:xsoar_saas")
     is_fetch_xsoar_on_prem: Optional[bool] = Field(None, alias="isfetch:xsoar_on_prem")
     is_fetch_events_xsoar: Optional[bool] = Field(None, alias="isfetchevents:xsoar")
-    is_fetch_events_marketplace_v2: Optional[bool] = Field(None, alias="isfetchevents:marketplacev2")
+    is_fetch_events_marketplace_v2: Optional[bool] = Field(
+        None, alias="isfetchevents:marketplacev2"
+    )
     is_fetch_events_xpanse: Optional[bool] = Field(None, alias="isfetchevents:xpanse")
-    is_fetch_events_xsoar_saas: Optional[bool] = Field(None, alias="isfetchevents:xsoar_saas")
-    is_fetch_events_xsoar_on_prem: Optional[bool] = Field(None, alias="isfetchevents:xsoar_on_prem")
+    is_fetch_events_xsoar_saas: Optional[bool] = Field(
+        None, alias="isfetchevents:xsoar_saas"
+    )
+    is_fetch_events_xsoar_on_prem: Optional[bool] = Field(
+        None, alias="isfetchevents:xsoar_on_prem"
+    )
 
 
 class CommonFieldsIntegration(CommonFields):

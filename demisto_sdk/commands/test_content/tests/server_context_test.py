@@ -142,9 +142,7 @@ def generate_mocked_server_context(
         "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
         return_value=False,
     )
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._notify_failed_test"
-    )
+
     mocker.patch.object(MITMProxy, "__init__", lambda *args, **kwargs: None)
     mocker.patch("time.sleep")
     # Executing the test

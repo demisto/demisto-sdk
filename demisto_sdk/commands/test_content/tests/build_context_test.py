@@ -212,10 +212,6 @@ def get_mocked_build_context(
     )
 
     mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.BuildContext._retrieve_slack_user_id",
-        return_value="some_user_id",
-    )
-    mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.ServerContext._get_all_integration_config",
         return_value=[],
     )
@@ -281,10 +277,6 @@ def create_xsiam_build(
         json.dumps(machine_assignment_content or {}) or "{}"
     )
 
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.BuildContext._retrieve_slack_user_id",
-        return_value="some_user_id",
-    )
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.ServerContext._get_all_integration_config",
         return_value=[],

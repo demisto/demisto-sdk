@@ -10,8 +10,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = CorrelationRule
-
-
 class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
     error_code = "CR102"
     description = (
@@ -22,7 +20,10 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = False
 
-    
+    def __init__(self):
+        self.execution_mode = self.current_file.get("execution_mode", None)
+        self.search_window = self.current_file.get("search_window", None)
+        
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -32,9 +33,9 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-               "search_window" not in self.current_file) or (
-                self.current_file["execution_mode"] == "SCHEDULED"
-                and not self.current_file["search_window"]
+               ("search_window" not in self.current_file) or (
+                self.execution_mode == "SCHEDULED"
+                and not self.search_window)
             )
         ]
         

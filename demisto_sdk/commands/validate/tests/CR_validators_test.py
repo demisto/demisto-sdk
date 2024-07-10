@@ -32,8 +32,7 @@ def test_validate_execution_mode_search_window_with_empty_search_window():
         The validation should fail.
     """
     correlation_rule = create_correlation_rule_object(
-        ["execution_mode", "search_window"],
-        [ExecutionMode.SCHEDULED, ""]
+        ["execution_mode", "search_window"], [ExecutionMode.SCHEDULED, ""]
     )
     assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 1
 
@@ -46,10 +45,9 @@ def test_validate_execution_mode_search_window_with_null_search_window():
     When:
         Calling Validate.
     Then:
-        The validation should fail.
+        The validation shouldn't fail.
     """
     correlation_rule = create_correlation_rule_object(
-        ["execution_mode", "search_window"],
-        [ExecutionMode.REAL_TIME, None]
+        ["execution_mode", "search_window"], [ExecutionMode.REAL_TIME, None]
     )
     assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 0

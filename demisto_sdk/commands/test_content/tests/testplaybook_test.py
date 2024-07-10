@@ -99,7 +99,15 @@ def test_close_incident(mocker, tmp_path, expected_res, client_res):
     """
 
     mocked_demisto_client = DemistoClientMock()
-    build_context = create_xsiam_build(mocker, tmp_path)
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": [],
+        }
+    }
+    build_context = create_xsiam_build(
+        mocker, tmp_path, machine_assignment_content=machine_assignment_content_xsiam
+    )
     test_playbook_configuration = TestConfiguration({}, 0)
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.demisto_client.generic_request_func",

@@ -316,7 +316,15 @@ def test_build_creation(mocker, tmp_path):
     Then:
         - All xsiam build  parameters created as expected
     """
-    build_contex = create_xsiam_build(mocker, tmp_path)
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "playbooks_to_run": [],
+        }
+    }
+    build_contex = create_xsiam_build(
+        mocker, tmp_path, machine_assignment_content=machine_assignment_content_xsiam
+    )
     assert build_contex.is_saas_server_type
     assert build_contex.servers
 

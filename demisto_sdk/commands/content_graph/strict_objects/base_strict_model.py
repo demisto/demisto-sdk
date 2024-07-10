@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Type, Union
 
 import pydantic
 from pydantic import BaseModel, Extra, Field

@@ -20,18 +20,15 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return [
-            ValidationResult(
+        validation_results = []
+        for content_item in content_items:
+            if(content_item.execution_mode == "REAL_TIME"): #when execution_mode is set to REAL_TIME, search_window can be empty
+                continue
+            elif((not content_item.search_window) or (content_item.execution_mode == "SCHEDULED" and not content_item.search_window)):
+                validation_results.append(ValidationResult(
                 validator=self,
                 message=self.error_message,
                 content_object=content_item,
-            )
-            for content_item in content_items
-            if (
-                (not content_item.search_window)
-                or (
-                    content_item.execution_mode == "SCHEDULED"
-                    and not content_item.search_window
-                )
-            )
-        ]
+            ))
+                
+        return validation_results

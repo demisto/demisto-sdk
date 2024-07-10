@@ -672,7 +672,9 @@ def preprocess_files(
             logger.info(
                 "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
             )
-            logger.info(f"\n######## - Raw Untracked files from git:\n{git_util.repo.untracked_files}")
+            logger.info(
+                f"\n######## - Raw Untracked files from git:\n{git_util.repo.untracked_files}"
+            )
             valid_untracked_files_paths = get_untracked_files_in_content(git_util)
             raw_files = raw_files.union(valid_untracked_files_paths)
             logger.info(f"\n######## - Running on collected files:\n{raw_files}")
@@ -707,7 +709,7 @@ def get_untracked_files_in_content(git_util) -> Set[Path]:
     untracked_files_paths = {
         Path(f)
         for f in git_util.repo.untracked_files
-        if str(Path(f).resolve()).startswith(f'{CONTENT_PATH}/Packs/')
+        if str(Path(f).resolve()).startswith(f"{CONTENT_PATH}/Packs/")
     }
     logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
     return untracked_files_paths

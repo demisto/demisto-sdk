@@ -259,7 +259,9 @@ class Initializer:
             logger.info(
                 "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
             )
-            logger.info(f"\n######## - Raw Untracked files from git:\n{self.git_util.repo.untracked_files}")
+            logger.info(
+                f"\n######## - Raw Untracked files from git:\n{self.git_util.repo.untracked_files}"
+            )
             valid_untracked_files_paths = self.get_untracked_files_in_content()
             modified_files = modified_files.union(valid_untracked_files_paths)
 
@@ -274,7 +276,7 @@ class Initializer:
         untracked_files_paths = {
             Path(f)
             for f in self.git_util.repo.untracked_files
-            if str(Path(f).resolve()).startswith(f'{CONTENT_PATH}/Packs/')
+            if str(Path(f).resolve()).startswith(f"{CONTENT_PATH}/Packs/")
         }
         logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
         return untracked_files_paths

@@ -124,7 +124,7 @@ def test_create_module(mocker, playbook, incident_configuration, expected):
     mocker.patch.object(BuildContext, "_load_env_results_json")
     mocker.patch.object(BuildContext, "_get_server_numeric_version")
     mocker.patch.object(BuildContext, "_get_instances_ips")
-    mocker.patch.object(BuildContext, "_extract_filtered_tests")
+    mocker.patch.object(BuildContext, "_extract_packs_to_install_by_machine")
     mocker.patch.object(BuildContext, "_get_unmockable_tests_from_conf")
     mocker.patch.object(ServerContext, "_get_tests_to_run", return_value=("", ""))
     mocker.patch.object(ServerContext, "_get_all_integration_config")

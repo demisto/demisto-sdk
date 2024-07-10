@@ -810,7 +810,7 @@ class BuildContext:
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.packs_to_install_by_machine_path = kwargs["machine_assignment"]
-        self.machine_assignment_json = self._extract_filtered_tests()
+        self.machine_assignment_json = self._extract_packs_to_install_by_machine()
 
         # --------------------------- Machine preparation logic -------------------------------
 
@@ -818,7 +818,7 @@ class BuildContext:
         self.server_numeric_version = self._get_server_numeric_version()
         self.servers = self.create_servers()
 
-    def _extract_filtered_tests(self) -> dict:
+    def _extract_packs_to_install_by_machine(self) -> dict:
         """
         Reads the content from packs_to_install_by_machine.json
         """
@@ -831,7 +831,7 @@ class BuildContext:
         """
         servers: set = set()
         if self.is_saas_server_type:
-            for machine in self.cloud_machines:
+            for machine in self.machine_assignment_json:
                 server_ip = self.env_json.get(machine, {}).get("base_url", "")
                 servers.add(
                     CloudServerContext(

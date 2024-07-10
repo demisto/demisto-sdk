@@ -1,4 +1,6 @@
-from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
+from demisto_sdk.commands.content_graph.objects.correlation_rule import (
+    ExecutionMode,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_correlation_rule_object,
 )
@@ -31,7 +33,7 @@ def test_validate_execution_mode_search_window_with_empty_search_window():
     """
     correlation_rule = create_correlation_rule_object(
         ["execution_mode", "search_window"],
-        ["SCHEDULED", ""]
+        [ExecutionMode.SCHEDULED, ""]
     )
     assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 1
 
@@ -48,6 +50,6 @@ def test_validate_execution_mode_search_window_with_null_search_window():
     """
     correlation_rule = create_correlation_rule_object(
         ["execution_mode", "search_window"],
-        ["REAL_TIME", None]
+        [ExecutionMode.REAL_TIME, None]
     )
     assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 0

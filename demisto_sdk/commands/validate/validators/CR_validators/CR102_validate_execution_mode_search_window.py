@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
+from demisto_sdk.commands.content_graph.objects.correlation_rule import (
+    CorrelationRule,
+    ExecutionMode,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -27,8 +30,8 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
             content_object=content_item
         )
         for content_item in content_items
-        if ((not content_item.search_window) or 
-            (content_item.execution_mode == "SCHEDULED" and not content_item.search_window)) and
-            content_item.execution_mode != "REAL_TIME"
+        if ((not content_item.search_window) or
+            (content_item.execution_mode == ExecutionMode.SCHEDULED and not content_item.search_window)) and
+            content_item.execution_mode != ExecutionMode.REAL_TIME
         ]
 

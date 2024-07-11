@@ -25,13 +25,15 @@ class ExecutionModeSearchWindowValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
-                validator=self,
-                message=self.error_message,
-                content_object=content_item
+                validator=self, message=self.error_message, content_object=content_item
             )
             for content_item in content_items
-            if ((not content_item.search_window) or
-                (content_item.execution_mode == ExecutionMode.SCHEDULED and not content_item.search_window)) and
-                content_item.execution_mode != ExecutionMode.REAL_TIME
+            if (
+                (not content_item.search_window)
+                or (
+                    content_item.execution_mode == ExecutionMode.SCHEDULED
+                    and not content_item.search_window
+                )
+            )
+            and content_item.execution_mode != ExecutionMode.REAL_TIME
         ]
-

@@ -17,7 +17,7 @@ def test_validate_execution_mode_search_window_with_no_fields():
     """
     correlation_rule = create_correlation_rule_object()
     assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 1
-    
+
 
 def test_validate_execution_mode_search_window_with_empty_search_window():
     """
@@ -32,7 +32,6 @@ def test_validate_execution_mode_search_window_with_empty_search_window():
         ["execution_mode", "search_window"], ["SCHEDULED", ""]
     )
     assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 1
-
 
 
 def test_validate_execution_mode_search_window_with_null_search_window():

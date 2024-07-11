@@ -11,8 +11,9 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 
 
 class ExecutionMode(StrEnum):
-    REAL_TIME = 'REAL_TIME'
-    SCHEDULED = 'SCHEDULED'
+    REAL_TIME = "REAL_TIME"
+    SCHEDULED = "SCHEDULED"
+
 
 class CorrelationRule(ContentItemXSIAM, content_type=ContentType.CORRELATION_RULE):  # type: ignore[call-arg]
     execution_mode: Optional[ExecutionMode] = Field(None)

@@ -1,0 +1,4 @@
+changes:
+- description: Moved CR102 to the new validate format. The validation checks 'search_window' existence and non-emptiness when 'execution_mode' == 'SCHEDULED'.
+  type: internal
+pr_number: 4409

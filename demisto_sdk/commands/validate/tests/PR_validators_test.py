@@ -8,8 +8,8 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_modeling_rule_object,
     create_parsing_rule_object,
 )
-from demisto_sdk.commands.validate.validators.PR_validators.PR101_invalid_parsing_or_modeling_rule_suffix_name import (
-    ParsingAndModelingRuleSuffixNameValidator,
+from demisto_sdk.commands.validate.validators.PR_validators.PR101_invalid_parsing_rule_suffix_name import (
+    ParsingRuleSuffixNameValidator,
 )
 
 
@@ -30,7 +30,7 @@ def test_parsing_rule_with_valid_suffixes():
         ],
     )
     assert (
-        len(ParsingAndModelingRuleSuffixNameValidator().is_valid([parsing_rule])) == 0
+        len(ParsingRuleSuffixNameValidator().is_valid([parsing_rule])) == 0
     )
 
 
@@ -47,7 +47,7 @@ def test_parsing_rule_with_invalid_id_suffix():
         paths=["id", "name"], values=["Example_", "Example " + PARSING_RULE_NAME_SUFFIX]
     )
     assert (
-        len(ParsingAndModelingRuleSuffixNameValidator().is_valid([parsing_rule])) == 1
+        len(ParsingRuleSuffixNameValidator().is_valid([parsing_rule])) == 1
     )
 
 
@@ -64,7 +64,7 @@ def test_parsing_rule_with_invalid_name_suffix():
         paths=["id", "name"], values=["Example_" + PARSING_RULE_ID_SUFFIX, "Example Parsing"]
     )
     assert (
-        len(ParsingAndModelingRuleSuffixNameValidator().is_valid([parsing_rule])) == 1
+        len(ParsingRuleSuffixNameValidator().is_valid([parsing_rule])) == 1
     )
 
 
@@ -82,7 +82,7 @@ def test_modeling_rule_with_valid_suffixes():
         values=["Example_" + MODELING_RULE_ID_SUFFIX, "Example " + MODELING_RULE_NAME_SUFFIX],
     )
     assert (
-        len(ParsingAndModelingRuleSuffixNameValidator().is_valid([modeling_rule])) == 0
+        len(ParsingRuleSuffixNameValidator().is_valid([modeling_rule])) == 0
     )
     
 
@@ -99,7 +99,7 @@ def test_modeling_rule_with_invalid_id_suffix():
         paths=["id", "name"], values=["Example_", "Example " + MODELING_RULE_NAME_SUFFIX]
     )
     assert (
-        len(ParsingAndModelingRuleSuffixNameValidator().is_valid([modeling_rule])) == 1
+        len(ParsingRuleSuffixNameValidator().is_valid([modeling_rule])) == 1
     )
 
 
@@ -116,5 +116,5 @@ def test_modeling_rule_with_invalid_name_suffix():
        paths= ["id", "name"], values=["Example_" + MODELING_RULE_ID_SUFFIX, "Example "]
     )
     assert (
-        len(ParsingAndModelingRuleSuffixNameValidator().is_valid([modeling_rule])) == 1
+        len(ParsingRuleSuffixNameValidator().is_valid([modeling_rule])) == 1
     )

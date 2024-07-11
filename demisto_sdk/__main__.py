@@ -3040,6 +3040,7 @@ def openapi_codegen(ctx, **kwargs):
 @click.option("-n", "--nightly", type=bool, help="Run nightly tests")
 @click.option("-sa", "--service_account", help="GCP service account.")
 @click.option("-t", "--slack", help="The token for slack", required=True)
+@click.option("-a", "--circleci", help="The token for circleci", required=True)
 @click.option("-b", "--build-number", help="The build number", required=True)
 @click.option(
     "-g", "--branch-name", help="The current content branch name", required=True
@@ -3086,6 +3087,13 @@ def openapi_codegen(ctx, **kwargs):
     "--machine_assignment",
     help="the path to the machine assignment file.",
     default="./packs_to_install_by_machine.json",
+)
+@click.option(
+    "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."
+)
+@click.option("--xsiam-servers-path", help="Path to secret xsiam server metadata file.")
+@click.option(
+    "--xsiam-servers-api-keys-path", help="Path to file with XSIAM Servers api keys."
 )
 @click.pass_context
 @logging_setup_decorator

@@ -782,7 +782,7 @@ class BuildContext:
 
         # --------------------------- Machine preparation -------------------------------
 
-        self.cloud_machines = kwargs.get("cloud_machine_ids", "").split(",")
+        self.cloud_machines = kwargs.get("cloud_machine_ids", "").split(",") if kwargs.get("cloud_machine_ids") else []
         self.cloud_servers_path = kwargs.get("cloud_servers_path")
         self.cloud_servers_api_keys_path = kwargs.get("cloud_servers_api_keys")
         self.use_retries_mechanism = kwargs.get("use_retries", False)

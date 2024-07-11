@@ -29,6 +29,7 @@ from urllib3.exceptions import ReadTimeoutError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    FILTER_CONF,
     MarketplaceVersions,
     PB_Status,
 )
@@ -782,7 +783,11 @@ class BuildContext:
 
         # --------------------------- Machine preparation -------------------------------
 
-        self.cloud_machines = kwargs.get("cloud_machine_ids", "").split(",") if kwargs.get("cloud_machine_ids") else []
+        self.cloud_machines = (
+            kwargs.get("cloud_machine_ids", "").split(",")
+            if kwargs.get("cloud_machine_ids")
+            else []
+        )
         self.cloud_servers_path = kwargs.get("cloud_servers_path")
         self.cloud_servers_api_keys_path = kwargs.get("cloud_servers_api_keys")
         self.use_retries_mechanism = kwargs.get("use_retries", False)
@@ -810,7 +815,8 @@ class BuildContext:
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.packs_to_install_by_machine_path = kwargs["machine_assignment"]
-        self.machine_assignment_json = self._extract_packs_to_install_by_machine()
+        if self.packs_to_install_by_machine_path:
+            self.machine_assignment_json = self._extract_packs_to_install_by_machine()
 
         # --------------------------- Machine preparation logic -------------------------------
 
@@ -824,6 +830,19 @@ class BuildContext:
         """
         with open(self.packs_to_install_by_machine_path) as packs_to_install_by_machine:
             return json.loads(packs_to_install_by_machine.read())
+
+    @staticmethod
+    def _extract_filtered_tests() -> list:
+        """
+        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
+        in the current build
+        Returns:
+            A list of playbook IDs that should be run in the current build
+        """
+        with open(FILTER_CONF) as filter_file:
+            filtered_tests = [line.strip("\n") for line in filter_file.readlines()]
+
+        return filtered_tests
 
     def create_servers(self):
         """
@@ -1437,9 +1456,13 @@ class OnPremServerContext(ServerContext):
             build_number=self.build_context.build_number,
             branch_name=self.build_context.build_name,
         )
-        self.filtered_tests = self.build_context.machine_assignment_json.get(
-            "xsoar-machine", {}
-        ).get("playbooks_to_run")
+        if self.build_context.packs_to_install_by_machine_path:
+            self.filtered_tests = self.build_context.machine_assignment_json.get(
+                "xsoar-machine", {}
+            ).get("playbooks_to_run", [])
+        else:
+            self.filtered_tests = self.build_context._extract_filtered_tests()
+
         (
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,

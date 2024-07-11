@@ -27,12 +27,13 @@ def test_modeling_rule_with_valid_suffixes():
     """
     modeling_rule = create_modeling_rule_object(
         paths=["id", "name"],
-        values=["Example_" + MODELING_RULE_ID_SUFFIX, "Example " + MODELING_RULE_NAME_SUFFIX],
+        values=[
+            "Example_" + MODELING_RULE_ID_SUFFIX,
+            "Example " + MODELING_RULE_NAME_SUFFIX,
+        ],
     )
-    assert (
-        len(ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])) == 0
-    )
-    
+    assert len(ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])) == 0
+
 
 def test_modeling_rule_with_invalid_id_suffix():
     """
@@ -44,11 +45,10 @@ def test_modeling_rule_with_invalid_id_suffix():
         The validation should fail.
     """
     modeling_rule = create_modeling_rule_object(
-        paths=["id", "name"], values=["Example_", "Example " + MODELING_RULE_NAME_SUFFIX]
+        paths=["id", "name"],
+        values=["Example_", "Example " + MODELING_RULE_NAME_SUFFIX],
     )
-    assert (
-        len(ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])) == 1
-    )
+    assert len(ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])) == 1
 
 
 def test_modeling_rule_with_invalid_name_suffix():
@@ -61,11 +61,9 @@ def test_modeling_rule_with_invalid_name_suffix():
         The validation should fail.
     """
     modeling_rule = create_modeling_rule_object(
-       paths= ["id", "name"], values=["Example_" + MODELING_RULE_ID_SUFFIX, "Example "]
+        paths=["id", "name"], values=["Example_" + MODELING_RULE_ID_SUFFIX, "Example "]
     )
-    assert (
-        len(ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])) == 1
-    )
+    assert len(ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])) == 1
 
 
 def test_ValidateSchemaFileExistsValidator_is_valid():

@@ -26,9 +26,7 @@ def test_parsing_rule_with_valid_suffixes():
             "Example " + PARSING_RULE_NAME_SUFFIX,
         ],
     )
-    assert (
-        len(ParsingRuleSuffixNameValidator().is_valid([parsing_rule])) == 0
-    )
+    assert len(ParsingRuleSuffixNameValidator().is_valid([parsing_rule])) == 0
 
 
 def test_parsing_rule_with_invalid_id_suffix():
@@ -43,9 +41,7 @@ def test_parsing_rule_with_invalid_id_suffix():
     parsing_rule = create_parsing_rule_object(
         paths=["id", "name"], values=["Example_", "Example " + PARSING_RULE_NAME_SUFFIX]
     )
-    assert (
-        len(ParsingRuleSuffixNameValidator().is_valid([parsing_rule])) == 1
-    )
+    assert len(ParsingRuleSuffixNameValidator().is_valid([parsing_rule])) == 1
 
 
 def test_parsing_rule_with_invalid_name_suffix():
@@ -58,9 +54,7 @@ def test_parsing_rule_with_invalid_name_suffix():
         The validation should fail.
     """
     parsing_rule = create_parsing_rule_object(
-        paths=["id", "name"], values=["Example_" + PARSING_RULE_ID_SUFFIX, "Example Parsing"]
+        paths=["id", "name"],
+        values=["Example_" + PARSING_RULE_ID_SUFFIX, "Example Parsing"],
     )
-    assert (
-        len(ParsingRuleSuffixNameValidator().is_valid([parsing_rule])) == 1
-    )
-
+    assert len(ParsingRuleSuffixNameValidator().is_valid([parsing_rule])) == 1

@@ -1,6 +1,9 @@
+from abc import abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type
+
+import pydantic
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -13,6 +16,10 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
     NotAContentItemException,
+)
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseStrictModel,
+    StructureError,
 )
 
 
@@ -33,6 +40,25 @@ class JSONContentItemParser(ContentItemParser):
 
         if self.should_skip_parsing():
             raise NotAContentItemException
+
+        self.structure_errors = self.validate_structure()
+
+    @property
+    @abstractmethod
+    def strict_obj(self) -> Type[BaseStrictModel]:
+        ...
+
+    def validate_structure(self) -> Optional[List[StructureError]]:
+        """
+        The method uses the parsed data and attempts to build a Pydantic Script object from it.
+        Whenever yml_data is invalid by the schema, we store the error in the 'structure_errors' attribute,
+        It will fail validation (ST110).
+        """
+        try:
+            self.strict_obj(**self.json_data)
+        except pydantic.error_wrappers.ValidationError as e:
+            return [StructureError(**error) for error in e.errors()]
+        return None
 
     @cached_property
     def field_mapping(self):

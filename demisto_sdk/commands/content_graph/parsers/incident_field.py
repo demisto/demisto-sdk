@@ -1,12 +1,18 @@
 from functools import cached_property
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Type
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
+)
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseStrictModel,
+)
+from demisto_sdk.commands.content_graph.strict_objects.incident_field import (
+    StrictIncidentField,
 )
 
 
@@ -28,6 +34,11 @@ class IncidentFieldParser(
         self.group = self.json_data.get("group")
 
         self.connect_to_dependencies()
+        self.structure_errors = self.validate_structure()
+
+    @property
+    def strict_obj(self) -> Type[BaseStrictModel]:
+        return StrictIncidentField
 
     @cached_property
     def field_mapping(self):

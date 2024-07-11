@@ -24,6 +24,7 @@ class BaseStrictModel(BaseModel, ABC):
         """
 
         extra = Extra.forbid
+        arbitrary_types_allowed = True
 
 
 def create_dynamic_model(
@@ -75,6 +76,12 @@ REQUIRED_DYNAMIC_MODEL = create_dynamic_model(
 )
 DEFAULT_DYNAMIC_MODEL = create_dynamic_model(
     field_name="defaultValue",
+    type_=Optional[Any],
+    default=None,
+    include_without_suffix=True,
+)
+ID_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="id",
     type_=Optional[Any],
     default=None,
     include_without_suffix=True,

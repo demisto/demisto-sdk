@@ -1,5 +1,6 @@
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.content_graph.objects import IncidentField
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -7,7 +8,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Script]
+ContentTypes = Union[Integration, Script, IncidentField]
 
 
 class SchemaValidator(BaseValidator[ContentTypes]):

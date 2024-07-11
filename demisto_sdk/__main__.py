@@ -3040,7 +3040,7 @@ def openapi_codegen(ctx, **kwargs):
 @click.option("-n", "--nightly", type=bool, help="Run nightly tests")
 @click.option("-sa", "--service_account", help="GCP service account.")
 @click.option("-t", "--slack", help="The token for slack", required=True)
-@click.option("-a", "--circleci", help="The token for circleci", required=True)
+@click.option("-a", "--circleci", help="The token for circleci")
 @click.option("-b", "--build-number", help="The build number", required=True)
 @click.option(
     "-g", "--branch-name", help="The current content branch name", required=True

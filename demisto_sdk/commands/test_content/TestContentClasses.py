@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.constants import (
     PB_Status,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.tools import get_demisto_version
+from demisto_sdk.commands.common.tools import get_demisto_version, get_json_file
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
 from demisto_sdk.commands.test_content.mock_server import (
@@ -796,11 +796,11 @@ class BuildContext:
         )
 
         if self.is_saas_server_type:
-            cloud_conf = self._load_cloud_file(self.cloud_servers_path)
+            cloud_conf = get_json_file(self.cloud_servers_path)
             self.env_json = {
                 machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
             }
-            self.api_key = self._load_cloud_file(self.cloud_servers_api_keys_path)
+            self.api_key = get_json_file(self.cloud_servers_api_keys_path)
         else:
             self.env_json = self._load_env_results_json()
             self.api_key = kwargs["api_key"]
@@ -814,22 +814,13 @@ class BuildContext:
             kwargs.get("artifacts_bucket"),
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
-        self.packs_to_install_by_machine_path = kwargs["machine_assignment"]
-        if self.packs_to_install_by_machine_path:
-            self.machine_assignment_json = self._extract_packs_to_install_by_machine()
+        self.machine_assignment_json = get_json_file(kwargs["machine_assignment"])
 
         # --------------------------- Machine preparation logic -------------------------------
 
         self.instances_ips = self._get_instances_ips()
         self.server_numeric_version = self._get_server_numeric_version()
         self.servers = self.create_servers()
-
-    def _extract_packs_to_install_by_machine(self) -> dict:
-        """
-        Reads the content from packs_to_install_by_machine.json
-        """
-        with open(self.packs_to_install_by_machine_path) as packs_to_install_by_machine:
-            return json.loads(packs_to_install_by_machine.read())
 
     @staticmethod
     def _extract_filtered_tests() -> list:
@@ -941,15 +932,6 @@ class BuildContext:
             f"Server version: {server_numeric_version}", real_time=True
         )
         return server_numeric_version
-
-    @staticmethod
-    def _load_cloud_file(cloud_servers_path):
-        conf = None
-        if cloud_servers_path:
-            with open(cloud_servers_path) as data_file:
-                conf = json.load(data_file)
-
-        return conf
 
     @staticmethod
     def _load_conf_files(conf_path, secret_conf_path):
@@ -1456,7 +1438,7 @@ class OnPremServerContext(ServerContext):
             build_number=self.build_context.build_number,
             branch_name=self.build_context.build_name,
         )
-        if self.build_context.packs_to_install_by_machine_path:
+        if self.build_context.machine_assignment_json:
             self.filtered_tests = self.build_context.machine_assignment_json.get(
                 "xsoar-machine", {}
             ).get("playbooks_to_run", [])

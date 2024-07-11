@@ -50,8 +50,8 @@ class JSONContentItemParser(ContentItemParser):
 
     def validate_structure(self) -> Optional[List[StructureError]]:
         """
-        The method uses the parsed data and attempts to build a Pydantic Script object from it.
-        Whenever yml_data is invalid by the schema, we store the error in the 'structure_errors' attribute,
+        The method uses the parsed data and attempts to build a Pydantic object from it.
+        Whenever data is invalid by the schema, we store the error in the 'structure_errors' attribute,
         It will fail validation (ST110).
         """
         try:

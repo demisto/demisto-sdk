@@ -1,0 +1,4 @@
+changes:
+- description: Removed IN150 - invalid_siem_integration_name and IN161 - invalid_siem_marketplaces_entry from both old and new validate flows.
+  type: breaking
+pr_number: 4418

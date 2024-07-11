@@ -3083,10 +3083,7 @@ def openapi_codegen(ctx, **kwargs):
 @click.option(
     "--cloud_servers_api_keys", help="Path to file with cloud Servers api keys."
 )
-@click.option(
-    "--machine_assignment",
-    help="the path to the machine assignment file."
-)
+@click.option("--machine_assignment", help="the path to the machine assignment file.")
 @click.option(
     "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."
 )

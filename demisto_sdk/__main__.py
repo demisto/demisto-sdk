@@ -3085,8 +3085,7 @@ def openapi_codegen(ctx, **kwargs):
 )
 @click.option(
     "--machine_assignment",
-    help="the path to the machine assignment file.",
-    default="./packs_to_install_by_machine.json",
+    help="the path to the machine assignment file."
 )
 @click.option(
     "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."

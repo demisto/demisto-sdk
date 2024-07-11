@@ -43,10 +43,9 @@ def test_validate_execution_mode_search_window_with_not_defined_search_window():
     Then:
         The validation should fail.
     """
-    correlation_rule = create_correlation_rule_object(
-        ["execution_mode"], ["SCHEDULED"]
-    )
+    correlation_rule = create_correlation_rule_object(["execution_mode"], ["SCHEDULED"])
     assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 1
+
 
 def test_validate_execution_mode_search_window_with_null_search_window():
     """

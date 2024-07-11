@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.constants import (
     RELIABILITY_PARAM,
     SUPPORT_LEVEL_HEADER,
     XSOAR_SUPPORT,
-    MarketplaceVersions,
     ParameterType,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -127,9 +126,6 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN146_is_containing_
 from demisto_sdk.commands.validate.validators.IN_validators.IN149_does_common_outputs_have_description import (
     DoesCommonOutputsHaveDescriptionValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN150_is_valid_display_for_siem_integration import (
-    IsValidDisplayForSiemIntegrationValidator,
-)
 from demisto_sdk.commands.validate.validators.IN_validators.IN151_is_none_command_args import (
     IsNoneCommandArgsValidator,
 )
@@ -153,9 +149,6 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN159_is_valid_reput
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN160_is_valid_display_name_for_non_deprecated_integration import (
     IsValidDisplayNameForNonDeprecatedIntegrationValidator,
-)
-from demisto_sdk.commands.validate.validators.IN_validators.IN161_is_siem_integration_valid_marketplace import (
-    IsSiemIntegrationValidMarketplaceValidator,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN162_is_partner_collector_has_xsoar_support_level import (
     IsPartnerCollectorHasXsoarSupportLevelValidator,
@@ -2222,87 +2215,6 @@ def test_IsValidParamDisplayValidator_fix():
 
 
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs, marketplaces",
-    [
-        (
-            [
-                create_integration_object(),
-                create_integration_object(
-                    paths=["script.marketplaces", "script.isfetchevents"],
-                    values=["marketplacev2", True],
-                ),
-            ],
-            0,
-            [],
-            [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["script.marketplaces", "script.isfetchevents"],
-                    values=["marketplace", True],
-                )
-            ],
-            1,
-            [
-                "The marketplaces field of this XSIAM integration is incorrect.\nThis field should have only the 'marketplacev2' value."
-            ],
-            [MarketplaceVersions.XSOAR],
-        ),
-    ],
-)
-def test_IsSiemIntegrationValidMarketplaceValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs, marketplaces
-):
-    """
-    Given
-    content_items iterables.
-        - Case 1: Two valid integrations:
-            - One non siem integration.
-            - One siem integration with the marketplacev2 tag.
-        - Case 2: One invalid siem integration without marketplacev2 tag.
-    When
-    - Calling the IsSiemIntegrationValidMarketplaceValidator is valid function.
-    Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail.
-    """
-    for content_item in content_items:
-        content_item.marketplaces = marketplaces
-    results = IsSiemIntegrationValidMarketplaceValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
-        ]
-    )
-
-
-def test_IsSiemIntegrationValidMarketplaceValidator_fix():
-    """
-    Given
-        A siem integration without marketplacev2 tag.
-    When
-    - Calling the IsSiemIntegrationValidMarketplaceValidator fix function.
-    Then
-        - Make sure that the marketplacev2 tag was added to the list of available marketplaces, and that the right message was returned.
-    """
-    content_item = create_integration_object(
-        paths=["script.marketplaces", "script.isfetchevents"],
-        values=["marketplace", True],
-    )
-    content_item.marketplaces = [MarketplaceVersions.MarketplaceV2]
-    validator = IsSiemIntegrationValidMarketplaceValidator()
-    assert (
-        validator.fix(content_item).message
-        == "Added the 'marketplacev2' entry to the integration's marketplaces list."
-    )
-    assert MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
-
-
-@pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
@@ -2972,90 +2884,6 @@ def test_IsNoneCommandArgsValidator_fix():
         content_item.data.get("script", {}).get("commands", [])[0].get("arguments")
         == []
     )
-
-
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(),
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["test Event Collector", True],
-                ),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["test", True],
-                ),
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["Event Collector test", True],
-                ),
-            ],
-            2,
-            [
-                "The integration is a siem integration with invalid display name (test). Please make sure the display name ends with 'Event Collector'",
-                "The integration is a siem integration with invalid display name (Event Collector test). Please make sure the display name ends with 'Event Collector'",
-            ],
-        ),
-    ],
-)
-def test_IsValidDisplayForSiemIntegrationValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
-):
-    """
-    Given
-    content_items iterables.
-        - Case 1: Two valid integrations:
-            - One non siem integration with display name not ending with 'Event Collector'.
-            - One siem integration with display name ending with 'Event Collector'.
-        - Case 2: Two invalid integrations:
-            - One siem integration with display name without 'Event Collector'.
-            - One siem integration with display name starting with 'Event Collector'.
-    When
-    - Calling the IsValidDisplayForSiemIntegrationValidator is valid function.
-    Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail.
-    """
-    results = IsValidDisplayForSiemIntegrationValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
-        ]
-    )
-
-
-def test_IsValidDisplayForSiemIntegrationValidator_fix():
-    """
-    Given
-        A siem integration without Event Collector suffix in the display name.
-    When
-    - Calling the IsValidDisplayForSiemIntegrationValidator fix function.
-    Then
-        - Make sure that the Event Collector was added to the display name, and that the right message was returned.
-    """
-    content_item = create_integration_object(
-        paths=["display", "script.isfetchevents"],
-        values=["test", True],
-    )
-    assert content_item.display_name == "test"
-    validator = IsValidDisplayForSiemIntegrationValidator()
-    assert (
-        validator.fix(content_item).message
-        == "Added the 'Event Collector' suffix to the display name, the new display name is test Event Collector."
-    )
-    assert content_item.display_name == "test Event Collector"
 
 
 @pytest.mark.parametrize(

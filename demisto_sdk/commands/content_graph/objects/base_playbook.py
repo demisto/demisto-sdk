@@ -139,7 +139,7 @@ class TaskConfig(BaseModel):
         task_config = {
             "id": self.id,
             "taskid": self.taskid,
-            "type": self.type,
+            "type": self.type.value if self.type else None,
             "form": self.form,
             "message": self.message,
             "defaultassigneecomplex": self.defaultassigneecomplex,
@@ -206,7 +206,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
         return client.import_playbook
 
     def save(self):
-        super().save()
+        super().save(fields_to_exclude=["tasks"])
         data = self.data
         data["tasks"] = {
             task_id: task_config.to_raw_dict

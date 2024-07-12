@@ -4599,3 +4599,29 @@ def run_sync(
             # Release the lock and close the file
             fcntl.flock(lock_file, fcntl.LOCK_UN)
             lock_file.close()
+
+
+def get_json_file(path):
+    """
+    Reads a JSON file from the given path and returns its content as a dictionary.
+
+    Args:
+        path (str): The file path to the JSON file.
+
+    Returns:
+        dict: The content of the JSON file as a dictionary.
+    """
+    file_content = {}
+    if path:
+        try:
+            with open(path, "r") as json_file:
+                file_content = json.load(json_file)
+        except FileNotFoundError:
+            logger.debug(f"Error: The file at path '{path}' was not found.")
+        except json.JSONDecodeError:
+            logger.debug(
+                f"Error: The file at path '{path}' does not contain valid JSON."
+            )
+        except Exception as e:
+            logger.debug(f"An unexpected error occurred: {e}")
+    return file_content

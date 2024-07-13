@@ -111,7 +111,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             content_type: ContentType = ContentType.by_path(path)
         except ValueError:
             try:
-                optional_content_type = ContentType.by_schema(path)
+                optional_content_type = ContentType.by_schema(path, git_sha=git_sha)
             except ValueError as e:
                 logger.error(f"Could not determine content type for {path}: {e}")
                 raise InvalidContentItemException from e

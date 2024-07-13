@@ -4,7 +4,6 @@ from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 
 import pytest
-import requests_mock
 from click.testing import CliRunner
 from git import GitCommandError
 
@@ -45,6 +44,7 @@ PACK_METADATA_PARTNER = {
     "price": 2,
     "email": "some@mail.com",
     "url": "https://www.paloaltonetworks.com/cortex",
+    "marketplaces": ["xsoar"],
 }
 
 README_INPUT_RESULTS_LIST = [
@@ -129,9 +129,6 @@ class TestPackUniqueFilesValidator:
             return_value=True,
         )
         mocker.patch.object(
-            PackUniqueFilesValidator, "validate_pack_readme_images", return_value=True
-        )
-        mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
         mocker.patch.object(
@@ -152,9 +149,6 @@ class TestPackUniqueFilesValidator:
             PackUniqueFilesValidator,
             "validate_pack_readme_and_pack_description",
             return_value=True,
-        )
-        mocker.patch.object(
-            PackUniqueFilesValidator, "validate_pack_readme_images", return_value=True
         )
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
@@ -221,7 +215,7 @@ class TestPackUniqueFilesValidator:
                 [
                     VALIDATE_CMD,
                     "-i",
-                    pack.path,
+                    str(pack.path),
                     "--run-old-validate",
                     "--skip-new-validate",
                 ],
@@ -289,7 +283,7 @@ class TestPackUniqueFilesValidator:
                 [
                     VALIDATE_CMD,
                     "-i",
-                    pack.path,
+                    str(pack.path),
                     "--run-old-validate",
                     "--skip-new-validate",
                 ],
@@ -353,7 +347,7 @@ class TestPackUniqueFilesValidator:
                 [
                     VALIDATE_CMD,
                     "-i",
-                    pack.path,
+                    str(pack.path),
                     "--run-old-validate",
                     "--skip-new-validate",
                 ],
@@ -496,7 +490,7 @@ class TestPackUniqueFilesValidator:
             "get_dict_from_file",
             return_value=({"approved_list": branch_usecases}, "json"),
         )
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_usecases() == is_valid
@@ -587,7 +581,7 @@ class TestPackUniqueFilesValidator:
             "get_dict_from_file",
             return_value=({"approved_list": branch_tags}, "json"),
         )
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_tags() == is_valid
@@ -638,7 +632,7 @@ class TestPackUniqueFilesValidator:
             "get_dict_from_file",
             return_value=({"approved_list": branch_tags}, "json"),
         )
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_tags() == is_valid
@@ -673,7 +667,7 @@ class TestPackUniqueFilesValidator:
             "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
             return_value=False,
         )
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_tag_prefixes() == is_valid
@@ -713,7 +707,7 @@ class TestPackUniqueFilesValidator:
         elif pack_content == "layout":
             pack.create_layout(name="Layout")
 
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert self.validator.is_right_usage_of_usecase_tag() == is_valid
@@ -747,7 +741,7 @@ class TestPackUniqueFilesValidator:
             {PACK_METADATA_USE_CASES: [], PACK_METADATA_SUPPORT: type}
         )
 
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert self.validator._is_valid_support_type() == is_valid
@@ -1024,179 +1018,6 @@ class TestPackUniqueFilesValidator:
         )
         assert self.validator.validate_pack_readme_file_is_not_empty()
 
-    def test_validate_pack_readme_valid_images(self, mocker):
-        """
-        Given
-            - A pack README file with valid absolute image paths in it.
-        When
-            - Run validate on pack README file
-        Then
-            - Ensure:
-                - Validation succeed
-                - Valid absolute image paths were not caught
-        """
-        from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-
-        self.validator = PackUniqueFilesValidator(
-            os.path.join(self.FILES_PATH, "DummyPack2")
-        )
-        mocker.patch.object(
-            ReadMeValidator, "check_readme_relative_image_paths", return_value=[]
-        )  # Test only absolute paths
-
-        with requests_mock.Mocker() as m:
-            # Mock get requests
-            m.get(
-                "https://github.com/demisto/content/raw/test1.png",
-                status_code=200,
-                text="Test1",
-            )
-            m.get(
-                "https://raw.githubusercontent.com/demisto/content/raw/test1.png",
-                status_code=200,
-                text="Test1",
-            )
-            m.get(
-                "https://raw.githubusercontent.com/demisto/content/raw/test1.jpg",
-                status_code=200,
-                text="Test1",
-            )
-
-            result = self.validator.validate_pack_readme_images()
-            errors = self.validator.get_errors()
-        assert result
-        assert (
-            "please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)"
-            not in errors
-        )
-        assert (
-            "please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)"
-            not in errors
-        )
-        assert (
-            "please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)"
-            not in errors
-        )
-
-    def test_validate_pack_readme_invalid_images(self, mocker):
-        """
-        Given
-            - A pack README file with invalid absolute and relative image paths in it.
-        When
-            - Run validate on pack README file
-        Then
-            - Ensure:
-                - Validation fails
-                - Invalid relative image paths were caught correctly
-                - Invalid absolute image paths were caught correctly
-        """
-        self.validator = PackUniqueFilesValidator(
-            os.path.join(self.FILES_PATH, "DummyPack2")
-        )
-        mocker.patch("demisto_sdk.commands.common.tools.sleep")
-
-        with requests_mock.Mocker() as m:
-            # Mock get requests
-            m.get(
-                "https://github.com/demisto/content/raw/test1.png",
-                status_code=404,
-                text="Test1",
-            )
-            m.get(
-                "https://raw.githubusercontent.com/demisto/content/raw/test1.png",
-                status_code=404,
-                text="Test1",
-            )
-            m.get(
-                "https://raw.githubusercontent.com/demisto/content/raw/test1.jpg",
-                status_code=404,
-                text="Test1",
-            )
-
-            result = self.validator.validate_pack_readme_images()
-            errors = self.validator.get_errors()
-        assert not result
-        assert (
-            "Detected the following image relative path: doc_files/High_Risk_User.png"
-            in errors
-        )
-        assert (
-            "Detected the following image relative path: home/test1/test2/doc_files/High_Risk_User.png"
-            in errors
-        )
-        assert (
-            "Detected the following image relative path: ../../doc_files/Access_investigation_-_Generic_4_5.png"
-            in errors
-        )
-        assert (
-            "Image link was not found, either insert it or remove it:\nInsert the link to your image here"
-            in errors
-        )
-
-        assert (
-            "please repair it:\nhttps://github.com/demisto/content/raw/test1.png"
-            in errors
-        )
-        assert (
-            "please repair it:\nhttps://raw.githubusercontent.com/demisto/content/raw/test1.png"
-            in errors
-        )
-        assert (
-            "please repair it:\nhttps://raw.githubusercontent.com/demisto/content/raw/test1.jpg"
-            in errors
-        )
-        # this path is not an image path and should not be shown.
-        assert "https://github.com/demisto/content/raw/test3.png" not in errors
-
-    def test_validate_pack_readme_relative_url(self):
-        """
-        Given
-            - A pack README file with invalid relative path in it.
-        When
-            - Run validate on pack README file
-        Then
-            - Ensure:
-                - Validation fails
-                - Invalid relative paths were caught correctly
-                - Invalid absolute paths were not caught.
-                - Image paths were not caught
-        """
-        self.validator = PackUniqueFilesValidator(
-            os.path.join(self.FILES_PATH, "DummyPack2")
-        )
-
-        result = self.validator.validate_pack_readme_relative_urls()
-        errors = self.validator.get_errors()
-        relative_urls = [
-            "relative1.com",
-            "www.relative2.com",
-            "hreftesting.com",
-            "www.hreftesting.com",
-        ]
-        absolute_urls = [
-            "https://www.good.co.il",
-            "https://example.com",
-            "doc_files/High_Risk_User.png",
-            "https://hreftesting.com",
-        ]
-        relative_error = (
-            "Relative urls are not supported within README. If this is not a relative url, please add "
-            "an https:// prefix:\n"
-        )
-        assert not result
-
-        for url in relative_urls:
-            assert f"{relative_error}{url}" in errors
-
-        for url in absolute_urls:
-            assert url not in errors
-
-        # no empty links found
-        assert (
-            "[RM112] - Relative urls are not supported within README. If this is not a relative url, "
-            "please add an https:// prefix:\n. " not in errors
-        )
-
     @pytest.mark.parametrize(
         "readme_content, is_valid",
         [
@@ -1230,7 +1051,7 @@ class TestPackUniqueFilesValidator:
             }
         )
 
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             assert (
@@ -1257,7 +1078,7 @@ class TestPackUniqueFilesValidator:
         self.restart_validator()
         pack_name = "PackName"
         pack = repo.create_pack(pack_name)
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
 
         with ChangeCWD(repo.path):
             Path(pack.readme.path).unlink()
@@ -1328,7 +1149,7 @@ class TestPackUniqueFilesValidator:
         pack = repo.create_pack("MyPack")
 
         self.validator.metadata_content = {"support": "partner"}
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
         author_image_path = pack.author_image.path
 
         with ChangeCWD(repo.path):
@@ -1353,7 +1174,7 @@ class TestPackUniqueFilesValidator:
         pack = repo.create_pack("MyPack")
 
         self.validator.metadata_content = {"support": "partner"}
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
         author_image_path = pack.author_image.path
 
         with ChangeCWD(repo.path):
@@ -1397,7 +1218,7 @@ class TestPackUniqueFilesValidator:
         """
         pack = repo.create_pack("MyPack")
         self.validator.metadata_content = pack_metadata
-        self.validator.pack_path = pack.path
+        self.validator.pack_path = str(pack.path)
         self.validator.pack_meta_file = PACKS_PACK_META_FILE_NAME
         if create_rn:
             pack.create_release_notes(version=rn_version)

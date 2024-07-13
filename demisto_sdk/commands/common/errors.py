@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
 from packaging.version import Version
-from requests import Response
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
@@ -15,8 +14,6 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
     RELIABILITY_PARAMETER_NAMES,
-    RN_CONTENT_ENTITY_WITH_STARS,
-    RN_HEADER_BY_FILE_TYPE,
     SUPPORT_LEVEL_HEADER,
     XSOAR_CONTEXT_AND_OUTPUTS_URL,
     XSOAR_SUPPORT,
@@ -572,10 +569,6 @@ ERROR_CODE: Dict = {
         "code": "IN123",
         "related_field": "display",
     },
-    "param_not_allowed_to_hide": {
-        "code": "IN124",
-        "related_field": "<parameter-name>.hidden",
-    },
     "no_default_value_in_parameter": {
         "code": "IN125",
         "related_field": "<parameter-name>.default",
@@ -1122,10 +1115,6 @@ ERROR_CODE: Dict = {
         "code": "RM107",
         "related_field": "readme",
     },
-    "invalid_readme_image_error": {
-        "code": "RM108",
-        "related_field": "readme",
-    },
     "missing_readme_file": {
         "code": "RM109",
         "related_field": "readme",
@@ -1136,10 +1125,6 @@ ERROR_CODE: Dict = {
     },
     "error_uninstall_node": {
         "code": "RM111",
-        "related_field": "readme",
-    },
-    "invalid_readme_relative_url_error": {
-        "code": "RM112",
         "related_field": "readme",
     },
     "copyright_section_in_readme_error": {
@@ -2730,19 +2715,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_invalid_header_format(content_type: str, pack_name: str):
-        contents_with_stars = [
-            RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS
-        ]
         error = (
             f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n'
-            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+            "For more information, refer to the following documentation: "
+            "https://xsoar.pan.dev/docs/documentation/release-notes"
         )
-
-        if content_type in contents_with_stars:
-            error = f'Did not find content items headers under "{content_type}" - might be duo to missing "**" symbols in the header.\n{error}'
-        else:
-            error = f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
-        return error
+        return f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
 
     @staticmethod
     @error_code_decorator
@@ -3434,60 +3412,12 @@ class Errors:
         )
 
     @staticmethod
-    def pack_readme_image_relative_path_error(path):
-        return (
-            f"Detected the following image relative path: {path}.\nRelative paths are not supported in pack README files. See "
-            f"https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to "
-            f"add images to pack README files."
-        )
-
-    @staticmethod
-    def invalid_readme_image_relative_path_error(path):
-        return f"The following image relative path is not valid, please recheck it:\n{path}."
-
-    @staticmethod
-    def invalid_readme_image_absolute_path_error(path):
-        return (
-            f"The following image link seems to be broken, please repair it:\n{path}."
-            "If you are changing an image name or location? first, merge the new image to master, "
-            "then make a 2nd PR linking to the new image in master."
-        )
-
-    @staticmethod
-    def branch_name_in_readme_image_absolute_path_error(path):
-        return f"Branch name was found in the URL, please change it to the commit hash:\n{path}"
-
-    @staticmethod
-    def invalid_readme_insert_image_link_error(path):
-        return f"Image link was not found, either insert it or remove it:\n{path}"
-
-    @staticmethod
     @error_code_decorator
     def invalid_readme_relative_url_error(path):
         return (
             f"Relative urls are not supported within README. If this is not a relative url, please add "
             f"an https:// prefix:\n{path}. "
         )
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_readme_image_error(
-        path: str, error_type: str, response: Optional[Response] = None
-    ):
-        error = "Error in readme image: "
-        if response is not None:
-            error += f"got HTTP response code {response.status_code}"
-            error += f", reason = {response.reason}" if response.reason else " "
-
-        error_body = {
-            "pack_readme_relative_error": Errors.pack_readme_image_relative_path_error,
-            "general_readme_relative_error": Errors.invalid_readme_image_relative_path_error,
-            "general_readme_absolute_error": Errors.invalid_readme_image_absolute_path_error,
-            "branch_name_readme_absolute_error": Errors.branch_name_in_readme_image_absolute_path_error,
-            "insert_image_link_error": Errors.invalid_readme_insert_image_link_error,
-        }.get(error_type, lambda x: f"Unexpected error when testing {x}")(path)
-
-        return error + f"\n{error_body}"
 
     @staticmethod
     @error_code_decorator

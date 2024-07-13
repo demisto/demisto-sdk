@@ -57,7 +57,7 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SecretsIgnoreRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-    replace_markdown_urls_and_upload_to_artifacts,
+    update_markdown_images_with_urls_and_rel_paths,
 )
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
@@ -314,15 +314,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
-        replace_markdown_urls_and_upload_to_artifacts(
+        update_markdown_images_with_urls_and_rel_paths(
             path, marketplace, self.object_id, file_type=ImagesFolderNames.README_IMAGES
         )
 
-    def dump(
-        self,
-        path: Path,
-        marketplace: MarketplaceVersions,
-    ):
+    def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool = False):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
@@ -330,8 +326,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         try:
             path.mkdir(exist_ok=True, parents=True)
 
+            content_types_excluded_from_upload = (
+                CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
+            )
+            if tpb:
+                content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
+
             for content_item in self.content_items:
-                if content_item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+                if content_item.content_type in content_types_excluded_from_upload:
                     logger.debug(
                         f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
                         "whose type was passed in `exclude_content_types`"
@@ -352,6 +354,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     and content_item.is_test
                 ):
                     folder = ContentType.TEST_PLAYBOOK.as_folder
+
+                # The content structure is different from the server
+                if folder == "CaseLayouts":
+                    folder = "Layouts"
 
                 content_item.dump(
                     dir=path / folder,
@@ -390,6 +396,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         target_demisto_version: Version,
         destination_zip_dir: Optional[Path] = None,
         zip: bool = True,
+        tpb: bool = False,
         **kwargs,
     ):
         if destination_zip_dir is None:
@@ -402,12 +409,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 target_demisto_version=target_demisto_version,
                 skip_validations=kwargs.get("skip_validations", False),
                 destination_dir=destination_zip_dir,
+                tpb=tpb,
             )
         else:
             self._upload_item_by_item(
                 client=client,
                 marketplace=marketplace,
                 target_demisto_version=target_demisto_version,
+                tpb=tpb,
             )
 
     def _zip_and_upload(
@@ -417,6 +426,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         skip_validations: bool,
         marketplace: MarketplaceVersions,
         destination_dir: DirectoryPath,
+        tpb: bool = False,
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(f"Uploading zipped pack {self.object_id}")
@@ -424,7 +434,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         # 1) dump the pack into a temporary file
         with TemporaryDirectory() as temp_dump_dir:
             temp_dir_path = Path(temp_dump_dir)
-            self.dump(temp_dir_path, marketplace=marketplace)
+            self.dump(temp_dir_path, marketplace=marketplace, tpb=tpb)
 
             # 2) zip the dumped pack
             with TemporaryDirectory() as pack_zips_dir:
@@ -461,6 +471,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         client: demisto_client,
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
+        tpb: bool = False,
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(
@@ -470,8 +481,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         uploaded_successfully: List[ContentItem] = []
         incompatible_content_items = []
 
+        content_types_excluded_from_upload = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
+        if tpb:
+            content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
+
         for item in self.content_items:
-            if item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+            if item.content_type in content_types_excluded_from_upload:
                 logger.debug(
                     f"SKIPPING upload of {item.content_type} {item.object_id}: type is skipped"
                 )

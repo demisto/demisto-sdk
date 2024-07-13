@@ -507,10 +507,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def find_uses_paths_with_invalid_marketplaces(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
-        """Searches and retrievs content items who use content items with invalid marketplaces.
+        """Searches and retrieves content items who use content items with invalid marketplaces.
 
         Args:
-            file_paths (List[str]): A list of content items' paths to check.
+            pack_ids (List[str]): A list of content items' pack_ids to check.
                 If not given, runs the query over all content items.
 
         Returns:

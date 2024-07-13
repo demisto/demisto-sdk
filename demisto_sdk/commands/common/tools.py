@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import fcntl
 import glob
 import os
 import re
@@ -1582,6 +1583,7 @@ def get_dict_from_file(
     raises_error: bool = True,
     clear_cache: bool = False,
     keep_order: bool = True,
+    git_sha: Optional[str] = None,
 ) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
@@ -1598,11 +1600,16 @@ def get_dict_from_file(
         if path:
             if path.endswith(".yml"):
                 return (
-                    get_yaml(path, cache_clear=clear_cache, keep_order=keep_order),
+                    get_yaml(
+                        path,
+                        cache_clear=clear_cache,
+                        keep_order=keep_order,
+                        git_sha=git_sha,
+                    ),
                     "yml",
                 )
             elif path.endswith(".json"):
-                res = get_json(path, cache_clear=clear_cache)
+                res = get_json(path, cache_clear=clear_cache, git_sha=git_sha)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
                     return res[0], "json"
                 else:
@@ -1807,6 +1814,9 @@ def find_type(
         FileType | None: Enum representation of the content file type, None otherwise.
     """
     from demisto_sdk.commands.content_graph.objects import (
+        CaseField,
+        CaseLayout,
+        CaseLayoutRule,
         Classifier,
         CorrelationRule,
         Dashboard,
@@ -1980,6 +1990,15 @@ def find_type(
 
     if LayoutRule.match(_dict, Path(path)):
         return FileType.LAYOUT_RULE
+
+    if CaseField.match(_dict, Path(path)):
+        return FileType.CASE_FIELD
+
+    if CaseLayout.match(_dict, Path(path)):
+        return FileType.CASE_LAYOUT
+
+    if CaseLayoutRule.match(_dict, Path(path)):
+        return FileType.CASE_LAYOUT_RULE
 
     if ListObject.match(_dict, Path(path)):
         return FileType.LISTS
@@ -4392,31 +4411,47 @@ def is_str_bool(input_: str) -> bool:
         return False
 
 
-def check_text_content_contain_sub_text(
-    sub_text_list: List[str],
-    is_lower: bool = False,
-    to_split: bool = False,
-    text: str = "",
+def search_substrings_by_line(
+    phrases_to_search: List[str],
+    text: str,
+    ignore_case: bool = False,
+    search_whole_word: bool = False,
+    exceptionally_allowed_substrings: Optional[list[str]] = None,
 ) -> List[str]:
     """
-    Args:
-        sub_text_list (List[str]): list of words/sentences to search in line content.
-        is_lower (bool): True to check when line is lower cased.
-        to_split (bool): True to split the line in order to search specific word
-        text (str): The readme content to search.
-
-    Returns:
-        list of lines which contains the given text.
+    Returns the list of line indices (as strings) in text,
+    where the searched phrases are found
     """
     invalid_lines = []
 
+    if ignore_case:
+        text = text.casefold()
+        exceptionally_allowed_substrings = [
+            allowed_phrase.casefold()
+            for allowed_phrase in (exceptionally_allowed_substrings or ())
+        ]
+
     for line_num, line in enumerate(text.split("\n")):
-        if is_lower:
-            line = line.lower()
-        if to_split:
-            line = line.split()  # type: ignore
-        for text in sub_text_list:
-            if text in line:
+        if ignore_case:
+            line = line.casefold()
+
+        if search_whole_word:
+            line = line.split()  # type: ignore[assignment]
+
+        for phrase_to_search in phrases_to_search:
+            if phrase_to_search in line:
+                if exceptionally_allowed_substrings and any(
+                    (allowed in line and phrase_to_search in allowed)
+                    for allowed in exceptionally_allowed_substrings
+                ):
+                    """
+                    example: we want to catch 'demisto', but not when it's in a URL.
+                        phrase = 'demisto'
+                        allowed = '/demisto/'
+                        line = 'foo/demisto/bar'
+                    we'll skip this line only iff 'demisto' in '/demisto/' and '/demisto/' in foo/demisto/bar
+                    """
+                    continue
                 invalid_lines.append(str(line_num + 1))
 
     return invalid_lines
@@ -4510,3 +4545,83 @@ def convert_path_to_str(data: Union[dict, list]):
                 convert_path_to_str(item)
             elif isinstance(item, Path):
                 data[index] = str(item)
+
+
+def find_regex_on_data(data: str, regex: str):
+    """
+    Finds all matches of a given regex pattern in the provided data.
+
+    Args:
+        data (str): The string data to search within.
+        regex (str): The regex pattern to use for finding matches.
+
+    Returns:
+        List[str]: A list of all matches found in the data. If no matches are found, returns an empty list.
+    """
+    return re.findall(
+        regex,
+        data,
+        re.IGNORECASE,
+    )
+
+
+def run_sync(
+    lock_file_path: str,
+    exclusive_function: Callable,
+    exclusive_function_kwargs: dict = {},
+):
+    """Uses a given lock file path to run a method synchronously.
+
+    Args:
+        lock_file_path (str): The lock file path.
+        exclusive_function (Callable): The function we want to run exclusivly.
+        exclusive_function_kwargs (dict, optional): The kwargs we wish to pass to the exclusive_function. Defaults to {}.
+    """
+    try:
+        # Open (or create) the lock file
+        lock_file = open(lock_file_path, "w")
+
+        # Wait until the lock is acquired
+        while True:
+            try:
+                # Try to acquire an exclusive lock
+                fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                logger.debug("Resource is busy, waiting...")
+                time.sleep(0.1)  # Wait for 0.1 seconds before retrying
+
+        # If lock is acquired, call the exclusive function
+        exclusive_function(**exclusive_function_kwargs)
+
+    finally:
+        if lock_file:
+            # Release the lock and close the file
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+            lock_file.close()
+
+
+def get_json_file(path):
+    """
+    Reads a JSON file from the given path and returns its content as a dictionary.
+
+    Args:
+        path (str): The file path to the JSON file.
+
+    Returns:
+        dict: The content of the JSON file as a dictionary.
+    """
+    file_content = {}
+    if path:
+        try:
+            with open(path, "r") as json_file:
+                file_content = json.load(json_file)
+        except FileNotFoundError:
+            logger.debug(f"Error: The file at path '{path}' was not found.")
+        except json.JSONDecodeError:
+            logger.debug(
+                f"Error: The file at path '{path}' does not contain valid JSON."
+            )
+        except Exception as e:
+            logger.debug(f"An unexpected error occurred: {e}")
+    return file_content

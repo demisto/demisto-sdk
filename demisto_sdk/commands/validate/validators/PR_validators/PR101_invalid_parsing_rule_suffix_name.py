@@ -21,7 +21,7 @@ class ParsingRuleSuffixNameValidator(BaseValidator[ContentTypes]):
         "Checks that id and name in the parsing rule, end with the correct suffixes."
     )
     rationale = "To prevent confusion caused by ambiguous naming of modeling and parsing rules in XSIAM UI, the validation ensures the rule ID and name end with 'ParsingRule' or 'Parsing Rule'. This will help avoid naming conflicts and improve clarity in release notes."
-    error_message = "The file {} is invalid, the parsing rule id should end with {} and rule name should end with {}"
+    error_message = "The file {} is invalid, the parsing rule id {} should end with {} and rule name {} should end with {}"
     related_field = "id, name"
     is_auto_fixable = False
 
@@ -30,7 +30,7 @@ class ParsingRuleSuffixNameValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.path, content_item.object_id, content_item.name
+                    content_item.path, content_item.object_id, PARSING_RULE_ID_SUFFIX, content_item.name, PARSING_RULE_NAME_SUFFIX
                 ),
                 content_object=content_item,
             )

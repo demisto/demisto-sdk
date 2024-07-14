@@ -17,8 +17,12 @@ ContentTypes = ParsingRule
 
 class ParsingRuleSuffixNameValidator(BaseValidator[ContentTypes]):
     error_code = "PR101"
-    description = ""
-    rationale = ""
+    description = (
+        "Checks that id and name in the parsing rule, end with the correct suffixes."
+    )
+    rationale = (
+        "To prevent confusion caused by ambiguous naming of modeling and parsing rules in XSIAM UI, the validation ensures the rule ID and name end with 'ParsingRule' or 'Parsing Rule'. This will help avoid naming conflicts and improve clarity in release notes."
+    )
     error_message = "The file {} is invalid, the parsing rule id should end with {} and rule name should end with {}"
     related_field = "id, name"
     is_auto_fixable = False

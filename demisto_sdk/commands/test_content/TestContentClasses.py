@@ -29,7 +29,6 @@ from urllib3.exceptions import ReadTimeoutError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    FILTER_CONF,
     MarketplaceVersions,
     PB_Status,
 )
@@ -822,19 +821,6 @@ class BuildContext:
         self.server_numeric_version = self._get_server_numeric_version()
         self.servers = self.create_servers()
 
-    @staticmethod
-    def _extract_filtered_tests() -> list:
-        """
-        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
-        in the current build
-        Returns:
-            A list of playbook IDs that should be run in the current build
-        """
-        with open(FILTER_CONF) as filter_file:
-            filtered_tests = [line.strip("\n") for line in filter_file.readlines()]
-
-        return filtered_tests
-
     def create_servers(self):
         """
         Create servers object based on build type.
@@ -1438,12 +1424,9 @@ class OnPremServerContext(ServerContext):
             build_number=self.build_context.build_number,
             branch_name=self.build_context.build_name,
         )
-        if self.build_context.machine_assignment_json:
-            self.filtered_tests = self.build_context.machine_assignment_json.get(
-                "xsoar-machine", {}
-            ).get("playbooks_to_run", [])
-        else:
-            self.filtered_tests = self.build_context._extract_filtered_tests()
+        self.filtered_tests = self.build_context.machine_assignment_json.get(
+            "xsoar-machine", {}
+        ).get("playbooks_to_run", [])
 
         (
             self.mockable_tests_to_run,

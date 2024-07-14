@@ -1,4 +1,0 @@
-changes:
-- description: Refactored validation GR100, that checks whether a content item attempts to use other content items which are not supported in all of the marketplaces of the content item.
-  type: feature
-pr_number: 4282

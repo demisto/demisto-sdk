@@ -1216,6 +1216,7 @@ class CloudServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.machine = cloud_machine
         self.server_url = self.server_ip
         self.api_key = self.build_context.api_key.get(cloud_machine)
         self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(
@@ -1414,6 +1415,7 @@ class OnPremServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.machine = self.server_ip
         self.server_url = f"https://{self.server_ip}"
         self.api_key = build_context.api_key
         self.configure_new_client()

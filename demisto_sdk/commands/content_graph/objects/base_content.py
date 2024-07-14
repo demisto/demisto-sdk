@@ -208,6 +208,7 @@ class BaseContent(BaseNode):
         path: Path,
         data: dict,
         predefined_keys_to_keep: Optional[Tuple[str, ...]] = None,
+        fields_to_exclude: List[str] = [],
     ):
         """Save the class vars into the dict data.
 
@@ -220,7 +221,7 @@ class BaseContent(BaseNode):
             attr = getattr(self, key)
             if key == "docker_image":
                 attr = str(attr)
-            elif key in ["params"]:
+            elif key in fields_to_exclude:
                 continue
             elif key == "marketplaces":
                 if (

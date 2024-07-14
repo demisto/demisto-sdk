@@ -235,8 +235,8 @@ class ContentItem(BaseContent):
     def ordered_data(self) -> dict:
         return get_file(self.path, keep_order=True)
 
-    def save(self):
-        super()._save(self.path, self.ordered_data)
+    def save(self, fields_to_exclude: List[str] = []):
+        super()._save(self.path, self.ordered_data, fields_to_exclude=fields_to_exclude)
 
     def prepare_for_upload(
         self,

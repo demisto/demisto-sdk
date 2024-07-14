@@ -285,7 +285,7 @@ class ContentType(StrEnum):
         elif ContentType.TRIGGER:
             return "Triggers Recommendations"  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
         return f"{self.value}s"
-    
+
     @staticmethod
     def from_release_note_header(header: str) -> "ContentType":
         if header == "Triggers Recommendations":

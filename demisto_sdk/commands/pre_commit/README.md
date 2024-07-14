@@ -2,7 +2,7 @@
 
 This command enhances the content development experience, by running a variety of checks and linters.
 It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) framework.
-A `.pre-commit-config-template.yaml` file is used to configure the hooks (if found in the content repo. Otherwise, a [default](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/.pre-commit-config_template.yaml) is used) 
+A `.pre-commit-config-template.yaml` file is used to configure the hooks (if found in the content repo. Otherwise, a [default](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/.pre-commit-config_template.yaml) is used)
 
 Since content items are made to run in containers with different Python versions and dependencies, this command matches content items with suitable configurations, before passing the generated (temporary) `.pre-commit-config.yaml` file.
 

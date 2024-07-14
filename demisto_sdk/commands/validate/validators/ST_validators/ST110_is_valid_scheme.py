@@ -14,6 +14,7 @@ ContentTypes = Union[Integration, Script, IncidentField, IndicatorField]
 class SchemaValidator(BaseValidator[ContentTypes]):
     error_code = "ST110"
     description = "Validate that the scheme's structure is valid."
+    rationale = "Maintain valid structure for content items."
 
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
 

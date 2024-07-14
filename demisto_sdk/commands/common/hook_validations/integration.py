@@ -159,7 +159,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_a_runnable(),
             self.is_valid_display_name(),
             self.is_valid_default_value_for_checkbox(),
-            self.is_valid_display_name_for_siem(),
             self.is_valid_xsiam_marketplace(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
@@ -1504,23 +1503,6 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
 
             return True
-
-    @error_codes("IN150")
-    def is_valid_display_name_for_siem(self) -> bool:
-        is_siem = self.current_file.get("script", {}).get("isfetchevents")
-
-        if is_siem:
-            display_name = self.current_file.get("display", "")
-            if not display_name.endswith("Event Collector"):
-                error_message, error_code = Errors.invalid_siem_integration_name(
-                    display_name
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    return False
-
-        return True
 
     def _is_replaced_by_type9(self, display_name: str) -> bool:
         """

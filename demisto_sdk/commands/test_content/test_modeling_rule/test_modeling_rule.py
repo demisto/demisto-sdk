@@ -94,7 +94,7 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
         data,
         tablefmt="grid",
         headers=["Model Field", "Expected Value", "Received Value"],
-        colalign="left",
+        colalign=("left", "left", "left"),
     )
 
 

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where playbook saved due to a failed attempt to dump task object.
+  type: fix
+pr_number: 4416

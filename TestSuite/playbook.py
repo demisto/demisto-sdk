@@ -32,7 +32,7 @@ class Playbook(YAML):
             self.create_default_playbook()
         else:
             # build test playbook
-            self.create_default_test_playbook()
+            self.create_default_test_playbook(name=name)
 
     @property
     def yml(self):

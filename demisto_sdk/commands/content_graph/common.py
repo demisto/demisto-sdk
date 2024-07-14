@@ -257,7 +257,7 @@ class ContentType(StrEnum):
                             yield tir_folder
 
     @staticmethod
-    def by_schema(path: Path) -> "ContentType":
+    def by_schema(path: Path, git_sha: Optional[str] = None) -> "ContentType":
         """
         Determines a content type value of a given file by accessing it and making minimal checks on its schema.
         """
@@ -265,7 +265,7 @@ class ContentType(StrEnum):
             CONTENT_TYPE_TO_MODEL,
         )
 
-        parsed_dict = get_dict_from_file(str(path))
+        parsed_dict = get_dict_from_file(str(path), git_sha=git_sha)
         if parsed_dict and isinstance(parsed_dict, tuple):
             _dict = parsed_dict[0]
         else:

@@ -20,9 +20,7 @@ class ModelingRuleSuffixNameValidator(BaseValidator[ContentTypes]):
     description = (
         "Checks that id and name in the modeling rule, end with the correct suffixes."
     )
-    rationale = (
-        "To prevent confusion caused by ambiguous naming of modeling and parsing rules in XSIAM UI, the validation ensures the rule ID and name end with 'ModelingRule' or 'Modeling Rule'. This will help avoid naming conflicts and improve clarity in release notes."
-    )
+    rationale = "To prevent confusion caused by ambiguous naming of modeling and parsing rules in XSIAM UI, the validation ensures the rule ID and name end with 'ModelingRule' or 'Modeling Rule'. This will help avoid naming conflicts and improve clarity in release notes."
     error_message = "The file {} is invalid, the modeling rule id should end with {} and name should end with {}"
     related_field = "id, name"
     is_auto_fixable = False

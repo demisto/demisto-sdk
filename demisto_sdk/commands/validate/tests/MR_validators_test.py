@@ -14,6 +14,9 @@ from demisto_sdk.commands.validate.validators.MR_validators.MR101_validate_empty
 from demisto_sdk.commands.validate.validators.MR_validators.MR106_modeling_rule_scheme_types import (
     ModelingRuleSchemaTypesValidator,
 )
+from demisto_sdk.commands.validate.validators.MR_validators.MR108_invalid_modeling_rule_suffix_name import (
+    ModelingRuleSuffixNameValidator,
+)
 
 
 def test_modeling_rule_with_valid_suffixes():
@@ -32,7 +35,7 @@ def test_modeling_rule_with_valid_suffixes():
             "Example " + MODELING_RULE_NAME_SUFFIX,
         ],
     )
-    assert len(ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])) == 0
+    assert len(ModelingRuleSuffixNameValidator().is_valid([modeling_rule])) == 0
 
 
 def test_modeling_rule_with_invalid_id_suffix():
@@ -48,7 +51,7 @@ def test_modeling_rule_with_invalid_id_suffix():
         paths=["id", "name"],
         values=["Example_", "Example " + MODELING_RULE_NAME_SUFFIX],
     )
-    assert len(ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])) == 1
+    assert len(ModelingRuleSuffixNameValidator().is_valid([modeling_rule])) == 1
 
 
 def test_modeling_rule_with_invalid_name_suffix():
@@ -63,7 +66,7 @@ def test_modeling_rule_with_invalid_name_suffix():
     modeling_rule = create_modeling_rule_object(
         paths=["id", "name"], values=["Example_" + MODELING_RULE_ID_SUFFIX, "Example "]
     )
-    assert len(ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])) == 1
+    assert len(ModelingRuleSuffixNameValidator().is_valid([modeling_rule])) == 1
 
 
 def test_ValidateSchemaFileExistsValidator_is_valid():

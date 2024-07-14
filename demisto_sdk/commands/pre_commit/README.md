@@ -6,7 +6,7 @@ A `.pre-commit-config-template.yaml` file is used to configure the hooks (if fou
 
 Since content items are made to run in containers with different Python versions and dependencies, this command matches content items with suitable configurations, before passing the generated (temporary) `.pre-commit-config.yaml` file.
 
-**Note**: An internet connection is required for this command
+**Note**: An internet connection is required for this command.
 
 ## Usage
 

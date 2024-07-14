@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Any, List, Optional, Type, Union
 
 import pydantic
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Extra, Field, validator
 from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import (
@@ -24,12 +24,19 @@ class BaseStrictModel(BaseModel, ABC):
         """
 
         extra = Extra.forbid
-        arbitrary_types_allowed = True
+
+    @validator("*")
+    def prevent_none(cls, v):
+        """
+        Validator ensures no None value is entered in a field.
+        """
+        assert v is not None, f"{v} may not be None"
+        return v
 
 
 def create_dynamic_model(
     field_name: str,
-    type_: Any,  # TODO try and find a solution for passing some type, incl. `Optional`
+    type_: Any,
     default: Any = ...,
     suffixes: List[str] = marketplace_suffixes,
     alias: Optional[str] = None,

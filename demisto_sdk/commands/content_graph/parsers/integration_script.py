@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Dict, List, Optional, Set
 
 import pydantic
 
@@ -13,7 +13,6 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    BaseStrictModel,
     StructureError,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
@@ -35,9 +34,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
         self.structure_errors = self.validate_structure()
 
     @property
-    @abstractmethod
-    def strict_obj(self) -> Type[BaseStrictModel]:
-        ...
+    def strict_obj(self):
+        return self.__class__
 
     def validate_structure(self) -> Optional[List[StructureError]]:
         """

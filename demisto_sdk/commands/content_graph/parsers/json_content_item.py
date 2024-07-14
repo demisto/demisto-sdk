@@ -1,7 +1,6 @@
-from abc import abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 import pydantic
 
@@ -18,7 +17,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    BaseStrictModel,
     StructureError,
 )
 
@@ -44,9 +42,8 @@ class JSONContentItemParser(ContentItemParser):
         self.structure_errors = self.validate_structure()
 
     @property
-    @abstractmethod
-    def strict_obj(self) -> Type[BaseStrictModel]:
-        ...
+    def strict_obj(self):
+        return self.__class__
 
     def validate_structure(self) -> Optional[List[StructureError]]:
         """

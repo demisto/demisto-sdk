@@ -140,8 +140,10 @@ class CommonFieldsIntegration(CommonFields):
     sort_values: Optional[List[str]] = Field(None, alias="sortvalues")
 
 
-class StrictIntegration(BaseIntegrationScript):
-    __base__ = (DESCRIPTION_DYNAMIC_MODEL,)
+class StrictIntegration(
+    BaseIntegrationScript, DESCRIPTION_DYNAMIC_MODEL  # type:ignore
+):
+    # type-ignore was added since mypy does not recognize the dynamic model as class
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")
     display: str
     beta: Optional[bool] = None

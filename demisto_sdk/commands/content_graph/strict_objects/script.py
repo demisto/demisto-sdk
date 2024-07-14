@@ -37,11 +37,6 @@ class CommonFieldsScript(CommonFields):
     id_xpanse: Optional[str] = Field(None, alias="id:xpanse")
 
 
-class ScriptOutput(Output):
-    description: Optional[str] = None
-    description_x2: Optional[str] = None
-
-
 class ScriptImportant(Important):
     description_x2: Optional[str] = None
 
@@ -74,7 +69,7 @@ class StrictScript(BaseIntegrationScript):
     timeout: Optional[str] = None
     depends_on: dict = Field({}, alias="dependson")
     depends_on_x2: dict = Field({}, alias="dependson_x2")
-    outputs: Optional[List[ScriptOutput]] = None
+    outputs: Optional[List[Output]] = None
     important: Optional[List[ScriptImportant]] = None
     docker_image: str = Field(None, alias="dockerimage")
     docker_image_45: str = Field(None, alias="dockerimage45")

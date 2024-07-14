@@ -285,6 +285,63 @@ class ContentType(StrEnum):
         elif ContentType.TRIGGER:
             return "Triggers Recommendations"  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
         return f"{self.value}s"
+    
+    @staticmethod
+    def from_release_note_header(header: str) -> "ContentType":
+        if header == "Triggers Recommendations":
+            return ContentType.TRIGGER
+        elif header == "Preprocess Rules":
+            return ContentType.PREPROCESS_RULE
+        elif header == "Mappers":
+            return ContentType.MAPPER
+        elif header == "Playbooks":
+            return ContentType.PLAYBOOK
+        elif header == "Integrations":
+            return ContentType.INTEGRATION
+        elif header == "Scripts":
+            return ContentType.SCRIPT
+        elif header == "Incident Fields":
+            return ContentType.INCIDENT_FIELD
+        elif header == "Indicator Fields":
+            return ContentType.INDICATOR_FIELD
+        elif header == "Incident Types":
+            return ContentType.INCIDENT_TYPE
+        elif header == "Classifiers":
+            return ContentType.CLASSIFIER
+        elif header == "Layouts":
+            return ContentType.LAYOUT
+        elif header == "Reports":
+            return ContentType.REPORT
+        elif header == "Widgets":
+            return ContentType.WIDGET
+        elif header == "Dashboards":
+            return ContentType.DASHBOARD
+        elif header == "Connections":
+            return ContentType.CONNECTION
+        elif header == "Generic Types":
+            return ContentType.GENERIC_TYPE
+        elif header == "Generic Fields":
+            return ContentType.GENERIC_FIELD
+        elif header == "Generic Modules":
+            return ContentType.GENERIC_MODULE
+        elif header == "Generic Definitions":
+            return ContentType.GENERIC_DEFINITION
+        elif header == "Lists":
+            return ContentType.LIST
+        elif header == "Jobs":
+            return ContentType.JOB
+        elif header == "Parsing Rules":
+            return ContentType.PARSING_RULE
+        elif header == "Modeling Rules":
+            return ContentType.MODELING_RULE
+        elif header == "Correlation Rules":
+            return ContentType.CORRELATION_RULE
+        elif header == "XSIAM Dashboards":
+            return ContentType.XSIAM_DASHBOARD
+        elif header == "XSIAM Reports":
+            return ContentType.XSIAM_REPORT
+        else:
+            raise ValueError(f"Could not find content type from header {header}")
 
 
 class Relationship(BaseModel):

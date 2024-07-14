@@ -199,7 +199,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         """
         missing_display_names = {}
         for header, display_names in headers_to_display_names.items():
-            content_type = CONTENT_TYPE_BY_RN_HEADER[header] # release_notes_header
+            content_type =  ContentType.from_release_note_header(header)
             pack_display_names = {
                 item.display_name for item in pack_items_by_types.get(content_type, [])
             }

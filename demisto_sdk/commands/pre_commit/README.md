@@ -1,22 +1,21 @@
 ## Pre-commit
 
 This command enhances the content development experience, by running a variety of checks and linters.
-It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) infrastructure, and uses a template file saved under the content repo (locally, or remotely) to dynamically generate a `pre-commit-config.yaml` file, based on the content being run.
+It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) framework.
+A `.pre-commit-config-template.yaml` file is used to configure the hooks (if found in the content repo. Otherwise, a [default](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/.pre-commit-config_template.yaml) is used)
 
-**Note**: An internet connection is required for using `demisto-sdk pre-commit`.
+Since content items are made to run in containers with different Python versions and dependencies, this command matches content items with suitable configurations, before passing the generated (temporary) `.pre-commit-config.yaml` file.
+
+**Note**: An internet connection is required for this command.
+
 ## Usage
 
-### Manually, using git (recommended)
+### Manually Running
 * In a terminal shell, change the directory to the folder that is used as a the content repo.
-* Make sure you have the latest version of `demisto-sdk`.
 * Run `demisto-sdk pre-commit`.
 
-### In a GitHub Action
-* Under the content repo, there is a GitHub Action that automatically runs `demisto-sdk pre-commit`, so it runs automatically after each commit.
-* Make sure to set the `GITHUB_ACTIONS` environment variable to `true`.
-
 ### Automatically, as a git hook
-* Create a [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) that calls `demisto-sdk pre-commit`.
+* Create a [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) that runs `demisto-sdk pre-commit`.
 
 **Arguments**:
 * **-i, --input, --files**

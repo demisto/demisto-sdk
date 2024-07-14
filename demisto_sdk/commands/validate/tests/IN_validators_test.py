@@ -127,9 +127,6 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN146_is_containing_
 from demisto_sdk.commands.validate.validators.IN_validators.IN149_does_common_outputs_have_description import (
     DoesCommonOutputsHaveDescriptionValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN150_is_valid_display_for_siem_integration import (
-    IsValidDisplayForSiemIntegrationValidator,
-)
 from demisto_sdk.commands.validate.validators.IN_validators.IN151_is_none_command_args import (
     IsNoneCommandArgsValidator,
 )
@@ -2972,90 +2969,6 @@ def test_IsNoneCommandArgsValidator_fix():
         content_item.data.get("script", {}).get("commands", [])[0].get("arguments")
         == []
     )
-
-
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(),
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["test Event Collector", True],
-                ),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["test", True],
-                ),
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["Event Collector test", True],
-                ),
-            ],
-            2,
-            [
-                "The integration is a siem integration with invalid display name (test). Please make sure the display name ends with 'Event Collector'",
-                "The integration is a siem integration with invalid display name (Event Collector test). Please make sure the display name ends with 'Event Collector'",
-            ],
-        ),
-    ],
-)
-def test_IsValidDisplayForSiemIntegrationValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
-):
-    """
-    Given
-    content_items iterables.
-        - Case 1: Two valid integrations:
-            - One non siem integration with display name not ending with 'Event Collector'.
-            - One siem integration with display name ending with 'Event Collector'.
-        - Case 2: Two invalid integrations:
-            - One siem integration with display name without 'Event Collector'.
-            - One siem integration with display name starting with 'Event Collector'.
-    When
-    - Calling the IsValidDisplayForSiemIntegrationValidator is valid function.
-    Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail.
-    """
-    results = IsValidDisplayForSiemIntegrationValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
-        ]
-    )
-
-
-def test_IsValidDisplayForSiemIntegrationValidator_fix():
-    """
-    Given
-        A siem integration without Event Collector suffix in the display name.
-    When
-    - Calling the IsValidDisplayForSiemIntegrationValidator fix function.
-    Then
-        - Make sure that the Event Collector was added to the display name, and that the right message was returned.
-    """
-    content_item = create_integration_object(
-        paths=["display", "script.isfetchevents"],
-        values=["test", True],
-    )
-    assert content_item.display_name == "test"
-    validator = IsValidDisplayForSiemIntegrationValidator()
-    assert (
-        validator.fix(content_item).message
-        == "Added the 'Event Collector' suffix to the display name, the new display name is test Event Collector."
-    )
-    assert content_item.display_name == "test Event Collector"
 
 
 @pytest.mark.parametrize(

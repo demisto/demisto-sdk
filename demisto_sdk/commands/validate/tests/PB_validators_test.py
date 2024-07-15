@@ -49,6 +49,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB122_does_playbook_
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB124_is_playbook_contain_unhandled_script_condition_branches import (
+    IsPlaybookContainUnhandledScriptConditionBranchesValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB125_playbook_only_default_next import (
     PlaybookOnlyDefaultNextValidator,
 )
@@ -948,3 +951,91 @@ def test_IsPlayBookUsingAnInstanceValidator_fix():
     for tasks in fixed_content_item.tasks.values():
         scriptargs = tasks.scriptarguments
         assert scriptargs == {"some_key": "value"}
+
+
+def test_IsPlaybookContainUnhandledScriptConditionBranchesValidator_is_valid():
+    """
+    Given:
+    - A playbook
+        Case 1: A valid playbook with 2 conditional tasks:
+        - One script condition with 2 next task branches.
+        - One non script condition with 1 next task branch.
+        Case 2: Two script condition tasks with 1 next task branch each.
+    When:
+    - calling IsPlaybookContainUnhandledScriptConditionBranchesValidator.is_valid.
+    Then:
+    - The results should be as expected:
+        Case 1: The playbook is valid.
+        Case 2: The playbook is invalid and both tasks should be mentioned as invalid.
+    """
+    validator = IsPlaybookContainUnhandledScriptConditionBranchesValidator()
+    # Case 1
+    valid_playbook = create_playbook_object(
+        ["tasks"],
+        [
+            {
+                "0": {
+                    "id": "test fail task No1",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"], "yes": ["2"]},
+                    "task": {
+                        "id": "27b9c747-b883-4878-8b60-7f352098a63c",
+                        "scriptName": "test",
+                    },
+                    "quietmode": 2,
+                },
+                "1": {
+                    "id": "test fail task No2",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"yes": ["3"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 2,
+                },
+            }
+        ],
+    )
+    valid_result = validator.is_valid([valid_playbook])
+
+    # Case 2
+    invalid_playbook = create_playbook_object(
+        ["tasks"],
+        [
+            {
+                "0": {
+                    "id": "0",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {
+                        "id": "27b9c747-b883-4878-8b60-7f352098a63c",
+                        "scriptName": "test",
+                    },
+                    "quietmode": 2,
+                },
+                "1": {
+                    "id": "1",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"yes": ["3"]},
+                    "task": {
+                        "id": "27b9c747-b883-4878-8b60-7f352098a63c",
+                        "scriptName": "test",
+                    },
+                    "quietmode": 2,
+                },
+            }
+        ],
+    )
+    results_invalid = validator.is_valid([invalid_playbook])
+
+    assert valid_result == []
+    assert results_invalid != []
+    assert results_invalid[0].message == (
+        "The following conditional tasks contains unhandled conditions: 0, 1."
+    )

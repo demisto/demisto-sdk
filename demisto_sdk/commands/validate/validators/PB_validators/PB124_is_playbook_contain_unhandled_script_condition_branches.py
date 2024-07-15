@@ -42,7 +42,17 @@ class IsPlaybookContainUnhandledScriptConditionBranchesValidator(
             )
         ]
 
-    def get_unhandled_script_condition_tasks(self, tasks: List[TaskConfig]):
+    def get_unhandled_script_condition_tasks(
+        self, tasks: List[TaskConfig]
+    ) -> List[str]:
+        """List all the script condition tasks with unhandled branches.
+
+        Args:
+            tasks (List[TaskConfig]): The list of the playbooks tasks.
+
+        Returns:
+            List[str]: The list of IDs of tasks with unhandled branches.
+        """
         return [
             task.id
             for task in tasks

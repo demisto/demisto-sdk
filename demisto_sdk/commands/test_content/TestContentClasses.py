@@ -788,7 +788,6 @@ class BuildContext:
             else []
         )
         self.cloud_servers_path = kwargs.get("cloud_servers_path")
-        self.cloud_servers_api_keys_path = kwargs.get("cloud_servers_api_keys")
         self.use_retries_mechanism = kwargs.get("use_retries", False)
         self.conf, self.secret_conf = self._load_conf_files(
             kwargs["conf"], kwargs["secret"]
@@ -799,7 +798,7 @@ class BuildContext:
             self.env_json = {
                 machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
             }
-            self.api_key = get_json_file(self.cloud_servers_api_keys_path)
+            self.api_key = get_json_file(kwargs.get("cloud_servers_api_keys"))
         else:
             self.env_json = self._load_env_results_json()
             self.api_key = kwargs["api_key"]

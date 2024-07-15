@@ -30,7 +30,11 @@ class ParsingRuleSuffixNameValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.path, content_item.object_id, PARSING_RULE_ID_SUFFIX, content_item.name, PARSING_RULE_NAME_SUFFIX
+                    content_item.path,
+                    content_item.object_id,
+                    PARSING_RULE_ID_SUFFIX,
+                    content_item.name,
+                    PARSING_RULE_NAME_SUFFIX,
                 ),
                 content_object=content_item,
             )

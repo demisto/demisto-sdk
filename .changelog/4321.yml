@@ -1,4 +1,0 @@
-changes:
-- description: Added support to the (internal) **test-content** command to work properly with multiple cloud servers.
-  type: internal
-pr_number: 4321

@@ -396,7 +396,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             mandatorily=is_mandatory,
         )
 
-    # TODO - make it abstract
     @property
+    @abstractmethod
     def strict_object(self) -> Optional[Type[BaseStrictModel]]:
         return None

@@ -1,4 +1,19 @@
 # Changelog
+## 1.31.3
+* Removed IN150 due to invalid_siem_integration_name from both old and new validate flows. [#4420](https://github.com/demisto/demisto-sdk/pull/4420)
+* Removed RM108 and RM112 from the old validate format. [#4408](https://github.com/demisto/demisto-sdk/pull/4408)
+* Added the **-tpb** option to the **upload** command. When provided, all the test playbooks for the given pack will be uploaded. [#4402](https://github.com/demisto/demisto-sdk/pull/4402)
+* Modified GR100, that checks whether a content item attempts to use other content items which are not supported in all of the marketplaces of the content item. [#4282](https://github.com/demisto/demisto-sdk/pull/4282)
+* Added the ability to use git.Repo object to initialize GitUtil. [#4387](https://github.com/demisto/demisto-sdk/pull/4387)
+* Added timestamp print in console. [#4412](https://github.com/demisto/demisto-sdk/pull/4412)
+* Add a pre-commit hook to validate file permission/mode changes in Packs directory. [#4389](https://github.com/demisto/demisto-sdk/pull/4389)
+* Fixed an issue where the relative path regex wasn't written correctly. This fix affect RM108 and RM114 in the new validate. [#4413](https://github.com/demisto/demisto-sdk/pull/4413)
+* Fixed an issue where new validate failed when attempting to parse renamed files. [#4411](https://github.com/demisto/demisto-sdk/pull/4411)
+* Fixed an issue where playbook saved due to a failed attempt to dump task object. [#4416](https://github.com/demisto/demisto-sdk/pull/4416)
+* Added support for the (internal) ***test-content*** command to work properly with multiple cloud servers. [#4321](https://github.com/demisto/demisto-sdk/pull/4321)
+* Moved CR102 to the new validate format. The validation checks 'search_window' existence and non-emptiness when 'execution_mode' == 'SCHEDULED'. [#4409](https://github.com/demisto/demisto-sdk/pull/4409)
+* Fixed an issue where wrong untracked files were collected during running of ***pre-commit*** and ***validate*** in contribution PR use-case. [#4410](https://github.com/demisto/demisto-sdk/pull/4410)
+
 ## 1.31.2
 * Added the *marketplaces* field to the widget schema. [#4396](https://github.com/demisto/demisto-sdk/pull/4396)
 * Moved IF119 to the new validation format. Check whether a *selectValue* key in an *incidentField* of type *singleSelect* do not contain multiple or only empty options. [#4277](https://github.com/demisto/demisto-sdk/pull/4277)

@@ -575,7 +575,7 @@ def generate_integration_doc(
             # Setup integration to work with Demisto
             docs.extend(
                 generate_section(
-                    "Configure {} on Cortex XSOAR".format(yml_data["display"]), ""
+                    "Configure {} on Cortex {}".format(yml_data["display"], get_marketplace_name(yml_data)), ""
                 )
             )
             # Setup integration on Demisto
@@ -648,7 +648,7 @@ def generate_setup_section(yaml_data: dict) -> List[str]:
     default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
 
     section = [
-        CONFIGURATION_SECTION_STEPS.STEP_1.value,
+        CONFIGURATION_SECTION_STEPS.STEP_1.value.format(get_conf_navigation(yaml_data)),
         CONFIGURATION_SECTION_STEPS.STEP_2_TEMPLATE.value.format(yaml_data["display"]),
         CONFIGURATION_SECTION_STEPS.STEP_3.value,
     ]
@@ -815,6 +815,38 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
     return section
 
 
+def get_marketplace_name(yaml_data):
+    if "marketplaces" not in yaml_data or not yaml_data["marketplaces"]:
+        return ""
+
+    xsoar_keys = {"xsoar", "xsoar_saas", "xsoar_on_prem"}
+    if any(key in yaml_data.get("marketplaces", []) for key in xsoar_keys):
+        return "" if "marketplacev2" in yaml_data.get("marketplaces", []) else "XSOAR "
+
+    return "XSIAM " if "marketplacev2" in yaml_data.get("marketplaces", []) else "XSOAR "
+
+def get_conf_navigation(yaml_data):
+    mp = get_marketplace_name(yaml_data)
+    if mp == "XSOAR ":
+        return(
+            "* For XSOAR 6.x users: Navigate to **Settings** > **Integrations** > **Instances**.\n"
+            "   * For XSOAR 8.x users: Navigate to **Settings & Info** > **Settings** > **Integrations** > "
+            "**Instances**."
+        )
+    elif mp == "XSIAM ":
+        return(
+            "Navigate to **Settings** > **Configurations** > **Data Collection** > "
+            "**Automation & Feed Integrations**."
+        ).strip()
+    else:
+        return(
+            "  * For XSOAR 6.x users: Navigate to **Settings** > **Integrations** > **Instances**.\n"
+            "   * For XSOAR 8.x users: Navigate to **Settings & Info** > **Settings** > **Integrations** > "
+            "**Instances**.\n"
+            "   * For XSIAM users: Navigate to **Settings** > **Configurations** > **Data Collection** > "
+            "**Automation & Feed Integrations**."
+            ).strip()
+
 # Commands
 def generate_commands_section(
     yaml_data: dict,
@@ -833,11 +865,12 @@ def generate_commands_section(
     Returns:
         [str, str] -- [commands section, errors]
     """
+    mp = get_marketplace_name(yaml_data)
     errors: list = []
     section = [
         "## Commands",
         "",
-        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        f"You can execute these commands from the Cortex {mp}CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
         "",
     ]

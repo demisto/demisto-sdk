@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     TYPE_PYTHON2,
     TYPE_PYTHON3,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
@@ -15,7 +16,16 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     CommonFields,
     Important,
     Output,
-    ScriptType, COMMENT_DYNAMIC_MODEL,
+    ScriptType,
+    create_dynamic_model,
+)
+
+COMMENT_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="comment",
+    type_=Optional[str],
+    default=None,
+    suffixes=[MarketplaceVersions.MarketplaceV2.value],
+    include_without_suffix=True,
 )
 
 
@@ -47,15 +57,14 @@ class ContentItemExportableFields(BaseStrictModel):
     )
 
 
-# TODO - check with Dor - does not work - COMMENT_DYNAMIC_MODEL
-class StrictScript(BaseIntegrationScript, COMMENT_DYNAMIC_MODEL):
+class StrictScript(
+    BaseIntegrationScript, COMMENT_DYNAMIC_MODEL  # type:ignore[valid-type,misc]
+):
     common_fields: CommonFieldsScript = Field(..., alias="commonfields")
     name_x2: Optional[str] = None
     script: str
     type_: ScriptType = Field(..., alias="type")
     tags: Optional[List[str]] = None
-    comment: Optional[str] = None
-    comment_marketplace_v2: Optional[str] = Field(None, alias="comment:marketplacev2")
     enabled: Optional[bool] = None
     args: Optional[List[Argument]] = None
     script_target: Optional[int] = Field(None, alias="scripttarget")

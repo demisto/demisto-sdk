@@ -42,6 +42,10 @@ class YAMLContentItemParser(ContentItemParser):
         if self.should_skip_parsing():
             raise NotAContentItemException
 
+    @property
+    def raw_data(self) -> dict:
+        return self.yml_data
+
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(

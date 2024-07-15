@@ -44,7 +44,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
         It will fail validation (ST110).
         """
         try:
-            self.strict_obj(**self.yml_data)
+            self.strict_object(**self.yml_data)
         except pydantic.error_wrappers.ValidationError as e:
             return [StructureError(**error) for error in e.errors()]
         return None

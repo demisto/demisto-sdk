@@ -12,6 +12,19 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     Important,
     Output,
     ScriptType,
+    create_dynamic_model,
+)
+from demisto_sdk.commands.content_graph.strict_objects.common import create_model
+
+IS_FETCH_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="isfetch",
+    type_=Optional[bool],
+    default=None,
+)
+IS_FETCH_EVENTS_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="isfetchevents",
+    type_=Optional[bool],
+    default=None,
 )
 
 
@@ -95,7 +108,7 @@ class Command(BaseStrictModel):
     )
 
 
-class Script(BaseStrictModel):
+class _Script(BaseStrictModel):
     script: str
     type_: ScriptType = Field(..., alias="type")
     docker_image: str = Field(None, alias="dockerimage")
@@ -118,32 +131,35 @@ class Script(BaseStrictModel):
     feed: Optional[bool] = None
     is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
     reset_context: Optional[bool] = Field(None, alias="resetContext")
-    is_fetch_xsoar: Optional[bool] = Field(None, alias="isfetch:xsoar")
-    is_fetch_marketplace_v2: Optional[bool] = Field(None, alias="isfetch:marketplacev2")
-    is_fetch_xpanse: Optional[bool] = Field(None, alias="isfetch:xpanse")
-    is_fetch_xsoar_saas: Optional[bool] = Field(None, alias="isfetch:xsoar_saas")
-    is_fetch_xsoar_on_prem: Optional[bool] = Field(None, alias="isfetch:xsoar_on_prem")
-    is_fetch_events_xsoar: Optional[bool] = Field(None, alias="isfetchevents:xsoar")
-    is_fetch_events_marketplace_v2: Optional[bool] = Field(
-        None, alias="isfetchevents:marketplacev2"
-    )
-    is_fetch_events_xpanse: Optional[bool] = Field(None, alias="isfetchevents:xpanse")
-    is_fetch_events_xsoar_saas: Optional[bool] = Field(
-        None, alias="isfetchevents:xsoar_saas"
-    )
-    is_fetch_events_xsoar_on_prem: Optional[bool] = Field(
-        None, alias="isfetchevents:xsoar_on_prem"
-    )
+    # is_fetch_xsoar: Optional[bool] = Field(None, alias="isfetch:xsoar")
+    # is_fetch_marketplace_v2: Optional[bool] = Field(None, alias="isfetch:marketplacev2")
+    # is_fetch_xpanse: Optional[bool] = Field(None, alias="isfetch:xpanse")
+    # is_fetch_xsoar_saas: Optional[bool] = Field(None, alias="isfetch:xsoar_saas")
+    # is_fetch_xsoar_on_prem: Optional[bool] = Field(None, alias="isfetch:xsoar_on_prem")
+    # is_fetch_events_xsoar: Optional[bool] = Field(None, alias="isfetchevents:xsoar")
+    # is_fetch_events_marketplace_v2: Optional[bool] = Field(
+    #     None, alias="isfetchevents:marketplacev2"
+    # )
+    # is_fetch_events_xpanse: Optional[bool] = Field(None, alias="isfetchevents:xpanse")
+    # is_fetch_events_xsoar_saas: Optional[bool] = Field(
+    #     None, alias="isfetchevents:xsoar_saas"
+    # )
+    # is_fetch_events_xsoar_on_prem: Optional[bool] = Field(
+    #     None, alias="isfetchevents:xsoar_on_prem"
+    # )
+
+
+Script = create_model(
+    model_name="Script",
+    base_models=(_Script, IS_FETCH_DYNAMIC_MODEL, IS_FETCH_EVENTS_DYNAMIC_MODEL),
+)
 
 
 class CommonFieldsIntegration(CommonFields):
     sort_values: Optional[List[str]] = Field(None, alias="sortvalues")
 
 
-class StrictIntegration(
-    BaseIntegrationScript, DESCRIPTION_DYNAMIC_MODEL  # type:ignore
-):
-    # type-ignore was added since mypy does not recognize the dynamic model as class
+class _StrictIntegration(BaseIntegrationScript):
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")
     display: str
     beta: Optional[bool] = None
@@ -160,10 +176,21 @@ class StrictIntegration(
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
     support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
     configuration: List[Configuration]
-    script: Script
+    script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     videos: Optional[List[str]] = None
     versioned_fields: dict = Field(None, alias="versionedfields")
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
+
+
+StrictIntegration = create_model(
+    model_name="StrictIntegration",
+    base_models=(
+        _StrictIntegration,
+        IS_FETCH_DYNAMIC_MODEL,
+        IS_FETCH_EVENTS_DYNAMIC_MODEL,
+        DESCRIPTION_DYNAMIC_MODEL,
+    ),
+)

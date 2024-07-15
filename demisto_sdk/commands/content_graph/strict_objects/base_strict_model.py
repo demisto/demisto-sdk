@@ -1,8 +1,7 @@
 from abc import ABC
-from typing import Any, List, Optional, Type, Union
+from typing import Any, List, Optional, Sequence, Union
 
-import pydantic
-from pydantic import BaseModel, Extra, Field, validator
+from pydantic import BaseModel, Extra, Field
 from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import (
@@ -13,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
+from demisto_sdk.commands.content_graph.strict_objects.common import create_model
 
 marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
 
@@ -25,23 +25,23 @@ class BaseStrictModel(BaseModel, ABC):
 
         extra = Extra.forbid
 
-    @validator("*")
-    def prevent_none(cls, v):
-        """
-        Validator ensures no None value is entered in a field.
-        """
-        assert v is not None, f"{v} may not be None"
-        return v
+    # @validator("*")
+    # def prevent_none(cls, v):
+    #     """
+    #     Validator ensures no None value is entered in a field.
+    #     """
+    #     assert v is not None, f"{v} may not be None"
+    #     return v
 
 
 def create_dynamic_model(
     field_name: str,
     type_: Any,
     default: Any = ...,
-    suffixes: List[str] = marketplace_suffixes,
+    suffixes: Sequence[str] = tuple(marketplace_suffixes),
     alias: Optional[str] = None,
     include_without_suffix: bool = False,
-) -> Type[BaseStrictModel]:
+) -> BaseModel:
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
     (we have fields that are almost identical, except for the suffix.
@@ -62,10 +62,10 @@ def create_dynamic_model(
     if include_without_suffix:
         fields[field_name] = (type_, FieldInfo(default, alias=f"{alias or field_name}"))
 
-    return pydantic.create_model(
-        f"Dynamic{field_name.title()}Model",
-        __base__=BaseStrictModel,
-        field_definitions=fields,
+    return create_model(
+        model_name=f"Dynamic{field_name.title()}Model",
+        base_models=(BaseStrictModel,),
+        **fields,
     )
 
 
@@ -91,13 +91,6 @@ ID_DYNAMIC_MODEL = create_dynamic_model(
     field_name="id",
     type_=Optional[Any],
     default=None,
-    include_without_suffix=True,
-)
-COMMENT_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="comment",
-    type_=Optional[str],
-    default=None,
-    suffixes=[MarketplaceVersions.MarketplaceV2.value],
     include_without_suffix=True,
 )
 

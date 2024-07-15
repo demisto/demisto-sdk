@@ -1,16 +1,15 @@
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
-)
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    BaseStrictModel,
 )
 from demisto_sdk.commands.content_graph.strict_objects.integration import (
     StrictIntegration,
@@ -59,7 +58,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.structure_errors = self.validate_structure()
 
     @property
-    def strict_object(self) -> Type[BaseStrictModel]:
+    def strict_object(self) -> BaseModel:
         return StrictIntegration
 
     @cached_property

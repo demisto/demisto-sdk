@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Type, cast
 
+import pydantic
 from packaging.version import Version
 from pydantic import Field
 
@@ -95,6 +96,22 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self.structure_errors: Optional[
             List[StructureError]
         ] = None  # TODO - remove when all ST validations are done
+
+    @property
+    def raw_data(self) -> dict:
+        ...
+
+    def validate_structure(self) -> Optional[List[StructureError]]:
+        """
+        The method uses the parsed data and attempts to build a Pydantic object from it.
+        Whenever data is invalid by the schema, we store the error in the 'structure_errors' attribute,
+        It will fail validation (ST110).
+        """
+        try:
+            self.strict_object(**self.raw_data)
+        except pydantic.error_wrappers.ValidationError as e:
+            return [StructureError(**error) for error in e.errors()]
+        return None
 
     @staticmethod
     def from_path(

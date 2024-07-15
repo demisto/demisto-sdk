@@ -95,7 +95,7 @@ def test_IsValidContentFieldValidator_not_valid():
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'content' field is set to False
     """
     content_items: List[IncidentField] = [
@@ -114,7 +114,7 @@ def test_IsValidSystemFlagValidator_not_valid():
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'system' field is set to True
     """
     content_items: List[IncidentField] = [
@@ -133,7 +133,7 @@ def test_IsValidFieldTypeValidator_not_valid():
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'type' field is not valid
     """
     content_items: List[IncidentField] = [
@@ -155,7 +155,7 @@ def test_IsValidGroupFieldValidator_not_valid():
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'group' field is not valid
     """
     content_items: List[IncidentField] = [create_incident_field_object(["group"], [2])]
@@ -173,7 +173,7 @@ def test_IsCliNameFieldAlphanumericValidator_not_valid(cli_name_value):
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'cliName' value is non-alphanumeric, or contains an uppercase letter.
     """
     content_items: List[IncidentField] = [
@@ -196,7 +196,7 @@ def test_IsCliNameReservedWordValidator_not_valid(reserved_word):
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'cliName' value is a reserved word
     """
     content_items: List[IncidentField] = [
@@ -218,7 +218,7 @@ def test_IsFieldTypeChangedValidator_is_valid():
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'type' field has changed
         - Ensure that no ValidationResult returned when 'type' field has not changed
     """
@@ -244,7 +244,7 @@ def test_UnsearchableKeyValidator_is_valid(unsearchable: Optional[bool]):
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'unsearchable' field is set to false or not or undefined
         - Ensure that no ValidationResult returned when unsearchable set to true
     """
@@ -266,7 +266,7 @@ def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose prefix name that not start with relevant pack name
     """
     # not valid
@@ -274,6 +274,7 @@ def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
     with ChangeCWD(REPO.path):
         # Create an Incident field so that there is no prefix name of the pack in the name field
         content_item = create_incident_field_object(pack_info={"name": pack_name})
+        assert not content_item.name.startswith(pack_name)
         results = NameFieldPrefixValidator().is_valid([content_item])
         assert results
         assert results[0].message == (
@@ -299,7 +300,7 @@ def test_NameFieldPrefixValidator_is_valid_without_item_prefix():
         pytest.param(
             "Foo test", "Foo test CVE", ["Foo", "Foo test"], id="itemPrefix is a str"
         ),
-        pytest.param(None, "Foo CVE", ["Foo"], id="no itemPrefix exists"),
+        pytest.param(None, "Foo CVE", ["Foo"], id="itemPrefix is None"),
     ],
 )
 def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
@@ -313,7 +314,7 @@ def test_NameFieldPrefixValidator_is_valid_with_item_prefix(
     When:
         - run is_valid method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose prefix name is not in `itemPrefix`
           which is in pack_metadata
         - Ensure that no ValidationResult returned when prefix name

@@ -54,7 +54,7 @@ def is_name_using_allowed_prefix(content_item: ContentTypes) -> bool:
     )
 
 
-def allowed_prefixes(content_item: ContentTypes) -> set:
+def allowed_prefixes(content_item: ContentTypes) -> set[str]:
     """
     Collects from pack metadata all the allowed prefixes
     """

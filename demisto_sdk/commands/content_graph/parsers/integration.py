@@ -3,6 +3,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from _distutils_hack import override
 from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -58,6 +59,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.structure_errors = self.validate_structure()
 
     @property
+    @override
     def strict_object(self) -> BaseModel:
         return StrictIntegration
 

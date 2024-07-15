@@ -99,7 +99,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @property
     def raw_data(self) -> dict:
-        ...
+        return {}
 
     def validate_structure(self) -> Optional[List[StructureError]]:
         """
@@ -414,6 +414,5 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         )
 
     @property
-    @abstractmethod
-    def strict_object(self) -> Optional[Type[BaseStrictModel]]:
-        return None
+    def strict_object(self) -> Type[BaseStrictModel]:
+        return BaseStrictModel

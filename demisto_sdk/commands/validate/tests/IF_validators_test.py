@@ -234,7 +234,7 @@ def test_IsFieldTypeChangedValidator_is_valid():
 
 
 @pytest.mark.parametrize("unsearchable", (False, None))
-def test_UnsearchableKeyValidator_is_valid(unsearchable: bool):
+def test_UnsearchableKeyValidator_is_valid(unsearchable: Optional[bool]):
     """
     Given:
         - IncidentFiled content items

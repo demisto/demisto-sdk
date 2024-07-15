@@ -93,6 +93,13 @@ ID_DYNAMIC_MODEL = create_dynamic_model(
     default=None,
     include_without_suffix=True,
 )
+COMMENT_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="comment",
+    type_=Optional[str],
+    default=None,
+    suffixes=[MarketplaceVersions.MarketplaceV2.value],
+    include_without_suffix=True,
+)
 
 
 class CommonFields(BaseStrictModel):

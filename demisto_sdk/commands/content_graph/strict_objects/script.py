@@ -15,7 +15,7 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     CommonFields,
     Important,
     Output,
-    ScriptType,
+    ScriptType, COMMENT_DYNAMIC_MODEL,
 )
 
 
@@ -28,17 +28,9 @@ class ScriptSubType(StrEnum):
     PYTHON2 = TYPE_PYTHON2
 
 
-class ScriptArgument(Argument):
-    description_x2: Optional[bool] = None
-
-
 class CommonFieldsScript(CommonFields):
     id_x2: Optional[str] = None
     id_xpanse: Optional[str] = Field(None, alias="id:xpanse")
-
-
-class ScriptImportant(Important):
-    description_x2: Optional[str] = None
 
 
 class EngineInfo(BaseStrictModel):
@@ -55,7 +47,8 @@ class ContentItemExportableFields(BaseStrictModel):
     )
 
 
-class StrictScript(BaseIntegrationScript):
+# TODO - check with Dor - does not work - COMMENT_DYNAMIC_MODEL
+class StrictScript(BaseIntegrationScript, COMMENT_DYNAMIC_MODEL):
     common_fields: CommonFieldsScript = Field(..., alias="commonfields")
     name_x2: Optional[str] = None
     script: str
@@ -64,13 +57,13 @@ class StrictScript(BaseIntegrationScript):
     comment: Optional[str] = None
     comment_marketplace_v2: Optional[str] = Field(None, alias="comment:marketplacev2")
     enabled: Optional[bool] = None
-    args: Optional[List[ScriptArgument]] = None
+    args: Optional[List[Argument]] = None
     script_target: Optional[int] = Field(None, alias="scripttarget")
     timeout: Optional[str] = None
     depends_on: dict = Field({}, alias="dependson")
     depends_on_x2: dict = Field({}, alias="dependson_x2")
     outputs: Optional[List[Output]] = None
-    important: Optional[List[ScriptImportant]] = None
+    important: Optional[List[Important]] = None
     docker_image: str = Field(None, alias="dockerimage")
     docker_image_45: str = Field(None, alias="dockerimage45")
     alt_docker_images: Optional[List[str]] = Field(None, alias="alt_dockerimages")

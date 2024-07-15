@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where wrong untracked files were collected during running of ***pre-commit*** and ***validate*** in contribution PR use-case.
-  type: internal
-pr_number: 4410

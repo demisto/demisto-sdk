@@ -671,9 +671,6 @@ class TestValidators:
             IntegrationValidator, "is_api_token_in_credential_type", return_value=True
         )
         mocker.patch.object(ReadMeValidator, "verify_image_exist", return_value=True)
-        mocker.patch.object(
-            ReadMeValidator, "verify_readme_image_paths", return_value=True
-        )
         mocker.patch.object(OldValidateManager, "is_node_exist", return_value=True)
         validate_manager = OldValidateManager(file_path=file_path, skip_conf_json=True)
         integration_yml = (
@@ -910,9 +907,6 @@ class TestValidators:
             PackUniqueFilesValidator,
             "validate_pack_readme_and_pack_description",
             return_value=True,
-        )
-        mocker.patch.object(
-            PackUniqueFilesValidator, "validate_pack_readme_images", return_value=True
         )
         mocker.patch.object(
             PackUniqueFilesValidator, "_read_metadata_content", return_value=dict()

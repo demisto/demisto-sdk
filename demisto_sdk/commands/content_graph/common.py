@@ -338,10 +338,8 @@ class ContentType(StrEnum):
             return ContentType.CORRELATION_RULE
         elif header == "XSIAM Dashboards":
             return ContentType.XSIAM_DASHBOARD
-        elif header == "XSIAM Reports":
-            return ContentType.XSIAM_REPORT
-        else:
-            raise ValueError(f"Could not find content type from header {header}")
+        # header == "XSIAM Reports"
+        return ContentType.XSIAM_REPORT
 
 
 class Relationship(BaseModel):

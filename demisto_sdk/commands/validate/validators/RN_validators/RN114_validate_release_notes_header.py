@@ -83,7 +83,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     description = "Validate the content items mentioned in second-level headers (##), exist in the pack."
     rationale = "Providing documentation with accurate headers, and avoid confusion."
     error_message = (
-        "The following invalid headers were found in:\n"
+        "The following headers that were found were invalid:\n"
         "{content_type_message}\n{content_item_message}\n"
     )
     related_field = "release_note"

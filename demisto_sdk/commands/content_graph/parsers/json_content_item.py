@@ -42,7 +42,7 @@ class JSONContentItemParser(ContentItemParser):
         self.structure_errors = self.validate_structure()
 
     @property
-    def strict_obj(self):
+    def strict_object(self):
         return self.__class__
 
     def validate_structure(self) -> Optional[List[StructureError]]:

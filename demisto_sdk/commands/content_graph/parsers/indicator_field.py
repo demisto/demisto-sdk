@@ -32,7 +32,7 @@ class IndicatorFieldParser(
         self.connect_to_dependencies()
 
     @property
-    def strict_obj(self) -> Type[BaseStrictModel]:
+    def strict_object(self) -> Type[BaseStrictModel]:
         return StrictIndicatorField
 
     @cached_property

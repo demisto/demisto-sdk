@@ -59,7 +59,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.structure_errors = self.validate_structure()
 
     @property
-    def strict_obj(self) -> Type[BaseStrictModel]:
+    def strict_object(self) -> Type[BaseStrictModel]:
         return StrictIntegration
 
     @cached_property

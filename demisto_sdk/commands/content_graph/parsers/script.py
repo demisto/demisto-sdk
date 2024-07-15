@@ -24,5 +24,5 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             git_sha=git_sha,
         )
 
-    def strict_obj(self) -> Type[BaseStrictModel]:
+    def strict_object(self) -> Type[BaseStrictModel]:
         return StrictScript

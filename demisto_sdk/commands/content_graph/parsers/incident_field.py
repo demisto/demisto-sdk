@@ -37,7 +37,7 @@ class IncidentFieldParser(
         self.structure_errors = self.validate_structure()
 
     @property
-    def strict_obj(self) -> Type[BaseStrictModel]:
+    def strict_object(self) -> Type[BaseStrictModel]:
         return StrictIncidentField
 
     @cached_property

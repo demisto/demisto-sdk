@@ -416,7 +416,9 @@ def create_incident_type_object(
 
 
 def create_incident_field_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
 ) -> IncidentField:
     """Creating an incident_field object with altered fields from a default incident_field json structure.
 
@@ -430,6 +432,8 @@ def create_incident_field_object(
     json_content = load_json("incident_field.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
     pack.create_incident_field(name="incident_field", content=json_content)
     return cast(
         IncidentField, BaseContent.from_path(Path(pack.incident_fields[0].path))

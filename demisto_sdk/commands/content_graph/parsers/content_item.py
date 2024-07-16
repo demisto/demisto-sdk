@@ -93,7 +93,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         super().__init__(path)
         self.relationships: Relationships = Relationships()
         self.git_sha: Optional[str] = git_sha
-        self.structure_errors: Optional[List[StructureError]] = self.validate_structure()
+        self.structure_errors: Optional[
+            List[StructureError]
+        ] = self.validate_structure()
 
     @property
     def raw_data(self) -> dict:

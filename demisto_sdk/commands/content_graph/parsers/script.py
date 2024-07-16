@@ -1,12 +1,12 @@
 from pathlib import Path
-from typing import List, Optional, Type
+from typing import List, Optional
+
+from _distutils_hack import override
+from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    BaseStrictModel,
-)
 from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
 
 
@@ -24,5 +24,7 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             git_sha=git_sha,
         )
 
-    def strict_object(self) -> Type[BaseStrictModel]:
+    @property
+    @override
+    def strict_object(self) -> BaseModel:
         return StrictScript

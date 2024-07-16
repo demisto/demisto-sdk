@@ -3,17 +3,12 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-import pydantic
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
-)
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    StructureError,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,

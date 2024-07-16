@@ -131,22 +131,6 @@ class _Script(BaseStrictModel):
     feed: Optional[bool] = None
     is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
     reset_context: Optional[bool] = Field(None, alias="resetContext")
-    # is_fetch_xsoar: Optional[bool] = Field(None, alias="isfetch:xsoar")
-    # is_fetch_marketplace_v2: Optional[bool] = Field(None, alias="isfetch:marketplacev2")
-    # is_fetch_xpanse: Optional[bool] = Field(None, alias="isfetch:xpanse")
-    # is_fetch_xsoar_saas: Optional[bool] = Field(None, alias="isfetch:xsoar_saas")
-    # is_fetch_xsoar_on_prem: Optional[bool] = Field(None, alias="isfetch:xsoar_on_prem")
-    # is_fetch_events_xsoar: Optional[bool] = Field(None, alias="isfetchevents:xsoar")
-    # is_fetch_events_marketplace_v2: Optional[bool] = Field(
-    #     None, alias="isfetchevents:marketplacev2"
-    # )
-    # is_fetch_events_xpanse: Optional[bool] = Field(None, alias="isfetchevents:xpanse")
-    # is_fetch_events_xsoar_saas: Optional[bool] = Field(
-    #     None, alias="isfetchevents:xsoar_saas"
-    # )
-    # is_fetch_events_xsoar_on_prem: Optional[bool] = Field(
-    #     None, alias="isfetchevents:xsoar_on_prem"
-    # )
 
 
 Script = create_model(

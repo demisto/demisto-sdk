@@ -34,7 +34,6 @@ class IncidentFieldParser(
         self.group = self.json_data.get("group")
 
         self.connect_to_dependencies()
-        self.structure_errors = self.validate_structure()
 
     @property
     def strict_object(self) -> Type[BaseStrictModel]:

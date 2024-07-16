@@ -94,7 +94,6 @@ class _Script(BaseStrictModel):
     script: str
     type_: ScriptType = Field(..., alias="type")
     docker_image: str = Field(None, alias="dockerimage")
-    docker_image_45: str = Field(None, alias="dockerimage45")
     alt_docker_images: Optional[List[str]] = Field(None, alias="alt_dockerimages")
     native_image: Optional[List[str]] = Field(None, alias="nativeImage")
     is_fetch: Optional[bool] = Field(None, alias="isfetch")

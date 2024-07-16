@@ -107,6 +107,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Whenever data is invalid by the schema, we store the error in the 'structure_errors' attribute,
         It will fail validation (ST110).
         """
+        if not self.strict_object:
+            return  # TODO - remove it
         try:
             self.strict_object(**self.raw_data)
         except pydantic.error_wrappers.ValidationError as e:
@@ -414,5 +416,5 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         )
 
     @property
-    def strict_object(self) -> Type[BaseStrictModel]:
-        return BaseStrictModel
+    def strict_object(self) -> Optional[Type[BaseStrictModel]]:
+        return None

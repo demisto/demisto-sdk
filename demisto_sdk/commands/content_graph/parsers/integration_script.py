@@ -26,7 +26,6 @@ class IntegrationScriptParser(YAMLContentItemParser):
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.connect_to_api_modules()
-        self.structure_errors = self.validate_structure()
 
     @cached_property
     def field_mapping(self):

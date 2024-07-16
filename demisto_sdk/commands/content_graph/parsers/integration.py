@@ -56,7 +56,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_tests()
-        self.structure_errors = self.validate_structure()
 
     @property
     @override

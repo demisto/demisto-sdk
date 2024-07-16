@@ -4,17 +4,21 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import IncidentFieldType
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    NAME_DYNAMIC_MODEL,
+    NAME_DYNAMIC_MODEL, BaseStrictModel,
 )
+from demisto_sdk.commands.content_graph.strict_objects.common import create_model
 from demisto_sdk.commands.content_graph.strict_objects.indicator_field import (
     StrictIndicatorField,
 )
 
 
-class Aliases(NAME_DYNAMIC_MODEL):
+class _Aliases(BaseStrictModel):
     cli_name: str = Field(..., alias="cliName")
     name: str
     type_: IncidentFieldType = Field(..., alias="type")
+
+
+Aliases = create_model(model_name="Aliases", base_models=(_Aliases, NAME_DYNAMIC_MODEL))
 
 
 class StrictIncidentField(StrictIndicatorField):

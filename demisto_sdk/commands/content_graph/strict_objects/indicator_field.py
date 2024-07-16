@@ -10,15 +10,10 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
 )
+from demisto_sdk.commands.content_graph.strict_objects.common import create_model
 
 
-class StrictIndicatorField(BaseStrictModel):
-    __base__ = (
-        NAME_DYNAMIC_MODEL,
-        REQUIRED_DYNAMIC_MODEL,
-        DESCRIPTION_DYNAMIC_MODEL,
-        ID_DYNAMIC_MODEL,
-    )
+class _StrictIndicatorField(BaseStrictModel):
     from_version: Optional[str] = Field(None, alias="fromVersion")
     to_version: Optional[str] = Field(None, alias="toVersion")
     id: str
@@ -61,3 +56,11 @@ class StrictIndicatorField(BaseStrictModel):
     to_server_version: Optional[str] = Field(None, alias="toServerVersion")
     open_ended: Optional[bool] = Field(None, alias="openEnded")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
+
+
+StrictIndicatorField = create_model(model_name="StrictIndicatorField", base_models=(_StrictIndicatorField,
+                                                                                    NAME_DYNAMIC_MODEL,
+                                                                                    REQUIRED_DYNAMIC_MODEL,
+                                                                                    DESCRIPTION_DYNAMIC_MODEL,
+                                                                                    ID_DYNAMIC_MODEL,
+                                                                                    ))

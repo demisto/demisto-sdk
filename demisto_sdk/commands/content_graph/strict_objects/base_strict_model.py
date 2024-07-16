@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Any, List, Optional, Sequence, Union
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Extra, Field, validator
 from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import (
@@ -25,13 +25,13 @@ class BaseStrictModel(BaseModel, ABC):
 
         extra = Extra.forbid
 
-    # @validator("*")
-    # def prevent_none(cls, v):
-    #     """
-    #     Validator ensures no None value is entered in a field.
-    #     """
-    #     assert v is not None, f"{v} may not be None"
-    #     return v
+    @validator("*")
+    def prevent_none(cls, v):
+        """
+        Validator ensures no None value is entered in a field.
+        """
+        assert v is not None, f"{v} may not be None"
+        return v
 
 
 def create_dynamic_model(

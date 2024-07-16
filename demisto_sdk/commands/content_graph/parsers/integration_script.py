@@ -33,10 +33,6 @@ class IntegrationScriptParser(YAMLContentItemParser):
         self.connect_to_api_modules()
         self.structure_errors = self.validate_structure()
 
-    @property
-    def strict_object(self):
-        return self.__class__
-
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(

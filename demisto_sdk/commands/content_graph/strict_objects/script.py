@@ -95,4 +95,3 @@ StrictScript = create_model(
         COMMENT_DYNAMIC_MODEL,
     ),
 )
-

@@ -5,7 +5,6 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import IncidentFieldType
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     NAME_DYNAMIC_MODEL,
-    BaseStrictModel,
 )
 from demisto_sdk.commands.content_graph.strict_objects.indicator_field import (
     StrictIndicatorField,

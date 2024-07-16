@@ -34,8 +34,6 @@ class JSONContentItemParser(ContentItemParser):
         if self.should_skip_parsing():
             raise NotAContentItemException
 
-        self.structure_errors = self.validate_structure()
-
     @property
     def raw_data(self) -> dict:
         return self.json_data

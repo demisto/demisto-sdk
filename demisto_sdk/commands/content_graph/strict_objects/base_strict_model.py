@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Extra, Field, validator
 from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import (

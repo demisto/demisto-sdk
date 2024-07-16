@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -9,7 +9,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[ModelingRule]
+ContentTypes = ModelingRule
 
 
 class IsSchemaMatchXIFValidator(BaseValidator[ContentTypes]):
@@ -31,11 +31,12 @@ class IsSchemaMatchXIFValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if not (
                 (xif_datasets := content_item.xif_file.get_dataset_from_xif())
-                and (schema_content := content_item.schema_file.file_content)
-                and (schema_datasets := schema_content.keys())
                 and (
-                    len(xif_datasets) == len(schema_datasets) and len(xif_datasets) >= 1
+                    schema_datasets := (
+                        content_item.schema_file.file_content or {}
+                    ).keys()
                 )
+                and len(xif_datasets) == len(schema_datasets)
                 and all(dataset in schema_datasets for dataset in xif_datasets)
             )
         ]

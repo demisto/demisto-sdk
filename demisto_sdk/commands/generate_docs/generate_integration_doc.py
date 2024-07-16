@@ -575,7 +575,10 @@ def generate_integration_doc(
             # Setup integration to work with Demisto
             docs.extend(
                 generate_section(
-                    "Configure {} on Cortex {}".format(yml_data["display"], get_marketplace_name(yml_data)), ""
+                    "Configure {} on Cortex {}".format(
+                        yml_data["display"], get_marketplace_name(yml_data)
+                    ),
+                    "",
                 )
             )
             # Setup integration on Demisto
@@ -823,29 +826,35 @@ def get_marketplace_name(yaml_data):
     if any(key in yaml_data.get("marketplaces", []) for key in xsoar_keys):
         return "" if "marketplacev2" in yaml_data.get("marketplaces", []) else "XSOAR "
 
-    return "XSIAM " if "marketplacev2" in yaml_data.get("marketplaces", []) else "XSOAR "
+    return (
+        "XSIAM " if "marketplacev2" in yaml_data.get("marketplaces", []) else "XSOAR "
+    )
+
 
 def get_conf_navigation(yaml_data):
     mp = get_marketplace_name(yaml_data)
     if mp == "XSOAR ":
-        return(
+        return (
             "* For XSOAR 6.x users: Navigate to **Settings** > **Integrations** > **Instances**.\n"
             "   * For XSOAR 8.x users: Navigate to **Settings & Info** > **Settings** > **Integrations** > "
             "**Instances**."
         )
     elif mp == "XSIAM ":
-        return(
+        if "Collector" in yaml_data["display"]:
+            return "Navigate to **Settings** > **Data Sources** > **Add Data Source** > **Search**."
+        return (
             "Navigate to **Settings** > **Configurations** > **Data Collection** > "
             "**Automation & Feed Integrations**."
         ).strip()
     else:
-        return(
+        return (
             "  * For XSOAR 6.x users: Navigate to **Settings** > **Integrations** > **Instances**.\n"
             "   * For XSOAR 8.x users: Navigate to **Settings & Info** > **Settings** > **Integrations** > "
             "**Instances**.\n"
             "   * For XSIAM users: Navigate to **Settings** > **Configurations** > **Data Collection** > "
             "**Automation & Feed Integrations**."
-            ).strip()
+        ).strip()
+
 
 # Commands
 def generate_commands_section(

@@ -12,8 +12,7 @@ from demisto_sdk.commands.content_graph.strict_objects.indicator_field import (
 )
 
 
-class Aliases(BaseStrictModel):
-    __base__ = NAME_DYNAMIC_MODEL
+class Aliases(NAME_DYNAMIC_MODEL):
     cli_name: str = Field(..., alias="cliName")
     name: str
     type_: IncidentFieldType = Field(..., alias="type")

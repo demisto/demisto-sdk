@@ -19,6 +19,7 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     ScriptType,
     create_dynamic_model,
 )
+from demisto_sdk.commands.content_graph.strict_objects.common import create_model
 
 COMMENT_DYNAMIC_MODEL = create_dynamic_model(
     field_name="comment",
@@ -57,9 +58,7 @@ class ContentItemExportableFields(BaseStrictModel):
     )
 
 
-class StrictScript(
-    BaseIntegrationScript, COMMENT_DYNAMIC_MODEL  # type:ignore[valid-type,misc]
-):
+class _StrictScript(BaseIntegrationScript):
     common_fields: CommonFieldsScript = Field(..., alias="commonfields")
     name_x2: Optional[str] = None
     script: str
@@ -87,3 +86,13 @@ class StrictScript(
     )
     polling: Optional[bool] = None
     skip_prepare: Optional[List[SkipPrepare]] = Field(None, alias="skipprepare")
+
+
+StrictScript = create_model(
+    model_name="StrictIntegration",
+    base_models=(
+        _StrictScript,
+        COMMENT_DYNAMIC_MODEL,
+    ),
+)
+

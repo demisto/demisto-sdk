@@ -54,7 +54,7 @@ class ContentItem(BaseContent):
     description: Optional[str] = ""
     is_test: bool = False
     pack: Any = Field(None, exclude=True, repr=False)
-    support_level: Optional[str] = ""
+    #support_level: Optional[str] = ""
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:

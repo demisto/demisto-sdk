@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, List, Optional, Sequence, Union, Tuple
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from pydantic import BaseModel, Extra, Field, validator
 from pydantic.fields import FieldInfo
@@ -105,13 +105,17 @@ ID_DYNAMIC_MODEL = create_dynamic_model(
 )
 
 
-class CommonFields(BaseStrictModel):
-    id_: str = Field(..., alias="id")
+class _CommonFields(BaseStrictModel):
     version: int
-    id_xsoar: str = Field(None, alias="id:xsoar")
-    id_marketplacev2: str = Field(None, alias="id:marketplacev2")
-    id_xsoar_saas: str = Field(None, alias="id:xsoar_saas")
-    id_xsoar_on_prem: str = Field(None, alias="id:xsoar_on_prem")
+
+
+CommonFields = create_model(
+    model_name="CommonFields",
+    base_models=(
+        _CommonFields,
+        ID_DYNAMIC_MODEL,
+    ),
+)
 
 
 class Argument(BaseModel):

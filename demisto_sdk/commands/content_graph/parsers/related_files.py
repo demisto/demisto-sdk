@@ -146,7 +146,7 @@ class XifRelatedFile(TextFiles):
         dataset = re.findall('dataset[ ]?=[ ]?(["a-zA-Z_0-9]+)', self.file_content)
         if dataset:
             return {dataset_name.strip('"') for dataset_name in dataset}
-        return {}
+        return set()
 
 
 class SchemaRelatedFile(RelatedFile):

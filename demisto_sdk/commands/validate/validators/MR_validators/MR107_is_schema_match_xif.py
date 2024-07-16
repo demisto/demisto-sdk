@@ -29,9 +29,13 @@ class IsSchemaMatchXIFValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not ((xif_datasets := content_item.xif_file.get_dataset_from_xif())
-            and (schema_content := content_item.schema_file.file_content)
-            and (schema_datasets := schema_content.keys())
-            and (len(xif_datasets) == len(schema_datasets) and len(xif_datasets) >= 1)
-            and all(dataset in schema_datasets for dataset in xif_datasets))
+            if not (
+                (xif_datasets := content_item.xif_file.get_dataset_from_xif())
+                and (schema_content := content_item.schema_file.file_content)
+                and (schema_datasets := schema_content.keys())
+                and (
+                    len(xif_datasets) == len(schema_datasets) and len(xif_datasets) >= 1
+                )
+                and all(dataset in schema_datasets for dataset in xif_datasets)
+            )
         ]

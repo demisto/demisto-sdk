@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Set, Type, cast
 
 import pydantic
 from packaging.version import Version
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
@@ -20,7 +20,6 @@ from demisto_sdk.commands.content_graph.common import (
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    BaseStrictModel,
     StructureError,
 )
 
@@ -416,5 +415,5 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         )
 
     @property
-    def strict_object(self) -> Optional[Type[BaseStrictModel]]:
+    def strict_object(self) -> Optional[Type[BaseModel]]:
         return None

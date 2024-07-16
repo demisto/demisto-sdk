@@ -1,8 +1,6 @@
 from functools import cached_property
 from pathlib import Path
-from typing import List, Optional, Set, Type
-
-from _distutils_hack import override
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
@@ -35,8 +33,7 @@ class IncidentFieldParser(
         self.connect_to_dependencies()
 
     @property
-    @override
-    def strict_object(self) -> Type[StrictIncidentField]:
+    def strict_object(self):
         return StrictIncidentField
 
     @cached_property

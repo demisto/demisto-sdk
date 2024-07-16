@@ -1,9 +1,10 @@
 import base64
+import re
 from abc import ABC
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Set, Union
 
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
@@ -135,11 +136,17 @@ class PackIgnoreRelatedFile(RelatedFile):
         return [self.main_file_path / PACKS_PACK_IGNORE_FILE_NAME]
 
 
-class XifRelatedFile(RelatedFile):
+class XifRelatedFile(TextFiles):
     file_type = RelatedFileType.XIF
 
     def get_optional_paths(self) -> List[Path]:
         return [Path(str(self.main_file_path).replace(".yml", ".xif"))]
+
+    def get_dataset_from_xif(self) -> Set[str]:
+        dataset = re.findall('dataset[ ]?=[ ]?(["a-zA-Z_0-9]+)', self.file_content)
+        if dataset:
+            return {dataset_name.strip('"') for dataset_name in dataset}
+        return {}
 
 
 class SchemaRelatedFile(RelatedFile):

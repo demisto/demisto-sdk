@@ -255,9 +255,9 @@ class BaseContent(BaseNode):
         """
         raise NotImplementedError
 
-    # @property
-    # def support_level(self) -> str:
-    #     raise NotImplementedError
+    @property
+    def support_level(self) -> str:
+        raise NotImplementedError
 
     def dump(
         self,

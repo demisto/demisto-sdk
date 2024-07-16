@@ -109,7 +109,7 @@ class YAMLContentItemParser(ContentItemParser):
         return self.get_marketplaces(self.yml_data)
     
     @property
-    def support_level(self) -> str:
+    def support_level(self) -> Optional[str]:
         return self.get_support_level(self.yml_data)
 
     def connect_to_tests(self) -> None:

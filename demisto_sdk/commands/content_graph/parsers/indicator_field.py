@@ -1,15 +1,15 @@
 from functools import cached_property
 from pathlib import Path
-from typing import List, Optional, Set, Type
+from typing import List, Optional, Set
+
+from _distutils_hack import override
+from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
-)
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    BaseStrictModel,
 )
 from demisto_sdk.commands.content_graph.strict_objects.indicator_field import (
     StrictIndicatorField,
@@ -32,7 +32,8 @@ class IndicatorFieldParser(
         self.connect_to_dependencies()
 
     @property
-    def strict_object(self) -> Type[BaseStrictModel]:
+    @override
+    def strict_object(self) -> BaseModel:
         return StrictIndicatorField
 
     @cached_property

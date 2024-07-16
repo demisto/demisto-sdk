@@ -71,9 +71,9 @@ class _Command(BaseStrictModel):
     description: str
     deprecated: Optional[bool] = None
     system: Optional[bool] = None
-    arguments: Optional[List[Argument]] = None
+    arguments: Optional[List[Argument]] = None  # type:ignore[valid-type]
     outputs: Optional[List[IntegrationOutput]] = None
-    important: Optional[List[Important]] = None
+    important: Optional[List[Important]] = None  # type:ignore[valid-type]
     timeout: Optional[int] = None
     hidden: Optional[bool] = None
     polling: Optional[bool] = None
@@ -104,7 +104,7 @@ class _Script(BaseStrictModel):
     is_mappable: Optional[bool] = Field(None, alias="ismappable")
     is_remote_sync_in: Optional[bool] = Field(None, alias="isremotesyncin")
     is_remote_sync_out: Optional[bool] = Field(None, alias="isremotesyncout")
-    commands: Optional[List[Command]] = None
+    commands: Optional[List[Command]] = None  # type:ignore[valid-type]
     run_once: Optional[bool] = Field(None, alias="runonce")
     sub_type: Optional[str] = Field(["python2", "python3"], alias="subtype")
     feed: Optional[bool] = None
@@ -118,11 +118,11 @@ Script = create_model(
 )
 
 
-class CommonFieldsIntegration(CommonFields):
+class CommonFieldsIntegration(CommonFields):  # type:ignore
     sort_values: Optional[List[str]] = Field(None, alias="sortvalues")
 
 
-class _StrictIntegration(BaseIntegrationScript):
+class _StrictIntegration(BaseIntegrationScript):  # type:ignore
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")
     display: str
     beta: Optional[bool] = None
@@ -137,7 +137,7 @@ class _StrictIntegration(BaseIntegrationScript):
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
     support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
-    configuration: List[Configuration]
+    configuration: List[Configuration]  # type:ignore[valid-type]
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     videos: Optional[List[str]] = None

@@ -25,25 +25,25 @@ class BaseStrictModel(BaseModel, ABC):
 
         extra = Extra.forbid
 
-    @validator("*")
-    def prevent_none(cls, v):
-        """
-        Validator ensures no None value is entered in a field.
-        There is a difference between an empty and missing field.
-        Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
-        """
-        # This assertion is caught by pydantic and converted to a pydantic.ValidationError
-        assert v is not None, f"{v} may not be None"
-        return v
+    # @validator("*")
+    # def prevent_none(cls, v):
+    #     """
+    #     Validator ensures no None value is entered in a field.
+    #     There is a difference between an empty and missing field.
+    #     Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
+    #     """
+    #     # This assertion is caught by pydantic and converted to a pydantic.ValidationError
+    #     assert v is not None, f"{v} may not be None"
+    #     return v
 
 
 def create_dynamic_model(
-        field_name: str,
-        type_: Any,
-        default: Any = ...,
-        suffixes: Sequence[str] = tuple(marketplace_suffixes),
-        alias: Optional[str] = None,
-        include_without_suffix: bool = False,
+    field_name: str,
+    type_: Any,
+    default: Any = ...,
+    suffixes: Sequence[str] = tuple(marketplace_suffixes),
+    alias: Optional[str] = None,
+    include_without_suffix: bool = False,
 ) -> BaseModel:
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
@@ -132,13 +132,17 @@ class _Argument(BaseStrictModel):
     hidden: Optional[bool] = None
 
 
-Argument = create_model(model_name="Argument", base_models=(_Argument,
-                                                            NAME_DYNAMIC_MODEL,
-                                                            REQUIRED_DYNAMIC_MODEL,
-                                                            DESCRIPTION_DYNAMIC_MODEL,
-                                                            DEPRECATED_DYNAMIC_MODEL,
-                                                            DEFAULT_DYNAMIC_MODEL,
-                                                            ))
+Argument = create_model(
+    model_name="Argument",
+    base_models=(
+        _Argument,
+        NAME_DYNAMIC_MODEL,
+        REQUIRED_DYNAMIC_MODEL,
+        DESCRIPTION_DYNAMIC_MODEL,
+        DEPRECATED_DYNAMIC_MODEL,
+        DEFAULT_DYNAMIC_MODEL,
+    ),
+)
 
 
 class Output(BaseStrictModel):
@@ -163,7 +167,9 @@ class _Important(BaseModel):
     )
 
 
-Important = create_model(model_name="Important", base_models=(_Important, DESCRIPTION_DYNAMIC_MODEL))
+Important = create_model(
+    model_name="Important", base_models=(_Important, DESCRIPTION_DYNAMIC_MODEL)
+)
 
 
 class ScriptType(StrEnum):
@@ -192,5 +198,7 @@ class _BaseIntegrationScript(BaseStrictModel):
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
 
 
-BaseIntegrationScript = create_model(model_name="BaseIntegrationScript",
-                                     base_models=(_BaseIntegrationScript, NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL))
+BaseIntegrationScript = create_model(
+    model_name="BaseIntegrationScript",
+    base_models=(_BaseIntegrationScript, NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL),
+)

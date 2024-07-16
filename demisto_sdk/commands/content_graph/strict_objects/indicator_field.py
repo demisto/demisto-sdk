@@ -58,9 +58,13 @@ class _StrictIndicatorField(BaseStrictModel):
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
 
 
-StrictIndicatorField = create_model(model_name="StrictIndicatorField", base_models=(_StrictIndicatorField,
-                                                                                    NAME_DYNAMIC_MODEL,
-                                                                                    REQUIRED_DYNAMIC_MODEL,
-                                                                                    DESCRIPTION_DYNAMIC_MODEL,
-                                                                                    ID_DYNAMIC_MODEL,
-                                                                                    ))
+StrictIndicatorField = create_model(
+    model_name="StrictIndicatorField",
+    base_models=(
+        _StrictIndicatorField,
+        NAME_DYNAMIC_MODEL,
+        REQUIRED_DYNAMIC_MODEL,
+        DESCRIPTION_DYNAMIC_MODEL,
+        ID_DYNAMIC_MODEL,
+    ),
+)

@@ -39,7 +39,7 @@ class ScriptSubType(StrEnum):
     PYTHON2 = TYPE_PYTHON2
 
 
-class CommonFieldsScript(CommonFields):
+class CommonFieldsScript(CommonFields):  # type:ignore
     id_x2: Optional[str] = None
     id_xpanse: Optional[str] = Field(None, alias="id:xpanse")
 
@@ -58,19 +58,19 @@ class ContentItemExportableFields(BaseStrictModel):
     )
 
 
-class _StrictScript(BaseIntegrationScript):
+class _StrictScript(BaseIntegrationScript):  # type:ignore
     common_fields: CommonFieldsScript = Field(..., alias="commonfields")
     name_x2: Optional[str] = None
     script: str
     type_: ScriptType = Field(..., alias="type")
     tags: Optional[List[str]] = None
     enabled: Optional[bool] = None
-    args: Optional[List[Argument]] = None
+    args: Optional[List[Argument]] = None  # type:ignore[valid-type]
     script_target: Optional[int] = Field(None, alias="scripttarget")
     timeout: Optional[str] = None
     depends_on: dict = Field({}, alias="dependson")
     outputs: Optional[List[Output]] = None
-    important: Optional[List[Important]] = None
+    important: Optional[List[Important]] = None  # type:ignore[valid-type]
     docker_image: str = Field(None, alias="dockerimage")
     docker_image_45: str = Field(None, alias="dockerimage45")
     alt_docker_images: Optional[List[str]] = Field(None, alias="alt_dockerimages")

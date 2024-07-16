@@ -108,7 +108,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         It will fail validation (ST110).
         """
         if not self.strict_object:
-            return  # TODO - remove it
+            return None  # TODO - remove it
         try:
             self.strict_object(**self.raw_data)
         except pydantic.error_wrappers.ValidationError as e:

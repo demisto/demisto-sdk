@@ -4,7 +4,8 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import IncidentFieldType
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    NAME_DYNAMIC_MODEL, BaseStrictModel,
+    NAME_DYNAMIC_MODEL,
+    BaseStrictModel,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import create_model
 from demisto_sdk.commands.content_graph.strict_objects.indicator_field import (
@@ -21,7 +22,7 @@ class _Aliases(BaseStrictModel):
 Aliases = create_model(model_name="Aliases", base_models=(_Aliases, NAME_DYNAMIC_MODEL))
 
 
-class StrictIncidentField(StrictIndicatorField):
+class StrictIncidentField(StrictIndicatorField):  # type:ignore
     """
     This class inherits from StrictIndicatorField, since the other class is contained in this class.
     """
@@ -37,6 +38,8 @@ class StrictIncidentField(StrictIndicatorField):
         None, alias="isExtractingSpecificIndicatorTypes"
     )
     template: Optional[str] = None
-    aliases: Optional[List[Aliases]] = Field(None, alias="Aliases")
+    aliases: Optional[List[Aliases]] = Field(  # type:ignore[valid-type]
+        None, alias="Aliases"
+    )
     x2_fields: Optional[str] = None
     alias_to: Optional[str] = Field(None, alias="aliasTo")

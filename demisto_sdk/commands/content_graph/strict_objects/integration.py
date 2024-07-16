@@ -4,7 +4,11 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    DEFAULT_DYNAMIC_MODEL_2,
+    DEPRECATED_DYNAMIC_MODEL,
     DESCRIPTION_DYNAMIC_MODEL,
+    NAME_DYNAMIC_MODEL,
+    REQUIRED_DYNAMIC_MODEL,
     Argument,
     BaseIntegrationScript,
     BaseStrictModel,
@@ -28,7 +32,7 @@ IS_FETCH_EVENTS_DYNAMIC_MODEL = create_dynamic_model(
 )
 
 
-class Configuration(BaseStrictModel):
+class _Configuration(BaseStrictModel):
     display: Optional[str] = None
     section: Optional[str] = None
     advanced: Optional[str] = None
@@ -43,27 +47,17 @@ class Configuration(BaseStrictModel):
     hidden_username: Optional[bool] = Field(None, alias="hiddenusername")
     hidden_password: Optional[bool] = Field(None, alias="hiddenpassword")
     from_license: Optional[str] = Field(None, alias="fromlicense")
-    default_value_xsoar: Optional[Any] = Field(None, alias="defaultvalue:xsoar")
-    default_value_marketplace_v2: Optional[Any] = Field(
-        None, alias="defaultvalue:marketplacev2"
-    )
-    default_value_xpanse: Optional[Any] = Field(None, alias="defaultvalue:xpanse")
-    default_value_xsoar_saas: Optional[Any] = Field(
-        None, alias="defaultvalue:xsoar_saas"
-    )
-    default_value_xsoar_on_prem: Optional[Any] = Field(
-        None, alias="defaultvalue:xsoar_on_prem"
-    )
-    name_xsoar: Optional[str] = Field(None, alias="name:xsoar")
-    name_marketplacev2: Optional[str] = Field(None, alias="name:marketplacev2")
-    name_xpanse: Optional[str] = Field(None, alias="name:xpanse")
-    name_xsoar_saas: Optional[str] = Field(None, alias="name:xsoar_saas")
-    name_xsoar_on_prem: Optional[str] = Field(None, alias="name:xsoar_on_prem")
-    required_xsoar: Optional[bool] = Field(None, alias="required:xsoar")
-    required_marketplacev2: Optional[bool] = Field(None, alias="required:marketplacev2")
-    required_xpanse: Optional[bool] = Field(None, alias="required:xpanse")
-    required_xsoar_saas: Optional[bool] = Field(None, alias="required:xsoar_saas")
-    required_xsoar_on_prem: Optional[bool] = Field(None, alias="required:xsoar_on_prem")
+
+
+Configuration = create_model(
+    model_name="Configuration",
+    base_models=(
+        _Configuration,
+        REQUIRED_DYNAMIC_MODEL,
+        DEFAULT_DYNAMIC_MODEL_2,
+        NAME_DYNAMIC_MODEL,
+    ),
+)
 
 
 class IntegrationOutput(Output):
@@ -71,7 +65,7 @@ class IntegrationOutput(Output):
     important_description: Optional[str] = Field(None, alias="importantDescription")
 
 
-class Command(BaseStrictModel):
+class _Command(BaseStrictModel):
     name: str
     execution: Optional[bool] = None
     description: str
@@ -83,29 +77,17 @@ class Command(BaseStrictModel):
     timeout: Optional[int] = None
     hidden: Optional[bool] = None
     polling: Optional[bool] = None
-    name_xsoar: Optional[str] = Field(None, alias="name:xsoar")
-    name_marketplacev2: Optional[str] = Field(None, alias="name:marketplacev2")
-    name_xpanse: Optional[str] = Field(None, alias="name:xpanse")
-    name_xsoar_saas: Optional[str] = Field(None, alias="name:xsoar_saas")
-    name_xsoar_on_prem: Optional[str] = Field(None, alias="name:xsoar_on_prem")
-    description_xsoar: Optional[str] = Field(None, alias="description:xsoar")
-    description_marketplace_v2: Optional[str] = Field(
-        None, alias="description:marketplacev2"
-    )
-    description_xpanse: Optional[str] = Field(None, alias="description:xpanse")
-    description_xsoar_saas: Optional[str] = Field(None, alias="description:xsoar_saas")
-    description_xsoar_on_prem: Optional[str] = Field(
-        None, alias="description:xsoar_on_prem"
-    )
-    deprecated_xsoar: Optional[bool] = Field(None, alias="deprecated:xsoar")
-    deprecated_marketplace_v2: Optional[bool] = Field(
-        None, alias="deprecated:marketplacev2"
-    )
-    deprecated_xpanse: Optional[bool] = Field(None, alias="deprecated:xpanse")
-    deprecated_xsoar_saas: Optional[bool] = Field(None, alias="deprecated:xsoar_saas")
-    deprecated_xsoar_on_prem: Optional[bool] = Field(
-        None, alias="deprecated:xsoar_on_prem"
-    )
+
+
+Command = create_model(
+    model_name="Command",
+    base_models=(
+        _Command,
+        DEPRECATED_DYNAMIC_MODEL,
+        DESCRIPTION_DYNAMIC_MODEL,
+        NAME_DYNAMIC_MODEL,
+    ),
+)
 
 
 class _Script(BaseStrictModel):

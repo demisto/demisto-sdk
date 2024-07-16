@@ -90,6 +90,13 @@ DEFAULT_DYNAMIC_MODEL = create_dynamic_model(
     default=None,
     include_without_suffix=True,
 )
+# field name here defaultvalue vs defaultValue
+DEFAULT_DYNAMIC_MODEL_2 = create_dynamic_model(
+    field_name="defaultvalue",
+    type_=Optional[Any],
+    default=None,
+    include_without_suffix=True,
+)
 ID_DYNAMIC_MODEL = create_dynamic_model(
     field_name="id",
     type_=Optional[Any],

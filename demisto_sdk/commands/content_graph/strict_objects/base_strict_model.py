@@ -60,7 +60,7 @@ def create_dynamic_model(
         for suffix in suffixes
     }
     if include_without_suffix:
-        fields[field_name] = (type_, FieldInfo(default, alias=f"{alias or field_name}"))
+        fields[field_name] = (type_, FieldInfo(default, alias=alias or field_name))
 
     return create_model(
         model_name=f"Dynamic{field_name.title()}Model",

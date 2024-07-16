@@ -17,7 +17,7 @@ PACKS_IGNORE = ["Common Types", "Core Alert Fields"]
 
 class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
     error_code = "IF113"
-    description = "Checks if field name starts with its pack name or one of the item prefixes from pack metadata."
+    description = "Checks if field name starts with its pack name or one of the item prefixes from pack metadata test."
     rationale = "Required by the platform."
     error_message = (
         "Field name must start with the relevant pack name or one of the item prefixes found in pack metadata."

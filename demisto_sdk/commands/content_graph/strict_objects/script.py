@@ -69,7 +69,6 @@ class _StrictScript(BaseIntegrationScript):
     script_target: Optional[int] = Field(None, alias="scripttarget")
     timeout: Optional[str] = None
     depends_on: dict = Field({}, alias="dependson")
-    depends_on_x2: dict = Field({}, alias="dependson_x2")
     outputs: Optional[List[Output]] = None
     important: Optional[List[Important]] = None
     docker_image: str = Field(None, alias="dockerimage")

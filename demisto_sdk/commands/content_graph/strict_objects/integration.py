@@ -104,9 +104,7 @@ class _Script(BaseStrictModel):
     long_running_port: Optional[bool] = Field(None, alias="longRunningPort")
     is_mappable: Optional[bool] = Field(None, alias="ismappable")
     is_remote_sync_in: Optional[bool] = Field(None, alias="isremotesyncin")
-    is_remote_sync_in_x2: Optional[bool] = Field(None, alias="isremotesyncin_x2")
     is_remote_sync_out: Optional[bool] = Field(None, alias="isremotesyncout")
-    is_remote_sync_out_x2: Optional[bool] = Field(None, alias="isremotesyncout_x2")
     commands: Optional[List[Command]] = None
     run_once: Optional[bool] = Field(None, alias="runonce")
     sub_type: Optional[str] = Field(["python2", "python3"], alias="subtype")
@@ -136,7 +134,6 @@ class _StrictIntegration(BaseIntegrationScript):
     description: str
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
     default_mapper_out: Optional[str] = Field(None, alias="defaultmapperout")
-    default_mapper_out_x2: Optional[str] = Field(None, alias="defaultmapperout_x2")
     default_classifier: Optional[str] = Field(None, alias="defaultclassifier")
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")

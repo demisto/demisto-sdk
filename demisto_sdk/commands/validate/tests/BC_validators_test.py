@@ -1425,14 +1425,14 @@ def test_IsChangedIncidentTypesAndFieldsValidator_is_valid_fail():
     """
     Given
     content_items and old_content_items iterables.
-        - Case 1: a content item with two incident types:
-            - One old incident type with one old incident field and one new incident field.
-            - One new incident type.
+        - A content item with three incident types:
+            - One old incident type with one old incident field.
+            - One old incident type with one incident field removed compared to the old one.
+            - One missing incident type compared to the old mapper.
     When
     - Calling the IsChangedIncidentTypesAndFieldsValidator is valid function.
     Then
         - Make sure the right amount of failures return and that the right message is returned.
-        - Case 1: Should pass.
     """
     content_items: List[Mapper] = [
         create_incoming_mapper_object(

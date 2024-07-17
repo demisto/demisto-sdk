@@ -15,7 +15,7 @@ ContentTypes = Integration
 
 class NoDescriptionFileValidator(BaseValidator[ContentTypes]):
     error_code = "DS104"
-    description = "Verifies that a Description file is present."
+    description = "Verifies that a Description file is present for an integration."
     rationale = "It is recommended to have a Description file for each integration, which for example will have additional details on how to configure the instance."
     error_message = "No Description file was found. Please adding one."
     related_field = "description file"

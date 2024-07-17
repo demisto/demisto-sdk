@@ -1562,7 +1562,6 @@ class TestIntegrationValidation:
         - Ensure failure message on non-latest docker image.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         pack_integration_path = join(
             AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"
         )

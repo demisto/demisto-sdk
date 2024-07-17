@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.30.0"
+version = "1.31.3"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -26,6 +26,7 @@ validate-content-path = "demisto_sdk.scripts.validate_content_path:main"
 validate-conf-json = "demisto_sdk.scripts.validate_conf_json:main"
 init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
+validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission_changes:main"
 
 [tool.poetry.dependencies]
 python = "^3.8,<3.12"
@@ -160,6 +161,7 @@ ignore = [
 
 exclude = [
     "demisto_sdk/tests/test_files/",
+    "demisto_sdk/commands/init/tests/test_files",
     "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
     "demisto_sdk/commands/init/templates",
     "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py",

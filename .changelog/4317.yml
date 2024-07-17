@@ -1,4 +1,0 @@
-changes:
-- description: Removed support for IN124 - 'is param valid is hidden' validation from old-validate flow and prevent the validation from being ignored. The validation and the related information can be found in the new-validate flow.
-  type: breaking
-pr_number: 4317

@@ -4,7 +4,6 @@ from typing import Iterable, List, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -21,7 +20,6 @@ class NoRemovedIntegrationParametersValidator(BaseValidator[ContentTypes]):
     related_field = "configuration"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
-    related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

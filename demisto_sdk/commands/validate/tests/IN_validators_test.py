@@ -1,3 +1,4 @@
+import copy
 from typing import List
 
 import pytest
@@ -24,6 +25,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
+    create_old_file_pointers,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy_and_insecure import (
@@ -125,9 +127,6 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN146_is_containing_
 from demisto_sdk.commands.validate.validators.IN_validators.IN149_does_common_outputs_have_description import (
     DoesCommonOutputsHaveDescriptionValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN150_is_valid_display_for_siem_integration import (
-    IsValidDisplayForSiemIntegrationValidator,
-)
 from demisto_sdk.commands.validate.validators.IN_validators.IN151_is_none_command_args import (
     IsNoneCommandArgsValidator,
 )
@@ -159,6 +158,81 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN162_is_partner_col
     IsPartnerCollectorHasXsoarSupportLevelValidator,
 )
 from TestSuite.repo import ChangeCWD
+
+INVALID_HIDDEN_PARAM_INTEGRATIONS = [
+    create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "non_hiddenable_param",
+                    "type": 8,
+                    "display": "test param",
+                    "required": False,
+                    "hidden": True,
+                }
+            ]
+        ],
+    ),
+    create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "type": 1,
+                    "display": "API key",
+                    "hidden": True,
+                    "name": "test_old",
+                },
+                {
+                    "type": 9,
+                    "displaypassword": "API key",
+                    "name": "test_new",
+                },
+            ]
+        ],
+    ),
+    create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "non_hiddenable_param",
+                    "type": 8,
+                    "display": "test param",
+                    "required": False,
+                    "hidden": "true",
+                }
+            ]
+        ],
+    ),
+    create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "non_hiddenable_param",
+                    "type": 8,
+                    "display": "test param",
+                    "required": False,
+                    "hidden": [
+                        "xsoar",
+                        "marketplacev2",
+                        "xpanse",
+                        "xsoar_saas",
+                        "xsoar_on_prem",
+                    ],
+                },
+                {
+                    "type": 4,
+                    "display": "API key",
+                    "hidden": True,
+                    "name": "test_old",
+                },
+            ]
+        ],
+    ),
+]
 
 
 @pytest.mark.parametrize(
@@ -2904,90 +2978,6 @@ def test_IsNoneCommandArgsValidator_fix():
             [
                 create_integration_object(),
                 create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["test Event Collector", True],
-                ),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["test", True],
-                ),
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["Event Collector test", True],
-                ),
-            ],
-            2,
-            [
-                "The integration is a siem integration with invalid display name (test). Please make sure the display name ends with 'Event Collector'",
-                "The integration is a siem integration with invalid display name (Event Collector test). Please make sure the display name ends with 'Event Collector'",
-            ],
-        ),
-    ],
-)
-def test_IsValidDisplayForSiemIntegrationValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
-):
-    """
-    Given
-    content_items iterables.
-        - Case 1: Two valid integrations:
-            - One non siem integration with display name not ending with 'Event Collector'.
-            - One siem integration with display name ending with 'Event Collector'.
-        - Case 2: Two invalid integrations:
-            - One siem integration with display name without 'Event Collector'.
-            - One siem integration with display name starting with 'Event Collector'.
-    When
-    - Calling the IsValidDisplayForSiemIntegrationValidator is valid function.
-    Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail.
-    """
-    results = IsValidDisplayForSiemIntegrationValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
-        ]
-    )
-
-
-def test_IsValidDisplayForSiemIntegrationValidator_fix():
-    """
-    Given
-        A siem integration without Event Collector suffix in the display name.
-    When
-    - Calling the IsValidDisplayForSiemIntegrationValidator fix function.
-    Then
-        - Make sure that the Event Collector was added to the display name, and that the right message was returned.
-    """
-    content_item = create_integration_object(
-        paths=["display", "script.isfetchevents"],
-        values=["test", True],
-    )
-    assert content_item.display_name == "test"
-    validator = IsValidDisplayForSiemIntegrationValidator()
-    assert (
-        validator.fix(content_item).message
-        == "Added the 'Event Collector' suffix to the display name, the new display name is test Event Collector."
-    )
-    assert content_item.display_name == "test Event Collector"
-
-
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(),
-                create_integration_object(
                     paths=["script.commands"],
                     values=[[]],
                 ),
@@ -4256,80 +4246,7 @@ def test_IsValidFeedIntegrationValidator_is_valid(
             [],
         ),
         (
-            [
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "non_hiddenable_param",
-                                "type": 8,
-                                "display": "test param",
-                                "required": False,
-                                "hidden": True,
-                            }
-                        ]
-                    ],
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "type": 1,
-                                "display": "API key",
-                                "hidden": True,
-                                "name": "test_old",
-                            },
-                            {
-                                "type": 9,
-                                "displaypassword": "API key",
-                                "name": "test_new",
-                            },
-                        ]
-                    ],
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "non_hiddenable_param",
-                                "type": 8,
-                                "display": "test param",
-                                "required": False,
-                                "hidden": "true",
-                            }
-                        ]
-                    ],
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "non_hiddenable_param",
-                                "type": 8,
-                                "display": "test param",
-                                "required": False,
-                                "hidden": [
-                                    "xsoar",
-                                    "marketplacev2",
-                                    "xpanse",
-                                    "xsoar_saas",
-                                    "xsoar_on_prem",
-                                ],
-                            },
-                            {
-                                "type": 4,
-                                "display": "API key",
-                                "hidden": True,
-                                "name": "test_old",
-                            },
-                        ]
-                    ],
-                ),
-            ],
+            INVALID_HIDDEN_PARAM_INTEGRATIONS,
             4,
             [
                 "The following fields are hidden and cannot be hidden, please unhide them: non_hiddenable_param.",
@@ -4354,7 +4271,7 @@ def test_IsHiddenableParamValidator_is_valid(
             - One integration with a hiddenable param with hidden value = 'true'.
             - One integration with a non-hiddenable param with hidden value = [xsoar].
             - One integration with a non-hiddenable param with hidden value = True and type = 4, with a type 9 replacement.
-        - Case 1: Four invalid integrations:
+        - Case 2: Four invalid integrations:
             - One integration with a non-hiddenable param with hidden value = True.
             - One integration with a non-hiddenable param with hidden value = True and type not in 0,4,12,14, with a type 9 replacement.
             - One integration with a non-hiddenable param with hidden value = 'true'.
@@ -4366,6 +4283,7 @@ def test_IsHiddenableParamValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
+
     results = IsHiddenableParamValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
@@ -4374,6 +4292,27 @@ def test_IsHiddenableParamValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IsHiddenableParamValidator_with_old_content_object_is_valid():
+    """
+    Given
+    content_items iterables.
+        - Case 1: Four invalid integrations with old content objects which is a copy of the current one:
+            - One integration with a non-hiddenable param with hidden value = True.
+            - One integration with a non-hiddenable param with hidden value = True and type not in 0,4,12,14, with a type 9 replacement.
+            - One integration with a non-hiddenable param with hidden value = 'true'.
+            - One integration with a non-hiddenable param with hidden value = all market places and another hidden type 4 param without type 9 replacement.
+    When
+    - Calling the IsHiddenableParamValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+    """
+    content_items = INVALID_HIDDEN_PARAM_INTEGRATIONS
+    old_content_items = copy.deepcopy(content_items)
+    create_old_file_pointers(content_items, old_content_items)
+    assert not IsHiddenableParamValidator().is_valid(content_items)
 
 
 def test_IsHiddenableParamValidator_fix():

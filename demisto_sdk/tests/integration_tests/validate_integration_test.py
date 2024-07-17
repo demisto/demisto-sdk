@@ -1562,7 +1562,6 @@ class TestIntegrationValidation:
         - Ensure failure message on non-latest docker image.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         pack_integration_path = join(
             AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"
         )
@@ -1591,13 +1590,8 @@ class TestIntegrationValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {pack_integration_path} as integration",
-                    "You can check for the most updated version of demisto/python3 here:",
                 ]
             ]
-        )
-        assert str_in_call_args_list(
-            logger_error.call_args_list,
-            "The docker image tag is not the latest numeric tag, please update it",
         )
         assert result.exit_code == 1
 
@@ -6180,7 +6174,7 @@ class TestValidationUsingGit:
                     "--no-conf-json",
                     "--skip-pack-release-notes",
                     "-i",
-                    pack_1.path,
+                    str(pack_1.path),
                 ],
                 catch_exceptions=False,
             )

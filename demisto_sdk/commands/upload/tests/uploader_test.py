@@ -1,6 +1,8 @@
 import logging
+import os
 import shutil
 import zipfile
+from builtins import len
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -385,6 +387,55 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
         "DummyScriptUnified.yml",
         "DummyScript.yml",
         "DummyPlaybook.yml",
+        "incidenttype-Hello_World_Alert.json",
+        "incidentfield-Hello_World_ID.json",
+        "incidentfield-Hello_World_Type.json",
+        "incidentfield-Hello_World_Status.json",
+        "classifier-aws_sns_test_classifier.json",
+        "widget-ActiveIncidentsByRole.json",
+        "layoutscontainer-test.json",
+        "upload_test_dashboard.json",
+        "DummyXDRCTemplate.json",
+    }
+    actual_names = {
+        content_item.path.name
+        for content_item in uploader._successfully_uploaded_content_items
+    }
+
+    assert actual_names == expected_names
+    assert mocked_upload_method.call_count == len(expected_names)
+
+
+def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
+    """
+    Given
+        - A pack called DummyPack
+
+    When
+        - Uploading pack with flag tpb
+
+    Then
+        - Ensure pack is uploaded successfully
+        - Ensure status code is as expected
+        - Check that all expected content entities that appear in the pack are reported as uploaded.
+    """
+    mocker.patch.object(demisto_client, "configure", return_value="object")
+    mocker.patch.object(
+        IntegrationScript, "get_supported_native_images", return_value=[]
+    )
+    path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack")
+    uploader = Uploader(path, destination_zip_dir=tmpdir, tpb=True)
+    mocker.patch.object(uploader, "client")
+    mocked_upload_method = mocker.patch.object(ContentItem, "upload")
+    assert uploader.upload() == SUCCESS_RETURN_CODE
+
+    expected_names = {
+        "DummyIntegration.yml",
+        "UploadTest.yml",
+        "DummyScriptUnified.yml",
+        "DummyScript.yml",
+        "DummyPlaybook.yml",
+        "DummyTestPlaybook.yml",
         "incidenttype-Hello_World_Alert.json",
         "incidentfield-Hello_World_ID.json",
         "incidentfield-Hello_World_Type.json",
@@ -928,6 +979,7 @@ class TestZippedPackUpload:
         mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
             click.Context(command=upload).invoke(
                 upload,
                 marketplace=marketplace,
@@ -1106,11 +1158,13 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     zipped_pack_path = tmp_path / "zipped.zip"
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
-    zip_multiple_packs(
-        [pack0.path, pack1.path, zipped_pack_path],
-        MarketplaceVersions.XSOAR,
-        tmp_path,
-    )
+    with TemporaryDirectory() as dir:
+        mocker.patch.object(os, "getenv", return_value=dir)
+        zip_multiple_packs(
+            [pack0.path, pack1.path, zipped_pack_path],
+            MarketplaceVersions.XSOAR,
+            tmp_path,
+        )
 
     assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
     folder_path = tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_STEM

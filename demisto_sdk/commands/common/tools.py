@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import fcntl
 import glob
 import os
 import re
@@ -1582,6 +1583,7 @@ def get_dict_from_file(
     raises_error: bool = True,
     clear_cache: bool = False,
     keep_order: bool = True,
+    git_sha: Optional[str] = None,
 ) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
@@ -1598,11 +1600,16 @@ def get_dict_from_file(
         if path:
             if path.endswith(".yml"):
                 return (
-                    get_yaml(path, cache_clear=clear_cache, keep_order=keep_order),
+                    get_yaml(
+                        path,
+                        cache_clear=clear_cache,
+                        keep_order=keep_order,
+                        git_sha=git_sha,
+                    ),
                     "yml",
                 )
             elif path.endswith(".json"):
-                res = get_json(path, cache_clear=clear_cache)
+                res = get_json(path, cache_clear=clear_cache, git_sha=git_sha)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
                     return res[0], "json"
                 else:
@@ -4556,3 +4563,65 @@ def find_regex_on_data(data: str, regex: str):
         data,
         re.IGNORECASE,
     )
+
+
+def run_sync(
+    lock_file_path: str,
+    exclusive_function: Callable,
+    exclusive_function_kwargs: dict = {},
+):
+    """Uses a given lock file path to run a method synchronously.
+
+    Args:
+        lock_file_path (str): The lock file path.
+        exclusive_function (Callable): The function we want to run exclusivly.
+        exclusive_function_kwargs (dict, optional): The kwargs we wish to pass to the exclusive_function. Defaults to {}.
+    """
+    try:
+        # Open (or create) the lock file
+        lock_file = open(lock_file_path, "w")
+
+        # Wait until the lock is acquired
+        while True:
+            try:
+                # Try to acquire an exclusive lock
+                fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                logger.debug("Resource is busy, waiting...")
+                time.sleep(0.1)  # Wait for 0.1 seconds before retrying
+
+        # If lock is acquired, call the exclusive function
+        exclusive_function(**exclusive_function_kwargs)
+
+    finally:
+        if lock_file:
+            # Release the lock and close the file
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+            lock_file.close()
+
+
+def get_json_file(path):
+    """
+    Reads a JSON file from the given path and returns its content as a dictionary.
+
+    Args:
+        path (str): The file path to the JSON file.
+
+    Returns:
+        dict: The content of the JSON file as a dictionary.
+    """
+    file_content = {}
+    if path:
+        try:
+            with open(path, "r") as json_file:
+                file_content = json.load(json_file)
+        except FileNotFoundError:
+            logger.debug(f"Error: The file at path '{path}' was not found.")
+        except json.JSONDecodeError:
+            logger.debug(
+                f"Error: The file at path '{path}' does not contain valid JSON."
+            )
+        except Exception as e:
+            logger.debug(f"An unexpected error occurred: {e}")
+    return file_content

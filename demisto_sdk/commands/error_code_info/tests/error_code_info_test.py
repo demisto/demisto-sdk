@@ -11,7 +11,7 @@ def test_parse_function_parameters():
         return f"error with {param1}, {param2.items()}, {param3}, {param4 + 1}", 1234
 
     sig = inspect.signature(dummy_func)
-    parameters = error_code_info.parse_function_parameters(sig)
+    parameters = error_code_info.parse_legacy_function_parameters(sig)
 
     assert parameters["param1"] == "<param1>"
     assert parameters["param2"] == error_code_info.TYPE_FILLER_MAPPING[dict]

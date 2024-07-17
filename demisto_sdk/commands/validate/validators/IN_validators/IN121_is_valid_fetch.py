@@ -74,7 +74,13 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
         """
         fetch_required_params = (
             INCIDENT_FETCH_REQUIRED_PARAMS
-            if MarketplaceVersions.XSOAR in marketplaces
+            if any(
+                [
+                    MarketplaceVersions.XSOAR in marketplaces,
+                    MarketplaceVersions.XSOAR_SAAS in marketplaces,
+                    MarketplaceVersions.XSOAR_ON_PREM in marketplaces,
+                ]
+            )
             else ALERT_FETCH_REQUIRED_PARAMS
         )
         current_integration = {}

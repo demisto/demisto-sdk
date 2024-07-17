@@ -662,12 +662,29 @@ def preprocess_files(
         raw_files = git_util._get_all_changed_files(prev_version)
         if not commited_only:
             raw_files = raw_files.union(staged_files)
+        if os.getenv("CONTRIB_BRANCH"):
+            """
+            If this command runs on a build triggered by an external contribution PR,
+            the relevant modified files would have an "untracked" status in git.
+            The following code segment retrieves all relevant untracked file paths that were changed in the external contribution PR
+            and adds them to `raw_files`. See CIAC-10490 for more info.
+            """
+            logger.info(
+                "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
+            )
+            logger.info(
+                f"\n######## - Raw Untracked files from git:\n{git_util.repo.untracked_files}"
+            )
+            valid_untracked_files_paths = get_untracked_files_in_content(git_util)
+            raw_files = raw_files.union(valid_untracked_files_paths)
+            logger.info(f"\n######## - Running on collected files:\n{raw_files}")
     elif all_files:
         raw_files = all_git_files
     else:
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."
         )
+
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
@@ -681,3 +698,18 @@ def preprocess_files(
     }
     # filter out files that are not in the content git repo (e.g in .gitignore)
     return relative_paths & all_git_files
+
+
+def get_untracked_files_in_content(git_util) -> Set[Path]:
+    """
+    Filter out a string list of untracked files with a path thats inside the build machine's content repository.
+    The file paths in the build machine are relative so we use absolute path (resolve) to make sure the files are in content.
+    """
+    logger.info(f"\n######## - CONTENT PATH to match:\nf'{CONTENT_PATH}/Packs/'")
+    untracked_files_paths = {
+        Path(f)
+        for f in git_util.repo.untracked_files
+        if str(Path(f).resolve()).startswith(f"{CONTENT_PATH}/Packs/")
+    }
+    logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
+    return untracked_files_paths

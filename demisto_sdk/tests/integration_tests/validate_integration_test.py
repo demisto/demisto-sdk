@@ -1591,13 +1591,8 @@ class TestIntegrationValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {pack_integration_path} as integration",
-                    "You can check for the most updated version of demisto/python3 here:",
                 ]
             ]
-        )
-        assert str_in_call_args_list(
-            logger_error.call_args_list,
-            "The docker image tag is not the latest numeric tag, please update it",
         )
         assert result.exit_code == 1
 

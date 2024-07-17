@@ -15,6 +15,24 @@ class TestValidateMyPyGlobalIgnore:
     added_mypy_global_ignore_2 = "# type:ignore"
     added_mypy_global_ignore_3 = "#type:ignore"
 
+    mypy_disable_error_code = '# mypy: disable-error-code="attr-defined"'
+    added_mypy_disable_error_code = f"{added_code}\n{mypy_disable_error_code}"
+
+    mypy_disable_multiple_error_codes = '# mypy: disable-error-code="attr-defined,misc"'
+    added_mypy_disable_multiple_error_codes = (
+        f"{added_code}\n{mypy_disable_multiple_error_codes}"
+    )
+
+    mypy_disable_error_code_no_space = '#mypy: disable-error-code="attr-defined"'
+    added_mypy_disable_error_code_no_space = (
+        f"{added_code}\n{mypy_disable_error_code_no_space}"
+    )
+
+    mypy_disable_error_code_no_space_2 = '# mypy:disable-error-code="attr-defined"'
+    added_mypy_disable_error_code_no_space_2 = (
+        f"{added_code}\n{mypy_disable_error_code_no_space_2}"
+    )
+
     """
     Test class for validation of mypy global ignore.
     """
@@ -203,5 +221,121 @@ class TestValidateMyPyGlobalIgnore:
         actual_output = result.stdout.splitlines()
         assert (
             f"File '{py_file_path}#L1' sets global mypy ignore. Please remove."
+            in actual_output[1]
+        )
+
+    def test_mypy_disable_error_code(cls, tmp_path: Path):
+        """
+        Test the behavior of `prevent_mypy_global_ignore` when
+        a mypy disable error code is present in the source code.
+
+        Given:
+        - A Python file.
+
+        When:
+        - A mypy disable error code is added.
+
+        Then:
+        - Exit code 1 is returned.
+        - The output includes a message to remove the global ignore.
+        """
+
+        py_file_path = tmp_path / "a.py"
+        py_file_path.write_text(cls.added_mypy_disable_error_code)
+
+        result = CliRunner().invoke(cls.func, [str(py_file_path)])
+
+        assert result.exit_code == 1
+        actual_output = result.stdout.splitlines()
+        assert (
+            f"File '{py_file_path}#L2' sets global mypy ignore. Please remove."
+            in actual_output[1]
+        )
+
+    def test_mypy_disable_multiple_error_code(cls, tmp_path: Path):
+        """
+        Test the behavior of `prevent_mypy_global_ignore` when
+        multiple mypy disable error codes are present in the source code.
+
+        Given:
+        - A Python file.
+
+        When:
+        - 2 mypy disable error codes are added.
+
+        Then:
+        - Exit code 1 is returned.
+        - The output includes a message to remove the global ignore.
+        """
+
+        py_file_path = tmp_path / "a.py"
+        py_file_path.write_text(cls.added_mypy_disable_multiple_error_codes)
+
+        result = CliRunner().invoke(cls.func, [str(py_file_path)])
+
+        assert result.exit_code == 1
+        actual_output = result.stdout.splitlines()
+        assert (
+            f"File '{py_file_path}#L2' sets global mypy ignore. Please remove."
+            in actual_output[1]
+        )
+
+    def test_mypy_disable_error_code_no_whitespace(cls, tmp_path: Path):
+        """
+        Test the behavior of `prevent_mypy_global_ignore` when
+        a mypy disable error code is present in the source code without a
+        whitespace.
+
+        Given:
+        - A Python file.
+
+        When:
+        - A mypy disable error code is added without whitespace
+        between the '#' and 'mypy'.
+
+        Then:
+        - Exit code 1 is returned.
+        - The output includes a message to remove the global ignore.
+        """
+
+        py_file_path = tmp_path / "a.py"
+        py_file_path.write_text(cls.added_mypy_disable_error_code_no_space)
+
+        result = CliRunner().invoke(cls.func, [str(py_file_path)])
+
+        assert result.exit_code == 1
+        actual_output = result.stdout.splitlines()
+        assert (
+            f"File '{py_file_path}#L2' sets global mypy ignore. Please remove."
+            in actual_output[1]
+        )
+
+    def test_mypy_disable_error_code_no_whitespace_2(cls, tmp_path: Path):
+        """
+        Test the behavior of `prevent_mypy_global_ignore` when
+        a mypy disable error code is present in the source code without a
+        whitespace.
+
+        Given:
+        - A Python file.
+
+        When:
+        - A mypy disable error code is added without whitespace
+        between the 'mypy:' and 'disable-error-code'.
+
+        Then:
+        - Exit code 1 is returned.
+        - The output includes a message to remove the global ignore.
+        """
+
+        py_file_path = tmp_path / "a.py"
+        py_file_path.write_text(cls.added_mypy_disable_error_code_no_space_2)
+
+        result = CliRunner().invoke(cls.func, [str(py_file_path)])
+
+        assert result.exit_code == 1
+        actual_output = result.stdout.splitlines()
+        assert (
+            f"File '{py_file_path}#L2' sets global mypy ignore. Please remove."
             in actual_output[1]
         )

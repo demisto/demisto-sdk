@@ -124,7 +124,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
         - Case 4: Make sure the retrieved list contains only the validation with the error_code that actually co-op with the validation_to_run.
     """
     validate_manager = get_validate_manager(mocker)
-    validate_manager.configured_validations.validations_to_run = validations_to_run
+    validate_manager.configured_validations.select = validations_to_run
     with patch.object(BaseValidator, "__subclasses__", return_value=sub_classes):
         results = validate_manager.filter_validators()
         assert results == expected_results
@@ -232,11 +232,11 @@ def test_gather_validations_from_conf(
     mocker.patch.object(toml, "load", return_value=config_file_content)
     config_reader = ConfigReader(category=category_to_run)
     results: ConfiguredValidations = config_reader.read(
-        execution_mode=execution_mode, ignore_support_level=ignore_support_level
+        mode=execution_mode, ignore_support_level=ignore_support_level
     )
-    assert results.validations_to_run == expected_results.validations_to_run
+    assert results.select == expected_results.validations_to_run
     assert results.ignorable_errors == expected_results.ignorable_errors
-    assert results.only_throw_warnings == expected_results.only_throw_warnings
+    assert results.warning == expected_results.only_throw_warnings
     assert results.support_level_dict == expected_results.support_level_dict
 
 

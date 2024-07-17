@@ -108,9 +108,9 @@ class YAMLContentItemParser(ContentItemParser):
     def marketplaces(self) -> List[MarketplaceVersions]:
         return self.get_marketplaces(self.yml_data)
     
-    # @property
-    # def support_level(self) -> Optional[str]:
-    #     return self.get_support_level(self.yml_data)
+    @property
+    def support_level(self) -> Optional[str]:
+        return self.get_support_level(self.yml_data)
 
     def connect_to_tests(self) -> None:
         """Iterates over the test playbooks registered to this content item,

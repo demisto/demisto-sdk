@@ -33,7 +33,11 @@ from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker impo
 
 ENV = os.environ
 ERROR_CODE_PATTERN = re.compile(
-    r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>E\d+)(?P<error_message> .*)$",
+    r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<code>(?P<type>[EW])\d+)(?P<error_message> .*)$",
+    re.MULTILINE,
+)
+WARNING_CODE_PATTERN = re.compile(
+    r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>W\d+)(?P<error_message> .*)$",
     re.MULTILINE,
 )
 
@@ -133,6 +137,7 @@ class ProcessResults:
 
     return_code: int = 0
     errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
     errors_and_warnings: str = ""
 
 
@@ -174,6 +179,8 @@ def process_file(file_path: Path) -> ProcessResults:
             for line in errors_and_warnings_str.splitlines():
                 if ERROR_CODE_PATTERN.match(line):
                     results.errors.append(line)
+                elif WARNING_CODE_PATTERN.match(line):
+                    results.warnings.append(line)
         except subprocess.TimeoutExpired:
             results.errors.append(
                 f"Got a timeout while processing the following file: {str(file_path)}"
@@ -199,6 +206,7 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     """
     return_codes = []
     errors = []
+    warning = []
     errors_and_warnings = []
 
     if not file_paths:
@@ -212,15 +220,18 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     for result in results:
         return_codes.append(result.return_code)
         errors += result.errors
+        warning += result.warnings
         errors_and_warnings.append(result.errors_and_warnings)
     errors_and_warnings_concat = "\n".join(elem for elem in errors_and_warnings if elem)
     logger.info(errors_and_warnings_concat)
 
     if any(return_codes):  # An error was found
-        errors = list(filter(None, errors))
+        errors, warning = list(filter(None, errors)), list(filter(None, warning))
         
         if os.getenv("GITHUB_ACTIONS"):
             print_errors_github_action(errors)
+            if os.getenv(""):
+                print_errors_github_action(warning)
             
         errors_str = "\n".join(errors)
         logger.error(f"Found the following errors: \n{errors_str}")
@@ -228,12 +239,13 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     return int(any(return_codes))
 
 
-def print_errors_github_action(errors: list[str]) -> None:
-    for error in errors:
-        if not (match := ERROR_CODE_PATTERN.match(error)):
-            logger.debug(f"Failed parsing error {error}")
+def print_errors_github_action(errors_and_warning: list[str]) -> None:
+    for error_and_warning in errors_and_warning:
+        if not (match := ERROR_CODE_PATTERN.match(error_and_warning)):
+            logger.debug(f"Failed parsing error {error_and_warning}")
             continue
 
+        prefix = {"W": "warning", "E": "error"}[match["type"]]
         print(  # noqa: T201
-            f"::error file={match.group('path')},line={match.group('line')},col={match.group('col')},title=XSOAR Linter {match.group('error_code')}::{match.group('error_message')}"
+            f"::{prefix} file={match.group('path')},line={match.group('line')},col={match.group('col')},title=XSOAR Linter {match.group('error_code')}::{match.group('error_message')}"
         )

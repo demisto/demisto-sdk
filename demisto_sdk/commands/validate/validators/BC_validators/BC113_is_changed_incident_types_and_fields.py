@@ -12,7 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Mapper
 
 
-class IsChangedIncidentTypesAndFeildsValidator(BaseValidator[ContentTypes]):
+class IsChangedIncidentTypesAndFieldsValidator(BaseValidator[ContentTypes]):
     error_code = "BC113"
     description = "Validate that no incident types were removed and no incident fields were changed."
     rationale = ""
@@ -33,7 +33,9 @@ class IsChangedIncidentTypesAndFeildsValidator(BaseValidator[ContentTypes]):
             removed_incident_field_by_incident_type = self.get_removed_incident_fields_by_incident_type(
                 content_item.mapping, content_item.old_base_content_object.mapping, intersected_incident_types  # type: ignore[union-attr]
             )
-            if error_msg := self.obtain_error_msg(removed_incident_types, removed_incident_field_by_incident_type):
+            if error_msg := self.obtain_error_msg(
+                removed_incident_types, removed_incident_field_by_incident_type
+            ):
                 validation_results.append(
                     ValidationResult(
                         validator=self,
@@ -43,8 +45,11 @@ class IsChangedIncidentTypesAndFeildsValidator(BaseValidator[ContentTypes]):
                 )
         return validation_results
 
-
-    def obtain_error_msg(self, removed_incident_types: Set[str], removed_incident_field_by_incident_type :Dict[str, Set]) -> str:
+    def obtain_error_msg(
+        self,
+        removed_incident_types: Set[str],
+        removed_incident_field_by_incident_type: Dict[str, Set],
+    ) -> str:
         """Create a formatted error message from the removed_incident_types and removed_incident_field_by_incident_type.
 
         Args:
@@ -59,14 +64,18 @@ class IsChangedIncidentTypesAndFeildsValidator(BaseValidator[ContentTypes]):
             error_msg += f"\n- The following incident types were removed: {', '.join(removed_incident_types)}."
         if removed_incident_field_by_incident_type:
             error_msg += "\n- The following incident fields were removed from the following incident types:"
-            for incident_type, missing_incident_fields in removed_incident_field_by_incident_type.items():
-                error_msg += f"\n\t- The following incident fields were removed from the incident types '{incident_type}': {', '.join(missing_incident_fields)}:"
+            for (
+                incident_type,
+                missing_incident_fields,
+            ) in removed_incident_field_by_incident_type.items():
+                error_msg += f"\n\t- The following incident fields were removed from the incident types '{incident_type}': {', '.join(missing_incident_fields)}."
         return error_msg
+
     def get_removed_incident_fields_by_incident_type(
         self,
         content_item_mappings: Dict[str, Any],
         old_content_item_mappings: Dict[str, Any],
-        intersected_incident_types: Set[str]
+        intersected_incident_types: Set[str],
     ) -> Dict[str, Set[str]]:
         """Retrieve the incident fields removed from each incident type
 
@@ -80,10 +89,25 @@ class IsChangedIncidentTypesAndFeildsValidator(BaseValidator[ContentTypes]):
         """
         missing_incident_fields_by_incident_type = {}
         for intersected_incident_type in intersected_incident_types:
-            current_incident_field_for_incident_type = {inc for inc in content_item_mappings[intersected_incident_type].get("internalMapping", {})}
-            old_incident_field_for_incident_type = {inc for inc in old_content_item_mappings[intersected_incident_type].get("internalMapping", {})}
-            if removed_fields := old_incident_field_for_incident_type - current_incident_field_for_incident_type:
-                missing_incident_fields_by_incident_type[intersected_incident_type] = removed_fields
+            current_incident_field_for_incident_type = {
+                inc
+                for inc in content_item_mappings[intersected_incident_type].get(
+                    "internalMapping", {}
+                )
+            }
+            old_incident_field_for_incident_type = {
+                inc
+                for inc in old_content_item_mappings[intersected_incident_type].get(
+                    "internalMapping", {}
+                )
+            }
+            if (
+                removed_fields := old_incident_field_for_incident_type
+                - current_incident_field_for_incident_type
+            ):
+                missing_incident_fields_by_incident_type[
+                    intersected_incident_type
+                ] = removed_fields
         return missing_incident_fields_by_incident_type
 
     def get_sorted_incident_types(

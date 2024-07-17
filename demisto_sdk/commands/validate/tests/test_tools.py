@@ -32,6 +32,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
+from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
@@ -734,7 +735,7 @@ def create_generic_module_object(
 
 def create_incoming_mapper_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Mapper:
     """Creating an incoming_mapper object with altered fields from a default incoming_mapper json structure.
 
     Args:
@@ -748,7 +749,7 @@ def create_incoming_mapper_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_mapper(name="incoming_mapper", content=json_content)
-    return BaseContent.from_path(Path(pack.mappers[0].path))
+    return cast(Mapper, BaseContent.from_path(Path(pack.mappers[0].path)))
 
 
 def create_outgoing_mapper_object(

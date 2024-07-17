@@ -6,6 +6,7 @@ import pytest
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects import Integration
 from demisto_sdk.commands.content_graph.objects.integration import Command, Output
+from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -52,6 +53,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC111_new_required_a
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC112_no_removed_integration_parameters import (
     NoRemovedIntegrationParametersValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC113_is_changed_incident_types_and_fields import (
+    IsChangedIncidentTypesAndFieldsValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -1377,3 +1381,91 @@ def test_has_removed_integration_parameters_without_changed_params():
     res = NoRemovedIntegrationParametersValidator().is_valid([new_item])
 
     assert res == []
+
+
+def test_IsChangedIncidentTypesAndFieldsValidator_is_valid_success():
+    """
+    Given
+    content_items and old_content_items iterables.
+        - Case 1: a content item with two incident types:
+            - One old incident type with one old incident field and one new incident field.
+            - One new incident type.
+    When
+    - Calling the IsChangedIncidentTypesAndFieldsValidator is valid function.
+    Then
+        - Make sure the validation passed.
+    """
+    content_items: List[Mapper] = [
+        create_incoming_mapper_object(
+            ["mapping"],
+            [
+                {
+                    "test_1": {
+                        "internalMapping": {
+                            "incident_field_1": {},
+                            "incident_field_2": {},
+                        }
+                    },
+                    "test_2": {"internalMapping": {"incident_field_2": {}}},
+                }
+            ],
+        )
+    ]
+    old_content_items: List[Mapper] = [
+        create_incoming_mapper_object(
+            ["mapping"], [{"test_1": {"internalMapping": {"incident_field_1": {}}}}]
+        )
+    ]
+    create_old_file_pointers(content_items, old_content_items)
+    results = IsChangedIncidentTypesAndFieldsValidator().is_valid(content_items)
+    assert not results
+
+
+def test_IsChangedIncidentTypesAndFieldsValidator_is_valid_fail():
+    """
+    Given
+    content_items and old_content_items iterables.
+        - Case 1: a content item with two incident types:
+            - One old incident type with one old incident field and one new incident field.
+            - One new incident type.
+    When
+    - Calling the IsChangedIncidentTypesAndFieldsValidator is valid function.
+    Then
+        - Make sure the right amount of failures return and that the right message is returned.
+        - Case 1: Should pass.
+    """
+    content_items: List[Mapper] = [
+        create_incoming_mapper_object(
+            ["mapping"],
+            [
+                {
+                    "test_1": {"internalMapping": {"incident_field_1": {}}},
+                    "test_2": {"internalMapping": {"incident_field_1": {}}},
+                }
+            ],
+        )
+    ]
+    old_content_items: List[Mapper] = [
+        create_incoming_mapper_object(
+            ["mapping"],
+            [
+                {
+                    "test_1": {"internalMapping": {"incident_field_1": {}}},
+                    "test_2": {
+                        "internalMapping": {
+                            "incident_field_1": {},
+                            "incident_field_2": {},
+                        }
+                    },
+                    "test_3": {"internalMapping": {"incident_field_2": {}}},
+                }
+            ],
+        )
+    ]
+    create_old_file_pointers(content_items, old_content_items)
+    results = IsChangedIncidentTypesAndFieldsValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The Mapper contains modified / removed keys:\n- The following incident types were removed: test_3.\n- The following incident fields were removed from the following incident types:\n\t- The following incident fields were removed from the incident types 'test_2': incident_field_2."
+    )

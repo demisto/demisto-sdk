@@ -9,11 +9,11 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
+from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
+    IDNameValidator,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-)
-from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equal_name import (
-    IDNameValidator,
 )
 
 ContentTypes = Union[Integration, Layout, Mapper, Playbook, Script, Wizard, Job]

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import contextlib
+import fcntl
 import glob
-import logging
 import os
 import re
 import shlex
@@ -10,6 +10,7 @@ import sys
 import time
 import traceback
 import urllib.parse
+import xml.etree.ElementTree as ET
 from abc import ABC
 from collections import OrderedDict
 from concurrent.futures import as_completed
@@ -77,13 +78,13 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
+    ISO_TIMESTAMP_FORMAT,
     JOBS_DIR,
     LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
     MARKETPLACE_TO_CORE_PACKS_FILE,
-    METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
     OFFICIAL_CONTENT_GRAPH_PATH,
@@ -107,6 +108,7 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
+    STRING_TO_BOOL_MAP,
     TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
@@ -137,16 +139,14 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
-logger = logging.getLogger("demisto-sdk")
-
 yaml_safe_load = YAML_Handler(typ="safe")
 
 urllib3.disable_warnings()
-
 
 GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
@@ -181,7 +181,6 @@ class MarketplaceTagParser:
     XSOAR_ON_PREM_TAG = "XSOAR_ON_PREM"
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
-
         self.marketplace = marketplace
 
         self._xsoar_parser = TagParser(marketplace_tag=self.XSOAR_TAG)
@@ -444,9 +443,13 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
     if marketplaces is None:
         marketplaces = list(MarketplaceVersions)
 
-    for mp, core_packs in get_marketplace_to_core_packs().items():
-        if mp in marketplaces:
-            result.update(core_packs)
+    try:
+        for mp, core_packs in get_marketplace_to_core_packs().items():
+            if mp in marketplaces:
+                result.update(core_packs)
+    except NoInternetConnectionException:
+        logger.debug("SDK running in offline mode, returning core_packs=[]")
+        return []
     return list(result)
 
 
@@ -597,7 +600,8 @@ def get_remote_file(
         if default_value is None:
             raise NoInternetConnectionException
         return default_value
-
+    if not tag:
+        tag = DEMISTO_GIT_PRIMARY_BRANCH
     tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
     if not git_content_config:
         try:
@@ -884,6 +888,8 @@ def get_file(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
+        elif type_of_file.lstrip(".") in {"svg"}:
+            return ET.fromstring(file_content)
         else:
             result = json.load(StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
@@ -1028,9 +1034,7 @@ def get_from_version(file_path):
         )
 
         if not from_version:
-            logger.warning(
-                f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}'
-            )
+            logger.warning(f"fromversion/fromVersion was not found in '{file_path}'")
             return ""
 
         if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", from_version):
@@ -1173,7 +1177,7 @@ def get_latest_release_notes_text(rn_path):
                 logger.info(
                     f"[red]Release Notes may not be empty. Please fill out correctly. - {rn_path}[/red]"
                 )
-                return None
+                return ""
         except OSError:
             return ""
 
@@ -1579,6 +1583,7 @@ def get_dict_from_file(
     raises_error: bool = True,
     clear_cache: bool = False,
     keep_order: bool = True,
+    git_sha: Optional[str] = None,
 ) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
@@ -1595,11 +1600,16 @@ def get_dict_from_file(
         if path:
             if path.endswith(".yml"):
                 return (
-                    get_yaml(path, cache_clear=clear_cache, keep_order=keep_order),
+                    get_yaml(
+                        path,
+                        cache_clear=clear_cache,
+                        keep_order=keep_order,
+                        git_sha=git_sha,
+                    ),
                     "yml",
                 )
             elif path.endswith(".json"):
-                res = get_json(path, cache_clear=clear_cache)
+                res = get_json(path, cache_clear=clear_cache, git_sha=git_sha)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
                     return res[0], "json"
                 else:
@@ -1651,7 +1661,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
-        elif path.name == METADATA_FILE_NAME:
+        elif path.name == PACKS_PACK_META_FILE_NAME:
             return FileType.METADATA
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
@@ -1671,6 +1681,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.MODELING_RULE_SCHEMA
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
+        elif PRE_PROCESS_RULES_DIR in path.parts:
+            return FileType.PRE_PROCESS_RULES
 
     elif (path.stem.endswith("_image") and path.suffix == ".png") or (
         (path.stem.endswith("_dark") or path.stem.endswith("_light"))
@@ -1801,6 +1813,43 @@ def find_type(
     Returns:
         FileType | None: Enum representation of the content file type, None otherwise.
     """
+    from demisto_sdk.commands.content_graph.objects import (
+        CaseField,
+        CaseLayout,
+        CaseLayoutRule,
+        Classifier,
+        CorrelationRule,
+        Dashboard,
+        GenericDefinition,
+        GenericField,
+        GenericModule,
+        GenericType,
+        IncidentField,
+        IncidentType,
+        IndicatorField,
+        IndicatorType,
+        Integration,
+        Job,
+        Layout,
+        LayoutRule,
+        Mapper,
+        ModelingRule,
+        ParsingRule,
+        Playbook,
+        PreProcessRule,
+        Report,
+        Script,
+        TestPlaybook,
+        TestScript,
+        Trigger,
+        Widget,
+        Wizard,
+        XDRCTemplate,
+        XSIAMDashboard,
+        XSIAMReport,
+    )
+    from demisto_sdk.commands.content_graph.objects import List as ListObject
+
     type_by_path = find_type_by_path(path)
     if type_by_path:
         return type_by_path
@@ -1820,154 +1869,149 @@ def find_type(
             return None
         raise err
 
-    if file_type == "yml" or path.lower().endswith(".yml"):
-        if path.lower().endswith("_unified.yml"):
-            return FileType.UNIFIED_YML
+    if (file_type == "yml" or path.lower().endswith(".yml")) and path.lower().endswith(
+        "_unified.yml"
+    ):
+        return FileType.UNIFIED_YML
 
-        if "category" in _dict:
-            if _dict.get("beta") and not ignore_sub_categories:
-                return FileType.BETA_INTEGRATION
+    if (
+        (file_type == "yml" or path.lower().endswith(".yml"))
+        and "category" in _dict
+        and _dict.get("beta")
+        and not ignore_sub_categories
+    ):
+        return FileType.BETA_INTEGRATION
 
-            return FileType.INTEGRATION
+    if Integration.match(_dict, Path(path)):
+        return FileType.INTEGRATION
 
-        if "script" in _dict:
-            if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
-                return FileType.TEST_SCRIPT
+    if TestScript.match(_dict, Path(path)) and not ignore_sub_categories:
+        return FileType.TEST_SCRIPT
 
-            return FileType.SCRIPT
+    if Script.match(_dict, Path(path)):
+        return FileType.SCRIPT
 
-        if "tasks" in _dict:
-            if TEST_PLAYBOOKS_DIR in Path(path).parts:
-                return FileType.TEST_PLAYBOOK
+    if TestPlaybook.match(_dict, Path(path)):
+        return FileType.TEST_PLAYBOOK
 
-            return FileType.PLAYBOOK
+    if Playbook.match(_dict, Path(path)):
+        return FileType.PLAYBOOK
 
-        if "rules" in _dict:
-            if "samples" in _dict and PARSING_RULES_DIR in Path(path).parts:
-                return FileType.PARSING_RULE
+    if ParsingRule.match(_dict, Path(path)):
+        return FileType.PARSING_RULE
 
-            if MODELING_RULES_DIR in Path(path).parts:
-                return FileType.MODELING_RULE
+    if MODELING_RULES_DIR in Path(path).parts:
+        if ModelingRule.match(_dict, Path(path)):
+            return FileType.MODELING_RULE
 
-        if "global_rule_id" in _dict or (
-            isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0]
-        ):
-            return FileType.CORRELATION_RULE
+    if CorrelationRule.match(_dict, Path(path)):
+        return FileType.CORRELATION_RULE
 
-    if file_type == "json" or path.lower().endswith(".json"):
-        if (
-            path.lower().endswith("_schema.json")
-            and MODELING_RULES_DIR in Path(path).parts
-        ):
-            return FileType.MODELING_RULE_SCHEMA
+    if (file_type == "json" or path.lower().endswith(".json")) and (
+        path.lower().endswith("_schema.json") and MODELING_RULES_DIR in Path(path).parts
+    ):
+        return FileType.MODELING_RULE_SCHEMA
 
-        if "widgetType" in _dict:
-            return FileType.WIDGET
+    if Widget.match(_dict, Path(path)):
+        return FileType.WIDGET
 
-        if "orientation" in _dict:
-            return FileType.REPORT
+    if Report.match(_dict, Path(path)):
+        return FileType.REPORT
 
-        if "color" in _dict and "cliName" not in _dict:
-            if (
-                "definitionId" in _dict
-                and _dict["definitionId"]
-                and _dict["definitionId"].lower() not in ["incident", "indicator"]
-            ):
-                return FileType.GENERIC_TYPE
-            return FileType.INCIDENT_TYPE
+    if GenericType.match(_dict, Path(path)):
+        return FileType.GENERIC_TYPE
 
-        # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
-        # located in reputations.json file.
-        if "regex" in _dict or "reputations" in _dict:
-            return FileType.REPUTATION
+    if IncidentType.match(_dict, Path(path)):
+        return FileType.INCIDENT_TYPE
 
-        if "brandName" in _dict and "transformer" in _dict:
-            return FileType.OLD_CLASSIFIER
+    # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
+    # located in reputations.json file.
+    if IndicatorType.match(_dict, Path(path)):
+        return FileType.REPUTATION
 
-        if ("transformer" in _dict and "keyTypeMap" in _dict) or "mapping" in _dict:
-            if _dict.get("type") and _dict.get("type") == "classification":
-                return FileType.CLASSIFIER
-            elif _dict.get("type") and "mapping" in _dict.get("type"):
-                return FileType.MAPPER
-            return None
+    if (
+        (file_type == "json" or path.lower().endswith(".json"))
+        and "brandName" in _dict
+        and "transformer" in _dict
+    ):
+        return FileType.OLD_CLASSIFIER
 
-        if "canvasContextConnections" in _dict:
-            return FileType.CONNECTION
+    if Classifier.match(_dict, Path(path)):
+        return FileType.CLASSIFIER
 
-        if (
-            "layout" in _dict or "kind" in _dict
-        ):  # it's a Layout or Dashboard but not a Generic Object
-            if "kind" in _dict or "typeId" in _dict:
-                return FileType.LAYOUT
+    if Mapper.match(_dict, Path(path)):
+        return FileType.MAPPER
 
-            return FileType.DASHBOARD
+    if (
+        file_type == "json" or path.lower().endswith(".json")
+    ) and "canvasContextConnections" in _dict:
+        return FileType.CONNECTION
 
-        if "group" in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+    if (
+        ("layout" in _dict or "kind" in _dict)
+        and ("kind" in _dict or "typeId" in _dict)
+        and Path(path).suffix == ".json"
+    ):
+        return FileType.LAYOUT
+
+    if isinstance(_dict, dict) and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+        if Layout.match(_dict, Path(path)):
             return FileType.LAYOUTS_CONTAINER
 
-        if (
-            "scriptName" in _dict
-            and "existingEventsFilters" in _dict
-            and "readyExistingEventsFilters" in _dict
-            and "newEventFilters" in _dict
-            and "readyNewEventFilters" in _dict
-        ):
-            return FileType.PRE_PROCESS_RULES
+    if Dashboard.match(_dict, Path(path)):
+        return FileType.DASHBOARD
 
-        if "definitionIds" in _dict and "views" in _dict:
-            return FileType.GENERIC_MODULE
+    if PreProcessRule.match(_dict, Path(path)):
+        return FileType.PRE_PROCESS_RULES
 
-        if "auditable" in _dict:
-            return FileType.GENERIC_DEFINITION
+    if GenericModule.match(_dict, Path(path)):
+        return FileType.GENERIC_MODULE
 
-        if isinstance(_dict, dict) and {
-            "isAllFeeds",
-            "selectedFeeds",
-            "isFeed",
-        }.issubset(_dict.keys()):
-            return FileType.JOB
+    if GenericDefinition.match(_dict, Path(path)):
+        return FileType.GENERIC_DEFINITION
 
-        if isinstance(_dict, dict) and "wizard" in _dict:
-            return FileType.WIZARD
+    if Job.match(_dict, Path(path)):
+        return FileType.JOB
 
-        if "dashboards_data" in _dict:
-            return FileType.XSIAM_DASHBOARD
+    if Wizard.match(_dict, Path(path)):
+        return FileType.WIZARD
 
-        if "templates_data" in _dict:
-            return FileType.XSIAM_REPORT
+    if XSIAMDashboard.match(_dict, Path(path)):
+        return FileType.XSIAM_DASHBOARD
 
-        if "trigger_id" in _dict:
-            return FileType.TRIGGER
+    if XSIAMReport.match(_dict, Path(path)):
+        return FileType.XSIAM_REPORT
 
-        if "profile_type" in _dict and "yaml_template" in _dict:
-            return FileType.XDRC_TEMPLATE
+    if Trigger.match(_dict, Path(path)):
+        return FileType.TRIGGER
 
-        if "rule_id" in _dict:
-            return FileType.LAYOUT_RULE
+    if XDRCTemplate.match(_dict, Path(path)):
+        return FileType.XDRC_TEMPLATE
 
-        if isinstance(_dict, dict) and {"data", "allRead", "truncated"}.intersection(
-            _dict.keys()
-        ):
-            return FileType.LISTS
+    if LayoutRule.match(_dict, Path(path)):
+        return FileType.LAYOUT_RULE
 
-        # When using it for all files validation- sometimes 'id' can be integer
-        if "id" in _dict:
-            if isinstance(_dict["id"], str):
-                if (
-                    "definitionId" in _dict
-                    and _dict["definitionId"]
-                    and _dict["definitionId"].lower() not in ["incident", "indicator"]
-                ):
-                    return FileType.GENERIC_FIELD
-                _id = _dict["id"].lower()
-                if _id.startswith("incident"):
-                    return FileType.INCIDENT_FIELD
-                if _id.startswith("indicator"):
-                    return FileType.INDICATOR_FIELD
-            else:
-                logger.info(
-                    f'The file {path} could not be recognized, please update the "id" to be a string'
-                )
+    if CaseField.match(_dict, Path(path)):
+        return FileType.CASE_FIELD
+
+    if CaseLayout.match(_dict, Path(path)):
+        return FileType.CASE_LAYOUT
+
+    if CaseLayoutRule.match(_dict, Path(path)):
+        return FileType.CASE_LAYOUT_RULE
+
+    if ListObject.match(_dict, Path(path)):
+        return FileType.LISTS
+
+    # When using it for all files validation- sometimes 'id' can be integer
+    if GenericField.match(_dict, Path(path)):
+        return FileType.GENERIC_FIELD
+
+    if IncidentField.match(_dict, Path(path)):
+        return FileType.INCIDENT_FIELD
+
+    if IndicatorField.match(_dict, Path(path)):
+        return FileType.INDICATOR_FIELD
 
     return None
 
@@ -2006,6 +2050,26 @@ def is_external_repository() -> bool:
         private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
         return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
+        return True
+
+
+def is_external_repo() -> bool:
+    """
+    Returns True if script executed from an external repository (use this instead of is_external_repository)
+
+    """
+    try:
+        remote = GitUtil().repo.remote()
+        return (
+            not remote
+            or (not (parsed_url := giturlparse.parse(remote.url)))
+            or (
+                f"{parsed_url.owner}/{parsed_url.name}"
+                not in ("cortex-xdr/content", "demisto/content")
+            )
+        )
+    except Exception as e:
+        logger.debug(f"failed to get repo information, {str(e)}")
         return True
 
 
@@ -2788,7 +2852,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     readme_content += (
         "### "  # mark end of file so last pattern of regex will be recognized.
     )
-    commands = yml_dict.get("script", {})
+    commands = yml_dict.get("script") or {}
 
     # handles scripts
     if not commands:
@@ -3275,12 +3339,12 @@ def get_mp_types_from_metadata_by_item(file_path):
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
     if (
-        METADATA_FILE_NAME in Path(file_path).parts
+        PACKS_PACK_META_FILE_NAME in Path(file_path).parts
     ):  # for when the type is pack, the item we get is the metadata path
         metadata_path = file_path
     else:
         metadata_path_parts = get_pack_dir(file_path)
-        metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
+        metadata_path = Path(*metadata_path_parts) / PACKS_PACK_META_FILE_NAME
 
     try:
         if not (
@@ -3672,20 +3736,6 @@ def normalize_field_name(field: str) -> str:
     return field.replace("incident_", "").replace("indicator_", "")
 
 
-STRING_TO_BOOL_MAP = {
-    "y": True,
-    "1": True,
-    "yes": True,
-    "true": True,
-    "n": False,
-    "0": False,
-    "no": False,
-    "false": False,
-    "t": True,
-    "f": False,
-}
-
-
 def string_to_bool(
     input_: Any,
     default_when_empty: Optional[bool] = None,
@@ -4058,7 +4108,7 @@ def find_correct_key(data: dict, keys: List[str]) -> str:
 
 def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
     """Updating a data object with given value in the given key.
-    If a list of keys is given, will find the right path to update based on which path acctually has a value.
+    If a list of keys is given, will find the right path to update based on which path actually has a value.
     Args:
         data (dict): the data object to update.
         keys (Union[str,List[str]]): the path or list of possible paths to update.
@@ -4178,7 +4228,7 @@ def get_file_by_status(
             )
 
         # handle renamed files which are in tuples
-        elif file_path in file:
+        elif isinstance(file, tuple) and file_path in file:
             filtered_modified_files.add(file)
             return (
                 filtered_modified_files,
@@ -4323,3 +4373,255 @@ def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> 
 
         raise SecretManagerException
     return payload["params"]
+
+
+def check_timestamp_format(timestamp: str) -> bool:
+    """Check that the timestamp is in ISO format"""
+    try:
+        datetime.strptime(timestamp, ISO_TIMESTAMP_FORMAT)
+        return True
+    except ValueError:
+        return False
+
+
+def get_pack_latest_rn_version(pack_path: str) -> str:
+    """
+    Extract all the Release notes from the pack and return the highest version of release note in the Pack.
+
+    Return:
+        (str): The lastest version of RN.
+    """
+    list_of_files = glob.glob(pack_path + "/ReleaseNotes/*")
+    list_of_release_notes = [Path(file).name for file in list_of_files]
+    list_of_versions = [
+        rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
+    ]
+    if list_of_versions:
+        list_of_versions.sort(key=Version)
+        return list_of_versions[-1]
+    else:
+        return ""
+
+
+def is_str_bool(input_: str) -> bool:
+    try:
+        string_to_bool(input_)
+        return True
+    except ValueError:
+        return False
+
+
+def search_substrings_by_line(
+    phrases_to_search: List[str],
+    text: str,
+    ignore_case: bool = False,
+    search_whole_word: bool = False,
+    exceptionally_allowed_substrings: Optional[list[str]] = None,
+) -> List[str]:
+    """
+    Returns the list of line indices (as strings) in text,
+    where the searched phrases are found
+    """
+    invalid_lines = []
+
+    if ignore_case:
+        text = text.casefold()
+        exceptionally_allowed_substrings = [
+            allowed_phrase.casefold()
+            for allowed_phrase in (exceptionally_allowed_substrings or ())
+        ]
+
+    for line_num, line in enumerate(text.split("\n")):
+        if ignore_case:
+            line = line.casefold()
+
+        if search_whole_word:
+            line = line.split()  # type: ignore[assignment]
+
+        for phrase_to_search in phrases_to_search:
+            if phrase_to_search in line:
+                if exceptionally_allowed_substrings and any(
+                    (allowed in line and phrase_to_search in allowed)
+                    for allowed in exceptionally_allowed_substrings
+                ):
+                    """
+                    example: we want to catch 'demisto', but not when it's in a URL.
+                        phrase = 'demisto'
+                        allowed = '/demisto/'
+                        line = 'foo/demisto/bar'
+                    we'll skip this line only iff 'demisto' in '/demisto/' and '/demisto/' in foo/demisto/bar
+                    """
+                    continue
+                invalid_lines.append(str(line_num + 1))
+
+    return invalid_lines
+
+
+def extract_image_paths_from_str(
+    text: str, regex_str: str = r"!\[.*\]\((.*/doc_files/[a-zA-Z0-9_-]+\.png)"
+) -> List[str]:
+    """
+    Args:
+        local_paths (List[str]): list of file paths
+        is_lower (bool): True to check when line is lower cased.
+        to_split (bool): True to split the line in order to search specific word
+        text (str): The readme content to search.
+
+    Returns:
+        list of lines which contains the given text.
+    """
+
+    return [image_path for image_path in re.findall(regex_str, text)]
+
+
+def get_full_image_paths_from_relative(
+    pack_name: str, image_paths: List[str]
+) -> List[Path]:
+    """
+        Args:
+            pack_name (str): Pack name to add to path
+            image_paths (List[Path]): List of images with a local path. For example: ![<title>](../doc_files/<image name>.png)
+    )
+
+        Returns:
+            List[Path]: A list of paths with the full path.
+    """
+
+    return [
+        Path(f"Packs/{pack_name}/{image_path.replace('../', '')}")
+        if "Packs" not in image_path
+        else Path(image_path)
+        for image_path in image_paths
+    ]
+
+
+def remove_nulls_from_dictionary(data):
+    """
+    Remove Null values from a dictionary. (updating the given dictionary)
+
+    :type data: ``dict``
+    :param data: The data to be added to the context (required)
+
+    :return: No data returned
+    :rtype: ``None``
+    """
+    list_of_keys = list(data.keys())[:]
+    for key in list_of_keys:
+        if data[key] in ("", None, [], {}, ()):
+            del data[key]
+
+
+def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
+    """Extract the relative path that is relative to the given path.
+
+    Args:
+        file_path (Union[str, Path]): The path to extract the relative path from.
+        relative_to (Path): The path to get the relative path to.
+
+    Returns:
+        Path: The extracted relative path.
+    """
+    file_path = Path(file_path)
+    if file_path.is_absolute():
+        file_path = file_path.relative_to(relative_to)
+    return file_path
+
+
+def convert_path_to_str(data: Union[dict, list]):
+    """This converts recursively all Path objects to strings in the given data.
+
+    Args:
+        data (Union[dict, list]): The data to convert.
+    """
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, (dict, list)):
+                convert_path_to_str(value)
+            elif isinstance(value, Path):
+                data[key] = str(value)
+    elif isinstance(data, list):
+        for index, item in enumerate(data):
+            if isinstance(item, (dict, list)):
+                convert_path_to_str(item)
+            elif isinstance(item, Path):
+                data[index] = str(item)
+
+
+def find_regex_on_data(data: str, regex: str):
+    """
+    Finds all matches of a given regex pattern in the provided data.
+
+    Args:
+        data (str): The string data to search within.
+        regex (str): The regex pattern to use for finding matches.
+
+    Returns:
+        List[str]: A list of all matches found in the data. If no matches are found, returns an empty list.
+    """
+    return re.findall(
+        regex,
+        data,
+        re.IGNORECASE,
+    )
+
+
+def run_sync(
+    lock_file_path: str,
+    exclusive_function: Callable,
+    exclusive_function_kwargs: dict = {},
+):
+    """Uses a given lock file path to run a method synchronously.
+
+    Args:
+        lock_file_path (str): The lock file path.
+        exclusive_function (Callable): The function we want to run exclusivly.
+        exclusive_function_kwargs (dict, optional): The kwargs we wish to pass to the exclusive_function. Defaults to {}.
+    """
+    try:
+        # Open (or create) the lock file
+        lock_file = open(lock_file_path, "w")
+
+        # Wait until the lock is acquired
+        while True:
+            try:
+                # Try to acquire an exclusive lock
+                fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                logger.debug("Resource is busy, waiting...")
+                time.sleep(0.1)  # Wait for 0.1 seconds before retrying
+
+        # If lock is acquired, call the exclusive function
+        exclusive_function(**exclusive_function_kwargs)
+
+    finally:
+        if lock_file:
+            # Release the lock and close the file
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+            lock_file.close()
+
+
+def get_json_file(path):
+    """
+    Reads a JSON file from the given path and returns its content as a dictionary.
+
+    Args:
+        path (str): The file path to the JSON file.
+
+    Returns:
+        dict: The content of the JSON file as a dictionary.
+    """
+    file_content = {}
+    if path:
+        try:
+            with open(path, "r") as json_file:
+                file_content = json.load(json_file)
+        except FileNotFoundError:
+            logger.debug(f"Error: The file at path '{path}' was not found.")
+        except json.JSONDecodeError:
+            logger.debug(
+                f"Error: The file at path '{path}' does not contain valid JSON."
+            )
+        except Exception as e:
+            logger.debug(f"An unexpected error occurred: {e}")
+    return file_content

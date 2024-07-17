@@ -5,22 +5,15 @@ from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
 from packaging.version import Version
-from requests import Response
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
-    MODELING_RULE_ID_SUFFIX,
-    MODELING_RULE_NAME_SUFFIX,
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
-    PARSING_RULE_ID_SUFFIX,
-    PARSING_RULE_NAME_SUFFIX,
     RELIABILITY_PARAMETER_NAMES,
-    RN_CONTENT_ENTITY_WITH_STARS,
-    RN_HEADER_BY_FILE_TYPE,
     SUPPORT_LEVEL_HEADER,
     XSOAR_CONTEXT_AND_OUTPUTS_URL,
     XSOAR_SUPPORT,
@@ -282,10 +275,6 @@ ERROR_CODE: Dict = {
         "code": "DO105",
         "related_field": "dockerimage",
     },
-    "docker_not_on_the_latest_tag": {
-        "code": "DO106",
-        "related_field": "dockerimage",
-    },
     "non_existing_docker": {
         "code": "DO107",
         "related_field": "dockerimage",
@@ -481,6 +470,10 @@ ERROR_CODE: Dict = {
         "code": "IM111",
         "related_field": "image",
     },
+    "svg_image_not_valid": {
+        "code": "IM112",
+        "related_field": "image",
+    },
     # IN - Integrations
     "wrong_display_name": {
         "code": "IN100",
@@ -571,10 +564,6 @@ ERROR_CODE: Dict = {
     "invalid_version_integration_name": {
         "code": "IN123",
         "related_field": "display",
-    },
-    "param_not_allowed_to_hide": {
-        "code": "IN124",
-        "related_field": "<parameter-name>.hidden",
     },
     "no_default_value_in_parameter": {
         "code": "IN125",
@@ -675,10 +664,6 @@ ERROR_CODE: Dict = {
     "empty_outputs_common_paths": {
         "code": "IN149",
         "related_field": "contextOutput",
-    },
-    "invalid_siem_integration_name": {
-        "code": "IN150",
-        "related_field": "display",
     },
     "empty_command_arguments": {
         "code": "IN151",
@@ -1096,59 +1081,55 @@ ERROR_CODE: Dict = {
         "related_field": "",
     },
     # RM - READMEs
-    "readme_error": {"code": "RM100", "related_field": ""},
-    "image_path_error": {"code": "RM101", "related_field": ""},
+    "readme_error": {"code": "RM100", "related_field": "readme"},
+    "image_path_error": {"code": "RM101", "related_field": "readme"},
     "readme_missing_output_context": {
         "code": "RM102",
-        "related_field": "",
+        "related_field": "readme",
     },
     "error_starting_mdx_server": {
         "code": "RM103",
-        "related_field": "",
+        "related_field": "readme",
     },
     "empty_readme_error": {
         "code": "RM104",
-        "related_field": "",
+        "related_field": "readme",
     },
     "readme_equal_description_error": {
         "code": "RM105",
-        "related_field": "",
+        "related_field": "readme",
     },
     "readme_contains_demisto_word": {
         "code": "RM106",
-        "related_field": "",
+        "related_field": "readme",
     },
     "template_sentence_in_readme": {
         "code": "RM107",
-        "related_field": "",
-    },
-    "invalid_readme_image_error": {
-        "code": "RM108",
-        "related_field": "",
+        "related_field": "readme",
     },
     "missing_readme_file": {
         "code": "RM109",
-        "related_field": "",
+        "related_field": "readme",
     },
     "missing_commands_from_readme": {
         "code": "RM110",
-        "related_field": "",
+        "related_field": "readme",
     },
     "error_uninstall_node": {
         "code": "RM111",
-        "related_field": "",
-    },
-    "invalid_readme_relative_url_error": {
-        "code": "RM112",
-        "related_field": "",
+        "related_field": "readme",
     },
     "copyright_section_in_readme_error": {
         "code": "RM113",
-        "related_field": "",
+        "related_field": "readme",
     },
     "image_does_not_exist": {
         "code": "RM114",
-        "related_field": "",
+        "related_field": "readme",
+    },
+    "readme_lint_errors": {
+        "code": "RM115",
+        "related_field": "readme",
     },
     # RN - Release Notes
     "missing_release_notes": {
@@ -1315,7 +1296,6 @@ ERROR_CODE: Dict = {
         "code": "ST112",
         "related_field": "",
     },
-    "invalid_yml_file": {"code": "ST113", "related_field": ""},
     # WD - Widgets
     "remove_field_from_widget": {
         "code": "WD100",
@@ -1513,6 +1493,7 @@ ALLOWED_IGNORE_ERRORS = (
         "IF113",
         "IF115",
         "IF116",
+        "IN101",
         "IN109",
         "IN110",
         "IN122",
@@ -1565,31 +1546,31 @@ ALLOWED_IGNORE_ERRORS = (
         "RN114",
         "RN115",
         "RN116",
-        "MR104",
-        "MR105",
         "MR108",
         "PR101",
         "LO107",
         "IN107",
         "DB100",
         "GR103",
+        "IN150",
+        "IN161",
     ]
 )
 
 
 def get_all_error_codes() -> List:
-    error_codes = []
-    for error in ERROR_CODE:
-        error_codes.append(ERROR_CODE[error].get("code"))
-
-    return error_codes
+    return [error.get("code") for error in ERROR_CODE.values()]
 
 
 def get_error_object(error_code: str) -> Dict:
-    for error in ERROR_CODE:
-        if error_code == ERROR_CODE[error].get("code"):
-            return ERROR_CODE[error]
-    return {}
+    return next(
+        (
+            error_value
+            for error_value in ERROR_CODE.values()
+            if error_code == error_value.get("code")
+        ),
+        {},
+    )
 
 
 @decorator.decorator
@@ -2116,15 +2097,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_siem_integration_name(display_name: str):
-        return (
-            f"The display name of this siem integration is incorrect , "
-            f'should end with "Event Collector".\n'
-            f"e.g: {display_name} Event Collector"
-        )
-
-    @staticmethod
-    @error_code_decorator
     def invalid_siem_marketplaces_entry():
         return (
             "The marketplaces field of this XSIAM integration is incorrect.\n"
@@ -2401,18 +2373,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(
-        docker_image_tag, docker_image_latest_tag, is_iron_bank=False
-    ) -> str:
-        return (
-            f"The docker image tag is not the latest numeric tag, please update it.\n"
-            f"The docker image tag in the yml file is: {docker_image_tag}\n"
-            f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub"} '
-            f"is: {docker_image_latest_tag}\n"
-        )
-
-    @staticmethod
-    @error_code_decorator
     def native_image_is_in_dockerimage_field(native_image: str) -> str:
         return f"invalid dockerimage {native_image}, the native image cannot be set to the dockerimage field in the yml."
 
@@ -2473,6 +2433,11 @@ class Errors:
     @error_code_decorator
     def image_too_large():
         return "Too large logo, please update the logo to be under 10kB"
+
+    @staticmethod
+    @error_code_decorator
+    def svg_image_not_valid(error_message):
+        return f"SVG image file is not valid: {error_message}"
 
     @staticmethod
     @error_code_decorator
@@ -2721,19 +2686,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_invalid_header_format(content_type: str, pack_name: str):
-        contents_with_stars = [
-            RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS
-        ]
         error = (
             f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n'
-            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+            "For more information, refer to the following documentation: "
+            "https://xsoar.pan.dev/docs/documentation/release-notes"
         )
-
-        if content_type in contents_with_stars:
-            error = f'Did not find content items headers under "{content_type}" - might be duo to missing "**" symbols in the header.\n{error}'
-        else:
-            error = f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
-        return error
+        return f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
 
     @staticmethod
     @error_code_decorator
@@ -3303,7 +3261,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_invalid_modules():
-        return f"Module field should include some of the following options: {', '.join(MODULES)}."
+        return f"Module field can include only label from the following options: {', '.join(MODULES)}."
 
     @staticmethod
     @error_code_decorator
@@ -3425,56 +3383,12 @@ class Errors:
         )
 
     @staticmethod
-    def pack_readme_image_relative_path_error(path):
-        return (
-            f"Detected the following image relative path: {path}.\nRelative paths are not supported in pack README files. See "
-            f"https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to "
-            f"add images to pack README files."
-        )
-
-    @staticmethod
-    def invalid_readme_image_relative_path_error(path):
-        return f"The following image relative path is not valid, please recheck it:\n{path}."
-
-    @staticmethod
-    def invalid_readme_image_absolute_path_error(path):
-        return f"The following image link seems to be broken, please repair it:\n{path}"
-
-    @staticmethod
-    def branch_name_in_readme_image_absolute_path_error(path):
-        return f"Branch name was found in the URL, please change it to the commit hash:\n{path}"
-
-    @staticmethod
-    def invalid_readme_insert_image_link_error(path):
-        return f"Image link was not found, either insert it or remove it:\n{path}"
-
-    @staticmethod
     @error_code_decorator
     def invalid_readme_relative_url_error(path):
         return (
             f"Relative urls are not supported within README. If this is not a relative url, please add "
             f"an https:// prefix:\n{path}. "
         )
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_readme_image_error(
-        path: str, error_type: str, response: Optional[Response] = None
-    ):
-        error = "Error in readme image: "
-        if response is not None:
-            error += f"got HTTP response code {response.status_code}"
-            error += f", reason = {response.reason}" if response.reason else " "
-
-        error_body = {
-            "pack_readme_relative_error": Errors.pack_readme_image_relative_path_error,
-            "general_readme_relative_error": Errors.invalid_readme_image_relative_path_error,
-            "general_readme_absolute_error": Errors.invalid_readme_image_absolute_path_error,
-            "branch_name_readme_absolute_error": Errors.branch_name_in_readme_image_absolute_path_error,
-            "insert_image_link_error": Errors.invalid_readme_insert_image_link_error,
-        }.get(error_type, lambda x: f"Unexpected error when testing {x}")(path)
-
-        return error + f"\n{error_body}"
 
     @staticmethod
     @error_code_decorator
@@ -4286,22 +4200,22 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_modeling_rule_suffix_name(file_path, **kwargs):
+    def invalid_modeling_rule_suffix_name(file_path, id_suffix, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
-            message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
+            message += f"\nThe rule id should end with '{id_suffix}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod
     @error_code_decorator
-    def invalid_parsing_rule_suffix_name(file_path, **kwargs):
+    def invalid_parsing_rule_suffix_name(file_path, id_suffix, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
-            message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
+            message += f"\nThe rule id should end with '{id_suffix}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{PARSING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod
@@ -4369,7 +4283,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def using_unknown_content(content_name: str, unknown_content_names: List[str]):
+    def using_unknown_content(content_name: str, unknown_content_names: Set[str]):
         return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
 
     @staticmethod
@@ -4377,6 +4291,7 @@ class Errors:
     def multiple_packs_with_same_display_name(
         content_name: str, pack_display_names: List[str]
     ):
+        pack_display_names = [f"'{name}'" for name in pack_display_names]
         return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "
 
     @staticmethod

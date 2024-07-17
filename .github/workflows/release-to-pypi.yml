@@ -1,0 +1,53 @@
+name: Deploy SDK to PyPi
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  deploy-to-pypi:
+    runs-on: ubuntu-latest
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'release-sdk-to-pypi') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch and checkout release tag ${{ github.event.pull_request.head.ref }}
+        run: |
+          git fetch --tags
+          git checkout tags/v${{ github.event.pull_request.head.ref }}
+
+      - uses: tj-actions/branch-names@v8
+        id: branch-name
+
+      - name: Check branch name is a release branch
+        run: |
+          pattern='(v[0-9]+\.[0-9]+\.[0-9]+|[0-9]+\.[0-9]+\.[0-9]+)'
+
+          branch=${{ steps.branch-name.outputs.current_branch }}
+          echo "current branch is $branch"
+          if [[ ! "$branch" =~ $pattern ]]; then
+            echo "Branch name $branch does not match the pattern. do not use release-sdk-to-pypi on non-release branch"
+            exit 1
+          else
+            echo "branch name $branch is valid, releasing the SDK into pypi"
+          fi
+
+      - name: Python ${{ matrix.python-version }} - Setup Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: '3.10'
+
+      - name: Poetry build
+        run: |
+          poetry build
+
+      - name: Publish SDK to PyPi
+        run: |
+          poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+
+      - name: Comment PR that SDK has been released
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            Demisto-SDK ${{ steps.branch-name.outputs.current_branch }} has been released successfully into pypi :smiley:

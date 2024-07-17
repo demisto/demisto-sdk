@@ -314,10 +314,10 @@ class GraphValidator(BaseValidator):
             raises_error=raises_error,
             include_optional=include_optional,
         ):
-            unknown_content_names = [
-                relationship.content_item_to.object_id or relationship.content_item_to.name  # type: ignore
+            unknown_content_names = {
+                f"'{relationship.content_item_to.object_id or relationship.content_item_to.name}'"  # type: ignore
                 for relationship in content_item.uses
-            ]
+            }
             error_message, error_code = Errors.using_unknown_content(
                 content_item.name, unknown_content_names
             )

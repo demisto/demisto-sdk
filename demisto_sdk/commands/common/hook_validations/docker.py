@@ -119,7 +119,7 @@ class DockerImageValidator(BaseValidator):
 
         return self.is_valid
 
-    @error_codes("DO100,DO106,DO101")
+    @error_codes("DO100,DO101")
     def is_docker_image_latest_tag(self):
         is_latest_tag = True
         if (
@@ -142,35 +142,6 @@ class DockerImageValidator(BaseValidator):
             # see parse_docker_image for the errors
             self.is_latest_tag, is_latest_tag = False, False
 
-        elif self.docker_image_latest_tag != self.docker_image_tag:
-            # If docker image tag is not the most updated one that exists in docker-hub
-            self.is_latest_tag = False
-            error_message, error_code = Errors.docker_not_on_the_latest_tag(
-                self.docker_image_tag,
-                self.docker_image_latest_tag,
-                self.is_iron_bank,
-            )
-            suggested_fix = Errors.suggest_docker_fix(
-                self.docker_image_name, self.file_path, self.is_iron_bank
-            )
-            if self.is_docker_older_than_three_days():
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    suggested_fix=suggested_fix,
-                ):
-                    return False
-
-            # if this error is ignored - do print it as a warning
-            self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                warning=True,
-                suggested_fix=suggested_fix,
-            )
-
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
             self.is_latest_tag = False
@@ -182,14 +153,14 @@ class DockerImageValidator(BaseValidator):
 
         return is_latest_tag
 
-    def is_docker_older_than_three_days(self):
+    def is_docker_older_than_three_months(self):
         """
         Return True if the docker is more than 3 days old.
 
         Returns:
             bool: True if the docker is more than 3 days old.
         """
-        three_days_ago: Optional[datetime] = parse("3 days ago")
+        three_days_ago: Optional[datetime] = parse("3 months ago")
         last_updated = self.get_docker_image_creation_date(
             self.docker_image_name, self.docker_image_tag
         )
@@ -295,7 +266,9 @@ class DockerImageValidator(BaseValidator):
         max_tag = only_numbered_tags[0]
 
         for num_tag in only_numbered_tags:
-            if parse_version(max_tag) < parse_version(num_tag):
+            # the version_tag.release returns a tuple from the version numbers '1.2.3.45' -> (1, 2, 3, 45)
+            # The last place is always a build number, therefore always increasing.
+            if parse_version(max_tag).release[-1] < parse_version(num_tag).release[-1]:
                 max_tag = num_tag
 
         return max_tag

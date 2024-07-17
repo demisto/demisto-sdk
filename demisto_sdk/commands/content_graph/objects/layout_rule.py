@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Set
 
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -20,3 +21,10 @@ class LayoutRule(ContentItemXSIAM, content_type=ContentType.LAYOUT_RULE):  # typ
                 }
             )
         )
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "rule_id" in _dict and path.suffix == ".json":
+            if "alerts_filter" in _dict:
+                return True
+        return False

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -8,19 +7,8 @@ from demisto_sdk.commands.pre_commit.hooks.docker import (
     DockerHook,
     docker_tag_to_runfiles,
 )
-from demisto_sdk.commands.pre_commit.tests.pre_commit_test import create_hook
-
-
-@dataclass
-class Obj:
-    path: Path = Path("somefile")
-    object_id: str = "id1"
-    is_powershell: bool = False
-    docker_image: str = "dockerimage"
-
-    @property
-    def docker_images(self):
-        return [self.docker_image]
+from demisto_sdk.commands.pre_commit.pre_commit_command import PreCommitContext
+from demisto_sdk.commands.pre_commit.tests.pre_commit_test import Obj, create_hook
 
 
 @pytest.fixture(autouse=True)
@@ -43,8 +31,8 @@ def test_no_files(repo):
     Then:
         There are no raw hooks added to the config
     """
-    raw_hook = create_hook({"args": []})
-    DockerHook(**raw_hook).prepare_hook([], True)
+    raw_hook = create_hook({"args": [], "id": "test"})
+    DockerHook(**raw_hook).prepare_hook()
 
     hooks = raw_hook["repo"]["hooks"]
     assert len(hooks) == 0
@@ -78,13 +66,18 @@ def test_moded_properties(mocker, mode, expected_text):
         "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
         return_value="devtestimg",
     )
-    raw_hook = create_hook({"args": []})
+    mocker.patch.object(
+        PreCommitContext, "files_to_run_with_objects", [(file_path, None)]
+    )
+    mocker.patch.object(PreCommitContext, "dry_run", True)
+
+    raw_hook = create_hook({"args": [], "language": "docker", "id": "test"}, mode=mode)
 
     raw_hook["hook"]["args"] = ["i am some argument"]
     raw_hook["hook"]["args:nightly"] = ["i am the nightly args"]
     raw_hook["hook"]["args:other"] = ["i am some other argument"]
 
-    DockerHook(**raw_hook, mode=mode).prepare_hook([(file_path, None)], True)
+    DockerHook(**raw_hook).prepare_hook()
 
     hook = raw_hook["repo"]["hooks"][0]
     assert hook["args"] == expected_text
@@ -113,9 +106,10 @@ def test_get_property():
                         "prop1": value1,
                         "prop1:nightly": nightly_val,
                         "prop1:othermode": "someval",
-                    }
+                        "id": "test",
+                    },
+                    mode=mode,
                 ),
-                mode=mode
             )._get_property(prop)
             == expected_value
         )
@@ -190,13 +184,148 @@ def test__set_properties():
                 "prop1:othermode": "someval",
                 "other_prop": "whatever",
                 "nonused:mode": "isignored",
-            }
+                "id": "test",
+            },
+            mode=mode,
         )
-        docker_hook = DockerHook(**hook, mode=mode)
+        docker_hook = DockerHook(**hook)
         assert docker_hook.base_hook == expected_value
 
     assert_get_prop_successful(
         "nightly",
-        {"prop1": nightly_val, "other_prop": "whatever"},
+        {"prop1": nightly_val, "other_prop": "whatever", "id": "test"},
     )
-    assert_get_prop_successful(None, {"prop1": value1, "other_prop": "whatever"})
+    assert_get_prop_successful(
+        None, {"prop1": value1, "other_prop": "whatever", "id": "test"}
+    )
+
+
+def test_isolate_container(mocker):
+    """
+    Given:
+        - files to run a hook
+
+    When:
+        - The hook is configured to run in isolation
+
+    Then:
+        - Make sure that a hook is created for each file
+    """
+    hook = create_hook({"run_isolated": True, "id": "test"})
+    file_path = Path("SomeFile.py")
+    file = (file_path, Obj(object_id="id1"))
+
+    file_path2 = Path("SomeFile2.py")
+    file2 = (file_path2, Obj(object_id="id2"))
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.docker_tag_to_runfiles",
+        return_value={"sometag": [file, file2]},
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        [(file_path, None), (file_path2, None)],
+    )
+    mocker.patch.object(PreCommitContext, "dry_run", True)
+    DockerHook(**hook).prepare_hook()
+    assert len(hook["repo"]["hooks"]) == 2
+    assert hook["repo"]["hooks"][0]["id"] == "test-sometag-id1"
+    assert hook["repo"]["hooks"][1]["id"] == "test-sometag-id2"
+
+
+def test_docker_pass_extra_args(mocker):
+    """
+    Given:
+        - files to run a hook
+
+    When:
+        - The hook is configured to provide extra docker args
+
+    Then:
+        - Make sure that a hook is created with the extra docker args
+    """
+    hook = create_hook({"pass_docker_extra_args": "--rm=false", "id": "test"})
+    file_path = Path("SomeFile.py")
+    file = (file_path, Obj(object_id="id1"))
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.docker_tag_to_runfiles",
+        return_value={"sometag": [file]},
+    )
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        [(file_path, None)],
+    )
+    mocker.patch.object(PreCommitContext, "dry_run", True)
+    DockerHook(**hook).prepare_hook()
+    assert "--rm=false" in hook["repo"]["hooks"][0]["entry"]
+
+
+def test_image_ref_argument(mocker):
+    """
+    Given:
+        - An object to run pre-commit on
+
+    When:
+        - Providing the `image_ref` flag to override the image to a custom image
+
+    Then:
+        - The hook will run on the provided image ref instead of the image of the YAML
+
+    """
+    file_path = Path("SomeFile.py")
+    files = [(file_path, Obj(object_id="id1"))]
+    hook = create_hook({"id": "test"}, image_ref="python3-custom-image")
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        files,
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    DockerHook(**hook).prepare_hook()
+    assert hook["repo"]["hooks"][0]["id"] == "test-python3-custom-image"
+
+
+def test_docker_image_argument(mocker):
+    """
+    Given:
+        - An object to run pre-commit on
+
+    When:
+        - Providing the `docker_image` to `native:candidate` and `image_ref` flag for a candidate to test a custom candidate
+
+    Then:
+        - The hook will run on the provided image ref instead of the image of the native image config file
+
+    """
+    file_path = Path("SomeFile.py")
+    files = [
+        (file_path, Obj(object_id="id1", docker_image="demisto/python3:3.10.13.89009"))
+    ]
+    hook = create_hook(
+        {"id": "test"},
+        image_ref="python3-candidate-image",
+        docker_image="native:candidate",
+    )
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        files,
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    DockerHook(**hook).prepare_hook()
+    assert hook["repo"]["hooks"][0]["id"] == "test-python3-candidate-image"

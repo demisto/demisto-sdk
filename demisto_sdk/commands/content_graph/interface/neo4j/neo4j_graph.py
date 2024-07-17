@@ -55,6 +55,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
     create_relationships,
+    delete_all_graph_relationships,
     get_sources_by_path,
     get_targets_by_path,
 )
@@ -108,12 +109,10 @@ class NoModelException(Exception):
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
-    # this is used to save cache of packs and integrations which queried
-    _import_handler = Neo4jImportHandler()
-
     def __init__(
         self,
     ) -> None:
+        self._import_handler = Neo4jImportHandler()
         self._id_to_obj: Dict[str, BaseNode] = {}
 
         if not self.is_alive():
@@ -344,7 +343,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result.element_id] for result in results]
 
     def create_indexes_and_constraints(self) -> None:
-        logger.info("Creating graph indexes and constraints...")
+        logger.debug("Creating graph indexes and constraints...")
         with self.driver.session() as session:
             session.execute_write(create_indexes)
             session.execute_write(create_constraints)
@@ -508,10 +507,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def find_uses_paths_with_invalid_marketplaces(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
-        """Searches and retrievs content items who use content items with invalid marketplaces.
+        """Searches and retrieves content items who use content items with invalid marketplaces.
 
         Args:
-            file_paths (List[str]): A list of content items' paths to check.
+            pack_ids (List[str]): A list of content items' pack_ids to check.
                 If not given, runs the query over all content items.
 
         Returns:
@@ -650,11 +649,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         output_path: Optional[Path] = None,
         override_commit: bool = True,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        clean_import_dir: bool = True,
     ) -> None:
-        self.clean_import_dir()
+        if clean_import_dir:
+            self.clean_import_dir()
         with self.driver.session() as session:
             session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata(override_commit)
+        self.dump_depends_on()
         if output_path:
             output_path = output_path / marketplace.value
             logger.info(f"Saving content graph in {output_path}.zip")
@@ -662,9 +664,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def clean_graph(self):
         with self.driver.session() as session:
+            session.execute_write(delete_all_graph_relationships)
             session.execute_write(delete_all_graph_nodes)
         self._id_to_obj = {}
-        super().clean_graph()
 
     def search(
         self,
@@ -704,7 +706,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_pack_dependencies(self):
         logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
-            session.execute_write(create_pack_dependencies)
+            self._depends_on = session.execute_write(create_pack_dependencies)
 
     def is_alive(self):
         return neo4j_service.is_alive()

@@ -1,5 +1,291 @@
 # Changelog
-## Unreleased
+## 1.31.3
+* Removed IN150 due to invalid_siem_integration_name from both old and new validate flows. [#4420](https://github.com/demisto/demisto-sdk/pull/4420)
+* Removed RM108 and RM112 from the old validate format. [#4408](https://github.com/demisto/demisto-sdk/pull/4408)
+* Added the **-tpb** option to the **upload** command. When provided, all the test playbooks for the given pack will be uploaded. [#4402](https://github.com/demisto/demisto-sdk/pull/4402)
+* Modified GR100, that checks whether a content item attempts to use other content items which are not supported in all of the marketplaces of the content item. [#4282](https://github.com/demisto/demisto-sdk/pull/4282)
+* Added the ability to use git.Repo object to initialize GitUtil. [#4387](https://github.com/demisto/demisto-sdk/pull/4387)
+* Added timestamp print in console. [#4412](https://github.com/demisto/demisto-sdk/pull/4412)
+* Add a pre-commit hook to validate file permission/mode changes in Packs directory. [#4389](https://github.com/demisto/demisto-sdk/pull/4389)
+* Fixed an issue where the relative path regex wasn't written correctly. This fix affect RM108 and RM114 in the new validate. [#4413](https://github.com/demisto/demisto-sdk/pull/4413)
+* Fixed an issue where new validate failed when attempting to parse renamed files. [#4411](https://github.com/demisto/demisto-sdk/pull/4411)
+* Fixed an issue where playbook saved due to a failed attempt to dump task object. [#4416](https://github.com/demisto/demisto-sdk/pull/4416)
+* Added support for the (internal) ***test-content*** command to work properly with multiple cloud servers. [#4321](https://github.com/demisto/demisto-sdk/pull/4321)
+* Moved CR102 to the new validate format. The validation checks 'search_window' existence and non-emptiness when 'execution_mode' == 'SCHEDULED'. [#4409](https://github.com/demisto/demisto-sdk/pull/4409)
+* Fixed an issue where wrong untracked files were collected during running of ***pre-commit*** and ***validate*** in contribution PR use-case. [#4410](https://github.com/demisto/demisto-sdk/pull/4410)
+
+## 1.31.2
+* Added the *marketplaces* field to the widget schema. [#4396](https://github.com/demisto/demisto-sdk/pull/4396)
+* Moved IF119 to the new validation format. Check whether a *selectValue* key in an *incidentField* of type *singleSelect* do not contain multiple or only empty options. [#4277](https://github.com/demisto/demisto-sdk/pull/4277)
+* Fixed an issue where IN121 in the new validate flow and IN148 in the old validate flow failed when running on content items with XSOAR on prem and XSOAR SAAS Marketplaces. [#4398](https://github.com/demisto/demisto-sdk/pull/4398)
+* Fixed an issue where ***upload*** command failed locally due to missing lock file. [#4397](https://github.com/demisto/demisto-sdk/pull/4397)
+* Fixed an issue where ***pre-commit*** and ***validate*** commands collected invalid untracked files when running on contribution PR. [#4394](https://github.com/demisto/demisto-sdk/pull/4394)
+
+## 1.31.1
+* Added an option to specify a marketplace for certain playbook fields: All input fields: *key*, *value*, *description*, *required*, *playbookInputKey*. The following task fields: *scriptId*, *scriptarguments*, *loop.scriptArguments*, *message*, *form*. The task id mappings (for example the first task can be converted by "0" -> "0:xsoar"). The *left* and *right* options of *condition*/*builtincondition* task fields (and their nested fields). [#4375](https://github.com/demisto/demisto-sdk/pull/4375)
+* Added the *-h* option as a short option for the *--help* flag in ***typer***-based commands. [#4350](https://github.com/demisto/demisto-sdk/pull/4350)
+* Modified the **error-code** command to show information using the new BaseValidator standard. When such isn't available, defaults to legacy-style inforamtion. [#4374](https://github.com/demisto/demisto-sdk/pull/4374)
+* Added support to **run-specific-validations** flag to the new validate format. [#4380](https://github.com/demisto/demisto-sdk/pull/4380)
+* Modified PA107 to fail when the key **marketplaces** is missing from the pack_metadata.json file. [#4379](https://github.com/demisto/demisto-sdk/pull/4379)
+* Added a *--fix* option to DA100 and fixed the incorrect check in DA101. [#4381](https://github.com/demisto/demisto-sdk/pull/4381)
+* Fixed an issue where **pre-commit** and **validate** commands ignored changed files when running on an external contribution PR. [#4351](https://github.com/demisto/demisto-sdk/pull/4351)
+* Fixed an issue where RN103 failed on newly added packs due to missing release notes. [#4383](https://github.com/demisto/demisto-sdk/pull/4383)
+* Fixed an issue where the *auto_update_docker_image* field was not updated correctly in the the content-graph. [#4287](https://github.com/demisto/demisto-sdk/pull/4287)
+* Moved PB125 to the new validation format. The validation checks that a playbook condition task doesn't has only a default nexttask. [#4365](https://github.com/demisto/demisto-sdk/pull/4365)
+* Moved PB114, PB119 to the new validation format. [#4348](https://github.com/demisto/demisto-sdk/pull/4348)
+* Added support for different validation modes (-i, -a, -g) was added to the new validate command. [#4301](https://github.com/demisto/demisto-sdk/pull/4301)
+* Moved PB115 to the new validation format. The validation checks if the 'quietmode' field of all tasks in playbook are not in default value. [#4366](https://github.com/demisto/demisto-sdk/pull/4366)
+* Moved PB116 to the new format. The validation checks that indicator playbooks stop on error. [#4364](https://github.com/demisto/demisto-sdk/pull/4364)
+* Moved PB109 to the new validate format. The validation checks that taskid field and id field under task field contains equal values. [#4358](https://github.com/demisto/demisto-sdk/pull/4358)
+* Moved DS108 to the new validation format. The validation ensures that there's a dot at the end of each description line. [#4339](https://github.com/demisto/demisto-sdk/pull/4339)
+* Moved PB122 to the new validation format. Validate whether branches of built-in conditional tasks are handled properly. [#4363](https://github.com/demisto/demisto-sdk/pull/4363)
+* Modified MR103 to a path validation. Validates that the file names are the same as its folder. [#4376](https://github.com/demisto/demisto-sdk/pull/4376)
+* Moved MR101 to the new validation format and combined it with MR102. Validates that the modeling rule yml file contains the schema and rules keys and that they are empty. [#4368](https://github.com/demisto/demisto-sdk/pull/4368)
+* Moved RM107 to the new validation format. The validation checks that all placeholders are removed and all sections are filled in the readme files. [#4373](https://github.com/demisto/demisto-sdk/pull/4373)
+* Modified IMAGES_BATCH variable to be configurable per environment. [#4382](https://github.com/demisto/demisto-sdk/pull/4382)
+* Moved PB106 to new validation format. The validation checks if the playbook uses a specific instance. [#4360](https://github.com/demisto/demisto-sdk/pull/4360)
+* Moved the RP102 to the new validation format. The validation checks wether the id field equals the details field in an indicator type [#4355](https://github.com/demisto/demisto-sdk/pull/4355)
+* Moved MR106 to the new validation format. The validation verifies the types in schema files of modeling rules. [#4372](https://github.com/demisto/demisto-sdk/pull/4372)
+* Moved RP103 to the new validation format. The validation make sure the indicator type id is valid. (can include letters, numbers whitespaces, ampersands and underscores.) [#4361](https://github.com/demisto/demisto-sdk/pull/4361)
+
+## 1.31.0
+* Fixed an issue where the logic for retrieving the latest Docker image was based on the entire tag (x.y.z.abcde) instead of just the last part of the image tag (_._._.abcde). Only the last part will now be used, per demisto/dockerfiles convention. [#4294](https://github.com/demisto/demisto-sdk/pull/4294)
+* demist-sdk **lint** command is deprecated and should be fully removed from the SDK on September 1st. Please use the **pre-commit** command instead. [#4336](https://github.com/demisto/demisto-sdk/pull/4336)
+* Removed support for IN124 - 'is param valid is hidden' validation from old-validate flow and prevent the validation from being ignored. The validation and the related information can be found in the new-validate flow. [#4317](https://github.com/demisto/demisto-sdk/pull/4317)
+* Added support for new XSIAM content items - Case Fields, Case layouts and Case Layout Rules. [#4240](https://github.com/demisto/demisto-sdk/pull/4240)
+* Added DS101 to the new validation format. Check if the beta disclaimer exists in the detailed description. [#4289](https://github.com/demisto/demisto-sdk/pull/4289)
+* Added the `--force` flag to the **generate-docs** command to force the README.md generation instead of use version control to update the doc. [#4303](https://github.com/demisto/demisto-sdk/pull/4303)
+* Added DS105 to the new validation format. "check if DESCRIPTION file contains contribution details" [#4347](https://github.com/demisto/demisto-sdk/pull/4347)
+* Added DS106 to the new validation format. "Check if the description file exist and the name is valid" [#4357](https://github.com/demisto/demisto-sdk/pull/4357)
+* updated the tenacity version to fix an installation error [#4352](https://github.com/demisto/demisto-sdk/pull/4352)
+* Fixed an issue where the **pre-commit** command would fail on simple repository due to a missing `docker_native_image_config.json` file. [#4314](https://github.com/demisto/demisto-sdk/pull/4314)
+* Fixed an issue in the **download** command where downloading with `force` and `run-format` flags did not merge YML fields. [#4328](https://github.com/demisto/demisto-sdk/pull/4328)
+* Fixed an issue in **generate-docs** where integration commands arguments had missing descriptions. [#4320](https://github.com/demisto/demisto-sdk/pull/4320)
+* Fixed an issue where validations searching for `demisto` in strings would find it in URLs (`/demisto/content`). [#4341](https://github.com/demisto/demisto-sdk/pull/4341)
+* Fixed an issue where **generate-docs** command couldn't find the sections within the integration README.md when updating documentation for modified commands. [#4303](https://github.com/demisto/demisto-sdk/pull/4303)
+* Fixed an issue where modified command names were treated as a new command. [#4303](https://github.com/demisto/demisto-sdk/pull/4303)
+* Fixed the **update-release-notes** command to support the right template for incident fields, incident types, layouts, generic objects, indicator types, and indicator fields. [#4304](https://github.com/demisto/demisto-sdk/pull/4304)
+* Fixed an issue in the **pre-commit** command where if the `DEMISTO_DEFAULT_BRANCH` environment variable was set to something other than "master", the command would fail. [#4325](https://github.com/demisto/demisto-sdk/pull/4325)
+* Fixed an issue where **validate-content-path** checked suffixes of test- or doc-files [#4337](https://github.com/demisto/demisto-sdk/pull/4337)
+* Fixed an issue where **format** did not work with private github repositories. [#4313](https://github.com/demisto/demisto-sdk/pull/4313)
+* Fixed an issue in the **format** command where using the `--deprecate` flag would not properly work on beta integrations. [#4332](https://github.com/demisto/demisto-sdk/pull/4332)
+* Modified the RM108 validation to follow the new validation format. [#4275](https://github.com/demisto/demisto-sdk/pull/4275)
+* Modeled base_playbook tasks into objects to ease on the use in various flows. [#4343](https://github.com/demisto/demisto-sdk/pull/4343)
+* Added a new flow that uploads a playbook execution report JSON to the artifacts bucket. [#4284](https://github.com/demisto/demisto-sdk/pull/4284)
+* Started adaption for relative paths enforcement in the upload flow - The flow will now attempt to create a json file including a dict objects of all the image paths appears in the markdown files in relative path formats. [#4338](https://github.com/demisto/demisto-sdk/pull/4338)
+* Updated the `artifacts_bucket` argument of the test-content command to be optional. [#4334](https://github.com/demisto/demisto-sdk/pull/4334)
+* Modified the test-pre-commit-command validate hook to run only BA100 validation. [#4336](https://github.com/demisto/demisto-sdk/pull/4336)
+* Converted the PB105 validation to the new format. The validation verifies the playbook doesn't contain deleteContext with all=Yes. [#4356](https://github.com/demisto/demisto-sdk/pull/4356)
+* Moved PB108 to the new validate format. The validate checks that the 'taskid' and the 'id' under the 'task' field are from UUID format. [#4359](https://github.com/demisto/demisto-sdk/pull/4359)
+* Modified the MR100 validation to follow the new validation format. [#4331](https://github.com/demisto/demisto-sdk/pull/4331)
+* Added PB126 to the new validation format. Ensure that conditional tasks have more than path which is not the default one [#4349](https://github.com/demisto/demisto-sdk/pull/4349)
+* Added the `removed_integration_parameter` validation to the new validate as `NoRemovedIntegrationParametersValidator`. [#4354](https://github.com/demisto/demisto-sdk/pull/4354)
+* Modified validations RN103 and RN104 to follow the new validations format. [#4275](https://github.com/demisto/demisto-sdk/pull/4275)
+* Added the PB103 to the new validation format. Validate whether there is an unconnected task. [#4340](https://github.com/demisto/demisto-sdk/pull/4340)
+
+## 1.30.0
+* Started a deprecation process of the **lint** command. It will be fully removed soon. Use **demisto-sdk pre-commit** instead. [#4286](https://github.com/demisto/demisto-sdk/pull/4286)
+* Added support for Python 3.11 [#2801](https://github.com/demisto/demisto-sdk/pull/2801)
+* Added validation for image files in doc_files folder. [#4249](https://github.com/demisto/demisto-sdk/pull/4249)
+* Refactored PB101 and PB123 valildations. [#4273](https://github.com/demisto/demisto-sdk/pull/4273)
+* Refactored validation IF116, Check whether a selectValue key in an incidentField of type multiSelect contains empty options. [#4278](https://github.com/demisto/demisto-sdk/pull/4278)
+* Added support for IT valildations in the new validation command. [#4264](https://github.com/demisto/demisto-sdk/pull/4264)
+* Converted the RM106 validation to the new format. The validation verifies that README doesn't contain the word 'demisto'. [#4295](https://github.com/demisto/demisto-sdk/pull/4295)
+* Converted the DS107 validation to the new format. The validation verifies the integration description doesn't contain the word 'demisto'. [#4296](https://github.com/demisto/demisto-sdk/pull/4296)
+* Added XSIAM prefix for the `defaultDataSource` integration README. [#4305](https://github.com/demisto/demisto-sdk/pull/4305)
+* When updating an existing graph, the list of updated packs is now sorted. [#4261](https://github.com/demisto/demisto-sdk/pull/4261)
+* Refactored all DA valildations. [#4264](https://github.com/demisto/demisto-sdk/pull/4264)
+* Updated validation BC106, Verify that the fromVersion key in an incident field has not been changed. [#4276](https://github.com/demisto/demisto-sdk/pull/4276)
+* Refactored validation DS100, check whether a description file exists for a beta integration. [#4274](https://github.com/demisto/demisto-sdk/pull/4274)
+* Removed support for the `defaultDataSource` field in the pack metadata for hybrid packs. [#4302](https://github.com/demisto/demisto-sdk/pull/4302)
+* Refactored validation IM111, Verify the integration image is within the allowed dimensions. [#4255](https://github.com/demisto/demisto-sdk/pull/4255)
+* Added the `defaultDataSource` field to the pack metadata. [#4139](https://github.com/demisto/demisto-sdk/pull/4139)
+* Change the default `fromversion` of XSIAM content items to 8.0.0 [#4243](https://github.com/demisto/demisto-sdk/pull/4243)
+* Fixed an issue where `.demisto-sdk-conf` did not take into consideration command arguments setting to `false`. [#4253](https://github.com/demisto/demisto-sdk/pull/4253)
+* Fixed an issue where **format** did not take `.demisto-sdk-conf` into consideration. [#4253](https://github.com/demisto/demisto-sdk/pull/4253)
+* More detailed error message with action items for validation RM108. [#4269](https://github.com/demisto/demisto-sdk/pull/4269)
+* Removed lint step from all sdk build steps. [#4286](https://github.com/demisto/demisto-sdk/pull/4286)
+
+## 1.29.3
+* Fixed an issue where **validate** ran from-version validation on `trigger` content items which do not have *from_version* field. [#4235](https://github.com/demisto/demisto-sdk/pull/4235)
+* Fixed an issue where requests to dockerhub failed on rate-limits when authenticating with username and password. [#4227](https://github.com/demisto/demisto-sdk/pull/4227)
+* Fixed an issue where reading **pre-commit** config templates would not handle cases with key=false and key:mode=true. [#4238](https://github.com/demisto/demisto-sdk/pull/4238)
+* Improved printing of file paths in the internal gitutil. [#4251](https://github.com/demisto/demisto-sdk/pull/4251)
+
+## 1.29.2
+* Added the `--docker_image` and `--image_ref` flags to **pre-commit* to override values from configuration files. [#4223](https://github.com/demisto/demisto-sdk/pull/4223)
+* Removed the `update-additional-dependencies` script and pre-commit hook. [#4225](https://github.com/demisto/demisto-sdk/pull/4225)
+
+## 1.29.1
+* Fix metadata (i.e. description) for XSOAR6 marketplace. [#4208](https://github.com/demisto/demisto-sdk/pull/4208)
+* Fixed an issue where `xsoar_on_prem` tag, was not removed as part of the parsing process. [#4218](https://github.com/demisto/demisto-sdk/pull/4218)
+* Added support to delete packs in **graph update** [#4205](https://github.com/demisto/demisto-sdk/pull/4205)
+* Added a default `.pre-commit-config_template.yaml` file that will be used by **pre-commit** command in case such does not exist in the target repository. [#4194](https://github.com/demisto/demisto-sdk/pull/4194)
+* Fixed an issue where the graph was not fully cleaned before import in **graph update** [#4215](https://github.com/demisto/demisto-sdk/pull/4215)
+* Fixed an issue where tests were not collected in VSCode after **setup-env** [#4219](https://github.com/demisto/demisto-sdk/pull/4219)
+* Fixed an issue where validate spammed logs when running. [#4203](https://github.com/demisto/demisto-sdk/pull/4203)
+* Added the **dump-api** command to dump the demisto-sdk API to a JSON file. [#4214](https://github.com/demisto/demisto-sdk/pull/4214)
+
+## 1.29.0
+* The new validate flow is enabled by default while the old one is disabled. If you want to change this behavior, use the **--run-old-validate** and **--skip-new-validate** flags or the **RUN_OLD_VALIDATE** and **SKIP_NEW_VALIDATE** environment variables. [#4114](https://github.com/demisto/demisto-sdk/pull/4114)
+* A new version of validate is available. For more information, refer to the readme. (a docs web page with further information about each validation will be added soon). Note that the old validate flow is beginning to go under a deprecation process and will eventually be removed. [#4114](https://github.com/demisto/demisto-sdk/pull/4114)
+* Added the `--template-path` argument to the **pre-commit** command. [#4184](https://github.com/demisto/demisto-sdk/pull/4184)
+* Added support for a new argument **parallel* for each hook to determine whether a hook run in parallel or not. [#4130](https://github.com/demisto/demisto-sdk/pull/4130)
+* Added handling for API Modules in **pre-commit**. [#4175](https://github.com/demisto/demisto-sdk/pull/4175)
+* Fixed an issue in **pre-commit** when using `--all-files` it crashed with memory error. [#4196](https://github.com/demisto/demisto-sdk/pull/4196)
+* Fixed an issue in **graph update** where all content packs were being parsed. [#4186](https://github.com/demisto/demisto-sdk/pull/4186)
+* Fixed an issue in **graph update** to create the graph from scratch if changed packs can not be determined. [#4186](https://github.com/demisto/demisto-sdk/pull/4186)
+* Fixed an issue in **graph update** where the graph failed to update in external repositories. [#4190](https://github.com/demisto/demisto-sdk/pull/4190)
+* Fixed an issue where **pre-commit** command showed wrong hooks failing. [#4130](https://github.com/demisto/demisto-sdk/pull/4130)
+* Fixes an issue where *Fetch Events* and *Fetch Assets* checkboxes appeared in Xsoar Machines. [#4160](https://github.com/demisto/demisto-sdk/pull/4160)
+* Added an implicit validation for the graph's *relationship* object by converting it to utilize Pydantic. [#4142](https://github.com/demisto/demisto-sdk/pull/4142)
+
+## 1.28.0
+* Added the `validate-xsoar-config` pre-commit hook, replacing `XC` validations. [#4150](https://github.com/demisto/demisto-sdk/pull/4150)
+* Add `--prev-version` argument to **pre-commit** command. [#4177](https://github.com/demisto/demisto-sdk/pull/4177)
+* Installing virtual environment in **setup-env** command will use `uv` and will fall back to `pip` to install requirements. [#4065](https://github.com/demisto/demisto-sdk/pull/4065)
+* Fixed an issue where **pre-commit** failed when called from an inner directory of a content repo. [#4182](https://github.com/demisto/demisto-sdk/pull/4182)
+* Fixed an issue where **generate-docs** command didn't work on newly-created integrations in existing Packs. [#4162](https://github.com/demisto/demisto-sdk/pull/4162)
+* Fixed an issue in **setup-env** where the pack was not uploaded correctly to XSOAR/XSIAM. [#4166](https://github.com/demisto/demisto-sdk/pull/4166)
+* Fixed an issue in **setup-env** where debug failed when running locally and not with docker. [#4166](https://github.com/demisto/demisto-sdk/pull/4166)
+* Added a script for generating validation docs [#4103](https://github.com/demisto/demisto-sdk/pull/4103)
+
+## 1.27.5
+* Added the `validate-content-path` **pre-commit** hook [#4084](https://github.com/demisto/demisto-sdk/pull/4084)
+* Fixed an issue where **setup-env** command failed when demistomock.py file does not exist locally. [#4094](https://github.com/demisto/demisto-sdk/pull/4094)
+* Fixed an issue where **prepare-content** command didn't add contribution section to description files when support level of pack-metadata was `developer` support. [#4151](https://github.com/demisto/demisto-sdk/pull/4151)
+* Fixes an issue in **graph** commands where empty pack folders were not being ignored. [#4154](https://github.com/demisto/demisto-sdk/pull/4154)
+* Update file paths in `test_content` from ec2-user to gcp-user. [#3828](https://github.com/demisto/demisto-sdk/pull/3828)
+
+## 1.27.4
+* Added support for `run_isolated` field to the **pre-commit** configuration file. [#3952](https://github.com/demisto/demisto-sdk/pull/3952)
+* Added support for `pass_docker_extra_args` field to the **pre-commit** configuration file. [#3952](https://github.com/demisto/demisto-sdk/pull/3952)
+* Added the `auto_update_docker_image` field to the content-graph for scripts and integrations. [#4133](https://github.com/demisto/demisto-sdk/pull/4133)
+* Fixed an issue in **validate** where several failed silently when the readme was malformed and the validation was ignored in the pack ignore errors. [#4129](https://github.com/demisto/demisto-sdk/pull/4129)
+
+## 1.27.3
+* Fixed an issue in **lint** and **pre-commit** with custom container registry [#4039](https://github.com/demisto/demisto-sdk/pull/4039)
+
+## 1.27.2
+* Updated the *DO106* error code in the **validate** command to not fail when a docker image is younger than 3 months instead of 3 days. [#4119](https://github.com/demisto/demisto-sdk/pull/4119)
+* Fixed an issue where **lint** crashed when collecting invalid logs. [#4072](https://github.com/demisto/demisto-sdk/pull/4072)
+* Adds auto-update to existing integration README and fixes README generation for existing Packs in contribution flow. [#3820](https://github.com/demisto/demisto-sdk/pull/3820)
+* Fixed an issue where new release notes were generated without marketplace specific tags when needed. [#4118](https://github.com/demisto/demisto-sdk/pull/4118)
+* Improved reviewer instructions on outdated pack submissions. [#4113](https://github.com/demisto/demisto-sdk/pull/4113)
+
+## 1.27.1
+* Updated the **validate** command (`PA114`) to verify the "currentVersion" field was raised in the pack_metadata when changing specific fields in the pack_metadata file. [#3972](https://github.com/demisto/demisto-sdk/pull/3972)
+* Added support for **update-release-notes** command to update release notes when changing specific fields in the pack_metadata file. [#3972](https://github.com/demisto/demisto-sdk/pull/3972)
+* Added support to load the correct file content when reading remote files according to its URL. [#4050](https://github.com/demisto/demisto-sdk/pull/4050)
+* Added to the **pre-commit** command a new hook `validate-deleted-files` which validates it is not possible to delete certain files. [#4050](https://github.com/demisto/demisto-sdk/pull/4050)
+* Added support for `hybrid` field in pack_metadata.json and the integration YAML. [#4087](https://github.com/demisto/demisto-sdk/pull/4087)
+* Improved error handling when reading files locally, remotely or from git. [#4081](https://github.com/demisto/demisto-sdk/pull/4081)
+* Added README to the **xsoar-lint** command [#4043](https://github.com/demisto/demisto-sdk/pull/4043)
+* Fixed an issue where SDK would crash when running on repoitories which do not have git configured. [#4088](https://github.com/demisto/demisto-sdk/pull/4088)
+* Fixed an issue where reading files on repositories which are not git repositories failed when the path provided was relative path. [#4088](https://github.com/demisto/demisto-sdk/pull/4088)
+* Fixed an issue where **lint** would crash without internet connectivity. [#4098](https://github.com/demisto/demisto-sdk/pull/4098)
+* Fixed an issue where SDK would crash when trying to read files which are not encoded with utf-8 directly from memory. [#4081](https://github.com/demisto/demisto-sdk/pull/4081)
+* Added description field to *Assets Modeling Rules* content item. [#4005](https://github.com/demisto/demisto-sdk/pull/4005)
+* Added the `validate-conf-json` pre-commit hook, checking for structure and linked content. [#4051](https://github.com/demisto/demisto-sdk/pull/4051)
+
+## 1.27.0
+* Added the **graph get-dependencies** command. [#3992](https://github.com/demisto/demisto-sdk/pull/3992)
+* Added a new command **xsoar-lint** and added it as a hook to **pre-commit**. [#3962](https://github.com/demisto/demisto-sdk/pull/3962)
+* Fixed an issue where **lint** created containers with the same name leading the command to crash. [#4019](https://github.com/demisto/demisto-sdk/pull/4019)
+* Fixed an issue where **secrets** command failed in case of detached head git state [#4041](https://github.com/demisto/demisto-sdk/pull/4041)
+* Fixed an issue where a few USES relationships between playbooks were not collected by the playbook parser. [#4032](https://github.com/demisto/demisto-sdk/pull/4032)
+* Fixed an issue where *validate* failed *pre-processing rule* id-set file validation. [#4042](https://github.com/demisto/demisto-sdk/pull/4042)
+* Fixed an issue where **validate** would not mention the reason when failing to connect to MDX. [#4048](https://github.com/demisto/demisto-sdk/pull/4048)
+* Fixed an issue where reading files from git could not be read when a commit did not exist locally. [#4052](https://github.com/demisto/demisto-sdk/pull/4052)
+* Fixed an issue where the **upload** command failed when using the `DEMISTO_SDK_OFFLINE_ENV` environment variable. [#4034](https://github.com/demisto/demisto-sdk/pull/4034)
+* Fixed an issue where **setup-env** crashed when trying to upload an instance of an integration into xsoar. [#4044](https://github.com/demisto/demisto-sdk/pull/4044)
+* Fixed an issue where the *init* command sometimes failed in the dialogue when enter was pressed and not explicitly written false. [#4058](https://github.com/demisto/demisto-sdk/pull/4058)
+* Fixed an issue where validate would state that it failed, even though it shouldn't, and then it would display an empty list of content items when running on specific validations. [#4006](https://github.com/demisto/demisto-sdk/pull/4006)
+* Fixed an issue where reading files from git failed when sending file paths as absolute. [#4060](https://github.com/demisto/demisto-sdk/pull/4060)
+* Code readability improvements in the **error-code** command. [#3322](https://github.com/demisto/demisto-sdk/pull/3322)
+* Update `update_content_graph` function to create the graph from scratch if `DEMISTO_SDK_GRAPH_FORCE_CREATE` env is set to true. [#4037](https://github.com/demisto/demisto-sdk/pull/4037)
+* Updated the path of the `neo4j` directory, generated & used by the `graph` commands, to project's directory (`$HOME/.demisto-sdk`). [#4010](https://github.com/demisto/demisto-sdk/pull/4010)
+* Added a `DEMISTO_SDK_NEO4J_VERSION` environment variable to set a custom Docker tag to pull for the `neo4j` image instead of the default one. [#4010](https://github.com/demisto/demisto-sdk/pull/4010)
+* Added `comment:marketplacev2` to the script schema. [#4077](https://github.com/demisto/demisto-sdk/pull/4077)
+* Sped up the way **validate** checks for deprecated content items. [#3578](https://github.com/demisto/demisto-sdk/pull/3578)
+* Sped up the way **validate** reads pack_metadata.json files. [#3578](https://github.com/demisto/demisto-sdk/pull/3578)
+* Added support for SVG image files in the **validate** command. [#4047](https://github.com/demisto/demisto-sdk/pull/4047)
+* Added support to set `deprecated` field for specific marketplaces in content items. [#4078](https://github.com/demisto/demisto-sdk/pull/4078)
+* Added a new step in the **validate-changelog** to comment the changelog description in PR comments. [#4040](https://github.com/demisto/demisto-sdk/pull/4040)
+* Added support to query the pull request number automatically when running **sdk-changelog --init** command. [#4040](https://github.com/demisto/demisto-sdk/pull/4040)
+* Modified the logging level of a few messages accross the SDK. [#3301](https://github.com/demisto/demisto-sdk/pull/3301)
+
+## 1.26.2
+* Added support to check the health status when initialing a client for xsoar-on-prem/xsoar-saas by default, will throw exception if server is not healthy. [#3985](https://github.com/demisto/demisto-sdk/pull/3985)
+* The `create-content-graph` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph create` command instead. [#4027](https://github.com/demisto/demisto-sdk/pull/4027)
+* The `update-content-graph` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph update` command instead. [#4027](https://github.com/demisto/demisto-sdk/pull/4027)
+* Fixed an issue where downloading custom content items with special YAML characters (like `:`) in their names would cause an error during UUID ID replacement when using the **download** command. [#3990](https://github.com/demisto/demisto-sdk/pull/3990)
+* Fixed an issue where **validate** failed on _data.json, when saved in a folder under `Lists` (rather than directly under `Lists`). [#3997](https://github.com/demisto/demisto-sdk/pull/3997)
+* Fixed an issue where the **pre-commit** pycln hook failed when the repo name contained hypens. [#3998](https://github.com/demisto/demisto-sdk/pull/3998)
+* Fixed an issue with **prepare-content** where partner event collectors which are supported by PANW add irrelevant suffixes to their display names. [#4021](https://github.com/demisto/demisto-sdk/pull/4021)
+* Fixed an issue in **setup-environment** command where `.env` files were not loaded correctly. [#4029](https://github.com/demisto/demisto-sdk/pull/4029)
+* Fixed an issue where **upload** failed when trying to upload a content item that was missing a *description* or *type* fields. [#4020](https://github.com/demisto/demisto-sdk/pull/4020)
+* Update the lock_integrations in **test-content** command to check if the current job still running (and not the pipeline). [#4016](https://github.com/demisto/demisto-sdk/pull/4016)
+* Fixed an issue where some unit-tests failed in github-actions CI. [#4023](https://github.com/demisto/demisto-sdk/pull/4023)
+
+## 1.26.1
+* Added retry mechanism for create docker container. As default, will attempt three times. [#3988](https://github.com/demisto/demisto-sdk/pull/3988)
+* Fixed the init command to successfully create event collector integration [#3995](https://github.com/demisto/demisto-sdk/pull/3995)
+* Fixes an issue where running **pre-commit** with the `run-hook` argument didn't execute the hook in some cases. [#3999](https://github.com/demisto/demisto-sdk/pull/3999)
+* Fixed an issue where fetching from a git remote would cause a failure in cases where fetching is not necessary. [#3878](https://github.com/demisto/demisto-sdk/pull/3878)
+* Added support for DOCKER_REGISTRY_URL environment variable. [#3975](https://github.com/demisto/demisto-sdk/pull/3975)
+
+## 1.26.0
+* Log file path (can be set by the `--log-file-path` flag or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable) can now only accept directory values. Setting it to a file path is no longer supported (file name is now constantly `demisto_sdk_debug.log` and cannot be changed). The path will now be automatically generated if it doesn't exist. [#3912](https://github.com/demisto/demisto-sdk/pull/3912)
+* Log files will now be saved by default to `$HOME/.demisto-sdk/logs`. This behavior can be overridden by the `--log-file-path` flag, or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable. [#3912](https://github.com/demisto/demisto-sdk/pull/3912)
+* Added warning when running on Windows (not supported) [#3950](https://github.com/demisto/demisto-sdk/pull/3950)
+* Fixed an issue where the ***validate*** command failed on pre-processing rules. [#3977](https://github.com/demisto/demisto-sdk/pull/3977)
+* Fixed an issue in **upload** where customFields with explicitly defined values (e.g., ${}) caused the command to fail. [#3970](https://github.com/demisto/demisto-sdk/pull/3970)
+* Fixed an issue where validate command failed with Lists folder containing a data json file. [#3971](https://github.com/demisto/demisto-sdk/pull/3971)
+* Added graph capabilities in **TestSuite**. [#3932](https://github.com/demisto/demisto-sdk/pull/3932)
+
+## 1.25.3
+* Fixed false positives in **validate** in `GR103` validations [#3873](https://github.com/demisto/demisto-sdk/pull/3873)
+* Add command `sdk-changelog` for creating a yml file to describe the development changes in the SDK [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+* Locking the `CHANGELOG.md` file for changes when the PR is not a release process [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+
+## 1.25.2
+* Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
+* Fixed an issue where **lint** command didn't work on detached heads.
+* Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.
+* Added support to check the version of the modeling rule against the demisto version of the XSIAM tenant when running the **modeling-rule test** command, and skip incompatible modeling rules.
+* Added support for JetBrains IDEs (PyCharm, IDEA, etc.) to the **setup-env** command, and added a new `--ide` flag.
+* Internal: Fixed an issue where `nativeimage` tags were not uploaded to buckets.
+* Fixed an issue where **lint -g** crashed when comparing changes against branches which are not `master`.
+* Fixed an issue in **prepare-content** command where the `incident to alert` process was not triggered when the playbook is set to only XSIAM.
+* Fixed an issue where **validate -g** command crashed when comparing changes against branches when in detached head state.
+* Add support for tests to run on specified marketplaces.
+
+## 1.25.1
+* Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.
+* Fixed an issue in **validate** where there is a specific value for marketplace in `isFetch` parameter.
+* Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
+* Added support for `excluding_support_level` property in **pre-commit** command to exclude specific support level from running hooks.
+* Added support for the `List` content-item to **prepare-content** and **split**.
+* **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
+* Fixed an issue in **generate-docs** where the description field was missing from an argument.
+* Changed the log level of some **pre-commit** `DockerHook` messages from `info` to `debug`.
+
+## 1.25.0
+* Added support to detect automatically the playground-id when running cli commands in xsoar-6.
+* Added support to return war-room entries when running cli commands.
+* Added support to automatically detect the correct file model by file path when reading files.
+* Fixed an issue where **run-playbook** command didn't work if the *url* argument was not provided.
+* Fixed an issue where **validate** command failed on valid complex layout rules and triggers.
+* Fixed an issue where *validate* command failed with release notes files for assets modeling rules folder.
+* Added support for `skip` property in **pre-commit** hooks.
+* **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
+* Added the *IN150* and *IN161* errors to *allowed ignore errors* list.
+* Added support for `env`, `copy_files` property in **pre-commit** docker hooks.
+* Added support to run specific hooks in **pre-commit**. Use with `demisto-sdk pre-commit <hook>`.
+* **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.
+* **Breaking change**: Removed the `--unit-test` argument in **pre-commit**. To skip unit tests, run with `--no-docker` or with `skip=pytest-in-docker`,
+* Fixed an issue where SDK commands were failing to execute correctly when supplied a path outside the Content repository.
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
@@ -10,7 +296,6 @@
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
 * Fixed an issue in **pre-commit** command where `False` properties were deleted.
-* Fixed an issue in **coverage-analyze** command where the `report_dir` does not exist.
 * Added support for json5 file, allowing to write files and read files from specific git branches, local file system, or from any remote api .
 * Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
 * Added support for *Assets Modeling Rule* new content item in all `demisto-sdk` commands.

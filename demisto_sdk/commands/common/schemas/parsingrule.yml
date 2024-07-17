@@ -17,7 +17,7 @@ mapping:
     required: true
     allowempty: true
     sequence:
-      - type: str
+    - type: str
   rules:
     type: str
   samples:
@@ -26,3 +26,33 @@ mapping:
     type: str
   deprecated:
     type: bool
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  deprecated:xsoar:
+    type: bool
+  deprecated:marketplacev2:
+    type: bool
+  deprecated:xpanse:
+    type: bool
+  deprecated:xsoar_saas:
+    type: bool
+  deprecated:xsoar_on_prem:
+    type: bool
+  id:xsoar:
+    type: str
+  id:marketplacev2:
+    type: str
+  id:xpanse:
+    type: str
+  id:xsoar_saas:
+    type: str
+  id:xsoar_on_prem:
+    type: str

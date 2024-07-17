@@ -18,6 +18,7 @@ class CliNameMatchIdValidator(BaseValidator[ContentTypes]):
     description = (
         "validate that the CLI name and the id match for incident and indicators field"
     )
+    rationale = "Consistency between the CLI name (used by the platform) and the id."
     error_message = (
         "The cli name {0} doesn't match the standards. the cliName should be: {1}."
     )
@@ -26,20 +27,18 @@ class CliNameMatchIdValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        results: List[ValidationResult] = []
-        for content_item in content_items:
-            if content_item.cli_name != content_item.object_id:
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            content_item.cli_name,
-                            content_item.object_id,
-                        ),
-                        content_object=content_item,
-                    )
-                )
-        return results
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    content_item.cli_name,
+                    content_item.object_id,
+                ),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if content_item.cli_name != content_item.object_id
+        ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         content_item.cli_name = content_item.object_id

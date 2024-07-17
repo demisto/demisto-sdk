@@ -6,20 +6,34 @@ from shutil import rmtree
 
 import pytest
 from packaging.version import parse
+from pytest import MonkeyPatch
 
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
     PACKS_DIR,
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects import PackMetaData
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import src_root
-from TestSuite.test_tools import ChangeCWD
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+)
+from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
+from demisto_sdk.commands.content_graph.objects.pack_content_items import (
+    PackContentItems,
+)
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_integration,
+)
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
@@ -126,8 +140,8 @@ def test_support_details_getter(url, support, email, expected_url, expected_emai
 @pytest.mark.parametrize(
     "support, author, expected_author, expected_log",
     [
-        (XSOAR_SUPPORT, XSOAR_AUTHOR, XSOAR_AUTHOR, ""),
-        ("someone", "someone", "someone", ""),
+        (XSOAR_SUPPORT, XSOAR_AUTHOR, XSOAR_AUTHOR, None),
+        ("someone", "someone", "someone", None),
         (
             XSOAR_SUPPORT,
             "someone",
@@ -136,13 +150,20 @@ def test_support_details_getter(url, support, email, expected_url, expected_emai
         ),
     ],
 )
-def test_author_getter(caplog, support, author, expected_author, expected_log):
+def test_author_getter(mocker, support, author, expected_author, expected_log):
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
     obj = PackMetaData(PACK_METADATA)
     obj.support = support
     obj.author = author
 
     assert obj.author == expected_author
-    assert expected_log in caplog.text
+
+    if expected_log:
+        assert str_in_call_args_list(
+            logger_warning.call_args_list,
+            expected_log,
+        )
 
 
 @pytest.mark.parametrize(
@@ -290,7 +311,7 @@ def test_load_user_metadata_advanced(repo):
     assert pack_1_metadata.tags == ["tag1", "Use Case"]
 
 
-def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
+def test_load_user_metadata_no_metadata_file(repo, mocker, monkeypatch):
     """
     When:
         - Dumping a pack with no pack_metadata file.
@@ -300,11 +321,8 @@ def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
 
     Then:
         - Verify that exceptions are written to the logger.
-
     """
-    import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
-
-    metadata_class.logger = logger
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack_1 = repo.setup_one_pack("Pack1")
@@ -324,10 +342,13 @@ def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
     pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
-    assert "Pack Number 1 pack is missing pack_metadata.json file." in caplog.text
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "Pack Number 1 pack is missing pack_metadata.json file.",
+    )
 
 
-def test_load_user_metadata_invalid_price(repo, monkeypatch, caplog):
+def test_load_user_metadata_invalid_price(repo, mocker, monkeypatch):
     """
     When:
         - Dumping a pack with invalid price in pack_metadata file.
@@ -339,9 +360,7 @@ def test_load_user_metadata_invalid_price(repo, monkeypatch, caplog):
         - Verify that exceptions are written to the logger.
 
     """
-    import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
-
-    metadata_class.logger = logger
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack_1 = repo.setup_one_pack("Pack1")
@@ -360,12 +379,13 @@ def test_load_user_metadata_invalid_price(repo, monkeypatch, caplog):
     pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
-    assert (
-        "Pack Number 1 pack price is not valid. The price was set to 0." in caplog.text
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "Pack Number 1 pack price is not valid. The price was set to 0.",
     )
 
 
-def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
+def test_load_user_metadata_bad_pack_metadata_file(repo, mocker, monkeypatch):
     """
     When:
         - Dumping a pack with invalid pack_metadata file.
@@ -377,9 +397,7 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
         - Verify that exceptions are written to the logger.
 
     """
-    import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
-
-    metadata_class.logger = logger
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack_1 = repo.setup_one_pack("Pack1")
@@ -389,4 +407,414 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
     pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
-    assert "Failed loading Pack Number 1 user metadata." in caplog.text
+    assert str_in_call_args_list(
+        logger_error.call_args_list, "Failed loading Pack Number 1 user metadata."
+    )
+
+
+@pytest.mark.parametrize("is_external, expected", [(True, ""), (False, "123")])
+def test__enhance_pack_properties__internal_and_external(
+    mocker, is_external, expected, monkeypatch: MonkeyPatch
+):
+    """Tests the _enhance_pack_properties method for internal and external packs.
+    Given:
+        - Pack object.
+    When:
+        - Calling the _enhance_pack_properties method.
+    Then:
+        - Verify that the version_info is set correctly.
+        Scenario 1: When the pack is external than the version_info should be empty.
+        Scenario 2: When the pack is internal than the version_info should be set to the CI_PIPELINE_ID env variable.
+    """
+    my_instance = PackMetadata(
+        name="test",
+        display_name="",
+        description="",
+        created="",
+        legacy=False,
+        support="",
+        url="",
+        email="",
+        eulaLink="",
+        price=0,
+        hidden=False,
+        commit="",
+        downloads=0,
+        keywords=[],
+        searchRank=0,
+        excludedDependencies=[],
+        videos=[],
+        modules=[],
+    )  # type: ignore
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.objects.pack_metadata.is_external_repository",
+        return_value=is_external,
+    )
+    monkeypatch.setenv("CI_PIPELINE_ID", "123")
+    my_instance._enhance_pack_properties(
+        marketplace=MarketplaceVersions.XSOAR,
+        pack_id="9",
+        content_items=PackContentItems(),  # type: ignore
+    )
+    assert my_instance.version_info == expected
+
+
+@pytest.mark.parametrize(
+    "marketplace_version, current_fromversion, new_fromversion, current_toversion, new_toversion, expected_toversion",
+    [
+        (MarketplaceVersions.XSOAR, "5.5.0", "8.0.0", "7.9.9", "8.2.0", "7.9.9"),
+        (MarketplaceVersions.XSOAR, "5.5.0", "6.5.0", "7.2.0", "7.9.9", "7.9.9"),
+        (
+            MarketplaceVersions.XSOAR,
+            "5.5.0",
+            "6.5.0",
+            "7.9.9",
+            DEFAULT_CONTENT_ITEM_TO_VERSION,
+            "",
+        ),
+        (MarketplaceVersions.XSOAR_SAAS, "5.5.0", "8.0.0", "6.2.0", "8.5.0", "8.5.0"),
+    ],
+)
+def test_replace_item_if_has_higher_toversion(
+    marketplace_version,
+    current_fromversion,
+    new_fromversion,
+    current_toversion,
+    new_toversion,
+    expected_toversion,
+):
+    """Tests the _replace_item_if_has_higher_toversion
+    updates to the highest version supported by the MarketplaceVersions.XSOAR
+    ARGS:
+        marketplace_version: MarketplaceVersions the flow is running on.
+        current_fromversion: current fromversion of content item in the pack metadata
+        new_fromversion: the fromversion of content item in the pack metadata
+        current_toversion: current toversion of content item in the pack metadata
+        new_toversion: a new toversion of content item
+        expected_toversion
+    Given:
+        - a Pack Metadata and an integration uploading to MarketplaceVersions.XSOAR
+    When:
+        - Calling the _replace_item_if_has_higher_toversion method.
+    Then:
+        - Verify that the content_item_metadata toversion is set correctly.
+        Scenario 1: On MarketplaceVersions.XSOAR should not update the metadata to a version higher than 7.9.9
+        Scenario 2: On MarketplaceVersions.XSOAR should update to higher version while still lower than the max 7.9.9
+        Scenario 3: On all marketplaces will update the metdata of content item toversion to empty if new toversion is DEFAULT_CONTENT_ITEM_TO_VERSION
+        Scenario 4: On MarketplaceVersions.XSOAR_SAAS should update metadata to the highest version.
+    """
+    content_item_metadata = {
+        "fromversion": current_fromversion,
+        "toversion": current_toversion,
+    }
+    marketplace = marketplace_version
+    my_instance = PackMetadata(
+        name="test",
+        display_name="",
+        description="",
+        created="",
+        legacy=False,
+        support="",
+        url="",
+        email="",
+        eulaLink="",
+        price=0,
+        hidden=False,
+        commit="",
+        downloads=0,
+        keywords=[],
+        searchRank=0,
+        excludedDependencies=[],
+        videos=[],
+        modules=[],
+    )  # type: ignore
+    integration = mock_integration()
+    integration.toversion = new_toversion
+    integration.fromversion = new_fromversion
+    my_instance._replace_item_if_has_higher_toversion(
+        integration, content_item_metadata, integration.summary(), marketplace
+    )
+    assert content_item_metadata["toversion"] == expected_toversion
+
+
+def mock_integration_for_data_source(
+    name,
+    display_name,
+    is_fetch=False,
+    is_fetch_events=False,
+    is_remote_sync_in=False,
+    is_fetch_samples=False,
+    is_feed=False,
+    deprecated=False,
+    marketplaces=MarketplaceVersions.MarketplaceV2,
+    path=Path("Packs"),
+):
+    if not isinstance(marketplaces, list):
+        marketplaces = [marketplaces]
+    return Integration(
+        id=name,
+        content_type=ContentType.INTEGRATION,
+        node_id=f"{ContentType.INTEGRATION}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        toversion="99.99.99",
+        display_name=display_name,
+        name=name,
+        marketplaces=marketplaces,
+        deprecated=deprecated,
+        type="python3",
+        docker_image=DockerImage("demisto/python3:3.10.11.54799"),
+        category="blabla",
+        commands=[Command(name="test-command", description="")],
+        is_fetch=is_fetch,
+        is_fetch_events=is_fetch_events,
+        is_remote_sync_in=is_remote_sync_in,
+        is_fetch_samples=is_fetch_samples,
+        is_feed=is_feed,
+    )
+
+
+@pytest.mark.parametrize(
+    "support_level, include_name, expected_output",
+    (
+        (
+            None,
+            False,
+            [
+                "Partner Contribution Same Name",
+                "partner_contribution_different_name",
+                "regular_integration_different_name",
+                "Samples Fetch",
+                "Some Mirroring",
+            ],
+        ),
+        (
+            "partner",
+            False,
+            [
+                "Partner Contribution Same Name",
+                "partner_contribution_different_name",
+                "regular_integration_different_name",
+                "Samples Fetch",
+                "Some Mirroring",
+            ],
+        ),
+        (
+            None,
+            True,
+            [
+                {
+                    "id": "Partner Contribution Same Name",
+                    "name": "Partner Contribution Same Name (Partner Contribution)",
+                },
+                {
+                    "id": "partner_contribution_different_name",
+                    "name": "Partner Contribution Different Name (Partner Contribution)",
+                },
+                {
+                    "id": "regular_integration_different_name",
+                    "name": "Regular Integration Different Name",
+                },
+                {"id": "Samples Fetch", "name": "Samples Fetch"},
+                {"id": "Some Mirroring", "name": "Some Mirroring"},
+            ],
+        ),
+        (
+            "partner",
+            True,
+            [
+                {
+                    "id": "Partner Contribution Same Name",
+                    "name": "Partner Contribution Same Name",
+                },
+                {
+                    "id": "partner_contribution_different_name",
+                    "name": "Partner Contribution Different Name",
+                },
+                {
+                    "id": "regular_integration_different_name",
+                    "name": "Regular Integration Different Name",
+                },
+                {"id": "Samples Fetch", "name": "Samples Fetch"},
+                {"id": "Some Mirroring", "name": "Some Mirroring"},
+            ],
+        ),
+    ),
+)
+def test_get_valid_data_source_integrations(
+    support_level, include_name, expected_output
+):
+    """
+    Given:
+        - Support level and whether to include the name
+
+    When:
+        - Getting valid data source integrations for a pack
+
+    Then:
+        - The correct data source integration return, with the expected name
+    """
+    integrations = [
+        mock_integration_for_data_source(
+            "Partner Contribution Same Name",
+            "Partner Contribution Same Name (Partner Contribution)",
+            is_fetch=True,
+        ),
+        mock_integration_for_data_source(
+            "partner_contribution_different_name",
+            "Partner Contribution Different Name (Partner Contribution)",
+            is_fetch_events=True,
+        ),
+        mock_integration_for_data_source(
+            "regular_integration_different_name",
+            "Regular Integration Different Name",
+            is_fetch=True,
+        ),
+        mock_integration_for_data_source(
+            "Not Fetching Integration", "Not Fetching Integration", is_fetch=False
+        ),
+        mock_integration_for_data_source(
+            "Deprecated Integration",
+            "Deprecated Integration",
+            is_fetch=True,
+            deprecated=True,
+        ),
+        mock_integration_for_data_source(
+            "Not XSIAM Integration",
+            "Not XSIAM Integration",
+            is_fetch=True,
+            marketplaces=MarketplaceVersions.XSOAR_ON_PREM,
+        ),
+        mock_integration_for_data_source(
+            "Some Feed", "Some Feed", is_fetch=True, is_feed=True
+        ),
+        mock_integration_for_data_source(
+            "Samples Fetch", "Samples Fetch", is_fetch_samples=True
+        ),
+        mock_integration_for_data_source(
+            "Some Mirroring", "Some Mirroring", is_remote_sync_in=True
+        ),
+    ]
+
+    content_items = PackContentItems()
+    content_items.integration.extend(integrations)
+
+    result = PackMetadata.get_valid_data_source_integrations(
+        content_items, support_level, include_name
+    )
+    assert result == expected_output
+
+
+@pytest.mark.parametrize(
+    "support, given_default_data_source_id, integrations, expected_default_data_source",
+    (
+        (
+            "partner",
+            "partner_support",
+            [
+                mock_integration_for_data_source(
+                    "partner_support",
+                    "Partner Support (Partner Contribution)",
+                    is_fetch=True,
+                ),
+                mock_integration_for_data_source(
+                    "other_partner_support",
+                    "Other Partner Support (Partner Contribution)",
+                    is_fetch=True,
+                ),
+            ],
+            {"id": "partner_support", "name": "Partner Support"},
+        ),
+        (
+            "xsoar",
+            "xsoar_support",
+            [
+                mock_integration_for_data_source(
+                    "xsoar_support", "XSOAR Support", is_fetch=True
+                ),
+                mock_integration_for_data_source(
+                    "Other XSOAR Support", "Other XSOAR Support", is_fetch=True
+                ),
+            ],
+            {"id": "xsoar_support", "name": "XSOAR Support"},
+        ),
+        (
+            "xsoar",
+            None,
+            [
+                mock_integration_for_data_source(
+                    "One Fetching Integration",
+                    "One Fetching Integration",
+                    is_fetch=True,
+                ),
+                mock_integration_for_data_source(
+                    "Not Fetching Integration",
+                    "Not Fetching Integration",
+                    is_fetch=False,
+                ),
+                mock_integration_for_data_source(
+                    "Deprecated Integration",
+                    "Deprecated Integration",
+                    is_fetch=True,
+                    deprecated=True,
+                ),
+                mock_integration_for_data_source(
+                    "Feed Integration", "Feed Integration", is_fetch=True, is_feed=True
+                ),
+            ],
+            {"id": "One Fetching Integration", "name": "One Fetching Integration"},
+        ),
+    ),
+)
+def test_set_default_data_source(
+    support, given_default_data_source_id, integrations, expected_default_data_source
+):
+    """
+    Given:
+        - Support level, default data source name and id, pack integrations names and ids
+
+    When:
+        - Setting a default data source to a pack
+
+    Then:
+        - The correct data source integration is set
+    """
+    content_items, my_instance = mock_pack_metadata_for_data_source(
+        support=support,
+        default_data_source=given_default_data_source_id,
+        integrations=integrations,
+    )
+
+    my_instance._set_default_data_source(content_items)
+    assert my_instance.default_data_source_id == expected_default_data_source.get("id")
+    assert my_instance.default_data_source_name == expected_default_data_source.get(
+        "name"
+    )
+
+
+def mock_pack_metadata_for_data_source(support, default_data_source, integrations):
+    my_instance = PackMetadata(
+        name="test",
+        display_name="",
+        description="",
+        created="",
+        legacy=False,
+        support=support,
+        url="",
+        email="",
+        eulaLink="",
+        price=0,
+        hidden=False,
+        commit="",
+        downloads=0,
+        keywords=[],
+        searchRank=0,
+        excludedDependencies=[],
+        videos=[],
+        modules=[],
+        default_data_source_id=default_data_source,
+    )  # type: ignore
+
+    content_items = PackContentItems()
+    content_items.integration.extend(integrations)
+    return content_items, my_instance

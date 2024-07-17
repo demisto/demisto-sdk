@@ -14,6 +14,7 @@ from tabulate import tabulate
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     INTEGRATIONS_DIR,
+    LISTS_DIR,
     SCRIPTS_DIR,
     FileType,
     MarketplaceVersions,
@@ -25,6 +26,9 @@ from demisto_sdk.commands.common.tools import (
     get_demisto_version,
     get_file,
     string_to_bool,
+)
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -67,6 +71,7 @@ class Uploader:
         override_existing: bool = False,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         zip: bool = False,
+        tpb: bool = False,
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
     ):
@@ -95,6 +100,7 @@ class Uploader:
         self.override_existing = override_existing
         self.marketplace = marketplace
         self.zip = zip  # -z flag
+        self.tpb = tpb  # -tpb flag
         self.destination_zip_dir = destination_zip_dir
 
     def _upload_zipped(self, path: Path) -> bool:
@@ -283,12 +289,13 @@ class Uploader:
                 marketplace=self.marketplace,
                 target_demisto_version=Version(str(self.demisto_version)),
                 zip=self.zip,  # only used for Packs
+                tpb=self.tpb,  # only used for Packs
                 destination_zip_dir=self.destination_zip_dir,  # only used for Packs
             )
 
             # upon reaching this line, the upload is surely successful
             uploaded_successfully = parse_uploaded_successfully(
-                content_item=content_item, zip=self.zip
+                content_item=content_item, zip=self.zip, tpb=self.tpb
             )
             self._successfully_uploaded_content_items.extend(uploaded_successfully)
             for item_uploaded_successfully in uploaded_successfully:
@@ -358,6 +365,8 @@ class Uploader:
         if path.name in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
             # These folders have another level of content
             to_upload = filter(lambda p: p.is_dir(), path.iterdir())
+        elif path.name == LISTS_DIR:
+            to_upload = path.iterdir()
         else:
             to_upload = itertools.chain(path.glob("*.yml"), path.glob("*.json"))
 
@@ -674,14 +683,16 @@ def is_uploadable_dir(path: Path) -> bool:
 
 
 def parse_uploaded_successfully(
-    content_item: Union[Pack, ContentItem], zip: bool
+    content_item: Union[Pack, ContentItem], zip: bool, tpb: bool
 ) -> Iterable[Union[Pack, ContentItem]]:
     # packs uploaded unzipped are uploaded item by item, we have to extract the item details here
     if isinstance(content_item, Pack) and not zip:
         return iter(
             filter(
-                lambda content_item: content_item.content_type
-                not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
+                lambda content_item: (
+                    content_item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
+                    or (tpb and content_item.content_type == ContentType.TEST_PLAYBOOK)
+                ),
                 content_item.content_items,
             )
         )

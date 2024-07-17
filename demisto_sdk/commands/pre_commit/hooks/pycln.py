@@ -1,14 +1,13 @@
-from pathlib import Path
-from typing import Sequence
-
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.pre_commit.hooks.hook import (
+    GeneratedHooks,
     Hook,
     safe_update_hook_args,
 )
 
 
 class PyclnHook(Hook):
-    def prepare_hook(self, python_path: Sequence[Path], **kwargs):
+    def prepare_hook(self) -> GeneratedHooks:
         """
         Prepares the Pycln hook.
         Adds the "--skip-imports" argument with all the imports that should be skipped and not removed.
@@ -17,7 +16,15 @@ class PyclnHook(Hook):
         Returns:
             None
         """
-        skip_imports = f"--skip-imports={','.join(path.name for path in python_path)},demisto,CommonServerUserPython"
+        paths_to_skip = tuple(
+            path.name
+            for path in PYTHONPATH
+            if path.absolute() != CONTENT_PATH.absolute()
+        )
+        builtins_to_skip = ("demisto", "CommonServerUserPython")
+
+        skip_imports = f"--skip-imports={','.join(paths_to_skip + builtins_to_skip)}"
         safe_update_hook_args(self.base_hook, skip_imports)
 
-        self.hooks.append(self.base_hook)
+        self.hooks.insert(self.hook_index, self.base_hook)
+        return GeneratedHooks(hook_ids=[self.base_hook["id"]], parallel=self.parallel)

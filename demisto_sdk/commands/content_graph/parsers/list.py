@@ -27,3 +27,7 @@ class ListParser(JSONContentItemParser, content_type=ContentType.LIST):
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @property
+    def is_unified(self) -> bool:
+        return bool((data := self.json_data.get("data")) and data != "-")

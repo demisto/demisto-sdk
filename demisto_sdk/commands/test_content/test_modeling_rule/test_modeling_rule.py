@@ -12,6 +12,7 @@ import requests
 import typer
 from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
 from junitparser.junitparser import Result
+from packaging.version import Version
 from tabulate import tabulate
 from tenacity import (
     Retrying,
@@ -398,7 +399,7 @@ def verify_results_against_test_data(
             else:
                 err = f"No mapping for key {expected_key} - skipping checking match"
                 result_test_case_system_out.append(err)
-                result_test_case_results.append(Skipped(err))
+                result_test_case_results.append(Skipped(err))  # type:ignore[arg-type]
                 logger.debug(f"[cyan]{err}[/cyan]", extra={"markup": True})
     else:
         err = f"No matching expected_values found for test_data_event_id={td_event_id} in test_data {test_data}"
@@ -505,14 +506,17 @@ def validate_schema_aligned_with_test_data(
     }
 
     errors_occurred = False
-    results = []
+    results: List[Result] = []
 
     for dataset, event_logs in schema_dataset_to_events.items():
         all_schema_dataset_mappings = schema[dataset]
         test_data_mappings: Dict = {}
         error_logs = set()
         for event_log in event_logs:
-            for event_key, event_val in event_log.event_data.items():
+            for (
+                event_key,
+                event_val,
+            ) in event_log.event_data.items():  # type:ignore[union-attr]
                 if (
                     event_val is None
                 ):  # if event_val is None, warn and continue looping.
@@ -549,7 +553,7 @@ def validate_schema_aligned_with_test_data(
                             f"that have different types for dataset {dataset}"
                         )
                         error_logs.add(err)
-                        results.append(Error(err))
+                        results.append(Error(err))  # type:ignore[arg-type]
                         errors_occurred = True
                         continue
                     else:
@@ -561,7 +565,7 @@ def validate_schema_aligned_with_test_data(
                             f"event ID {event_log.test_data_event_id} between testdata and schema --- "
                             f'TestData Mapping "{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"'
                         )
-                        results.append(Error(err))
+                        results.append(Error(err))  # type:ignore[arg-type]
                         error_logs.add(
                             f"[red][bold]the field {event_key} has mismatch on type or is_array in "
                             f"event ID {event_log.test_data_event_id} between testdata and schema[/bold][red] --- "
@@ -945,14 +949,12 @@ def validate_modeling_rule(
     modeling_rule_directory: Path,
     xsiam_url: str,
     retrying_caller: Retrying,
-    api_key: str,
-    auth_id: str,
-    xsiam_token: str,
-    collector_token: str,
     push: bool,
     interactive: bool,
     ctx: typer.Context,
     delete_existing_dataset: bool,
+    xsiam_client: XsiamApiClient,
+    tenant_demisto_version: Version,
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Validate a modeling rule.
 
@@ -960,14 +962,12 @@ def validate_modeling_rule(
         modeling_rule_directory (Path): Path to the modeling rule directory.
         retrying_caller (tenacity.Retrying): The retrying caller object.
         xsiam_url (str): URL of the xsiam tenant.
-        api_key (str): xsiam API key.
-        auth_id (str): xsiam auth ID.
-        xsiam_token (str): xsiam token.
-        collector_token: collector token.
         push (bool): Whether to push test event data to the tenant.
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
         delete_existing_dataset (bool): Whether to delete the existing dataset in the tenant.
+        xsiam_client (XsiamApiClient): The XSIAM client used to do API calls to the tenant.
+        tenant_demisto_version (Version): The demisto version of the XSIAM tenant.
     """
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     modeling_rule_file_name = Path(modeling_rule.path).name
@@ -982,7 +982,9 @@ def validate_modeling_rule(
     modeling_rule_test_suite.add_property(
         "file_name", modeling_rule_file_name
     )  # used in the convert to jira issue.
-    modeling_rule_test_suite.filepath = get_relative_path_to_content(modeling_rule.path)
+    modeling_rule_test_suite.filepath = get_relative_path_to_content(
+        modeling_rule.path
+    )  # type:ignore[arg-type]
     modeling_rule_test_suite.add_property(
         "modeling_rule_path", get_relative_path_to_content(modeling_rule.path)
     )
@@ -996,13 +998,22 @@ def validate_modeling_rule(
         else NOT_AVAILABLE,
     )
     modeling_rule_test_suite.add_property(
-        "schema_path", get_relative_path_to_content(modeling_rule.schema_path)
+        "schema_path",
+        get_relative_path_to_content(
+            modeling_rule.schema_path  # type:ignore[arg-type]
+        ),
     )
-    modeling_rule_test_suite.add_property("push", push)
-    modeling_rule_test_suite.add_property("interactive", interactive)
+    modeling_rule_test_suite.add_property("push", push)  # type:ignore[arg-type]
+    modeling_rule_test_suite.add_property(
+        "interactive", interactive  # type:ignore[arg-type]
+    )
     modeling_rule_test_suite.add_property("xsiam_url", xsiam_url)
-    modeling_rule_test_suite.add_property("from_version", modeling_rule.from_version)
-    modeling_rule_test_suite.add_property("to_version", modeling_rule.to_version)
+    modeling_rule_test_suite.add_property(
+        "from_version", modeling_rule.from_version  # type:ignore[arg-type]
+    )  #
+    modeling_rule_test_suite.add_property(
+        "to_version", modeling_rule.to_version  # type:ignore[arg-type]
+    )  #
     modeling_rule_test_suite.add_property(
         "pack_id", containing_pack.id
     )  # used in the convert to jira issue.
@@ -1015,6 +1026,23 @@ def validate_modeling_rule(
             extra={"markup": True},
         )
         test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
+        modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(
+            to_version=modeling_rule.to_version,
+            from_version=modeling_rule.from_version,
+            tenant_demisto_version=tenant_demisto_version,
+        )
+        if not modeling_rule_is_compatible:
+            # Modeling rule version is not compatible with the demisto version of the tenant, skipping
+            skipped = f"XSIAM Tenant's Demisto version doesn't match Modeling Rule {modeling_rule} version, skipping"
+            logger.warning(f"[yellow]{skipped}[/yellow]", extra={"markup": True})
+            test_case = TestCase(
+                "Modeling Rule not compatible with XSIAM tenant's demisto version",
+                classname=f"Modeling Rule {modeling_rule_file_name}",
+            )
+            test_case.result += [Skipped(skipped)]  # type:ignore[arg-type]
+            modeling_rule_test_suite.add_testcase(test_case)
+            # Return True since we don't want to fail the command
+            return True, modeling_rule_test_suite
         if (
             Validations.TEST_DATA_CONFIG_IGNORE.value
             not in test_data.ignored_validations
@@ -1026,16 +1054,6 @@ def validate_modeling_rule(
             missing_event_data, _ = is_test_data_exists_on_server(
                 modeling_rule.testdata_path
             )
-
-            # initialize xsiam client
-            xsiam_client_cfg = XsiamApiClientConfig(
-                base_url=xsiam_url,  # type: ignore[arg-type]
-                api_key=api_key,  # type: ignore[arg-type]
-                auth_id=auth_id,  # type: ignore[arg-type]
-                token=xsiam_token,  # type: ignore[arg-type]
-                collector_token=collector_token,  # type: ignore[arg-type]
-            )
-            xsiam_client = XsiamApiClient(xsiam_client_cfg)
             if not verify_pack_exists_on_tenant(
                 xsiam_client, retrying_caller, modeling_rule, interactive
             ):
@@ -1051,7 +1069,7 @@ def validate_modeling_rule(
                 delete_existing_dataset_flow(xsiam_client, test_data, retrying_caller)
             schema_test_case = TestCase(
                 "Validate Schema",
-                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",  # type:ignore[arg-type]
             )
             if schema_path := modeling_rule.schema_path:
                 try:
@@ -1082,7 +1100,7 @@ def validate_modeling_rule(
                 )
 
                 success, results = validate_schema_aligned_with_test_data(
-                    test_data=test_data, schema=schema
+                    test_data=test_data, schema=schema  # type:ignore[arg-type]
                 )
                 schema_test_case.result += results
                 if not success:
@@ -1099,7 +1117,7 @@ def validate_modeling_rule(
                     "is aligned with TestData file."
                 )
                 logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
-                schema_test_case.result += [Skipped(skipped)]
+                schema_test_case.result += [Skipped(skipped)]  #  type:ignore[arg-type]
                 modeling_rule_test_suite.add_testcase(schema_test_case)
 
             if push:
@@ -1235,12 +1253,31 @@ def validate_modeling_rule(
             )
             test_data_test_case = TestCase(
                 "Test data file does not exist",
-                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",  #  type:ignore[arg-type]
             )
-            test_data_test_case.result += [Error(err)]
+            test_data_test_case.result += [Error(err)]  #  type:ignore[arg-type]
             modeling_rule_test_suite.add_testcase(test_data_test_case)
             return False, modeling_rule_test_suite
         return False, None
+
+
+def validate_modeling_rule_version_against_tenant(
+    to_version: Version, from_version: Version, tenant_demisto_version: Version
+) -> bool:
+    """Checks if the version of the modeling rule is compatible with the XSIAM tenant's demisto version.
+    Compatibility is checked by: from_version <= tenant_xsiam_version <= to_version
+
+    Args:
+        to_version (Version): The to version of the modeling rule
+        from_version (Version): The from version of the modeling rule
+        tenant_demisto_version (Version): The demisto version of the XSIAM tenant
+
+    Returns:
+        bool: True if the version of the modeling rule is compatible, else False
+    """
+    return (
+        tenant_demisto_version >= from_version and tenant_demisto_version <= to_version
+    )
 
 
 def handle_missing_event_data_in_modeling_rule(
@@ -1262,7 +1299,7 @@ def handle_missing_event_data_in_modeling_rule(
         "Missing Event Data", classname="Modeling Rule"
     )
     err = f"Missing Event Data for the following test data event ids: {missing_event_data}"
-    missing_event_data_test_case.result += [Error(err)]
+    missing_event_data_test_case.result += [Error(err)]  #  type:ignore[arg-type]
     prefix = "Event log test data is missing for the following ids:"
     system_errors = [prefix]
     logger.warning(
@@ -1276,7 +1313,7 @@ def handle_missing_event_data_in_modeling_rule(
         )
         system_errors.append(str(test_data_event_id))
     suffix = (
-        f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "
+        f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "  #  type:ignore[arg-type]
         f"with test event(s) data and expected outputs and then rerun"
     )
     logger.warning(
@@ -1304,7 +1341,7 @@ def log_error_to_test_case(
 def add_result_to_test_case(
     err: str, test_case: TestCase, modeling_rule_test_suite: TestSuite
 ) -> Tuple[bool, TestSuite]:
-    test_case.result += [Error(err)]
+    test_case.result += [Error(err)]  #  type:ignore[arg-type]
     modeling_rule_test_suite.add_testcase(test_case)
     return False, modeling_rule_test_suite
 
@@ -1343,7 +1380,11 @@ def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optiona
 
 @app.command(
     no_args_is_help=True,
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    context_settings={
+        "allow_extra_args": True,
+        "ignore_unknown_options": True,
+        "help_option_names": ["-h", "--help"],
+    },
 )
 def test_modeling_rule(
     ctx: typer.Context,
@@ -1434,6 +1475,12 @@ def test_modeling_rule(
         show_default=True,
         help="The number of times to retry the request against the server.",
     ),
+    delete_existing_dataset: bool = typer.Option(
+        False,
+        "--delete_existing_dataset",
+        "-dd",
+        help="Deletion of the existing dataset from the tenant. Default: False.",
+    ),
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
@@ -1446,17 +1493,11 @@ def test_modeling_rule(
         "--file-log-threshold",
         help="Minimum logging threshold for the file logger.",
     ),
-    log_file_path: str = typer.Option(
-        "demisto_sdk_debug.log",
+    log_file_path: Optional[str] = typer.Option(
+        None,
         "-lp",
         "--log-file-path",
-        help="Path to the log file. Default: ./demisto_sdk_debug.log.",
-    ),
-    delete_existing_dataset: bool = typer.Option(
-        False,
-        "--delete_existing_dataset",
-        "-dd",
-        help="Deletion of the existing dataset from the tenant. Default: False.",
+        help="Path to save log files onto.",
     ),
 ):
     """
@@ -1485,6 +1526,16 @@ def test_modeling_rule(
     errors = False
     xml = JUnitXml()
     start_time = datetime.now(timezone.utc)
+    # initialize xsiam client
+    xsiam_client_cfg = XsiamApiClientConfig(
+        base_url=xsiam_url,  # type: ignore[arg-type]
+        api_key=api_key,  # type: ignore[arg-type]
+        auth_id=auth_id,  # type: ignore[arg-type]
+        token=xsiam_token,  # type: ignore[arg-type]
+        collector_token=collector_token,  # type: ignore[arg-type]
+    )
+    xsiam_client = XsiamApiClient(xsiam_client_cfg)
+    tenant_demisto_version: Version = xsiam_client.get_demisto_version()
     for i, modeling_rule_directory in enumerate(inputs, start=1):
         logger.info(
             f"[cyan][{i}/{len(inputs)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
@@ -1495,14 +1546,12 @@ def test_modeling_rule(
             # can ignore the types since if they are not set to str values an error occurs
             xsiam_url,  # type: ignore[arg-type]
             retrying_caller,
-            api_key,  # type: ignore[arg-type]
-            auth_id,  # type: ignore[arg-type]
-            xsiam_token,  # type: ignore[arg-type]
-            collector_token,  # type: ignore[arg-type]
             push,
             interactive,
             ctx,
             delete_existing_dataset,
+            xsiam_client=xsiam_client,
+            tenant_demisto_version=tenant_demisto_version,
         )
         if success:
             logger.info(
@@ -1516,7 +1565,9 @@ def test_modeling_rule(
                 extra={"markup": True},
             )
         if modeling_rule_test_suite:
-            modeling_rule_test_suite.add_property("start_time", start_time)
+            modeling_rule_test_suite.add_property(
+                "start_time", start_time  #  type:ignore[arg-type]
+            )
             xml.add_testsuite(modeling_rule_test_suite)
 
     if output_junit_file:

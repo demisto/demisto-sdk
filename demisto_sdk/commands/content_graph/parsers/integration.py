@@ -19,6 +19,8 @@ class CommandParser:
     name: str
     deprecated: bool
     description: str
+    args: List[dict]
+    outputs: List[dict]
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -31,9 +33,16 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
+        self.is_beta = self.yml_data.get("beta", False)
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
+        self.is_fetch_events_and_assets = self.script_info.get(
+            "isfetcheventsandassets", False
+        )
+        self.is_mappable = self.script_info.get("ismappable", False)
+        self.is_remote_sync_in = self.script_info.get("isremotesyncin", False)
+        self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.is_long_running = self.script_info.get("longRunning", False)
@@ -51,6 +60,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 "type": "script.type",
                 "subtype": "script.subtype",
                 "alt_docker_images": "script.alt_dockerimages",
+                "params": "configuration",
             }
         )
         return super().field_mapping
@@ -58,6 +68,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
     @property
     def display_name(self) -> Optional[str]:
         return get_value(self.yml_data, self.field_mapping.get("display_name", ""))
+
+    @property
+    def params(self) -> Optional[List]:
+        return get_value(self.yml_data, self.field_mapping.get("params", ""), [])
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.
@@ -68,6 +82,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             name = command_data.get("name")
             deprecated = command_data.get("deprecated", False) or self.deprecated
             description = command_data.get("description")
+            args = command_data.get("arguments") or []
+            outputs = command_data.get("outputs") or []
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,
@@ -77,7 +93,13 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 description=description,
             )
             self.commands.append(
-                CommandParser(name=name, description=description, deprecated=deprecated)
+                CommandParser(
+                    name=name,
+                    description=description,
+                    deprecated=deprecated,
+                    args=args,
+                    outputs=outputs,
+                )
             )
 
     def connect_to_dependencies(self) -> None:
@@ -117,6 +139,13 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         if self.is_unified or self.script_info.get("script") not in ("-", "", None):
             return self.script_info.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(
-            self.path.parent
-        )[1]
+        if not self.git_sha:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data(
+                self.path.parent
+            )[1]
+        else:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
+                self.path, self.git_sha, self.yml_data
+            )[
+                1
+            ]

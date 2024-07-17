@@ -1,4 +1,7 @@
+import os
+import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 from click.testing import CliRunner
@@ -79,7 +82,7 @@ class TestPrepareContentIntegration:
         "collector_key", ["isfetchevents", "isfetcheventsandassets"]
     )
     def test_unify_integration__detailed_description_partner_collector(
-        self, pack: Pack, collector_key: str
+        self, mocker, pack: Pack, collector_key: str
     ):
         """
         Given:
@@ -113,12 +116,14 @@ class TestPrepareContentIntegration:
         }
         integration = pack.create_integration(name, yml=yml, description=description)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main,
-                [PREPARE_CONTENT_CMD, "-i", f"{integration.path}"],
-                catch_exceptions=True,
-            )
+            with TemporaryDirectory() as dir:
+                mocker.patch.object(os, "getenv", return_value=dir)
+                runner = CliRunner(mix_stderr=False)
+                result = runner.invoke(
+                    main,
+                    [PREPARE_CONTENT_CMD, "-i", f"{integration.path}"],
+                    catch_exceptions=True,
+                )
 
         unified_integration = get_file(Path(integration.path) / "integration-test.yml")
         assert result.exit_code == 0
@@ -126,3 +131,39 @@ class TestPrepareContentIntegration:
             unified_integration["detaileddescription"]
             == f"**This integration is supported by Palo Alto Networks.**\n***\n{description}"
         )
+
+
+def test_pack_prepare_content(mocker, git_repo):
+    """
+    Given:
+        - A pack with a pack metadata where some fields are set
+
+    When:
+        - Calling prepare-content on the pack
+
+    Then:
+        - Ensure the pack is prepared correctly, with the fields from the pack metadata
+
+    """
+
+    pack: Pack = git_repo.create_pack("PackName")
+    pack.set_data(hybrid=True, price=3)
+    with ChangeCWD(pack.repo_path):
+        with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(
+                main,
+                [PREPARE_CONTENT_CMD, "-i", f"{pack.path}"],
+                catch_exceptions=True,
+            )
+    assert result.exit_code == 0
+    # unzip the pack
+    pack_zip = Path(pack.path) / f"{pack.name}.zip"
+    shutil.unpack_archive(pack_zip, Path(pack.path) / "unzipped_pack")
+    # check that the pack was prepared correctly
+    metadata_path = Path(pack.path) / "unzipped_pack" / "metadata.json"
+    assert metadata_path.exists()
+    metadata = get_file(metadata_path)
+    assert metadata["hybrid"]
+    assert metadata["price"] == 3

@@ -2,16 +2,20 @@ from pathlib import Path
 
 import dotenv
 import pytest
+from lxml import etree
 
 import demisto_sdk.commands.content_graph.objects.content_item as content_item
 import demisto_sdk.commands.setup_env.setup_environment as setup_environment
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.setup_env.setup_environment import (
+    IDEType,
     docker_helper,
     json,
     json5,
     setup_env,
 )
+
+TESTS_DATA_DIR = Path(__file__).parent / "tests_data"
 
 
 @pytest.mark.parametrize("create_virtualenv", [False, True])
@@ -45,7 +49,7 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     mocker.patch.object(content_item, "CONTENT_PATH", repo_path)
     mocker.patch.object(
         docker_helper.DockerBase,
-        "pull_or_create_test_image",
+        "get_or_create_test_image",
         return_value=(test_image, ""),
     )
     mocker.patch.object(
@@ -63,12 +67,14 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
         mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     else:
         interpreter_path = repo_path / ".venv" / "bin" / "python"
-    setup_env([integration.yml.path], create_virtualenv=create_virtualenv)
+    setup_env(
+        file_paths=(integration.yml.path,),
+        ide_type=IDEType.VSCODE,
+        create_virtualenv=create_virtualenv,
+    )
     dotenv_text = (repo_path / ".env").read_text()
+    assert "DEMISTO_PARAMS" in dotenv_text
     assert "PYTHONPATH" in dotenv_text
-    assert "MYPYPATH" in dotenv_text
-    assert "CommonServerPython" in dotenv_text
-
     vscode_folder = (
         repo_path / ".vscode" if not create_virtualenv else Path(pack.path) / ".vscode"
     )
@@ -90,16 +96,72 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     tasks = tasks_json["tasks"]
     assert (
         tasks[0]["python"]["file"]
-        == "/app/Packs/pack_0/Integrations/integration_0/integration_0.py"
+        == f"{str(repo_path)}/Packs/pack_0/Integrations/integration_0/integration_0.py"
     )
     assert tasks[0]["dockerRun"]["image"] == image
     assert tasks[1]["python"]["module"] == "pytest"
     assert (
         tasks[1]["python"]["args"][-1]
-        == "/app/Packs/pack_0/Integrations/integration_0/integration_0_test.py"
+        == f"{str(repo_path)}/Packs/pack_0/Integrations/integration_0/integration_0_test.py"
     )
     assert tasks[1]["dockerRun"]["image"] == test_image
 
     assert json.loads(dotenv.get_key(repo_path / ".env", "DEMISTO_PARAMS")) == params
 
     assert settings_json["python.defaultInterpreterPath"] == str(interpreter_path)
+
+
+@pytest.mark.parametrize(
+    "sample_file, expected_updated_sample_file, expected_added_entries",
+    [
+        (
+            TESTS_DATA_DIR / "idea_configuration" / "samples" / "sample1.iml",
+            TESTS_DATA_DIR
+            / "idea_configuration"
+            / "expected_updated_files"
+            / "sample1.iml",
+            1,
+        ),
+        (
+            TESTS_DATA_DIR / "idea_configuration" / "samples" / "sample2.iml",
+            TESTS_DATA_DIR
+            / "idea_configuration"
+            / "expected_updated_files"
+            / "sample2.iml",
+            2,
+        ),
+    ],
+)
+def test_update_pycharm_config_xml_data(
+    sample_file: Path, expected_updated_sample_file: Path, expected_added_entries: int
+):
+    """
+    Given:
+        - A sample file with a configuration that needs to be updated
+
+    When:
+        - Calling update_pycharm_config_xml_data
+
+    Then:
+        - The configuration is updated correctly
+    """
+    assert sample_file.exists()
+    assert expected_updated_sample_file.exists()
+
+    python_discovery_paths = [Path("test0/test1"), Path("test2/test3")]
+
+    sample_file_content = etree.parse(str(sample_file))
+    expected_updated_sample_file_content = expected_updated_sample_file.read_text()
+
+    added_entries = setup_environment.update_pycharm_config_xml_data(
+        config_data=sample_file_content,
+        python_discovery_paths=python_discovery_paths,
+    )
+
+    assert added_entries == expected_added_entries
+
+    sample_file_content_str = etree.tostring(
+        sample_file_content, pretty_print=True, xml_declaration=True, encoding="utf-8"
+    ).decode("utf-8")
+
+    assert sample_file_content_str == expected_updated_sample_file_content

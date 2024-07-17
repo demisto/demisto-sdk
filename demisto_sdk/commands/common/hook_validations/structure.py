@@ -344,7 +344,9 @@ class StructureValidator(BaseValidator):
         if "Cannot find required key" in error_line:
             return self.parse_missing_key_line(error_path, error_line)
 
-        elif "was not defined" in error_line:
+        elif (
+            "was not defined" in error_line or "does not match any regex" in error_line
+        ):
             return self.parse_undefined_key_line(error_path, error_line)
 
         elif "Enum" in error_line:

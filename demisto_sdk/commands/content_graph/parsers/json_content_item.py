@@ -5,9 +5,10 @@ from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_files_in_dir, get_json, get_value
+from demisto_sdk.commands.common.tools import get_json, get_value
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -22,8 +23,8 @@ class JSONContentItemParser(ContentItemParser):
         pack_marketplaces: List[MarketplaceVersions],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
-        self.json_data: Dict[str, Any] = self.get_json(git_sha=git_sha)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        self.path = self.get_path_with_suffix(".json") if not git_sha else self.path
         self.original_json_data: Dict[str, Any] = self.json_data
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(
@@ -43,6 +44,7 @@ class JSONContentItemParser(ContentItemParser):
                 "description": "description",
                 "fromversion": "fromVersion",
                 "toversion": "toVersion",
+                "version": "version",
             }
         )
         return super().field_mapping
@@ -74,7 +76,9 @@ class JSONContentItemParser(ContentItemParser):
         return get_value(
             self.json_data,
             self.field_mapping.get("fromversion", ""),
-            DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            DEFAULT_CONTENT_ITEM_FROM_VERSION
+            if MarketplaceVersions.XSOAR_ON_PREM in self.supported_marketplaces
+            else MINIMUM_XSOAR_SAAS_VERSION,
         )
 
     @property
@@ -91,12 +95,10 @@ class JSONContentItemParser(ContentItemParser):
     def marketplaces(self) -> List[MarketplaceVersions]:
         return self.get_marketplaces(self.json_data)
 
-    def get_json(self, git_sha: Optional[str]) -> Dict[str, Any]:
-        if self.path.is_dir():
-            json_files_in_dir = get_files_in_dir(self.path.as_posix(), ["json"], False)
-            if len(json_files_in_dir) != 1:
-                raise NotAContentItemException(
-                    f"Directory {self.path} must have a single JSON file."
-                )
-            self.path = Path(json_files_in_dir[0])
-        return get_json(self.path.as_posix(), git_sha=git_sha)
+    @cached_property
+    def json_data(self) -> Dict[str, Any]:
+        return get_json(str(self.path), git_sha=self.git_sha)
+
+    @property
+    def version(self) -> int:
+        return get_value(self.json_data, self.field_mapping.get("version", ""), 0)

@@ -5,7 +5,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
@@ -14,7 +14,10 @@ from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedSc
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
+    COMMUNITY_SUPPORT,
+    CONTRIBUTORS_LIST,
     DEFAULT_IMAGE_PREFIX,
+    DEVELOPER_SUPPORT,
     PARTNER_SUPPORT,
     SUPPORT_LEVEL_HEADER,
     TYPE_TO_EXTENSION,
@@ -22,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     ImagesFolderNames,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -36,7 +40,7 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-    replace_markdown_urls_and_upload_to_artifacts,
+    update_markdown_images_with_urls_and_rel_paths,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
@@ -58,8 +62,6 @@ CONTRIBUTOR_COMMUNITY_DETAILED_DESC = (
     "t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions)."
 )
 
-CONTRIBUTORS_LIST = ["partner", "developer", "community"]
-COMMUNITY_CONTRIBUTOR = "community"
 INTEGRATIONS_DOCS_REFERENCE = "https://xsoar.pan.dev/docs/reference/integrations/"
 
 
@@ -226,7 +228,7 @@ class IntegrationScriptUnifier(Unifier):
                 with tempfile.NamedTemporaryFile(mode="r+", delete=False) as tempf:
                     tempf.write(desc_data)
                     tempf.flush()
-                    replace_markdown_urls_and_upload_to_artifacts(
+                    update_markdown_images_with_urls_and_rel_paths(
                         Path(tempf.name),
                         marketplace,
                         pack_name,
@@ -390,6 +392,21 @@ class IntegrationScriptUnifier(Unifier):
             package_path, TYPE_TO_EXTENSION[code_type]
         )
         code = get_file(code_path, return_content=True)
+
+        return yml_path, code
+
+    @staticmethod
+    def get_script_or_integration_package_data_with_sha(
+        yml_path: Path, git_sha: str, yml_data: dict
+    ):
+        # should be static method
+        if find_type(str(yml_path)) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+            code_type = yml_data.get("type")
+        else:
+            code_type = yml_data.get("script", {}).get("type")
+        code_path = str(yml_path).replace(".yml", TYPE_TO_EXTENSION[code_type])  # type: ignore[index]
+
+        code = TextFile.read_from_git_path(code_path, tag=git_sha)
 
         return yml_path, code
 
@@ -587,18 +604,17 @@ class IntegrationScriptUnifier(Unifier):
         Returns:
             The unified yaml file (dict).
         """
-        if " Contribution)" not in unified_yml["display"]:
-            unified_yml["display"] += CONTRIBUTOR_DISPLAY_NAME.format(
-                contributor_type.capitalize()
-            )
-        existing_detailed_description = unified_yml.get("detaileddescription", "")
-
         if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
             contributor_type = support_level_header
 
-        if contributor_type == COMMUNITY_CONTRIBUTOR:
+        unified_yml["display"] = IntegrationScriptUnifier.get_display_name(
+            unified_yml["display"], contributor_type
+        )
+        existing_detailed_description = unified_yml.get("detaileddescription", "")
+
+        if contributor_type == COMMUNITY_SUPPORT:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
-        elif contributor_type == PARTNER_SUPPORT:
+        elif contributor_type in (PARTNER_SUPPORT, DEVELOPER_SUPPORT):
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(
                 contributor_type.capitalize(), author
             )
@@ -626,6 +642,34 @@ class IntegrationScriptUnifier(Unifier):
             )
 
         return unified_yml
+
+    @staticmethod
+    def get_display_name(display_name: str, contributor_type: str):
+        if (
+            display_name
+            and contributor_type
+            and " Contribution)" not in display_name
+            and contributor_type != "xsoar"
+        ):
+            display_name += CONTRIBUTOR_DISPLAY_NAME.format(
+                contributor_type.capitalize()
+            )
+        return display_name
+
+    @staticmethod
+    def remove_support_from_display_name(
+        display_name: str, contributor_type: Optional[str]
+    ):
+        if (
+            display_name
+            and contributor_type
+            and " Contribution)" in display_name
+            and contributor_type != "xsoar"
+        ):
+            suffix = CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
+            if display_name.endswith(suffix):
+                display_name = display_name[: -len(suffix)]
+        return display_name
 
     @staticmethod
     def get_integration_doc_link(package_path: Path, unified_yml: Dict) -> str:

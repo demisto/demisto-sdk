@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -17,3 +18,9 @@ class XSIAMReport(ContentItemXSIAM, content_type=ContentType.XSIAM_REPORT):  # t
         if preview := self.get_preview_image_gcs_path():
             summary.update({"preview": preview})
         return summary
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "templates_data" in _dict and path.suffix == ".json":
+            return True
+        return False

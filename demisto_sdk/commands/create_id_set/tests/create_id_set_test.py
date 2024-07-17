@@ -168,7 +168,9 @@ class TestIDSetCreator:
         )
         packs.append(pack_to_not_create_id_set_on)
 
-        id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)
+        id_set_creator = IDSetCreator(
+            self.file_path, str(pack_to_create_id_set_on.path)
+        )
 
         id_set_creator.create_id_set()
 
@@ -205,11 +207,11 @@ class TestIDSetCreator:
 
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
-        id_set_creator = IDSetCreator(self.file_path, pack.path)
+        id_set_creator = IDSetCreator(self.file_path, str(pack.path))
 
         id_set_creator.create_id_set()
 
-        with open(self.file_path) as id_set_file:
+        with open(str(self.file_path)) as id_set_file:
             private_id_set = json.load(id_set_file)
         for content_entity, content_entity_value_list in private_id_set.items():
             if content_entity != "Packs":
@@ -265,7 +267,7 @@ def test_create_id_set_flow(repo, mocker):
         assert len(entity_content_in_id_set) == factor * number_of_packs_to_create
 
 
-def test_create_id_set_flow_xpanse(repo, mocker):
+def test_create_id_set_flow_xpanse(repo, monkeypatch):
     """
     Given
         create-id-set sdk command, content repo that contains xpanse packs.
@@ -275,7 +277,7 @@ def test_create_id_set_flow_xpanse(repo, mocker):
         Make sure the id set is created as expected.
     """
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
-    mocker.patch.dict(os.environ, {"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL": "-1"})
+    monkeypatch.setenv("DEMISTO_SDK_ID_SET_REFRESH_INTERVAL", value="-1")
     number_of_packs_to_create = 10
     repo.setup_content_repo(
         number_of_packs=number_of_packs_to_create,

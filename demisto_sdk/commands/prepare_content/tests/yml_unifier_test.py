@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 import requests
@@ -241,12 +242,14 @@ def test_insert_description_to_yml_with_markdown_image(
         IntegrationScriptUnifier, "get_data", return_value=(description_as_bytes, True)
     )
     package_path = Path("Packs/CybleEventsV2/Integrations/CybleEventsV2")
-    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
-        package_path,
-        {"commonfields": {"id": "VulnDB"}},
-        is_script,
-        MarketplaceVersions.XSOAR,
-    )
+    with TemporaryDirectory() as dir:
+        mocker.patch.object(os, "getenv", return_value=dir)
+        yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
+            package_path,
+            {"commonfields": {"id": "VulnDB"}},
+            is_script,
+            MarketplaceVersions.XSOAR,
+        )
     assert (
         GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH in yml_unified["detaileddescription"]
     ) == res
@@ -274,6 +277,70 @@ def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
     assert (
         "[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)"
         == yml_unified["detaileddescription"]
+    )
+
+
+@pytest.mark.parametrize(
+    "display_name, support_level, expected_name",
+    (
+        ("Cymulate v2", "partner", "Cymulate v2 (Partner Contribution)"),
+        (
+            "Cymulate v2 (Partner Contribution)",
+            "partner",
+            "Cymulate v2 (Partner Contribution)",
+        ),
+        ("Cymulate v2", "xsoar", "Cymulate v2"),
+        ("Cymulate v2", None, "Cymulate v2"),
+        ("Cymulate v2", "community", "Cymulate v2 (Community Contribution)"),
+        (None, "community", None),
+        ("", "community", ""),
+    ),
+)
+def test_get_display_name(display_name, support_level, expected_name):
+    """
+    Given:
+        - Current display name and pack support level
+
+    When:
+        - Enhancing the integration yml display name to also hold the support level
+
+    Then:
+        - The returned display name holds the expected support level suffix
+    """
+    assert (
+        IntegrationScriptUnifier.get_display_name(display_name, support_level)
+        == expected_name
+    )
+
+
+@pytest.mark.parametrize(
+    "display_name, support_level, expected_name",
+    (
+        ("Cymulate v2 (Partner Contribution)", "partner", "Cymulate v2"),
+        ("Cymulate v2 (Partner Contribution)", "partner", "Cymulate v2"),
+        ("Cymulate v2", "xsoar", "Cymulate v2"),
+        ("Cymulate v2", None, "Cymulate v2"),
+        ("Cymulate v2 (Community Contribution)", "community", "Cymulate v2"),
+        (None, "community", None),
+        ("", "community", ""),
+    ),
+)
+def test_remove_support_from_display_name(display_name, support_level, expected_name):
+    """
+    Given:
+        - Current display name and pack support level
+
+    When:
+        - Removing the support level from the integration display name to hold the
+
+    Then:
+        - The returned display name doesn't hold the support level suffix
+    """
+    assert (
+        IntegrationScriptUnifier.remove_support_from_display_name(
+            display_name, support_level
+        )
+        == expected_name
     )
 
 
@@ -706,9 +773,11 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            input=Path(self.export_dir_path), output=Path(self.test_dir_path)
-        )
+        with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path), output=Path(self.test_dir_path)
+            )
 
         assert export_yml_path == Path(self.expected_yml_path)
 
@@ -751,11 +820,13 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        unified_yml = PrepareUploadManager.prepare_for_upload(
-            input=Path(self.export_dir_path),
-            output=Path(self.test_dir_path),
-            marketplace=marketplace,
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            unified_yml = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path),
+                output=Path(self.test_dir_path),
+                marketplace=marketplace,
+            )
 
         hidden_true = set()
         hidden_false = set()
@@ -843,11 +914,13 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        unified_yml = PrepareUploadManager.prepare_for_upload(
-            input=Path(self.export_dir_path),
-            output=Path(self.test_dir_path),
-            marketplace=marketplace,
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            unified_yml = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path),
+                output=Path(self.test_dir_path),
+                marketplace=marketplace,
+            )
 
         for param in get_yaml(unified_yml)["configuration"]:
             # updates the three sets
@@ -883,9 +956,11 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(self.export_dir_path), output=Path(self.test_dir_path)
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                Path(self.export_dir_path), output=Path(self.test_dir_path)
+            )
 
         assert export_yml_path == Path(self.expected_yml_path)
         actual_yml = get_yaml(export_yml_path)
@@ -926,9 +1001,11 @@ final test: hi
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(self.export_dir_path), output=Path(self.test_dir_path)
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                Path(self.export_dir_path), output=Path(self.test_dir_path)
+            )
 
         assert export_yml_path == Path(self.expected_yml_path)
 
@@ -959,9 +1036,11 @@ final test: hi
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(input_path_integration)
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                Path(input_path_integration)
+            )
         expected_yml_path = (
             TESTS_DIR
             + "/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml"

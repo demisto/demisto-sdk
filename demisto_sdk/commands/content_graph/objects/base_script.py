@@ -1,7 +1,7 @@
 from typing import Callable, List, Set
 
 import demisto_client
-from pydantic import DirectoryPath
+from pydantic import DirectoryPath, Field
 
 from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
@@ -11,12 +11,17 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     write_dict,
 )
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseNode,
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    RelationshipType,
+)
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Integration,
 )
 from demisto_sdk.commands.content_graph.objects.integration_script import (
+    Argument,
     IntegrationScript,
+    Output,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_scripts_prepare import (
     MarketplaceIncidentToAlertScriptsPreparer,
@@ -26,6 +31,9 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # type: ignore[call-arg]
     tags: List[str]
     skip_prepare: List[str]
+    runas: str = ""
+    args: List[Argument] = Field([], exclude=True)
+    outputs: List[Output] = Field([], exclude=True)
 
     def metadata_fields(self) -> Set[str]:
         return (
@@ -46,7 +54,6 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         data = super().prepare_for_upload(current_marketplace, **kwargs)
 
         if supported_native_images := self.get_supported_native_images(
-            marketplace=current_marketplace,
             ignore_native_image=kwargs.get("ignore_native_image") or False,
         ):
             logger.debug(
@@ -57,12 +64,12 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         return data
 
     @property
-    def imported_by(self) -> List[BaseNode]:
+    def imported_by(self) -> List[Integration]:
         return [
-            r.content_item_to
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.IMPORTS]
             if r.content_item_to.database_id == r.source_id
-        ]
+        ]  # type: ignore[return-value]
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)

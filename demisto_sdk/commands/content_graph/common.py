@@ -1,14 +1,23 @@
-import enum
 import os
 import re
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Set
+from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Set
 
 from neo4j import graph
+from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_NEO4J_DATABASE_HTTP,
+    DEMISTO_SDK_NEO4J_DATABASE_URL,
+    DEMISTO_SDK_NEO4J_PASSWORD,
+    DEMISTO_SDK_NEO4J_USERNAME,
+    PACKS_FOLDER,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import (
+    get_dict_from_file,
     get_json,
     get_remote_file,
 )
@@ -16,21 +25,17 @@ from demisto_sdk.commands.common.tools import (
 NEO4J_ADMIN_DOCKER = ""
 
 NEO4J_DATABASE_HTTP = os.getenv(
-    "DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474"
+    DEMISTO_SDK_NEO4J_DATABASE_HTTP, "http://127.0.0.1:7474"
 )
-NEO4J_DATABASE_URL = os.getenv(
-    "DEMISTO_SDK_NEO4J_DATABASE_URL", "neo4j://127.0.0.1:7687"
-)
-NEO4J_USERNAME = os.getenv("DEMISTO_SDK_NEO4J_USERNAME", "neo4j")
-NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "contentgraph")
-
-NEO4J_FOLDER = "neo4j-data"
+NEO4J_DATABASE_URL = os.getenv(DEMISTO_SDK_NEO4J_DATABASE_URL, "neo4j://127.0.0.1:7687")
+NEO4J_USERNAME = os.getenv(DEMISTO_SDK_NEO4J_USERNAME, "neo4j")
+NEO4J_PASSWORD = os.getenv(DEMISTO_SDK_NEO4J_PASSWORD, "contentgraph")
 
 PACK_METADATA_FILENAME = "pack_metadata.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
 
-SERVER_CONTENT_ITEMS_PATH = "Tests/Marketplace/server_content_items.json"
+SERVER_CONTENT_ITEMS_PATH = Path("Tests/Marketplace/server_content_items.json")
 
 
 class Neo4jRelationshipResult(NamedTuple):
@@ -39,7 +44,7 @@ class Neo4jRelationshipResult(NamedTuple):
     nodes_to: List[graph.Node]
 
 
-class RelationshipType(str, enum.Enum):
+class RelationshipType(StrEnum):
     DEPENDS_ON = "DEPENDS_ON"
     HAS_COMMAND = "HAS_COMMAND"
     IMPORTS = "IMPORTS"
@@ -48,11 +53,12 @@ class RelationshipType(str, enum.Enum):
     USES = "USES"
     USES_BY_ID = "USES_BY_ID"
     USES_BY_NAME = "USES_BY_NAME"
+    USES_BY_CLI_NAME = "USES_BY_CLI_NAME"
     USES_COMMAND_OR_SCRIPT = "USES_COMMAND_OR_SCRIPT"
     USES_PLAYBOOK = "USES_PLAYBOOK"
 
 
-class ContentType(str, enum.Enum):
+class ContentType(StrEnum):
     BASE_CONTENT = "BaseContent"
     BASE_NODE = "BaseNode"
     BASE_PLAYBOOK = "BasePlaybook"
@@ -93,6 +99,9 @@ class ContentType(str, enum.Enum):
     XDRC_TEMPLATE = "XDRCTemplate"
     LAYOUT_RULE = "LayoutRule"
     ASSETS_MODELING_RULE = "AssetsModelingRule"
+    CASE_LAYOUT_RULE = "CaseLayoutRule"
+    CASE_FIELD = "CaseField"
+    CASE_LAYOUT = "CaseLayout"
 
     @property
     def labels(self) -> List[str]:
@@ -120,7 +129,9 @@ class ContentType(str, enum.Enum):
             return "reputation"
         elif self == ContentType.INDICATOR_FIELD:
             return "incidentfield-indicatorfield"
-        elif self == ContentType.LAYOUT:
+        elif self == ContentType.CASE_FIELD:
+            return "casefield"
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "layoutscontainer"
         elif self == ContentType.PREPROCESS_RULE:
             return "preprocessrule"
@@ -139,7 +150,7 @@ class ContentType(str, enum.Enum):
             return "automation"
         elif self == ContentType.INDICATOR_TYPE:
             return "reputation"
-        elif self == ContentType.LAYOUT:
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "layoutscontainer"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
@@ -155,7 +166,7 @@ class ContentType(str, enum.Enum):
             return "Reputation"
         elif self == ContentType.MAPPER:
             return "Classifier"
-        elif self == ContentType.LAYOUT:
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "Layouts Container"
         else:
             return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)
@@ -245,16 +256,54 @@ class ContentType(str, enum.Enum):
                         if tir_folder.is_dir() and not tir_folder.name.startswith("."):
                             yield tir_folder
 
+    @staticmethod
+    def by_schema(path: Path, git_sha: Optional[str] = None) -> "ContentType":
+        """
+        Determines a content type value of a given file by accessing it and making minimal checks on its schema.
+        """
+        from demisto_sdk.commands.content_graph.objects.base_content import (
+            CONTENT_TYPE_TO_MODEL,
+        )
+
+        parsed_dict = get_dict_from_file(str(path), git_sha=git_sha)
+        if parsed_dict and isinstance(parsed_dict, tuple):
+            _dict = parsed_dict[0]
+        else:
+            _dict = parsed_dict
+        for content_type in ContentType.content_items():
+            if content_type_obj := CONTENT_TYPE_TO_MODEL.get(content_type):
+                if content_type_obj.match(_dict, path):
+                    return content_type
+        raise ValueError(f"Could not find content type in path {path}")
+
+
+class Relationship(BaseModel):
+    relationship: Optional[RelationshipType] = None
+    source: Optional[str] = None
+    source_id: Optional[str] = None
+    source_type: Optional[ContentType] = None
+    source_fromversion: Optional[str] = None
+    source_marketplaces: Optional[List[MarketplaceVersions]]
+    target: Optional[str] = None
+    target_type: Optional[ContentType] = None
+    mandatorily: Optional[bool] = None
+    description: Optional[str] = None
+    deprecated: Optional[bool] = None
+    name: Optional[str] = None
+
 
 class Relationships(dict):
     def add(self, relationship: RelationshipType, **kwargs):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
-        self.__getitem__(relationship).append(kwargs)
+        self.__getitem__(relationship).append(
+            Relationship.parse_obj(kwargs).dict(exclude_none=True)
+        )
 
     def add_batch(self, relationship: RelationshipType, data: List[Dict[str, Any]]):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
+        data = [Relationship.parse_obj(item).dict(exclude_none=True) for item in data]
         self.__getitem__(relationship).extend(data)
 
     def update(self, other: "Relationships") -> None:  # type: ignore
@@ -338,21 +387,25 @@ def lazy_property(property_func: Callable):
     return LazyProperty(_lazy_decorator)
 
 
-def get_server_content_items() -> Dict[ContentType, list]:
+def get_server_content_items(tag: Optional[str] = None) -> Dict[ContentType, list]:
     """Reads a JSON file containing server content items from content repository
     and returns a dict representation of it in the required format.
-
+    Args:
+        tag (Optional[str], optional): A tag to get the server content items from.
+            If not specified, the server content items will be read from the local file.
     Returns:
         Dict[ContentType, list]: A mapping of content types to the list of server content items.
     """
-    try:
-        json_data: dict = get_json(SERVER_CONTENT_ITEMS_PATH)
-    except FileNotFoundError:
+    from_remote = tag is not None or not SERVER_CONTENT_ITEMS_PATH.exists()
+    if not from_remote:
+        json_data: dict = get_json(str(SERVER_CONTENT_ITEMS_PATH))
+    else:
         json_data = get_remote_file(
-            SERVER_CONTENT_ITEMS_PATH,
+            str(SERVER_CONTENT_ITEMS_PATH),
             git_content_config=GitContentConfig(
                 repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
             ),
+            tag=tag,
         )
     return {ContentType(k): v for k, v in json_data.items()}
 

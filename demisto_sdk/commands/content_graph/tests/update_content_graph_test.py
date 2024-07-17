@@ -20,7 +20,7 @@ from demisto_sdk.commands.content_graph.interface import (
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO, from_path
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     find_model_for_id,
     mock_classifier,
@@ -40,15 +40,21 @@ GIT_PATH = Path(git_path())
 
 
 @pytest.fixture(autouse=True)
-def setup_method(mocker):
+def setup_method(mocker, tmp_path_factory):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
+    from demisto_sdk.commands.common.files.file import File
+
+    from_path.cache_clear()
 
     bc.CONTENT_PATH = GIT_PATH
-    mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
+    mocker.patch.object(
+        neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
+    )
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+    mocker.patch.object(
+        File,
+        "read_from_github_api",
         return_value={
             "docker_images": {
                 "python3": {
@@ -58,7 +64,6 @@ def setup_method(mocker):
             }
         },
     )
-    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -186,15 +191,15 @@ def repository(mocker) -> ContentDTO:
     pack3.content_items.script.append(mock_script("SampleScript2"))
     repository.packs.extend([pack1, pack2, pack3])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
         if not packs_to_update:
-            return [repository]
+            return repository
         repo_copy = repository.copy()
         repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
-        return [repo_copy]
+        return repo_copy
 
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
     return repository
@@ -218,19 +223,19 @@ def external_repository(mocker) -> ContentDTO:
         return [repo_copy]
 
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
         if not packs_to_update:
-            return [repository]
+            return repository
         repo_copy = repository.copy()
         repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
-        return [repo_copy]
+        return repo_copy
 
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
     return repository
@@ -696,7 +701,9 @@ class TestUpdateContentGraph:
             extracted_files = list(tmp_path.glob("extracted/*"))
             assert extracted_files
             assert all(
-                file.suffix == ".graphml" or file.name == "metadata.json"
+                file.suffix == ".graphml"
+                or file.name == "metadata.json"
+                or file.name == "depends_on.json"
                 for file in extracted_files
             )
 
@@ -794,7 +801,9 @@ class TestUpdateContentGraph:
             extracted_files = list(tmp_path.glob("extracted/*"))
             assert extracted_files
             assert all(
-                file.suffix == ".graphml" or file.name == "metadata.json"
+                file.suffix == ".graphml"
+                or file.name == "metadata.json"
+                or file.name == "depends_on.json"
                 for file in extracted_files
             )
 

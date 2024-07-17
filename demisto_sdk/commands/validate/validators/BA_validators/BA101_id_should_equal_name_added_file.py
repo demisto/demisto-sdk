@@ -6,10 +6,10 @@ from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
-from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
-from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equal_name import (
+from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
+from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 
 ContentTypes = Union[
     Dashboard,

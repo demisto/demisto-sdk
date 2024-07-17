@@ -5,6 +5,7 @@
         "-v"
     ],
     "python.analysis.typeCheckingMode": "basic",
+    "coverage-gutters.coverageBaseDir": "coverage_report",
     "python.testing.unittestEnabled": false,
     "mypy-type-checker.args": [
         "--follow-imports=silent",

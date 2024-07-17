@@ -17,6 +17,9 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
     days: int
     weeks: int
     closure_script: Optional[str] = Field("", alias="closureScript")
+    version: Optional[int] = 0
+    data_dict: dict = Field({}, exclude=True)
+    extract_settings: dict = Field({}, exclude=True)
 
     def metadata_fields(self) -> Set[str]:
         return (
@@ -44,3 +47,14 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
                 # Wrapping the dictionary with a list, as that's what the server expects
                 json.dump([self.prepare_for_upload(marketplace=marketplace)], f)
             client.import_incident_types_handler(str(file_path))
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "color" in _dict and "cliName" not in _dict and path.suffix == ".json":
+            if not (
+                "definitionId" in _dict
+                and _dict["definitionId"]
+                and _dict["definitionId"].lower() not in ["incident", "indicator"]
+            ):
+                return True
+        return False

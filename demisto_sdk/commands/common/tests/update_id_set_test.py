@@ -347,14 +347,14 @@ class TestDuplicates:
                 "pack1",
                 "pack1",
                 ("github.com", "demisto", "repo1"),
-                ("code.pan.run", "xsoar", "repo1"),
+                ("gitlab.xdr.pan.local", "xsoar", "repo1"),
                 False,
             ),
             (
                 "pack1",
                 "pack1",
                 ("github.com", "demisto", "repo1"),
-                ("code.pan.run", "xsoar", "repo2"),
+                ("gitlab.xdr.pan.local", "xsoar", "repo2"),
                 True,
             ),
         ],
@@ -2871,6 +2871,41 @@ class TestGenericFunctions:
 
         result = get_fields_by_script_argument(task)
         assert "field_name" in result
+
+    @staticmethod
+    def test_get_fields_by_script_argument__explicit_method():
+        """
+        Given
+            - A playbook task with custom fields that retrieves its values in an explicit way (using the ${} method instead of "get" method)
+        When
+            -  Searching for dependent incident fields in the task script arguments
+        Then
+            -  The function should return an empty set with no errors, since a the custom field - ${} sould be ignored
+        """
+        task = {"id": "ID", "scriptarguments": {"customFields": {"simple": "${keys}"}}}
+        result = get_fields_by_script_argument(task)
+        assert result == set()
+
+    @staticmethod
+    def test_get_fields_by_script_argument__json():
+        """
+        Given
+            - A playbook task with custom fields value is a json
+        When
+            -  Searching for dependent incident fields in the task script arguments
+        Then
+            -  The function should return all dependent incident custom fields in the task
+        """
+        task = {
+            "id": "ID",
+            "scriptarguments": {
+                "customFields": {
+                    "complex": {"root": "keys", "test_key": "tets_value", "id": "ID"}
+                }
+            },
+        }
+        result = get_fields_by_script_argument(task)
+        assert result == {"root", "test_key"}
 
 
 class TestFlow(unittest.TestCase):

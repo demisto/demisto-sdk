@@ -11,8 +11,10 @@ yaml = YAML_Handler()
 
 class Script(Integration):
     # Im here just to have one!!!
-    def __init__(self, tmpdir: Path, name, repo, create_unified=False):
-        super().__init__(tmpdir, name, repo, create_unified)
+    def __init__(
+        self, tmpdir: Path, name, repo, create_unified=False, _type: str = "python"
+    ):
+        super().__init__(tmpdir, name, repo, create_unified, _type)
         self.prefix = "script"
 
     def create_default_script(self, name: str = "sample_script"):

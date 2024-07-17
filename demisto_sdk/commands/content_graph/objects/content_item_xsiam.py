@@ -4,9 +4,13 @@ from typing import List
 
 import demisto_client
 from packaging.version import Version
-from pydantic import DirectoryPath
+from pydantic import DirectoryPath, validator
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    MINIMUM_XSOAR_SAAS_VERSION,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.tools import (
     write_dict,
 )
@@ -20,6 +24,12 @@ from demisto_sdk.commands.upload.exceptions import (
 
 
 class ContentItemXSIAM(ContentItem, ABC):
+    @validator("fromversion", always=True)
+    def validate_from_version(cls, v: str) -> str:
+        if not v or DEFAULT_CONTENT_ITEM_FROM_VERSION == v:
+            return MINIMUM_XSOAR_SAAS_VERSION
+        return v
+
     def dump(
         self,
         dir: DirectoryPath,

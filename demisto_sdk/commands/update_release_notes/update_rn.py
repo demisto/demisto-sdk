@@ -16,12 +16,12 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     EVENT_COLLECTOR,
     IGNORED_PACK_NAMES,
-    RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     SIEM_ONLY_ENTITIES,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     FileType,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -269,6 +269,9 @@ class UpdateRN:
                 )
             else:
                 docker_image_name = None
+            if file_type == FileType.METADATA:
+                self.pack_metadata_only = True
+                continue
             changed_files[(file_name, file_type)] = {
                 "description": get_file_description(packfile, file_type),
                 "is_new_file": packfile in self.added_files,
@@ -276,6 +279,7 @@ class UpdateRN:
                 "dockerimage": docker_image_name,
                 "path": packfile,
             }
+        self.pack_metadata_only = (not changed_files) and self.pack_metadata_only
         return self.create_pack_rn(rn_path, changed_files, new_metadata, new_version)
 
     def create_pack_rn(
@@ -672,7 +676,8 @@ class UpdateRN:
         rn_string = ""
 
         if self.pack_metadata_only:
-            rn_string += f"\n#### Integrations\n\n##### {self.pack}\n\n- Documentation and metadata improvements.\n"
+            pack_display_name = self.get_pack_metadata().get("name", self.pack)
+            rn_string += f"## {pack_display_name}\n\n- %%UPDATE_RN%%\n"
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
@@ -739,13 +744,8 @@ class UpdateRN:
         :return
         The release notes description
         """
-        if _type in RN_CONTENT_ENTITY_WITH_STARS:
-            if is_new_file:
-                rn_desc = f"- New: **{content_name}**\n"
-            else:
-                rn_desc = f"- **{content_name}**\n"
 
-        elif self.is_force:
+        if self.is_force:
             rn_desc = f"## {content_name}\n\n"
             rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
         else:
@@ -756,9 +756,18 @@ class UpdateRN:
                 if _type in SIEM_ONLY_ENTITIES or content_name.replace(
                     " ", ""
                 ).lower().endswith(EVENT_COLLECTOR.lower()):
-                    rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
+                    rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>"
                 elif from_version and _type not in SIEM_ONLY_ENTITIES:
-                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
+                    pack_marketplaces = self.get_pack_metadata().get(
+                        "marketplaces", [MarketplaceVersions.XSOAR.value]
+                    )
+                    if MarketplaceVersions.MarketplaceV2.value in pack_marketplaces:
+                        rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
+                    if (
+                        not pack_marketplaces
+                        or MarketplaceVersions.XSOAR.value in pack_marketplaces
+                    ):
+                        rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"

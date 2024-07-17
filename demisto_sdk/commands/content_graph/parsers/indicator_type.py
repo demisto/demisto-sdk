@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -26,8 +27,14 @@ class IndicatorTypeParser(
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"name": "details", "description": "details"})
+        super().field_mapping.update(
+            {"name": "details", "description": "details", "expiration": "expiration"}
+        )
         return super().field_mapping
+
+    @property
+    def expiration(self):
+        return get_value(self.json_data, self.field_mapping.get("expiration", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

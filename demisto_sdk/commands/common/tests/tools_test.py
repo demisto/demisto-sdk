@@ -13,14 +13,15 @@ import requests
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     DOC_FILES_DIR,
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
     MARKETPLACE_TO_CORE_PACKS_FILE,
-    METADATA_FILE_NAME,
     PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_PACK_META_FILE_NAME,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
@@ -67,6 +68,7 @@ from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     TagParser,
     arg_to_list,
+    check_timestamp_format,
     compare_context_path_in_yml_and_readme,
     extract_field_from_mapping,
     field_to_cli_name,
@@ -110,6 +112,7 @@ from demisto_sdk.commands.common.tools import (
     parse_multiple_path_inputs,
     run_command_os,
     search_and_delete_from_conf,
+    search_substrings_by_line,
     server_version_compare,
     set_value,
     str2bool,
@@ -137,6 +140,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_LIST_PATH,
     VALID_MD,
     VALID_PLAYBOOK_ID_PATH,
+    VALID_PRE_PROCESSING_RULE_PATH,
     VALID_REPUTATION_FILE,
     VALID_SCRIPT_PATH,
     VALID_WIDGET_PATH,
@@ -342,9 +346,10 @@ class TestGenericFunctions:
         (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
         (FileType.SECRET_IGNORE.value, FileType.SECRET_IGNORE),
         (Path(DOC_FILES_DIR) / "foo", FileType.DOC_FILE),
-        (METADATA_FILE_NAME, FileType.METADATA),
+        (PACKS_PACK_META_FILE_NAME, FileType.METADATA),
         ("", None),
         (VULTURE_WHITELIST_PATH, FileType.VULTURE_WHITELIST),
+        (VALID_PRE_PROCESSING_RULE_PATH, FileType.PRE_PROCESS_RULES),
     ]
 
     @pytest.mark.parametrize("path, _type", data_test_find_type)
@@ -626,7 +631,7 @@ class TestGetRemoteFileLocally:
     FILE_CONTENT = '{"id": "some_file"}'
 
     git_util = Content.git_util()
-    main_branch = git_util.handle_prev_ver()[1]
+    main_branch = DEMISTO_GIT_PRIMARY_BRANCH
 
     def setup_method(self):
         # create local git repo
@@ -798,7 +803,7 @@ def test_get_latest_release_notes_text_invalid():
     """
     PATH_TO_HERE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/"
     file_path = os.path.join(PATH_TO_HERE, "empty-RN.md")
-    assert get_latest_release_notes_text(file_path) is None
+    assert get_latest_release_notes_text(file_path) == ""
 
 
 def test_get_release_notes_file_path_valid():
@@ -1467,7 +1472,7 @@ def test_get_pack_metadata(repo):
     pack_metadata = pack.pack_metadata
     pack_metadata.write_json(metadata_json)
 
-    result = get_pack_metadata(pack.path)
+    result = get_pack_metadata(str(pack.path))
 
     assert metadata_json == result
 
@@ -3303,3 +3308,105 @@ def test_set_value(dict, paths, value, expected_dict):
     """
     set_value(dict, paths, value)
     assert expected_dict == dict
+
+
+def test_check_timestamp_format():
+    """
+    Given
+    - timestamps in various formats.
+
+    When
+    - Running check_timestamp_format on them.
+
+    Then
+    - Ensure True for iso format and False for any other format.
+    """
+    good_format_timestamp = "2020-04-14T00:00:00Z"
+    missing_z = "2020-04-14T00:00:00"
+    missing_t = "2020-04-14 00:00:00Z"
+    only_date = "2020-04-14"
+    with_hyphen = "2020-04-14T00-00-00Z"
+    assert check_timestamp_format(good_format_timestamp)
+    assert not check_timestamp_format(missing_t)
+    assert not check_timestamp_format(missing_z)
+    assert not check_timestamp_format(only_date)
+    assert not check_timestamp_format(with_hyphen)
+
+
+class TestSearchSubstringByLine:
+    @staticmethod
+    @pytest.mark.parametrize(
+        "phrases,text,expected_to_find",
+        (
+            pytest.param(["foo"], "foo bar", True, id="found"),
+            pytest.param(
+                ["foo"],
+                "bar baz",
+                False,
+                id="nothing to find",
+            ),
+        ),
+    )
+    def test_search_substring_by_line(
+        phrases: List[str], text: str, expected_to_find: bool
+    ):
+        assert search_substrings_by_line(phrases, text) == (
+            ["1"] if expected_to_find else []
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "phrases,text,ignore_case,expected_to_find",
+        (
+            pytest.param(
+                ["foo"],
+                "this is Fooland",
+                False,
+                False,
+                id="case difference, case sensitive, not found",
+            ),
+            pytest.param(
+                ["foo"],
+                "this is Fooland",
+                True,
+                True,
+                id="different case, ignore case, found",
+            ),
+        ),
+    )
+    def test_search_substring_by_line_case(
+        phrases: List[str], text: str, ignore_case: bool, expected_to_find: bool
+    ):
+        assert search_substrings_by_line(phrases, text, ignore_case=ignore_case) == (
+            ["1"] if expected_to_find else []
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "phrases,text,exceptions,expected_to_find",
+        (
+            pytest.param(
+                ["foo"],
+                "I like food",
+                [],
+                True,
+                id="no exceptions, foo found in food",
+            ),
+            pytest.param(
+                ["foo"],
+                "I like food",
+                ["food"],
+                False,
+                id="exceptionally ignoring foo in food",
+            ),
+        ),
+    )
+    def test_search_substring_by_line_exceptions(
+        phrases: List[str],
+        text: str,
+        exceptions: Optional[List[str]],
+        expected_to_find: bool,
+    ):
+        assert search_substrings_by_line(
+            phrases, text, exceptionally_allowed_substrings=exceptions
+        ) == (["1"] if expected_to_find else [])

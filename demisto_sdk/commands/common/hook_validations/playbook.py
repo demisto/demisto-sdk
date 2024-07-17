@@ -480,9 +480,10 @@ class PlaybookValidator(ContentEntityValidator):
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
             error_message, error_code = Errors.playbook_unconnected_tasks(orphan_tasks)
-            return self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ) is None
+            return (
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+                is None
+            )
 
         return True
 

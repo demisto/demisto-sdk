@@ -1,18 +1,25 @@
 import logging
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import Thread
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 import dateparser
+import demisto_client
 import pytz
 import requests
 import typer
-from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
-from junitparser.junitparser import Result
+from demisto_client.demisto_api import DefaultApi
+from google.cloud import storage  # noqa type: ignore[attr-defined]
+from junitparser import Error
+from junitparser import JUnitXml, TestCase, TestSuite
+from junitparser.junitparser import Failure, Result, Skipped
 from packaging.version import Version
+from slack_sdk import WebClient as SlackClient
 from tabulate import tabulate
 from tenacity import (
     Retrying,
@@ -23,14 +30,20 @@ from tenacity import (
 )
 from typer.main import get_command_from_info
 
+from commands.test_content.tools import get_ui_url
+from demisto_sdk.commands.common.constants import (
+    FILTER_CONF,
+    XSIAM_SERVER_TYPE,
+    XSOAR_SAAS_SERVER_TYPE,
+    XSOAR_PRODUCT_TYPE,
+    XSIAM_PRODUCT_TYPE,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
     SingleModelingRule,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import (
-    DEFAULT_JSON_HANDLER as json,
-)
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json  # noqa
 from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
@@ -40,6 +53,11 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     is_epoch_datetime,
     parse_int_or_default,
+)
+from demisto_sdk.commands.common.tools import get_json_file
+from demisto_sdk.commands.test_content.ParallelLoggingManager import (
+    ParallelLoggingManager,
+    ARTIFACTS_PATH,
 )
 from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
     EXPECTED_SCHEMA_MAPPINGS,
@@ -60,6 +78,7 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
 
+ENV_RESULTS_PATH = "./artifacts/env_results.json"
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
 XSIAM_CLIENT_SLEEP_INTERVAL = 60
 XSIAM_CLIENT_RETRY_ATTEMPTS = 5
@@ -216,9 +235,7 @@ def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying
     return Retrying(**retry_params)
 
 
-def xsiam_execute_query(
-    xsiam_client: XsiamApiClient, query: str, print_req_error: bool = True
-) -> List[dict]:
+def xsiam_execute_query(xsiam_client: XsiamApiClient, query: str) -> List[dict]:
     """Execute an XQL query and return the results.
     Wrapper for XsiamApiClient.execute_query() with retry logic.
     """
@@ -982,7 +999,10 @@ def validate_modeling_rule(
     modeling_rule_test_suite.add_property(
         "file_name", modeling_rule_file_name
     )  # used in the convert to jira issue.
-    modeling_rule_test_suite.filepath = get_relative_path_to_content(modeling_rule.path)  # type:ignore[arg-type]
+    modeling_rule_test_suite.filepath = (get_relative_path_to_content(  # type:ignore[arg-type]
+            modeling_rule.path
+        )
+    )
     modeling_rule_test_suite.add_property(
         "modeling_rule_path", get_relative_path_to_content(modeling_rule.path)
     )
@@ -1119,7 +1139,7 @@ def validate_modeling_rule(
                     "is aligned with TestData file."
                 )
                 logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
-                schema_test_case.result += [Skipped(skipped)]  #  type:ignore[arg-type]
+                schema_test_case.result += [Skipped(skipped)]  # type:ignore[arg-type]
                 modeling_rule_test_suite.add_testcase(schema_test_case)
 
             if push:
@@ -1255,9 +1275,9 @@ def validate_modeling_rule(
             )
             test_data_test_case = TestCase(
                 "Test data file does not exist",
-                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",  #  type:ignore[arg-type]
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",  # type:ignore[arg-type]
             )
-            test_data_test_case.result += [Error(err)]  #  type:ignore[arg-type]
+            test_data_test_case.result += [Error(err)]  # type:ignore[arg-type]
             modeling_rule_test_suite.add_testcase(test_data_test_case)
             return False, modeling_rule_test_suite
         return False, None
@@ -1277,9 +1297,7 @@ def validate_modeling_rule_version_against_tenant(
     Returns:
         bool: True if the version of the modeling rule is compatible, else False
     """
-    return (
-        tenant_demisto_version >= from_version and tenant_demisto_version <= to_version
-    )
+    return from_version <= tenant_demisto_version <= to_version
 
 
 def handle_missing_event_data_in_modeling_rule(
@@ -1301,7 +1319,7 @@ def handle_missing_event_data_in_modeling_rule(
         "Missing Event Data", classname="Modeling Rule"
     )
     err = f"Missing Event Data for the following test data event ids: {missing_event_data}"
-    missing_event_data_test_case.result += [Error(err)]  #  type:ignore[arg-type]
+    missing_event_data_test_case.result += [Error(err)]  # type:ignore[arg-type]
     prefix = "Event log test data is missing for the following ids:"
     system_errors = [prefix]
     logger.warning(
@@ -1315,7 +1333,7 @@ def handle_missing_event_data_in_modeling_rule(
         )
         system_errors.append(str(test_data_event_id))
     suffix = (
-        f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "  #  type:ignore[arg-type]
+        f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "  # type:ignore[arg-type]
         f"with test event(s) data and expected outputs and then rerun"
     )
     logger.warning(
@@ -1343,7 +1361,7 @@ def log_error_to_test_case(
 def add_result_to_test_case(
     err: str, test_case: TestCase, modeling_rule_test_suite: TestSuite
 ) -> Tuple[bool, TestSuite]:
-    test_case.result += [Error(err)]  #  type:ignore[arg-type]
+    test_case.result += [Error(err)]  # type:ignore[arg-type]
     modeling_rule_test_suite.add_testcase(test_case)
     return False, modeling_rule_test_suite
 
@@ -1378,6 +1396,327 @@ def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optiona
             )
             raise typer.BadParameter(err_str)
     return value
+
+
+class TestResults:
+    def __init__(
+        self,
+        artifacts_path: str,
+        service_account: str = None,
+        artifacts_bucket: str = None,
+    ):
+        self.test_results_xml_file = JUnitXml()
+        self.errors = False
+        self.artifacts_path = Path(artifacts_path)
+        self.service_account = service_account
+        self.artifacts_bucket = artifacts_bucket
+
+    def upload_playbook_result_json_to_bucket(
+        self,
+        repository_name: str,
+        file_name,
+        logging_module: Union[Any, ParallelLoggingManager] = logging,
+    ):
+        """Uploads a JSON object to a specified path in the GCP bucket.
+
+        Args:
+          repository_name: The name of the repository within the bucket.
+          file_name: The desired filename for the uploaded JSON data.
+          logging_module: Logging module to use for upload_playbook_result_json_to_bucket.
+        """
+        logging_module.info("Start uploading playbook results file to bucket")
+
+        storage_client = storage.Client.from_service_account_json(self.service_account)
+        storage_bucket = storage_client.bucket(self.artifacts_bucket)
+
+        blob = storage_bucket.blob(
+            f"content-test-modeling-rules/{repository_name}/{file_name}"
+        )
+        blob.upload_from_filename(
+            self.artifacts_path / "test_playbooks_report.xml",
+            content_type="application/xml",
+        )
+
+        logging_module.info("Finished uploading playbook results file to bucket")
+
+
+class BuildContext:
+    def __init__(
+        self,
+        server_type,
+        nightly,
+        build_number,
+        branch_name,
+        retry_attempts,
+        sleep_interval,
+        server,
+        product_type,
+        logging_module: ParallelLoggingManager,
+        cloud_machine_ids,
+        cloud_servers_path,
+        cloud_servers_api_keys,
+        artifacts_path,
+        service_account,
+        artifacts_bucket,
+        api_key,
+        machine_assignment,
+        push,
+        interactive,
+        delete_existing_dataset,
+        ctx,
+    ):
+
+        # --------------------------- overall build configuration -------------------------------
+        self.logging_module: ParallelLoggingManager = logging_module
+        self.retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
+
+        self.ctx = ctx
+        self.server_type = server_type
+        self.is_saas_server_type = self.server_type in [
+            XSIAM_SERVER_TYPE,
+            XSOAR_SAAS_SERVER_TYPE,
+        ]
+        self.is_nightly = nightly
+        self.build_number = build_number
+        self.build_name = branch_name
+        self.server = server
+        self.is_local_run = self.server is not None
+        self.product_type = product_type
+        self.push = push
+        self.interactive = interactive
+        self.delete_existing_dataset = delete_existing_dataset
+
+        # --------------------------- Machine preparation -------------------------------
+
+        self.cloud_machines = cloud_machine_ids.split(",")
+        self.cloud_servers_path = cloud_servers_path
+        self.cloud_servers_api_keys_path = cloud_servers_api_keys
+        # self.conf, self.secret_conf = self._load_conf_files(
+        #     kwargs["conf"], kwargs["secret"]
+        # )
+
+        if self.is_saas_server_type:
+            cloud_conf = get_json_file(self.cloud_servers_path)
+            self.env_json = {
+                machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
+            }
+            self.api_key = get_json_file(self.cloud_servers_api_keys_path)
+        else:
+            self.env_json = self._load_env_results_json()
+            self.api_key = api_key
+
+        # --------------------------- Testing preparation -------------------------------
+
+        self.tests_data_keeper = TestResults(
+            artifacts_path,
+            service_account,
+            artifacts_bucket,
+        )
+        # self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
+        self.machine_assignment_json = get_json_file(machine_assignment)
+
+        # --------------------------- Machine preparation logic -------------------------------
+
+        # self.instances_ips = self._get_instances_ips()
+        # self.server_numeric_version = self._get_server_numeric_version()
+        self.servers = self.create_servers()
+
+    @staticmethod
+    def _load_env_results_json():
+        if not Path(ENV_RESULTS_PATH).is_file():
+            return {}
+
+        with open(ENV_RESULTS_PATH) as json_file:
+            return json.load(json_file)
+
+    #
+    # @staticmethod
+    # def _load_conf_files(conf_path, secret_conf_path):
+    #     with open(conf_path) as data_file:
+    #         conf = Conf(json.load(data_file))
+    #
+    #     secret_conf = None
+    #     if secret_conf_path:
+    #         with open(secret_conf_path) as data_file:
+    #             secret_conf = SecretConf(json.load(data_file))
+    #
+    #     return conf, secret_conf
+
+    @staticmethod
+    def _extract_filtered_tests() -> list:
+        """
+        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
+        in the current build
+        Returns:
+            A list of playbook IDs that should be run in the current build
+        """
+        with open(FILTER_CONF) as filter_file:
+            filtered_tests = [line.strip("\n") for line in filter_file.readlines()]
+
+        return filtered_tests
+
+    def create_servers(self):
+        """
+        Create servers object based on build type.
+        """
+        return (
+            [
+                CloudServerContext(
+                    self,
+                    server_private_ip=self.env_json.get(machine, {}).get(
+                        "base_url", ""
+                    ),
+                    cloud_machine=machine,
+                )
+                for machine in self.machine_assignment_json
+            ]
+            # if self.is_saas_server_type
+            # else [
+            #     OnPremServerContext(
+            #         self,
+            #         server_private_ip=server_ip,
+            #         use_retries_mechanism=self.use_retries_mechanism,
+            #     )
+            #     for server_ip in self.instances_ips
+            # ]
+        )
+
+
+class ServerContext:
+    def __init__(
+        self,
+        build_context: BuildContext,
+        server_private_ip: str,
+    ):
+
+        # --------------------------- Overall build configuration -------------------------------
+
+        self.auth_id = None
+        self.api_key = None
+        self.server_ip = server_private_ip
+        self.server_url: str = ""
+        self.build_context = build_context
+        self.cloud_ui_path = None
+        self.client: Optional[DefaultApi] = None
+
+
+class CloudServerContext(ServerContext):
+    def __init__(
+        self,
+        build_context: BuildContext,
+        server_private_ip: str,
+        cloud_machine: str,
+    ):
+        super().__init__(build_context, server_private_ip)
+        self.server_url = self.server_ip
+        self.api_key = self.build_context.api_key.get(cloud_machine)
+        self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(
+            "x-xdr-auth-id"
+        )
+        os.environ.pop(
+            "DEMISTO_USERNAME", None
+        )  # we use client without demisto username
+        self.configure_new_client()
+        self.cloud_ui_path = self.build_context.env_json.get(cloud_machine, {}).get(
+            "ui_url"
+        )
+        self.filtered_tests = self.build_context.machine_assignment_json.get(
+            cloud_machine, {}
+        ).get("playbooks_to_run")
+
+    def configure_new_client(self):
+        if self.client:
+            self.client.api_client.pool.close()
+            self.client.api_client.pool.terminate()
+            del self.client
+        self.client = demisto_client.configure(
+            base_url=self.server_url,
+            api_key=self.api_key,
+            auth_id=self.auth_id,
+            verify_ssl=False,
+        )
+
+    def execute_tests(self):
+        try:
+            self.build_context.logging_module.info(
+                f"Starts tests with server url - {get_ui_url(self.server_url)}",
+                real_time=True,
+            )
+            self.build_context.logging_module.info(
+                f"Running the following tests: {self.filtered_tests}",
+                real_time=True,
+            )
+            # self._execute_mockable_tests()
+            # self.build_context.logging_module.info(
+            #     "Running mock-disabled tests", real_time=True
+            # )
+            # self.configure_new_client()
+            # self._execute_unmockable_tests()
+            # if self.use_retries_mechanism:
+            #     self.build_context.logging_module.info(
+            #         "Running failed tests", real_time=True
+            #     )
+            #     self._execute_failed_tests()
+            xsiam_client_cfg = XsiamApiClientConfig(
+                base_url=xsiam_url,  # type: ignore[arg-type]
+                api_key=api_key,  # type: ignore[arg-type]
+                auth_id=auth_id,  # type: ignore[arg-type]
+                token=xsiam_token,  # type: ignore[arg-type]
+                collector_token=collector_token,  # type: ignore[arg-type]
+            )
+            xsiam_client = XsiamApiClient(xsiam_client_cfg)
+            tenant_demisto_version: Version = xsiam_client.get_demisto_version()
+            for i, modeling_rule_directory in enumerate(self.filtered_tests, start=1):
+                logger.info(
+                    f"[cyan][{i}/{len(self.filtered_tests)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
+                    extra={"markup": True},
+                )
+                success, modeling_rule_test_suite = validate_modeling_rule(
+                    modeling_rule_directory,
+                    # can ignore the types since if they are not set to str values an error occurs
+                    xsiam_url,  # type: ignore[arg-type]
+                    self.build_context.retrying_caller,
+                    self.build_context.push,
+                    self.build_context.interactive,
+                    self.build_context.ctx,
+                    self.build_context.delete_existing_dataset,
+                    xsiam_client=xsiam_client,
+                    tenant_demisto_version=tenant_demisto_version,
+                )
+                if success:
+                    logger.info(
+                        f"[green]Test Modeling rule {get_relative_path_to_content(modeling_rule_directory)} passed[/green]",
+                        extra={"markup": True},
+                    )
+                else:
+                    errors = True
+                    logger.error(
+                        f"[red]Test Modeling Rule {get_relative_path_to_content(modeling_rule_directory)} failed[/red]",
+                        extra={"markup": True},
+                    )
+                if modeling_rule_test_suite:
+                    modeling_rule_test_suite.add_property(
+                        "start_time", start_time  # type:ignore[arg-type]
+                    )
+                    self.build_context.tests_data_keeper.test_results_xml_file.add_testsuite(
+                        modeling_rule_test_suite
+                    )
+
+                    self.build_context.logging_module.info(
+                        f"Finished tests with server url - "
+                        f"{get_ui_url(self.server_url)}",
+                        real_time=True,
+                    )
+            #
+            # self.build_context.logging_module.debug(
+            #     f"Tests executed on server {self.server_ip}:\n"
+            #     f"{pformat(self.executed_tests)}"
+            # )
+        except Exception:
+            self.build_context.logging_module.exception("~~ Thread failed ~~")
+            raise
+        finally:
+            self.build_context.logging_module.execute_logs()
 
 
 @app.command(
@@ -1483,6 +1822,89 @@ def test_modeling_rule(
         "-dd",
         help="Deletion of the existing dataset from the tenant. Default: False.",
     ),
+    service_account: Optional[str] = typer.Option(
+        None,
+        "-sa",
+        "--service-account",
+        envvar="GCP_SERVICE_ACCOUNT",
+        help="GCP service account.",
+        show_default=False,
+    ),
+    cloud_machine_ids: str = typer.Option(
+        "",
+        "-cm",
+        "--cloud-machine-ids",
+        help="Cloud machine ids to use.",
+        show_default=False,
+    ),
+    cloud_servers_path: str = typer.Option(
+        "",
+        "-csp",
+        "--cloud-servers-path",
+        help="Path to secret cloud server metadata file.",
+        show_default=False,
+    ),
+    cloud_servers_api_keys: str = typer.Option(
+        "",
+        "-csak",
+        "--cloud-servers-api-keys",
+        help="Path to file with cloud Servers api keys.",
+        show_default=False,
+    ),
+    machine_assignment: str = typer.Option(
+        "",
+        "-ma",
+        "--machine-assignment",
+        help="the path to the machine assignment file.",
+        show_default=False,
+    ),
+    # @click.option("--cloud_machine_ids", help="Cloud machine ids to use.")
+    # @click.option("--cloud_servers_path", help="Path to secret cloud server metadata file.")
+    # @click.option(
+    #     "--cloud_servers_api_keys", help="Path to file with cloud Servers api keys."
+    # )
+    # @click.option("--machine_assignment", help="the path to the machine assignment file.")
+    # build_number: str = typer.Option(
+    #     "",
+    #     "--build-number",
+    #     help="The build number",
+    #     required=True,
+    #     show_default=False,
+    # ),
+    product_type: str = typer.Option(
+        XSIAM_PRODUCT_TYPE,
+        "-pt",
+        "--product-type",
+        help="The product type to test against.",
+        show_default=True,
+    ),
+    server_type: str = typer.Option(
+        XSIAM_SERVER_TYPE,
+        "-st",
+        "--server-type",
+        help="The type of server to test against.",
+        show_default=True,
+    ),
+    branch_name: str = typer.Option(
+        "master",
+        "-bn",
+        "--branch-name",
+        help="The current content branch name.",
+        show_default=True,
+    ),
+    nightly: bool = typer.Option(
+        False,
+        "--nightly",
+        "-n",
+        help="Whether the command is being run in nightly mode.",
+    ),
+    artifacts_path: str = typer.Option(
+        ARTIFACTS_PATH,
+        "-ap",
+        "--artifacts-path",
+        help="The path to save artifacts onto.",
+        show_default=True,
+    ),
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
@@ -1512,73 +1934,91 @@ def test_modeling_rule(
     )
     handle_deprecated_args(ctx.args)
 
-    logger.info(
+    logging_manager = ParallelLoggingManager(
+        "test_modeling_rules.log", real_time_logs_only=not nightly
+    )
+
+    logging_manager.info(f"Starting to run tests on Server Type:{server_type}")
+    logging_manager.info(
         "[cyan]Test Modeling Rules directories to test:[/cyan]",
-        extra={"markup": True},
     )
 
     for modeling_rule_directory in inputs:
-        logger.info(
+        logging_manager.info(
             f"[cyan]\t{get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
-            extra={"markup": True},
         )
 
-    retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
-
-    errors = False
-    xml = JUnitXml()
     start_time = datetime.now(timezone.utc)
-    # initialize xsiam client
-    xsiam_client_cfg = XsiamApiClientConfig(
-        base_url=xsiam_url,  # type: ignore[arg-type]
-        api_key=api_key,  # type: ignore[arg-type]
-        auth_id=auth_id,  # type: ignore[arg-type]
-        token=xsiam_token,  # type: ignore[arg-type]
-        collector_token=collector_token,  # type: ignore[arg-type]
+
+    build_context = BuildContext(
+        server_type=server_type,
+        nightly=nightly,
+        build_number="build_number",
+        branch_name=branch_name,
+        retry_attempts=retry_attempts,
+        sleep_interval=sleep_interval,
+        server="server",
+        product_type=product_type,
+        logging_module=logging_manager,
+        cloud_machine_ids="cloud_machine_ids",
+        cloud_servers_path="cloud_servers_path",
+        cloud_servers_api_keys="cloud_servers_api_keys",
+        artifacts_path=artifacts_path,
+        service_account=service_account,
+        artifacts_bucket="artifacts_bucket",
+        api_key=api_key,
     )
-    xsiam_client = XsiamApiClient(xsiam_client_cfg)
-    tenant_demisto_version: Version = xsiam_client.get_demisto_version()
-    for i, modeling_rule_directory in enumerate(inputs, start=1):
-        logger.info(
-            f"[cyan][{i}/{len(inputs)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
-            extra={"markup": True},
-        )
-        success, modeling_rule_test_suite = validate_modeling_rule(
-            modeling_rule_directory,
-            # can ignore the types since if they are not set to str values an error occurs
-            xsiam_url,  # type: ignore[arg-type]
-            retrying_caller,
-            push,
-            interactive,
-            ctx,
-            delete_existing_dataset,
-            xsiam_client=xsiam_client,
-            tenant_demisto_version=tenant_demisto_version,
-        )
-        if success:
-            logger.info(
-                f"[green]Test Modeling rule {get_relative_path_to_content(modeling_rule_directory)} passed[/green]",
-                extra={"markup": True},
+
+    threads_list = []
+    for index, server in enumerate(build_context.servers):
+        thread_name = f"Thread-{index} (execute_tests)"
+        threads_list.append(Thread(target=server.execute_tests, name=thread_name))
+
+    logging_manager.info("Finished creating configurations, starting to run tests.")
+    for thread in threads_list:
+        thread.start()
+
+    for t in threads_list:
+        t.join()
+
+    logging_manager.info("Finished running tests.")
+    for server in build_context.servers:
+        if not server.mockable_tests_to_run.empty():
+            logging_manager.critical(
+                "Not all tests have been executed. Not destroying instances. Exiting",
+                real_time=True,
             )
-        else:
-            errors = True
-            logger.error(
-                f"[red]Test Modeling Rule {get_relative_path_to_content(modeling_rule_directory)} failed[/red]",
-                extra={"markup": True},
-            )
-        if modeling_rule_test_suite:
-            modeling_rule_test_suite.add_property(
-                "start_time",
-                start_time,  #  type:ignore[arg-type]
-            )
-            xml.add_testsuite(modeling_rule_test_suite)
+            sys.exit(1)
+    # if (
+    #         build_context.tests_data_keeper.playbook_skipped_integration
+    #         and build_context.build_name != "master"
+    #         and not build_context.is_nightly
+    # ):
+    #     skipped_integrations = "\n- ".join(
+    #         build_context.tests_data_keeper.playbook_skipped_integration
+    #     )
+    #     comment = f"{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}"
+    #     _add_pr_comment(comment, logging_manager)
+    # build_context.tests_data_keeper.print_test_summary(
+    #     build_context.isAMI, logging_manager
+    # )
+    # build_context.tests_data_keeper.create_result_files()
 
     if output_junit_file:
         logger.info(
             f"[cyan]Writing JUnit XML to {get_relative_path_to_content(output_junit_file)}[/cyan]",
             extra={"markup": True},
         )
-        xml.write(output_junit_file.as_posix(), pretty=True)
+        build_context.tests_data_keeper.test_results_xml_file.write(
+            output_junit_file.as_posix(), pretty=True
+        )
+        if nightly:
+            build_number = build_number
+            build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(
+                server_type,
+                f"test_modeling_rules_report_{build_number}",
+                logging_manager,
+            )
     else:
         logger.info(
             "[cyan]No JUnit XML file path was passed - skipping writing JUnit XML[/cyan]",
@@ -1586,12 +2026,13 @@ def test_modeling_rule(
         )
 
     duration = duration_since_start_time(start_time)
-    if errors:
+    if build_context.tests_data_keeper.errors:
         logger.info(
             f"[red]Test Modeling Rules: Failed, took:{duration} seconds[/red]",
             extra={"markup": True},
         )
         raise typer.Exit(1)
+
     logger.info(
         f"[green]Test Modeling Rules: Passed, took:{duration} seconds[/green]",
         extra={"markup": True},

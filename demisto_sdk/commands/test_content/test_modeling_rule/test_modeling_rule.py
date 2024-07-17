@@ -13,13 +13,11 @@ import demisto_client
 import pytz
 import requests
 import typer
-from demisto_client.demisto_api import DefaultApi
 from google.cloud import storage  # noqa type: ignore[attr-defined]
 from junitparser import Error
 from junitparser import JUnitXml, TestCase, TestSuite
 from junitparser.junitparser import Failure, Result, Skipped
 from packaging.version import Version
-from slack_sdk import WebClient as SlackClient
 from tabulate import tabulate
 from tenacity import (
     Retrying,
@@ -32,11 +30,7 @@ from typer.main import get_command_from_info
 
 from commands.test_content.tools import get_ui_url
 from demisto_sdk.commands.common.constants import (
-    FILTER_CONF,
     XSIAM_SERVER_TYPE,
-    XSOAR_SAAS_SERVER_TYPE,
-    XSOAR_PRODUCT_TYPE,
-    XSIAM_PRODUCT_TYPE,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
@@ -1374,7 +1368,8 @@ def tenant_config_cb(
 ):
     if ctx.resilient_parsing:
         return
-    if param.value_is_missing(value):
+    # Only check the params if the machine_assignment is not set.
+    if param.value_is_missing(value) and not ctx.params.get("machine_assignment"):
         err_str = (
             f"{param.name} must be set either via the environment variable "
             f'"{param.envvar}" or passed explicitly when running the command'
@@ -1386,7 +1381,8 @@ def tenant_config_cb(
 def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]):
     if ctx.resilient_parsing:
         return
-    if param.value_is_missing(value):
+    # Only check the params if the machine_assignment is not set.
+    if param.value_is_missing(value) and not ctx.params.get("machine_assignment"):
         parameter_to_check = "xsiam_token"
         other_token = ctx.params.get(parameter_to_check)
         if not other_token:
@@ -1443,14 +1439,11 @@ class TestResults:
 class BuildContext:
     def __init__(
         self,
-        server_type,
         nightly,
         build_number,
         branch_name,
         retry_attempts,
         sleep_interval,
-        server,
-        product_type,
         logging_module: ParallelLoggingManager,
         cloud_machine_ids,
         cloud_servers_path,
@@ -1458,7 +1451,12 @@ class BuildContext:
         artifacts_path,
         service_account,
         artifacts_bucket,
+        xsiam_url,
+        xsiam_token,
         api_key,
+        auth_id,
+        collector_token,
+        inputs,
         machine_assignment,
         push,
         interactive,
@@ -1471,17 +1469,18 @@ class BuildContext:
         self.retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
 
         self.ctx = ctx
-        self.server_type = server_type
-        self.is_saas_server_type = self.server_type in [
-            XSIAM_SERVER_TYPE,
-            XSOAR_SAAS_SERVER_TYPE,
-        ]
         self.is_nightly = nightly
         self.build_number = build_number
         self.build_name = branch_name
-        self.server = server
-        self.is_local_run = self.server is not None
-        self.product_type = product_type
+
+        # -------------------------- Manual run on a single instance --------------------------
+        self.xsiam_url = xsiam_url
+        self.xsiam_token = xsiam_token
+        self.api_key = api_key
+        self.auth_id = auth_id
+        self.collector_token = collector_token
+        self.inputs = inputs
+
         self.push = push
         self.interactive = interactive
         self.delete_existing_dataset = delete_existing_dataset
@@ -1491,19 +1490,14 @@ class BuildContext:
         self.cloud_machines = cloud_machine_ids.split(",")
         self.cloud_servers_path = cloud_servers_path
         self.cloud_servers_api_keys_path = cloud_servers_api_keys
-        # self.conf, self.secret_conf = self._load_conf_files(
-        #     kwargs["conf"], kwargs["secret"]
-        # )
 
-        if self.is_saas_server_type:
-            cloud_conf = get_json_file(self.cloud_servers_path)
-            self.env_json = {
-                machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
-            }
-            self.api_key = get_json_file(self.cloud_servers_api_keys_path)
-        else:
-            self.env_json = self._load_env_results_json()
-            self.api_key = api_key
+        cloud_conf = get_json_file(self.cloud_servers_path)
+        self.env_json = {
+            machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
+        }
+        self.cloud_servers_api_keys_path = get_json_file(
+            self.cloud_servers_api_keys_path
+        )
 
         # --------------------------- Testing preparation -------------------------------
 
@@ -1517,8 +1511,6 @@ class BuildContext:
 
         # --------------------------- Machine preparation logic -------------------------------
 
-        # self.instances_ips = self._get_instances_ips()
-        # self.server_numeric_version = self._get_server_numeric_version()
         self.servers = self.create_servers()
 
     @staticmethod
@@ -1529,100 +1521,60 @@ class BuildContext:
         with open(ENV_RESULTS_PATH) as json_file:
             return json.load(json_file)
 
-    #
-    # @staticmethod
-    # def _load_conf_files(conf_path, secret_conf_path):
-    #     with open(conf_path) as data_file:
-    #         conf = Conf(json.load(data_file))
-    #
-    #     secret_conf = None
-    #     if secret_conf_path:
-    #         with open(secret_conf_path) as data_file:
-    #             secret_conf = SecretConf(json.load(data_file))
-    #
-    #     return conf, secret_conf
-
-    @staticmethod
-    def _extract_filtered_tests() -> list:
-        """
-        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
-        in the current build
-        Returns:
-            A list of playbook IDs that should be run in the current build
-        """
-        with open(FILTER_CONF) as filter_file:
-            filtered_tests = [line.strip("\n") for line in filter_file.readlines()]
-
-        return filtered_tests
-
     def create_servers(self):
         """
         Create servers object based on build type.
         """
-        return (
-            [
+        # If xsiam_url is provided we assume it's a run on a single server.
+        if self.xsiam_url:
+            return [
                 CloudServerContext(
                     self,
-                    server_private_ip=self.env_json.get(machine, {}).get(
-                        "base_url", ""
-                    ),
-                    cloud_machine=machine,
+                    base_url=self.xsiam_url,
+                    api_key=self.api_key,
+                    auth_id=self.auth_id,
+                    ui_url=get_ui_url(self.xsiam_url),
+                    tests=self.inputs,
                 )
-                for machine in self.machine_assignment_json
             ]
-            # if self.is_saas_server_type
-            # else [
-            #     OnPremServerContext(
-            #         self,
-            #         server_private_ip=server_ip,
-            #         use_retries_mechanism=self.use_retries_mechanism,
-            #     )
-            #     for server_ip in self.instances_ips
-            # ]
-        )
+        return [
+            CloudServerContext(
+                self,
+                base_url=self.env_json.get(machine, {}).get("base_url", ""),
+                api_key=self.cloud_servers_api_keys_path.get(machine, {}).get(
+                    "api_key", ""
+                ),
+                auth_id=self.cloud_servers_api_keys_path.get(machine, {}).get(
+                    "auth_id", ""
+                ),
+                ui_url=self.env_json.get(machine, {}).get("ui_url", ""),
+                tests=self.env_json.get(machine, {}).get("playbooks_to_run", []),
+            )
+            for machine in self.machine_assignment_json
+        ]
 
 
-class ServerContext:
+class CloudServerContext:
     def __init__(
         self,
         build_context: BuildContext,
-        server_private_ip: str,
+        base_url: str,
+        api_key: str,
+        auth_id: str,
+        ui_url: str,
+        tests: List[Path],
     ):
-
-        # --------------------------- Overall build configuration -------------------------------
-
-        self.auth_id = None
-        self.api_key = None
-        self.server_ip = server_private_ip
-        self.server_url: str = ""
         self.build_context = build_context
-        self.cloud_ui_path = None
-        self.client: Optional[DefaultApi] = None
-
-
-class CloudServerContext(ServerContext):
-    def __init__(
-        self,
-        build_context: BuildContext,
-        server_private_ip: str,
-        cloud_machine: str,
-    ):
-        super().__init__(build_context, server_private_ip)
-        self.server_url = self.server_ip
-        self.api_key = self.build_context.api_key.get(cloud_machine)
-        self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(
-            "x-xdr-auth-id"
-        )
+        self.client = None
+        self.base_url = base_url
+        self.api_key = api_key
+        self.auth_id = auth_id
         os.environ.pop(
             "DEMISTO_USERNAME", None
         )  # we use client without demisto username
         self.configure_new_client()
-        self.cloud_ui_path = self.build_context.env_json.get(cloud_machine, {}).get(
-            "ui_url"
-        )
-        self.filtered_tests = self.build_context.machine_assignment_json.get(
-            cloud_machine, {}
-        ).get("playbooks_to_run")
+        self.ui_url = ui_url
+        self.tests = tests
 
     def configure_new_client(self):
         if self.client:
@@ -1630,7 +1582,7 @@ class CloudServerContext(ServerContext):
             self.client.api_client.pool.terminate()
             del self.client
         self.client = demisto_client.configure(
-            base_url=self.server_url,
+            base_url=self.base_url,
             api_key=self.api_key,
             auth_id=self.auth_id,
             verify_ssl=False,
@@ -1639,24 +1591,15 @@ class CloudServerContext(ServerContext):
     def execute_tests(self):
         try:
             self.build_context.logging_module.info(
-                f"Starts tests with server url - {get_ui_url(self.server_url)}",
+                f"Starts tests with server url - {get_ui_url(self.ui_url)}",
                 real_time=True,
             )
+            start_time = datetime.utcnow()
             self.build_context.logging_module.info(
-                f"Running the following tests: {self.filtered_tests}",
+                f"Running the following tests: {self.tests}",
                 real_time=True,
             )
-            # self._execute_mockable_tests()
-            # self.build_context.logging_module.info(
-            #     "Running mock-disabled tests", real_time=True
-            # )
-            # self.configure_new_client()
-            # self._execute_unmockable_tests()
-            # if self.use_retries_mechanism:
-            #     self.build_context.logging_module.info(
-            #         "Running failed tests", real_time=True
-            #     )
-            #     self._execute_failed_tests()
+
             xsiam_client_cfg = XsiamApiClientConfig(
                 base_url=xsiam_url,  # type: ignore[arg-type]
                 api_key=api_key,  # type: ignore[arg-type]
@@ -1666,9 +1609,9 @@ class CloudServerContext(ServerContext):
             )
             xsiam_client = XsiamApiClient(xsiam_client_cfg)
             tenant_demisto_version: Version = xsiam_client.get_demisto_version()
-            for i, modeling_rule_directory in enumerate(self.filtered_tests, start=1):
+            for i, modeling_rule_directory in enumerate(self.tests, start=1):
                 logger.info(
-                    f"[cyan][{i}/{len(self.filtered_tests)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
+                    f"[cyan][{i}/{len(self.tests)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
                     extra={"markup": True},
                 )
                 success, modeling_rule_test_suite = validate_modeling_rule(
@@ -1689,7 +1632,7 @@ class CloudServerContext(ServerContext):
                         extra={"markup": True},
                     )
                 else:
-                    errors = True
+                    self.build_context.tests_data_keeper.errors = True
                     logger.error(
                         f"[red]Test Modeling Rule {get_relative_path_to_content(modeling_rule_directory)} failed[/red]",
                         extra={"markup": True},
@@ -1703,15 +1646,14 @@ class CloudServerContext(ServerContext):
                     )
 
                     self.build_context.logging_module.info(
-                        f"Finished tests with server url - "
-                        f"{get_ui_url(self.server_url)}",
+                        f"Finished tests with server url - " f"{self.ui_url}",
                         real_time=True,
                     )
-            #
-            # self.build_context.logging_module.debug(
-            #     f"Tests executed on server {self.server_ip}:\n"
-            #     f"{pformat(self.executed_tests)}"
-            # )
+            duration = duration_since_start_time(start_time)
+            self.build_context.logging_module.info(
+                f"Finished tests with server url - {self.ui_url}, Took: {duration} seconds",
+                real_time=True,
+            )
         except Exception:
             self.build_context.logging_module.exception("~~ Thread failed ~~")
             raise
@@ -1858,33 +1800,6 @@ def test_modeling_rule(
         help="the path to the machine assignment file.",
         show_default=False,
     ),
-    # @click.option("--cloud_machine_ids", help="Cloud machine ids to use.")
-    # @click.option("--cloud_servers_path", help="Path to secret cloud server metadata file.")
-    # @click.option(
-    #     "--cloud_servers_api_keys", help="Path to file with cloud Servers api keys."
-    # )
-    # @click.option("--machine_assignment", help="the path to the machine assignment file.")
-    # build_number: str = typer.Option(
-    #     "",
-    #     "--build-number",
-    #     help="The build number",
-    #     required=True,
-    #     show_default=False,
-    # ),
-    product_type: str = typer.Option(
-        XSIAM_PRODUCT_TYPE,
-        "-pt",
-        "--product-type",
-        help="The product type to test against.",
-        show_default=True,
-    ),
-    server_type: str = typer.Option(
-        XSIAM_SERVER_TYPE,
-        "-st",
-        "--server-type",
-        help="The type of server to test against.",
-        show_default=True,
-    ),
     branch_name: str = typer.Option(
         "master",
         "-bn",
@@ -1898,12 +1813,26 @@ def test_modeling_rule(
         "-n",
         help="Whether the command is being run in nightly mode.",
     ),
+    build_number: str = typer.Option(
+        "",
+        "-bn",
+        "--build-number",
+        help="The build number.",
+        show_default=True,
+    ),
     artifacts_path: str = typer.Option(
         ARTIFACTS_PATH,
         "-ap",
         "--artifacts-path",
         help="The path to save artifacts onto.",
         show_default=True,
+    ),
+    artifacts_bucket: str = typer.Option(
+        None,
+        "-ab",
+        "--artifacts_bucket",
+        help="The artifacts bucket name to upload the results to",
+        show_default=False,
     ),
     console_log_threshold: str = typer.Option(
         "INFO",
@@ -1938,7 +1867,18 @@ def test_modeling_rule(
         "test_modeling_rules.log", real_time_logs_only=not nightly
     )
 
-    logging_manager.info(f"Starting to run tests on Server Type:{server_type}")
+    if machine_assignment:
+        if inputs:
+            logger.error(
+                "You cannot pass both machine_assignment and inputs arguments."
+            )
+            raise typer.Exit(1)
+        if xsiam_url:
+            logger.error(
+                "You cannot pass both machine_assignment and xsiam_url arguments."
+            )
+            raise typer.Exit(1)
+
     logging_manager.info(
         "[cyan]Test Modeling Rules directories to test:[/cyan]",
     )
@@ -1951,26 +1891,33 @@ def test_modeling_rule(
     start_time = datetime.now(timezone.utc)
 
     build_context = BuildContext(
-        server_type=server_type,
         nightly=nightly,
-        build_number="build_number",
+        build_number=build_number,
         branch_name=branch_name,
         retry_attempts=retry_attempts,
         sleep_interval=sleep_interval,
-        server="server",
-        product_type=product_type,
         logging_module=logging_manager,
-        cloud_machine_ids="cloud_machine_ids",
-        cloud_servers_path="cloud_servers_path",
-        cloud_servers_api_keys="cloud_servers_api_keys",
+        cloud_machine_ids=cloud_machine_ids,
+        cloud_servers_path=cloud_servers_path,
+        cloud_servers_api_keys=cloud_servers_api_keys,
         artifacts_path=artifacts_path,
         service_account=service_account,
-        artifacts_bucket="artifacts_bucket",
+        artifacts_bucket=artifacts_bucket,
+        machine_assignment=machine_assignment,
+        push=push,
+        interactive=interactive,
+        delete_existing_dataset=delete_existing_dataset,
+        ctx=ctx,
+        xsiam_url=xsiam_url,
+        xsiam_token=xsiam_token,
         api_key=api_key,
+        auth_id=auth_id,
+        collector_token=collector_token,
+        inputs=inputs,
     )
 
     threads_list = []
-    for index, server in enumerate(build_context.servers):
+    for index, server in enumerate(build_context.servers, start=1):
         thread_name = f"Thread-{index} (execute_tests)"
         threads_list.append(Thread(target=server.execute_tests, name=thread_name))
 
@@ -1983,26 +1930,12 @@ def test_modeling_rule(
 
     logging_manager.info("Finished running tests.")
     for server in build_context.servers:
-        if not server.mockable_tests_to_run.empty():
+        if not server.tests:
             logging_manager.critical(
                 "Not all tests have been executed. Not destroying instances. Exiting",
                 real_time=True,
             )
             sys.exit(1)
-    # if (
-    #         build_context.tests_data_keeper.playbook_skipped_integration
-    #         and build_context.build_name != "master"
-    #         and not build_context.is_nightly
-    # ):
-    #     skipped_integrations = "\n- ".join(
-    #         build_context.tests_data_keeper.playbook_skipped_integration
-    #     )
-    #     comment = f"{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}"
-    #     _add_pr_comment(comment, logging_manager)
-    # build_context.tests_data_keeper.print_test_summary(
-    #     build_context.isAMI, logging_manager
-    # )
-    # build_context.tests_data_keeper.create_result_files()
 
     if output_junit_file:
         logger.info(
@@ -2013,9 +1946,8 @@ def test_modeling_rule(
             output_junit_file.as_posix(), pretty=True
         )
         if nightly:
-            build_number = build_number
             build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(
-                server_type,
+                XSIAM_SERVER_TYPE,
                 f"test_modeling_rules_report_{build_number}",
                 logging_manager,
             )

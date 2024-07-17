@@ -275,10 +275,6 @@ ERROR_CODE: Dict = {
         "code": "DO105",
         "related_field": "dockerimage",
     },
-    "docker_not_on_the_latest_tag": {
-        "code": "DO106",
-        "related_field": "dockerimage",
-    },
     "non_existing_docker": {
         "code": "DO107",
         "related_field": "dockerimage",
@@ -2373,18 +2369,6 @@ class Errors:
             f"You can check for the most updated version of {docker_image_name} "
             f"here: {iron_bank_link if is_iron_bank else docker_hub_link} \n"
             f"To update the docker image run:\ndemisto-sdk format -ud -i {file_path}\n"
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def docker_not_on_the_latest_tag(
-        docker_image_tag, docker_image_latest_tag, is_iron_bank=False
-    ) -> str:
-        return (
-            f"The docker image tag is not the latest numeric tag, please update it.\n"
-            f"The docker image tag in the yml file is: {docker_image_tag}\n"
-            f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub"} '
-            f"is: {docker_image_latest_tag}\n"
         )
 
     @staticmethod

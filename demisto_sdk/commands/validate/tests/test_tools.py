@@ -177,6 +177,8 @@ def create_playbook_object(
 def create_modeling_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
+    rules: Optional[str] = None,
+    schema: Optional[dict] = None,
 ) -> ModelingRule:
     """Creating an modeling_rule object with altered fields from a default modeling_rule yml structure.
 
@@ -190,7 +192,7 @@ def create_modeling_rule_object(
     yml_content = load_yaml("modeling_rule.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
-    pack.create_modeling_rule(yml=yml_content)
+    pack.create_modeling_rule(yml=yml_content, rules=rules, schema=schema)
     return cast(ModelingRule, BaseContent.from_path(Path(pack.modeling_rules[0].path)))
 
 

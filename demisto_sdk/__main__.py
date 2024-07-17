@@ -1547,6 +1547,12 @@ def format(ctx, **kwargs):
     default=True,
 )
 @click.option(
+    "-tpb",
+    help="Adds the test playbook for upload when the -tpb flag is used. This flag is relevant only for packs.",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-x",
     "--xsiam",
     help="Upload the pack to XSIAM server. Must be used together with -z",
@@ -3042,7 +3048,6 @@ def openapi_codegen(ctx, **kwargs):
 @click.option("-n", "--nightly", type=bool, help="Run nightly tests")
 @click.option("-sa", "--service_account", help="GCP service account.")
 @click.option("-t", "--slack", help="The token for slack", required=True)
-@click.option("-a", "--circleci", help="The token for circleci", required=True)
 @click.option("-b", "--build-number", help="The build number", required=True)
 @click.option(
     "-g", "--branch-name", help="The current content branch name", required=True
@@ -3080,12 +3085,15 @@ def openapi_codegen(ctx, **kwargs):
     help="On which product type runs the tests:XSIAM, XSOAR",
     default="XSOAR",
 )
+@click.option("--cloud_machine_ids", help="Cloud machine ids to use.")
+@click.option("--cloud_servers_path", help="Path to secret cloud server metadata file.")
 @click.option(
-    "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."
+    "--cloud_servers_api_keys", help="Path to file with cloud Servers api keys."
 )
-@click.option("--xsiam-servers-path", help="Path to secret xsiam server metadata file.")
 @click.option(
-    "--xsiam-servers-api-keys-path", help="Path to file with XSIAM Servers api keys."
+    "--machine_assignment",
+    help="Path to the machine assignment file.",
+    default="./packs_to_install_by_machine.json",
 )
 @click.pass_context
 @logging_setup_decorator
@@ -3800,7 +3808,6 @@ def pre_commit(
 
 main.add_command(typer.main.get_command(pre_commit_app), "pre-commit")
 
-
 # ====================== modeling-rules command group ====================== #
 modeling_rules_app = typer.Typer(
     name="modeling-rules",
@@ -3829,7 +3836,6 @@ app_generate_modeling_rules.command("generate-modeling-rules", no_args_is_help=T
 typer_click_object2 = typer.main.get_command(app_generate_modeling_rules)
 main.add_command(typer_click_object2, "generate-modeling-rules")
 
-
 # ====================== graph command group ====================== #
 
 graph_cmd_group = typer.Typer(
@@ -3843,7 +3849,6 @@ graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
 graph_cmd_group.command("get-dependencies", no_args_is_help=True)(get_dependencies)
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
-
 
 # ====================== Xsoar-Lint ====================== #
 
@@ -3877,7 +3882,6 @@ def xsoar_linter(
 
 
 main.add_command(typer.main.get_command(xsoar_linter_app), "xsoar-lint")
-
 
 # ====================== export ====================== #
 
@@ -3923,7 +3927,6 @@ def dump_api(
 
 
 main.add_command(typer.main.get_command(export_app), "dump-api")
-
 
 if __name__ == "__main__":
     main()

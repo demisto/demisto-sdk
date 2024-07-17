@@ -73,3 +73,8 @@ mapping:
     type: str
   id:xsoar_on_prem:
     type: str
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str
+      enum: ['xsoar', 'xsoar_saas', 'xsoar_on_prem']

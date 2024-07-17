@@ -18,7 +18,7 @@ class NoDescriptionFileValidator(BaseValidator[ContentTypes]):
     description = "Verifies that a Description file is present."
     rationale = "It is recommended to have a Description file for each integration, which for example will have additional details on how to configure the instance."
     error_message = "No Description file was found. Please adding one."
-    related_field = ""
+    related_field = "description file"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.DESCRIPTION_File]
     expected_git_statuses = [GitStatuses.ADDED]

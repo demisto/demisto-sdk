@@ -480,12 +480,11 @@ class PlaybookValidator(ContentEntityValidator):
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
             error_message, error_code = Errors.playbook_unconnected_tasks(orphan_tasks)
-            if not self.handle_error(
+            return self.handle_error(
                 error_message, error_code, file_path=self.file_path
-            ):
-                return False
+            ) is None
 
-        return tasks_bucket.issubset(next_tasks_bucket)
+        return True
 
     @error_codes("PB104")
     def is_valid_as_deprecated(self) -> bool:

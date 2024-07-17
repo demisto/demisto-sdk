@@ -31,6 +31,10 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
     PB_Status,
+    XSOAR_SERVER_TYPE,
+    XSIAM_SERVER_TYPE,
+    XPANSE_SERVER_TYPE,
+    XSOAR_SAAS_SERVER_TYPE,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_demisto_version, get_json_file
@@ -60,11 +64,6 @@ DEFAULT_INTERVAL = 4
 MAX_RETRIES = 3
 RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
 
-SLACK_MEM_CHANNEL_ID = "CM55V7J8K"
-XSOAR_SERVER_TYPE = "XSOAR"
-XSIAM_SERVER_TYPE = "XSIAM"
-XPANSE_SERVER_TYPE = "XPANSE"
-XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
 
 MARKETPLACE_VERSIONS_TO_SERVER_TYPE = {
     MarketplaceVersions.XSOAR: {XSOAR_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE},

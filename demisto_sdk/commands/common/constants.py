@@ -1323,7 +1323,6 @@ OFFICIAL_INDEX_JSON_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETP
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
-FILTER_CONF = "./artifacts/filter_file.txt"
 
 GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com"
 
@@ -1622,7 +1621,7 @@ GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 
 FEATURE_BRANCHES = ["v4.5.0"]
 VERSION_REGEX = r"(\d{1,2}\.){2}\d{1,2}$"
-DOC_FILE_IMAGE_REGEX = r"\.\./doc_files/[a-zA-Z0-9_-]+\.png"
+DOC_FILE_IMAGE_REGEX = r"[\.\./]*doc_files/[a-zA-Z0-9_-]+\.png"
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"

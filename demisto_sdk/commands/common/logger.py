@@ -117,12 +117,8 @@ LOG_FILE_COUNT = environment_variable_to_int(DEMISTO_SDK_LOG_FILE_COUNT, 10)
 
 FILE_LOG_RECORD_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s"
 
-if environment_variable_to_bool("CI"):
-    CONSOLE_LOG_RECORD_FORMAT = "[%(asctime)s] [%(levelname)s] %(message)s"
-    CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(asctime)s] [%(levelname)s] "
-else:
-    CONSOLE_LOG_RECORD_FORMAT = "[%(levelname)s] %(message)s"
-    CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(levelname)s] "
+CONSOLE_LOG_RECORD_FORMAT = "[%(asctime)s] [%(levelname)s] %(message)s"
+CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(asctime)s] [%(levelname)s] "
 
 
 CONSOLE_RECORD_FORMATS = {

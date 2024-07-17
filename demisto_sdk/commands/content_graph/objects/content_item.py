@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Optional, Set, Union
 
 import demisto_client
 from packaging.version import Version
@@ -54,7 +54,7 @@ class ContentItem(BaseContent):
     description: Optional[str] = ""
     is_test: bool = False
     pack: Any = Field(None, exclude=True, repr=False)
-    support_level: Optional[str] = "Hello"
+    support_level: ClassVar [str] =""
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -76,8 +76,8 @@ class ContentItem(BaseContent):
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
 
-    @validator("support_level", always=True)
-    def validate_support_level(cls, v: Optional[str], values) -> str:
+    @validator("support_level", always=True, check_fields=False)
+    def validate_support_level(cls, v:str, values) -> str:
         if v:
             return v
         return (

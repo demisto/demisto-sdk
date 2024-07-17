@@ -12,28 +12,6 @@ class TestValidateFileChangePermissions:
 
     from demisto_sdk.scripts.validate_file_permission_changes import main as func
 
-    # branch_non_permission = "add-integration-code"
-    # branch_permission = "set-integration-executable"
-
-    # @pytest.fixture(autouse=True)
-    # def setup(self, git_repo: Repo, mocker: MockerFixture, tmp_path: Path):
-
-    #     from demisto_sdk.commands.common.git_util import Repo as GitRepo
-    #     from demisto_sdk.scripts.validate_deleted_files import GitUtil
-
-    #     mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
-    #     mocker.patch.object(GitRepo, "remote", return_value="")
-    #     mocker.patch.object(GitUtil, "fetch", return_value=None)
-
-    #     # Set up 'local' remote
-    #     GitUtil.REPO_CLS.init(str(tmp_path), bare=True)
-    #     git_repo.git_util.repo.delete_remote(Remote(git_repo.git_util.repo, "origin"))
-    #     git_repo.git_util.repo.create_remote("origin", str(tmp_path))
-
-    #     # Initialize Pack
-    #     git_repo.create_pack(name="TestPack").create_integration(name="TestIntegration")
-    #     git_repo.git_util.commit_files("Added a new Pack and Integration")
-
     def test_unchanged_permissions(cls, tmp_path: Path):
         """
         Test `validate_file_permission_changes` exit code when

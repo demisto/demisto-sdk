@@ -377,6 +377,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
+            try:
+                shutil.copytree(self.path / "doc_files", path / "doc_files")
+            except FileNotFoundError:
+                logger.debug(f'No such directory {self.path / "doc_files"}')
 
             if self.object_id == BASE_PACK:
                 self._copy_base_pack_docs(path, marketplace)

@@ -8,11 +8,11 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.MR_validators.MR100_validate_schema_file_exists import (
     ValidateSchemaFileExistsValidator,
 )
-from demisto_sdk.commands.validate.validators.MR_validators.MR101_validate_empty_keys import (
-    ValidateEmptyKeysValidator,
-)
 from demisto_sdk.commands.validate.validators.MR_validators.MR106_modeling_rule_scheme_types import (
     ModelingRuleSchemaTypesValidator,
+)
+from demisto_sdk.commands.validate.validators.MR_validators.MR107_is_schema_match_xif import (
+    IsSchemaMatchXIFValidator,
 )
 from demisto_sdk.commands.validate.validators.MR_validators.MR108_invalid_modeling_rule_suffix_name import (
     ModelingRuleSuffixNameValidator,
@@ -119,36 +119,47 @@ def test_ModelingRuleSchemaTypesValidator_valid():
     )
 
 
-def test_ValidateEmptyKeysValidator_is_valid():
+def test_IsSchemaMatchXIFValidator_is_valid():
     """
     Given:
-        - Modeling Rules content items
+    - A list of modeling rules items
+        Case 1: A valid modeling rule
+        Case 2: Four invalid modeling rules objects
+            - A modeling rule object without data sets in thx XIF file.
+            - A modeling rule object without a schema file content.
+            - A modeling rule object where len(xif_datasets) != len(schema_datasets).
+            - A modeling rule object where len(xif_datasets) == len(schema_datasets) but schema_datasets != xif_datasets.
     When:
-        - run is_valid method
+    - calling IsPlaybookContainUnhandledScriptConditionBranchesValidator.is_valid.
     Then:
-        - Ensure that no ValidationResult returned when modeling rule has the right keys.
-        - Ensure that the ValidationResult returned when:
-            - One of the keys has a value in it (test instead of empty string).
-            - One of the keys does not exist as all.
+    - The results should be as expected:
+        Case 1: The modeling rule object is valid.
+        Case 2: All modeling rule objects failed.
     """
-    modeling_rule = create_modeling_rule_object()
+    validator = IsSchemaMatchXIFValidator()
+    modeling_rule = create_modeling_rule_object(
+        rules='[MODEL: dataset="test_audit_raw", model="Model", version=0.1]'
+    )
     # Valid
-    assert not ValidateEmptyKeysValidator().is_valid([modeling_rule])
+    assert not validator.is_valid([modeling_rule])
 
     # Case where there is a value in schema key
-    modeling_rule.schema_key = "test"
-    results = ValidateEmptyKeysValidator().is_valid([modeling_rule])
-    assert (
-        "Either the 'rules' key or the 'schema' key are missing or not empty, "
-        "make sure to set the values of these keys to an empty string."
-        == results[0].message
+    modeling_rule_without_data_sets = create_modeling_rule_object(rules="test")
+    modeling_rule_without_schema = create_modeling_rule_object()
+    modeling_rule_without_schema.schema_file.file_content = {}
+    modeling_rule_with_unequal_lengths = create_modeling_rule_object(
+        schema={"test": 1, "test_2": 2}
     )
-
-    # Case where the rules key does not exist.
-    modeling_rule.rules_key = None
-    results = ValidateEmptyKeysValidator().is_valid([modeling_rule])
+    modeling_rule_with_different_datasets = create_modeling_rule_object()
+    invalid_modeling_rules = [
+        modeling_rule_without_data_sets,
+        modeling_rule_without_schema,
+        modeling_rule_with_unequal_lengths,
+        modeling_rule_with_different_datasets,
+    ]
+    results = validator.is_valid(invalid_modeling_rules)
+    assert len(results) == 4
     assert (
-        "Either the 'rules' key or the 'schema' key are missing or not empty, "
-        "make sure to set the values of these keys to an empty string."
-        == results[0].message
+        results[0].message
+        == "There is a mismatch between datasets in schema file and in the xif file. Either there are more datasets declared in one of the files, or the datasets titles are not the same."
     )

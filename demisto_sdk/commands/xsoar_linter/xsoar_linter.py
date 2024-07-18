@@ -177,10 +177,8 @@ def process_file(file_path: Path) -> ProcessResults:
             results.errors_and_warnings = errors_and_warnings_str
             # catch only error codes from the error and warning string
             for line in errors_and_warnings_str.splitlines():
-                if ERROR_CODE_PATTERN.match(line):
-                    results.errors.append(line)
-                elif WARNING_CODE_PATTERN.match(line):
-                    results.warnings.append(line)
+                if (error_or_warning := ERROR_CODE_PATTERN.match(line)):
+                    results.errors.append(line) if error_or_warning["type"] == "E" else results.warnings.append(line)
         except subprocess.TimeoutExpired:
             results.errors.append(
                 f"Got a timeout while processing the following file: {str(file_path)}"
@@ -230,7 +228,7 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
         
         if os.getenv("GITHUB_ACTIONS"):
             print_errors_github_action(errors)
-            if os.getenv(""):
+            if os.getenv("IS_CONTRIBUTION"):
                 print_errors_github_action(warning)
             
         errors_str = "\n".join(errors)

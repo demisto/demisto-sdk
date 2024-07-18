@@ -1,0 +1,4 @@
+changes:
+- description: Improve the implementation of the **validate-file-permission-changes** hook.
+  type: internal
+pr_number: 4439

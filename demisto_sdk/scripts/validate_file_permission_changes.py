@@ -1,6 +1,6 @@
 import os
 import stat
-from typing import Dict, List
+from typing import List
 
 import typer
 
@@ -64,16 +64,11 @@ def validate_changed_files_permissions(
             f"Iterating over {len(changed_files)} changed files to check if their permissions flags have changed..."
         )
 
-        result: Dict[str, bool] = {}
-
         for changed_file in changed_files:
-            result[changed_file] = is_executable(changed_file)
-
-        for filename, executable in result.items():
-            if executable:
-                logger.error(
-                    f"File '{filename}' has executable bits set. Please revert using command 'chmod -x {filename}'"
-                )
+            if is_executable(changed_file):
                 exit_code = 1
+                logger.error(
+                    f"File '{changed_file}' has executable bits set. Please revert using command 'chmod -x {changed_file}'"
+                )
 
     raise typer.Exit(code=exit_code)

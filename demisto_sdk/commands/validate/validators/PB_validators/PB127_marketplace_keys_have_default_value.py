@@ -19,10 +19,14 @@ ContentTypes = Playbook
 class MarketplaceKeysHaveDefaultValidator(BaseValidator[ContentTypes]):
     error_code = "PB127"
     description = "Ensure that any yml keys that are marketplace only have a default non-marketplace counterpart."
-    rationale = "To be able to validate the existence of required yml keys, we need to make sure that in addition to a specific marketplace key (say mykey:xsoar) there is also a basic key with no specific marketplace (for example: mykey)"
+    rationale = (
+        "To be able to validate the existence of required yml keys, "
+        "we need to make sure that in addition to a specific marketplace key (say mykey:xsoar) "
+        "there is also a basic key with no specific marketplace (for example: mykey)."
+    )
     error_message = (
-        "The following playbook yml keys only do not have a default option: {}. Please remove these keys or add "
-        "another default option to each key."
+        "The following playbook yml keys only do not have a default option: {}. "
+        "Please remove these keys or add another default option to each key."
     )
     fix_message = "Added default value to the following playbook keys:\n{0}"
     marketplace_suffixes = [

@@ -209,10 +209,10 @@ class PackMetadataParser:
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         marketplaces = self._metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
-        marketplace_set: Set[
-            MarketplaceVersions
-        ] = BaseContentParser.update_marketplaces_set_with_xsoar_values(
-            {MarketplaceVersions(mp) for mp in marketplaces}
+        marketplace_set: Set[MarketplaceVersions] = (
+            BaseContentParser.update_marketplaces_set_with_xsoar_values(
+                {MarketplaceVersions(mp) for mp in marketplaces}
+            )
         )
         return sorted(list(marketplace_set))
 

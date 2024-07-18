@@ -1,4 +1,5 @@
 """This file is a part of the generating yml design. Generating a yml file from a python file."""
+
 import datetime
 import importlib.util
 import inspect
@@ -244,9 +245,11 @@ class MetadataToDict:
             "description": self.mc.description,
             "commonfields": {"id": self.mc.integration_name, "version": -1},
             "name": self.mc.integration_name,
-            "display": self.mc.display
-            if self.mc.display
-            else self.mc.integration_name.replace("_", " "),
+            "display": (
+                self.mc.display
+                if self.mc.display
+                else self.mc.integration_name.replace("_", " ")
+            ),
             "configuration": config_keys,
             "script": {
                 "commands": commands,
@@ -381,9 +384,9 @@ class MetadataToDict:
                 MetadataToDict.add_arg_metadata(
                     arg_name=argument.name,
                     description=argument.description if argument.description else "",
-                    default_value=argument.default_value
-                    if argument.default_value
-                    else None,
+                    default_value=(
+                        argument.default_value if argument.default_value else None
+                    ),
                     is_array=argument.is_array,
                     secret=argument.secret,
                     options=options,

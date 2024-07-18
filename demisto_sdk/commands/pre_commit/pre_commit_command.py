@@ -82,17 +82,17 @@ class PreCommitRunner:
 
         for hook_id in hooks.copy():
             if hook_id in custom_hooks_to_classes:
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = custom_hooks_to_classes[hook_id](
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                    custom_hooks_to_classes[hook_id](
+                        **hooks.pop(hook_id), context=pre_commit_context
+                    ).prepare_hook()
+                )
             elif hook_id.endswith("in-docker"):
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = DockerHook(
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                    DockerHook(
+                        **hooks.pop(hook_id), context=pre_commit_context
+                    ).prepare_hook()
+                )
             else:
                 # this is used to handle the mode property correctly even for non-custom hooks which do not require
                 # special preparation
@@ -469,9 +469,11 @@ def group_by_language(
             },
             {
                 (
-                    integration_script.path.relative_to(CONTENT_PATH)
-                    if integration_script.path.is_absolute()
-                    else integration_script.path,
+                    (
+                        integration_script.path.relative_to(CONTENT_PATH)
+                        if integration_script.path.is_absolute()
+                        else integration_script.path
+                    ),
                     integration_script,
                 )
             },

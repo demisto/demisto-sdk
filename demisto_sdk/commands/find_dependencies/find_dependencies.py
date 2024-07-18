@@ -3475,9 +3475,9 @@ def convert_entity_types_to_id_set_headers(excluded_items_by_type: dict):
 
     for key in entity_type_to_header:
         if key in excluded_items_by_type:
-            excluded_items_by_type[
-                entity_type_to_header[key]
-            ] = excluded_items_by_type.pop(key)
+            excluded_items_by_type[entity_type_to_header[key]] = (
+                excluded_items_by_type.pop(key)
+            )
 
 
 def remove_items_from_packs_section(id_set: dict, excluded_items_by_pack: dict) -> None:
@@ -3501,7 +3501,9 @@ def remove_items_from_packs_section(id_set: dict, excluded_items_by_pack: dict) 
             item_type = item_type_to_content_items_header(item_type)
             try:
                 pack_content_items.get(item_type, []).remove(item_name)
-            except ValueError:  # This content item has already been excluded from the id_set
+            except (
+                ValueError
+            ):  # This content item has already been excluded from the id_set
                 pass
 
         # if no content items left, remove the pack from the id_set

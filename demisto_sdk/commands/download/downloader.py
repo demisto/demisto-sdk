@@ -1511,9 +1511,9 @@ class Downloader:
         content_item_entity_directory: str = content_object["entity"]
         content_item_type: FileType = content_object["type"]
         content_item_file_data: StringIO = content_object["file"]
-        source_to_destination_mapping: dict[
-            Path, Path
-        ] = {}  # A mapping of temp file paths to target final paths
+        source_to_destination_mapping: dict[Path, Path] = (
+            {}
+        )  # A mapping of temp file paths to target final paths
         is_unified = content_item_entity_directory in (INTEGRATIONS_DIR, SCRIPTS_DIR)
 
         # If content item is an integration / script, split the unified content item into separate files

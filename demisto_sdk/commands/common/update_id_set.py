@@ -1346,9 +1346,11 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ""):
             "current_version": json_data.get("currentVersion"),
             "source": get_current_repo(),
             "author": json_data.get("author", ""),
-            "certification": "certified"
-            if json_data.get("support", "").lower() in ["xsoar", "partner"]
-            else "",
+            "certification": (
+                "certified"
+                if json_data.get("support", "").lower() in ["xsoar", "partner"]
+                else ""
+            ),
             "tags": json_data.get("tags", []),
             "use_cases": json_data.get("useCases", []),
             "categories": json_data.get("categories", []),

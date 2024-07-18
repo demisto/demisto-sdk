@@ -40,9 +40,9 @@ class TestPylint:
         linter_obj._docker_client.containers.run("test-image").wait.return_value = {
             "StatusCode": exp_container_exit_code
         }
-        linter_obj._docker_client.containers.run(
-            "test-image"
-        ).logs.return_value = exp_container_log.encode("utf-8")
+        linter_obj._docker_client.containers.run("test-image").logs.return_value = (
+            exp_container_log.encode("utf-8")
+        )
         act_container_exit_code, act_container_log = linter_obj._docker_run_linter(
             linter="pylint", test_image="test-image", keep_container=False
         )

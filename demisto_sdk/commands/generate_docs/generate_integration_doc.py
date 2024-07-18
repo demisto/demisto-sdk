@@ -226,9 +226,9 @@ class IntegrationDocUpdateManager:
                 CONFIGURATION_SECTION_STEPS.STEP_4.value
             )
 
-            doc_text_lines[
-                old_config_start_line : old_config_end_line + 1
-            ] = new_configuration_section
+            doc_text_lines[old_config_start_line : old_config_end_line + 1] = (
+                new_configuration_section
+            )
 
             self.output_doc = "\n".join(doc_text_lines)
         except ValueError as e:
@@ -630,7 +630,6 @@ with (Path(__file__).parent / "default_additional_information.json").open() as f
 
 
 def generate_setup_section(yaml_data: dict) -> List[str]:
-
     """
     Generate the configuration section of the README.
     This section includes:
@@ -1280,9 +1279,11 @@ def add_access_data_of_type_credentials(
     access_data.append(
         {
             "Parameter": credentials_conf.get("displaypassword", "Password"),
-            "Description": ""
-            if display_name
-            else string_escape_md(credentials_conf.get("additionalinfo", "")),
+            "Description": (
+                ""
+                if display_name
+                else string_escape_md(credentials_conf.get("additionalinfo", ""))
+            ),
             "Required": credentials_conf.get("required", ""),
         }
     )

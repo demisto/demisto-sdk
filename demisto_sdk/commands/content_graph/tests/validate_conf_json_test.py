@@ -35,9 +35,9 @@ def test_integration_playbook_positive(
         tests=[
             {
                 "playbookID": playbook.name,
-                "integrations": [integration.name]
-                if list_of_integrations
-                else integration.name,
+                "integrations": (
+                    [integration.name] if list_of_integrations else integration.name
+                ),
             }
         ]
     )

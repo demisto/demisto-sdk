@@ -71,9 +71,9 @@ class ContentGraphInterface(ABC):
     def dump_metadata(self, override_commit: bool = True) -> None:
         """Adds metadata to the graph."""
         metadata = {
-            "commit": GitUtil().get_current_commit_hash()
-            if override_commit
-            else self.commit,
+            "commit": (
+                GitUtil().get_current_commit_hash() if override_commit else self.commit
+            ),
             "content_parser_latest_hash": self._get_latest_content_parser_hash(),
             "schema": self.get_schema(),
         }
@@ -193,8 +193,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def clean_graph(self):
-        ...
+    def clean_graph(self): ...
 
     @abstractmethod
     def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
@@ -293,8 +292,7 @@ class ContentGraphInterface(ABC):
         return ContentDTO(packs=packs)
 
     @abstractmethod
-    def create_pack_dependencies(self):
-        ...
+    def create_pack_dependencies(self): ...
 
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
@@ -307,5 +305,4 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def is_alive(self):
-        ...
+    def is_alive(self): ...

@@ -4021,9 +4021,11 @@ def strip_description(description):
     return (
         description.strip('"')
         if description.startswith('"') and description.endswith('"')
-        else description.strip("'")
-        if description.startswith("'") and description.endswith("'")
-        else description
+        else (
+            description.strip("'")
+            if description.startswith("'") and description.endswith("'")
+            else description
+        )
     )
 
 
@@ -4488,9 +4490,11 @@ def get_full_image_paths_from_relative(
     """
 
     return [
-        Path(f"Packs/{pack_name}/{image_path.replace('../', '')}")
-        if "Packs" not in image_path
-        else Path(image_path)
+        (
+            Path(f"Packs/{pack_name}/{image_path.replace('../', '')}")
+            if "Packs" not in image_path
+            else Path(image_path)
+        )
         for image_path in image_paths
     ]
 

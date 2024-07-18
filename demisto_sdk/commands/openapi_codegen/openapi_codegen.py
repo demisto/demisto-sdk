@@ -937,9 +937,12 @@ class OpenAPIIntegration:
                             new_ref_arg = {
                                 "name": k,
                                 "in": arg.get("in"),
-                                "required": True
-                                if k in self.reference.get(ref, {}).get("required", [])
-                                else False,
+                                "required": (
+                                    True
+                                    if k
+                                    in self.reference.get(ref, {}).get("required", [])
+                                    else False
+                                ),
                             }
                             if "$ref" in ref_arg[k]:
                                 new_ref_arg["properties"] = {}
@@ -953,9 +956,9 @@ class OpenAPIIntegration:
                                         new_ref_arg["properties"][ck]["type"] = cv.get(
                                             "type", "string"
                                         )
-                                        new_ref_arg["properties"][ck][
-                                            "description"
-                                        ] = cv.get("description", "")
+                                        new_ref_arg["properties"][ck]["description"] = (
+                                            cv.get("description", "")
+                                        )
                                         new_ref_arg["properties"][ck]["required"] = (
                                             True
                                             if ck

@@ -239,9 +239,11 @@ class XsiamApiClient(XsiamApiInterface):
             endpoint = urljoin(self.base_url, "logs/v1/event")
             additional_headers = {
                 "authorization": self.collector_token,
-                "content-type": "application/json"
-                if data_format.casefold == "json"
-                else "text/plain",
+                "content-type": (
+                    "application/json"
+                    if data_format.casefold == "json"
+                    else "text/plain"
+                ),
                 "content-encoding": "gzip",
             }
             token_type = "collector_token"

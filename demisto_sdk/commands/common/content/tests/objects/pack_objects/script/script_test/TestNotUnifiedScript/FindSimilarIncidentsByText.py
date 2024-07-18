@@ -97,9 +97,11 @@ def incident_to_record(incident, time_field):
         "id": "[{}](#/Details/{})".format(incident["id"], incident["id"]),
         "rawId": incident["id"],
         "name": incident["name"],
-        "closedTime": parse_time(incident["closed"])
-        if incident["closed"] != "0001-01-01T00:00:00Z"
-        else "",
+        "closedTime": (
+            parse_time(incident["closed"])
+            if incident["closed"] != "0001-01-01T00:00:00Z"
+            else ""
+        ),
         "Time": occured_time,
         "similarity": "{:.2f}".format(incident["similarity"]),
     }
@@ -167,7 +169,7 @@ def main():
 
     similarity_vector = get_similar_texts(incident_text, candidates_text)
     similar_incidents = []
-    for (i, similarity) in enumerate(similarity_vector):
+    for i, similarity in enumerate(similarity_vector):
         candidates[i]["similarity"] = similarity
         if similarity >= THRESHOLD:
             similar_incidents.append(candidates[i])

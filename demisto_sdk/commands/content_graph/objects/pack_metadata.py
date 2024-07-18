@@ -201,17 +201,19 @@ class PackMetadata(BaseModel):
                 marketplace=marketplace,
             )
 
-            content_displays[
-                content_item.content_type.metadata_name
-            ] = content_item.content_type.metadata_display_name
+            content_displays[content_item.content_type.metadata_name] = (
+                content_item.content_type.metadata_display_name
+            )
 
         content_displays = {
-            content_type: content_type_display
-            if (
-                collected_content_items[content_type]
-                and len(collected_content_items[content_type]) == 1
+            content_type: (
+                content_type_display
+                if (
+                    collected_content_items[content_type]
+                    and len(collected_content_items[content_type]) == 1
+                )
+                else f"{content_type_display}s"
             )
-            else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
         if (
@@ -428,14 +430,16 @@ class PackMetadata(BaseModel):
         When a support level is provided, the returned display names are without the contribution suffix.
         """
         return [
-            {
-                "name": IntegrationScriptUnifier.remove_support_from_display_name(
-                    integration.display_name, support_level
-                ),
-                "id": integration.object_id,  # same as integration.name
-            }
-            if include_name
-            else integration.object_id
+            (
+                {
+                    "name": IntegrationScriptUnifier.remove_support_from_display_name(
+                        integration.display_name, support_level
+                    ),
+                    "id": integration.object_id,  # same as integration.name
+                }
+                if include_name
+                else integration.object_id
+            )
             for integration in content_items.integration
             if integration.is_data_source()
         ]

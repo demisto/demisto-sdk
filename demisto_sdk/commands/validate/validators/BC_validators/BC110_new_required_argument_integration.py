@@ -12,6 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
+
 # This validation is similar to BC111, but specifically for integrations.
 class NewRequiredArgumentIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "BC110"

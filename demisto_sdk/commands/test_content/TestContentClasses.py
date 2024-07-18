@@ -330,9 +330,9 @@ class TestPlaybook:
                 msg = f"Skipping {self} because it's not in filtered tests"
                 self.log_debug(msg)
                 self.close_test_suite([Skipped(msg)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "not in filtered tests"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    "not in filtered tests"
+                )
                 return False
             return True
 
@@ -347,9 +347,9 @@ class TestPlaybook:
                     self.log_warning(log_message)
                 else:
                     self.log_debug(log_message)
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "nightly test in a non nightly build"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    "nightly test in a non nightly build"
+                )
                 return True
             return False
 
@@ -384,9 +384,9 @@ class TestPlaybook:
                 )
                 self.log_warning(log_message)
                 self.close_test_suite([Skipped(log_message)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
+                )
                 return True
             return False
 
@@ -420,9 +420,9 @@ class TestPlaybook:
                         self.log_warning(log_message)
                         results.append(Skipped(msg))
 
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f'The integrations:{",".join(skipped_integrations)} are skipped'
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    f'The integrations:{",".join(skipped_integrations)} are skipped'
+                )
                 self.test_suite.add_property(
                     "skipped_integrations", ",".join(skipped_integrations)
                 )
@@ -470,9 +470,9 @@ class TestPlaybook:
                 self.log_warning(log_message)
             else:
                 self.log_debug(log_message)
-            skipped_tests_collected[
-                self.configuration.playbook_id
-            ] = f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
+            skipped_tests_collected[self.configuration.playbook_id] = (
+                f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
+            )
             return False  # test has a marketplace value that doesn't matched the build server marketplace
 
         return (
@@ -1813,9 +1813,9 @@ class Integration:
         self.name = integration_name
         self.instance_names = potential_integration_instance_names
         self.instance_name = ""
-        self.configuration: Optional[
-            IntegrationConfiguration
-        ] = IntegrationConfiguration({"name": self.name, "params": {}})
+        self.configuration: Optional[IntegrationConfiguration] = (
+            IntegrationConfiguration({"name": self.name, "params": {}})
+        )
         self.docker_image: list = []
         self.integration_configuration_from_server: dict = {}
         self.integration_type: str = ""
@@ -1872,13 +1872,17 @@ class Integration:
         ]
         if self.name == "Core REST API":
             self.configuration.params = {  # type: ignore
-                "url": server_url
-                if self.build_context.is_saas_server_type
-                else "https://localhost",
-                "creds_apikey": {
-                    "identifier": str(self.server_context.auth_id)
+                "url": (
+                    server_url
                     if self.build_context.is_saas_server_type
-                    else "",
+                    else "https://localhost"
+                ),
+                "creds_apikey": {
+                    "identifier": (
+                        str(self.server_context.auth_id)
+                        if self.build_context.is_saas_server_type
+                        else ""
+                    ),
                     "password": self.server_context.api_key,
                 },
                 "auth_method": "Standard",

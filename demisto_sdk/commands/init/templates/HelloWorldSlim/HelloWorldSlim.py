@@ -9,6 +9,7 @@ The HelloWorldSlim resembles an integration that can retrive an alert from the a
 modify the alert's status.
 
 """
+
 import urllib3
 from typing import Any, Dict
 

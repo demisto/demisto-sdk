@@ -73,9 +73,9 @@ class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValid
             filter(lambda select_value: select_value != "", select_values)
         )  # First remove all empty values
         new_select_values.append("")  # Add back one empty value.
-        content_item.data[
-            "selectValues"
-        ] = content_item.select_values = new_select_values
+        content_item.data["selectValues"] = content_item.select_values = (
+            new_select_values
+        )
 
         return FixResult(
             validator=self,

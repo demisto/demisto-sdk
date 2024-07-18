@@ -274,7 +274,7 @@ def test_mypy_hooks(mocker):
 
     mypy_hook = create_hook(mypy_hook)
     MypyHook(**mypy_hook).prepare_hook()
-    for (hook, python_version) in itertools.zip_longest(
+    for hook, python_version in itertools.zip_longest(
         mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         assert hook["args"][-1] == f"--python-version={python_version}"
@@ -303,7 +303,7 @@ def test_ruff_hook(github_actions, mocker):
     )
     RuffHook(**ruff_hook).prepare_hook()
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
-    for (hook, python_version) in itertools.zip_longest(
+    for hook, python_version in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         assert (
@@ -334,7 +334,7 @@ def test_ruff_hook_nightly_mode(mocker):
 
     RuffHook(**ruff_hook).prepare_hook()
 
-    for (hook, _) in itertools.zip_longest(
+    for hook, _ in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         hook_args = hook["args"]

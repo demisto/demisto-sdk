@@ -494,10 +494,12 @@ class LintManager:
                 for pack in sorted(self._pkgs):
                     linter: Linter = Linter(
                         pack_dir=pack,
-                        content_repo=""
-                        if not self._facts["content_repo"]
-                        else Path(  # type: ignore
-                            self._facts["content_repo"].repo.working_dir
+                        content_repo=(
+                            ""
+                            if not self._facts["content_repo"]
+                            else Path(  # type: ignore
+                                self._facts["content_repo"].repo.working_dir
+                            )
                         ),
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,
@@ -1384,9 +1386,11 @@ class LintManager:
                     "linter": "xsoar_linter",
                     "severity": errors.get("type"),
                     "errorCode": code,
-                    "message": message.split(code)[-1].lstrip()
-                    if len(message.split(code)) >= 1
-                    else "",
+                    "message": (
+                        message.split(code)[-1].lstrip()
+                        if len(message.split(code)) >= 1
+                        else ""
+                    ),
                     "row": split_message[1] if len(split_message) >= 2 else "",
                     "col": split_message[2] if len(split_message) >= 3 else "",
                 }

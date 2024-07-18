@@ -993,9 +993,11 @@ def validate_modeling_rule(
     )
     modeling_rule_test_suite.add_property(
         "test_data_path",
-        get_relative_path_to_content(modeling_rule.testdata_path)
-        if modeling_rule.testdata_path
-        else NOT_AVAILABLE,
+        (
+            get_relative_path_to_content(modeling_rule.testdata_path)
+            if modeling_rule.testdata_path
+            else NOT_AVAILABLE
+        ),
     )
     modeling_rule_test_suite.add_property(
         "schema_path",

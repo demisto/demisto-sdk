@@ -74,9 +74,11 @@ class BaseUpdate:
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
         self.prev_ver = prev_ver
         self.old_file = self.is_old_file(
-            self.relative_content_path
-            if self.relative_content_path
-            else self.output_file,
+            (
+                self.relative_content_path
+                if self.relative_content_path
+                else self.output_file
+            ),
             self.prev_ver,
         )
         self.schema_path = path

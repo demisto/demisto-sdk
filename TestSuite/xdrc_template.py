@@ -19,9 +19,11 @@ class XDRCTemplate(JSONBased):
         self.name = name
 
         self._tmp_path = self.xdrc_template_yml_tmp_path
-        self.write_dict(
-            yaml_content
-        ) if yaml_content else self.create_default_xdrc_template_yaml()
+        (
+            self.write_dict(yaml_content)
+            if yaml_content
+            else self.create_default_xdrc_template_yaml()
+        )
 
         self._tmp_path = self.xdrc_template_tmp_path
         super().__init__(xdrc_template_dir_path, name, "", json_content)

@@ -324,10 +324,8 @@ class Uploader:
             for failure in e.upload_failures:
                 failure_str = failure.additional_info or str(failure)
 
-                _failed_content_item: Union[
-                    Pack, ContentItem, None
-                ] = BaseContent.from_path(
-                    failure.path
+                _failed_content_item: Union[Pack, ContentItem, None] = (
+                    BaseContent.from_path(failure.path)
                 )  # type:ignore[assignment]
 
                 if _failed_content_item is None:
@@ -600,9 +598,11 @@ class ItemDetacher:
                 self.detach_item(file.get("file_id"), file_path=file.get("file_path"))
                 if upload_file:
                     Uploader(
-                        input=Path(raw_file_path)
-                        if (raw_file_path := file.get("file_path")) is not None
-                        else None,
+                        input=(
+                            Path(raw_file_path)
+                            if (raw_file_path := file.get("file_path")) is not None
+                            else None
+                        ),
                         marketplace=self.marketplace,
                     ).upload()
 

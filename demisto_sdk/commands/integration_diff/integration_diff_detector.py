@@ -350,9 +350,11 @@ class IntegrationDiffDetector:
                     parameters.append(
                         {
                             "type": "parameters",
-                            "name": old_param["display"]
-                            if "display" in old_param
-                            else old_param["name"],
+                            "name": (
+                                old_param["display"]
+                                if "display" in old_param
+                                else old_param["name"]
+                            ),
                             "message": f'Missing the parameter \'{old_param["display"] if "display" in old_param else old_param["name"]}\'.',
                         }
                     )

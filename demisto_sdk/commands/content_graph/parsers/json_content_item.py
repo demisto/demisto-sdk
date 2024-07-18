@@ -96,8 +96,8 @@ class JSONContentItemParser(ContentItemParser):
         return self.get_marketplaces(self.json_data)
     
     @property
-    def support_level(self) -> Optional[str]:
-        return self.get_support_level(self.json_data)
+    def support(self) -> Optional[str]:
+        return self.get_support(self.json_data)
 
     @cached_property
     def json_data(self) -> Dict[str, Any]:

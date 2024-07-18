@@ -198,6 +198,7 @@ class BaseContent(BaseNode):
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
+    #support_level: Optional[str] = ""
 
     def _save(
         self,
@@ -255,9 +256,9 @@ class BaseContent(BaseNode):
         """
         raise NotImplementedError
 
-    @property
-    def support_level(self) -> str:
-        raise NotImplementedError
+    # @property
+    # def support_level(self) -> str:
+    #     raise NotImplementedError
 
     def dump(
         self,

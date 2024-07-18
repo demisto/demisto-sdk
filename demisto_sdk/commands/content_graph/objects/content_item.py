@@ -54,7 +54,7 @@ class ContentItem(BaseContent):
     description: Optional[str] = ""
     is_test: bool = False
     pack: Any = Field(None, exclude=True, repr=False)
-    support_level: ClassVar [str] =""
+    support: str =""
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -76,13 +76,13 @@ class ContentItem(BaseContent):
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
 
-    @validator("support_level", always=True, check_fields=False)
-    def validate_support_level(cls, v:str, values) -> str:
+    @validator("support", always=True)
+    def validate_support(cls, v:str, values) -> str:
         if v:
             return v
         return (
-                values.get("in_pack").support_level
-                if values.get("in_pack") and values.get("in_pack").support_level
+                values.get("in_pack").support
+                if values.get("in_pack") and values.get("in_pack").support
                 else ""
             )
 

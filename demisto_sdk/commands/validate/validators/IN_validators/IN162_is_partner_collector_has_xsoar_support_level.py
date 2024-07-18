@@ -47,7 +47,7 @@ class IsPartnerCollectorHasXsoarSupportLevelValidator(BaseValidator[ContentTypes
                 ]
             )
             and (
-                content_item.support_level == PARTNER_SUPPORT
+                content_item.support == PARTNER_SUPPORT
                 and content_item.data.get(SUPPORT_LEVEL_HEADER) != XSOAR_SUPPORT
             )
         ]

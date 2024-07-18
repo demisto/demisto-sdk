@@ -138,7 +138,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     self.related_file_type,
                 ),
                 not is_support_level_support_validation(
-                    self.error_code, support_level_dict, content_item.support_level
+                    self.error_code, support_level_dict, content_item.support
                 ),
             ]
         )

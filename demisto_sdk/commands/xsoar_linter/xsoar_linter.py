@@ -158,7 +158,7 @@ def process_file(file_path: Path) -> ProcessResults:
 
         xsoar_linter_env = build_xsoar_linter_env_var(integration_script)
         env.update(xsoar_linter_env)
-        command = build_xsoar_linter_command(integration_script.support_level)
+        command = build_xsoar_linter_command(integration_script.support)
         command.append(str(file))
 
         try:

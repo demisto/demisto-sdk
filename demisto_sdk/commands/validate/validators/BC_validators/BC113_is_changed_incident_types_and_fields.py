@@ -15,7 +15,7 @@ ContentTypes = Mapper
 class IsChangedIncidentTypesAndFieldsValidator(BaseValidator[ContentTypes]):
     error_code = "BC113"
     description = "Validate that no incident types were removed and no incident fields were changed."
-    rationale = ""
+    rationale = "We want to ensure no breaking changes are made to existing mappers so customers won't lose data between pack updates."
     error_message = "The Mapper contains modified / removed keys:{0}"
     related_field = "mapping"
     is_auto_fixable = False

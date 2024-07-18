@@ -1,0 +1,4 @@
+changes:
+- description: Added support for validation PB127 that verifies default keys where marketplace suffix keys exist in playbooks. (For example if "description:xsoar" exists then "description" should also).
+  type: feature
+pr_number: 4401

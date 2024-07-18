@@ -82,4 +82,3 @@
   entry: validate-xsoar-config
   language: python
   pass_filenames: true
-

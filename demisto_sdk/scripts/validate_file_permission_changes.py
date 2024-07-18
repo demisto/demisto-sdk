@@ -1,5 +1,4 @@
-import os
-import stat
+import subprocess
 from typing import List
 
 import typer
@@ -11,29 +10,37 @@ main = typer.Typer()
 HELP_CHANGED_FILES = "The files to check, e.g. dir/f1 f2 f3.py"
 
 
-def is_executable(file_path: str) -> bool:
+def are_files_executable(file_paths: List[str]) -> List[str]:
     """
-    Checks whether a file has executable bits set or not.
+    Checks whether files have executable bits set or not using `ls -l`.
 
     Arguments:
-    - `file_path` (``str``): The file path to check.
+    - `file_paths` (``List[str]``): The file paths to check.
 
     Returns:
-    - `True` if the file has executable bits set, `False` otherwise.
+    - List of files that have executable bits set.
     """
 
-    # Retrieve the file's status
-    file_stat = os.stat(file_path)
+    # Run the `ls -l` command and capture its output
+    result = subprocess.run(["ls", "-l"] + file_paths, capture_output=True, text=True)
 
-    # Check if the file is executable by owner, group, or others
-    is_owner_executable = file_stat.st_mode & stat.S_IXUSR
-    is_group_executable = file_stat.st_mode & stat.S_IXGRP
-    is_other_executable = file_stat.st_mode & stat.S_IXOTH
+    # List to store files with executable permissions
+    executable_files = []
 
-    if is_owner_executable or is_group_executable or is_other_executable:
-        return True
-    else:
-        return False
+    # Iterate over the output lines
+    for line in result.stdout.strip().split("\n"):
+        # Extract the permission string and the file name
+        parts = line.split(maxsplit=8)
+        if len(parts) > 8:  # Ensure that the line contains enough parts
+            permissions = parts[0]
+            file_name = parts[8]
+
+            # permissions[3], permissions[6], and permissions[9] correspond to
+            # executable bits for owner, group, and others respectively
+            if "x" in permissions[3:10:3]:
+                executable_files.append(file_name)
+
+    return executable_files
 
 
 @main.command(help="Validate that file modes were not changed")
@@ -61,14 +68,17 @@ def validate_changed_files_permissions(
     if changed_files:
 
         logger.debug(
-            f"Iterating over {len(changed_files)} changed files to check if their permissions flags have changed..."
+            f"Checking permissions for {len(changed_files)} changed files using `ls -l`..."
         )
 
-        for changed_file in changed_files:
-            if is_executable(changed_file):
-                exit_code = 1
+        # Get the list of files with executable bits set
+        executable_files = are_files_executable(changed_files)
+
+        if executable_files:
+            exit_code = 1
+            for file in executable_files:
                 logger.error(
-                    f"File '{changed_file}' has executable bits set. Please revert using command 'chmod -x {changed_file}'"
+                    f"File '{file}' has executable bits set. Please revert using command 'chmod -x {file}'"
                 )
 
     raise typer.Exit(code=exit_code)

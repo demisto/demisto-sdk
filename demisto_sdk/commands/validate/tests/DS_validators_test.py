@@ -507,3 +507,38 @@ def test_DescriptionEndsWithDotValidator_fix(
     validator.lines_without_dots[content_item.name] = lines_without_dots
     assert validator.fix(content_item).message == expected_fix_msg
     assert not validator.is_valid([content_item])
+
+
+@pytest.mark.parametrize(
+    "description_file_exist, is_unified, expected_len_errors",
+    [
+        pytest.param(True, False, 0, id="Case 1"),
+        pytest.param(False, True, 0, id="Case 2"),
+        pytest.param(False, False, 1, id="Case 3"),
+    ],
+)
+def test_NoDescriptionFileValidator_is_valid(
+    description_file_exist, is_unified, expected_len_errors
+):
+    """
+    Given:
+        - Case 1: Description file exists in the integration folder, integration is not unified.
+        - Case 2: Description file doesn't exist in the integration folder, but is unified.
+        - Case 3: Description file doesn't exist in the integration folder, and is not unified.
+    When:
+        - Calling the DescriptionInFolderAndYmlValidator is_valid function.
+    Then:
+        - Case 1: Should pass.
+        - Case 2: Should pass.
+        - Case 3: Should fail.
+    """
+    from demisto_sdk.commands.validate.validators.DS_validators.DS104_no_description_file import (
+        NoDescriptionFileValidator,
+    )
+
+    integration = create_integration_object()
+
+    integration.description_file.exist = description_file_exist
+    integration.is_unified = is_unified
+    is_valid = NoDescriptionFileValidator().is_valid([integration])
+    assert len(is_valid) == expected_len_errors

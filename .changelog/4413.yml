@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the Relative path regex wasn't written correctly. This fix affect RM108, RM114 validation in the new validate.
-  type: fix
-pr_number: 4413

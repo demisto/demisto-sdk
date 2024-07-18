@@ -1,4 +1,0 @@
-changes:
-- description: Added the ability to use git.Repo object to initialize GitUtil.
-  type: feature
-pr_number: 4387

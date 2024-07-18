@@ -323,8 +323,8 @@ class Uploader:
                 failure_str = failure.additional_info or str(failure)
 
                 _failed_content_item: Union[Pack, ContentItem, None] = (
-                    BaseContent.from_path(failure.path)
-                )  # type:ignore[assignment]
+                    BaseContent.from_path(failure.path)  # type:ignore[assignment]
+                )
 
                 if _failed_content_item is None:
                     self.failed_parsing.append((failure.path, failure_str))

@@ -29,7 +29,6 @@ from urllib3.exceptions import ReadTimeoutError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    FILTER_CONF,
     MarketplaceVersions,
     PB_Status,
 )
@@ -789,7 +788,6 @@ class BuildContext:
             else []
         )
         self.cloud_servers_path = kwargs.get("cloud_servers_path")
-        self.cloud_servers_api_keys_path = kwargs.get("cloud_servers_api_keys")
         self.use_retries_mechanism = kwargs.get("use_retries", False)
         self.conf, self.secret_conf = self._load_conf_files(
             kwargs["conf"], kwargs["secret"]
@@ -800,7 +798,7 @@ class BuildContext:
             self.env_json = {
                 machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
             }
-            self.api_key = get_json_file(self.cloud_servers_api_keys_path)
+            self.api_key = get_json_file(kwargs.get("cloud_servers_api_keys"))
         else:
             self.env_json = self._load_env_results_json()
             self.api_key = kwargs["api_key"]
@@ -821,19 +819,6 @@ class BuildContext:
         self.instances_ips = self._get_instances_ips()
         self.server_numeric_version = self._get_server_numeric_version()
         self.servers = self.create_servers()
-
-    @staticmethod
-    def _extract_filtered_tests() -> list:
-        """
-        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
-        in the current build
-        Returns:
-            A list of playbook IDs that should be run in the current build
-        """
-        with open(FILTER_CONF) as filter_file:
-            filtered_tests = [line.strip("\n") for line in filter_file.readlines()]
-
-        return filtered_tests
 
     def create_servers(self):
         """
@@ -1229,6 +1214,7 @@ class CloudServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.machine = cloud_machine
         self.server_url = self.server_ip
         self.api_key = self.build_context.api_key.get(cloud_machine)
         self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(
@@ -1427,6 +1413,7 @@ class OnPremServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.machine = self.server_ip
         self.server_url = f"https://{self.server_ip}"
         self.api_key = build_context.api_key
         self.configure_new_client()
@@ -1437,12 +1424,9 @@ class OnPremServerContext(ServerContext):
             build_number=self.build_context.build_number,
             branch_name=self.build_context.build_name,
         )
-        if self.build_context.machine_assignment_json:
-            self.filtered_tests = self.build_context.machine_assignment_json.get(
-                "xsoar-machine", {}
-            ).get("playbooks_to_run", [])
-        else:
-            self.filtered_tests = self.build_context._extract_filtered_tests()
+        self.filtered_tests = self.build_context.machine_assignment_json.get(
+            "xsoar-machine", {}
+        ).get("playbooks_to_run", [])
 
         (
             self.mockable_tests_to_run,

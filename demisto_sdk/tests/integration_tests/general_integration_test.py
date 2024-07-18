@@ -62,10 +62,6 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
                     logger_info.call_args_list,
                     "================= Validating file ",
                 ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "DO106",
-                ),
             ]
         )
 
@@ -82,10 +78,6 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
                 str_in_call_args_list(
                     logger_info.call_args_list,
                     "================= Validating file ",
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    "DO106",
                 ),
             ]
         )

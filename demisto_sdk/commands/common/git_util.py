@@ -1060,7 +1060,7 @@ class GitUtil:
 
     def fetch(self):
         try:
-            self.repo.remote(DEMISTO_GIT_UPSTREAM).fetch()
+            self.repo.remote(DEMISTO_GIT_UPSTREAM).fetch(verbose=False)
         except Exception as e:
             logger.warning(
                 f"Failed to fetch branch '{self.get_current_working_branch()}' "

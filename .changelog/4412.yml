@@ -1,4 +1,0 @@
-changes:
-- description: Print timestamp in console in every environment.
-  type: feature
-pr_number: 4412

@@ -97,8 +97,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         ] = self.validate_structure()
 
     @property
+    @abstractmethod
     def raw_data(self) -> dict:
-        raise NotImplementedError
+        pass
 
     def validate_structure(self) -> Optional[List[StructureError]]:
         """

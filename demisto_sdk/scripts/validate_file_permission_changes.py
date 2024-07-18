@@ -28,7 +28,7 @@ def are_files_executable(file_paths: List[str]) -> List[str]:
     executable_files = []
 
     # Iterate over the output lines
-    for line in result.stdout.strip().split("\n"):
+    for line in result.stdout.strip().splitlines():
         # Extract the permission string and the file name
         parts = line.split(maxsplit=8)
         if len(parts) > 8:  # Ensure that the line contains enough parts

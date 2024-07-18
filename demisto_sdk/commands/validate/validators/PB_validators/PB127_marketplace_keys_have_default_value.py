@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -100,43 +100,63 @@ class MarketplaceKeysHaveDefaultValidator(BaseValidator[ContentTypes]):
 
         return bad_keys
 
-    def get_parent_path_from_data(self, data, key_path):
-        keys = key_path.split(".")
-        last_key = keys[-1]
+    @staticmethod
+    def get_parent_path_from_data(
+        data: Union[list, dict], key_path: str
+    ) -> Tuple[dict, str]:
+        """Return the parent path and the last key from the dataset given.
+
+        Args:
+            data (list | dict): The data to search in.
+            key_path (str): The path to obtain. For example: "root.inputs.[0].description".
+
+        Return:
+            (dict, str): The parent node, the last key name.
+        """
+        keys: list = key_path.split(".")
+        last_key: str = keys[-1]
         keys = keys[1:-1]  # No root and no last key
-        data_node = data
+        data_node: Union[list, dict] = data
         for key_index, key in enumerate(keys):
             if (
                 key.startswith("[")
                 and key.endswith("]")
                 and isinstance(data_node, list)
             ):
-                key = int(key[1:-1])
+                # If it is a list node, the key is numerical
+                key = int(key[1:-1])  # type: ignore[assignment]
             data_node = data_node[key]
 
-        if (
-            last_key.startswith("[")
-            and last_key.endswith("]")
-            and isinstance(data_node, list)
-        ):
-            last_key = int(key[1:-1])
-
-        return data_node, last_key
+        # During the iteration data_node can be a list.
+        # If the key with a suffix is found, the parent can only be a dict.
+        # Therefor the iteration will end with a dict and a string.
+        return data_node, last_key  # type: ignore[return-value]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
+        """Add default value to keys with marketplace suffix. Add the first one encountered.
+
+        Args:
+            content_item (ContentTypes): The content item to fix.
+
+        Return:
+            (FixResult) The relevant fix result.
+        """
         new_content_data = content_item.data
-        bad_paths = self.bad_paths_dict[content_item.name]
+        # Go to the longest, nested paths first.
+        bad_paths = sorted(self.bad_paths_dict[content_item.name], key=len)[::-1]
         default_paths_used = {}
         for bad_path in bad_paths:
             parent_datum, last_key = self.get_parent_path_from_data(
                 new_content_data, bad_path
             )
+            # Go over the available suffixes and find the first match.
             for suffix in self.marketplace_suffixes:
                 key_with_suffix = f"{last_key}{SEPARATOR}{suffix}"
                 if key_with_suffix in parent_datum.keys():
                     new_default_value = parent_datum[key_with_suffix]
                     parent_datum[last_key] = new_default_value
                     default_paths_used[bad_path] = key_with_suffix
+                    # No need to continue looking after a match is found
                     break
 
         return FixResult(

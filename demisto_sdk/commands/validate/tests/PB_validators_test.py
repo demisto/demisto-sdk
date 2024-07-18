@@ -956,7 +956,7 @@ def test_IsPlayBookUsingAnInstanceValidator_fix():
 
 
 @pytest.mark.parametrize(
-    "playbook_paths, playbook_values, expected_bad_keys",
+    "playbook_paths, playbook_values, expected_bad_keys, expected_fixed_values",
     [
         # Case 1: No marketplace suffixes specified.
         (
@@ -993,6 +993,7 @@ def test_IsPlayBookUsingAnInstanceValidator_fix():
                 },
             ],
             [],
+            {},
         ),
         # Case 2: Various suffixes without a default.
         (
@@ -1028,8 +1029,8 @@ def test_IsPlayBookUsingAnInstanceValidator_fix():
                 [
                     {
                         "key": "some_key",
-                        "value:xsoar": {"simple:xsoar_saas": "some value"},
-                        "value:xsoar_on_prem": {"simple": "some value"},
+                        "value:xsoar": {"simple:xsoar_saas": "some saas value"},
+                        "value:xsoar_on_prem": {"simple": "some prem value"},
                         "required": False,
                         "description:xpanse": "some_key_desc",
                         "playbookInputQuery": None,
@@ -1037,12 +1038,65 @@ def test_IsPlayBookUsingAnInstanceValidator_fix():
                 ],
             ],
             [
-                "root.tasks.1:xsoar",
-                "root.tasks.1:marketplacev2",
-                "root.inputs.[0].value:xsoar.simple:xsoar_saas",
-                "root.inputs.[0].value:xsoar",
-                "root.inputs.[0].value:xsoar_on_prem",
-                "root.inputs.[0].description:xpanse",
+                "root.tasks.1",
+                "root.inputs.[0].value:xsoar.simple",
+                "root.inputs.[0].value",
+                "root.inputs.[0].description",
+            ],
+            [
+                "0",
+                {
+                    "0": {
+                        "id": "test task",
+                        "type": "regular",
+                        "message": {"replyOptions": ["yes"]},
+                        "nexttasks": {"#none#": ["1"]},
+                        "task": {"id": "some_id"},
+                        "taskid": "some_id",
+                    },
+                    "1": {
+                        "id": "test task",
+                        "type": "condition",
+                        "message": {"replyOptions": ["yes"]},
+                        "nexttasks": {"no": ["2"]},
+                        "task": {"id": "some_id1"},
+                        "taskid": "some_id1",
+                    },
+                    "1:xsoar": {
+                        "id": "test task",
+                        "type": "condition",
+                        "message": {"replyOptions": ["yes"]},
+                        "nexttasks": {"no": ["2"]},
+                        "task": {"id": "some_id1"},
+                        "taskid": "some_id1",
+                    },
+                    "1:marketplacev2": {
+                        "id": "test task",
+                        "type": "condition",
+                        "message": {"replyOptions": ["yes"]},
+                        "nexttasks": {"no": ["2"]},
+                        "task": {"id": "some_id1"},
+                        "taskid": "some_id1",
+                    },
+                },
+                [
+                    {
+                        "key": "some_key",
+                        "value": {
+                            "simple:xsoar_saas": "some saas value",
+                            "simple": "some saas value",
+                        },
+                        "value:xsoar": {
+                            "simple:xsoar_saas": "some saas value",
+                            "simple": "some saas value",
+                        },
+                        "value:xsoar_on_prem": {"simple": "some prem value"},
+                        "required": False,
+                        "description:xpanse": "some_key_desc",
+                        "description": "some_key_desc",
+                        "playbookInputQuery": None,
+                    }
+                ],
             ],
         ),
         # Case 3: All keys with suffixes have default.
@@ -1102,11 +1156,12 @@ def test_IsPlayBookUsingAnInstanceValidator_fix():
                 ],
             ],
             [],
+            [],
         ),
     ],
 )
 def test_MarketplaceKeysHaveDefaultValidator(
-    playbook_paths, playbook_values, expected_bad_keys
+    playbook_paths, playbook_values, expected_bad_keys, expected_fixed_values
 ):
     """
     Given: A playbook with:
@@ -1124,8 +1179,21 @@ def test_MarketplaceKeysHaveDefaultValidator(
         "another default option to each key."
     )
     playbook_obj = create_playbook_object(paths=playbook_paths, values=playbook_values)
-
-    results = MarketplaceKeysHaveDefaultValidator().is_valid([playbook_obj])
+    marketplace_suffix_validator = MarketplaceKeysHaveDefaultValidator()
+    results = marketplace_suffix_validator.is_valid([playbook_obj])
     assert len(results) == (1 if expected_bad_keys else 0)
     if results:
         assert results[0].message == error_message.format(expected_bad_keys)
+
+        fix_validator = marketplace_suffix_validator.fix(playbook_obj)
+        fix_message = fix_validator.message
+        fixed_content_item: Playbook = fix_validator.content_object
+
+        expected_playbook_obj = create_playbook_object(
+            paths=playbook_paths, values=expected_fixed_values
+        )
+
+        for expected_bad_key in expected_bad_keys:
+            assert expected_bad_key in fix_message
+
+        assert fixed_content_item.data == expected_playbook_obj.data

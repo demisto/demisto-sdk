@@ -11,11 +11,9 @@ app = typer.Typer()
 
 @app.command("run")
 def run(path: Path = Path.cwd()):
-    path = Path("/Users/rshunim/dev/demisto/content/Packs/Arkime/Integrations/Arkime")
-    os.chdir(path)
-    # python_files =
+    path = Path("/Users/rshunim/dev/demisto/content/Packs/ipinfo/Integrations/ipinfo_v2")
     modules = subprocess.run(
-        ["monkeytype", "list-modules"], text=True, check=True, capture_output=True
+        ["monkeytype", "list-modules"], text=True, check=True, capture_output=True, cwd=path,
     ).stdout.splitlines()
     runner_path = path / "runner.py"
     python_path = ':'.join(str(path) for path in PYTHONPATH)
@@ -29,12 +27,16 @@ def run(path: Path = Path.cwd()):
         ],
         check=True,
         env=env,
+        cwd=path
     )
-    runner_path.write_text("\n".join(f"import {module}" for module in modules))
+    modules = subprocess.run(
+        ["monkeytype", "list-modules"], text=True, check=True, capture_output=True, cwd=path,
+    ).stdout.splitlines()
     filtered_modules = set(modules).difference(("demistomock", "CommonServerPython"))
+    runner_path.write_text("\n".join(f"import {module}\n{module}.main()" for module in filtered_modules))
     for module in filtered_modules:
-        subprocess.run(["monkeytype", "-v", "stub", module], check=True)
-        subprocess.run(["monkeytype", "-v", "apply", module], check=True)
+        subprocess.run(["monkeytype", "-v", "stub", module], check=True, cwd=path)
+        subprocess.run(["monkeytype", "-v", "apply", module], check=True, cwd=path)
     runner_path.unlink()
 
 

@@ -491,12 +491,19 @@ class IntegrationScriptUnifier(Unifier):
                 if "// pack version:" in script_code
                 else f"// pack version: {pack_version}\n{script_code}"
             )
-        elif script_type in {".py", ".ps1"}:
+        elif script_type == ".ps1":
             return (
                 script_code
                 if "### pack version:" in script_code
                 else f"### pack version: {pack_version}\n{script_code}"
             )
+        elif script_type == ".py":
+            if "### pack version:" not in script_code:
+                script_code = f"### pack version: {pack_version}\n{script_code}"
+            if "os.environ['PACK_VERSION'] =" not in script_code:
+                script_code = f"os.environ['PACK_VERSION'] = '{pack_version}'\n{script_code}"
+            return script_code
+
         return script_code
 
     @staticmethod

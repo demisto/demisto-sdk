@@ -36,9 +36,9 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
                     content_item.description or ""
                 )
             ) and is_invalid_description_sentence(stripped_description):
-                self.lines_without_dots[content_item.name][
-                    "description"
-                ] = f"{stripped_description}."
+                self.lines_without_dots[content_item.name]["description"] = (
+                    f"{stripped_description}."
+                )
                 lines_with_missing_dot = f"{lines_with_missing_dot}\nThe file's {'comment' if isinstance(content_item, Script) else 'description'} field is missing a '.' at the end of the sentence."
             lines_with_missing_dot_dict: Dict[str, List[str]] = {}
             if isinstance(content_item, Script):
@@ -46,9 +46,9 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
                     content_item, lines_with_missing_dot_dict
                 ):
                     lines_with_missing_dot = f"{lines_with_missing_dot}\n{args_and_context_lines_with_missing_dot}"
-                    self.lines_without_dots[
-                        content_item.name
-                    ] = lines_with_missing_dot_dict
+                    self.lines_without_dots[content_item.name] = (
+                        lines_with_missing_dot_dict
+                    )
             else:
                 for command in content_item.commands:
                     if current_command := is_line_ends_with_dot(
@@ -57,9 +57,9 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
                         lines_with_missing_dot += (
                             f"\n- In command '{command.name}':{current_command}"
                         )
-                        self.lines_without_dots[content_item.name][
-                            command.name
-                        ] = lines_with_missing_dot_dict
+                        self.lines_without_dots[content_item.name][command.name] = (
+                            lines_with_missing_dot_dict
+                        )
                         lines_with_missing_dot_dict = {}
             if lines_with_missing_dot:
                 results.append(

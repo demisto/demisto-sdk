@@ -151,7 +151,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         super().__init__(
             structure_validator,
             oldest_supported_version=LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION,
-            **kwargs
+            **kwargs,
         )
 
     def is_valid_layout(

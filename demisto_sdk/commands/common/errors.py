@@ -2276,8 +2276,9 @@ class Errors:
     @error_code_decorator
     def breaking_backwards_arg_changed(cls):
         return (
-            "{}, You've changed the name of an arg in "
-            "the file, please undo.".format(cls.BACKWARDS)
+            "{}, You've changed the name of an arg in " "the file, please undo.".format(
+                cls.BACKWARDS
+            )
         )
 
     @classmethod

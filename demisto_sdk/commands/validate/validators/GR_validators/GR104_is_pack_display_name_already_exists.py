@@ -31,7 +31,6 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
     def is_valid_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-
         file_paths_to_objects = {
             str(content_item.path.relative_to(CONTENT_PATH)): content_item
             for content_item in content_items

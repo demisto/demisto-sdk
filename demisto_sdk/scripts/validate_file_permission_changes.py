@@ -66,7 +66,7 @@ def is_ci() -> bool:
 def validate_changed_files_permissions(
     changed_files: List[str] = typer.Argument(
         default=None, help=HELP_CHANGED_FILES, callback=split_files
-    )
+    ),
 ) -> None:
     """
     Validate whether the file mode was modified. Exit code 0 if no files
@@ -97,7 +97,6 @@ def validate_changed_files_permissions(
         ]
 
     if changed_files:
-
         logger.debug(
             f"The following changed files were found comparing '{DEMISTO_GIT_PRIMARY_BRANCH}': {', '.join(changed_files)}"
         )

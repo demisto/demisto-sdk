@@ -36,7 +36,6 @@ class IsValidTypeValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         validator_results: List[ValidationResult] = []
         for content_item in content_items:
-
             if (
                 MarketplaceVersions.MarketplaceV2.value in content_item.marketplaces
                 and (invalid_types := self.get_invalid_layout_type(content_item))

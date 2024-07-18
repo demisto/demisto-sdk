@@ -47,7 +47,9 @@ class IsValidModulesValidator(BaseValidator[ContentTypes]):
         content_item: ContentTypes,
     ) -> FixResult:
         content_item.modules = [
-            module for module in content_item.modules if module not in self.non_approved_modules_dict[content_item.name]  # type: ignore[union-attr, arg-type]
+            module
+            for module in content_item.modules
+            if module not in self.non_approved_modules_dict[content_item.name]  # type: ignore[union-attr, arg-type]
         ]
         return FixResult(
             validator=self,

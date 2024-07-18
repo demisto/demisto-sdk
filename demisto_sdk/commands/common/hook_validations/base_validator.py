@@ -266,9 +266,7 @@ class BaseValidator:
         ):  # warnings are not printed
             github_annotation_message = (
                 f"{error_message}\n{suggested_fix}" if suggested_fix else error_message
-            ).replace(
-                "\n", "%0A"
-            )  # GitHub action syntax
+            ).replace("\n", "%0A")  # GitHub action syntax
             print(  # noqa: T201
                 f"::error file={file_path},line=1,endLine=1,title=Validation Error {error_code}::{github_annotation_message}"
             )
@@ -445,13 +443,11 @@ class BaseValidator:
         Returns:
             bool: True if no such terms were found, False otherwise.
         """
-        disallowed_terms = (
-            [  # These terms are checked regardless for case (case-insensitive)
-                "test-module",
-                "test module",
-                "long-running-execution",
-            ]
-        )
+        disallowed_terms = [  # These terms are checked regardless for case (case-insensitive)
+            "test-module",
+            "test module",
+            "long-running-execution",
+        ]
 
         found_terms = []
 

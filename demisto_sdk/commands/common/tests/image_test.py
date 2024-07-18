@@ -247,7 +247,6 @@ def test_is_valid_image_name_with_invalid_name(repo, file_name):
     )
 
     with ChangeCWD(repo.path):
-
         image_validator = image.ImageValidator(integration.image.path)
 
         assert not image_validator.is_valid_image_name()

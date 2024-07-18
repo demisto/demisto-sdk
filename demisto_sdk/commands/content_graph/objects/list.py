@@ -37,7 +37,7 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-        **kwargs
+        **kwargs,
     ) -> dict:
         data = (
             self.data

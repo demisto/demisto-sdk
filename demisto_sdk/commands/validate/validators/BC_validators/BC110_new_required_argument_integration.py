@@ -12,6 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
+
 # This validation is similar to BC111, but specifically for integrations.
 class NewRequiredArgumentIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "BC110"
@@ -33,7 +34,8 @@ class NewRequiredArgumentIntegrationValidator(BaseValidator[ContentTypes]):
                 current_command_name = new_command.name
 
                 old_corresponding_command = find_command(
-                    old_content_item.commands, current_command_name  # type: ignore
+                    old_content_item.commands,  # type: ignore[union-attr]
+                    current_command_name,
                 )
                 # If the command is new, there is no need to check for its arguments
                 if old_corresponding_command:

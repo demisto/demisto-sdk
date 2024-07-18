@@ -28,7 +28,6 @@ class PlaybookOnlyDefaultNextValidator(BaseValidator[ContentTypes]):
         validation_results: list = list()
 
         for content_item in content_items:
-
             invalid_tasks: list = []
             for task_id, task in content_item.tasks.items():
                 if (

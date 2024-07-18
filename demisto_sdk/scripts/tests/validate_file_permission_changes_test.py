@@ -25,14 +25,12 @@ class TestBaseClass:
 
 
 class TestValidateFileChangePermissionsLocal(TestBaseClass):
-
     """
     Test class for validation running in a local environment
     """
 
     @pytest.fixture(autouse=True)
     def setup(self, git_repo: Repo, mocker: MockerFixture, tmp_path: Path):
-
         from demisto_sdk.commands.common.git_util import Repo as GitRepo
         from demisto_sdk.scripts.validate_deleted_files import GitUtil
 
@@ -430,7 +428,6 @@ class TestValidateFileChangePermissionsCI(TestBaseClass):
 
 
 class TestIsCI:
-
     valid_true = "true"
     valid_false = "false"
     invalid_false = "fale"

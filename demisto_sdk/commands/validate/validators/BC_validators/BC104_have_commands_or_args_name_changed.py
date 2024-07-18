@@ -12,6 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
+
 # This validator checks for changes in command and argument names within the integration file.
 # BC103 performs a similar validation but specifically for script arguments.
 class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):

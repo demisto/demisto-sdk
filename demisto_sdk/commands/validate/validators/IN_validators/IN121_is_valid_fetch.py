@@ -93,8 +93,8 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
                     param.type == fetch_required_param.get("type"),
                 ]
             ):
-                current_integration[
-                    fetch_required_param.get("name")
-                ] = fetch_required_param
+                current_integration[fetch_required_param.get("name")] = (
+                    fetch_required_param
+                )
         self.missing_or_malformed_integration[integration_name] = current_integration
         return current_integration

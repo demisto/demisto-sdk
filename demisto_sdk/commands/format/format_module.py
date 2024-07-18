@@ -277,9 +277,7 @@ def format_manager(
                         "red",
                     )
                 )
-        if (
-            graph
-        ):  # In case that the graph was activated, we need to call exit in order to close it.
+        if graph:  # In case that the graph was activated, we need to call exit in order to close it.
             graph.__exit__()
         update_content_entity_ids(files)
 

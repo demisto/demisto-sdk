@@ -179,7 +179,7 @@ class ScriptType(StrEnum):
 
 
 class StructureError(BaseStrictModel):
-    field_name: Optional[Tuple[str, str]] = Field(None, alias="loc")
+    field_name: Optional[Tuple[str, ]] = Field(None, alias="loc")
     error_message: Optional[str] = Field(None, alias="msg")
     error_type: Optional[str] = Field(None, alias="type")
     ctx: Optional[dict] = None

@@ -22,6 +22,7 @@ class _Aliases(BaseStrictModel):
 Aliases = create_model(model_name="Aliases", base_models=(_Aliases, NAME_DYNAMIC_MODEL))
 
 
+# class StrictIncidentField(StrictIndicatorField):  # type:ignore
 class StrictIncidentField(StrictIndicatorField):  # type:ignore
     """
     This class inherits from StrictIndicatorField, since the other class is contained in this class.

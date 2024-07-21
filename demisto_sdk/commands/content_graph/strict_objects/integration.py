@@ -2,7 +2,11 @@ from typing import Any, List, Optional
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    TYPE_PYTHON2,
+    TYPE_PYTHON3,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     Argument,
     BaseIntegrationScript,
@@ -108,7 +112,7 @@ class _Script(BaseStrictModel):
     is_remote_sync_out: Optional[bool] = Field(None, alias="isremotesyncout")
     commands: Optional[List[Command]] = None  # type:ignore[valid-type]
     run_once: Optional[bool] = Field(None, alias="runonce")
-    sub_type: Optional[str] = Field(["python2", "python3"], alias="subtype")
+    sub_type: Optional[str] = Field([TYPE_PYTHON2, TYPE_PYTHON3], alias="subtype")
     feed: Optional[bool] = None
     is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
     reset_context: Optional[bool] = Field(None, alias="resetContext")

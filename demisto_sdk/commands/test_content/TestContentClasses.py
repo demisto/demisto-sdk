@@ -1230,9 +1230,11 @@ class CloudServerContext(ServerContext):
         self.cloud_ui_path = self.build_context.env_json.get(cloud_machine, {}).get(
             "ui_url"
         )
-        self.filtered_tests = self.build_context.machine_assignment_json.get(
-            cloud_machine, {}
-        ).get("playbooks_to_run")
+        self.filtered_tests = (
+            self.build_context.machine_assignment_json.get(cloud_machine, {})
+            .get("tests", {})
+            .get("TestPlaybooks", [])
+        )
         (
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
@@ -1425,10 +1427,11 @@ class OnPremServerContext(ServerContext):
             build_number=self.build_context.build_number,
             branch_name=self.build_context.build_name,
         )
-        self.filtered_tests = self.build_context.machine_assignment_json.get(
-            "xsoar-machine", {}
-        ).get("playbooks_to_run", [])
-
+        self.filtered_tests = (
+            self.build_context.machine_assignment_json.get("xsoar-machine", {})
+            .get("tests", {})
+            .get("TestPlaybooks", [])
+        )
         (
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,

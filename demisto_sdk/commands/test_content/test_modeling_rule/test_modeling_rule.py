@@ -1506,7 +1506,6 @@ class BuildContext:
             service_account,
             artifacts_bucket,
         )
-        # self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.machine_assignment_json = get_json_file(machine_assignment)
 
         # --------------------------- Machine preparation logic -------------------------------
@@ -1549,7 +1548,9 @@ class BuildContext:
                 auth_id=self.cloud_servers_path.get(machine, {}).get("auth_id", ""),
                 token=self.cloud_servers_tokens_json.get(machine, {}).get("token", ""),
                 ui_url=self.env_json.get(machine, {}).get("ui_url", ""),
-                tests=self.env_json.get(machine, {}).get("playbooks_to_run", []),
+                tests=self.env_json.get(machine, {})
+                .get("tests", {})
+                .get("TestModelingRules", []),
             )
             for machine in self.machine_assignment_json
         ]
@@ -1961,7 +1962,7 @@ def test_modeling_rule(
         if nightly:
             build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(
                 XSIAM_SERVER_TYPE,
-                f"test_modeling_rules_report_{build_number}",
+                f"test_modeling_rules_report_{build_number}.xml",
                 logging_manager,
             )
     else:

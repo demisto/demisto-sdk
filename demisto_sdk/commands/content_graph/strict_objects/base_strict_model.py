@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Union
 
 from pydantic import BaseModel, Extra, Field, validator
 from pydantic.fields import FieldInfo
@@ -179,11 +179,7 @@ class ScriptType(StrEnum):
 
 
 class StructureError(BaseStrictModel):
-    field_name: Optional[
-        Tuple[
-            str,
-        ]
-    ] = Field(None, alias="loc")
+    field_name: Optional[tuple] = Field(None, alias="loc")
     error_message: Optional[str] = Field(None, alias="msg")
     error_type: Optional[str] = Field(None, alias="type")
     ctx: Optional[dict] = None

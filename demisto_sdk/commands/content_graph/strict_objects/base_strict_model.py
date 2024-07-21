@@ -91,7 +91,7 @@ DEFAULT_DYNAMIC_MODEL = create_dynamic_model(
     include_without_suffix=True,
 )
 # field name here defaultvalue vs defaultValue
-DEFAULT_DYNAMIC_MODEL_2 = create_dynamic_model(
+DEFAULT_DYNAMIC_MODEL_LOWER_CASE = create_dynamic_model(
     field_name="defaultvalue",
     type_=Optional[Any],
     default=None,

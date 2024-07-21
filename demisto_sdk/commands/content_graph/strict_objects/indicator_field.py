@@ -3,14 +3,14 @@ from typing import Any, List, Optional, Union
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
+    create_model,
 )
-from demisto_sdk.commands.content_graph.strict_objects.common import create_model
 
 
 class _StrictIndicatorField(BaseStrictModel):

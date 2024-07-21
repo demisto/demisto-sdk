@@ -1,8 +1,6 @@
-from abc import ABC
-from typing import Any, List, Optional, Sequence, Union
+from typing import List, Optional, Union
 
-from pydantic import BaseModel, Extra, Field, validator
-from pydantic.fields import FieldInfo
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     TYPE_JS,
@@ -12,96 +10,15 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
-from demisto_sdk.commands.content_graph.strict_objects.common import create_model
-
-marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
-
-
-class BaseStrictModel(BaseModel, ABC):
-    class Config:
-        """
-        This is the definition of not allowing extra fields except those defined by the schema.
-        """
-
-        extra = Extra.forbid
-
-    @validator("*")
-    def prevent_none(cls, v):
-        """
-        Validator ensures no None value is entered in a field.
-        There is a difference between an empty and missing field.
-        Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
-        """
-        # This assertion is caught by pydantic and converted to a pydantic.ValidationError
-        assert v is not None, f"{v} may not be None"
-        return v
-
-
-def create_dynamic_model(
-    field_name: str,
-    type_: Any,
-    default: Any = ...,
-    suffixes: Sequence[str] = tuple(marketplace_suffixes),
-    alias: Optional[str] = None,
-    include_without_suffix: bool = False,
-) -> BaseModel:
-    """
-    This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
-    (we have fields that are almost identical, except for the suffix.
-     for example: description:xsoar, description:marketplacev2, description:xpanse etc.)
-    Then the strict models inherit it, thus adding those fields to the root.
-
-    This is a better way than declaring on those fields manually in the root object, in this way:
-    description_xsoar: Optional[str] = Field(None, alias="description:xsoar")
-    description_marketplace_v2: Optional[str] = Field(None, alias="description:marketplacev2")
-    """
-    fields = {
-        f"{field_name}_{suffix}": (
-            type_,
-            FieldInfo(default, alias=f"{alias or field_name}:{suffix}"),
-        )
-        for suffix in suffixes
-    }
-    if include_without_suffix:
-        fields[field_name] = (type_, FieldInfo(default, alias=alias or field_name))
-
-    return create_model(
-        model_name=f"Dynamic{field_name.title()}Model",
-        base_models=(BaseStrictModel,),
-        **fields,
-    )
-
-
-DESCRIPTION_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="description", type_=Optional[str], default=None
-)
-NAME_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="name", type_=Optional[str], default=None
-)
-DEPRECATED_DYNAMIC_MODEL = deprecated_dynamic_model = create_dynamic_model(
-    field_name="deprecated", type_=Optional[bool], default=None
-)
-REQUIRED_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="required", type_=Optional[bool], default=None
-)
-DEFAULT_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="defaultValue",
-    type_=Optional[Any],
-    default=None,
-    include_without_suffix=True,
-)
-# field name here defaultvalue vs defaultValue
-DEFAULT_DYNAMIC_MODEL_LOWER_CASE = create_dynamic_model(
-    field_name="defaultvalue",
-    type_=Optional[Any],
-    default=None,
-    include_without_suffix=True,
-)
-ID_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="id",
-    type_=Optional[Any],
-    default=None,
-    include_without_suffix=True,
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    DEFAULT_DYNAMIC_MODEL,
+    DEPRECATED_DYNAMIC_MODEL,
+    DESCRIPTION_DYNAMIC_MODEL,
+    ID_DYNAMIC_MODEL,
+    NAME_DYNAMIC_MODEL,
+    REQUIRED_DYNAMIC_MODEL,
+    BaseStrictModel,
+    create_model,
 )
 
 

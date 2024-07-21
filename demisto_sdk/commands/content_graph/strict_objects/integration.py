@@ -4,11 +4,6 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    DEFAULT_DYNAMIC_MODEL_2,
-    DEPRECATED_DYNAMIC_MODEL,
-    DESCRIPTION_DYNAMIC_MODEL,
-    NAME_DYNAMIC_MODEL,
-    REQUIRED_DYNAMIC_MODEL,
     Argument,
     BaseIntegrationScript,
     BaseStrictModel,
@@ -16,9 +11,16 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     Important,
     Output,
     ScriptType,
-    create_dynamic_model,
 )
-from demisto_sdk.commands.content_graph.strict_objects.common import create_model
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    DEFAULT_DYNAMIC_MODEL_LOWER_CASE,
+    DEPRECATED_DYNAMIC_MODEL,
+    DESCRIPTION_DYNAMIC_MODEL,
+    NAME_DYNAMIC_MODEL,
+    REQUIRED_DYNAMIC_MODEL,
+    create_dynamic_model,
+    create_model,
+)
 
 IS_FETCH_DYNAMIC_MODEL = create_dynamic_model(
     field_name="isfetch",
@@ -54,7 +56,7 @@ Configuration = create_model(
     base_models=(
         _Configuration,
         REQUIRED_DYNAMIC_MODEL,
-        DEFAULT_DYNAMIC_MODEL_2,
+        DEFAULT_DYNAMIC_MODEL_LOWER_CASE,
         NAME_DYNAMIC_MODEL,
     ),
 )
@@ -118,11 +120,11 @@ Script = create_model(
 )
 
 
-class CommonFieldsIntegration(CommonFields):  # type:ignore
+class CommonFieldsIntegration(CommonFields):  # type:ignore[misc,valid-type]
     sort_values: Optional[List[str]] = Field(None, alias="sortvalues")
 
 
-class _StrictIntegration(BaseIntegrationScript):  # type:ignore
+class _StrictIntegration(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")
     display: str
     beta: Optional[bool] = None

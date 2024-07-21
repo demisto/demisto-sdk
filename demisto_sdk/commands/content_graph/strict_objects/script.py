@@ -12,14 +12,16 @@ from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     Argument,
     BaseIntegrationScript,
-    BaseStrictModel,
     CommonFields,
     Important,
     Output,
     ScriptType,
-    create_dynamic_model,
 )
-from demisto_sdk.commands.content_graph.strict_objects.common import create_model
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    BaseStrictModel,
+    create_dynamic_model,
+    create_model,
+)
 
 COMMENT_DYNAMIC_MODEL = create_dynamic_model(
     field_name="comment",
@@ -39,7 +41,7 @@ class ScriptSubType(StrEnum):
     PYTHON2 = TYPE_PYTHON2
 
 
-class CommonFieldsScript(CommonFields):  # type:ignore
+class CommonFieldsScript(CommonFields):  # type:ignore[misc,valid-type]
     id_x2: Optional[str] = None
     id_xpanse: Optional[str] = Field(None, alias="id:xpanse")
 
@@ -58,7 +60,7 @@ class ContentItemExportableFields(BaseStrictModel):
     )
 
 
-class _StrictScript(BaseIntegrationScript):  # type:ignore
+class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     common_fields: CommonFieldsScript = Field(..., alias="commonfields")
     name_x2: Optional[str] = None
     script: str

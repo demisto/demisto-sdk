@@ -3,11 +3,11 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import IncidentFieldType
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
+    create_model,
 )
-from demisto_sdk.commands.content_graph.strict_objects.common import create_model
 from demisto_sdk.commands.content_graph.strict_objects.indicator_field import (
     StrictIndicatorField,
 )
@@ -22,7 +22,7 @@ class _Aliases(BaseStrictModel):
 Aliases = create_model(model_name="Aliases", base_models=(_Aliases, NAME_DYNAMIC_MODEL))
 
 
-class StrictIncidentField(StrictIndicatorField):  # type:ignore
+class StrictIncidentField(StrictIndicatorField):  # type:ignore[misc,valid-type]
     """
     This class inherits from StrictIndicatorField, since the other class is contained in this class.
     """

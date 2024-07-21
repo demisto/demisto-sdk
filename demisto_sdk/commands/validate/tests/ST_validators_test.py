@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 
 import pytest
 
@@ -22,7 +23,7 @@ from TestSuite.pack import Pack
     ],
 )
 def test_sanity_SchemaValidator(
-    paths: list[str], values: list[str], expected_length_results: int
+    paths: List[str], values: List[str], expected_length_results: int
 ):
     """
     Given:

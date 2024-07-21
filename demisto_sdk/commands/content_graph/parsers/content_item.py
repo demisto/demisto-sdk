@@ -92,6 +92,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         super().__init__(path)
         self.relationships: Relationships = Relationships()
         self.git_sha: Optional[str] = git_sha
+        # The validate_structure method is called in the first child(JsonContentItem, YamlContentItem)
         self.structure_errors: Optional[List[StructureError]] = None
 
     @property

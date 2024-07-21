@@ -13,9 +13,8 @@ import demisto_client
 import pytz
 import requests
 import typer
-from google.cloud import storage  # noqa type: ignore[attr-defined]
-from junitparser import Error
-from junitparser import JUnitXml, TestCase, TestSuite
+from google.cloud import storage  # type: ignore[attr-defined]
+from junitparser import Error, JUnitXml, TestCase, TestSuite
 from junitparser.junitparser import Failure, Result, Skipped
 from packaging.version import Version
 from tabulate import tabulate
@@ -28,7 +27,6 @@ from tenacity import (
 )
 from typer.main import get_command_from_info
 
-from commands.test_content.tools import get_ui_url
 from demisto_sdk.commands.common.constants import (
     XSIAM_SERVER_TYPE,
 )
@@ -37,7 +35,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     SingleModelingRule,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json  # noqa
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
@@ -45,13 +43,13 @@ from demisto_sdk.commands.common.logger import (
 )
 from demisto_sdk.commands.common.tools import (
     get_file,
+    get_json_file,
     is_epoch_datetime,
     parse_int_or_default,
 )
-from demisto_sdk.commands.common.tools import get_json_file
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
-    ParallelLoggingManager,
     ARTIFACTS_PATH,
+    ParallelLoggingManager,
 )
 from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
     EXPECTED_SCHEMA_MAPPINGS,
@@ -61,6 +59,7 @@ from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
     TIME_ZONE_WARNING,
     XQL_QUERY_ERROR_EXPLANATION,
 )
+from demisto_sdk.commands.test_content.tools import get_ui_url
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
     TestData,
     Validations,
@@ -1448,6 +1447,7 @@ class BuildContext:
         cloud_machine_ids,
         cloud_servers_path,
         cloud_servers_api_keys,
+        cloud_servers_tokens,
         artifacts_path,
         service_account,
         artifacts_bucket,
@@ -1489,15 +1489,15 @@ class BuildContext:
 
         self.cloud_machines = cloud_machine_ids.split(",")
         self.cloud_servers_path = cloud_servers_path
-        self.cloud_servers_api_keys_path = cloud_servers_api_keys
 
         cloud_conf = get_json_file(self.cloud_servers_path)
         self.env_json = {
             machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
         }
-        self.cloud_servers_api_keys_path = get_json_file(
-            self.cloud_servers_api_keys_path
-        )
+        self.cloud_servers_api_keys = cloud_servers_api_keys
+        self.cloud_servers_api_keys_json = get_json_file(self.cloud_servers_api_keys)
+        self.cloud_servers_tokens = cloud_servers_tokens
+        self.cloud_servers_tokens_json = get_json_file(self.cloud_servers_tokens)
 
         # --------------------------- Testing preparation -------------------------------
 
@@ -1533,6 +1533,8 @@ class BuildContext:
                     base_url=self.xsiam_url,
                     api_key=self.api_key,
                     auth_id=self.auth_id,
+                    token=self.xsiam_token,
+                    collector_token=self.collector_token,
                     ui_url=get_ui_url(self.xsiam_url),
                     tests=self.inputs,
                 )
@@ -1541,12 +1543,11 @@ class BuildContext:
             CloudServerContext(
                 self,
                 base_url=self.env_json.get(machine, {}).get("base_url", ""),
-                api_key=self.cloud_servers_api_keys_path.get(machine, {}).get(
+                api_key=self.cloud_servers_api_keys_json.get(machine, {}).get(
                     "api_key", ""
                 ),
-                auth_id=self.cloud_servers_api_keys_path.get(machine, {}).get(
-                    "auth_id", ""
-                ),
+                auth_id=self.cloud_servers_path.get(machine, {}).get("auth_id", ""),
+                token=self.cloud_servers_tokens_json.get(machine, {}).get("token", ""),
                 ui_url=self.env_json.get(machine, {}).get("ui_url", ""),
                 tests=self.env_json.get(machine, {}).get("playbooks_to_run", []),
             )
@@ -1561,14 +1562,18 @@ class CloudServerContext:
         base_url: str,
         api_key: str,
         auth_id: str,
+        token: str,
         ui_url: str,
         tests: List[Path],
+        collector_token: Optional[str] = None,
     ):
         self.build_context = build_context
         self.client = None
         self.base_url = base_url
         self.api_key = api_key
         self.auth_id = auth_id
+        self.token = token
+        self.collector_token = collector_token
         os.environ.pop(
             "DEMISTO_USERNAME", None
         )  # we use client without demisto username
@@ -1601,11 +1606,11 @@ class CloudServerContext:
             )
 
             xsiam_client_cfg = XsiamApiClientConfig(
-                base_url=xsiam_url,  # type: ignore[arg-type]
-                api_key=api_key,  # type: ignore[arg-type]
-                auth_id=auth_id,  # type: ignore[arg-type]
-                token=xsiam_token,  # type: ignore[arg-type]
-                collector_token=collector_token,  # type: ignore[arg-type]
+                base_url=self.base_url,  # type: ignore[arg-type]
+                api_key=self.api_key,  # type: ignore[arg-type]
+                auth_id=self.auth_id,  # type: ignore[arg-type]
+                token=self.token,  # type: ignore[arg-type]
+                collector_token=self.collector_token,  # type: ignore[arg-type]
             )
             xsiam_client = XsiamApiClient(xsiam_client_cfg)
             tenant_demisto_version: Version = xsiam_client.get_demisto_version()
@@ -1617,7 +1622,7 @@ class CloudServerContext:
                 success, modeling_rule_test_suite = validate_modeling_rule(
                     modeling_rule_directory,
                     # can ignore the types since if they are not set to str values an error occurs
-                    xsiam_url,  # type: ignore[arg-type]
+                    self.base_url,  # type: ignore[arg-type]
                     self.build_context.retrying_caller,
                     self.build_context.push,
                     self.build_context.interactive,
@@ -1793,6 +1798,13 @@ def test_modeling_rule(
         help="Path to file with cloud Servers api keys.",
         show_default=False,
     ),
+    cloud_servers_tokens: str = typer.Option(
+        "",
+        "-cst",
+        "--cloud-servers-tokens",
+        help="Path to file with cloud Servers tokens.",
+        show_default=False,
+    ),
     machine_assignment: str = typer.Option(
         "",
         "-ma",
@@ -1900,6 +1912,7 @@ def test_modeling_rule(
         cloud_machine_ids=cloud_machine_ids,
         cloud_servers_path=cloud_servers_path,
         cloud_servers_api_keys=cloud_servers_api_keys,
+        cloud_servers_tokens=cloud_servers_tokens,
         artifacts_path=artifacts_path,
         service_account=service_account,
         artifacts_bucket=artifacts_bucket,

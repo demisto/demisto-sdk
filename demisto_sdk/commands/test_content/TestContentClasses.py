@@ -29,12 +29,12 @@ from urllib3.exceptions import ReadTimeoutError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    XPANSE_SERVER_TYPE,
+    XSIAM_SERVER_TYPE,
+    XSOAR_SAAS_SERVER_TYPE,
+    XSOAR_SERVER_TYPE,
     MarketplaceVersions,
     PB_Status,
-    XSOAR_SERVER_TYPE,
-    XSIAM_SERVER_TYPE,
-    XPANSE_SERVER_TYPE,
-    XSOAR_SAAS_SERVER_TYPE,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_demisto_version, get_json_file
@@ -239,7 +239,7 @@ class TestPlaybook:
         self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
         self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
         self.test_suite.add_property(
-            "is_saas_server_type", self.build_context.is_saas_server_type
+            "is_saas_server_type", str(self.build_context.is_saas_server_type)
         )
         self.test_suite.add_property("server_type", self.build_context.server_type)
         self.test_suite.add_property("product_type", self.build_context.product_type)
@@ -269,14 +269,16 @@ class TestPlaybook:
         self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
         self.test_suite.add_property("from_version", self.configuration.from_version)
         self.test_suite.add_property("to_version", self.configuration.to_version)
-        self.test_suite.add_property("nightly_test", self.configuration.nightly_test)
+        self.test_suite.add_property(
+            "nightly_test", str(self.configuration.nightly_test)
+        )
         self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
         self.test_suite.add_property(
             "memory_threshold",
             self.configuration.memory_threshold,
         )
         self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
-        self.test_suite.add_property("timeout", self.configuration.timeout)
+        self.test_suite.add_property("timeout", str(self.configuration.timeout))
         self.test_suite.add_property(
             "playbook.test_instance_names",
             ",".join(self.configuration.test_instance_names),
@@ -433,7 +435,7 @@ class TestPlaybook:
 
         def marketplaces_match_server_type() -> bool:
             """
-            Checks if the test has a marketplace value, and if so- if it matches the server machine we are on.
+            Checks if the test has a marketplace value, and if so- it matches the server machine we are on.
             A test playbook might have several entries, each with a different marketplace. This might cause the test playbook to
             be in the filtered tests list, even when the provided entry is not be the one that runs with the current sever
             machine marketplace. This function checks that the entry provided is the exact one that needs to run.
@@ -446,7 +448,7 @@ class TestPlaybook:
                 )
 
             if not test_server_types:
-                return True  # test doesn't have a marketplace value so it runs on all machines
+                return True  # test doesn't have a marketplace value, so it runs on all machines
 
             instance_names_log_message = (
                 f" for instance names: {', '.join(self.configuration.test_instance_names)}"

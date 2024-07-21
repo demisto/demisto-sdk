@@ -49,7 +49,7 @@ def create_dynamic_model(
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
     (we have fields that are almost identical, except for the suffix.
      for example: description:xsoar, description:marketplacev2, description:xpanse etc.)
-    Then the model inherit it for adding those fields to the root.
+    Then the strict models inherit it, thus adding those fields to the root.
 
     This is a better way than declaring on those fields manually in the root object, in this way:
     description_xsoar: Optional[str] = Field(None, alias="description:xsoar")

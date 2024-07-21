@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.parsers import IntegrationParser, ScriptParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
@@ -13,7 +15,15 @@ from demisto_sdk.commands.validate.validators.ST_validators.ST110_is_valid_schem
 from TestSuite.pack import Pack
 
 
-def test_sanity_SchemaValidator():
+@pytest.mark.parametrize(
+    "paths, values, expected_length_results",
+    [
+        (["name"], ["Test"], 0),
+    ],
+)
+def test_sanity_SchemaValidator(
+    paths: list[str], values: list[str], expected_length_results: int
+):
     """
     Given:
         - a valid script
@@ -24,12 +34,12 @@ def test_sanity_SchemaValidator():
         - Ensure the validation is passed without any errors (a sanity check)
     """
     content_items = [
-        create_script_object(paths=["name"], values=["Test"]),
-        create_integration_object(paths=["name"], values=["Test"]),
+        create_script_object(paths=paths, values=values),
+        create_integration_object(paths=paths, values=values),
     ]
 
     results = SchemaValidator().is_valid(content_items)
-    assert len(results) == 0
+    assert len(results) == expected_length_results
 
 
 def test_SchemaValidator_None_as_value(pack: Pack):

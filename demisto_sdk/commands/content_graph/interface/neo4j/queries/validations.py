@@ -92,6 +92,11 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
         for item in run_query(tx, query)
     }
 
+def validate_test_playbook():
+    query = f"""
+    MATCH (n:TestPlaybook {{object_id: 'Test XDR Playbook quarantine file command'}})<-[:{RelationshipType.TESTED_BY}]-(t:{ContentType.INTEGRATION}) WHERE n.deprecated =false
+RETURN t.name
+    """
 
 def validate_toversion(
     tx: Transaction, file_paths: List[str], for_supported_versions: bool

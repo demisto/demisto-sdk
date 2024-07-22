@@ -1217,10 +1217,13 @@ class CloudServerContext(ServerContext):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.machine = cloud_machine
         self.server_url = self.server_ip
+        logging.info(f"Accessing self.build_context.api_key")
+        logging.info(f"{self.build_context.api_key.keys()=}")
         self.api_key = self.build_context.api_key.get(cloud_machine, {}).get("api-key")
         self.auth_id = self.build_context.api_key.get(cloud_machine, {}).get(
             "x-xdr-auth-id"
         )
+        logging.info(f"Accessed self.build_context.api_key and took {self.build_context.api_key.get(cloud_machine, {}).keys()=}")
         os.environ.pop(
             "DEMISTO_USERNAME", None
         )  # we use client without demisto username

@@ -6,6 +6,7 @@ from demisto_sdk.commands.content_graph.objects import (
     IncidentField,
     IncidentType,
     IndicatorField,
+    Layout,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -22,6 +23,7 @@ ContentTypes = Union[
     IncidentType,
     GenericType,
     Classifier,
+    Layout,
 ]
 
 

@@ -1,6 +1,7 @@
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects import (
+    Classifier,
     GenericType,
     IncidentField,
     IncidentType,
@@ -14,7 +15,13 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[
-    Integration, Script, IncidentField, IndicatorField, IncidentType, GenericType
+    Integration,
+    Script,
+    IncidentField,
+    IndicatorField,
+    IncidentType,
+    GenericType,
+    Classifier,
 ]
 
 

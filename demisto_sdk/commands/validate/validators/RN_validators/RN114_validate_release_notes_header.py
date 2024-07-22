@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Iterable, List, Set, Tuple, Union
+from typing import Dict, Iterable, List, Set, Tuple
 
 from demisto_sdk.commands.common.constants import (
     RN_HEADER_BY_FILE_TYPE,
@@ -27,23 +27,12 @@ CONTENT_ITEM_SECTION = re.compile(
 )
 
 
-def remove_none_values(ls: Union[List[Any], Tuple[Any, ...]]) -> List[Any]:
-    """
-    Filters out None values from a list or tuple.
-
-    Args:
-        ls (List or Tuple): The list or tuple to filter.
-
-    Returns:
-        List: Filtered list with None values removed.
-    """
-    return list(filter(None, ls))
-
-
 class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"
     description = "Validate the existence of content types in the first-level headers (####) and the content items in second-level headers (#####)."
-    rationale = "Providing documentation with accurate information and avoiding confusion."
+    rationale = (
+        "Providing documentation with accurate information and avoiding confusion."
+    )
     error_message = (
         "The following release note headers are invalid:\n"
         "{content_type_message}\n{content_item_message}\n"
@@ -101,11 +90,12 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         headers: Dict[str, List[str]] = {}
 
         # Get all sections from the release notes using regex
-        content_type_and_item = remove_none_values(
-            CONTENT_TYPE_SECTION.findall(release_note_content)
+        content_type_and_item = list(
+            filter(None, CONTENT_TYPE_SECTION.findall(release_note_content))
         )
         for section in content_type_and_item:
-            section = remove_none_values(ls=section)
+            # Filters out None values from a list or tuple.
+            section = list(filter(None, section))
             if not section:
                 logger.debug("No content items found under content type section.")
                 continue
@@ -118,7 +108,8 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             content_items_sections_ls = CONTENT_ITEM_SECTION.findall(content_items)
 
             for content_type_section in content_items_sections_ls:
-                content_type_section = remove_none_values(ls=content_type_section)
+                # Filters out None values from a list or tuple.
+                content_type_section = list(filter(None, content_type_section))
                 if content_type_section:
                     logger.debug(
                         f'removing New: " if "New:" in {content_type_section[0]} else "" '
@@ -170,9 +161,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 missing_display_names[header] = missing
         return missing_display_names
 
-    def validate_release_notes_headers(
-        self, pack: Pack
-    ) -> Tuple[List[str], List[str]]:
+    def validate_release_notes_headers(self, pack: Pack) -> Tuple[List[str], List[str]]:
         """
         Validate that the release notes headers are valid:
         - Validate that the release notes 1st headers are a valid content entity.
@@ -186,8 +175,8 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             - List of invalid header types (str or None).
             - List of invalid header content items (str or None).
         """
-        headers = self.extract_rn_headers(content_item.release_note.file_content)
-        pack_items_by_types = content_item.content_items.items_by_type()
+        headers = self.extract_rn_headers(pack.release_note.file_content)
+        pack_items_by_types = pack.content_items.items_by_type()
         invalid_content_type: List[str] = [
             header_type
             for header_type in headers

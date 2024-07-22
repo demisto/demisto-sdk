@@ -68,6 +68,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
+    validate_test_playbook_in_use,
     validate_toversion,
     validate_unknown_content,
 )
@@ -566,6 +567,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
+    def find_test_playbook_without_uses(
+        self, test_playbook_id: str
+    ) -> bool:
+         with self.driver.session() as session:
+            return session.execute_read(validate_test_playbook_in_use, test_playbook_id)
+    
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]
     ) -> None:

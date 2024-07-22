@@ -92,11 +92,6 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
         for item in run_query(tx, query)
     }
 
-def validate_test_playbook():
-    query = f"""
-    MATCH (n:TestPlaybook {{object_id: 'Test XDR Playbook quarantine file command'}})<-[:{RelationshipType.TESTED_BY}]-(t:{ContentType.INTEGRATION}) WHERE n.deprecated =false
-RETURN t.name
-    """
 
 def validate_toversion(
     tx: Transaction, file_paths: List[str], for_supported_versions: bool
@@ -313,3 +308,13 @@ def validate_duplicate_ids(
         (item.get("content_item"), item.get("duplicate_content_items"))
         for item in run_query(tx, query)
     ]
+
+
+def validate_test_playbook_in_use(tx: Transaction, test_playbook_id: str) -> bool:
+    query = f"""// Return the name of the Test Playbook if is no any content-item that use this Test Playbook
+MATCH (tp:TestPlaybook{{object_id: '{test_playbook_id}'}})
+WHERE (NOT EXISTS (()-[:TESTED_BY]->(tp)))
+AND  tp.deprecated =false
+RETURN collect(tp.name) AS tp_name
+    """
+    return bool([item.get("tp_name") for item in run_query(tx, query) if item.get("tp_name")])

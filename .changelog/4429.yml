@@ -1,6 +1,0 @@
-changes:
-- description: Added MR107 to the new validation format. Validate that the dataset name of a modeling rule shows in the xif and schema files match.
-  type: internal
-- description: Removed DO106 - docker_not_on_the_latest_tag validation for the old validate.
-  type: breaking
-pr_number: 4429

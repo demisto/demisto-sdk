@@ -18,16 +18,17 @@ class BaseStrictModel(BaseModel, ABC):
 
         extra = Extra.forbid
 
-    @validator("*")
-    def prevent_none(cls, v):
-        """
-        Validator ensures no None value is entered in a field.
-        There is a difference between an empty and missing field.
-        Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
-        """
-        # This assertion is caught by pydantic and converted to a pydantic.ValidationError
-        assert v is not None, f"{v} may not be None"
-        return v
+    # TODO - When editing all 968 yml files in content, turn on this validator
+    # @validator("*")
+    # def prevent_none(cls, v):
+    #     """
+    #     Validator ensures no None value is entered in a field.
+    #     There is a difference between an empty and missing field.
+    #     Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
+    #     """
+    #     # This assertion is caught by pydantic and converted to a pydantic.ValidationError
+    #     assert v is not None, f"{v} may not be None"
+    #     return v
 
 
 def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:

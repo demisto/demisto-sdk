@@ -28,14 +28,12 @@ class IsTestPlaybookInUseValidator(BaseValidator[ContentTypes], ABC):
     def is_valid_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        validation_error = []
-        for content_item in content_items:
-            if self.graph.find_test_playbook_without_uses(content_item.name):
-                validation_error.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(content_item.name),
-                        content_object=content_item,
-                    )
-                )
-        return validation_error
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(content_item.name),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if self.graph.find_test_playbook_without_uses(content_item.name)
+        ]

@@ -31,7 +31,7 @@ class IsHaveUnitTestFileValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     content_item.content_type,
-                    str(content_item.path).replace("yml", "_test.py"),
+                    str(content_item.path).replace(".yml", "_test.py"),
                 ),
                 content_object=content_item,
             )

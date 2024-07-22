@@ -1,4 +1,0 @@
-changes:
-- description: Added DS104 to the new validation format. The validation verifies that a Description file is present for an integration.
-  type: internal
-pr_number: 4393

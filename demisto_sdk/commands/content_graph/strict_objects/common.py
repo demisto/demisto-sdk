@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Any, Optional, Sequence
 
 import pydantic
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, Extra
 from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions

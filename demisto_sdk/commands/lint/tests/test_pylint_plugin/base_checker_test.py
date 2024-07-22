@@ -209,7 +209,11 @@ class TestExitChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
-        _, node_a, node_b, = astroid.extract_node(
+        (
+            _,
+            node_a,
+            node_b,
+        ) = astroid.extract_node(
             """
             def test_function(): #@
                 if True:

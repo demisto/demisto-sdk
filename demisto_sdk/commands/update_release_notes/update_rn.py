@@ -1,6 +1,7 @@
 """
 This script is used to create a release notes template
 """
+
 import copy
 import errno
 import os

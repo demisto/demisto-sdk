@@ -65,9 +65,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             user_answer = (
                 "y"
                 if self.assume_answer
-                else "n"
-                if self.assume_answer is False
-                else ""
+                else "n" if self.assume_answer is False else ""
             )
             while not user_answer:
                 user_answer = input()

@@ -76,9 +76,11 @@ class JSONContentItemParser(ContentItemParser):
         return get_value(
             self.json_data,
             self.field_mapping.get("fromversion", ""),
-            DEFAULT_CONTENT_ITEM_FROM_VERSION
-            if MarketplaceVersions.XSOAR_ON_PREM in self.supported_marketplaces
-            else MINIMUM_XSOAR_SAAS_VERSION,
+            (
+                DEFAULT_CONTENT_ITEM_FROM_VERSION
+                if MarketplaceVersions.XSOAR_ON_PREM in self.supported_marketplaces
+                else MINIMUM_XSOAR_SAAS_VERSION
+            ),
         )
 
     @property

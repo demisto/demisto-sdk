@@ -63,9 +63,7 @@ class IsValidDefaultValueForCheckboxParamValidator(BaseValidator[ContentTypes]):
                 param.defaultvalue = (
                     "true"
                     if param.defaultvalue is True
-                    else "false"
-                    if param.defaultvalue is False
-                    else None
+                    else "false" if param.defaultvalue is False else None
                 )
                 changed_params.append(
                     f"param {param.name} default value was changed to {param.defaultvalue}."

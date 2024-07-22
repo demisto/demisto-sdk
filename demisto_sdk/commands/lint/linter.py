@@ -987,15 +987,15 @@ class Linter:
         output = ""
         command = [self._facts["lint_to_commands"][linter]]
         try:
-            container: docker.models.containers.Container = (
-                get_docker().create_container(
-                    name=container_name,
-                    image=test_image,
-                    command=command,
-                    user=f"{os.getuid()}:4000",
-                    files_to_push=[(self._pack_abs_dir, "/devwork")],
-                    environment=self._facts["env_vars"],
-                )
+            container: (
+                docker.models.containers.Container
+            ) = get_docker().create_container(
+                name=container_name,
+                image=test_image,
+                command=command,
+                user=f"{os.getuid()}:4000",
+                files_to_push=[(self._pack_abs_dir, "/devwork")],
+                environment=self._facts["env_vars"],
             )
         except Exception:
             logger.exception(
@@ -1086,18 +1086,16 @@ class Linter:
             logger.debug(
                 f"{log_prompt} - user uid for running lint/test: {uid}"
             )  # lgtm[py/clear-text-logging-sensitive-data]
-            container: docker.models.containers.Container = (
-                get_docker().create_container(
-                    name=container_name,
-                    image=test_image,
-                    command=[
-                        build_pytest_command(test_xml=test_xml, json=True, cov=cov)
-                    ],
-                    user=f"{uid}:4000",
-                    files_to_push=[(self._pack_abs_dir, "/devwork")],
-                    environment=self._facts["env_vars"],
-                    network_disabled=should_disable_network,
-                )
+            container: (
+                docker.models.containers.Container
+            ) = get_docker().create_container(
+                name=container_name,
+                image=test_image,
+                command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
+                user=f"{uid}:4000",
+                files_to_push=[(self._pack_abs_dir, "/devwork")],
+                environment=self._facts["env_vars"],
+                network_disabled=should_disable_network,
             )
             container.start()
             stream_docker_container_output(container.logs(stream=True))
@@ -1306,15 +1304,15 @@ class Linter:
             logger.debug(
                 f"{log_prompt} - user uid for running lint/test: {uid}"
             )  # lgtm[py/clear-text-logging-sensitive-data]
-            container: docker.models.containers.Container = (
-                get_docker().create_container(
-                    files_to_push=[(self._pack_abs_dir, "/devwork")],
-                    name=container_name,
-                    image=test_image,
-                    command=build_pwsh_test_command(),
-                    user=f"{uid}:4000",
-                    environment=self._facts["env_vars"],
-                )
+            container: (
+                docker.models.containers.Container
+            ) = get_docker().create_container(
+                files_to_push=[(self._pack_abs_dir, "/devwork")],
+                name=container_name,
+                image=test_image,
+                command=build_pwsh_test_command(),
+                user=f"{uid}:4000",
+                environment=self._facts["env_vars"],
             )
             container.start()
             stream_docker_container_output(container.logs(stream=True))

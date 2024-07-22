@@ -369,9 +369,9 @@ class Initializer:
                 non_content_items,
             ) = self.get_files_using_git()
         if self.execution_mode != ExecutionMode.USE_GIT:
-            content_objects_to_run_with_packs: Set[
-                BaseContent
-            ] = self.get_items_from_packs(content_objects_to_run)
+            content_objects_to_run_with_packs: Set[BaseContent] = (
+                self.get_items_from_packs(content_objects_to_run)
+            )
         else:
             content_objects_to_run_with_packs = content_objects_to_run
         for non_content_item in non_content_items:
@@ -440,9 +440,9 @@ class Initializer:
         ] = {}
         for path, status in statuses_dict.items():
             if status == GitStatuses.RENAMED:
-                statuses_dict_with_renamed_files_tuple[
-                    (path, renamed_files[path])
-                ] = status
+                statuses_dict_with_renamed_files_tuple[(path, renamed_files[path])] = (
+                    status
+                )
             else:
                 statuses_dict_with_renamed_files_tuple[path] = status
         # Parsing the files.

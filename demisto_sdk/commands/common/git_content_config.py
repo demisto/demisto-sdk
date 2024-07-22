@@ -1,6 +1,7 @@
 """
 This is module to store the git configuration of the content repo
 """
+
 import enum
 import os
 from functools import lru_cache
@@ -275,9 +276,11 @@ class GitContentConfig:
             r = requests.get(
                 f"https://api.{api_host}/repos/{repo_name}",
                 headers={
-                    "Authorization": f"Bearer {GitContentConfig.CREDENTIALS.github_token}"
-                    if GitContentConfig.CREDENTIALS.github_token
-                    else "",
+                    "Authorization": (
+                        f"Bearer {GitContentConfig.CREDENTIALS.github_token}"
+                        if GitContentConfig.CREDENTIALS.github_token
+                        else ""
+                    ),
                     "Accept": "application/vnd.github.VERSION.raw",
                 },
                 verify=False,

@@ -344,8 +344,7 @@ class UnknownContent(BaseNode):
     object_id: str = ""
     name: str = ""
 
-    def dump(self, _, __):
-        ...
+    def dump(self, _, __): ...
 
     @property
     def identifier(self):

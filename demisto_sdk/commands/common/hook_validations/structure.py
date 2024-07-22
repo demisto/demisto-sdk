@@ -2,6 +2,7 @@
 
 Module contains validation of schemas, ids and paths.
 """
+
 import logging
 import os
 import re

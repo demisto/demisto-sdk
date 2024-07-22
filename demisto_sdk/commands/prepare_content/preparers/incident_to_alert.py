@@ -47,17 +47,17 @@ def prepare_descriptions_and_names(
         if description := task_value.get("task", {}).get("description", ""):
             if description != "commands.local.cmd.set.incident":
                 # Since it is a server key, we do not want to change it
-                data["tasks"][task_key]["task"][
-                    "description"
-                ] = prepare_descriptions_and_names_classifier(
-                    description, replace_incident_to_alert
+                data["tasks"][task_key]["task"]["description"] = (
+                    prepare_descriptions_and_names_classifier(
+                        description, replace_incident_to_alert
+                    )
                 )
 
         if name := task_value.get("task", {}).get("name", ""):
-            data["tasks"][task_key]["task"][
-                "name"
-            ] = prepare_descriptions_and_names_classifier(
-                name, replace_incident_to_alert
+            data["tasks"][task_key]["task"]["name"] = (
+                prepare_descriptions_and_names_classifier(
+                    name, replace_incident_to_alert
+                )
             )
 
     # The external playbook's description

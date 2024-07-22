@@ -1,6 +1,7 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
+
 import re
 from enum import IntEnum
 from typing import List, Set

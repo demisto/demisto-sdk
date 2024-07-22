@@ -356,9 +356,9 @@ class File(ABC):
                 url,
                 headers=frozenset(
                     {
-                        "Authorization": f"Bearer {github_token}"
-                        if github_token
-                        else "",
+                        "Authorization": (
+                            f"Bearer {github_token}" if github_token else ""
+                        ),
                         "Accept": "application/vnd.github.VERSION.raw",
                     }.items()
                 ),

@@ -72,7 +72,9 @@ class ConfigReader:
             specific_validations or section.get("select", []),
             section.get("warning", []),
             self.config_file_content.get("ignorable_errors", []),
-            self.config_file_content.get("support_level", {})
-            if not ignore_support_level
-            else {},
+            (
+                self.config_file_content.get("support_level", {})
+                if not ignore_support_level
+                else {}
+            ),
         )

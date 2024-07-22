@@ -555,9 +555,9 @@ def test_docker_thresholds_for_pwsh_integrations(mocker):
     playbook_instance = TestPlaybook(
         mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
     )
-    playbook_instance.integrations[
-        0
-    ].integration_type = Docker.POWERSHELL_INTEGRATION_TYPE
+    playbook_instance.integrations[0].integration_type = (
+        Docker.POWERSHELL_INTEGRATION_TYPE
+    )
     test_context = TestContext(
         build_context=mocker.MagicMock(),
         playbook=playbook_instance,
@@ -864,8 +864,7 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
     )
     playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
 
-    class clientMock(DefaultApi):
-        ...
+    class clientMock(DefaultApi): ...
 
     test_context = TestContext(
         build_context=mocker.MagicMock(),
@@ -995,8 +994,7 @@ def test_replacing_pb_inputs_fails_with_build_pass(
         demisto_client,
     )
 
-    class ClientMock(DefaultApi):
-        ...
+    class ClientMock(DefaultApi): ...
 
     def generic_request_func(self, path, method, body=None, **kwargs):
         if path == "/playbook/inputs/pb_test" and method == "POST":
@@ -1119,8 +1117,7 @@ def test_replacing_pb_inputs_fails_with_build_fail(
         demisto_client,
     )
 
-    class clientMock(DefaultApi):
-        ...
+    class clientMock(DefaultApi): ...
 
     def generic_request_func(self, path, method, body=None, **kwargs):
         if path == "/playbook/inputs/pb_test" and method == "POST":

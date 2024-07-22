@@ -144,8 +144,10 @@ def generate_table_section(
             section = [""]
         return section
 
-    section.extend([text, "    |", "    |"]) if numbered_section else section.extend(
-        [text, "|", "|"]
+    (
+        section.extend([text, "    |", "    |"])
+        if numbered_section
+        else section.extend([text, "|", "|"])
     )
     header_index = len(section) - 2
     for key in data[0]:

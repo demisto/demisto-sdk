@@ -1636,9 +1636,11 @@ class IntegrationValidator(ContentEntityValidator):
 
         invalid_display_names = []
         for parameter in parameters_display_name:
-            invalid_display_names.append(parameter) if parameter and not parameter[
-                0
-            ].isupper() or "_" in parameter else None
+            (
+                invalid_display_names.append(parameter)
+                if parameter and not parameter[0].isupper() or "_" in parameter
+                else None
+            )
 
         if invalid_display_names:
             (
@@ -2269,7 +2271,10 @@ class IntegrationValidator(ContentEntityValidator):
                 if (
                     command in REPUTATION_COMMAND_NAMES
                 ):  # Integration has a reputation command
-                    (error_message, error_code,) = Errors.missing_reliability_parameter(
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.missing_reliability_parameter(
                         is_feed=False, command_name=command
                     )
 

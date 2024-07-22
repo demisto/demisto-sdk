@@ -29,9 +29,11 @@ class YAMLContentItemParser(ContentItemParser):
         self.path = (
             self.get_path_with_suffix(".yml")
             if not git_sha
-            else self.path / f"{self.path.name}.yml"
-            if not self.path.suffix == ".yml"
-            else self.path
+            else (
+                self.path / f"{self.path.name}.yml"
+                if not self.path.suffix == ".yml"
+                else self.path
+            )
         )  # If git_sha is given then we know we're running on the old_content_object copy and we can assume that the file_path is either the actual item path or the path to the item's dir.
 
         if not isinstance(self.yml_data, dict):
@@ -89,9 +91,11 @@ class YAMLContentItemParser(ContentItemParser):
         return get_value(
             self.yml_data,
             self.field_mapping.get("fromversion", ""),
-            DEFAULT_CONTENT_ITEM_FROM_VERSION
-            if MarketplaceVersions.XSOAR_ON_PREM in self.supported_marketplaces
-            else MINIMUM_XSOAR_SAAS_VERSION,
+            (
+                DEFAULT_CONTENT_ITEM_FROM_VERSION
+                if MarketplaceVersions.XSOAR_ON_PREM in self.supported_marketplaces
+                else MINIMUM_XSOAR_SAAS_VERSION
+            ),
         )
 
     @property

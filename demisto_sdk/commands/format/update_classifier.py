@@ -37,9 +37,11 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
 
     def run_format(self) -> int:
         super().update_json(
-            file_type=FileType.OLD_CLASSIFIER.value
-            if self.old_classifier_type
-            else VERSION_6_0_0
+            file_type=(
+                FileType.OLD_CLASSIFIER.value
+                if self.old_classifier_type
+                else VERSION_6_0_0
+            )
         )
         return SUCCESS_RETURN_CODE
 
@@ -83,7 +85,8 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
 
        Attributes:
             input (str): the path to the file we are updating at the moment.
-            output (str): the desired file name to save the updated version of the YML to."""
+            output (str): the desired file name to save the updated version of the YML to.
+    """
 
     def run_format(self) -> int:
         try:

@@ -255,6 +255,13 @@ jobs:
           cd content
           echo -e '[use_git]\nselect = ["BA100"]\n[path_based_validations]\nselect = ["BA100"]' > validation_config.toml
 
+      - name: change content permissions
+        run: |
+          cd content
+          git config core.fileMode false
+          sudo chmod -R 777 .
+          sudo chown -R $USER .
+
       - name: run pre-commit on changed files
         timeout-minutes: 60
         run: |

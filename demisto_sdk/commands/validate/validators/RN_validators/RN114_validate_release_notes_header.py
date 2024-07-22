@@ -91,7 +91,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
 
         # Get all sections from the release notes using regex
         content_type_and_item = list(
-            filter(None, CONTENT_TYPE_SECTION.findall(release_note_content))
+            filter(None, list(CONTENT_TYPE_SECTION.findall(release_note_content)))
         )
         for section in content_type_and_item:
             # Filters out None values from a list or tuple.

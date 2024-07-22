@@ -1,4 +1,0 @@
-changes:
-- description: Added support to replace incident to alert for deprecated content.
-  type: fix
-pr_number: 4440

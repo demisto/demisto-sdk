@@ -341,6 +341,11 @@ class Downloader:
                 or (compiled_regex and re.match(compiled_regex, content_item_name))
                 or content_item_name in self.input_files
             ):
+                # XSUP-39266: replacing playbookId with playbookName in tasks.
+                for task_id, task_data in content_item_data.get("data", {}).get("tasks").items():
+                    if task_data.get("type") == 'playbook' and task_data.get('task', {}).get('playbookId'):
+                        task_data['task']['playbookName'] = task_data['task']['playbookId']
+                        task_data['task'].pop('playbookId', None)
                 filtered_custom_content_objects[file_name] = content_item_data
 
         logger.info(

@@ -1,4 +1,0 @@
-changes:
-- description: Improved the documentation for the **pre-commit** command.
-  type: feature
-pr_number: 4421

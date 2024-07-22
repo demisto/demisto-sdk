@@ -1,4 +1,5 @@
-from typing import List, Optional, Union
+from enum import Enum
+from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -118,4 +119,62 @@ class _BaseIntegrationScript(BaseStrictModel):
 BaseIntegrationScript = create_model(
     model_name="BaseIntegrationScript",
     base_models=(_BaseIntegrationScript, NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL),
+)
+
+
+class Enum0123(Enum):
+    ZERO = 0
+    ONE = 1
+    TWO = 2
+    THREE = 3
+
+
+class ExtractSettings(BaseStrictModel):
+    field_cli_name_to_extract_settings: Optional[Any] = Field(
+        None, alias="fieldCliNameToExtractSettings"
+    )
+    mode: Optional[str] = None
+
+
+class _StrictGenericIncidentType(BaseStrictModel):
+    id_: str = Field(..., alias="id")
+    version: int
+    vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
+    sort_values: Optional[Any] = Field(None, alias="sortValues")
+    locked: Optional[bool] = None
+    name: str
+    prev_name: Optional[str] = Field(None, alias="prevName")
+    color: str
+    sla: Optional[int] = None
+    sla_reminder: Optional[int] = Field(None, alias="slaReminder")
+    playbook_id: Optional[str] = Field(None, alias="playbookId")
+    hours: Optional[int] = None
+    days: Optional[int] = None
+    weeks: Optional[int] = None
+    hours_r: Optional[int] = Field(None, alias="hoursR")
+    days_r: Optional[int] = Field(None, alias="daysR")
+    weeks_r: Optional[int] = Field(None, alias="weeksR")
+    system: Optional[bool] = None
+    readonly: Optional[bool] = None
+    default: Optional[bool] = None
+    autorun: Optional[bool] = None
+    pre_processing_script: Optional[str] = Field(None, alias="preProcessingScript")
+    closure_script: Optional[str] = Field(None, alias="closureScript")
+    disabled: Optional[bool] = None
+    reputation_calc: Optional[Enum0123] = Field(None, alias="reputationCalc")
+    on_change_rep_alg: Optional[Enum0123] = Field(None, alias="onChangeRepAlg")
+    detached: Optional[bool] = None
+    from_version: Optional[str] = Field(None, alias="fromVersion")
+    to_version: Optional[str] = Field(None, alias="toVersion")
+    layout: Optional[str] = None
+    extract_settings: Optional[ExtractSettings] = Field(None, alias="extractSettings")
+
+
+StrictGenericIncidentType = create_model(
+    model_name="_StrictGenericIncidentType",
+    base_models=(
+        _StrictGenericIncidentType,
+        NAME_DYNAMIC_MODEL,
+        ID_DYNAMIC_MODEL,
+    ),
 )

@@ -90,12 +90,12 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         headers: Dict[str, List[str]] = {}
 
         # Get all sections from the release notes using regex
-        content_type_and_item = list(
-            filter(None, list(CONTENT_TYPE_SECTION.findall(release_note_content)))
+        content_type_and_item: List[ContentType] = list(
+            filter(None, CONTENT_TYPE_SECTION.findall(release_note_content))
         )
-        for section in content_type_and_item:
+        for section_ in content_type_and_item:
             # Filters out None values from a list or tuple.
-            section = list(filter(None, section))
+            section: list[str] = list(filter(None, section_))
             if not section:
                 logger.debug("No content items found under content type section.")
                 continue

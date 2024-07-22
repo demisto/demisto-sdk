@@ -17,6 +17,9 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_displa
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_list_files import (
     IsPackDisplayNameAlreadyExistsValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_list_files import (
+    IsTestPlaybookInUseValidatorListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -130,8 +133,12 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_2.create_script(
         "TestApiModule", code='demisto.execute_command("SampleScriptTwo", dArgs)'
     ).set_data(marketplaces=MP_XSOAR_AND_V2)
-    sample_pack_2.create_test_playbook("SampleTestPlaybook")
     sample_pack_2.create_classifier("SampleClassifier")
+    sample_pack_2.create_test_playbook("SampleTestPlaybook")
+    sample_pack_2.create_test_playbook("TestPlaybookNoInUse")
+    sample_pack_2.create_test_playbook("TestPlaybookDeprecated").set_data(
+        deprecated="true"
+    )
 
     sample_pack_3 = graph_repo.create_pack("SamplePack3")
     sample_pack_3.set_data(marketplaces=MP_XSOAR)
@@ -227,3 +234,49 @@ def test_MarketplacesFieldValidatorAllFiles_is_valid(
     to_validate = pack_objects[pack_indices]
     validation_results = MarketplacesFieldValidatorAllFiles().is_valid(to_validate)
     assert expected_messages == {result.message for result in validation_results}
+
+
+def test_IsTestPlaybookInUseValidatorListFiles_is_valid(prepared_graph_repo: Repo):
+    """
+    Tests the IsTestPlaybookInUseValidatorListFiles validator for different scenarios of test playbooks.
+
+    Given:
+    - A graph interface with prepared repository data.
+    - Three test playbooks: one in use, one not in use, and one deprecated.
+
+    When:
+    - Validating each test playbook using the IsTestPlaybookInUseValidatorListFiles.
+
+    Then:
+    - Ensure that the validator correctly identifies the playbook in use with no errors.
+    - Ensure that the validator correctly identifies the playbook not in use and returns an appropriate error message.
+    - Ensure that the validator correctly identifies the deprecated playbook with no errors.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    playbook_in_use = (
+        prepared_graph_repo.packs[1].test_playbooks[0].get_graph_object(graph_interface)
+    )
+    validation_results = IsTestPlaybookInUseValidatorListFiles().is_valid(
+        [playbook_in_use]
+    )
+    assert validation_results == []  # the test playbook in use
+
+    playbook_no_in_use = (
+        prepared_graph_repo.packs[1].test_playbooks[1].get_graph_object(graph_interface)
+    )
+    validation_results = IsTestPlaybookInUseValidatorListFiles().is_valid(
+        [playbook_no_in_use]
+    )
+    assert validation_results[0].message == (  # the test playbook not in use
+        "Test playbook 'TestPlaybookNoInUse' is not linked to any content item. "
+        "Please ensure it is properly utilized."
+    )
+
+    playbook_deprecated = (
+        prepared_graph_repo.packs[1].test_playbooks[2].get_graph_object(graph_interface)
+    )
+    validation_results = IsTestPlaybookInUseValidatorListFiles().is_valid(
+        [playbook_deprecated]
+    )
+    assert validation_results == []  # the test playbook is deprecated

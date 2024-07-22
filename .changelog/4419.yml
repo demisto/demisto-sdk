@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue in the **test-modeling-rule** command, where the table wasn't left aligned.
-  type: fix
-pr_number: 4419

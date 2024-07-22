@@ -1,4 +1,19 @@
 # Changelog
+## 1.31.4
+* Removed DO106 - docker_not_on_the_latest_tag validation for the old validate. [#4429](https://github.com/demisto/demisto-sdk/pull/4429)
+* Added documentation improvements to the **pre-commit** command. [#4421](https://github.com/demisto/demisto-sdk/pull/4421)
+* Added support to replace incident to alert for deprecated content. [#4440](https://github.com/demisto/demisto-sdk/pull/4440)
+* Fixed an issue in the **test-modeling-rule** command, where the table wasn't left aligned. [#4419](https://github.com/demisto/demisto-sdk/pull/4419)
+* Added Improvements to ***validate-file-permission-changes*** **pre-commit** hook. [#4434](https://github.com/demisto/demisto-sdk/pull/4434)
+* Fixed an issue where old validate failed without listing the invalid content items. [#4432](https://github.com/demisto/demisto-sdk/pull/4432)
+* Added DS104 to the new validation format. The validation verifies that a Description file is present for an integration. [#4393](https://github.com/demisto/demisto-sdk/pull/4393)
+* Added MR107 to the new validation format. Validate that the dataset name of a modeling rule shows in the xif and schema files match. [#4429](https://github.com/demisto/demisto-sdk/pull/4429)
+* Moved MP107 and MP108 validations to the new validate format as BC113. The validation ensures no incident types and incident fields were removed from the mapper. [#4433](https://github.com/demisto/demisto-sdk/pull/4433)
+* Added PR101 and MR108 to the new validate format. The validations check if the rule id and the rule name end with the correct suffixes. [#4415](https://github.com/demisto/demisto-sdk/pull/4415)
+* Removed the following arguments from the (internal) **test-content** command: circleci, xsiam-machine, xsiam-servers-path, xsiam-servers-api-keys-path. [#4422](https://github.com/demisto/demisto-sdk/pull/4422)
+* Added the *verbose=False* parameter to the *fetch* method call to minimize unnecessary output messages. [#4427](https://github.com/demisto/demisto-sdk/pull/4427)
+* Removed the **validate-file-permissions-changes** pre-commit hook. [#4436](https://github.com/demisto/demisto-sdk/pull/4436)
+
 ## 1.31.3
 * Removed IN150 due to invalid_siem_integration_name from both old and new validate flows. [#4420](https://github.com/demisto/demisto-sdk/pull/4420)
 * Removed RM108 and RM112 from the old validate format. [#4408](https://github.com/demisto/demisto-sdk/pull/4408)

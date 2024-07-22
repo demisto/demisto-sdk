@@ -42,10 +42,10 @@ def remove_none_values(ls: Union[List[Any], Tuple[Any, ...]]) -> List[Any]:
 
 class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN114"
-    description = "Validate the content items mentioned in second-level headers (##), exist in the pack."
-    rationale = "Providing documentation with accurate headers, and avoid confusion."
+    description = "Validate the existence of content types in the first-level headers (####) and the content items in second-level headers (#####)."
+    rationale = "Providing documentation with accurate information and avoiding confusion."
     error_message = (
-        "The following headers that were found were invalid:\n"
+        "The following release note headers are invalid:\n"
         "{content_type_message}\n{content_item_message}\n"
     )
     related_field = "release_note"
@@ -65,12 +65,12 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 invalid_headers_content_item,
             ) = self.validate_release_notes_headers(content_item)
             content_type_message = (
-                f"Headers Content Types: {', '.join(invalid_headers_content_type)}\n"
+                f"Content types: {', '.join(invalid_headers_content_type)}\n"
                 if invalid_headers_content_type
                 else ""
             )
             content_item_message = (
-                f"Headers Content Items: {', '.join(invalid_headers_content_item)}\n"
+                f"Content items: {', '.join(invalid_headers_content_item)}\n"
                 if invalid_headers_content_item
                 else ""
             )
@@ -171,7 +171,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         return missing_display_names
 
     def validate_release_notes_headers(
-        self, content_item: Pack
+        self, pack: Pack
     ) -> Tuple[List[str], List[str]]:
         """
         Validate that the release notes headers are valid:

@@ -73,7 +73,7 @@ class IsChangedOrRemovedFieldsValidator(BaseValidator[ContentTypes]):
                     "true",
                     "false",
                 ]:
-                    if current_field != old_field:
+                    if current_field != old_field and current_field in [False, "false"]:
                         modified_fields.append(field)
                 else:
                     removed_fields.append(field)

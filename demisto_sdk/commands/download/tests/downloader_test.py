@@ -1557,10 +1557,7 @@ def test_download_with_subplaybook(mocker):
             }
         }
     )
-
-    assert (
-        filtered_custom_content_objects["playbook-task_with_sub-playbook"]["data"][
-            "playbookName"
-        ]
-        == "test2"
-    )
+    returned_playbookName_value = filtered_custom_content_objects[
+        "playbook-task_with_sub-playbook"
+    ]["data"]["tasks"]["1"]["task"]["playbookName"]
+    assert returned_playbookName_value == "test2"

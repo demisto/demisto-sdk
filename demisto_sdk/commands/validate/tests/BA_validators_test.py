@@ -4,7 +4,11 @@ from typing import List
 
 import pytest
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.constants import (
+    PACKS_FOLDER,
+    PARTNER_SUPPORT,
+    XSOAR_SUPPORT,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_assets_modeling_rule_object,
     create_classifier_object,
@@ -88,6 +92,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA119_is_py_file_contain_copy_right_section import (
     IsPyFileContainCopyRightSectionValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA124_is_have_unit_test_file import (
+    IsHaveUnitTestFileValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA125_customer_facing_docs_disallowed_terms import (
     CustomerFacingDocsDisallowedTermsValidator,
 )
@@ -96,6 +103,57 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_i
 )
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    name="MyIntegration0",
+                    unit_test_name="MyIntegration0",
+                    pack_info={"support": XSOAR_SUPPORT},
+                ),
+                create_integration_object(
+                    name="MyIntegration0",
+                    unit_test_name="MyIntegration0",
+                    pack_info={"support": PARTNER_SUPPORT},
+                ),
+                # unit test's filename is in lowercase
+                create_integration_object(
+                    name="MyIntegration0",
+                    unit_test_name="myintegration0",
+                    pack_info={"support": XSOAR_SUPPORT},
+                ),
+            ],
+            1,
+            [
+                "The given Integration is missing a unit test file, please make sure to add one with the following name MyIntegration0_test.py."
+            ],
+        ),
+    ],
+)
+def test_IsHaveUnitTestFileValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items list.
+        - Case 1: Three content items, where the last one has an invalid unit test file name.
+    When
+    - Calling the IsHaveUnitTestFileValidator is_valid function.
+    Then
+        - Make sure the right amount of failures return and that the error msg is correct.
+    """
+    results = IsHaveUnitTestFileValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
 
 
 @pytest.mark.parametrize(

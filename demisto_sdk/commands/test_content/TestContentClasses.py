@@ -799,6 +799,8 @@ class BuildContext:
                 machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
             }
             self.api_key = get_json_file(kwargs.get("cloud_servers_api_keys"))
+            self.logging_module.info(f"Accessing {self.api_key.keys()}")
+            self.logging_module.info(f"Values keys are: {[(k, v.keys()) for k, v in self.api_key.items()]}")
         else:
             self.env_json = self._load_env_results_json()
             self.api_key = kwargs["api_key"]
@@ -1217,13 +1219,10 @@ class CloudServerContext(ServerContext):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.machine = cloud_machine
         self.server_url = self.server_ip
-        logging.info(f"Accessing self.build_context.api_key")
-        logging.info(f"{self.build_context.api_key.keys()=}")
         self.api_key = self.build_context.api_key.get(cloud_machine, {}).get("api-key")
         self.auth_id = self.build_context.api_key.get(cloud_machine, {}).get(
             "x-xdr-auth-id"
         )
-        logging.info(f"Accessed self.build_context.api_key and took {self.build_context.api_key.get(cloud_machine, {}).keys()=}")
         os.environ.pop(
             "DEMISTO_USERNAME", None
         )  # we use client without demisto username

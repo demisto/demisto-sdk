@@ -679,11 +679,13 @@ def preprocess_files(
             # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py and read file paths
             with open(
                 "contribution_files_relative_paths.txt", "r"
-            ) as contribution_files_relative_paths:
-                for line in contribution_files_relative_paths:
+            ) as contribution_files:
+                for line in contribution_files:
                     clean_line: str = line.rstrip("\n")
                     relative_untracked_files_paths.add(Path(clean_line))
-
+            logger.info(
+                f"\n######## - Modified untracked:\n{relative_untracked_files_paths}"
+            )
             raw_files = raw_files.union(relative_untracked_files_paths)
             logger.info(f"\n######## - Running on collected files:\n{raw_files}")
     elif all_files:

@@ -25,7 +25,6 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -262,24 +261,37 @@ class Initializer:
             logger.info(
                 f"\n######## - Raw Untracked files from git:\n{self.git_util.repo.untracked_files}"
             )
-            valid_untracked_files_paths = self.get_untracked_files_in_content()
-            modified_files = modified_files.union(valid_untracked_files_paths)
+            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py and read file paths
+            relative_untracked_files_paths: Set[Path] = set()
+
+            with open(
+                "contribution_files_relative_paths.txt", "r"
+            ) as contribution_files:
+                for line in contribution_files:
+                    clean_line: str = line.rstrip("\n")
+                    relative_untracked_files_paths.add(Path(clean_line))
+            logger.info(
+                f"\n######## - Modified untracked:\n{relative_untracked_files_paths}"
+            )
+            # valid_untracked_files_paths = self.get_untracked_files_in_content()  #DELETE
+            modified_files = modified_files.union(relative_untracked_files_paths)
 
         return modified_files, added_files, renamed_files
 
-    def get_untracked_files_in_content(self) -> Set[Path]:
-        """
-        Filter out a string list of untracked files with a path thats inside the build machine's content repository.
-        The file paths in the build machine are relative so we use absolute path (resolve) to make sure the files are in content.
-        """
-        logger.info(f"\n######## - CONTENT PATH to match:\nf'{CONTENT_PATH}/Packs/'")
-        untracked_files_paths = {
-            Path(f)
-            for f in self.git_util.repo.untracked_files
-            if str(Path(f).resolve()).startswith(f"{CONTENT_PATH}/Packs/")
-        }
-        logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
-        return untracked_files_paths
+    # DELETE
+    # def get_untracked_files_in_content(self) -> Set[Path]:
+    #     """
+    #     Filter out a string list of untracked files with a path thats inside the build machine's content repository.
+    #     The file paths in the build machine are relative so we use absolute path (resolve) to make sure the files are in content.
+    #     """
+    #     logger.info(f"\n######## - CONTENT PATH to match:\nf'{CONTENT_PATH}/Packs/'")
+    #     untracked_files_paths = {
+    #         Path(f)
+    #         for f in self.git_util.repo.untracked_files
+    #         if str(Path(f).resolve()).startswith(f"{CONTENT_PATH}/Packs/")
+    #     }
+    #     logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
+    #     return untracked_files_paths
 
     def specify_files_by_status(
         self,

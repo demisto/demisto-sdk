@@ -24,7 +24,9 @@ class IsChangedOrRemovedFieldsValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -44,7 +46,7 @@ class IsChangedOrRemovedFieldsValidator(BaseValidator[ContentTypes]):
             and (old_obj_data := old_obj.data)  # type: ignore[attr-defined]
             and (
                 altered_fields := self.obtain_removed_fields(
-                    content_item.data, old_obj_data
+                    content_item.data.get("script", {}), old_obj_data.get("script", {})
                 )
             )
         ]
@@ -55,8 +57,8 @@ class IsChangedOrRemovedFieldsValidator(BaseValidator[ContentTypes]):
         """Retrieve the modified and removed fields.
 
         Args:
-            current_data (dict): The yml content after the modification.
-            old_data (dict): The yml content before the modification.
+            current_data (dict): The yml content script section after the modification.
+            old_data (dict): The yml content script section before the modification.
 
         Returns:
             Dict[str, List[str]]: The modified and removed fields mapped.
@@ -65,7 +67,12 @@ class IsChangedOrRemovedFieldsValidator(BaseValidator[ContentTypes]):
         modified_fields = []
         for field in INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE:
             if old_field := old_data.get(field):
-                if current_field := current_data.get(field):
+                if (current_field := current_data.get(field)) in [
+                    True,
+                    False,
+                    "true",
+                    "false",
+                ]:
                     if current_field != old_field:
                         modified_fields.append(field)
                 else:

@@ -36,7 +36,8 @@ class IsPlaybookContainUnhandledScriptConditionBranchesValidator(
             )
             for content_item in content_items
             if (
-                unhandled_script_condition_tasks := self.get_unhandled_script_condition_tasks(
+                unhandled_script_condition_tasks
+                := self.get_unhandled_script_condition_tasks(
                     list(content_item.tasks.values())
                 )
             )

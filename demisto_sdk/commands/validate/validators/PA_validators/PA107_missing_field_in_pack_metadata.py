@@ -45,7 +45,11 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
         Returns:
             List[str]: the list of missing fields.
         """
-        if missing_fields := [field for field in MANDATORY_PACK_METADATA_FIELDS if field not in content_item.pack_metadata_dict]:  # type: ignore[operator]
+        if missing_fields := [
+            field
+            for field in MANDATORY_PACK_METADATA_FIELDS
+            if field not in content_item.pack_metadata_dict  # type: ignore[operator]
+        ]:
             self.missing_fields[content_item.name] = missing_fields
         return missing_fields
 

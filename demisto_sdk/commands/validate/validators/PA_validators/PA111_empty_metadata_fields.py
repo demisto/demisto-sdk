@@ -37,9 +37,7 @@ class EmptyMetadataFieldsValidator(BaseValidator[ContentTypes]):
                     for field in PACK_METADATA_MANDATORY_FILLED_FIELDS
                     if field in content_item.pack_metadata_dict  # type:ignore[operator]
                     and (
-                        field_val := content_item.pack_metadata_dict[
-                            field
-                        ]  # type:ignore[index]
+                        field_val := content_item.pack_metadata_dict[field]  # type:ignore[index]
                     )  # type:ignore[index]
                     and "" in field_val
                 ]

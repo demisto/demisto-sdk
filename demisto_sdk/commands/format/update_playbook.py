@@ -186,9 +186,9 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                     )
                     # make sure the playbookId or playbookName use the new id and not the old
                     if task_data.get("task", {}).get(id_key) == current_playbook_id:
-                        playbook_data["tasks"][task_id]["task"][
-                            id_key
-                        ] = new_playbook_id
+                        playbook_data["tasks"][task_id]["task"][id_key] = (
+                            new_playbook_id
+                        )
                         updated_tasks.append(task_id)
 
             # if any tasks were changed re-write the playbook

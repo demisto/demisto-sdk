@@ -36,7 +36,8 @@ class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                invalid_fields := validate_content_item_type_not_in_name_or_display_fields(
+                invalid_fields
+                := validate_content_item_type_not_in_name_or_display_fields(
                     content_item
                 )
             )

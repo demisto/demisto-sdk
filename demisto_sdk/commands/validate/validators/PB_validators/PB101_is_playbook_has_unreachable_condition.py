@@ -62,7 +62,6 @@ class IsAskConditionHasUnreachableConditionValidator(BaseValidator[ContentTypes]
         tasks = playbook.tasks
         for task in tasks.values():
             if task.type == PlaybookTaskType.CONDITION and task.message:
-
                 next_tasks: dict = task.nexttasks or {}
                 # Rename the keys in dictionary to upper case
                 next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}

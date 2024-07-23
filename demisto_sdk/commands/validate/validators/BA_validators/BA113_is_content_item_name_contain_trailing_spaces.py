@@ -75,7 +75,6 @@ class IsContentItemNameContainTrailingSpacesValidator(BaseValidator[ContentTypes
     violations: ClassVar[Dict[str, List[str]]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-
         return [
             ValidationResult(
                 validator=self,

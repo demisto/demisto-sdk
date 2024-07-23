@@ -102,7 +102,6 @@ def mock_deprecation_manager() -> DeprecationValidator:
 
 
 class TestDeprecationValidator:
-
     INTEGRATIONS_VALIDATIONS_LS = [
         (
             {

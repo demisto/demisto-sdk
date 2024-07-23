@@ -2672,9 +2672,9 @@ class PackDependencies:
                 f"\nPack {pack} and its dependencies were successfully added to the dependencies graph."
             )
             dependency_graph.nodes()[pack]["depending_on_packs"] = list(dependencies)
-            dependency_graph.nodes()[pack][
-                "depending_on_items_mandatorily"
-            ] = dependencies_items
+            dependency_graph.nodes()[pack]["depending_on_items_mandatorily"] = (
+                dependencies_items
+            )
 
         return dependency_graph
 
@@ -2833,7 +2833,9 @@ class PackDependencies:
 
         if get_dependent_on:
             dependent_packs, _ = get_packs_dependent_on_given_packs(
-                input_paths, id_set_path, output_path  # type: ignore[arg-type]
+                input_paths,  # type: ignore[arg-type]
+                id_set_path,
+                output_path,
             )
             logger.info("[green]Found the following dependent packs:[/green]")
             dependent_packs = json.dumps(dependent_packs, indent=4)
@@ -3263,7 +3265,9 @@ def find_dependencies_between_two_packs(
         dependency: The pack to search the dependency for.
     """
     dependent_packs, _ = get_packs_dependent_on_given_packs(
-        [dependency], id_set_path, output_path  # type: ignore[arg-type]
+        [dependency],
+        id_set_path,
+        output_path,  # type: ignore[arg-type]
     )
     input_pack_name = ""
     if input_paths:
@@ -3475,9 +3479,9 @@ def convert_entity_types_to_id_set_headers(excluded_items_by_type: dict):
 
     for key in entity_type_to_header:
         if key in excluded_items_by_type:
-            excluded_items_by_type[
-                entity_type_to_header[key]
-            ] = excluded_items_by_type.pop(key)
+            excluded_items_by_type[entity_type_to_header[key]] = (
+                excluded_items_by_type.pop(key)
+            )
 
 
 def remove_items_from_packs_section(id_set: dict, excluded_items_by_pack: dict) -> None:
@@ -3501,7 +3505,9 @@ def remove_items_from_packs_section(id_set: dict, excluded_items_by_pack: dict) 
             item_type = item_type_to_content_items_header(item_type)
             try:
                 pack_content_items.get(item_type, []).remove(item_name)
-            except ValueError:  # This content item has already been excluded from the id_set
+            except (
+                ValueError
+            ):  # This content item has already been excluded from the id_set
                 pass
 
         # if no content items left, remove the pack from the id_set

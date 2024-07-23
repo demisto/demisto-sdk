@@ -35,9 +35,10 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                len(content_item.categories) != 1  # type:ignore[arg-type]
+                len(content_item.categories) != 1
                 or not validate_categories_approved(
-                    content_item.pack_metadata_dict.get("categories", []), approved_list  # type: ignore[union-attr]
+                    content_item.pack_metadata_dict.get("categories", []),  # type: ignore[union-attr]
+                    approved_list,
                 )
             )
             and content_item.name != API_MODULES_PACK

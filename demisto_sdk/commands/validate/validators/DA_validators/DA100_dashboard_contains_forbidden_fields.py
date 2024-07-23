@@ -84,7 +84,6 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
         }
 
     def fix(self, content_item: Dashboard) -> FixResult:
-
         for field in FIELDS_TO_EXCLUDE:
             content_item.data_dict.pop(field, None)
 

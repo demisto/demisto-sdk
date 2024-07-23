@@ -42,7 +42,6 @@ class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
-
             new_marketplaces = content_item.marketplaces
             old_marketplaces = content_item.old_base_content_object.marketplaces  # type: ignore
 
@@ -57,7 +56,9 @@ class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
 
                 #  If the content item was renamed (perhaps because it was moved into a new pack), we need to compare the marketplaces at the pack level.
                 if content_item.git_status == GitStatuses.RENAMED:
-                    old_pack_marketplaces = content_item.old_base_content_object.in_pack.marketplaces  # type: ignore
+                    old_pack_marketplaces = (
+                        content_item.old_base_content_object.in_pack.marketplaces  # type: ignore[union-attr]
+                    )
                     old_marketplaces = old_pack_marketplaces
                     new_marketplaces = pack_marketplaces
 

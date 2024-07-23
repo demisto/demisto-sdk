@@ -28,14 +28,14 @@ class IsChangedIncidentTypesAndFieldsValidator(BaseValidator[ContentTypes]):
                 removed_incident_types,
                 intersected_incident_types,
             ) = self.get_sorted_incident_types(
-                content_item.mapping,
+                content_item.mapping,  # type: ignore[union-attr]
                 content_item.old_base_content_object.mapping,  # type: ignore[union-attr]
             )
             removed_incident_field_by_incident_type = (
                 self.get_removed_incident_fields_by_incident_type(
                     content_item.mapping,
-                    content_item.old_base_content_object.mapping,
-                    intersected_incident_types,  # type: ignore[union-attr]
+                    content_item.old_base_content_object.mapping,  # type: ignore[union-attr]
+                    intersected_incident_types,
                 )
             )
             if error_msg := self.obtain_error_msg(

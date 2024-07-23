@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where **pre-commit** and **validate** were executed on irrelevant untracked files during contribution use case.
+  type: internal
+pr_number: 35123

@@ -1,0 +1,83 @@
+id: 042cb645-528b-4545-8bb8-04a6920dafb7
+version: 4
+vcShouldKeepItemLegacyProdMachine: false
+name: test1
+starttaskid: "0"
+tasks:
+  "0":
+    id: "0"
+    taskid: 26f432c0-09fe-48eb-84eb-1c5a3186049a
+    type: start
+    task:
+      id: 26f432c0-09fe-48eb-84eb-1c5a3186049a
+      version: -1
+      name: ""
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "1"
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "1":
+    id: "1"
+    taskid: ef63fc75-5a1b-4b21-8dd5-4348a564b424
+    type: playbook
+    task:
+      id: ef63fc75-5a1b-4b21-8dd5-4348a564b424
+      version: -1
+      name: "2342"
+      playbookName: test2
+      type: playbook
+      iscommand: false
+      brand: ""
+    separatecontext: true
+    continueonerrortype: ""
+    loop:
+      iscommand: false
+      exitCondition: ""
+      wait: 1
+      max: 100
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 230
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 275,
+        "width": 380,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs: []
+outputs: []
+quiet: true

@@ -160,7 +160,7 @@ GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS = create_integration_object(
         ),
     ],
 )
-def test_BreakingBackwardsSubtypeValidator_is_valid(
+def test_BreakingBackwardsSubtypeValidator_obtain_invalid_content_items(
     content_items, old_content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -180,7 +180,9 @@ def test_BreakingBackwardsSubtypeValidator_is_valid(
         - Case 4: Shouldn't fail any content item.
     """
     create_old_file_pointers(content_items, old_content_items)
-    results = BreakingBackwardsSubtypeValidator().is_valid(content_items)
+    results = BreakingBackwardsSubtypeValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -309,7 +311,7 @@ def test_IdChangedValidator(
     """
     create_old_file_pointers(content_items, old_content_items)
     validator = IdChangedValidator()
-    results = validator.is_valid(content_items)
+    results = validator.obtain_invalid_content_items(content_items)
     assert validator.old_id == old_id
     assert len(results) == expected_number_of_failures
     assert all(
@@ -386,16 +388,21 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[
-        1
-    ].marketplaces = XSIAM_MARKETPLACE
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = old_marketplaces
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
+        XSIAM_MARKETPLACE
+    )
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        old_marketplaces
+    )
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
-        assert WasMarketplaceModifiedValidator().is_valid(modified_content_items) == []
+        assert (
+            WasMarketplaceModifiedValidator().obtain_invalid_content_items(
+                modified_content_items
+            )
+            == []
+        )
 
 
 @pytest.mark.parametrize(
@@ -429,16 +436,18 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[
-        1
-    ].marketplaces = XSIAM_MARKETPLACE
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = old_marketplaces
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
+        XSIAM_MARKETPLACE
+    )
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        old_marketplaces
+    )
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
-        results = WasMarketplaceModifiedValidator().is_valid(modified_content_items)
+        results = WasMarketplaceModifiedValidator().obtain_invalid_content_items(
+            modified_content_items
+        )
         assert (
             results[0].message
             == "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
@@ -477,16 +486,21 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__pas
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[
-        1
-    ].marketplaces = modified_marketplaces
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = XSIAM_MARKETPLACE
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
+        modified_marketplaces
+    )
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        XSIAM_MARKETPLACE
+    )
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
-        assert WasMarketplaceModifiedValidator().is_valid(modified_content_items) == []
+        assert (
+            WasMarketplaceModifiedValidator().obtain_invalid_content_items(
+                modified_content_items
+            )
+            == []
+        )
 
 
 def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__fails():
@@ -513,16 +527,18 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__fai
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[
-        1
-    ].marketplaces = modified_marketplaces
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = XSIAM_MARKETPLACE
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
+        modified_marketplaces
+    )
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        XSIAM_MARKETPLACE
+    )
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
-        results = WasMarketplaceModifiedValidator().is_valid(modified_content_items)
+        results = WasMarketplaceModifiedValidator().obtain_invalid_content_items(
+            modified_content_items
+        )
         assert (
             results[0].message
             == "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
@@ -565,7 +581,12 @@ def test_WasMarketplaceModifiedValidator__old_and_modified_items_have_all_market
 
     create_old_file_pointers(modified_content_items, old_content_items)
     with ChangeCWD(REPO.path):
-        assert WasMarketplaceModifiedValidator().is_valid(modified_content_items) == []
+        assert (
+            WasMarketplaceModifiedValidator().obtain_invalid_content_items(
+                modified_content_items
+            )
+            == []
+        )
 
 
 @pytest.mark.parametrize(
@@ -601,7 +622,12 @@ def test_WasMarketplaceModifiedValidator__a_pack_is_modified__passes(
     old_content_item[0].marketplaces = old_pack
 
     create_old_file_pointers(modified_content_item, old_content_item)
-    assert WasMarketplaceModifiedValidator().is_valid(modified_content_item) == []
+    assert (
+        WasMarketplaceModifiedValidator().obtain_invalid_content_items(
+            modified_content_item
+        )
+        == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -631,7 +657,9 @@ def test_WasMarketplaceModifiedValidator__a_pack_is_modified__fails(
     old_content_item[0].marketplaces = old_pack
 
     create_old_file_pointers(modified_content_item, old_content_item)
-    results = WasMarketplaceModifiedValidator().is_valid(modified_content_item)
+    results = WasMarketplaceModifiedValidator().obtain_invalid_content_items(
+        modified_content_item
+    )
     assert (
         results[0].message
         == "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
@@ -657,18 +685,20 @@ def test_WasMarketplaceModifiedValidator__renamed__fails():
         create_integration_object(pack_info={"marketplaces": XSOAR_MARKETPLACE}),
         create_script_object(pack_info={"marketplaces": XSOAR_MARKETPLACE}),
     ]
-    renamed_content_items[0].git_status = renamed_content_items[
-        1
-    ].git_status = GitStatuses.RENAMED
+    renamed_content_items[0].git_status = renamed_content_items[1].git_status = (
+        GitStatuses.RENAMED
+    )
     old_content_items = [create_integration_object(), create_script_object()]
 
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = ALL_MARKETPLACES_FOR_IN_PACK
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        ALL_MARKETPLACES_FOR_IN_PACK
+    )
     create_old_file_pointers(renamed_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
-        results = WasMarketplaceModifiedValidator().is_valid(renamed_content_items)
+        results = WasMarketplaceModifiedValidator().obtain_invalid_content_items(
+            renamed_content_items
+        )
         assert (
             results[0].message
             == "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
@@ -697,18 +727,23 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
         ),
         create_script_object(pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}),
     ]
-    renamed_content_items[0].git_status = renamed_content_items[
-        1
-    ].git_status = GitStatuses.RENAMED
+    renamed_content_items[0].git_status = renamed_content_items[1].git_status = (
+        GitStatuses.RENAMED
+    )
     old_content_items = [create_integration_object(), create_script_object()]
 
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = XSOAR_MARKETPLACE
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        XSOAR_MARKETPLACE
+    )
     create_old_file_pointers(renamed_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
-        assert WasMarketplaceModifiedValidator().is_valid(renamed_content_items) == []
+        assert (
+            WasMarketplaceModifiedValidator().obtain_invalid_content_items(
+                renamed_content_items
+            )
+            == []
+        )
 
 
 @pytest.mark.parametrize(
@@ -776,7 +811,7 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
         ),
     ],
 )
-def test_IsBreakingContextOutputBackwardsValidator_is_valid(
+def test_IsBreakingContextOutputBackwardsValidator_obtain_invalid_content_items(
     content_items: List[Script],
     old_content_items: List[Script],
     expected_number_of_failures: int,
@@ -801,7 +836,9 @@ def test_IsBreakingContextOutputBackwardsValidator_is_valid(
         - Case 2: Should fail only the last two.
     """
     create_old_file_pointers(content_items, old_content_items)
-    results = IsBreakingContextOutputBackwardsValidator().is_valid(content_items)
+    results = IsBreakingContextOutputBackwardsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -871,7 +908,7 @@ def test_IsBreakingContextOutputBackwardsValidator_is_valid(
         ),
     ],
 )
-def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
+def test_IsValidFromversionOnModifiedValidator_obtain_invalid_content_items_fails(
     content_items, old_content_items
 ):
     """
@@ -883,10 +920,12 @@ def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
     When:
         - Calling the `IsValidFromversionOnModifiedValidator` validator.
     Then:
-        - The is_valid function will catch the change in `fromversion` and will fail the validation only on the relevant content_item.
+        - The obtain_invalid_content_items function will catch the change in `fromversion` and will fail the validation only on the relevant content_item.
     """
     create_old_file_pointers(content_items, old_content_items)
-    result = IsValidFromversionOnModifiedValidator().is_valid(content_items)
+    result = IsValidFromversionOnModifiedValidator().obtain_invalid_content_items(
+        content_items
+    )
 
     assert (
         len(result) == 1
@@ -898,7 +937,6 @@ def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
 def create_dummy_integration_with_context_path(
     command_name: str, context_path: str
 ) -> Integration:
-
     integration = create_integration_object()
     command = Command(name=command_name)
     command.outputs = [Output(contextPath=context_path)]
@@ -933,12 +971,16 @@ def test_IsContextPathChangedValidator():
     new_integration.old_base_content_object = old_integration
 
     # integration is valid so we get an empty list
-    assert not IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+    assert not IsContextPathChangedValidator().obtain_invalid_content_items(
+        content_items=[new_integration]
+    )
 
     new_integration.commands[0].outputs[0].contextPath = f"{old_context_path}1"
 
     # integration is invalid, so we get a list which contains ValidationResult
-    errors = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+    errors = IsContextPathChangedValidator().obtain_invalid_content_items(
+        content_items=[new_integration]
+    )
     assert errors, "Should have failed validation"
     assert old_context_path in errors[0].message
     assert errors[0].message.startswith(
@@ -967,7 +1009,9 @@ def test_IsContextPathChangedValidator_remove_command():
     new_integration.old_base_content_object = old_integration
 
     # integration is invalid, since command was removed
-    errors = IsContextPathChangedValidator().is_valid(content_items=[new_integration])
+    errors = IsContextPathChangedValidator().obtain_invalid_content_items(
+        content_items=[new_integration]
+    )
 
     assert errors, "Should have failed validation"
     assert (
@@ -1003,7 +1047,9 @@ def test_IsContextPathChangedValidator_remove_command():
         ),
     ],
 )
-def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content_items):
+def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
+    content_items, old_content_items
+):
     """
     Given:
         - Case 1: two content item of type 'Integration', one with modified `toversion`.
@@ -1011,10 +1057,12 @@ def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content
     When:
         - Calling the `IsValidToversionOnModifiedValidator` validator.
     Then:
-        - The is_valid function will catch the change in `toversion` and will fail the validation only on the relevant content_item.
+        - The obtain_invalid_content_items function will catch the change in `toversion` and will fail the validation only on the relevant content_item.
     """
     create_old_file_pointers(content_items, old_content_items)
-    result = IsValidToversionOnModifiedValidator().is_valid(content_items)
+    result = IsValidToversionOnModifiedValidator().obtain_invalid_content_items(
+        content_items
+    )
 
     assert (
         len(result) == 1
@@ -1044,7 +1092,9 @@ def test_args_name_change_validator__fails():
 
     create_old_file_pointers(modified_content_items, old_content_items)
 
-    results = ArgsNameChangeValidator().is_valid(modified_content_items)
+    results = ArgsNameChangeValidator().obtain_invalid_content_items(
+        modified_content_items
+    )
     assert "old_arg." in results[0].message
 
 
@@ -1070,7 +1120,9 @@ def test_args_name_change_validator__passes():
     ]
 
     create_old_file_pointers(modified_content_items, old_content_items)
-    assert not ArgsNameChangeValidator().is_valid(modified_content_items)
+    assert not ArgsNameChangeValidator().obtain_invalid_content_items(
+        modified_content_items
+    )
 
 
 def test_HaveCommandsOrArgsNameChangedValidator__fails():
@@ -1099,7 +1151,9 @@ def test_HaveCommandsOrArgsNameChangedValidator__fails():
 
     # Create old file pointers and validate
     create_old_file_pointers([new_content_item], [old_content_item])
-    results = HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])
+    results = HaveCommandsOrArgsNameChangedValidator().obtain_invalid_content_items(
+        [new_content_item]
+    )
 
     assert (
         'changes to the names of the following existing commands:"old_command_1". In addition, you have made changes to the names of existing arguments: In command "command_3" the following arguments have been changed: "old_arg_1_command_2".'
@@ -1155,7 +1209,9 @@ def test_HaveCommandsOrArgsNameChangedValidator__passes():
     old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
 
     create_old_file_pointers([new_content_item], [old_content_item])
-    assert not HaveCommandsOrArgsNameChangedValidator().is_valid([new_content_item])
+    assert not HaveCommandsOrArgsNameChangedValidator().obtain_invalid_content_items(
+        [new_content_item]
+    )
 
 
 def test_NewRequiredArgumentValidator__fails():
@@ -1198,7 +1254,9 @@ def test_NewRequiredArgumentValidator__fails():
     new_content_item.commands[1].args[0].required = True
 
     create_old_file_pointers([new_content_item], [old_content_item])
-    res = NewRequiredArgumentIntegrationValidator().is_valid([new_content_item])
+    res = NewRequiredArgumentIntegrationValidator().obtain_invalid_content_items(
+        [new_content_item]
+    )
 
     assert (
         "added the following new *required* arguments: in command 'command_2' you have added a new required argument:'arg_1_command_2'. in command 'command_3' you have added a new required argument:'arg_3_command_3'."
@@ -1245,7 +1303,9 @@ def test_NewRequiredArgumentValidator__passes():
     old_content_item = GENERIC_INTEGRATION_WITH_3_COMMANDS_AND_4_ARGS
     create_old_file_pointers([new_content_item], [old_content_item])
 
-    assert not NewRequiredArgumentIntegrationValidator().is_valid([new_content_item])
+    assert not NewRequiredArgumentIntegrationValidator().obtain_invalid_content_items(
+        [new_content_item]
+    )
 
 
 @pytest.mark.parametrize(
@@ -1284,7 +1344,9 @@ def test_NewRequiredArgumentScriptValidator__fails(new_args, breaking_arg):
     old_content_item = create_script_object(paths=["args"], values=[[{"name": "arg1"}]])
 
     create_old_file_pointers([new_content_item], [old_content_item])
-    res = NewRequiredArgumentScriptValidator().is_valid([new_content_item])
+    res = NewRequiredArgumentScriptValidator().obtain_invalid_content_items(
+        [new_content_item]
+    )
     assert breaking_arg in res[0].message
 
 
@@ -1330,7 +1392,9 @@ def test_NewRequiredArgumentScriptValidator__passes(new_args):
     )
 
     create_old_file_pointers([new_content_item], [old_content_item])
-    assert not NewRequiredArgumentScriptValidator().is_valid([new_content_item])
+    assert not NewRequiredArgumentScriptValidator().obtain_invalid_content_items(
+        [new_content_item]
+    )
 
 
 def test_has_removed_integration_parameters_with_changed_params():
@@ -1352,7 +1416,9 @@ def test_has_removed_integration_parameters_with_changed_params():
         values=[[{"name": "param_1"}, {"name": "param_2"}, {"name": "param_3"}]],
     )
 
-    res = NoRemovedIntegrationParametersValidator().is_valid([new_item])
+    res = NoRemovedIntegrationParametersValidator().obtain_invalid_content_items(
+        [new_item]
+    )
 
     assert (
         res[0].message
@@ -1378,12 +1444,14 @@ def test_has_removed_integration_parameters_without_changed_params():
         paths=["configuration"], values=[[{"name": "param_1"}, {"name": "param_2"}]]
     )
 
-    res = NoRemovedIntegrationParametersValidator().is_valid([new_item])
+    res = NoRemovedIntegrationParametersValidator().obtain_invalid_content_items(
+        [new_item]
+    )
 
     assert res == []
 
 
-def test_IsChangedIncidentTypesAndFieldsValidator_is_valid_success():
+def test_IsChangedIncidentTypesAndFieldsValidator_obtain_invalid_content_items_success():
     """
     Given
     content_items and old_content_items iterables.
@@ -1417,11 +1485,13 @@ def test_IsChangedIncidentTypesAndFieldsValidator_is_valid_success():
         )
     ]
     create_old_file_pointers(content_items, old_content_items)
-    results = IsChangedIncidentTypesAndFieldsValidator().is_valid(content_items)
+    results = IsChangedIncidentTypesAndFieldsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert not results
 
 
-def test_IsChangedIncidentTypesAndFieldsValidator_is_valid_fail():
+def test_IsChangedIncidentTypesAndFieldsValidator_obtain_invalid_content_items_fail():
     """
     Given
     content_items and old_content_items iterables.
@@ -1463,7 +1533,9 @@ def test_IsChangedIncidentTypesAndFieldsValidator_is_valid_fail():
         )
     ]
     create_old_file_pointers(content_items, old_content_items)
-    results = IsChangedIncidentTypesAndFieldsValidator().is_valid(content_items)
+    results = IsChangedIncidentTypesAndFieldsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 1
     assert (
         results[0].message

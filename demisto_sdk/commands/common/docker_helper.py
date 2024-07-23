@@ -109,7 +109,6 @@ def docker_login(docker_client) -> bool:
     if docker_user and docker_pass:
         try:
             if not is_custom_registry():
-
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
@@ -309,7 +308,6 @@ class DockerBase:
         """
         for _ in range(2):
             try:
-
                 test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push

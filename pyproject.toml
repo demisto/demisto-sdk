@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.31.3"
+version = "1.31.4"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -119,9 +119,8 @@ pytest-datadir-ng = "^1.1.1"
 pytest-mock = "^3.7.0"
 pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
-black = "^22.10.0"
 ipykernel = "^6.16.1"
-ruff = "^0.1.11"
+ruff = "^0.5.2"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
 pygithub = "^2.2.0"
@@ -151,11 +150,10 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-ignore = [
+lint.ignore = [
     "F403",
     "F405",
     "E501",
-    "W293", # handled by Black
 ]
 
 
@@ -167,7 +165,7 @@ exclude = [
     "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py",
 ]
 
-select = [
+lint.select = [
     "C9",
     "E",
     "F",
@@ -186,11 +184,11 @@ select = [
 
 target-version = "py38"
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 30
 
-[tool.ruff.flake8-tidy-imports]
-[tool.ruff.flake8-tidy-imports.banned-api]
+[tool.ruff.lint.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
 # "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
 "json".msg = "use JSON_Handler instead"
 "json5".msg = "use JSON_Handler instead"

@@ -25,7 +25,9 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     missing_fields: ClassVar[dict] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -45,7 +47,11 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
         Returns:
             List[str]: the list of missing fields.
         """
-        if missing_fields := [field for field in MANDATORY_PACK_METADATA_FIELDS if field not in content_item.pack_metadata_dict]:  # type: ignore[operator]
+        if missing_fields := [
+            field
+            for field in MANDATORY_PACK_METADATA_FIELDS
+            if field not in content_item.pack_metadata_dict  # type: ignore[operator]
+        ]:
             self.missing_fields[content_item.name] = missing_fields
         return missing_fields
 

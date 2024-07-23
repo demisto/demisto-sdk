@@ -25,7 +25,9 @@ class IsValidModulesValidator(BaseValidator[ContentTypes]):
     fix_message = "Removed the following label from the modules field: {0}."
     non_approved_modules_dict: ClassVar[dict] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -47,7 +49,9 @@ class IsValidModulesValidator(BaseValidator[ContentTypes]):
         content_item: ContentTypes,
     ) -> FixResult:
         content_item.modules = [
-            module for module in content_item.modules if module not in self.non_approved_modules_dict[content_item.name]  # type: ignore[union-attr, arg-type]
+            module
+            for module in content_item.modules
+            if module not in self.non_approved_modules_dict[content_item.name]  # type: ignore[union-attr, arg-type]
         ]
         return FixResult(
             validator=self,

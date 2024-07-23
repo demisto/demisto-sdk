@@ -160,7 +160,6 @@ def report_time_measurements(
             )
     timers = registered_timers.get(group_name)
     if timers:
-
         method_states = [
             [
                 func.__qualname__,

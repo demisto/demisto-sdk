@@ -1,4 +1,0 @@
-changes:
-- description: Moved MP107 and MP108 validations to the new validate format as BC113. The validation ensures no incident types and incident fields were removed from the mapper.
-  type: internal
-pr_number: 4433

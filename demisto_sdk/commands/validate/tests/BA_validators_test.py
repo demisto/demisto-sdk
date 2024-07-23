@@ -155,7 +155,7 @@ VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
         ),
     ],
 )
-def test_IDNameValidator_is_valid(
+def test_IDNameValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -168,7 +168,7 @@ def test_IDNameValidator_is_valid(
         - Case 3: content_items with 1 Wizard without changes.
         - Case 2: content_items with 1 Wizard with its ID altered.
     When
-    - Calling the IDNameValidator is_valid function.
+    - Calling the IDNameValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Should fail 1 integration.
@@ -178,7 +178,7 @@ def test_IDNameValidator_is_valid(
         - Case 5: Should fail anything.
         - Case 6: Should fail the Wizard.
     """
-    results = IDNameValidator().is_valid(content_items)
+    results = IDNameValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -241,7 +241,7 @@ def test_IDNameValidator_fix(content_item, expected_name, expected_fix_msg):
         ),
     ],
 )
-def test_CliNameMatchIdValidator_is_valid(
+def test_CliNameMatchIdValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -251,13 +251,13 @@ def test_CliNameMatchIdValidator_is_valid(
         - Case 2: content_items with 1 indicator field, where the cliName is different from id.
 
     When
-    - Calling the CliNameMatchIdValidator is_valid function.
+    - Calling the CliNameMatchIdValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail the indicator field.
     """
-    results = CliNameMatchIdValidator().is_valid(content_items)
+    results = CliNameMatchIdValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -348,7 +348,7 @@ def test_CliNameMatchIdValidator_fix(content_item, expected_name, expected_fix_m
         ),
     ],
 )
-def test_IsFromVersionSufficientAllItemsValidator_is_valid(
+def test_IsFromVersionSufficientAllItemsValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -357,13 +357,15 @@ def test_IsFromVersionSufficientAllItemsValidator_is_valid(
         - Case 1: a list of content items with 1 item of each kind supported by the validation where the fromVersion field is valid.
         - Case 2: IncidentField, wizard, playbook, and genericField, all set to fromVersion = 4.5.0 (insufficient).
     When
-    - Calling the IsFromVersionSufficientAllItemsValidator is_valid function.
+    - Calling the IsFromVersionSufficientAllItemsValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail all 4 content items.
     """
-    results = IsFromVersionSufficientAllItemsValidator().is_valid(content_items)
+    results = IsFromVersionSufficientAllItemsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -450,7 +452,7 @@ def test_IsFromVersionSufficientAllItemsValidator_fix(
         ),
     ],
 )
-def test_FromToVersionSyncedValidator_is_valid(
+def test_FromToVersionSyncedValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -459,13 +461,13 @@ def test_FromToVersionSyncedValidator_is_valid(
         - Case 1: a list of content items with 1 item of each kind supported by the validation where the fromVersion < toVersion / toVersion field doesn't exist.
         - Case 2: IncidentType with the fromVersion = toVersion = 5.0.0, IncidentField, Widget, and Wizard, all set to toVersion = 4.5.0 < fromVersion (insufficient).
     When
-    - Calling the FromToVersionSyncedValidator is_valid function.
+    - Calling the FromToVersionSyncedValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail all 4 content items.
     """
-    results = FromToVersionSyncedValidator().is_valid(content_items)
+    results = FromToVersionSyncedValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -539,7 +541,7 @@ def test_FromToVersionSyncedValidator_is_valid(
         ),
     ],
 )
-def test_IsFromVersionSufficientIndicatorFieldValidator_is_valid(
+def test_IsFromVersionSufficientIndicatorFieldValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -561,7 +563,7 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_is_valid(
         - Case 4: One indicator field:
             - one with shortText type and fromVersion = 4.5.0.
     When
-    - Calling the IsFromVersionSufficientIndicatorFieldValidator is_valid function.
+    - Calling the IsFromVersionSufficientIndicatorFieldValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of content_items failed, and that the right error message is returned.
         - Case 1: Shouldn't fail any indicator field.
@@ -569,7 +571,11 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_is_valid(
         - Case 3: Should fail the third and fourth indicator fields.
         - Case 4: Should fail the indicator field.
     """
-    results = IsFromVersionSufficientIndicatorFieldValidator().is_valid(content_items)
+    results = (
+        IsFromVersionSufficientIndicatorFieldValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -730,7 +736,7 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_fix(
         ),
     ],
 )
-def test_IsFromVersionSufficientIntegrationValidator_is_valid(
+def test_IsFromVersionSufficientIntegrationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -751,7 +757,11 @@ def test_IsFromVersionSufficientIntegrationValidator_is_valid(
         - Case 4: Should fail only one integration.
         - Case 5: Should fail only one integration.
     """
-    results = IsFromVersionSufficientIntegrationValidator().is_valid(content_items)
+    results = (
+        IsFromVersionSufficientIntegrationValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -862,7 +872,7 @@ def test_IsFromVersionSufficientIntegrationValidator_fix(
         ),
     ],
 )
-def test_IDContainSlashesValidator_is_valid(
+def test_IDContainSlashesValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -871,13 +881,13 @@ def test_IDContainSlashesValidator_is_valid(
         - Case 1: A list of one of each content_item supported by the validation with a valid ID.
         - Case 2: A list of one IncidentType, IncidentField, List, and Integration, all with invalid ids with at least one /.
     When
-    - Calling the IDContainSlashesValidator is_valid function.
+    - Calling the IDContainSlashesValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail all 4 content items.
     """
-    results = IDContainSlashesValidator().is_valid(content_items)
+    results = IDContainSlashesValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -936,7 +946,7 @@ def test_IDContainSlashesValidator_fix(
     assert content_item.object_id == expected_id
 
 
-def test_IsDeprecatedCorrectlyValidator_is_valid():
+def test_IsDeprecatedCorrectlyValidator_obtain_invalid_content_items():
     """
     Given:
      - 1 integration and 1 script which are deprecated incorrectly
@@ -969,7 +979,9 @@ def test_IsDeprecatedCorrectlyValidator_is_valid():
         create_script_object(paths=["comment"], values=["Some description"]),
     ]
 
-    results = IsDeprecatedCorrectlyValidator().is_valid(content_items)
+    results = IsDeprecatedCorrectlyValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 2
     for result in results:
         assert result.content_object.deprecated
@@ -1018,7 +1030,7 @@ def test_IsDeprecatedCorrectlyValidator_is_valid():
         ),
     ],
 )
-def test_IsValidVersionValidator_is_valid(
+def test_IsValidVersionValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -1027,13 +1039,13 @@ def test_IsValidVersionValidator_is_valid(
         - Case 1: A list of one of each content_item supported by the validation with a valid ID.
         - Case 2: A list of one IncidentField, List, and Integration, all with invalid versions.
     When
-    - Calling the IsValidVersionValidator is_valid function.
+    - Calling the IsValidVersionValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail all 3 content items.
     """
-    results = IsValidVersionValidator().is_valid(content_items)
+    results = IsValidVersionValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1126,7 +1138,9 @@ def test_IsValidVersionValidator_fix():
         ),
     ],
 )
-def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg):
+def test_IsEntityTypeInEntityNameValidator_obtain_invalid_content_items(
+    content_items, expected_msg
+):
     """
     Given
     - Case 1: Two content items of type 'Integration' are validated.
@@ -1153,9 +1167,11 @@ def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg)
         - Don't fail the validation.
         - Fail the validation with a relevant message containing 'name' field.
     - Case 4:
-        - Don't fail the validation and is_valid function return empty array.
+        - Don't fail the validation and obtain_invalid_content_items function return empty array.
     """
-    result = IsEntityTypeInEntityNameValidator().is_valid(content_items)
+    result = IsEntityTypeInEntityNameValidator().obtain_invalid_content_items(
+        content_items
+    )
     if result:
         assert result[0].message == expected_msg
         assert len(result) == 1
@@ -1229,7 +1245,7 @@ def test_IsEntityNameContainExcludedWordValidator(
     - Case 7: Don't fail the validation.
     - Case 8: Fail the validation with a relevant message containing 'name' field.
     """
-    results = IsEntityNameContainExcludedWordValidator().is_valid(
+    results = IsEntityNameContainExcludedWordValidator().obtain_invalid_content_items(
         content_items=content_items
     )
     assert len(results) == expected_number_of_failures
@@ -1546,7 +1562,7 @@ def test_IsEntityNameContainExcludedWordValidator(
         ),
     ],
 )
-def test_ValidPackNameValidator_is_valid(
+def test_ValidPackNameValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -1556,7 +1572,7 @@ def test_ValidPackNameValidator_is_valid(
         Each test contains one object where the pack name was changed, and one where it was not.
 
     When:
-        - Calling the PackNameValidator is_valid function.
+        - Calling the PackNameValidator obtain_invalid_content_items function.
 
     Then:
         - Make sure the right amount of tests failed, and that the right error message is returned.
@@ -1569,7 +1585,7 @@ def test_ValidPackNameValidator_is_valid(
     content_item_parts[packs_folder_index] = "newPackName"
     new_path = Path(*content_item_parts)
     content_items[1].path = new_path
-    results = PackNameValidator().is_valid(content_items)
+    results = PackNameValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1641,7 +1657,7 @@ def test_CustomerFacingDocsDisallowedTermsValidator(
     - Case 1: Fail the validation with a relevant message containing the found disallowed terms.
     - Case 2: Don't fail the validation.
     """
-    results = CustomerFacingDocsDisallowedTermsValidator().is_valid(
+    results = CustomerFacingDocsDisallowedTermsValidator().obtain_invalid_content_items(
         content_items=content_items
     )
     assert len(results) == expected_number_of_failures
@@ -1688,7 +1704,7 @@ def test_IsPyFileContainCopyRightSectionValidator(
     - Case 1: Shouldn't fail anything.
     - Case 2: Should fail all.
     """
-    results = IsPyFileContainCopyRightSectionValidator().is_valid(
+    results = IsPyFileContainCopyRightSectionValidator().obtain_invalid_content_items(
         content_items=content_items
     )
     assert len(results) == expected_number_of_failures
@@ -1725,18 +1741,18 @@ def test_IsPyFileContainCopyRightSectionValidator(
         pytest.param(create_layout_object(), id="layout"),
     ],
 )
-def test_IsContentItemNameContainTrailingSpacesValidator_is_valid_success(
+def test_IsContentItemNameContainTrailingSpacesValidator_obtain_invalid_content_items_success(
     content_items: ContentTypes113,
 ):
     """Test validate BA113 - Trailing spaces in content item name
     Given:
         A list of content items with names that have trailing spaces.
     When:
-        The IsContentItemNameContainTrailingSpacesValidator's is_valid method is called.
+        The IsContentItemNameContainTrailingSpacesValidator's obtain_invalid_content_items method is called.
     Then:
         The method should return False, indicating that there are no validation failures.
     """
-    assert not IsContentItemNameContainTrailingSpacesValidator().is_valid(
+    assert not IsContentItemNameContainTrailingSpacesValidator().obtain_invalid_content_items(
         [content_items]
     )  # no failures
 
@@ -1852,7 +1868,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid_success(
         ),
     ],
 )
-def test_IsContentItemNameContainTrailingSpacesValidator_is_valid_failure(
+def test_IsContentItemNameContainTrailingSpacesValidator_obtain_invalid_content_items_failure(
     content_items: ContentTypes113,
     expected_field_error_messages: List[str],
 ):
@@ -1860,12 +1876,14 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid_failure(
     Given:
         A list of content items with names that may contain trailing spaces.
     When:
-        The `IsContentItemNameContainTrailingSpacesValidator.is_valid` method is called.
+        The `IsContentItemNameContainTrailingSpacesValidator.obtain_invalid_content_items` method is called.
     Then:
         The method should return the correct number of validation failures and the correct error messages.
     """
-    results = IsContentItemNameContainTrailingSpacesValidator().is_valid(
-        [content_items]
+    results = (
+        IsContentItemNameContainTrailingSpacesValidator().obtain_invalid_content_items(
+            [content_items]
+        )
     )
     assert len(results) == 1  # one failure
     assert (
@@ -1977,7 +1995,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         ),
     ],
 )
-def test_FileNameHasSeparatorsValidator_is_valid(
+def test_FileNameHasSeparatorsValidator_obtain_invalid_content_items(
     content_item, expected_number_of_failures, expected_messages
 ):
     """
@@ -1987,14 +2005,14 @@ def test_FileNameHasSeparatorsValidator_is_valid(
         A content item with a name that contains separators (e.g., hyphens) or not.
 
     When:
-        The FileNameHasSeparatorsValidator's is_valid method is called.
+        The FileNameHasSeparatorsValidator's obtain_invalid_content_items method is called.
 
     Then:
         The method should return the expected number of validation failures and messages.
         Failure with an appropriate message if the name contains separators.
     """
     validator = FileNameHasSeparatorsValidator()
-    ValidationResultList = validator.is_valid([content_item])
+    ValidationResultList = validator.obtain_invalid_content_items([content_item])
 
     assert len(ValidationResultList) == expected_number_of_failures
 
@@ -2039,10 +2057,12 @@ def test_FileNameHasSeparatorsValidator_is_valid(
         ),
     ],
 )
-def test_IsFolderNameHasSeparatorsValidator_is_valid(
+def test_IsFolderNameHasSeparatorsValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msg
 ):
-    result = IsFolderNameHasSeparatorsValidator().is_valid(content_items)
+    result = IsFolderNameHasSeparatorsValidator().obtain_invalid_content_items(
+        content_items
+    )
 
     assert len(result) == expected_number_of_failures
 

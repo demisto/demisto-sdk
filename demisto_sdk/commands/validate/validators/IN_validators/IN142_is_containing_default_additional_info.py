@@ -31,7 +31,9 @@ class IsContainingDefaultAdditionalInfoValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     invalid_params: ClassVar[dict] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         default_additional_info: CaseInsensitiveDict = (
             load_default_additional_info_dict()
         )

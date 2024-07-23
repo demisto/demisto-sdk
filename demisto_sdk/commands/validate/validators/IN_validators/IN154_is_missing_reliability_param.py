@@ -28,7 +28,9 @@ class IsMissingReliabilityParamValidator(BaseValidator[ContentTypes]):
     error_message = "Feed integrations and integrations with reputation commands must implement a reliability parameter, make sure to add one."
     related_field = "isfeed, configuration, script.commands"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

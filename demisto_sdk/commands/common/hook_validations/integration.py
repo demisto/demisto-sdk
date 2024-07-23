@@ -2269,7 +2269,10 @@ class IntegrationValidator(ContentEntityValidator):
                 if (
                     command in REPUTATION_COMMAND_NAMES
                 ):  # Integration has a reputation command
-                    (error_message, error_code,) = Errors.missing_reliability_parameter(
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.missing_reliability_parameter(
                         is_feed=False, command_name=command
                     )
 

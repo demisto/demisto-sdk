@@ -290,7 +290,7 @@ def init_mapping_field_list(
     """
     mapping_list = []
     xdm_onedata_model_names = xdm_rule_to_dclass.keys()
-    for (field_name, xdm_field_name) in zip(name_columen, xdm_one_data_model):
+    for field_name, xdm_field_name in zip(name_columen, xdm_one_data_model):
         raw_event_data_list: List[RawEventData] = handle_raw_evnet_data(
             field_name, raw_event
         )

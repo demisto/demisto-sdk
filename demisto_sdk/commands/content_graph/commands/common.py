@@ -22,7 +22,6 @@ def recover_if_fails(func):
                 )
                 raise
             if not neo4j_service.is_running_on_docker():
-
                 logger.error(
                     "Either start the Docker service or install Neo4j locally with this guide: https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/content_graph/README.md",
                     exc_info=True,

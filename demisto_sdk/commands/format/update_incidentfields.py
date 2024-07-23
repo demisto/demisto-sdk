@@ -69,7 +69,6 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
         aliases = self.data.get("Aliases", {})
         if aliases:
-
             if not self.graph:
                 logger.info(
                     f"Skipping formatting of marketplaces field of aliases for {self.source_file} as the "
@@ -88,7 +87,6 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                     len(alias_marketplaces) != 1
                     or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
                 ):
-
                     logger.info(
                         f"\n[blue]================= Updating file {alias_file_path} =================[/blue]"
                     )

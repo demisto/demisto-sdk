@@ -99,7 +99,6 @@ class TestXSOARConfigFileUpdater:
         )
 
         with temp_dir() as tmp_output_dir:
-
             with open(f"{tmp_output_dir}/xsoar_config.json", "w") as config_file:
                 json.dump(
                     {"marketplace_packs": [{"id": "test2", "version": "2.0.0"}]},

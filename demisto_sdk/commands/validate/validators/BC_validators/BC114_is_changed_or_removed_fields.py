@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import (
+    INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE,
+    GitStatuses,
+)
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -25,7 +28,15 @@ class IsChangedOrRemovedFieldsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format("\n".join([f"The following fields were {action}: {', '.join(fields)}." for action, fields in altered_fields.items() if fields])),
+                message=self.error_message.format(
+                    "\n".join(
+                        [
+                            f"The following fields were {action}: {', '.join(fields)}."
+                            for action, fields in altered_fields.items()
+                            if fields
+                        ]
+                    )
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
@@ -38,7 +49,9 @@ class IsChangedOrRemovedFieldsValidator(BaseValidator[ContentTypes]):
             )
         ]
 
-    def obtain_removed_fields(self, current_data: dict, old_data: dict) -> Dict[str, List[str]]:
+    def obtain_removed_fields(
+        self, current_data: dict, old_data: dict
+    ) -> Dict[str, List[str]]:
         """Retrieve the modified and removed fields.
 
         Args:
@@ -50,15 +63,7 @@ class IsChangedOrRemovedFieldsValidator(BaseValidator[ContentTypes]):
         """
         removed_fields = []
         modified_fields = []
-        for field in [
-            "feed",
-            "isfetch",
-            "longRunning",
-            "longRunningPort",
-            "ismappable",
-            "isremotesyncin",
-            "isremotesyncout",
-        ]:
+        for field in INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE:
             if old_field := old_data.get(field):
                 if current_field := current_data.get(field):
                     if current_field != old_field:

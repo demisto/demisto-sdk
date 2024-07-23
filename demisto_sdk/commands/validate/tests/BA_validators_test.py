@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
     create_assets_modeling_rule_object,
     create_classifier_object,
     create_correlation_rule_object,
@@ -101,6 +102,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA125_customer_facin
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
 )
+from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
 
@@ -146,7 +148,8 @@ def test_IsHaveUnitTestFileValidator_is_valid(
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
     """
-    results = IsHaveUnitTestFileValidator().is_valid(content_items)
+    with ChangeCWD(REPO.path):
+        results = IsHaveUnitTestFileValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [

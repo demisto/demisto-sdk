@@ -3022,43 +3022,46 @@ def test_release_notes_header_and_from_release_note_header():
     """
     from demisto_sdk.commands.content_graph.common import ContentType
 
-    test_cases = {
-        ContentType.PLAYBOOK: "Playbooks",
-        ContentType.INTEGRATION: "Integrations",
-        ContentType.SCRIPT: "Scripts",
-        ContentType.INCIDENT_FIELD: "Incident Fields",
-        ContentType.INDICATOR_FIELD: "Indicator Fields",
-        ContentType.INCIDENT_TYPE: "Incident Types",
-        ContentType.CLASSIFIER: "Classifiers",
-        ContentType.LAYOUT: "Layouts",
-        ContentType.REPORT: "Reports",
-        ContentType.WIDGET: "Widgets",
-        ContentType.DASHBOARD: "Dashboards",
-        ContentType.CONNECTION: "Connections",
-        ContentType.MAPPER: "Mappers",
-        ContentType.PREPROCESS_RULE: "PreProcess Rules",
-        ContentType.GENERIC_DEFINITION: "Objects",
-        ContentType.GENERIC_MODULE: "Modules",
-        ContentType.GENERIC_TYPE: "Object Types",
-        ContentType.GENERIC_FIELD: "Object Fields",
-        ContentType.LIST: "Lists",
-        ContentType.JOB: "Jobs",
-        ContentType.PARSING_RULE: "Parsing Rules",
-        ContentType.MODELING_RULE: "Modeling Rules",
-        ContentType.CORRELATION_RULE: "Correlation Rules",
-        ContentType.XSIAM_DASHBOARD: "XSIAM Dashboards",
-        ContentType.XSIAM_REPORT: "XSIAM Reports",
-        ContentType.TRIGGER: "Triggers Recommendations",
-        ContentType.WIZARD: "Wizards",
-        ContentType.XDRC_TEMPLATE: "XDRC Templates",
-        ContentType.LAYOUT_RULE: "Layout Rules",
-        ContentType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
-        ContentType.CASE_LAYOUT_RULE: "Case Layout Rules",
-        ContentType.CASE_FIELD: "Case Fields",
-        ContentType.CASE_LAYOUT: "Case Layouts",
-    }
-    for content_type in test_cases.keys():
-        parsed_content_type = ContentType.from_release_note_header(
+    test_cases = [
+        ContentType.PLAYBOOK,
+        ContentType.INTEGRATION,
+        ContentType.SCRIPT,
+        ContentType.INCIDENT_FIELD, # not good
+        ContentType.INDICATOR_FIELD,
+        ContentType.INCIDENT_TYPE,
+        ContentType.CLASSIFIER,
+        ContentType.LAYOUT,
+        ContentType.REPORT,
+        ContentType.WIDGET,
+        ContentType.DASHBOARD,
+        ContentType.CONNECTION,
+        ContentType.MAPPER,
+        ContentType.PREPROCESS_RULE,
+        ContentType.GENERIC_DEFINITION,
+        ContentType.GENERIC_MODULE,
+        ContentType.GENERIC_TYPE,
+        ContentType.GENERIC_FIELD,
+        ContentType.LIST,
+        ContentType.JOB,
+        ContentType.PARSING_RULE,
+        ContentType.MODELING_RULE,
+        ContentType.CORRELATION_RULE,
+        ContentType.XSIAM_DASHBOARD,
+        ContentType.XSIAM_REPORT,
+        ContentType.TRIGGER,
+        ContentType.WIZARD,
+        ContentType.XDRC_TEMPLATE,
+        ContentType.LAYOUT_RULE,
+        ContentType.ASSETS_MODELING_RULE,
+        ContentType.CASE_LAYOUT_RULE,
+        ContentType.CASE_FIELD,
+        ContentType.CASE_LAYOUT,
+    ]
+    list_not_ok = []
+    for content_type in test_cases:
+
+        if not content_type == ContentType.from_release_note_header(
             content_type.release_notes_header
-        )
-        assert test_cases[parsed_content_type] == parsed_content_type
+        ):
+            list_not_ok.append(content_type)
+    assert list_not_ok

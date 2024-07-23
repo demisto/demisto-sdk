@@ -167,7 +167,7 @@ CASE_LAYOUT = "caselayout"
 
 # Marketplaces
 
-DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = "marketplace-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = "marketplace-dist-dev"
 DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
 DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"

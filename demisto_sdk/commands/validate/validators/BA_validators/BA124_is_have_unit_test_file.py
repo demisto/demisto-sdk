@@ -44,19 +44,13 @@ class IsHaveUnitTestFileValidator(BaseValidator[ContentTypes]):
                 and not self.case_sensitive_exists(
                     content_item.path.with_name(f"{content_item.path.stem}_test.py")
                 )
-                # and content_item.path.with_name(
-                #     f"{content_item.path.stem}_test.py"
-                # ).exists()
-                # # exists() is not case-sensitive, we need to check the suffix of the unit test's filename
-                # and not content_item.path.with_name(
-                #     f"{content_item.path.stem}_test.py"
-                # ).stem.startswith(f"{content_item.path.stem}")
             )
         ]
 
     def case_sensitive_exists(self, unit_test_path: Path):
         if not unit_test_path.exists():
             return False
+        # Checking if the file exists is not enough since Path.exists() isn't always case sensitive (related to file system configuration)
         # List all file names in the directory of the given path
         actual_files = [file.name for file in unit_test_path.parent.iterdir()]
         # Check if the exact file name exists in the directory

@@ -16,7 +16,14 @@ def test_validate_execution_mode_search_window_with_no_fields():
         The validation should fail.
     """
     correlation_rule = create_correlation_rule_object()
-    assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 1
+    assert (
+        len(
+            ExecutionModeSearchWindowValidator().obtain_invalid_content_items(
+                [correlation_rule]
+            )
+        )
+        == 1
+    )
 
 
 def test_validate_execution_mode_search_window_with_empty_search_window():
@@ -31,7 +38,14 @@ def test_validate_execution_mode_search_window_with_empty_search_window():
     correlation_rule = create_correlation_rule_object(
         ["execution_mode", "search_window"], ["SCHEDULED", ""]
     )
-    assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 1
+    assert (
+        len(
+            ExecutionModeSearchWindowValidator().obtain_invalid_content_items(
+                [correlation_rule]
+            )
+        )
+        == 1
+    )
 
 
 def test_validate_execution_mode_search_window_with_not_defined_search_window():
@@ -44,7 +58,14 @@ def test_validate_execution_mode_search_window_with_not_defined_search_window():
         The validation should fail.
     """
     correlation_rule = create_correlation_rule_object(["execution_mode"], ["SCHEDULED"])
-    assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 1
+    assert (
+        len(
+            ExecutionModeSearchWindowValidator().obtain_invalid_content_items(
+                [correlation_rule]
+            )
+        )
+        == 1
+    )
 
 
 def test_validate_execution_mode_search_window_with_null_search_window():
@@ -59,4 +80,11 @@ def test_validate_execution_mode_search_window_with_null_search_window():
     correlation_rule = create_correlation_rule_object(
         ["execution_mode", "search_window"], ["REAL_TIME", None]
     )
-    assert len(ExecutionModeSearchWindowValidator().is_valid([correlation_rule])) == 0
+    assert (
+        len(
+            ExecutionModeSearchWindowValidator().obtain_invalid_content_items(
+                [correlation_rule]
+            )
+        )
+        == 0
+    )

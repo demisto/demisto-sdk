@@ -24,7 +24,7 @@ class IsPriceChangedValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     old_prices_dict: ClassVar[dict] = {}
 
-    def is_valid(
+    def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:

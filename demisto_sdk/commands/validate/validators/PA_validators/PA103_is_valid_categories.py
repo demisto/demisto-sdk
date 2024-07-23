@@ -25,7 +25,9 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
     related_field = "categories"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         approved_list = get_current_categories()
         return [
             ValidationResult(

@@ -25,7 +25,9 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
     error_message = "The following reputation commands are invalid:\n{0}\nMake sure to fix the issue both in the yml and the code."
     related_field = "script.commands"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

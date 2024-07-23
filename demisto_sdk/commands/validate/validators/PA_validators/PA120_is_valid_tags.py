@@ -30,7 +30,9 @@ class IsValidTagsValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     non_approved_tags_dict: ClassVar[dict] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         marketplaces: List[str] = [x.value for x in list(MarketplaceVersions)]
         return [
             ValidationResult(

@@ -29,7 +29,9 @@ class ShouldHaveDisplayFieldValidator(BaseValidator[ContentTypes]):
     invalid_params: ClassVar[dict] = {}
     expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

@@ -1535,19 +1535,32 @@ def test_invalid_regex_error(mocker):
 
 
 def test_download_with_subplaybook(mocker):
-        """
-        Given: A downloader object
-        When: Downloading custom a playbook with task of subplaybbok.
-        Then: Ensure that when "playbookId" is replayed with "playbookName".
-        
-        """
-        playbook_path = TESTS_DATA_FOLDER / "custom_content" / "test_task_with_sub-playbook.yml"
-        custom_content_data = get_yaml(playbook_path)
-        downloader = Downloader()
+    """
+    Given: A downloader object
+    When: Downloading custom a playbook with task of subplaybbok.
+    Then: Ensure that when "playbookId" is replayed with "playbookName".
 
-        filtered_custom_content_objects = downloader.filter_custom_content(
-            custom_content_objects={ "test_task_with_sub-playbook": {"test_task_with_sub-playbook": custom_content_data}}
-        )
+    """
+    playbook_path = (
+        TESTS_DATA_FOLDER / "custom_content" / "playbook-task_with_sub-playbook.yml"
+    )
+    custom_content_data = get_yaml(playbook_path)
+    downloader = Downloader(input=("task_with_sub-playbook",), output="fake_output_dir")
 
-        # We subtract one since there is one JS script in the testing content bundle that is skipped during filtration.
-        assert len(custom_content_data) - 1 == len(filtered_custom_content_objects)
+    filtered_custom_content_objects = downloader.filter_custom_content(
+        custom_content_objects={
+            "playbook-task_with_sub-playbook": {
+                "id": "1111-111-111",
+                "name": "task_with_sub-playbook",
+                "type": "playbook",
+                "data": custom_content_data,
+            }
+        }
+    )
+
+    assert (
+        filtered_custom_content_objects["playbook-task_with_sub-playbook"]["data"][
+            "playbookName"
+        ]
+        == "test2"
+    )

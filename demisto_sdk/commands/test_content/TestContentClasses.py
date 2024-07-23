@@ -799,8 +799,6 @@ class BuildContext:
                 machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
             }
             self.api_key = get_json_file(kwargs.get("cloud_servers_api_keys"))
-            self.logging_module.info(f"Accessing {self.api_key.keys()}")
-            self.logging_module.info(f"Values keys are: {[(k, v.keys()) for k, v in self.api_key.items()]}")
         else:
             self.env_json = self._load_env_results_json()
             self.api_key = kwargs["api_key"]

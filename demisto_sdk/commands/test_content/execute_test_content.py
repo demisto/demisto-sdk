@@ -83,9 +83,6 @@ def execute_test_content(**kwargs):
     logging_manager.info(
         f'Starting to run tests on Server version:{kwargs["server_version"]} Server Type:{kwargs["server_type"]}'
     )
-    logging_manager.info(
-        f'running with sdk ref'
-    )
     build_context = BuildContext(kwargs, logging_manager)
 
     threads_list = []

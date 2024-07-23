@@ -1983,7 +1983,6 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
 
     # Run
     with ChangeCWD(repo_path):
-
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", f"{pack_path}", "-d", "-ngr"], input="\n"

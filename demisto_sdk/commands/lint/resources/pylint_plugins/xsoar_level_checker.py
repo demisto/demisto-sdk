@@ -125,13 +125,11 @@ class XsoarChecker(BaseChecker):
         try:
             # exclude scripts as are not obligated to raise NotImplementedError in the main func.
             if not self.is_script:
-
                 if node.name == "main":
                     not_implemented_error_exist = False
 
                     # Iterate over each child node of the FuncDef main Node.
                     for child in self._inner_search(node):
-
                         # In case the NotImplementedError appears as part of a raise node.
                         if (
                             isinstance(child, astroid.Raise)
@@ -182,7 +180,6 @@ class XsoarChecker(BaseChecker):
                 isinstance(node.parent, astroid.Assign)
                 and node not in node.parent.targets
             ):
-
                 # Checks for demisto.args()[] implementation.
                 if (
                     node.value.func.expr.name == "demisto"

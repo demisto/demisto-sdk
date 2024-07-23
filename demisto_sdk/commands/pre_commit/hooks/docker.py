@@ -192,7 +192,6 @@ def _split_by_objects(
     ] = defaultdict(set)
     config_name, config_filename = config_arg if config_arg else ("", "")
     for file, obj in files_with_objects:
-
         if run_isolated or (
             config_arg and (obj.path.parent / config_filename).exists()
         ):
@@ -361,9 +360,9 @@ class DockerHook(Hook):
         if docker_version < Version("19.03"):
             quiet = False
         docker_extra_args = self._get_property("pass_docker_extra_args", "")
-        new_hook[
-            "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} {dev_image}'
+        new_hook["entry"] = (
+            f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} {dev_image}'
+        )
         ret_hooks = []
         for (
             integration_script,
@@ -390,16 +389,16 @@ class DockerHook(Hook):
                         ]
                     )
                     hook["args"] = args
-                hook[
-                    "id"
-                ] = f"{hook['id']}-{integration_script.object_id}"  # for uniqueness
-                hook[
-                    "name"
-                ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
+                hook["id"] = (
+                    f"{hook['id']}-{integration_script.object_id}"  # for uniqueness
+                )
+                hook["name"] = (
+                    f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
+                )
                 # change the working directory to the integration script, as it runs in an isolated container
-                hook[
-                    "entry"
-                ] = f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"
+                hook["entry"] = (
+                    f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"
+                )
 
             if self._set_files_on_hook(
                 hook,

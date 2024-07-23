@@ -25,7 +25,9 @@ class IsPlaybookContainUnhandledScriptConditionBranchesValidator(
     related_field = "task.type, task.nexttasks"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -36,7 +38,8 @@ class IsPlaybookContainUnhandledScriptConditionBranchesValidator(
             )
             for content_item in content_items
             if (
-                unhandled_script_condition_tasks := self.get_unhandled_script_condition_tasks(
+                unhandled_script_condition_tasks
+                := self.get_unhandled_script_condition_tasks(
                     list(content_item.tasks.values())
                 )
             )

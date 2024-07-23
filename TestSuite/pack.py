@@ -513,7 +513,6 @@ class Pack(TestSuiteBase):
         return layoutcontainer
 
     def create_report(self, name: str = None, content: dict = None) -> Report:
-
         if not name:
             name = f"report{len(self.reports)}"
         report = Report(name, self._report_path, content)
@@ -560,7 +559,6 @@ class Pack(TestSuiteBase):
         return wizard
 
     def create_list(self, name: str = None, content: dict = None) -> ContentList:
-
         if not name:
             name = f"list{len(self.lists)}"
         content_list = ContentList(name, self._lists_path, content)

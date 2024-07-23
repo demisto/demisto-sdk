@@ -149,7 +149,9 @@ def test_IsHaveUnitTestFileValidator_is_valid(
         - Make sure the right amount of failures return and that the error msg is correct.
     """
     with ChangeCWD(REPO.path):
-        results = IsHaveUnitTestFileValidator().obtain_invalid_content_items(content_items)
+        results = IsHaveUnitTestFileValidator().obtain_invalid_content_items(
+            content_items
+        )
     assert len(results) == expected_number_of_failures
     assert all(
         [

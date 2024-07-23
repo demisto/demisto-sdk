@@ -53,7 +53,9 @@ def test_ScriptNameIsVersionCorrectlyValidator():
         create_script_object(paths=["name"], values=["TestV3"]),
     ]
 
-    results = ScriptNameIsVersionedCorrectlyValidator().is_valid(content_items)
+    results = ScriptNameIsVersionedCorrectlyValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 1
     assert results[0].content_object.name == "Testv2"
 
@@ -63,7 +65,9 @@ def test_ScriptNameIsVersionCorrectlyValidator():
     assert fix_result.content_object.name == "TestV2"
 
 
-def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_is_valid(mocker):
+def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_content_items(
+    mocker,
+):
     """
     Given:
      - 1 script that has the word incident in its arguments and is not deprecated and is in the core-packs list
@@ -98,14 +102,14 @@ def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_is_valid(mocker)
     )
 
     with ChangeCWD(REPO.path):
-        results = IsScriptArgumentsContainIncidentWordValidatorCorePacks().is_valid(
+        results = IsScriptArgumentsContainIncidentWordValidatorCorePacks().obtain_invalid_content_items(
             content_items
         )
     assert len(results) == 1
     assert results[0].content_object.name == "InvalidScript"
 
 
-def test_ScriptRunAsIsNotDBotRoleValidator_is_valid():
+def test_ScriptRunAsIsNotDBotRoleValidator_obtain_invalid_content_items():
     """
     Given:
      - 1 script that has runas field = DBotRole
@@ -125,12 +129,16 @@ def test_ScriptRunAsIsNotDBotRoleValidator_is_valid():
         create_script_object(),
     )
 
-    results = ScriptRunAsIsNotDBotRoleValidator().is_valid(content_items)
+    results = ScriptRunAsIsNotDBotRoleValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 1
     assert results[0].content_object.name == "InvalidScript"
 
 
-def test_DuplicatedScriptNameValidatorListFiles_is_valid(mocker, graph_repo: Repo):
+def test_DuplicatedScriptNameValidatorListFiles_obtain_invalid_content_items(
+    mocker, graph_repo: Repo
+):
     """
     Given
         - A content repo with 8 scripts:
@@ -139,7 +147,7 @@ def test_DuplicatedScriptNameValidatorListFiles_is_valid(mocker, graph_repo: Rep
         - 2 scripts (test_alert3, test_incident3) supported by MP V2 with SKIP_PREPARE_SCRIPT_NAME = "script-name-incident-to-alert".
         - 2 scripts (test_alert4, test_incident4) where only one is supported by MP V2 without SKIP_PREPARE_SCRIPT_NAME = "script-name-incident-to-alert".
     When
-        - running DuplicatedScriptNameValidatorListFiles is_valid function.
+        - running DuplicatedScriptNameValidatorListFiles obtain_invalid_content_items function.
     Then
         - Validate that only the first pair of scripts appear in the results, and the rest of the scripts is valid.
     """
@@ -168,7 +176,7 @@ def test_DuplicatedScriptNameValidatorListFiles_is_valid(mocker, graph_repo: Rep
 
     BaseValidator.graph_interface = graph_repo.create_graph()
 
-    results = DuplicatedScriptNameValidatorListFiles().is_valid(
+    results = DuplicatedScriptNameValidatorListFiles().obtain_invalid_content_items(
         [script.object for script in pack.scripts]
     )
 
@@ -176,7 +184,9 @@ def test_DuplicatedScriptNameValidatorListFiles_is_valid(mocker, graph_repo: Rep
     assert "test_alert_1.yml" == results[0].content_object.path.name
 
 
-def test_DuplicatedScriptNameValidatorAllFiles_is_valid(mocker, graph_repo: Repo):
+def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
+    mocker, graph_repo: Repo
+):
     """
     Given
         - A content repo with 8 scripts:
@@ -185,7 +195,7 @@ def test_DuplicatedScriptNameValidatorAllFiles_is_valid(mocker, graph_repo: Repo
         - 2 scripts (test_alert3, test_incident3) supported by MP V2 with SKIP_PREPARE_SCRIPT_NAME = "script-name-incident-to-alert".
         - 2 scripts (test_alert4, test_incident4) where only one is supported by MP V2 without SKIP_PREPARE_SCRIPT_NAME = "script-name-incident-to-alert".
     When
-        - running DuplicatedScriptNameValidatorAllFiles is_valid function.
+        - running DuplicatedScriptNameValidatorAllFiles obtain_invalid_content_items function.
     Then
         - Validate that only the first pair of scripts appear in the results, and the rest of the scripts is valid.
     """
@@ -214,7 +224,7 @@ def test_DuplicatedScriptNameValidatorAllFiles_is_valid(mocker, graph_repo: Repo
 
     BaseValidator.graph_interface = graph_repo.create_graph()
 
-    results = DuplicatedScriptNameValidatorAllFiles().is_valid(
+    results = DuplicatedScriptNameValidatorAllFiles().obtain_invalid_content_items(
         [script.object for script in pack.scripts]
     )
 

@@ -20,7 +20,9 @@ class IsNameContainIncidentInCorePackValidator(BaseValidator[ContentTypes]):
     related_field = "name"
     invalid_commands: ClassVar[Dict[str, dict]] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         core_packs_list = get_core_pack_list()
         return [
             ValidationResult(

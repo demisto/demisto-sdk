@@ -23,7 +23,9 @@ class ArgsNameChangeValidator(BaseValidator[ContentTypes]):
     related_field = "args.name"
     expected_git_statuses = [GitStatuses.MODIFIED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
             current_args = [arg.name for arg in content_item.args]

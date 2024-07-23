@@ -26,7 +26,9 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
     lines_without_dots: ClassVar[Dict[str, dict]] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
             self.lines_without_dots[content_item.name] = {}

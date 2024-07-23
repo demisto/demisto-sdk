@@ -9,7 +9,7 @@ from demisto_sdk.commands.validate.validators.RP_validators.RP101_expiration_fie
 from demisto_sdk.commands.validate.validators.RP_validators.RP102_details_field_equals_id import (
     DetailsFieldEqualsIdValidator,
 )
-from demisto_sdk.commands.validate.validators.RP_validators.RP103_obtain_invalid_content_items_indicator_type_id import (
+from demisto_sdk.commands.validate.validators.RP_validators.RP103_is_valid_indicator_type_id import (
     IsValidIndicatorTypeId,
 )
 

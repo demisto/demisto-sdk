@@ -2108,7 +2108,7 @@ def test_IsFolderNameHasSeparatorsValidator_obtain_invalid_content_items(
         ),
     ],
 )
-def test_IsHaveUnitTestFileValidator_is_valid(
+def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2116,7 +2116,7 @@ def test_IsHaveUnitTestFileValidator_is_valid(
     content_items list.
         - Case 1: Three content items, where the last one has an invalid unit test file name.
     When
-    - Calling the IsHaveUnitTestFileValidator is_valid function.
+    - Calling the IsHaveUnitTestFileValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
     """

@@ -1829,6 +1829,16 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
     "blocked",
 ]
 
+INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE = [
+    "feed",
+    "isfetch",
+    "longRunning",
+    "longRunningPort",
+    "ismappable",
+    "isremotesyncin",
+    "isremotesyncout",
+]
+
 CONTEXT_OUTPUT_README_TABLE_HEADER = "| **Path** | **Type** | **Description** |"
 
 ARGUMENT_FIELDS_TO_CHECK = ["defaultValue", "required", "isArray"]

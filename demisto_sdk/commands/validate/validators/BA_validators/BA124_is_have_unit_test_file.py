@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import (
@@ -33,7 +34,7 @@ class IsHaveUnitTestFileValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     content_item.content_type,
-                    str(content_item.path).replace(".yml", "_test.py"),
+                    content_item.path.name.replace(".yml", "_test.py"),
                 ),
                 content_object=content_item,
             )
@@ -42,8 +43,25 @@ class IsHaveUnitTestFileValidator(BaseValidator[ContentTypes]):
                 content_item.support_level in [PARTNER_SUPPORT, XSOAR_SUPPORT]
                 and content_item.type == TYPE_PYTHON
                 and content_item.path.with_name(f"{content_item.path.stem}.py").exists()
-                and not content_item.path.with_name(
-                    f"{content_item.path.stem}_test.py"
-                ).exists()
+                and not self.case_sensitive_exists(
+                    content_item.path.with_name(f"{content_item.path.stem}_test.py")
+                )
             )
         ]
+
+    def case_sensitive_exists(self, unit_test_path: Path) -> bool:
+        """Checks if the unit test file's path (case sensitive) exists.
+
+        Args:
+            unit_test_path (Path): The unit test file's path to check.
+
+        Returns:
+            bool: If the path exists, taking into consideration case sensitivity.
+        """
+        if not unit_test_path.exists():
+            return False
+        # Checking if the file exists is not enough since Path.exists() isn't always case sensitive (related to file system configuration)
+        # List all file names in the directory of the given path
+        actual_files = [file.name for file in unit_test_path.parent.iterdir()]
+        # Check if the exact file name exists in the directory
+        return unit_test_path.name in actual_files

@@ -231,7 +231,7 @@ def test_gather_validations_from_conf(
         - Case 6: Make sure the retrieved results contains only the specific validations section.
     """
     mocker.patch.object(toml, "load", return_value=config_file_content)
-    config_reader = ConfigReader(category=category_to_run)
+    config_reader = ConfigReader(category=category_to_run, explicitly_selected=specific_validations)
     results: ConfiguredValidations = config_reader.read(
         mode=execution_mode, ignore_support_level=ignore_support_level
     )

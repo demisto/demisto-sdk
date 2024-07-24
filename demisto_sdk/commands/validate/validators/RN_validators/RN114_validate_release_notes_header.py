@@ -130,7 +130,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         Return:
             True if the content type is valid, False otherwise.
         """
-        return header in RN_HEADER_BY_FILE_TYPE.values()
+        return ContentType.convert_header_to_content_type(header).release_notes_header == header
 
     def validate_content_item_header(
         self,
@@ -153,7 +153,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         missing_display_names = {}
         for header, display_names in headers_to_display_names.items():
             logger.debug(f"Validating {header} content items")
-            content_type = ContentType.from_release_note_header(header)
+            content_type = ContentType.convert_header_to_content_type(header)
             pack_display_names = {
                 item.display_name for item in pack_items_by_types.get(content_type, [])
             }

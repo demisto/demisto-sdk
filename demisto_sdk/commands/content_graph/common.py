@@ -325,8 +325,7 @@ class ContentType(StrEnum):
         return f"{self.value}s"
 
     @staticmethod
-    def from_release_note_header(header: str) -> "ContentType":
-
+    def convert_header_to_content_type(header: str) -> "ContentType":
         if header == "Triggers Recommendations":
             return ContentType.TRIGGER
         elif header == "Preprocess Rules":

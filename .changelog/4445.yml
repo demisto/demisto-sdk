@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where playbookId contained playbook name by replacing playbookId attribute with playbookName.
+- description: Fixed an issue where playbookId incorrectly contained the playbook name by replacing the playbookId attribute with playbookName.
   type: fix
 pr_number: 4445

@@ -104,6 +104,34 @@ KEEP_EXISTING_YAML_FIELDS = [
 ]
 
 
+def format_playbook_task(content_item_data: dict[str, dict]) -> dict[str, dict]:
+    """This function checks if there are tasks that run sub-playbooks and converts 'playbookId' to 'playbookName' where applicable.
+       XSUP-39266: replacing playbookId with playbookName in tasks.
+
+    Args:
+        content_item_data (Dict): The content item data containing tasks.
+
+    Returns:
+        Dict: The updated content_item_data where 'playbookId' is replaced with 'playbookName' in tasks running sub-playbooks.
+    """
+    content_data = content_item_data.get("data", {})
+    tasks_data = content_data.get("tasks", {})
+
+    for task_id, task_data in tasks_data.items():
+        if task_data.get("type") == "playbook":
+            playbook_id_value = task_data.get("task", {}).get("playbookId")
+            if playbook_id_value:
+                new_task_data = {
+                    "task": {
+                        "playbookName": playbook_id_value,
+                    }
+                }
+                tasks_data[task_id] = new_task_data
+
+    content_data["tasks"] = tasks_data
+    return content_item_data
+
+
 class Downloader:
     """
     A class for downloading content from an XSOAR / XSIAM server.
@@ -341,6 +369,7 @@ class Downloader:
                 or (compiled_regex and re.match(compiled_regex, content_item_name))
                 or content_item_name in self.input_files
             ):
+<<<<<<< Updated upstream
                 # XSUP-39266: replacing playbookId with playbookName in tasks.
                 content_data = content_item_data.get("data", {})
                 all_tasks_data = content_data.get("tasks", {})
@@ -350,6 +379,11 @@ class Downloader:
                         if task_data.get("type") == "playbook" and task_data.get( "task", {}).get("playbookId"):
                             task_data["task"]["playbookName"] = task_data["task"].pop("playbookId")
                 filtered_custom_content_objects[file_name] = content_item_data
+=======
+                filtered_custom_content_objects[file_name] = format_playbook_task(
+                    content_item_data
+                )
+>>>>>>> Stashed changes
 
         logger.info(
             f"Filtering process completed, {len(filtered_custom_content_objects)}/{original_count} items remain."

@@ -3,9 +3,6 @@ from __future__ import annotations
 import re
 from typing import Dict, Iterable, List, Set, Tuple
 
-from demisto_sdk.commands.common.constants import (
-    RN_HEADER_BY_FILE_TYPE,
-)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -130,7 +127,10 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         Return:
             True if the content type is valid, False otherwise.
         """
-        return ContentType.convert_header_to_content_type(header).release_notes_header == header
+        return (
+            ContentType.convert_header_to_content_type(header).release_notes_header
+            == header
+        )
 
     def validate_content_item_header(
         self,

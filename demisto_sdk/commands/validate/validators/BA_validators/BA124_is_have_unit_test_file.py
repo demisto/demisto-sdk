@@ -49,7 +49,15 @@ class IsHaveUnitTestFileValidator(BaseValidator[ContentTypes]):
             )
         ]
 
-    def case_sensitive_exists(self, unit_test_path: Path):
+    def case_sensitive_exists(self, unit_test_path: Path) -> bool:
+        """Checks if the unit test file's path (case sensitive) exists.
+
+        Args:
+            unit_test_path (Path): The unit test file's path to check.
+
+        Returns:
+            bool: If the path exists, taking into consideration case sensitivity.
+        """
         if not unit_test_path.exists():
             return False
         # Checking if the file exists is not enough since Path.exists() isn't always case sensitive (related to file system configuration)

@@ -144,3 +144,36 @@ def test_release_note_header_validator_invalid():
     pack.content_items.integration.extend(integrations)
     results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
     assert expected_error == results[0].message
+
+
+def test_release_note_header_validator_edge_cases():
+    """
+    mapper and a trigger (edge cases)
+    Given:
+    - content_items.
+        pack_metadata: pack with valid release note headers.
+
+    When:
+    - Calling the ReleaseNoteHeaderValidator is_valid function.
+
+    Then:
+    - Make sure the validation passes.
+    """
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Mappers"
+        "##### New: Hello World - Incoming Mapper"
+        " - New: This is an example\n\n."
+        "##### User Profile - Hello World - Outgoing Mapper"
+        "- fix."
+        "#### Triggers Recommendations"
+        "##### Alibaba ActionTrail - Multiple Unauthorized Action Attempts Detected By a User Alerts"
+        "- This trigger is responsible for handling alerts.",
+    )
+    integrations = [
+        create_integration_object(["name"], ["TestIntegration"]),
+    ]
+    pack.content_items.integration.extend(integrations)
+    results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
+    assert len(results) == 0

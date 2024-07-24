@@ -33,7 +33,7 @@ from demisto_sdk.commands.validate.validators.RP_validators.RP103_is_valid_indic
         ),
     ],
 )
-def test_ExpirationFieldIsNumericValidator_is_valid(
+def test_ExpirationFieldIsNumericValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -53,7 +53,9 @@ def test_ExpirationFieldIsNumericValidator_is_valid(
         - Case 2: Shouldn't fail anything.
         - Case 3: Should fail object two and three.
     """
-    results = ExpirationFieldIsNumericValidator().is_valid(content_items)
+    results = ExpirationFieldIsNumericValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -63,7 +65,7 @@ def test_ExpirationFieldIsNumericValidator_is_valid(
     )
 
 
-def test_DetailsFieldEqualsIdValidator_is_valid():
+def test_DetailsFieldEqualsIdValidator_obtain_invalid_content_items():
     """
     Given
         - two indicator_type objects:
@@ -81,7 +83,9 @@ def test_DetailsFieldEqualsIdValidator_is_valid():
     expected_msgs = [
         "id and details fields are not equal. id=test-not-equal, details=test"
     ]
-    results = DetailsFieldEqualsIdValidator().is_valid(content_items)
+    results = DetailsFieldEqualsIdValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 1
     assert all(
         [
@@ -101,7 +105,7 @@ def test_ValidIndicatorTypeId():
         - Case 4: One indicator_type with letters string with underscores
         - Case 5: One indicator_type with letters string with numbers
     When
-    - Calling the IsValidIndicatorTypeId is_valid function.
+    - Calling the IsValidIndicatorTypeId obtain_invalid_content_items function.
     Then
         - Make sure no errors will return.
     """
@@ -115,7 +119,7 @@ def test_ValidIndicatorTypeId():
     ]
     expected_number_of_failures = 0
     expected_msgs = []
-    results = IsValidIndicatorTypeId().is_valid(content_items)
+    results = IsValidIndicatorTypeId().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -132,7 +136,7 @@ def test_InValidIndicatorTypeId():
         - Case 1: One indicator_type with invalid special characters.
         - Case 2: One indicator_type with invalid slashes
     When
-    - Calling the IsValidIndicatorTypeId is_valid function.
+    - Calling the IsValidIndicatorTypeId obtain_invalid_content_items function.
     Then
         - Make sure it will return 2 errors with the appropriate message.
     """
@@ -147,7 +151,7 @@ def test_InValidIndicatorTypeId():
         "underscores (_), and ampersands (&) only."
     )
 
-    results = IsValidIndicatorTypeId().is_valid(content_items)
+    results = IsValidIndicatorTypeId().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     for result in results:
         assert result.message == expected_msg

@@ -24,7 +24,9 @@ class IsInputKeyNotInTasksValidator(BaseValidator[ContentTypes]):
     related_field = "input"
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         """Check whether all playbook inputs (defined in the "inputs" section) are in use in any of the tasks
         Args:
             - content_items (Iterable[ContentTypes]): The content items to check.

@@ -85,7 +85,7 @@ def test_get_client_from_config(
         DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
     )
 
-    assert type(get_client_from_config(config)) == expected_client_type
+    assert isinstance(get_client_from_config(config), expected_client_type)
 
 
 @pytest.mark.parametrize(
@@ -138,13 +138,11 @@ def test_get_client_from_marketplace(
         DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
     )
 
-    assert (
-        type(
-            get_client_from_marketplace(
-                marketplace, base_url=base_api_url, api_key="test", auth_id="1"
-            )
-        )
-        == expected_client_type
+    assert isinstance(
+        get_client_from_marketplace(
+            marketplace, base_url=base_api_url, api_key="test", auth_id="1"
+        ),
+        expected_client_type,
     )
 
 
@@ -200,13 +198,9 @@ def test_get_xsoar_client_from_server_type_no_product_deployment_mode(
         status_code=200,
     )
 
-    assert (
-        type(
-            get_client_from_server_type(
-                base_url=base_api_url, api_key="test", auth_id="1"
-            )
-        )
-        == expected_client_type
+    assert isinstance(
+        get_client_from_server_type(base_url=base_api_url, api_key="test", auth_id="1"),
+        expected_client_type,
     )
 
 
@@ -243,13 +237,11 @@ def test_get_xsiam_client_from_server_type_no_product_deployment_mode(
         status_code=200,
     )
 
-    assert (
-        type(
-            get_client_from_server_type(
-                base_url="https://test3.com", api_key="test", auth_id="1"
-            )
-        )
-        == XsiamClient
+    assert isinstance(
+        get_client_from_server_type(
+            base_url="https://test3.com", api_key="test", auth_id="1"
+        ),
+        XsiamClient,
     )
 
 
@@ -383,13 +375,9 @@ def test_get_client_from_server_type_with_product_deployment_mode(
         status_code=200,
     )
 
-    assert (
-        type(
-            get_client_from_server_type(
-                base_url=base_api_url, api_key="test", auth_id="1"
-            )
-        )
-        == expected_client_type
+    assert isinstance(
+        get_client_from_server_type(base_url=base_api_url, api_key="test", auth_id="1"),
+        expected_client_type,
     )
 
 
@@ -432,9 +420,9 @@ def test_get_client_from_server_type_no_product_deployment_mode_xsoar_on_prem_wi
         status_code=200,
     )
 
-    assert (
-        type(get_client_from_server_type(base_url="https://test9.com", api_key="test"))
-        == XsoarClient
+    assert isinstance(
+        get_client_from_server_type(base_url="https://test9.com", api_key="test"),
+        XsoarClient,
     )
 
 
@@ -545,11 +533,9 @@ def test_get_xsoar_on_prem_client_from_server_type_with_auth_id(mocker, requests
         status_code=200,
     )
 
-    assert (
-        type(
-            get_client_from_server_type(
-                base_url="https://test12.com", api_key="test", auth_id="1"
-            )
-        )
-        == XsoarClient
+    assert isinstance(
+        get_client_from_server_type(
+            base_url="https://test12.com", api_key="test", auth_id="1"
+        ),
+        XsoarClient,
     )

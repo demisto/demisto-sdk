@@ -73,7 +73,11 @@ class ValidateManager:
                     self.objects_to_run,
                 )
             ):
-                validation_results: List[ValidationResult] = validator.is_valid(filtered_content_objects_for_validator)  # type: ignore
+                validation_results: List[ValidationResult] = (
+                    validator.obtain_invalid_content_items(
+                        filtered_content_objects_for_validator
+                    )
+                )  # type: ignore
                 try:
                     if self.allow_autofix and validator.is_auto_fixable:
                         for validation_result in validation_results:

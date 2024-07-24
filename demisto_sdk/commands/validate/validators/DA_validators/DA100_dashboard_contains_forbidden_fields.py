@@ -39,7 +39,9 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
     related_field = "layout"
     is_auto_fixable = True
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         results = []
         for content_item in content_items:
             error_messages = []
@@ -84,7 +86,6 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
         }
 
     def fix(self, content_item: Dashboard) -> FixResult:
-
         for field in FIELDS_TO_EXCLUDE:
             content_item.data_dict.pop(field, None)
 

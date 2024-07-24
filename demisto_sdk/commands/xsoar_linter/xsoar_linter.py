@@ -33,7 +33,7 @@ from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker impo
 
 ENV = os.environ
 ERROR_CODE_PATTERN = re.compile(
-    r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<code>(?P<type>[EW])\d+)(?P<error_message> .*)$",
+    r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>(?P<type>[EW])\d+)(?P<error_message> .*)$",
     re.MULTILINE,
 )
 WARNING_CODE_PATTERN = re.compile(
@@ -244,12 +244,6 @@ def print_errors_github_action(errors_and_warning: list[str]) -> None:
             continue
 
         prefix = {"W": "warning", "E": "error"}[match["type"]]
-        print(f"file={match.group('path')}")
-        print(f"line={match.group('line')}")
-        print(f"col={match.group('col')}")
-        print(f"error_code={match.group('error_code')}")
-        print(f"error_message={match.group('error_message')}")
-        print(prefix)
         print(  # noqa: T201
             f"::{prefix} file={match.group('path')},line={match.group('line')},col={match.group('col')},title=XSOAR Linter {match.group('error_code')}::{match.group('error_message')}"
         )

@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH,
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
+    INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE,
     IOC_OUTPUTS_DICT,
     MANDATORY_REPUTATION_CONTEXT_NAMES,
     MAX_FETCH,
@@ -1091,21 +1092,12 @@ class IntegrationValidator(ContentEntityValidator):
         """checks if some specific Fields in the yml file were changed from true to false or removed
         Returns True if valid, and False otherwise.
         """
-        fields = [
-            "feed",
-            "isfetch",
-            "longRunning",
-            "longRunningPort",
-            "ismappable",
-            "isremotesyncin",
-            "isremotesyncout",
-        ]
         currentscript = self.current_file.get("script", {})
         oldscript = self.old_file.get("script", {})
 
         removed, changed = {}, {}
 
-        for field in fields:
+        for field in INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE:
             old = oldscript.get(field)
             current = currentscript.get(field)
 

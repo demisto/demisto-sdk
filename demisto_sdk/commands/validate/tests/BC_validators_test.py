@@ -57,6 +57,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC112_no_removed_int
 from demisto_sdk.commands.validate.validators.BC_validators.BC113_is_changed_incident_types_and_fields import (
     IsChangedIncidentTypesAndFieldsValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC114_is_changed_or_removed_fields import (
+    IsChangedOrRemovedFieldsValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 ALL_MARKETPLACES = list(MarketplaceVersions)
@@ -1540,4 +1543,42 @@ def test_IsChangedIncidentTypesAndFieldsValidator_obtain_invalid_content_items_f
     assert (
         results[0].message
         == "The Mapper contains modified / removed keys:\n- The following incident types were removed: test_3.\n- The following incident fields were removed from the following incident types:\n\t- The following incident fields were removed from the incident types 'test_2': incident_field_2."
+    )
+
+
+def test_IsChangedOrRemovedFieldsValidator_obtain_invalid_content_items_fail():
+    """
+    Given
+    content_items and old_content_items iterables.
+        - A content item with one integration with feed, isfetch, ismappable fields similar to the old integration.
+        - A content item with one integration with feed field modified, isfetch not modified, and ismappable removed.
+    When
+    - Calling the IsChangedOrRemovedFieldsValidator is valid function.
+    Then
+        - Make sure the right amount of failures return and that the right message is returned.
+    """
+    # Valid case:
+    content_items: List[Integration] = [
+        create_integration_object(
+            paths=["script.feed", "script.isfetch", "script.ismappable"],
+            values=[True, True, True],
+        )
+    ]
+    old_content_items: List[Integration] = [content_items[0].copy(deep=True)]
+    create_old_file_pointers(content_items, old_content_items)
+    validator = IsChangedOrRemovedFieldsValidator()
+    assert not validator.obtain_invalid_content_items(content_items)
+    # Invalid case:
+    content_items = [
+        create_integration_object(
+            paths=["script.feed", "script.isfetch"],
+            values=[False, True],
+        )
+    ]
+    create_old_file_pointers(content_items, old_content_items)
+    invalid_results = validator.obtain_invalid_content_items(content_items)
+    assert len(invalid_results) == 1
+    assert (
+        invalid_results[0].message
+        == "The following fields were modified/removed from the integration, please undo:\nThe following fields were removed: ismappable.\nThe following fields were modified: feed."
     )

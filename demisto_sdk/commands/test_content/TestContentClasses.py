@@ -182,6 +182,7 @@ class TestPlaybook:
             test_configuration: The configuration from content conf.json file
             server_context (ServerContext): The ServerContext instance in which the TestPlaybook instance is created in
         """
+        self.start_time = None
         self.build_context = build_context
         self.server_context = server_context
 
@@ -190,7 +191,6 @@ class TestPlaybook:
             self.configuration.playbook_id not in server_context.unmockable_test_ids
         )
         self.test_suite = TestSuite(self.configuration.playbook_id)
-        self.start_time = datetime.now(timezone.utc)
         self.test_suite_system_out: List[str] = []
         self.test_suite_system_err: List[str] = []
         self.integrations: List[Integration] = [
@@ -3210,6 +3210,7 @@ class TestContext:
         Returns:
             True if the test was executed by the instance else False
         """
+        self.playbook.start_time = datetime.now(timezone.utc)
         try:
             if not self._is_runnable_on_current_server_instance():
                 return False

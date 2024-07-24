@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 import toml
 from more_itertools import map_reduce
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
@@ -107,7 +108,7 @@ def get_validate_manager(mocker):
         ),
     ],
 )
-def test_filter_validators(mocker, validations_to_run, sub_classes, expected_results):
+def test_filter_validators(mocker: MockerFixture, validations_to_run, sub_classes, expected_results):
     """
     Given
     a list of validation_to_run (config file select section mock), and a list of sub_classes (a mock for the BaseValidator sub classes)
@@ -124,7 +125,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
         - Case 4: Make sure the retrieved list contains only the validation with the error_code that actually co-op with the validation_to_run.
     """
     validate_manager = get_validate_manager(mocker)
-    validate_manager.configured_validations.select = validations_to_run
+    mocker.patch.object(ConfiguredValidations, "select", validations_to_run)
     with patch.object(BaseValidator, "__subclasses__", return_value=sub_classes):
         results = validate_manager.filter_validators()
         assert results == expected_results
@@ -234,9 +235,9 @@ def test_gather_validations_from_conf(
     results: ConfiguredValidations = config_reader.read(
         mode=execution_mode, ignore_support_level=ignore_support_level
     )
-    assert results.select == expected_results.validations_to_run
+    assert results.select == expected_results.select
     assert results.ignorable_errors == expected_results.ignorable_errors
-    assert results.warning == expected_results.only_throw_warnings
+    assert results.warning == expected_results.warning
     assert results.support_level_dict == expected_results.support_level_dict
 
 

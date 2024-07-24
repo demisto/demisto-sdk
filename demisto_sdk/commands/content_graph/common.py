@@ -278,12 +278,50 @@ class ContentType(StrEnum):
 
     @property
     def release_notes_header(self) -> str:
-        if self == ContentType.MAPPER:
-            return f"{ContentType.CLASSIFIER}s"
-        elif self == ContentType.PREPROCESS_RULE:
-            return f"{ContentType.PREPROCESS_RULE}s"
+        if self == ContentType.PREPROCESS_RULE:
+            return "PreProcess Rules"
         elif self == ContentType.TRIGGER:
             return "Triggers Recommendations"  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+        elif self == ContentType.XSIAM_REPORT:
+            return "XSIAM Reports"
+        elif self == ContentType.XDRC_TEMPLATE:
+            return "XDRC Templates"
+        elif self == ContentType.XSIAM_DASHBOARD:
+            return "XSIAM Dashboards"
+        elif self == ContentType.INCIDENT_FIELD:
+            return "Incident Fields"
+        elif self == ContentType.INCIDENT_TYPE:
+            return "Incident Types"
+        elif self == ContentType.INDICATOR_FIELD:
+            return "Indicator Fields"
+        elif self == ContentType.INDICATOR_TYPE:
+            return "Indicator Types"
+        elif self == ContentType.PREPROCESS_RULE:
+            return "PreProcess Rules"
+        elif self == ContentType.GENERIC_TYPE:
+            return "Object Types"
+        elif self == ContentType.GENERIC_FIELD:
+            return "Object Fields"
+        elif self == ContentType.GENERIC_DEFINITION:
+            return "Objects"
+        elif self == ContentType.GENERIC_MODULE:
+            return "Modules"
+        elif self == ContentType.PARSING_RULE:
+            return "Parsing Rules"
+        elif self == ContentType.MODELING_RULE:
+            return "Modeling Rules"
+        elif self == ContentType.CORRELATION_RULE:
+            return "Correlation Rules"
+        elif self == ContentType.LAYOUT_RULE:
+            return "Layout Rules"
+        elif self == ContentType.ASSETS_MODELING_RULE:
+            return "Assets Modeling Rules"
+        elif self == ContentType.CASE_LAYOUT_RULE:
+            return "Case Layout Rules"
+        elif self == ContentType.CASE_FIELD:
+            return  "Case Fields"
+        elif self == ContentType.CASE_LAYOUT:
+            return "Case Layouts"
         return f"{self.value}s"
 
     @staticmethod
@@ -295,6 +333,14 @@ class ContentType(StrEnum):
             return ContentType.PREPROCESS_RULE
         elif header == "Mappers":
             return ContentType.MAPPER
+        elif header == "Objects":
+            return ContentType.GENERIC_DEFINITION
+        elif header == "Modules":
+            return ContentType.GENERIC_MODULE
+        elif header == "Object Types":
+            return ContentType.GENERIC_TYPE
+        elif header == "Object Fields":
+            return ContentType.GENERIC_FIELD
         normalized_header = header.rstrip("s").replace(" ", "_").upper()
         return ContentType[normalized_header]
 

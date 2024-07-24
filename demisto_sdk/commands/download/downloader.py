@@ -348,8 +348,7 @@ class Downloader:
                     for task_id, task_data in all_tasks_data.items()
                     ):
                         if task_data.get("type") == "playbook" and task_data.get( "task", {}).get("playbookId"):
-                            task_data["task"]["playbookName"] = task_data["task"]["playbookId"]
-                            task_data["task"].pop("playbookId", None)
+                            task_data["task"]["playbookName"] = task_data["task"].pop("playbookId")
                 filtered_custom_content_objects[file_name] = content_item_data
 
         logger.info(

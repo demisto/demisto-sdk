@@ -1538,7 +1538,7 @@ def test_download_with_subplaybook(mocker):
     """
     Given: A downloader object.
     When: Downloading a custom playbook with task of subplaybook.
-    Then: Ensure that when "playbookId" is replayed with "playbookName"
+    Then: Ensure that "playbookId" attribute of the sub-playbook task is replaced with "playbookName" attribute
     """
     playbook_path = (
         TESTS_DATA_FOLDER / "custom_content" / "playbook-task_with_sub-playbook.yml"

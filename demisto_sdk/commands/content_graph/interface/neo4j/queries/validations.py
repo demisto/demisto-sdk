@@ -310,11 +310,20 @@ def validate_duplicate_ids(
     ]
 
 
-def validate_test_playbook_in_use(tx: Transaction, test_playbook_id: str) -> bool:
-    query = f"""// Return the name of the Test Playbook if is no any content-item that use this Test Playbook
-MATCH (tp:TestPlaybook{{object_id: '{test_playbook_id}'}})
-WHERE (NOT EXISTS (()-[:TESTED_BY]->(tp)))
-AND  tp.deprecated =false
-RETURN collect(tp.name) AS tp_name
+def validate_test_playbook_in_use(tx: Transaction, test_playbook_id: str, tests_skipped: list[str]) -> bool:
+#     query = f"""// Return the name of the Test Playbook if is no any content-item that use this Test Playbook
+# MATCH (tp:TestPlaybook{{object_id: '{test_playbook_id}'}})
+# WHERE (NOT EXISTS (()-[:TESTED_BY]->(tp)))
+# AND  tp.deprecated =false
+# RETURN collect(tp.name) AS tp_name
+#     """
+    query = f"""MATCH (tp:TestPlaybook{{object_id: '{test_playbook_id}'}})
+WHERE NOT EXISTS {{ MATCH ()-[:TESTED_BY]->(tp) }}
+AND tp.deprecated = false
+AND NOT (tp.object_id IN {tests_skipped})
+MATCH (tp)-[:IN_PACK]->(p:Pack)
+WHERE p.support = "xsoar"
+AND p.deprecated = false
+RETURN collect(tp.object_id) AS tp_id
     """
-    return bool([item.get("tp_name") for item in run_query(tx, query) if item.get("tp_name")])
+    return bool([item.get("tp_id") for item in run_query(tx, query) if item.get("tp_id")])

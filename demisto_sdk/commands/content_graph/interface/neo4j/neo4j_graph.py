@@ -568,10 +568,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_test_playbook_without_uses(
-        self, test_playbook_id: str
+        self, test_playbook_id: str, skipped_tests_keys: list
     ) -> bool:
          with self.driver.session() as session:
-            return session.execute_read(validate_test_playbook_in_use, test_playbook_id)
+            return session.execute_read(validate_test_playbook_in_use, test_playbook_id, skipped_tests_keys)
     
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]

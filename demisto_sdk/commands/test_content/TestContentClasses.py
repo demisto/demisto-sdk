@@ -182,7 +182,7 @@ class TestPlaybook:
             test_configuration: The configuration from content conf.json file
             server_context (ServerContext): The ServerContext instance in which the TestPlaybook instance is created in
         """
-        self.start_time = None
+        self.start_time = datetime.now(timezone.utc)
         self.build_context = build_context
         self.server_context = server_context
 

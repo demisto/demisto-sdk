@@ -369,7 +369,6 @@ class Downloader:
                 or (compiled_regex and re.match(compiled_regex, content_item_name))
                 or content_item_name in self.input_files
             ):
-
                 filtered_custom_content_objects[file_name] = format_playbook_task(
                     content_item_data
                 )

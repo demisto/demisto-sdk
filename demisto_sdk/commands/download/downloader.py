@@ -342,18 +342,13 @@ class Downloader:
                 or content_item_name in self.input_files
             ):
                 # XSUP-39266: replacing playbookId with playbookName in tasks.
-                if isinstance(
-                    content_item_data.get("data", {}).get("tasks"), dict
-                ) and content_item_data.get("data", {}).get("tasks"):
-                    for task_id, task_data in (
-                        content_item_data.get("data", {}).get("tasks").items()
+                content_data = content_item_data.get("data", {})
+                all_tasks_data = content_data.get("tasks", {})
+                if isinstance(all_tasks_data, dict) and all_tasks_data:
+                    for task_id, task_data in all_tasks_data.items()
                     ):
-                        if task_data.get("type") == "playbook" and task_data.get(
-                            "task", {}
-                        ).get("playbookId"):
-                            task_data["task"]["playbookName"] = task_data["task"][
-                                "playbookId"
-                            ]
+                        if task_data.get("type") == "playbook" and task_data.get( "task", {}).get("playbookId"):
+                            task_data["task"]["playbookName"] = task_data["task"]["playbookId"]
                             task_data["task"].pop("playbookId", None)
                 filtered_custom_content_objects[file_name] = content_item_data
 

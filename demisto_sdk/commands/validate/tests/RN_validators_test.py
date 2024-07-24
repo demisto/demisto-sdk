@@ -10,6 +10,7 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_not
 from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
     ReleaseNoteHeaderValidator,
 )
+from TestSuite.pack import Pack
 
 
 @pytest.mark.parametrize(
@@ -159,7 +160,9 @@ def test_release_note_header_validator_edge_cases():
     Then:
     - Make sure the validation passes.
     """
-    pack = create_pack_object(
+    from demisto_sdk.commands.content_graph.objects.trigger import Trigger
+
+    pack: Pack = create_pack_object(
         paths=["version"],
         values=["2.0.5"],
         release_note_content="#### Mappers"
@@ -171,9 +174,8 @@ def test_release_note_header_validator_edge_cases():
         "##### Alibaba ActionTrail - Multiple Unauthorized Action Attempts Detected By a User Alerts"
         "- This trigger is responsible for handling alerts.",
     )
-    integrations = [
-        create_integration_object(["name"], ["TestIntegration"]),
-    ]
+    trigger = pack.create_trigger("TestTrigger", load_json("trigger.json"))
+
     pack.content_items.integration.extend(integrations)
     results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
     assert len(results) == 0

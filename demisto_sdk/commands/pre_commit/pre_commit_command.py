@@ -671,9 +671,6 @@ def preprocess_files(
             logger.info(
                 "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
             )
-            logger.info(
-                f"\n######## - Raw Untracked files from git:\n{git_util.repo.untracked_files}"
-            )
             relative_untracked_files_paths: Set[Path] = set()
 
             # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py and read file paths
@@ -708,19 +705,3 @@ def preprocess_files(
     }
     # filter out files that are not in the content git repo (e.g in .gitignore)
     return relative_paths & all_git_files
-
-
-# DELETE
-# def get_untracked_files_in_content(git_util) -> Set[Path]:
-# """
-# Filter out a string list of untracked files with a path thats inside the build machine's content repository.
-# The file paths in the build machine are relative so we use absolute path (resolve) to make sure the files are in content.
-# """
-# logger.info(f"\n######## - CONTENT PATH to match:\nf'{CONTENT_PATH}/Packs/'")
-# untracked_files_paths = {
-#     Path(f)
-#     for f in git_util.repo.untracked_files
-#     if str(Path(f).resolve()).startswith(f"{CONTENT_PATH}/Packs/")
-# }
-# logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
-# return untracked_files_paths

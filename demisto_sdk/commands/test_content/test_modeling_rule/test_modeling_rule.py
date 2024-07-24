@@ -992,9 +992,8 @@ def validate_modeling_rule(
     modeling_rule_test_suite.add_property(
         "file_name", modeling_rule_file_name
     )  # used in the convert to jira issue.
-    modeling_rule_test_suite.filepath = (get_relative_path_to_content(  # type:ignore[arg-type]
-            modeling_rule.path
-        )
+    modeling_rule_test_suite.filepath = get_relative_path_to_content(  # type:ignore[arg-type]
+        modeling_rule.path
     )
     modeling_rule_test_suite.add_property(
         "modeling_rule_path", get_relative_path_to_content(modeling_rule.path)
@@ -1463,7 +1462,6 @@ class BuildContext:
         delete_existing_dataset,
         ctx,
     ):
-
         # --------------------------- overall build configuration -------------------------------
         self.logging_module: ParallelLoggingManager = logging_module
         self.retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
@@ -1645,7 +1643,8 @@ class CloudServerContext:
                     )
                 if modeling_rule_test_suite:
                     modeling_rule_test_suite.add_property(
-                        "start_time", start_time  # type:ignore[arg-type]
+                        "start_time",
+                        start_time,  # type:ignore[arg-type]
                     )
                     self.build_context.tests_data_keeper.test_results_xml_file.add_testsuite(
                         modeling_rule_test_suite

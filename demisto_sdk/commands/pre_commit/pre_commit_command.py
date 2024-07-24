@@ -55,7 +55,6 @@ INTEGRATIONS_BATCH = 300
 
 
 class PreCommitRunner:
-
     original_hook_id_to_generated_hook_ids: Dict[str, GeneratedHooks] = {}
 
     @staticmethod
@@ -82,17 +81,17 @@ class PreCommitRunner:
 
         for hook_id in hooks.copy():
             if hook_id in custom_hooks_to_classes:
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = custom_hooks_to_classes[hook_id](
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                    custom_hooks_to_classes[
+                        hook_id
+                    ](**hooks.pop(hook_id), context=pre_commit_context).prepare_hook()
+                )
             elif hook_id.endswith("in-docker"):
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = DockerHook(
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                    DockerHook(
+                        **hooks.pop(hook_id), context=pre_commit_context
+                    ).prepare_hook()
+                )
             else:
                 # this is used to handle the mode property correctly even for non-custom hooks which do not require
                 # special preparation
@@ -329,9 +328,9 @@ class PreCommitRunner:
         PreCommitRunner.prepare_hooks(pre_commit_context)
 
         if pre_commit_context.all_files:
-            pre_commit_context.precommit_template[
-                "exclude"
-            ] += f"|{join_files(exclude_files or set())}"
+            pre_commit_context.precommit_template["exclude"] += (
+                f"|{join_files(exclude_files or set())}"
+            )
         else:
             pre_commit_context.precommit_template["files"] = join_files(
                 pre_commit_context.files_to_run

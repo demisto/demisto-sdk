@@ -17,7 +17,6 @@ class CircleCIError(Exception):
 
 
 class CircleCIResponse(SimpleNamespace):
-
     ATTRIBUTES_DEFAULT_MAPPING = {
         "items": [],
         "steps": [],
@@ -91,7 +90,6 @@ def parse_http_response(expected_valid_code: int = 200, response_type: str = "cl
 
 
 class CircleCIClient:
-
     API_VERSION_V2 = "v2"
     API_VERSION_V1 = "v1.1"
 

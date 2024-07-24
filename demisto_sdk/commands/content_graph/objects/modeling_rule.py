@@ -37,7 +37,7 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
-        **kwargs
+        **kwargs,
     ) -> dict:
         if not kwargs.get("unify_only"):
             data = super().prepare_for_upload(current_marketplace)

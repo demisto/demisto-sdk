@@ -1536,10 +1536,9 @@ def test_invalid_regex_error(mocker):
 
 def test_download_with_subplaybook(mocker):
     """
-    Given: A downloader object
+    Given: A downloader object.
     When: Downloading custom a playbook with task of subplaybbok.
-    Then: Ensure that when "playbookId" is replayed with "playbookName".
-
+    Then: Ensure that when "playbookId" is replayed with "playbookName"
     """
     playbook_path = (
         TESTS_DATA_FOLDER / "custom_content" / "playbook-task_with_sub-playbook.yml"

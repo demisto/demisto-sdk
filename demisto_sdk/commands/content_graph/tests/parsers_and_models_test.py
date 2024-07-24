@@ -3055,7 +3055,9 @@ def test_release_notes_header_and_from_release_note_header():
         ContentType.ASSETS_MODELING_RULE,
         ContentType.CASE_LAYOUT_RULE,
         ContentType.CASE_FIELD,
-        ContentType.CASE_LAYOUT
+        ContentType.CASE_LAYOUT,
     ]
     for content_type in test_cases:
-        assert content_type == ContentType.from_release_note_header( content_type.release_notes_header)
+        assert content_type == ContentType.from_release_note_header(
+            content_type.release_notes_header
+        )

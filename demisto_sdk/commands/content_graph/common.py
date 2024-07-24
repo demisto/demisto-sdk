@@ -319,7 +319,7 @@ class ContentType(StrEnum):
         elif self == ContentType.CASE_LAYOUT_RULE:
             return "Case Layout Rules"
         elif self == ContentType.CASE_FIELD:
-            return  "Case Fields"
+            return "Case Fields"
         elif self == ContentType.CASE_LAYOUT:
             return "Case Layouts"
         return f"{self.value}s"

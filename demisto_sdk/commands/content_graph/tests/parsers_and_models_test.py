@@ -3021,12 +3021,11 @@ def test_release_notes_header_and_from_release_note_header():
         - Assert that the ContentType enum value returned by from_release_note_header(header) matches the original ContentType enum value.
     """
     from demisto_sdk.commands.content_graph.common import ContentType
-
     test_cases = [
         ContentType.PLAYBOOK,
         ContentType.INTEGRATION,
         ContentType.SCRIPT,
-        ContentType.INCIDENT_FIELD, # not good
+        ContentType.INCIDENT_FIELD,
         ContentType.INDICATOR_FIELD,
         ContentType.INCIDENT_TYPE,
         ContentType.CLASSIFIER,
@@ -3059,7 +3058,6 @@ def test_release_notes_header_and_from_release_note_header():
     ]
     list_not_ok = []
     for content_type in test_cases:
-
         if not content_type == ContentType.from_release_note_header(
             content_type.release_notes_header
         ):

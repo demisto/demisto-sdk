@@ -24,7 +24,9 @@ class IsValidPackNameValidator(BaseValidator[ContentTypes]):
     error_message = "Invalid pack name ({0}), pack name should be at least 3 characters long, start with a capital letter, must not contain the words: {1}."
     related_field = "name"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

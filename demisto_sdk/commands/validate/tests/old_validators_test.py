@@ -483,8 +483,8 @@ class TestValidators:
 
         test_package = list()
 
-        for (dummy_file, file_type) in changelog_needed:
-            for (release_notes_file, answer) in changelog_files_answer:
+        for dummy_file, file_type in changelog_needed:
+            for release_notes_file, answer in changelog_files_answer:
                 if file_type == "Script":
                     test_package.append(
                         (
@@ -1659,21 +1659,21 @@ class TestValidators:
             script3 = pack1.create_script("Script3")
             script.yml.write_dict(
                 {
-                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200b\n"
                     "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
                     "deprecated": True,
                 }
             )
             script2.yml.write_dict(
                 {
-                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200b\n"
                     "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
                     "deprecated": False,
                 }
             )
             script3.yml.write_dict(
                 {
-                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200b\n"
                     "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n"
                 }
             )

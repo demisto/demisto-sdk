@@ -113,60 +113,6 @@ VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
         (
             [
                 create_integration_object(
-                    name="MyIntegration0",
-                    unit_test_name="MyIntegration0",
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-                create_integration_object(
-                    name="MyIntegration0",
-                    unit_test_name="MyIntegration0",
-                    pack_info={"support": PARTNER_SUPPORT},
-                ),
-                # unit test's filename is in lowercase
-                create_integration_object(
-                    name="MyIntegration0",
-                    unit_test_name="myintegration0",
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-            ],
-            1,
-            [
-                "The given Integration is missing a unit test file, please make sure to add one with the following name MyIntegration0_test.py."
-            ],
-        ),
-    ],
-)
-def test_IsHaveUnitTestFileValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
-):
-    """
-    Given
-    content_items list.
-        - Case 1: Three content items, where the last one has an invalid unit test file name.
-    When
-    - Calling the IsHaveUnitTestFileValidator is_valid function.
-    Then
-        - Make sure the right amount of failures return and that the error msg is correct.
-    """
-    with ChangeCWD(REPO.path):
-        results = IsHaveUnitTestFileValidator().obtain_invalid_content_items(
-            content_items
-        )
-    assert len(results) == expected_number_of_failures
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
-        ]
-    )
-
-
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(
                     paths=["commonfields.id"], values=["changedName"]
                 ),
                 create_integration_object(),
@@ -2131,3 +2077,58 @@ def test_IsFolderNameHasSeparatorsValidator_obtain_invalid_content_items(
 
     if result:
         assert result[0].message == expected_msg
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    name="MyIntegration0",
+                    unit_test_name="MyIntegration0",
+                    pack_info={"support": XSOAR_SUPPORT},
+                ),
+                create_integration_object(
+                    name="MyIntegration0",
+                    unit_test_name="MyIntegration0",
+                    pack_info={"support": PARTNER_SUPPORT},
+                ),
+                # unit test's filename is in lowercase
+                create_integration_object(
+                    name="MyIntegration0",
+                    unit_test_name="myintegration0",
+                    pack_info={"support": XSOAR_SUPPORT},
+                ),
+            ],
+            1,
+            [
+                "The given Integration is missing a unit test file, please make sure to add one with the following name MyIntegration0_test.py."
+            ],
+        ),
+    ],
+)
+def test_IsHaveUnitTestFileValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items list.
+        - Case 1: Three content items, where the last one has an invalid unit test file name.
+    When
+    - Calling the IsHaveUnitTestFileValidator is_valid function.
+    Then
+        - Make sure the right amount of failures return and that the error msg is correct.
+    """
+    create_indicator_type_object()
+    with ChangeCWD(REPO.path):
+        results = IsHaveUnitTestFileValidator().obtain_invalid_content_items(
+            content_items
+        )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

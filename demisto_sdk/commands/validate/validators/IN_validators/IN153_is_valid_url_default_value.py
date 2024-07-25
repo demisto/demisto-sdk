@@ -29,7 +29,9 @@ class IsValidUrlDefaultValueValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     invalid_params: ClassVar[Dict[str, List[str]]] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

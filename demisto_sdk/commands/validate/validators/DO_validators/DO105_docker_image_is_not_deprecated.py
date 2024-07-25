@@ -25,8 +25,9 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
         Dict[str, str]
     ] = {}  # map between deprecated docker to the reason its deprecated
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         if not self.deprecated_dockers_to_reasons:
             deprecated_dockers = JsonFile.read_from_github_api(
                 path="/docker/deprecated_images.json",

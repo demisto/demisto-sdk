@@ -181,7 +181,9 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             )
         )
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
-            json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
+            json_dct["path"] = (
+                Path(json_dct["path"]).relative_to(CONTENT_PATH)
+            ).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct
 
@@ -348,8 +350,7 @@ class UnknownContent(BaseNode):
     object_id: str = ""
     name: str = ""
 
-    def dump(self, _, __):
-        ...
+    def dump(self, _, __): ...
 
     @property
     def identifier(self):

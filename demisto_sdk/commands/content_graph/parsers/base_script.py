@@ -87,9 +87,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         else:
             return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
                 self.path, self.git_sha, self.yml_data
-            )[
-                1
-            ]
+            )[1]
 
     def get_depends_on(self) -> Set[str]:
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])

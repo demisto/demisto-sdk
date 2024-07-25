@@ -153,6 +153,4 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         else:
             return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
                 self.path, self.git_sha, self.yml_data
-            )[
-                1
-            ]
+            )[1]

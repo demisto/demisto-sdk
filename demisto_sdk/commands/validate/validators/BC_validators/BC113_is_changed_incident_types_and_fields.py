@@ -21,17 +21,24 @@ class IsChangedIncidentTypesAndFieldsValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         validation_results: List[ValidationResult] = []
         for content_item in content_items:
             (
                 removed_incident_types,
                 intersected_incident_types,
             ) = self.get_sorted_incident_types(
-                content_item.mapping, content_item.old_base_content_object.mapping  # type: ignore[union-attr]
+                content_item.mapping,  # type: ignore[union-attr]
+                content_item.old_base_content_object.mapping,  # type: ignore[union-attr]
             )
-            removed_incident_field_by_incident_type = self.get_removed_incident_fields_by_incident_type(
-                content_item.mapping, content_item.old_base_content_object.mapping, intersected_incident_types  # type: ignore[union-attr]
+            removed_incident_field_by_incident_type = (
+                self.get_removed_incident_fields_by_incident_type(
+                    content_item.mapping,
+                    content_item.old_base_content_object.mapping,  # type: ignore[union-attr]
+                    intersected_incident_types,
+                )
             )
             if error_msg := self.obtain_error_msg(
                 removed_incident_types, removed_incident_field_by_incident_type
@@ -105,9 +112,9 @@ class IsChangedIncidentTypesAndFieldsValidator(BaseValidator[ContentTypes]):
                 removed_fields := old_incident_field_for_incident_type
                 - current_incident_field_for_incident_type
             ):
-                missing_incident_fields_by_incident_type[
-                    intersected_incident_type
-                ] = removed_fields
+                missing_incident_fields_by_incident_type[intersected_incident_type] = (
+                    removed_fields
+                )
         return missing_incident_fields_by_incident_type
 
     def get_sorted_incident_types(

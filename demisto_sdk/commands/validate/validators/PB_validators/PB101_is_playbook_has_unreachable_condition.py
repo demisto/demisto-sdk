@@ -31,7 +31,9 @@ class IsAskConditionHasUnreachableConditionValidator(BaseValidator[ContentTypes]
     related_field = "tasks"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         """Checks whether a builtin conditional task branches are handled properly
         Args:
             - content_items (Iterable[ContentTypes]): The content items to check.
@@ -62,7 +64,6 @@ class IsAskConditionHasUnreachableConditionValidator(BaseValidator[ContentTypes]
         tasks = playbook.tasks
         for task in tasks.values():
             if task.type == PlaybookTaskType.CONDITION and task.message:
-
                 next_tasks: dict = task.nexttasks or {}
                 # Rename the keys in dictionary to upper case
                 next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}

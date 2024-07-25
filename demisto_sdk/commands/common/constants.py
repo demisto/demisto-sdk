@@ -934,9 +934,9 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
-PACKS_README_FILE_NAME = (
-    INTEGRATIONS_README_FILE_NAME
-) = SCRIPTS_README_FILE_NAME = "README.md"
+PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAME = (
+    "README.md"
+)
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
@@ -1827,6 +1827,16 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
     "description",
     "Tags",
     "blocked",
+]
+
+INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE = [
+    "feed",
+    "isfetch",
+    "longRunning",
+    "longRunningPort",
+    "ismappable",
+    "isremotesyncin",
+    "isremotesyncout",
 ]
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = "| **Path** | **Type** | **Description** |"

@@ -5,7 +5,6 @@ from typer.testing import CliRunner
 
 
 class TestValidateFileChangePermissions:
-
     """
     Test class for validation running in a local environment
     """

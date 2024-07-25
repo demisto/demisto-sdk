@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Any, Optional, Sequence
 
 import pydantic
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, Extra, validator
 from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -18,15 +18,39 @@ class BaseStrictModel(BaseModel, ABC):
 
         extra = Extra.forbid
 
-    # TODO - When editing all 968 yml files in content, turn on this validator
-    # @validator("*")
-    # def prevent_none(cls, v):
-    #     """
-    #     Validator ensures no None value is entered in a field.
-    #     There is a difference between an empty and missing field.
-    #     Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
-    #     """
-    #     # The assertion is caught by pydantic and converted to a pydantic.ValidationError
+    @validator("*", pre=True)
+    def prevent_none(cls, value, field):
+        """
+        Validator ensures no None value is entered in a field.
+        There is a difference between an empty and missing field.
+        Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
+        """
+        # TODO - There is currently an exclusion for all fields which failed this validation on the Content repository
+        if field.name not in {
+            "default_value",
+            "defaultvalue",
+            "additional_info",
+            "additionalinfo",
+            "defaultValue",
+            "default",
+            "detailed_description",
+            "image",
+            "default_classifier",
+            "display",
+            "outputs",
+            "predefined",
+            "select_values",
+            "columns",
+            "default_rows",
+            "system_associated_types",
+            "associated_types",
+            "propagation_labels",
+            "sort_values",
+            "playbook_id",
+        }:
+            # The assertion is caught by pydantic and converted to a pydantic.ValidationError
+            assert value is not None, f"{value} may not be None"
+        return value
 
 
 def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:

@@ -124,12 +124,21 @@ Script = create_model(
 )
 
 
-class CommonFieldsIntegration(CommonFields):  # type:ignore[misc,valid-type]
+class _CommonFieldsIntegration(BaseStrictModel):
     sort_values: Optional[List[str]] = Field(None, alias="sortvalues")
 
 
-class _StrictIntegration(BaseIntegrationScript):  # type:ignore[misc,valid-type]
-    common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")
+CommonFieldsIntegration = create_model(
+    model_name="CommonFieldsIntegration",
+    base_models=(
+        _CommonFieldsIntegration,
+        CommonFields,
+    ),
+)
+
+
+class _StrictIntegration(BaseStrictModel):
+    common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
     display: str
     beta: Optional[bool] = None
     category: str
@@ -157,6 +166,7 @@ StrictIntegration = create_model(
     model_name="StrictIntegration",
     base_models=(
         _StrictIntegration,
+        BaseIntegrationScript,
         IS_FETCH_DYNAMIC_MODEL,
         IS_FETCH_EVENTS_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,

@@ -1543,14 +1543,13 @@ def test_download_with_subplaybook(mocker):
     playbook_path = (
         TESTS_DATA_FOLDER / "custom_content" / "playbook-task_with_sub-playbook.yml"
     )
-    custom_content_data = get_yaml(playbook_path)
 
     filtered_custom_content_objects = {
         "playbook-task_with_sub-playbook": {
             "id": "1111-111-111",
             "name": "task_with_sub-playbook",
             "type": "playbook",
-            "data": custom_content_data,
+            "data": get_yaml(playbook_path),
         }
     }
     returned_playbook_content_data = format_playbook_task(

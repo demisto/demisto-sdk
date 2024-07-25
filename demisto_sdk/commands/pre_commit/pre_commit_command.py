@@ -656,6 +656,7 @@ def preprocess_files(
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files().union(staged_files)
+    contribution_flow = os.getenv("CONTRIB_BRANCH")
     if input_files:
         raw_files = set(input_files)
     elif staged_only:
@@ -664,7 +665,7 @@ def preprocess_files(
         raw_files = git_util._get_all_changed_files(prev_version)
         if not commited_only:
             raw_files = raw_files.union(staged_files)
-        if os.getenv("CONTRIB_BRANCH"):
+        if contribution_flow:
             """
             If this command runs on a build triggered by an external contribution PR,
             the relevant modified files would have an "untracked" status in git.
@@ -712,5 +713,6 @@ def preprocess_files(
     logger.info(  # DELETE
         f"\n[cyan]{relative_paths & all_git_files=}"
     )
-    # filter out files that are not in the content git repo (e.g in .gitignore)
-    return relative_paths & all_git_files
+    """filter out files that are not in the content git repo (e.g in .gitignore)
+    excluding the contribution flow which gets its "git diff" manually from a file"""
+    return relative_paths if contribution_flow else relative_paths & all_git_files

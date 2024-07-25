@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where playbookId incorrectly contained the playbook name by replacing the playbookId attribute with playbookName.
+- description: Fixed an issue in the **download** command where a 'missing content' error was shown on playbook-type tasks of an uploaded playbook that was initially downloaded using this command.
   type: fix
 pr_number: 4445

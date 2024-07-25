@@ -1552,10 +1552,10 @@ def test_download_with_subplaybook(mocker):
             "data": get_yaml(playbook_path),
         }
     }
-    returned_playbook_content_data = format_playbook_task(
+    format_playbook_task(
         filtered_custom_content_objects["playbook-task_with_sub-playbook"]
     )
-    returned_playbookName_value = returned_playbook_content_data["data"]["tasks"]["1"][
-        "task"
-    ]["playbookName"]
+    returned_playbookName_value = filtered_custom_content_objects[
+        "playbook-task_with_sub-playbook"
+    ]["data"]["tasks"]["1"]["task"]["playbookName"]
     assert returned_playbookName_value == "test2"

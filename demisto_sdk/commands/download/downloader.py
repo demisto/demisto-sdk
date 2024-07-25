@@ -104,15 +104,12 @@ KEEP_EXISTING_YAML_FIELDS = [
 ]
 
 
-def format_playbook_task(content_item_data: dict[str, dict]) -> dict[str, dict]:
+def format_playbook_task(content_item_data: dict[str, dict]):
     """This function checks if there are tasks that run sub-playbooks and converts 'playbookId' to 'playbookName' where applicable.
        XSUP-39266: replacing playbookId with playbookName in tasks.
 
     Args:
         content_item_data (Dict): The content item data containing tasks.
-
-    Returns:
-        Dict: The updated content_item_data where 'playbookId' is replaced with 'playbookName' in tasks running sub-playbooks.
     """
     content_data = content_item_data.get("data", {})
     all_tasks_data = content_data.get("tasks", {})
@@ -258,7 +255,7 @@ class Downloader:
                 )
                 for _, value in downloaded_content_objects.items():
                     if value["type"] == FileType.PLAYBOOK:
-                        value = format_playbook_task(value)
+                        format_playbook_task(value)
                 if self.input_files:
                     downloaded_content_item_names = [
                         item["name"] for item in downloaded_content_objects.values()

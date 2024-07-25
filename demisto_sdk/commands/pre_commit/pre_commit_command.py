@@ -557,7 +557,9 @@ def pre_commit_manager(
     if not language_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return 0
-
+    logger.info(  # DELETE
+        f"\n[cyan]{language_to_files_with_objects=}"
+    )
     skipped_hooks: set = SKIPPED_HOOKS
     skipped_hooks.update(set(skip_hooks or ()))
     if validate and "validate" in skipped_hooks:
@@ -570,9 +572,17 @@ def pre_commit_manager(
     if not pre_commit_template_path:
         if PRECOMMIT_TEMPLATE_PATH.exists():
             pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
+            logger.info(  # DELETE
+                f"\n[cyan]{PRECOMMIT_TEMPLATE_PATH=}"
+            )
         else:
             pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
-
+            logger.info(  # DELETE
+                f"\n[cyan]{DEFAULT_PRE_COMMIT_TEMPLATE_PATH=}"
+            )
+    logger.info(  # DELETE
+        f"\n[cyan]{pre_commit_template_path=}"
+    )
     if pre_commit_template_path and not pre_commit_template_path.exists():
         logger.error(
             f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
@@ -593,6 +603,11 @@ def pre_commit_manager(
         docker_image,
         pre_commit_template_path=pre_commit_template_path,
     )
+
+    logger.info(  # DELETE
+        f"\n[cyan]{pre_commit_context=}"
+    )
+
     return PreCommitRunner.prepare_and_run(
         pre_commit_context,
         verbose,

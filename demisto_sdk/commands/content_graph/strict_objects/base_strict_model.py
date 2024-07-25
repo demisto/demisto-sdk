@@ -164,7 +164,7 @@ class _StrictGenericIncidentType(BaseStrictModel):
 
 
 StrictGenericIncidentType = create_model(
-    model_name="_StrictGenericIncidentType",
+    model_name="StrictGenericIncidentType",
     base_models=(
         _StrictGenericIncidentType,
         NAME_DYNAMIC_MODEL,

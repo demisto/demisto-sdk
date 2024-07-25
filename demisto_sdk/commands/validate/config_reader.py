@@ -1,6 +1,5 @@
-from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, List, NamedTuple, Optional
+from typing import Dict, Iterable, List, NamedTuple, Optional
 
 import toml
 

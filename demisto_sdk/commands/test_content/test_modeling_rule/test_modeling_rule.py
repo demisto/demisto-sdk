@@ -48,7 +48,6 @@ from demisto_sdk.commands.common.tools import (
     parse_int_or_default,
 )
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
-    ARTIFACTS_PATH,
     ParallelLoggingManager,
 )
 from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
@@ -1395,13 +1394,11 @@ def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optiona
 class TestResults:
     def __init__(
         self,
-        artifacts_path: str,
         service_account: str = None,
         artifacts_bucket: str = None,
     ):
         self.test_results_xml_file = JUnitXml()
         self.errors = False
-        self.artifacts_path = Path(artifacts_path)
         self.service_account = service_account
         self.artifacts_bucket = artifacts_bucket
 
@@ -1409,11 +1406,13 @@ class TestResults:
         self,
         repository_name: str,
         file_name,
+        original_file_path: Path,
         logging_module: Union[Any, ParallelLoggingManager] = logging,
     ):
         """Uploads a JSON object to a specified path in the GCP bucket.
 
         Args:
+          original_file_path: The path to the JSON file to upload.
           repository_name: The name of the repository within the bucket.
           file_name: The desired filename for the uploaded JSON data.
           logging_module: Logging module to use for upload_playbook_result_json_to_bucket.
@@ -1427,7 +1426,7 @@ class TestResults:
             f"content-test-modeling-rules/{repository_name}/{file_name}"
         )
         blob.upload_from_filename(
-            self.artifacts_path / "test_playbooks_report.xml",
+            original_file_path.as_posix(),
             content_type="application/xml",
         )
 
@@ -1447,7 +1446,6 @@ class BuildContext:
         cloud_servers_path,
         cloud_servers_api_keys,
         cloud_servers_tokens,
-        artifacts_path,
         service_account,
         artifacts_bucket,
         xsiam_url,
@@ -1500,7 +1498,6 @@ class BuildContext:
         # --------------------------- Testing preparation -------------------------------
 
         self.tests_data_keeper = TestResults(
-            artifacts_path,
             service_account,
             artifacts_bucket,
         )
@@ -1772,7 +1769,7 @@ def test_modeling_rule(
     service_account: Optional[str] = typer.Option(
         None,
         "-sa",
-        "--service-account",
+        "--service_account",
         envvar="GCP_SERVICE_ACCOUNT",
         help="GCP service account.",
         show_default=False,
@@ -1780,43 +1777,50 @@ def test_modeling_rule(
     cloud_machine_ids: str = typer.Option(
         "",
         "-cm",
-        "--cloud-machine-ids",
+        "--cloud_machine_ids",
         help="Cloud machine ids to use.",
         show_default=False,
     ),
     cloud_servers_path: str = typer.Option(
         "",
         "-csp",
-        "--cloud-servers-path",
+        "--cloud_servers_path",
         help="Path to secret cloud server metadata file.",
         show_default=False,
     ),
     cloud_servers_api_keys: str = typer.Option(
         "",
         "-csak",
-        "--cloud-servers-api-keys",
+        "--cloud_servers_api_keys",
         help="Path to file with cloud Servers api keys.",
         show_default=False,
     ),
     cloud_servers_tokens: str = typer.Option(
         "",
         "-cst",
-        "--cloud-servers-tokens",
+        "--cloud_servers_tokens",
         help="Path to file with cloud Servers tokens.",
         show_default=False,
     ),
     machine_assignment: str = typer.Option(
         "",
         "-ma",
-        "--machine-assignment",
+        "--machine_assignment",
         help="the path to the machine assignment file.",
         show_default=False,
     ),
     branch_name: str = typer.Option(
         "master",
         "-bn",
-        "--branch-name",
+        "--branch_name",
         help="The current content branch name.",
+        show_default=True,
+    ),
+    build_number: str = typer.Option(
+        "",
+        "-bn",
+        "--build_number",
+        help="The build number.",
         show_default=True,
     ),
     nightly: bool = typer.Option(
@@ -1824,20 +1828,6 @@ def test_modeling_rule(
         "--nightly",
         "-n",
         help="Whether the command is being run in nightly mode.",
-    ),
-    build_number: str = typer.Option(
-        "",
-        "-bn",
-        "--build-number",
-        help="The build number.",
-        show_default=True,
-    ),
-    artifacts_path: str = typer.Option(
-        ARTIFACTS_PATH,
-        "-ap",
-        "--artifacts-path",
-        help="The path to save artifacts onto.",
-        show_default=True,
     ),
     artifacts_bucket: str = typer.Option(
         None,
@@ -1913,7 +1903,6 @@ def test_modeling_rule(
         cloud_servers_path=cloud_servers_path,
         cloud_servers_api_keys=cloud_servers_api_keys,
         cloud_servers_tokens=cloud_servers_tokens,
-        artifacts_path=artifacts_path,
         service_account=service_account,
         artifacts_bucket=artifacts_bucket,
         machine_assignment=machine_assignment,
@@ -1962,6 +1951,7 @@ def test_modeling_rule(
             build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(
                 XSIAM_SERVER_TYPE,
                 f"test_modeling_rules_report_{build_number}.xml",
+                output_junit_file,
                 logging_manager,
             )
     else:

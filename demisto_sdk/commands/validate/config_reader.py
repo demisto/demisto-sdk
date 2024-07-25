@@ -90,7 +90,9 @@ class ConfigReader:
             check_ignored_are_ignorable(codes_to_ignore, ignorable)
             select = _ignore_errors(select, "select", codes_to_ignore)
             warning = _ignore_errors(warning, "warning", codes_to_ignore)
-            explicitly_selected = _ignore_errors(explicitly_selected, "explicitly_selected", codes_to_ignore)
+            explicitly_selected = _ignore_errors(
+                explicitly_selected, "explicitly_selected", codes_to_ignore
+            )
 
         return ConfiguredValidations(
             select=explicitly_selected or select,

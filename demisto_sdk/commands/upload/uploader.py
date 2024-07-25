@@ -27,6 +27,9 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     string_to_bool,
 )
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
 )
@@ -68,6 +71,7 @@ class Uploader:
         override_existing: bool = False,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         zip: bool = False,
+        tpb: bool = False,
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
     ):
@@ -96,6 +100,7 @@ class Uploader:
         self.override_existing = override_existing
         self.marketplace = marketplace
         self.zip = zip  # -z flag
+        self.tpb = tpb  # -tpb flag
         self.destination_zip_dir = destination_zip_dir
 
     def _upload_zipped(self, path: Path) -> bool:
@@ -260,9 +265,7 @@ class Uploader:
             NotIndivitudallyUploadedException (see exception class)
             NotUploadableException
         """
-        content_item: Union[ContentItem, Pack] = BaseContent.from_path(
-            path
-        )  # type:ignore[assignment]
+        content_item: Union[ContentItem, Pack] = BaseContent.from_path(path)  # type:ignore[assignment]
         if content_item is None:
             reason = (
                 "Deprecated type - use LayoutContainer instead"
@@ -284,12 +287,13 @@ class Uploader:
                 marketplace=self.marketplace,
                 target_demisto_version=Version(str(self.demisto_version)),
                 zip=self.zip,  # only used for Packs
+                tpb=self.tpb,  # only used for Packs
                 destination_zip_dir=self.destination_zip_dir,  # only used for Packs
             )
 
             # upon reaching this line, the upload is surely successful
             uploaded_successfully = parse_uploaded_successfully(
-                content_item=content_item, zip=self.zip
+                content_item=content_item, zip=self.zip, tpb=self.tpb
             )
             self._successfully_uploaded_content_items.extend(uploaded_successfully)
             for item_uploaded_successfully in uploaded_successfully:
@@ -318,11 +322,9 @@ class Uploader:
             for failure in e.upload_failures:
                 failure_str = failure.additional_info or str(failure)
 
-                _failed_content_item: Union[
-                    Pack, ContentItem, None
-                ] = BaseContent.from_path(
-                    failure.path
-                )  # type:ignore[assignment]
+                _failed_content_item: Union[Pack, ContentItem, None] = (
+                    BaseContent.from_path(failure.path)  # type:ignore[assignment]
+                )
 
                 if _failed_content_item is None:
                     self.failed_parsing.append((failure.path, failure_str))
@@ -677,14 +679,16 @@ def is_uploadable_dir(path: Path) -> bool:
 
 
 def parse_uploaded_successfully(
-    content_item: Union[Pack, ContentItem], zip: bool
+    content_item: Union[Pack, ContentItem], zip: bool, tpb: bool
 ) -> Iterable[Union[Pack, ContentItem]]:
     # packs uploaded unzipped are uploaded item by item, we have to extract the item details here
     if isinstance(content_item, Pack) and not zip:
         return iter(
             filter(
-                lambda content_item: content_item.content_type
-                not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
+                lambda content_item: (
+                    content_item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
+                    or (tpb and content_item.content_type == ContentType.TEST_PLAYBOOK)
+                ),
                 content_item.content_items,
             )
         )

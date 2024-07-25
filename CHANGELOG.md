@@ -1,4 +1,41 @@
 # Changelog
+## 1.31.4
+* Removed DO106 - docker_not_on_the_latest_tag validation for the old validate. [#4429](https://github.com/demisto/demisto-sdk/pull/4429)
+* Added documentation improvements to the **pre-commit** command. [#4421](https://github.com/demisto/demisto-sdk/pull/4421)
+* Added support to replace incident to alert for deprecated content. [#4440](https://github.com/demisto/demisto-sdk/pull/4440)
+* Fixed an issue in the **test-modeling-rule** command, where the table wasn't left aligned. [#4419](https://github.com/demisto/demisto-sdk/pull/4419)
+* Added Improvements to ***validate-file-permission-changes*** **pre-commit** hook. [#4434](https://github.com/demisto/demisto-sdk/pull/4434)
+* Fixed an issue where old validate failed without listing the invalid content items. [#4432](https://github.com/demisto/demisto-sdk/pull/4432)
+* Added DS104 to the new validation format. The validation verifies that a Description file is present for an integration. [#4393](https://github.com/demisto/demisto-sdk/pull/4393)
+* Added MR107 to the new validation format. Validate that the dataset name of a modeling rule shows in the xif and schema files match. [#4429](https://github.com/demisto/demisto-sdk/pull/4429)
+* Moved MP107 and MP108 validations to the new validate format as BC113. The validation ensures no incident types and incident fields were removed from the mapper. [#4433](https://github.com/demisto/demisto-sdk/pull/4433)
+* Added PR101 and MR108 to the new validate format. The validations check if the rule id and the rule name end with the correct suffixes. [#4415](https://github.com/demisto/demisto-sdk/pull/4415)
+* Removed the following arguments from the (internal) **test-content** command: circleci, xsiam-machine, xsiam-servers-path, xsiam-servers-api-keys-path. [#4422](https://github.com/demisto/demisto-sdk/pull/4422)
+* Added the *verbose=False* parameter to the *fetch* method call to minimize unnecessary output messages. [#4427](https://github.com/demisto/demisto-sdk/pull/4427)
+* Removed the **validate-file-permissions-changes** pre-commit hook. [#4436](https://github.com/demisto/demisto-sdk/pull/4436)
+
+## 1.31.3
+* Removed IN150 due to invalid_siem_integration_name from both old and new validate flows. [#4420](https://github.com/demisto/demisto-sdk/pull/4420)
+* Removed RM108 and RM112 from the old validate format. [#4408](https://github.com/demisto/demisto-sdk/pull/4408)
+* Added the **-tpb** option to the **upload** command. When provided, all the test playbooks for the given pack will be uploaded. [#4402](https://github.com/demisto/demisto-sdk/pull/4402)
+* Modified GR100, that checks whether a content item attempts to use other content items which are not supported in all of the marketplaces of the content item. [#4282](https://github.com/demisto/demisto-sdk/pull/4282)
+* Added the ability to use git.Repo object to initialize GitUtil. [#4387](https://github.com/demisto/demisto-sdk/pull/4387)
+* Added timestamp print in console. [#4412](https://github.com/demisto/demisto-sdk/pull/4412)
+* Add a pre-commit hook to validate file permission/mode changes in Packs directory. [#4389](https://github.com/demisto/demisto-sdk/pull/4389)
+* Fixed an issue where the relative path regex wasn't written correctly. This fix affect RM108 and RM114 in the new validate. [#4413](https://github.com/demisto/demisto-sdk/pull/4413)
+* Fixed an issue where new validate failed when attempting to parse renamed files. [#4411](https://github.com/demisto/demisto-sdk/pull/4411)
+* Fixed an issue where playbook saved due to a failed attempt to dump task object. [#4416](https://github.com/demisto/demisto-sdk/pull/4416)
+* Added support for the (internal) ***test-content*** command to work properly with multiple cloud servers. [#4321](https://github.com/demisto/demisto-sdk/pull/4321)
+* Moved CR102 to the new validate format. The validation checks 'search_window' existence and non-emptiness when 'execution_mode' == 'SCHEDULED'. [#4409](https://github.com/demisto/demisto-sdk/pull/4409)
+* Fixed an issue where wrong untracked files were collected during running of ***pre-commit*** and ***validate*** in contribution PR use-case. [#4410](https://github.com/demisto/demisto-sdk/pull/4410)
+
+## 1.31.2
+* Added the *marketplaces* field to the widget schema. [#4396](https://github.com/demisto/demisto-sdk/pull/4396)
+* Moved IF119 to the new validation format. Check whether a *selectValue* key in an *incidentField* of type *singleSelect* do not contain multiple or only empty options. [#4277](https://github.com/demisto/demisto-sdk/pull/4277)
+* Fixed an issue where IN121 in the new validate flow and IN148 in the old validate flow failed when running on content items with XSOAR on prem and XSOAR SAAS Marketplaces. [#4398](https://github.com/demisto/demisto-sdk/pull/4398)
+* Fixed an issue where ***upload*** command failed locally due to missing lock file. [#4397](https://github.com/demisto/demisto-sdk/pull/4397)
+* Fixed an issue where ***pre-commit*** and ***validate*** commands collected invalid untracked files when running on contribution PR. [#4394](https://github.com/demisto/demisto-sdk/pull/4394)
+
 ## 1.31.1
 * Added an option to specify a marketplace for certain playbook fields: All input fields: *key*, *value*, *description*, *required*, *playbookInputKey*. The following task fields: *scriptId*, *scriptarguments*, *loop.scriptArguments*, *message*, *form*. The task id mappings (for example the first task can be converted by "0" -> "0:xsoar"). The *left* and *right* options of *condition*/*builtincondition* task fields (and their nested fields). [#4375](https://github.com/demisto/demisto-sdk/pull/4375)
 * Added the *-h* option as a short option for the *--help* flag in ***typer***-based commands. [#4350](https://github.com/demisto/demisto-sdk/pull/4350)

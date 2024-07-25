@@ -92,7 +92,6 @@ def create_hook(
 
 @dataclass
 class MockProcess:
-
     returncode = 0
     stdout = "finished"
     stderr = ""
@@ -274,7 +273,7 @@ def test_mypy_hooks(mocker):
 
     mypy_hook = create_hook(mypy_hook)
     MypyHook(**mypy_hook).prepare_hook()
-    for (hook, python_version) in itertools.zip_longest(
+    for hook, python_version in itertools.zip_longest(
         mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         assert hook["args"][-1] == f"--python-version={python_version}"
@@ -303,7 +302,7 @@ def test_ruff_hook(github_actions, mocker):
     )
     RuffHook(**ruff_hook).prepare_hook()
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
-    for (hook, python_version) in itertools.zip_longest(
+    for hook, python_version in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         assert (
@@ -334,7 +333,7 @@ def test_ruff_hook_nightly_mode(mocker):
 
     RuffHook(**ruff_hook).prepare_hook()
 
-    for (hook, _) in itertools.zip_longest(
+    for hook, _ in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         hook_args = hook["args"]
@@ -483,11 +482,12 @@ class TestPreprocessFiles:
         assert output == expected_output
 
     @pytest.mark.parametrize(
-        "untracked_files, modified_files, expected_output",
+        "untracked_files, modified_files, untracked_files_in_content ,expected_output",
         [
             (
                 ["Packs/untracked.txt"],
                 set([Path("Packs/modified.txt")]),
+                set([Path("Packs/untracked.txt")]),
                 set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
             ),
             (
@@ -498,6 +498,12 @@ class TestPreprocessFiles:
                     "another/invalid/path/untracked.txt",
                 ],
                 set([Path("Packs/modified.txt")]),
+                set(
+                    [
+                        Path("Packs/untracked_1.txt"),
+                        Path("Packs/untracked_2.txt"),
+                    ]
+                ),
                 set(
                     [
                         Path("Packs/modified.txt"),
@@ -520,6 +526,12 @@ class TestPreprocessFiles:
                         Path("Packs/untracked_2.txt"),
                     ]
                 ),
+                set(
+                    [
+                        Path("Packs/untracked_1.txt"),
+                        Path("Packs/untracked_2.txt"),
+                    ]
+                ),
             ),
         ],
         ids=[
@@ -529,7 +541,12 @@ class TestPreprocessFiles:
         ],
     )
     def test_preprocess_files_in_external_pr_use_case(
-        self, mocker, untracked_files, modified_files, expected_output
+        self,
+        mocker,
+        untracked_files,
+        modified_files,
+        untracked_files_in_content,
+        expected_output,
     ):
         """
         This UT verifies changes made to pre commit command to support collection of
@@ -558,6 +575,12 @@ class TestPreprocessFiles:
             "git.repo.base.Repo._get_untracked_files",
             return_value=untracked_files,
         )
+        mocker.patch.object(
+            pre_commit_command,
+            "get_untracked_files_in_content",
+            return_value=untracked_files_in_content,
+        )
+
         output = preprocess_files(use_git=True)
         assert output == expected_output
 

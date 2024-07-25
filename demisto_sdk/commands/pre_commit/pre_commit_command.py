@@ -55,7 +55,6 @@ INTEGRATIONS_BATCH = 300
 
 
 class PreCommitRunner:
-
     original_hook_id_to_generated_hook_ids: Dict[str, GeneratedHooks] = {}
 
     @staticmethod
@@ -82,17 +81,17 @@ class PreCommitRunner:
 
         for hook_id in hooks.copy():
             if hook_id in custom_hooks_to_classes:
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = custom_hooks_to_classes[hook_id](
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                    custom_hooks_to_classes[
+                        hook_id
+                    ](**hooks.pop(hook_id), context=pre_commit_context).prepare_hook()
+                )
             elif hook_id.endswith("in-docker"):
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = DockerHook(
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                    DockerHook(
+                        **hooks.pop(hook_id), context=pre_commit_context
+                    ).prepare_hook()
+                )
             else:
                 # this is used to handle the mode property correctly even for non-custom hooks which do not require
                 # special preparation
@@ -329,9 +328,9 @@ class PreCommitRunner:
         PreCommitRunner.prepare_hooks(pre_commit_context)
 
         if pre_commit_context.all_files:
-            pre_commit_context.precommit_template[
-                "exclude"
-            ] += f"|{join_files(exclude_files or set())}"
+            pre_commit_context.precommit_template["exclude"] += (
+                f"|{join_files(exclude_files or set())}"
+            )
         else:
             pre_commit_context.precommit_template["files"] = join_files(
                 pre_commit_context.files_to_run
@@ -669,17 +668,15 @@ def preprocess_files(
             The following code segment retrieves all relevant untracked file paths that were changed in the external contribution PR
             and adds them to `raw_files`. See CIAC-10490 for more info.
             """
-            # filter out a string list of untracked files with a path that starts with "Packs/"
-            # The file paths in the build machine are relative.
-            untracked_files_list = filter(
-                lambda f: f.startswith("Packs/"), git_util.repo.untracked_files
+            logger.info(
+                "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
             )
             logger.info(
-                f"\n[cyan]Running on untracked files: {untracked_files_list}[/cyan]"
+                f"\n######## - Raw Untracked files from git:\n{git_util.repo.untracked_files}"
             )
-            # convert the string list of untracked files to a set of Path object
-            untracked_files_paths = set(map(Path, untracked_files_list))
-            raw_files = raw_files.union(untracked_files_paths)
+            valid_untracked_files_paths = get_untracked_files_in_content(git_util)
+            raw_files = raw_files.union(valid_untracked_files_paths)
+            logger.info(f"\n######## - Running on collected files:\n{raw_files}")
     elif all_files:
         raw_files = all_git_files
     else:
@@ -700,3 +697,18 @@ def preprocess_files(
     }
     # filter out files that are not in the content git repo (e.g in .gitignore)
     return relative_paths & all_git_files
+
+
+def get_untracked_files_in_content(git_util) -> Set[Path]:
+    """
+    Filter out a string list of untracked files with a path thats inside the build machine's content repository.
+    The file paths in the build machine are relative so we use absolute path (resolve) to make sure the files are in content.
+    """
+    logger.info(f"\n######## - CONTENT PATH to match:\nf'{CONTENT_PATH}/Packs/'")
+    untracked_files_paths = {
+        Path(f)
+        for f in git_util.repo.untracked_files
+        if str(Path(f).resolve()).startswith(f"{CONTENT_PATH}/Packs/")
+    }
+    logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
+    return untracked_files_paths

@@ -33,7 +33,9 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
     related_field = "configuration"
     missing_or_malformed_integration: ClassVar[dict] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -74,7 +76,13 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
         """
         fetch_required_params = (
             INCIDENT_FETCH_REQUIRED_PARAMS
-            if MarketplaceVersions.XSOAR in marketplaces
+            if any(
+                [
+                    MarketplaceVersions.XSOAR in marketplaces,
+                    MarketplaceVersions.XSOAR_SAAS in marketplaces,
+                    MarketplaceVersions.XSOAR_ON_PREM in marketplaces,
+                ]
+            )
             else ALERT_FETCH_REQUIRED_PARAMS
         )
         current_integration = {}
@@ -87,8 +95,8 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
                     param.type == fetch_required_param.get("type"),
                 ]
             ):
-                current_integration[
-                    fetch_required_param.get("name")
-                ] = fetch_required_param
+                current_integration[fetch_required_param.get("name")] = (
+                    fetch_required_param
+                )
         self.missing_or_malformed_integration[integration_name] = current_integration
         return current_integration

@@ -13,12 +13,12 @@ from demisto_sdk.commands.validate.validators.GF_validators.GF102_unsearchable_k
 )
 
 
-def test_GenericFieldIdPrefixValidateValidator_is_valid():
+def test_GenericFieldIdPrefixValidateValidator_obtain_invalid_content_items():
     """
     Given:
         - GenericField content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that the ValidationResult returned
           for the GenericField whose 'id' without `generic_` prefix
@@ -28,20 +28,24 @@ def test_GenericFieldIdPrefixValidateValidator_is_valid():
     generic_field = create_generic_field_object(paths=["id"], values=["foo"])
 
     # not valid
-    results = GenericFieldIdPrefixValidateValidator().is_valid([generic_field])
+    results = GenericFieldIdPrefixValidateValidator().obtain_invalid_content_items(
+        [generic_field]
+    )
     assert results[0].message == "foo is not a valid id, it should start with generic_."
 
     # valid
     generic_field.object_id = "generic_foo"
-    assert not GenericFieldIdPrefixValidateValidator().is_valid([generic_field])
+    assert not GenericFieldIdPrefixValidateValidator().obtain_invalid_content_items(
+        [generic_field]
+    )
 
 
-def test_GenericFieldGroupValidator_is_valid():
+def test_GenericFieldGroupValidator_obtain_invalid_content_items():
     """
     Given:
         - GenericField content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that the ValidationResult returned
           for the GenericField whose 'group' field is not valid
@@ -49,20 +53,22 @@ def test_GenericFieldGroupValidator_is_valid():
     """
     # not valid
     generic_field = create_generic_field_object(paths=["group"], values=[0])
-    assert GenericFieldGroupValidator().is_valid([generic_field])
+    assert GenericFieldGroupValidator().obtain_invalid_content_items([generic_field])
 
     # valid
     generic_field.group = REQUIRED_GROUP_VALUE
-    assert not GenericFieldGroupValidator().is_valid([generic_field])
+    assert not GenericFieldGroupValidator().obtain_invalid_content_items(
+        [generic_field]
+    )
 
 
 @pytest.mark.parametrize("unsearchable", (False, None))
-def test_UnsearchableKeyValidator_is_valid(unsearchable: bool):
+def test_UnsearchableKeyValidator_obtain_invalid_content_items(unsearchable: bool):
     """
     Given:
         - GenericField content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that the ValidationResult returned
           for the GenericField whose 'unsearchable' field is set to false or not or undefined
@@ -72,11 +78,11 @@ def test_UnsearchableKeyValidator_is_valid(unsearchable: bool):
     generic_field = create_generic_field_object(
         paths=["unsearchable"], values=[unsearchable]
     )
-    assert UnsearchableKeyValidator().is_valid([generic_field])
+    assert UnsearchableKeyValidator().obtain_invalid_content_items([generic_field])
 
     # valid
     generic_field.unsearchable = True
-    assert not UnsearchableKeyValidator().is_valid([generic_field])
+    assert not UnsearchableKeyValidator().obtain_invalid_content_items([generic_field])
 
 
 def test_GenericFieldGroupValidator_fix():

@@ -112,7 +112,6 @@ class Hook:
         include_pattern = None
         exclude_pattern = None
         try:
-
             if files_reg := self.base_hook.get("files"):
                 include_pattern = re.compile(files_reg)
             if exclude_reg := self.base_hook.get("exclude"):

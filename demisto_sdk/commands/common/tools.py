@@ -1440,7 +1440,9 @@ def pack_name_to_posix_path(pack_name):
 
 
 def get_pack_ignore_file_path(pack_name):
-    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)  # type: ignore
+    return os.path.join(
+        get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME
+    )  # type: ignore
 
 
 def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore
@@ -1583,6 +1585,7 @@ def get_dict_from_file(
     raises_error: bool = True,
     clear_cache: bool = False,
     keep_order: bool = True,
+    git_sha: Optional[str] = None,
 ) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
@@ -1599,11 +1602,16 @@ def get_dict_from_file(
         if path:
             if path.endswith(".yml"):
                 return (
-                    get_yaml(path, cache_clear=clear_cache, keep_order=keep_order),
+                    get_yaml(
+                        path,
+                        cache_clear=clear_cache,
+                        keep_order=keep_order,
+                        git_sha=git_sha,
+                    ),
                     "yml",
                 )
             elif path.endswith(".json"):
-                res = get_json(path, cache_clear=clear_cache)
+                res = get_json(path, cache_clear=clear_cache, git_sha=git_sha)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
                     return res[0], "json"
                 else:
@@ -2041,7 +2049,9 @@ def is_external_repository() -> bool:
     """
     try:
         git_repo = GitUtil().repo
-        private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
+        private_settings_path = os.path.join(
+            git_repo.working_dir, ".private-repo-settings"
+        )  # type: ignore
         return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
         return True
@@ -2861,9 +2871,9 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
         if not command_section:
             continue
         if not command_section[0].endswith("###"):
-            command_section[
-                0
-            ] += "###"  # mark end of file so last pattern of regex will be recognized.
+            command_section[0] += (
+                "###"  # mark end of file so last pattern of regex will be recognized.
+            )
         context_section = re.findall(
             context_section_pattern, command_section[0], re.DOTALL
         )
@@ -2923,7 +2933,8 @@ def write_dict(
             raise ValueError(f"The file {path} is neither json/yml")
 
     safe_write_unicode(
-        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path  # type: ignore[union-attr]
+        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs),  # type: ignore[union-attr]
+        path,
     )
 
 
@@ -3897,7 +3908,7 @@ def get_api_module_dependencies_from_graph(
 
 
 def parse_multiple_path_inputs(
-    input_path: Optional[Union[Path, str, List[Path], Tuple[Path]]]
+    input_path: Optional[Union[Path, str, List[Path], Tuple[Path]]],
 ) -> Optional[Tuple[Path, ...]]:
     if not input_path:
         return ()
@@ -4593,3 +4604,29 @@ def run_sync(
             # Release the lock and close the file
             fcntl.flock(lock_file, fcntl.LOCK_UN)
             lock_file.close()
+
+
+def get_json_file(path):
+    """
+    Reads a JSON file from the given path and returns its content as a dictionary.
+
+    Args:
+        path (str): The file path to the JSON file.
+
+    Returns:
+        dict: The content of the JSON file as a dictionary.
+    """
+    file_content = {}
+    if path:
+        try:
+            with open(path, "r") as json_file:
+                file_content = json.load(json_file)
+        except FileNotFoundError:
+            logger.debug(f"Error: The file at path '{path}' was not found.")
+        except json.JSONDecodeError:
+            logger.debug(
+                f"Error: The file at path '{path}' does not contain valid JSON."
+            )
+        except Exception as e:
+            logger.debug(f"An unexpected error occurred: {e}")
+    return file_content

@@ -122,7 +122,7 @@ def format_playbook_task(content_item_data: dict[str, dict]) -> dict[str, dict]:
             if task_data.get("type") == "playbook" and playbook_id_value:
                 task_data["task"]["playbookName"] = playbook_id_value
                 task_data["task"].pop("playbookId", None)
-                all_tasks_data[task_id]=task_data
+                all_tasks_data[task_id] = task_data
     content_data["tasks"] = all_tasks_data
     return content_item_data
 
@@ -261,7 +261,7 @@ class Downloader:
                     custom_content_objects=all_custom_content_objects
                 )
                 for _, value in downloaded_content_objects.items():
-                    if value['type'] == FileType.PLAYBOOK:
+                    if value["type"] == FileType.PLAYBOOK:
                         value = format_playbook_task(value)
                 if self.input_files:
                     downloaded_content_item_names = [

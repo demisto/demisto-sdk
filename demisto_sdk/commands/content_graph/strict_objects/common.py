@@ -7,7 +7,7 @@ from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
+marketplace_suffixes = tuple((marketplace.value for marketplace in MarketplaceVersions))
 
 
 class BaseStrictModel(BaseModel, ABC):
@@ -26,9 +26,7 @@ class BaseStrictModel(BaseModel, ABC):
     #     There is a difference between an empty and missing field.
     #     Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
     #     """
-    #     # This assertion is caught by pydantic and converted to a pydantic.ValidationError
-    #     assert v is not None, f"{v} may not be None"
-    #     return v
+    #     # The assertion is caught by pydantic and converted to a pydantic.ValidationError
 
 
 def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:
@@ -44,7 +42,7 @@ def create_dynamic_model(
     field_name: str,
     type_: Any,
     default: Any = ...,
-    suffixes: Sequence[str] = tuple(marketplace_suffixes),
+    suffixes: Sequence[str] = marketplace_suffixes,
     alias: Optional[str] = None,
     include_without_suffix: bool = False,
 ) -> BaseModel:
@@ -93,8 +91,8 @@ DEFAULT_DYNAMIC_MODEL = create_dynamic_model(
     default=None,
     include_without_suffix=True,
 )
-# field name here defaultvalue vs defaultValue
 DEFAULT_DYNAMIC_MODEL_LOWER_CASE = create_dynamic_model(
+    # field name here defaultvalue vs defaultValue
     field_name="defaultvalue",
     type_=Optional[Any],
     default=None,

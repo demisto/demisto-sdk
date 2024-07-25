@@ -26,9 +26,7 @@ class BaseStrictModel(BaseModel, ABC):
     #     There is a difference between an empty and missing field.
     #     Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
     #     """
-    #     # This assertion is caught by pydantic and converted to a pydantic.ValidationError
-    #     assert v is not None, f"{v} may not be None"
-    #     return v
+    #     # The assertion is caught by pydantic and converted to a pydantic.ValidationError
 
 
 def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:

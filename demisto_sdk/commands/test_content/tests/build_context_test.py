@@ -176,7 +176,7 @@ def get_mocked_build_context(
         content_conf_json: The contents of conf.json to load in the BuildContext instance
         secret_conf_json: The contents of content-test-conf conf.json to load in the BuildContext instance
         env_results_content: The contents of env_results.json to load in the BuildContext instance
-        machine_assignment_content: The contents of packs_to_install_by_machine.json to load in the BuildContext instance
+        machine_assignment_content: The contents of machine_assignment.json to load in the BuildContext instance
         nightly: Indicates whether this build is a nightly build
         server_version: The server version to run the instance on
     """
@@ -204,7 +204,7 @@ def get_mocked_build_context(
         str(env_results_path),
     )
 
-    machine_assignment_path = tmp_file / "packs_to_install_by_machine.json"
+    machine_assignment_path = tmp_file / "machine_assignment.json"
     machine_assignment_path.write_text(
         json.dumps(machine_assignment_content or {}) or "{}"
     )
@@ -275,7 +275,7 @@ def create_xsiam_build(
         str(env_results_path),
     )
 
-    machine_assignment_path = tmp_file / "packs_to_install_by_machine.json"
+    machine_assignment_path = tmp_file / "machine_assignment.json"
     machine_assignment_path.write_text(
         json.dumps(machine_assignment_content or {}) or "{}"
     )

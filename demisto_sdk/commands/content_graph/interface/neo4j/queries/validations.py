@@ -18,6 +18,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
     versioned,
 )
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
 
 def validate_unknown_content(
@@ -310,20 +311,16 @@ def validate_duplicate_ids(
     ]
 
 
-def validate_test_playbook_in_use(tx: Transaction, test_playbook_id: str, tests_skipped: list[str]) -> bool:
-#     query = f"""// Return the name of the Test Playbook if is no any content-item that use this Test Playbook
-# MATCH (tp:TestPlaybook{{object_id: '{test_playbook_id}'}})
-# WHERE (NOT EXISTS (()-[:TESTED_BY]->(tp)))
-# AND  tp.deprecated =false
-# RETURN collect(tp.name) AS tp_name
-#     """
-    query = f"""MATCH (tp:TestPlaybook{{object_id: '{test_playbook_id}'}})
-WHERE NOT EXISTS {{ MATCH ()-[:TESTED_BY]->(tp) }}
+def validate_test_playbook_in_use(tx: Transaction, test_playbook_ids: List[str], tests_skipped: List[str]) -> List[graph.Node]:
+    query = f"""
+MATCH (tp:TestPlaybook)
+WHERE tp.object_id IN {test_playbook_ids}
+AND NOT EXISTS {{ MATCH ()-[:TESTED_BY]->(tp) }}
 AND tp.deprecated = false
 AND NOT (tp.object_id IN {tests_skipped})
 MATCH (tp)-[:IN_PACK]->(p:Pack)
 WHERE p.support = "xsoar"
 AND p.deprecated = false
-RETURN collect(tp.object_id) AS tp_id
-    """
-    return bool([item.get("tp_id") for item in run_query(tx, query) if item.get("tp_id")])
+RETURN collect(tp) AS content_items
+"""
+    return [item.get("content_items") for item in run_query(tx, query) if item.get("content_items")][0]

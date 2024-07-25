@@ -80,6 +80,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
 
 def _parse_node(element_id: str, node: dict) -> BaseNode:
@@ -568,10 +569,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_test_playbook_without_uses(
-        self, test_playbook_id: str, skipped_tests_keys: list
-    ) -> bool:
+        self, test_playbook_ids: List[str], skipped_tests_keys: list
+    ) -> List[TestPlaybook]:
          with self.driver.session() as session:
-            return session.execute_read(validate_test_playbook_in_use, test_playbook_id, skipped_tests_keys)
+            results = session.execute_read(validate_test_playbook_in_use, test_playbook_ids, skipped_tests_keys)
+            self._add_nodes_to_mapping(results)
+            return [self._id_to_obj[result.element_id] for result in results]
     
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]

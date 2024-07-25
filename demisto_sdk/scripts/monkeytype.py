@@ -1,16 +1,13 @@
 import os
 import subprocess
+import sys
 from pathlib import Path
-
-import typer
-
 from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
 
-app = typer.Typer()
 
-
-@app.command("run")
-def run(path: Path = Path.cwd()):
+def monkeytype(path: Path):
+    if path.is_file():
+        path = path.parent
     runner_path = path / "runner.py"
     python_path = ':'.join(str(path_) for path_ in PYTHONPATH + [path])
     env = os.environ.copy() | {'PYTHONPATH': os.environ['PYTHONPATH'] + ":" + python_path}
@@ -36,7 +33,7 @@ def run(path: Path = Path.cwd()):
 
 
 def main():
-    app()
+    monkeytype(Path(sys.argv[0]))
 
 
 if __name__ == "__main__":

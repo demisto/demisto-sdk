@@ -260,7 +260,9 @@ class Downloader:
                 downloaded_content_objects = self.filter_custom_content(
                     custom_content_objects=all_custom_content_objects
                 )
-
+                for item, value in downloaded_content_objects.items():
+                    if value['type'] == 'playbook':
+                        value = format_playbook_task(value)
                 if self.input_files:
                     downloaded_content_item_names = [
                         item["name"] for item in downloaded_content_objects.values()

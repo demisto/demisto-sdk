@@ -74,15 +74,6 @@ class _Important(BaseModel):
     context_path: str = Field(..., alias="contextPath")
     description: str
     related: Optional[str] = None
-    description_xsoar: Optional[str] = Field(None, alias="contextPath")
-    description_marketplacev2: Optional[str] = Field(
-        None, alias="description:marketplacev2"
-    )
-    description_xpanse: Optional[str] = Field(None, alias="description:xpanse")
-    description_xsoar_saas: Optional[str] = Field(None, alias="description:xsoar_saas")
-    description_xsoar_on_prem: Optional[str] = Field(
-        None, alias="description:xsoar_on_prem"
-    )
 
 
 Important = create_model(
@@ -97,7 +88,8 @@ class ScriptType(StrEnum):
 
 
 class StructureError(BaseStrictModel):
-    """ Used for wrapping Pydantic errors, not part of content."""
+    """Used for wrapping Pydantic errors, not part of content."""
+
     field_name: Optional[tuple] = Field(None, alias="loc")
     error_message: Optional[str] = Field(None, alias="msg")
     error_type: Optional[str] = Field(None, alias="type")

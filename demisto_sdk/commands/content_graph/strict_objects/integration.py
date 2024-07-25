@@ -133,7 +133,7 @@ class _StrictIntegration(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order_1: Optional[List[str]] = Field(None, alias="sectionOrder")
+    section_order_pascal_case: Optional[List[str]] = Field(None, alias="sectionOrder")
     section_order_2: Optional[List[str]] = Field(None, alias="sectionorder")
     image: Optional[str] = None
     description: str

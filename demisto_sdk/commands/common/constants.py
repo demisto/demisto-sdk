@@ -2075,7 +2075,9 @@ class ParameterType(Enum):
     DAY_DROPDOWN = 21
 
 
-class IncidentFieldType:  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
+class IncidentFieldType(
+    StrEnum
+):  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
     SHORT_TEXT = "shortText"
     LONG_TEXT = "longText"
     NUMBER = "number"

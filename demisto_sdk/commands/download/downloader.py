@@ -120,11 +120,7 @@ def format_playbook_task(content_item_data: dict[str, dict]) -> dict[str, dict]:
         for task_id, task_data in all_tasks_data.items():
             playbook_id_value = task_data.get("task", {}).get("playbookId")
             if task_data.get("type") == "playbook" and playbook_id_value:
-                task_data["task"]["playbookName"] = playbook_id_value
-                task_data["task"].pop("playbookId", None)
-                all_tasks_data[task_id] = task_data
-    content_data["tasks"] = all_tasks_data
-    return content_item_data
+                task_data["task"]["playbookName"] = task_data["task"].pop("playbookId")
 
 
 class Downloader:

@@ -656,6 +656,9 @@ def preprocess_files(
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files().union(staged_files)
+    logger.info(  # DELETE
+        f"\n[cyan]{all_git_files=}"
+    )
     contribution_flow = os.getenv("CONTRIB_BRANCH")
     if input_files:
         raw_files = set(input_files)

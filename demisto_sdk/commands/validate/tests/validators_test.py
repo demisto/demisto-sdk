@@ -108,7 +108,9 @@ def get_validate_manager(mocker):
         ),
     ],
 )
-def test_filter_validators(mocker: MockerFixture, validations_to_run, sub_classes, expected_results):
+def test_filter_validators(
+    mocker: MockerFixture, validations_to_run, sub_classes, expected_results
+):
     """
     Given
     a list of validation_to_run (config file select section mock), and a list of sub_classes (a mock for the BaseValidator sub classes)
@@ -231,7 +233,9 @@ def test_gather_validations_from_conf(
         - Case 6: Make sure the retrieved results contains only the specific validations section.
     """
     mocker.patch.object(toml, "load", return_value=config_file_content)
-    config_reader = ConfigReader(category=category_to_run, explicitly_selected=specific_validations)
+    config_reader = ConfigReader(
+        category=category_to_run, explicitly_selected=specific_validations
+    )
     results: ConfiguredValidations = config_reader.read(
         mode=execution_mode, ignore_support_level=ignore_support_level
     )
@@ -790,7 +794,10 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
         pytest.param(
             None,
             ExecutionMode.USE_GIT,
-            {"use_git": {"select": ["E001", "E002", "E003"]}, "ignorable_errors": ["E002", "W001"]},
+            {
+                "use_git": {"select": ["E001", "E002", "E003"]},
+                "ignorable_errors": ["E002", "W001"],
+            },
             ConfiguredValidations(
                 select=["E001", "E003"],
                 warning=[],
@@ -800,27 +807,33 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
             False,
             [],
             ["E002", "W001"],
-            id="Ignore E002 and W001"
+            id="Ignore E002 and W001",
         ),
         pytest.param(
             None,
             ExecutionMode.USE_GIT,
-            {"use_git": {"select": ["E001", "E002"], "warning": ["W001"]}, "ignorable_errors": ["E002"]},
+            {
+                "use_git": {"select": ["E001", "E002"], "warning": ["W001"]},
+                "ignorable_errors": ["E002"],
+            },
             ConfiguredValidations(
                 select=["E001"],
                 warning=["W001"],
-                ignorable_errors=['E002'],
+                ignorable_errors=["E002"],
                 support_level_dict={},
             ),
             True,
             ["E001"],
             ["E002"],
-            id="Ignore E002 only"
+            id="Ignore E002 only",
         ),
         pytest.param(
             None,
             ExecutionMode.USE_GIT,
-            {"use_git": {"select": ["E001", "E002", "E003"]}, "ignorable_errors": ["E002", "W001"]},
+            {
+                "use_git": {"select": ["E001", "E002", "E003"]},
+                "ignorable_errors": ["E002", "W001"],
+            },
             ConfiguredValidations(
                 select=[],
                 warning=[],
@@ -830,7 +843,7 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
             False,
             ["E002"],
             ["E002", "W001"],
-            id="Specific validation and ignore same code E002"
+            id="Specific validation and ignore same code E002",
         ),
     ],
 )
@@ -845,9 +858,13 @@ def test_ignore_codes_in_config(
     codes_to_ignore,
 ):
     mocker.patch.object(toml, "load", return_value=config_file_content)
-    config_reader = ConfigReader(category=category_to_run, explicitly_selected=specific_validations)
+    config_reader = ConfigReader(
+        category=category_to_run, explicitly_selected=specific_validations
+    )
     results: ConfiguredValidations = config_reader.read(
-        mode=execution_mode, ignore_support_level=ignore_support_level, codes_to_ignore=codes_to_ignore
+        mode=execution_mode,
+        ignore_support_level=ignore_support_level,
+        codes_to_ignore=codes_to_ignore,
     )
     assert results.select == expected_results.select
     assert results.ignorable_errors == expected_results.ignorable_errors

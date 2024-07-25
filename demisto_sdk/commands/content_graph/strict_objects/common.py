@@ -7,7 +7,7 @@ from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-marketplace_suffixes = [marketplace.value for marketplace in MarketplaceVersions]
+marketplace_suffixes = tuple((marketplace.value for marketplace in MarketplaceVersions))
 
 
 class BaseStrictModel(BaseModel, ABC):

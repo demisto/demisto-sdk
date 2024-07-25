@@ -62,8 +62,8 @@ def test_SchemaValidator_None_as_value(pack: Pack):
     assert len(results) == 1
     assert (
         results[0].message
-        == "problematic field: ('name',) | error message: none is not an allowed value |"
-        " error type : type_error.none.not_allowed"
+        == "problematic field: ('name',) | error message: None may not be None | error "
+        "type : assertion_error"
     )
 
 

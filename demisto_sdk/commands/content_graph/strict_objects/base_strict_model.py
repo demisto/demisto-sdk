@@ -97,6 +97,7 @@ class ScriptType(StrEnum):
 
 
 class StructureError(BaseStrictModel):
+    """ Used for wrapping Pydantic errors, not part of content."""
     field_name: Optional[tuple] = Field(None, alias="loc")
     error_message: Optional[str] = Field(None, alias="msg")
     error_type: Optional[str] = Field(None, alias="type")

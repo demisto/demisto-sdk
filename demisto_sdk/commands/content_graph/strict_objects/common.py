@@ -42,7 +42,7 @@ def create_dynamic_model(
     field_name: str,
     type_: Any,
     default: Any = ...,
-    suffixes: Sequence[str] = tuple(marketplace_suffixes),
+    suffixes: Sequence[str] = marketplace_suffixes,
     alias: Optional[str] = None,
     include_without_suffix: bool = False,
 ) -> BaseModel:

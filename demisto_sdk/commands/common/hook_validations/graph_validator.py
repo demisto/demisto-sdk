@@ -163,10 +163,10 @@ class GraphValidator(BaseValidator):
         is_valid = []
 
         # Returns warnings - for non supported versions
-        content_items_with_invalid_fromversion: List[
-            ContentItem
-        ] = self.graph.find_uses_paths_with_invalid_fromversion(
-            self.file_paths, for_supported_versions=False
+        content_items_with_invalid_fromversion: List[ContentItem] = (
+            self.graph.find_uses_paths_with_invalid_fromversion(
+                self.file_paths, for_supported_versions=False
+            )
         )
         for content_item in content_items_with_invalid_fromversion:
             is_valid.append(self.handle_invalid_fromversion(content_item, warning=True))
@@ -206,10 +206,10 @@ class GraphValidator(BaseValidator):
         is_valid = []
 
         # Returns warnings - for non supported versions
-        content_items_with_invalid_versions: List[
-            ContentItem
-        ] = self.graph.find_uses_paths_with_invalid_toversion(
-            self.file_paths, for_supported_versions=False
+        content_items_with_invalid_versions: List[ContentItem] = (
+            self.graph.find_uses_paths_with_invalid_toversion(
+                self.file_paths, for_supported_versions=False
+            )
         )
 
         for content_item in content_items_with_invalid_versions:
@@ -366,7 +366,10 @@ class GraphValidator(BaseValidator):
 
         if query_results:
             for script_name, file_path in query_results.items():
-                (error_message, error_code,) = Errors.duplicated_script_name(
+                (
+                    error_message,
+                    error_code,
+                ) = Errors.duplicated_script_name(
                     replace_incident_to_alert(script_name), script_name
                 )
                 if self.handle_error(

@@ -320,9 +320,9 @@ class TestTimeStampReplacer:
             - Ensure that the boundary will be replaced to 'fixed_boundary'
         """
         original_boundary = "original_boundary"
-        flow.request.headers[
-            "Content-Type"
-        ] = f"multipart/form-data; boundary={original_boundary}"
+        flow.request.headers["Content-Type"] = (
+            f"multipart/form-data; boundary={original_boundary}"
+        )
         flow.request.content = (
             f"--{original_boundary}\nContent-Disposision: form-data; "
             f'name="test"\n\nsomething\n--{original_boundary}--'.encode()
@@ -338,9 +338,7 @@ class TestTimeStampReplacer:
 
 def test_demisto_sdk_imports():
     code_file = Path(__file__).parent.parent / "timestamp_replacer.py"
-    assert (
-        code_file.exists()
-    ), "Do not move this file unless you understand where is this files used in the mock process."
+    assert code_file.exists(), "Do not move this file unless you understand where is this files used in the mock process."
     assert (
         "demisto_sdk" not in code_file.read_text()
     ), "This file should be a stand alone file and should be cleaned up from any demisto_sdk references."

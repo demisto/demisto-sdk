@@ -38,7 +38,6 @@ def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[
     new_command_outputs = {command.name: command for command in integration.commands}
 
     for command in sorted(old_command_outputs):
-
         if command in new_command_outputs:
             if diff := diff_outputs_context_path(
                 new_command_outputs[command], old_command_outputs[command]
@@ -73,7 +72,9 @@ class IsContextPathChangedValidator(BaseValidator[ContentTypes]):
         GitStatuses.MODIFIED,
     ]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

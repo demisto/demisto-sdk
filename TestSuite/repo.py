@@ -127,9 +127,9 @@ class Repo:
         integration.yml.update({"name": f"{name}_integration"})
         integration.yml.update({"display": f"{name}_integration"})
         integration_content = integration.yml.read_dict()
-        integration_content["script"]["commands"][0][
-            "name"
-        ] = f"command_{name}_integration"
+        integration_content["script"]["commands"][0]["name"] = (
+            f"command_{name}_integration"
+        )
         integration.yml.write_dict(integration_content)
 
         classifier = pack.create_classifier(f"{name}_classifier")

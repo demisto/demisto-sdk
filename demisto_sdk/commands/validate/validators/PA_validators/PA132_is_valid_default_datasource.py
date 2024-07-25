@@ -27,7 +27,9 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
     related_field = "defaultDataSource"
     is_auto_fixable = True
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -51,8 +53,10 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         # The fix applies when the defaultDataSource value is the display name instead of the id of the selected integration
-        data_sources: List[Dict[str, str]] = content_item.get_valid_data_source_integrations(  # type: ignore[assignment]
-            content_item.content_items, content_item.support, include_name=True
+        data_sources: List[Dict[str, str]] = (
+            content_item.get_valid_data_source_integrations(  # type: ignore[assignment]
+                content_item.content_items, content_item.support, include_name=True
+            )
         )
 
         default_data_source = [

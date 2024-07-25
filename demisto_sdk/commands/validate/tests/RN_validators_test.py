@@ -63,13 +63,15 @@ def test_release_note_filled_out_validator(
             - 1 pack without any release notes.
 
     When:
-    - Calling the IsReleaseNotesFilledOutValidator is_valid function.
+    - Calling the IsReleaseNotesFilledOutValidator obtain_invalid_content_items function.
 
     Then:
     - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
     """
 
-    results = IsReleaseNotesFilledOutValidator().is_valid(content_items)
+    results = IsReleaseNotesFilledOutValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [

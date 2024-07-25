@@ -329,7 +329,6 @@ def test_coverage_files(tmpdir, monkeypatch, dirs_list, files_set):
 
 
 class TestFixFilePath:
-
     data_test_fix_file_path = [
         ("HealthCheckAnalyzeLargeInvestigations", "the_python_file_path"),
     ]

@@ -88,7 +88,6 @@ class TextFile(File):
             raise FileWriteError(output_path, exc=e)
 
     def write_safe_unicode(self, data: Any, path: Path, **kwargs) -> None:
-
         if self.encoding != "utf-8":
             self._do_write(data, path=path, **kwargs)
         else:

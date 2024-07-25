@@ -313,7 +313,6 @@ FROM_AND_TO_VERSION_FOR_TEST = [
 def test_are_fromversion_and_toversion_in_correct_format(
     mocker, current_file, file_path, expected_result
 ):
-
     mocker.patch.object(StructureValidator, "__init__", lambda a, b: None)
     structure = StructureValidator(file_path)
     structure.is_valid = True

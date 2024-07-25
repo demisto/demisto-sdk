@@ -1,5 +1,4 @@
-from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -74,15 +73,6 @@ class _Important(BaseModel):
     context_path: str = Field(..., alias="contextPath")
     description: str
     related: Optional[str] = None
-    description_xsoar: Optional[str] = Field(None, alias="contextPath")
-    description_marketplacev2: Optional[str] = Field(
-        None, alias="description:marketplacev2"
-    )
-    description_xpanse: Optional[str] = Field(None, alias="description:xpanse")
-    description_xsoar_saas: Optional[str] = Field(None, alias="description:xsoar_saas")
-    description_xsoar_on_prem: Optional[str] = Field(
-        None, alias="description:xsoar_on_prem"
-    )
 
 
 Important = create_model(
@@ -97,6 +87,8 @@ class ScriptType(StrEnum):
 
 
 class StructureError(BaseStrictModel):
+    """Used for wrapping Pydantic errors, not part of content."""
+
     field_name: Optional[tuple] = Field(None, alias="loc")
     error_message: Optional[str] = Field(None, alias="msg")
     error_type: Optional[str] = Field(None, alias="type")
@@ -122,11 +114,7 @@ BaseIntegrationScript = create_model(
 )
 
 
-class Enum0123(Enum):
-    ZERO = 0
-    ONE = 1
-    TWO = 2
-    THREE = 3
+REPUTATION = Literal[tuple(range(4))]  # type:ignore[misc]
 
 
 class ExtractSettings(BaseStrictModel):
@@ -161,8 +149,8 @@ class _StrictGenericIncidentType(BaseStrictModel):
     pre_processing_script: Optional[str] = Field(None, alias="preProcessingScript")
     closure_script: Optional[str] = Field(None, alias="closureScript")
     disabled: Optional[bool] = None
-    reputation_calc: Optional[Enum0123] = Field(None, alias="reputationCalc")
-    on_change_rep_alg: Optional[Enum0123] = Field(None, alias="onChangeRepAlg")
+    reputation_calc: Optional[REPUTATION] = Field(None, alias="reputationCalc")  # type:ignore[valid-type]
+    on_change_rep_alg: Optional[REPUTATION] = Field(None, alias="onChangeRepAlg")  # type:ignore[valid-type]
     detached: Optional[bool] = None
     from_version: Optional[str] = Field(None, alias="fromVersion")
     to_version: Optional[str] = Field(None, alias="toVersion")
@@ -178,28 +166,3 @@ StrictGenericIncidentType = create_model(
         ID_DYNAMIC_MODEL,
     ),
 )
-
-
-class StrictBaseClassifier(BaseStrictModel):
-    feed: Optional[bool] = None
-    incident_samples: Optional[List[str]] = Field(None, alias="incidentSamples")
-    indicator_samples: Optional[List[str]] = Field(None, alias="indicatorSamples")
-    propagation_labels: Optional[Any] = Field(None, alias="propagationLabels")
-    is_default: Optional[bool] = Field(None, alias="isDefault")
-    sort_values: Optional[Any] = Field(None, alias="sortValues")
-    id_: str = Field(..., alias="id")
-    version: int
-    from_version: Optional[str] = Field(None, alias="fromVersion")
-    to_version: Optional[str] = Field(None, alias="toVersion")
-
-    modified: Optional[str] = None
-    default_incident_type: Optional[str] = Field(None, alias="defaultIncidentType")
-
-    # TODO - the filed 'mapping' does not exist in the classifier.yml Schema, but appears as a field in the classifier
-    #  files in our Content repository (exists in classifier_5_5_9.yml Schema)
-    mapping: Optional[dict] = None
-
-    unclassified_cases: Optional[dict] = Field(None, alias="unclassifiedCases")
-    transformer: Optional[dict] = None
-    key_type_map: Optional[dict] = Field(None, alias="keyTypeMap")
-    custom: Optional[bool] = None

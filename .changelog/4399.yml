@@ -1,4 +1,4 @@
 changes:
-- description: Added new validation ST110 for checking schema validness. (At the meantime, just for Integrations, Scripts, IncidentField and IndicatorField.
+- description: Added new validation ST110 for checking schema validness. For `Integration`, `Script`, `Incident Field`, `Indicator Field` and `Generic Type` objects.
   type: feature
 pr_number: 4399

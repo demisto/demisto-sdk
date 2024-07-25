@@ -1,5 +1,4 @@
-from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -115,11 +114,7 @@ BaseIntegrationScript = create_model(
 )
 
 
-class Enum0123(Enum):
-    ZERO = 0
-    ONE = 1
-    TWO = 2
-    THREE = 3
+REPUTATION = Literal[tuple(range(4))]  # type:ignore[misc]
 
 
 class ExtractSettings(BaseStrictModel):
@@ -154,8 +149,8 @@ class _StrictGenericIncidentType(BaseStrictModel):
     pre_processing_script: Optional[str] = Field(None, alias="preProcessingScript")
     closure_script: Optional[str] = Field(None, alias="closureScript")
     disabled: Optional[bool] = None
-    reputation_calc: Optional[Enum0123] = Field(None, alias="reputationCalc")
-    on_change_rep_alg: Optional[Enum0123] = Field(None, alias="onChangeRepAlg")
+    reputation_calc: Optional[REPUTATION] = Field(None, alias="reputationCalc")  # type:ignore[valid-type]
+    on_change_rep_alg: Optional[REPUTATION] = Field(None, alias="onChangeRepAlg")  # type:ignore[valid-type]
     detached: Optional[bool] = None
     from_version: Optional[str] = Field(None, alias="fromVersion")
     to_version: Optional[str] = Field(None, alias="toVersion")

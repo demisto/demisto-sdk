@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, Union
 
 import demisto_client
 from packaging.version import Version
@@ -75,17 +75,58 @@ class ContentItem(BaseContent):
     @property
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
+    
+    @validator("pack", always=True)
+    def validate_pack(cls, v: Any, values) -> Optional["Pack"]:
+        pack = cls.get_pack(values.get("pack"), values.get("relationships_data"), values.get("path"))
+        if v and not isinstance(v, fields.FieldInfo):
+            return v
+        return pack
+    
+    
+    @property
+    def in_pack(self) -> Optional["Pack"]:
+        """
+        This returns the Pack which the content item is in.
+
+        Returns:
+            Pack: Pack model.
+        """
+        if pack := ContentItem.get_pack(self.pack, self.relationships_data, self.path):
+            self.pack = pack
+        return pack  # type: ignore[return-value]
+
+
+    @staticmethod
+    def get_pack(
+        pack: Any,
+        relationships_data : dict,
+        path: Path,
+    ) -> Optional["Pack"]:
+        """
+        Returns the Pack which the content item is in.
+
+        Returns:
+            Pack: Pack model.
+        """
+        if not pack or isinstance(pack, fields.FieldInfo):
+            pack = None
+            if in_pack := relationships_data[RelationshipType.IN_PACK]:
+                pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if not pack:
+            if pack_name := get_pack_name(path):
+                pack = BaseContent.from_path(
+                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
+                )  # type: ignore[assignment]
+        return pack  # type: ignore[return-value]
+
 
     @validator("support", always=True)
-    def validate_support(cls, v:str, values) -> str:
-        if v:
-            return v
-        return (
-                values.get("in_pack").support
-                if values.get("in_pack") and values.get("in_pack").support
-                else ""
-            )
-
+    def validate_support(cls, v: str, values) -> str:
+        #pack = cls.get_pack(values.get("pack"), values.get("relationships_data"), values.get("path"))
+        return v or values.get("in_pack").support if values.get("in_pack") and values.get("in_pack").support else ""
+    
+    
     @property
     def ignored_errors(self) -> List[str]:
         if ignored_errors := self.get_ignored_errors(self.path.name):

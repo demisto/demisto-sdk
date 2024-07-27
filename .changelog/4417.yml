@@ -1,0 +1,4 @@
+changes:
+- description: Moved Tests/markteplace/Core_* and Approved_* files in content repo to be under Config folder.
+  type: internal
+pr_number: 4417

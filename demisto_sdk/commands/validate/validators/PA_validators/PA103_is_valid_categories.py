@@ -25,7 +25,9 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
     related_field = "categories"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         approved_list = get_current_categories()
         return [
             ValidationResult(
@@ -35,9 +37,10 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                len(content_item.categories) != 1  # type:ignore[arg-type]
+                len(content_item.categories) != 1
                 or not validate_categories_approved(
-                    content_item.pack_metadata_dict.get("categories", []), approved_list  # type: ignore[union-attr]
+                    content_item.pack_metadata_dict.get("categories", []),  # type: ignore[union-attr]
+                    approved_list,
                 )
             )
             and content_item.name != API_MODULES_PACK

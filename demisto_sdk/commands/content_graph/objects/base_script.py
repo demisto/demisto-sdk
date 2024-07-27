@@ -116,7 +116,6 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
                 marketplace == MarketplaceVersions.MarketplaceV2,
                 "incident" in self.name.lower(),
                 SKIP_PREPARE_SCRIPT_NAME not in self.skip_prepare,
-                not self.deprecated,
             )
         )
 

@@ -24,7 +24,9 @@ class IsNoneCommandArgsValidator(BaseValidator[ContentTypes]):
     fix_message = "Set an empty list value to the following commands arguments: {0}."
     invalid_commands: ClassVar[Dict[str, List[str]]] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

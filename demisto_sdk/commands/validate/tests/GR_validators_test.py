@@ -27,14 +27,14 @@ MP_XSOAR_AND_V2 = [
 ]
 
 
-def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
+def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_obtain_invalid_content_items(
     mocker, graph_repo: Repo
 ):
     """
     Given
         - 3 packs, and 2 of them are with the same name
     When
-        - running IsPackDisplayNameAlreadyExistsValidatorListFiles is_valid function, on one of the duplicate packs.
+        - running IsPackDisplayNameAlreadyExistsValidatorListFiles obtain_invalid_content_items function, on one of the duplicate packs.
     Then
         - Validate that we got the error messages for the duplicate name.
     """
@@ -56,22 +56,24 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_is_valid(
 
     BaseValidator.graph_interface = graph_repo.create_graph()
 
-    results = IsPackDisplayNameAlreadyExistsValidatorListFiles().is_valid(
-        [graph_repo.packs[0], graph_repo.packs[2]]
+    results = (
+        IsPackDisplayNameAlreadyExistsValidatorListFiles().obtain_invalid_content_items(
+            [graph_repo.packs[0], graph_repo.packs[2]]
+        )
     )
 
     assert len(results) == 1
     assert results[0].message == "Pack 'pack1' has a duplicate display_name as: pack2."
 
 
-def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(
+def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_obtain_invalid_content_items(
     mocker, graph_repo: Repo
 ):
     """
     Given
         - 3 packs, and 2 of them are with the same name
     When
-        - running IsPackDisplayNameAlreadyExistsValidatorAllFiles is_valid function.
+        - running IsPackDisplayNameAlreadyExistsValidatorAllFiles obtain_invalid_content_items function.
     Then
         - Validate that we got the error messages for the duplicate name.
     """
@@ -93,8 +95,10 @@ def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_is_valid(
 
     BaseValidator.graph_interface = graph_repo.create_graph()
 
-    results = IsPackDisplayNameAlreadyExistsValidatorAllFiles().is_valid(
-        [pack for pack in graph_repo.packs]
+    results = (
+        IsPackDisplayNameAlreadyExistsValidatorAllFiles().obtain_invalid_content_items(
+            [pack for pack in graph_repo.packs]
+        )
     )
 
     assert len(results) == 2
@@ -164,14 +168,14 @@ def prepared_graph_repo(graph_repo: Repo):
         ),
     ],
 )
-def test_MarketplacesFieldValidatorListFiles_is_valid(
+def test_MarketplacesFieldValidatorListFiles_obtain_invalid_content_items(
     prepared_graph_repo: Repo, pack_indices, expected_messages
 ):
     """
     Given
     - A content repo.
     When
-    - Running MarketplacesFieldValidatorListFiles is_valid() function on specific packs.
+    - Running MarketplacesFieldValidatorListFiles obtain_invalid_content_items() function on specific packs.
     Then
     - Validate the existence of invalid marketplaces usages.
     - Invalid content items shall be found, searched over specific packs, with expected error messages listed in
@@ -184,7 +188,9 @@ def test_MarketplacesFieldValidatorListFiles_is_valid(
     ]
 
     to_validate = pack_objects[pack_indices]
-    validation_results = MarketplacesFieldValidatorListFiles().is_valid(to_validate)
+    validation_results = (
+        MarketplacesFieldValidatorListFiles().obtain_invalid_content_items(to_validate)
+    )
     assert expected_messages == {result.message for result in validation_results}
 
 
@@ -196,14 +202,14 @@ def test_MarketplacesFieldValidatorListFiles_is_valid(
         slice(None, None),  # All packs.
     ],
 )
-def test_MarketplacesFieldValidatorAllFiles_is_valid(
+def test_MarketplacesFieldValidatorAllFiles_obtain_invalid_content_items(
     prepared_graph_repo: Repo, pack_indices
 ):
     """
     Given
     - A content repo.
     When
-    - Running MarketplacesFieldValidatorAllFiles is_valid() function with different pack slices.
+    - Running MarketplacesFieldValidatorAllFiles obtain_invalid_content_items() function with different pack slices.
     Then
     - Validate the validator ignores the provided specific packs and validates all content items in the content graph.
     - Validate the existence of invalid marketplaces usages.
@@ -225,5 +231,7 @@ def test_MarketplacesFieldValidatorAllFiles_is_valid(
     ]
 
     to_validate = pack_objects[pack_indices]
-    validation_results = MarketplacesFieldValidatorAllFiles().is_valid(to_validate)
+    validation_results = (
+        MarketplacesFieldValidatorAllFiles().obtain_invalid_content_items(to_validate)
+    )
     assert expected_messages == {result.message for result in validation_results}

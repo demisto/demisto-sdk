@@ -205,12 +205,6 @@ def get_mocked_build_context(
         "demisto_sdk.commands.test_content.TestContentClasses.ENV_RESULTS_PATH",
         str(env_results_path),
     )
-    filtered_tests_path = tmp_file / "filtered_tests_path"
-    filtered_tests_path.write_text("\n".join([]))
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.FILTER_CONF",
-        str(filtered_tests_path),
-    )
 
     machine_assignment_path = tmp_file / "packs_to_install_by_machine.json"
     machine_assignment_path.write_text(

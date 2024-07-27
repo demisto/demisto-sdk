@@ -265,9 +265,7 @@ class Uploader:
             NotIndivitudallyUploadedException (see exception class)
             NotUploadableException
         """
-        content_item: Union[ContentItem, Pack] = BaseContent.from_path(
-            path
-        )  # type:ignore[assignment]
+        content_item: Union[ContentItem, Pack] = BaseContent.from_path(path)  # type:ignore[assignment]
         if content_item is None:
             reason = (
                 "Deprecated type - use LayoutContainer instead"
@@ -324,11 +322,9 @@ class Uploader:
             for failure in e.upload_failures:
                 failure_str = failure.additional_info or str(failure)
 
-                _failed_content_item: Union[
-                    Pack, ContentItem, None
-                ] = BaseContent.from_path(
-                    failure.path
-                )  # type:ignore[assignment]
+                _failed_content_item: Union[Pack, ContentItem, None] = (
+                    BaseContent.from_path(failure.path)  # type:ignore[assignment]
+                )
 
                 if _failed_content_item is None:
                     self.failed_parsing.append((failure.path, failure_str))

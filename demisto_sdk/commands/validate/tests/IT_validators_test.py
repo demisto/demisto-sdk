@@ -13,12 +13,12 @@ from demisto_sdk.commands.validate.validators.IT_validators.IT103_is_auto_extrac
 )
 
 
-def test_IncidentTypeIncludesIntFieldValidator_is_valid():
+def test_IncidentTypeIncludesIntFieldValidator_obtain_invalid_content_items():
     """
     Given:
         - Incident Type content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
           when all required fields has positive int values.
@@ -28,12 +28,16 @@ def test_IncidentTypeIncludesIntFieldValidator_is_valid():
     incident_type = create_incident_type_object()
 
     # valid
-    assert not IncidentTypeIncludesIntFieldValidator().is_valid([incident_type])
+    assert not IncidentTypeIncludesIntFieldValidator().obtain_invalid_content_items(
+        [incident_type]
+    )
 
     # not valid
     incident_type.data_dict["days"] = None
     incident_type.data_dict["daysR"] = "day"
-    results = IncidentTypeIncludesIntFieldValidator().is_valid([incident_type])
+    results = IncidentTypeIncludesIntFieldValidator().obtain_invalid_content_items(
+        [incident_type]
+    )
     assert (
         results[0].message
         == "The 'days, daysR' fields need to be included with a positive integer."
@@ -41,12 +45,12 @@ def test_IncidentTypeIncludesIntFieldValidator_is_valid():
     )
 
 
-def test_IncidentTypValidPlaybookIdValidator_is_valid():
+def test_IncidentTypValidPlaybookIdValidator_obtain_invalid_content_items():
     """
     Given:
         - Incident Tyupe content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that the ValidationResult returned
           for the GenericField whose 'group' field is not valid
@@ -54,23 +58,27 @@ def test_IncidentTypValidPlaybookIdValidator_is_valid():
     """
     # valid
     incident_type = create_incident_type_object()
-    assert not IncidentTypValidPlaybookIdValidator().is_valid([incident_type])
+    assert not IncidentTypValidPlaybookIdValidator().obtain_invalid_content_items(
+        [incident_type]
+    )
 
     # not valid
     incident_type.playbook = "abbababb-aaaa-bbbb-cccc-abcdabcdabcd"
-    results = IncidentTypValidPlaybookIdValidator().is_valid([incident_type])
+    results = IncidentTypValidPlaybookIdValidator().obtain_invalid_content_items(
+        [incident_type]
+    )
     assert (
         results[0].message
         == "The 'playbookId' field is not valid - please enter a non-UUID playbook ID."
     )
 
 
-def test_IncidentTypeValidAutoExtractFieldsValidator_is_valid():
+def test_IncidentTypeValidAutoExtractFieldsValidator_obtain_invalid_content_items():
     """
     Given:
         - Incident Type content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
           when all required fields has positive int values.
@@ -80,7 +88,11 @@ def test_IncidentTypeValidAutoExtractFieldsValidator_is_valid():
     incident_type = create_incident_type_object()
 
     # valid
-    assert not IncidentTypeValidAutoExtractFieldsValidator().is_valid([incident_type])
+    assert (
+        not IncidentTypeValidAutoExtractFieldsValidator().obtain_invalid_content_items(
+            [incident_type]
+        )
+    )
 
     # not valid
     incident_type.extract_settings = {
@@ -92,15 +104,17 @@ def test_IncidentTypeValidAutoExtractFieldsValidator_is_valid():
             }
         }
     }
-    assert IncidentTypeValidAutoExtractFieldsValidator().is_valid([incident_type])
+    assert IncidentTypeValidAutoExtractFieldsValidator().obtain_invalid_content_items(
+        [incident_type]
+    )
 
 
-def test_IncidentTypeValidAutoExtractModeValidator_is_valid():
+def test_IncidentTypeValidAutoExtractModeValidator_obtain_invalid_content_items():
     """
     Given:
         - Incident Type content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
           when all required fields has positive int values.
@@ -110,8 +124,12 @@ def test_IncidentTypeValidAutoExtractModeValidator_is_valid():
     incident_type = create_incident_type_object()
 
     # valid
-    assert not IncidentTypeValidAutoExtractModeValidator().is_valid([incident_type])
+    assert not IncidentTypeValidAutoExtractModeValidator().obtain_invalid_content_items(
+        [incident_type]
+    )
 
     # not valid
     incident_type.extract_settings = {"mode": "foo"}
-    assert IncidentTypeValidAutoExtractModeValidator().is_valid([incident_type])
+    assert IncidentTypeValidAutoExtractModeValidator().obtain_invalid_content_items(
+        [incident_type]
+    )

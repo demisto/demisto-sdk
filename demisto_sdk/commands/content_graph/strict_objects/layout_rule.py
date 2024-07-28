@@ -39,7 +39,7 @@ class _StrictLayoutRule(BaseStrictModel):
     rule_id: str
     rule_name: str
     layout_id: str
-    from_version: str = Field(..., alias="fromVersion")
+    from_version: str = Field(alias="fromVersion") # not using the base because it's required
     description: Optional[str] = None
     alerts_filter: Optional[AlertsFilter] = None
 

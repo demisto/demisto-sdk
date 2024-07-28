@@ -4931,95 +4931,95 @@ def test_IsValidFetchValidator_obtain_invalid_content_items(
     )
 
 
-# @pytest.mark.parametrize(
-#     "content_items, expected_number_of_failures, expected_msgs",
-#     [
-#         (
-#             [
-#                 # create_integration_object(pack_info={"support": XSOAR_SUPPORT}),
-#                 # create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
-#                 # create_integration_object(pack_info={"support": DEVELOPER_SUPPORT}),
-#                 # create_integration_object(pack_info={"support": COMMUNITY_SUPPORT}),
-#                 create_integration_object(
-#                     paths=["configuration"],
-#                     values=[
-#                         [
-#                             {
-#                                 "name": "insecure",
-#                                 "type": 8,
-#                                 "required": False,
-#                                 "display": "Trust any certificate (not secure)",
-#                                 "fromlicense": "encrypted",
-#                             }
-#                         ]
-#                     ],
-#                     pack_info={"support": XSOAR_SUPPORT},
-#                 ),
-#             ],
-#             0,
-#             [],
-#         ),
-#         # (
-#         #     [
-#         #         create_integration_object(
-#         #             paths=["configuration"],
-#         #             values=[
-#         #                 [
-#         #                     {
-#         #                         "name": "test_1",
-#         #                         "type": 8,
-#         #                         "required": False,
-#         #                         "display": "Trust any certificate (not secure)",
-#         #                         "fromlicense": "encrypted",
-#         #                     }
-#         #                 ]
-#         #             ],
-#         #             pack_info={"support": PARTNER_SUPPORT},
-#         #         ),
-#         #         create_integration_object(
-#         #             paths=["configuration"],
-#         #             values=[
-#         #                 [
-#         #                     {
-#         #                         "name": "test_2",
-#         #                         "type": 8,
-#         #                         "required": False,
-#         #                         "display": "Trust any certificate (not secure)",
-#         #                         "fromlicense": "encrypted",
-#         #                     }
-#         #                 ]
-#         #             ],
-#         #             pack_info={"support": DEVELOPER_SUPPORT},
-#         #         ),
-#         #         create_integration_object(
-#         #             paths=["configuration"],
-#         #             values=[
-#         #                 [
-#         #                     {
-#         #                         "name": "test_3",
-#         #                         "type": 8,
-#         #                         "required": False,
-#         #                         "display": "Trust any certificate (not secure)",
-#         #                         "fromlicense": "encrypted",
-#         #                     }
-#         #                 ]
-#         #             ],
-#         #             pack_info={"support": COMMUNITY_SUPPORT},
-#         #         ),
-#         #     ],
-#         #     3,
-#         #     [
-#         #         'The following parameters contain the "fromlicense" field: test_1. The field is not allowed for contributors, please remove it.',
-#         #         'The following parameters contain the "fromlicense" field: test_2. The field is not allowed for contributors, please remove it.',
-#         #         'The following parameters contain the "fromlicense" field: test_3. The field is not allowed for contributors, please remove it.',
-#         #     ],
-#         # ),
-#     ],
-# )
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(pack_info={"support": XSOAR_SUPPORT}),
+                create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
+                create_integration_object(pack_info={"support": DEVELOPER_SUPPORT}),
+                create_integration_object(pack_info={"support": COMMUNITY_SUPPORT}),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "insecure",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                                "fromlicense": "encrypted",
+                            }
+                        ]
+                    ],
+                    pack_info={"support": XSOAR_SUPPORT},
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                                "fromlicense": "encrypted",
+                            }
+                        ]
+                    ],
+                    pack_info={"support": PARTNER_SUPPORT},
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_2",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                                "fromlicense": "encrypted",
+                            }
+                        ]
+                    ],
+                    pack_info={"support": DEVELOPER_SUPPORT},
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_3",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                                "fromlicense": "encrypted",
+                            }
+                        ]
+                    ],
+                    pack_info={"support": COMMUNITY_SUPPORT},
+                ),
+            ],
+            3,
+            [
+                'The following parameters contain the "fromlicense" field: test_1. The field is not allowed for contributors, please remove it.',
+                'The following parameters contain the "fromlicense" field: test_2. The field is not allowed for contributors, please remove it.',
+                'The following parameters contain the "fromlicense" field: test_3. The field is not allowed for contributors, please remove it.',
+            ],
+        ),
+    ],
+)
 def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items(
-    #content_items: List[Integration],
-    expected_number_of_failures: int = 0,
-    expected_msgs: List[str] = "",
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -5042,14 +5042,9 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items(
         - Case 2: Should fail all.
     """
     with ChangeCWD(REPO.path):
-        test= create_integration_object(
-                    paths=["support"],
-                    values=["test"],
-                    pack_info={"support": "test_2"},
-                )
         results = (
             IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
-                [test]
+                content_items
             )
         )
     assert len(results) == expected_number_of_failures

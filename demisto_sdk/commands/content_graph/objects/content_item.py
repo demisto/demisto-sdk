@@ -124,7 +124,7 @@ class ContentItem(BaseContent):
     @validator("support", always=True)
     def validate_support(cls, v: str, values) -> str:
         #pack = cls.get_pack(values.get("pack"), values.get("relationships_data"), values.get("path"))
-        return v or values.get("in_pack").support if values.get("in_pack") and values.get("in_pack").support else ""
+        return v or values.get("pack").support if values.get("pack") and values.get("pack").support else ""
 
 
     @property

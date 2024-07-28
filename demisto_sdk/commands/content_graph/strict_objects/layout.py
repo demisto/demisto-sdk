@@ -1,7 +1,8 @@
-from typing import Any, Optional, Sequence
+from typing import Any, List, Optional
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
@@ -11,13 +12,26 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 )
 
 
+class ArgFilterSchema(BaseStrictModel):
+    operator: str
+    ignore_case: Optional[bool] = Field(None, alias="ignorecase")
+    left: dict = Field(..., example={"value": Any, "isContext": bool})
+    right: Optional[dict] = Field(None, example={"value": Any, "isContext": bool})
+    type_: Optional[str] = Field(None, alias="type")
+
+
+class ArgFiltersSchema(BaseStrictModel):
+    __root__: List[ArgFilterSchema]
+
+
 class _FieldSchema(BaseStrictModel):
     id: Optional[str] = None
-    version: Optional[int] = None
+    version: Optional[float] = None
     modified: Optional[str] = None
     field_id: Optional[str] = Field(None, alias="fieldId")
     is_visible: Optional[bool] = Field(None, alias="isVisible")
     sort_values: Optional[str] = Field(None, alias="sortValues")
+    filters: Optional[List[ArgFiltersSchema]] = None
 
 
 FieldSchema = create_model(
@@ -25,65 +39,76 @@ FieldSchema = create_model(
 )
 
 
-class _Section(BaseStrictModel):
+class _SectionSchema(BaseStrictModel):
     id: Optional[str] = None
-    version: Optional[int] = None
+    version: Optional[float] = None
     modified: Optional[str] = None
     name: Optional[str] = None
-    type_: Optional[str] = Field(None, alias="type")
+    type: Optional[str] = None
     is_visible: Optional[bool] = Field(None, alias="isVisible")
     read_only: Optional[bool] = Field(None, alias="readOnly")
     description: Optional[str] = None
     query: Optional[Any] = None
-    query_type: Optional[Any] = Field(None, alias="queryType")
+    query_type: Optional[str] = Field(None, alias="queryType")
     sort_values: Optional[str] = Field(None, alias="sortValues")
-    fields: Optional[Sequence[FieldSchema]] = None  # type:ignore[valid-type]
+    fields: Optional[List[FieldSchema]] = None  # type:ignore[valid-type]
 
 
-Section = create_model(
-    model_name="Section",
+SectionSchema = create_model(
+    model_name="SectionSchema",
     base_models=(
-        _Section,
-        NAME_DYNAMIC_MODEL,
-        DESCRIPTION_DYNAMIC_MODEL,
+        _SectionSchema,
         ID_DYNAMIC_MODEL,
+        DESCRIPTION_DYNAMIC_MODEL,
+        NAME_DYNAMIC_MODEL,
     ),
 )
 
 
-class _Layout(BaseStrictModel):
-    id_: str = Field(..., alias="id")
-    system: Optional[bool] = None
-    type_name: Optional[str] = Field(None, alias="TypeName")
-    version: Optional[int] = None
-    kind: Optional[str] = None
-    type_id: str = Field(..., alias="typeId")
-    modified: Optional[str] = None
-    name: Optional[str] = None
-    tabs: Optional[Any] = None
-    sections: Optional[Sequence[Section]] = None  # type:ignore[valid-type]
+class TabsSchema(BaseStrictModel):
+    __root__: Any  # Assuming tabs can be any type
 
 
-Layout = create_model(
-    model_name="Layout", base_models=(_Layout, NAME_DYNAMIC_MODEL, ID_DYNAMIC_MODEL)
-)
+class MappingSchema(BaseStrictModel):
+    tabs: Optional[List[TabsSchema]] = None
+    sections: Optional[List[SectionSchema]] = None  # type:ignore[valid-type]
 
 
 class _StrictLayout(BaseStrictModel):
-    type_id: str = Field(..., alias="typeId")
-    type_name: Optional[str] = Field(None, alias="TypeName")
-    version: Optional[int] = None
-    kind: str
-    from_version: Optional[str] = Field(None, alias="fromVersion")
-    to_version: str = Field(..., alias="toVersion")
-    system: Optional[bool] = None
-    description: Optional[str] = None
-    id_: Optional[str] = Field(None, alias="id")
-    layout: Optional[Layout] = None  # type:ignore[valid-type]
+    """
+    This is the layout-container item in Content repo.
+    Since there are no layouts in Content, StrictLayout is for layout-container same like the graph.
+    """
+    id: str
+    group: str = Field(..., enum=["incident", "indicator", "case"])
     definition_id: Optional[str] = Field(None, alias="definitionId")
+    version: float
+    name: str
+    from_version: str = Field(..., alias="fromVersion")
+    to_version: Optional[str] = Field(None, alias="toVersion")
+    description: Optional[str] = None
+    system: Optional[bool] = None
+    marketplaces: Optional[List[str]] = Field(
+        None, enum=[market_place.value for market_place in MarketplaceVersions]
+    )
+    edit: Optional[MappingSchema] = None
+    indicators_details: Optional[MappingSchema] = Field(None, alias="indicatorsDetails")
+    indicators_quick_view: Optional[MappingSchema] = Field(
+        None, alias="indicatorsQuickView"
+    )
+    quick_view: Optional[MappingSchema] = Field(None, alias="quickView")
+    close: Optional[MappingSchema] = None
+    details: Optional[MappingSchema] = None
+    details_v2: Optional[MappingSchema] = Field(None, alias="detailsV2")
+    mobile: Optional[MappingSchema] = None
 
 
 StrictLayout = create_model(
     model_name="StrictLayout",
-    base_models=(_StrictLayout, DESCRIPTION_DYNAMIC_MODEL, ID_DYNAMIC_MODEL),
+    base_models=(
+        _StrictLayout,
+        DESCRIPTION_DYNAMIC_MODEL,
+        NAME_DYNAMIC_MODEL,
+        ID_DYNAMIC_MODEL,
+    ),
 )

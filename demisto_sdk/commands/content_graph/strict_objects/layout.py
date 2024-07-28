@@ -79,6 +79,7 @@ class _StrictLayout(BaseStrictModel):
     This is the layout-container item in Content repo.
     Since there are no layouts in Content, StrictLayout is for layout-container same like the graph.
     """
+
     id: str
     group: str = Field(..., enum=["incident", "indicator", "case"])
     definition_id: Optional[str] = Field(None, alias="definitionId")

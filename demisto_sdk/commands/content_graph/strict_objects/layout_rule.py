@@ -8,6 +8,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     create_model,
 )
 
+SCHEMAS = Union["FilterSchema", "OrSchema", "AndSchema"]
 
 class FilterSchema(BaseStrictModel):
     SEARCH_FIELD: str
@@ -16,11 +17,11 @@ class FilterSchema(BaseStrictModel):
 
 
 class AndSchema(BaseStrictModel):
-    AND: Optional[List[Union["FilterSchema", "OrSchema", "AndSchema"]]] = None
+    AND: Optional[List[SCHEMAS]] = None
 
 
 class OrSchema(BaseStrictModel):
-    OR: Optional[List[Union["FilterSchema", "OrSchema", "AndSchema"]]] = None
+    OR: Optional[List[SCHEMAS]] = None
 
 
 # Forward references to resolve circular dependencies

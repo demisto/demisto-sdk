@@ -22,11 +22,6 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 )
 
 
-class IdAndVersion(BaseStrictModel):
-    id_: str = Field(..., alias="id")
-    version: int
-
-
 class _CommonFields(BaseStrictModel):
     version: int
 
@@ -169,6 +164,8 @@ class _StrictGenericIncidentType(BaseStrictModel):
     detached: Optional[bool] = None
     layout: Optional[str] = None
     extract_settings: Optional[ExtractSettings] = Field(None, alias="extractSettings")
+    id_: str = Field(..., alias="id")
+    version: int
 
 
 StrictGenericIncidentType = create_model(
@@ -178,6 +175,5 @@ StrictGenericIncidentType = create_model(
         NAME_DYNAMIC_MODEL,
         ID_DYNAMIC_MODEL,
         BaseVersionJson,
-        IdAndVersion,
     ),
 )

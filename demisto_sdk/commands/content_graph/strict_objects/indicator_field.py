@@ -5,7 +5,6 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseVersionJson,
-    IdAndVersion,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
@@ -56,6 +55,8 @@ class _StrictIndicatorField(BaseStrictModel):
     to_server_version: Optional[str] = Field(None, alias="toServerVersion")
     open_ended: Optional[bool] = Field(None, alias="openEnded")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
+    id_: str = Field(..., alias="id")
+    version: int
 
 
 StrictIndicatorField = create_model(
@@ -67,6 +68,5 @@ StrictIndicatorField = create_model(
         DESCRIPTION_DYNAMIC_MODEL,
         ID_DYNAMIC_MODEL,
         BaseVersionJson,
-        IdAndVersion,
     ),
 )

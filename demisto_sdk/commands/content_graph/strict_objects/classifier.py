@@ -5,7 +5,6 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseVersionJson,
-    IdAndVersion,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
@@ -29,7 +28,6 @@ class _StrictClassifier(BaseStrictModel):
     transformer: Optional[dict] = None
     key_type_map: Optional[dict] = Field(None, alias="keyTypeMap")
     custom: Optional[bool] = None
-
     name: str
     type_: str = Field(..., alias="type")
     description: str
@@ -37,6 +35,8 @@ class _StrictClassifier(BaseStrictModel):
     marketplaces: Optional[List[MarketplaceVersions]] = Field(
         None, alias="marketplaces"
     )
+    id_: str = Field(..., alias="id")
+    version: int
 
 
 StrictClassifier = create_model(
@@ -47,6 +47,5 @@ StrictClassifier = create_model(
         ID_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
         BaseVersionJson,
-        IdAndVersion,
     ),
 )

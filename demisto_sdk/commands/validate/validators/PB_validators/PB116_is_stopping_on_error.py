@@ -34,7 +34,9 @@ class IsStoppingOnErrorValidator(BaseValidator[ContentTypes]):
         "causing following tasks to rely on its output and fail."
     )
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         results = []
         for content_item in content_items:
             if is_indicator_pb(content_item) and (

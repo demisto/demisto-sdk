@@ -209,10 +209,10 @@ class PackMetadataParser:
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         marketplaces = self._metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
-        marketplace_set: Set[
-            MarketplaceVersions
-        ] = BaseContentParser.update_marketplaces_set_with_xsoar_values(
-            {MarketplaceVersions(mp) for mp in marketplaces}
+        marketplace_set: Set[MarketplaceVersions] = (
+            BaseContentParser.update_marketplaces_set_with_xsoar_values(
+                {MarketplaceVersions(mp) for mp in marketplaces}
+            )
         )
         return sorted(list(marketplace_set))
 
@@ -348,7 +348,11 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def parse_ignored_errors(self, git_sha: Optional[str]):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {}) if not git_sha else {}  # type: ignore
+        self.ignored_errors_dict = (
+            dict(get_pack_ignore_content(self.path.name) or {})  # type:ignore[var-annotated]
+            if not git_sha
+            else {}
+        )
 
     def get_rn_info(self):
         self.latest_rn_version = get_pack_latest_rn_version(str(self.path))

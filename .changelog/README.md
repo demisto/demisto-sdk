@@ -5,7 +5,7 @@ To document your changes, adhere to the following steps:
 ### Init:
 - Commit and push your alterations to the remote branch.
 - Initiate a pull request.
-- Execute the command `sdk-changelog —-init -n <pr number>`.
+- Execute the command `sdk-changelog --init -n <pr number>`.
   - It will create `<pr number>.yml` file with the following starting template:
     ```
     changes:

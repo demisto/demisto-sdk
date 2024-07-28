@@ -286,7 +286,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
-
         shutil.copyfile(self.path / "README.md", path)
         if self.contributors:
             fixed_contributor_names = [
@@ -377,6 +376,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
+
+            try:
+                shutil.copytree(self.path / "doc_files", path / "doc_files")
+            except FileNotFoundError:
+                logger.debug(f'No such directory {self.path / "doc_files"}')
 
             if self.object_id == BASE_PACK:
                 self._copy_base_pack_docs(path, marketplace)
@@ -532,7 +536,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def _copy_base_pack_docs(
         self, destination_path: Path, marketplace: MarketplaceVersions
     ):
-
         documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = destination_path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
@@ -569,7 +572,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def save(self):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
-        super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
+        super()._save(
+            file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS
+        )  # type: ignore
 
     @cached_property
     def readme(self) -> ReadmeRelatedFile:

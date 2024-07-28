@@ -33,7 +33,7 @@ class YAMLContentItemParser(ContentItemParser):
             if not self.path.suffix == ".yml"
             else self.path
         )  # If git_sha is given then we know we're running on the old_content_object copy and we can assume that the file_path is either the actual item path or the path to the item's dir.
-
+        self.structure_errors = self.validate_structure()
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(
                 f"The content of {self.path} must be in a JSON dictionary format"
@@ -41,6 +41,10 @@ class YAMLContentItemParser(ContentItemParser):
 
         if self.should_skip_parsing():
             raise NotAContentItemException
+
+    @property
+    def raw_data(self) -> dict:
+        return self.yml_data
 
     @cached_property
     def field_mapping(self):

@@ -81,7 +81,9 @@ class BaseUpdate:
         )
         self.schema_path = path
         self.schema = self.get_schema()
-        self.extended_schema: dict = self.recursive_extend_schema(self.schema, self.schema)  # type: ignore
+        self.extended_schema: dict = self.recursive_extend_schema(
+            self.schema, self.schema
+        )  # type: ignore
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_answer = assume_answer

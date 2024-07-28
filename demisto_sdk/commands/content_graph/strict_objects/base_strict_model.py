@@ -22,6 +22,11 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 )
 
 
+class IdAndVersion(BaseStrictModel):
+    id_: str = Field(..., alias="id")
+    version: int
+
+
 class _CommonFields(BaseStrictModel):
     version: int
 
@@ -137,8 +142,6 @@ class ExtractSettings(BaseStrictModel):
 
 
 class _StrictGenericIncidentType(BaseStrictModel):
-    id_: str = Field(..., alias="id")
-    version: int
     vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     locked: Optional[bool] = None
@@ -164,8 +167,6 @@ class _StrictGenericIncidentType(BaseStrictModel):
     reputation_calc: Optional[REPUTATION] = Field(None, alias="reputationCalc")  # type:ignore[valid-type]
     on_change_rep_alg: Optional[REPUTATION] = Field(None, alias="onChangeRepAlg")  # type:ignore[valid-type]
     detached: Optional[bool] = None
-    # from_version: Optional[str] = Field(None, alias="fromVersion")
-    # to_version: Optional[str] = Field(None, alias="toVersion")
     layout: Optional[str] = None
     extract_settings: Optional[ExtractSettings] = Field(None, alias="extractSettings")
 
@@ -177,5 +178,6 @@ StrictGenericIncidentType = create_model(
         NAME_DYNAMIC_MODEL,
         ID_DYNAMIC_MODEL,
         BaseVersionJson,
+        IdAndVersion,
     ),
 )

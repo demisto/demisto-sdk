@@ -9,7 +9,7 @@
 * Moved IN147 validation to the new validate format as code BC114. The validation ensures no fields were removed/modified from the integration yml for a predefined list of fields. [#4449](https://github.com/demisto/demisto-sdk/pull/4449)
 * Moved PB124 validation to the new validate format, The validation ensures there're unhandled condition tasks in the playbook. [#4424](https://github.com/demisto/demisto-sdk/pull/4424)
 * Added support for different api key file structure in **test-content** command. [#4442](https://github.com/demisto/demisto-sdk/pull/4442)
-* Moved Tests/markteplace/Core_* and Approved_* files in content repo to be under Config folder. [#4417](https://github.com/demisto/demisto-sdk/pull/4417)
+* Moved Tests/markteplace/Core_* and Approved_* files in content repo under the *Config* folder. [#4417](https://github.com/demisto/demisto-sdk/pull/4417)
 
 ## 1.31.4
 * Removed DO106 - docker_not_on_the_latest_tag validation for the old validate. [#4429](https://github.com/demisto/demisto-sdk/pull/4429)

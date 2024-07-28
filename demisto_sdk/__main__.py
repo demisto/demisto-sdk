@@ -1,18 +1,13 @@
 # Site packages
 import platform
 import sys
-import warnings
 
 import click
-from cryptography.utils import CryptographyDeprecationWarning
 
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import xsoar_linter_manager
-
-with warnings.catch_warnings(action="ignore", category=CryptographyDeprecationWarning):
-    import paramiko
 
 try:
     import git

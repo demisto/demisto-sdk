@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
@@ -84,7 +85,7 @@ class _StrictLayoutsContainer(BaseStrictModel):
     description: Optional[str] = None
     system: Optional[bool] = None
     marketplaces: Optional[List[str]] = Field(
-        None, enum=["xsoar", "marketplacev2", "xpanse", "xsoar_saas", "xsoar_on_prem"]
+        None, enum=[market_place.value for market_place in MarketplaceVersions]
     )
     edit: Optional[MappingSchema] = None
     indicators_details: Optional[MappingSchema] = Field(None, alias="indicatorsDetails")

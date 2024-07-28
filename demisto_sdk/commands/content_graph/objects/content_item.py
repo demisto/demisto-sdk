@@ -82,8 +82,8 @@ class ContentItem(BaseContent):
         if v and not isinstance(v, fields.FieldInfo):
             return v
         return pack
-    
-    
+
+
     @property
     def in_pack(self) -> Optional["Pack"]:
         """
@@ -125,8 +125,8 @@ class ContentItem(BaseContent):
     def validate_support(cls, v: str, values) -> str:
         #pack = cls.get_pack(values.get("pack"), values.get("relationships_data"), values.get("path"))
         return v or values.get("in_pack").support if values.get("in_pack") and values.get("in_pack").support else ""
-    
-    
+
+
     @property
     def ignored_errors(self) -> List[str]:
         if ignored_errors := self.get_ignored_errors(self.path.name):

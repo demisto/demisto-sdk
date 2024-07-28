@@ -6,7 +6,7 @@
 * Fixed an issue in the **download** command where a 'missing content' error was shown on playbook-type tasks of an uploaded playbook that was initially downloaded using this command. [#4445](https://github.com/demisto/demisto-sdk/pull/4445)
 * Replaced project formatter from *Black* to *ruff-format* and removed the *Black* dev-dependency. [#4435](https://github.com/demisto/demisto-sdk/pull/4435)
 * Modified the new validate **is_valid** method name to **obtain_invalid_content_items**. [#4448](https://github.com/demisto/demisto-sdk/pull/4448)
-* Moved IN147 validation to the new validate format as code BC114. The validation ensures no fields were removed/modified from the integration yml for a predefined list of fields.. [#4449](https://github.com/demisto/demisto-sdk/pull/4449)
+* Moved IN147 validation to the new validate format as code BC114. The validation ensures no fields were removed/modified from the integration yml for a predefined list of fields. [#4449](https://github.com/demisto/demisto-sdk/pull/4449)
 * Moved PB124 validation to the new validate format, The validation ensures there're unhandled condition tasks in the playbook. [#4424](https://github.com/demisto/demisto-sdk/pull/4424)
 * Added support for different api key file structure in **test-content** command. [#4442](https://github.com/demisto/demisto-sdk/pull/4442)
 * Moved Tests/markteplace/Core_* and Approved_* files in content repo to be under Config folder. [#4417](https://github.com/demisto/demisto-sdk/pull/4417)

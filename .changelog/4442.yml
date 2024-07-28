@@ -1,0 +1,4 @@
+changes:
+- description: Add support in the `test-content` command for different api key file structure.
+  type: internal
+pr_number: 4442

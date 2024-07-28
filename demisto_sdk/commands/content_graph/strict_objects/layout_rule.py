@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 
 SCHEMAS = Union["FilterSchema", "OrSchema", "AndSchema"]
 
+
 class FilterSchema(BaseStrictModel):
     SEARCH_FIELD: str
     SEARCH_TYPE: str

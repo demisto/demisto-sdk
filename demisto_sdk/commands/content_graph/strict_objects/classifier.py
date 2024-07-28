@@ -3,6 +3,9 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseVersionJson,
+)
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
@@ -21,8 +24,8 @@ class _StrictClassifier(BaseStrictModel):
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     id_: str = Field(..., alias="id")
     version: int
-    from_version: Optional[str] = Field(None, alias="fromVersion")
-    to_version: Optional[str] = Field(None, alias="toVersion")
+    # from_version: Optional[str] = Field(None, alias="fromVersion")
+    # to_version: Optional[str] = Field(None, alias="toVersion")
     modified: Optional[str] = None
     default_incident_type: Optional[str] = Field(None, alias="defaultIncidentType")
     unclassified_cases: Optional[dict] = Field(None, alias="unclassifiedCases")
@@ -46,5 +49,6 @@ StrictClassifier = create_model(
         NAME_DYNAMIC_MODEL,
         ID_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
+        BaseVersionJson,
     ),
 )

@@ -602,10 +602,6 @@ def pre_commit_manager(
         pre_commit_template_path=pre_commit_template_path,
     )
 
-    logger.info(  # DELETE
-        f"\n[cyan]{pre_commit_context=}"
-    )
-
     return PreCommitRunner.prepare_and_run(
         pre_commit_context,
         verbose,

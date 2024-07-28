@@ -1,4 +1,4 @@
 changes:
-- description: Added Classifier and Layout to ST110 validation.
+- description: Added Classifier, Layouts-Container and Layout-rule to the `ST110` validation.
   type: feature
 pr_number: 4447

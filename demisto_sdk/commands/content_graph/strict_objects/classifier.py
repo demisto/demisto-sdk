@@ -25,11 +25,6 @@ class _StrictClassifier(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toVersion")
     modified: Optional[str] = None
     default_incident_type: Optional[str] = Field(None, alias="defaultIncidentType")
-
-    # TODO - the filed 'mapping' does not exist in the classifier.yml Schema, but appears as a field in the classifier
-    #  files in our Content repository
-    mapping: Optional[dict] = None
-
     unclassified_cases: Optional[dict] = Field(None, alias="unclassifiedCases")
     transformer: Optional[dict] = None
     key_type_map: Optional[dict] = Field(None, alias="keyTypeMap")

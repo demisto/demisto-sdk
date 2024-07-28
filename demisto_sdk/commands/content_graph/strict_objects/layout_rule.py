@@ -1,5 +1,7 @@
 from typing import List, Optional, Union
 
+from pydantic import Field
+
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     BaseStrictModel,
@@ -35,7 +37,7 @@ class _StrictLayoutRule(BaseStrictModel):
     rule_id: str
     rule_name: str
     layout_id: str
-    fromVersion: str
+    from_version: str = Field(..., alias="fromVersion")
     description: Optional[str] = None
     alerts_filter: Optional[AlertsFilter] = None
 

@@ -1972,11 +1972,11 @@ MarketplaceVersionToMarketplaceName = {
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
-    MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_ON_PREM: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
-    MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
+    MarketplaceVersions.XSOAR: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_SAAS: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
+    MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
+    MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
 }
 
 
@@ -2075,7 +2075,9 @@ class ParameterType(Enum):
     DAY_DROPDOWN = 21
 
 
-class IncidentFieldType:  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
+class IncidentFieldType(
+    StrEnum
+):  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
     SHORT_TEXT = "shortText"
     LONG_TEXT = "longText"
     NUMBER = "number"

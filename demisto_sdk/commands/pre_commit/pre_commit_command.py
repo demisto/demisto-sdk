@@ -557,9 +557,7 @@ def pre_commit_manager(
     if not language_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return 0
-    logger.info(  # DELETE
-        f"\n[cyan]{language_to_files_with_objects=}"
-    )
+
     skipped_hooks: set = SKIPPED_HOOKS
     skipped_hooks.update(set(skip_hooks or ()))
     if validate and "validate" in skipped_hooks:

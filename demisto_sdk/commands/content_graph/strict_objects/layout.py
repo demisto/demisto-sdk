@@ -89,9 +89,7 @@ class _StrictLayout(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toVersion")
     description: Optional[str] = None
     system: Optional[bool] = None
-    marketplaces: Optional[List[str]] = Field(
-        None, enum=[market_place.value for market_place in MarketplaceVersions]
-    )
+    marketplaces: Optional[List[MarketplaceVersions]] = None
     edit: Optional[MappingSchema] = None
     indicators_details: Optional[MappingSchema] = Field(None, alias="indicatorsDetails")
     indicators_quick_view: Optional[MappingSchema] = Field(

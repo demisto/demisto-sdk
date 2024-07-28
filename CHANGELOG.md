@@ -1,6 +1,6 @@
 # Changelog
 ## 1.31.5
-* Added new validation ST110 for checking schema validness. For `Integration`, `Script`, `Incident Field`, `Indicator Field` and `Generic Type` objects. [#4399](https://github.com/demisto/demisto-sdk/pull/4399)
+* Added new validation ST110. Checks schema validness for *Integration*, *Script*, *Incident Field*, *Indicator Field* and *Generic Type* objects. [#4399](https://github.com/demisto/demisto-sdk/pull/4399)
 * Added support for pack doc_files upload. [#4438](https://github.com/demisto/demisto-sdk/pull/4438)
 * Fixed an issue in BA124 validation where the validation wasn't case sensitive. [#4450](https://github.com/demisto/demisto-sdk/pull/4450)
 * Fixed an issue in the **download** command where a 'missing content' error was shown on playbook-type tasks of an uploaded playbook that was initially downloaded using this command. [#4445](https://github.com/demisto/demisto-sdk/pull/4445)

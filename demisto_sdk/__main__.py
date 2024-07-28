@@ -1,13 +1,18 @@
 # Site packages
 import platform
 import sys
+import warnings
 
 import click
+from cryptography.utils import CryptographyDeprecationWarning
 
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import xsoar_linter_manager
+
+with warnings.catch_warnings(action="ignore", category=CryptographyDeprecationWarning):
+    import paramiko
 
 try:
     import git
@@ -941,7 +946,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             exit_code += validator_v2.run_validations()
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
-        logger.info(f"[red]{e}[/red]")
+        logger.error(f"[red]{type(e)}: {e}[/red]")
         logger.info(
             "\n[red]You may not be running `demisto-sdk validate` command in the content directory.\n"
             "Please run the command from content directory[red]"

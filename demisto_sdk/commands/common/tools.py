@@ -2990,7 +2990,7 @@ def get_approved_usecases() -> list:
         List of approved usecases
     """
     return get_remote_file(
-        "Tests/Marketplace/approved_usecases.json",
+        "Config/approved_usecases.json",
         git_content_config=GitContentConfig(
             repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         ),
@@ -3112,9 +3112,7 @@ def get_current_usecases() -> list:
         List of approved usecases from current branch
     """
     if not is_external_repository():
-        approved_usecases_json, _ = get_dict_from_file(
-            "Tests/Marketplace/approved_usecases.json"
-        )
+        approved_usecases_json, _ = get_dict_from_file("Config/approved_usecases.json")
         return approved_usecases_json.get("approved_list", [])
     return []
 
@@ -3126,9 +3124,7 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
         Dict of approved tags from current branch
     """
     if not is_external_repository():
-        approved_tags_json, _ = get_dict_from_file(
-            "Tests/Marketplace/approved_tags.json"
-        )
+        approved_tags_json, _ = get_dict_from_file("Config/approved_tags.json")
         if isinstance(approved_tags_json.get("approved_list"), list):
             logger.info(
                 "[yellow]You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
@@ -3155,15 +3151,13 @@ def get_current_categories() -> list:
         return []
     try:
         approved_categories_json, _ = get_dict_from_file(
-            "Tests/Marketplace/approved_categories.json"
+            "Config/approved_categories.json"
         )
     except FileNotFoundError:
         logger.warning(
             "File approved_categories.json was not found. Getting from remote."
         )
-        approved_categories_json = get_remote_file(
-            "Tests/Marketplace/approved_categories.json"
-        )
+        approved_categories_json = get_remote_file("Config/approved_categories.json")
     return approved_categories_json.get("approved_list", [])
 
 

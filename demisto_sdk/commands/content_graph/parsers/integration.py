@@ -9,6 +9,9 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.integration import (
+    StrictIntegration,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -50,6 +53,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_tests()
+
+    @property
+    def strict_object(self):
+        return StrictIntegration
 
     @cached_property
     def field_mapping(self):

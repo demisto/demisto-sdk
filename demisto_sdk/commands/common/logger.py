@@ -354,6 +354,14 @@ class NoColorFileFormatter(logging.Formatter):
         return message
 
 
+def get_logging_color_formatter() -> logging.Formatter:
+    return (
+        ColorConsoleFormatter()
+        if not environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS)
+        else NoColorFileFormatter()
+    )
+
+
 def logging_setup(
     console_log_threshold: Union[int, str] = logging.INFO,
     file_log_threshold: Union[int, str] = logging.DEBUG,
@@ -381,12 +389,7 @@ def logging_setup(
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(console_log_threshold or logging.INFO)
-
-    if environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS):
-        console_handler.setFormatter(fmt=NoColorFileFormatter())
-    else:
-        console_handler.setFormatter(fmt=ColorConsoleFormatter())
-
+    console_handler.setFormatter(fmt=get_logging_color_formatter())
     log_handlers: List[logging.Handler] = [console_handler]
 
     # We set up the console handler separately before the file logger is ready, so that we can display log messages

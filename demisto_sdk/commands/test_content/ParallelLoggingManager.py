@@ -7,7 +7,7 @@ from queue import Queue
 from threading import Lock, current_thread
 from typing import Any, Dict, Set
 
-from commands.common.logger import get_logging_color_formatter
+from demisto_sdk.commands.common.logger import get_logging_color_formatter
 
 ARTIFACTS_PATH = os.environ.get("ARTIFACTS_FOLDER", ".")
 LOGGING_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s"

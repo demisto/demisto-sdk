@@ -49,13 +49,6 @@ class BaseStrictModel(BaseModel, ABC):
             "playbook_id",
             "query",
             "playbook_input_query",
-            "suppression_duration",  # correlation rules
-            "suppression_fields",  # correlation rules
-            "user_defined_category",  # correlation rules
-            "user_defined_severity",  # correlation rules
-            "investigation_query_link",  # correlation rules
-            "cron_tab",  # correlation rules
-            "search_window",  # correlation rules
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"

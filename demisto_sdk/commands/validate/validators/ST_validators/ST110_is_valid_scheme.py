@@ -2,7 +2,6 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects import (
     Classifier,
-    CorrelationRule,
     GenericType,
     IncidentField,
     IncidentType,
@@ -29,7 +28,6 @@ ContentTypes = Union[
     Layout,
     LayoutRule,
     Playbook,
-    CorrelationRule,
 ]
 
 

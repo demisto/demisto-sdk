@@ -15,7 +15,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 
 class _StrictCorrelationRule(BaseStrictModel):
     global_rule_id: str
-    name: str # not included in NAME_DYNAMIC_MODEL
+    name: str  # not included in NAME_DYNAMIC_MODEL
     alert_name: str
     description: str
     alert_description: str

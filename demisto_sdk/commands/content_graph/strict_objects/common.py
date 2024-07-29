@@ -47,6 +47,7 @@ class BaseStrictModel(BaseModel, ABC):
             "propagation_labels",
             "sort_values",
             "playbook_id",
+            "query",
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"

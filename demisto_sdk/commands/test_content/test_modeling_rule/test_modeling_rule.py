@@ -990,10 +990,8 @@ def validate_modeling_rule(
     modeling_rule_test_suite.add_property(
         "file_name", modeling_rule_file_name
     )  # used in the convert to jira issue.
-    modeling_rule_test_suite.filepath = (
-        get_relative_path_to_content(  # type:ignore[arg-type]
-            modeling_rule.path
-        )
+    modeling_rule_test_suite.filepath = get_relative_path_to_content(  # type:ignore[arg-type]
+        modeling_rule.path
     )
     modeling_rule_test_suite.add_property(
         "modeling_rule_path", get_relative_path_to_content(modeling_rule.path)
@@ -1443,10 +1441,9 @@ class BuildContext:
         retry_attempts: int,
         sleep_interval: int,
         logging_module: ParallelLoggingManager,
-        cloud_machine_ids,
-        cloud_servers_path,
-        cloud_servers_api_keys,
-        cloud_servers_tokens,
+        cloud_machine_ids: str,
+        cloud_servers_path: str,
+        cloud_servers_api_keys: str,
         service_account: Optional[str],
         artifacts_bucket: Optional[str],
         xsiam_url: Optional[str],
@@ -1493,8 +1490,6 @@ class BuildContext:
         }
         self.cloud_servers_api_keys = cloud_servers_api_keys
         self.cloud_servers_api_keys_json = get_json_file(self.cloud_servers_api_keys)
-        self.cloud_servers_tokens = cloud_servers_tokens
-        self.cloud_servers_tokens_json = get_json_file(self.cloud_servers_tokens)
 
         # --------------------------- Testing preparation -------------------------------
 
@@ -1550,17 +1545,19 @@ class BuildContext:
                     base_url=self.cloud_servers_path_json.get(machine, {}).get(
                         "base_url", ""
                     ),
-                    api_key=self.cloud_servers_api_keys_json.get(machine)
-                    or self.cloud_servers_path_json.get(machine, {}).get("api_key", ""),
-                    auth_id=self.cloud_servers_path_json.get(machine, {}).get(
-                        "x-xdr-auth-id"
-                    ),
-                    token=self.cloud_servers_tokens_json.get(machine)
-                    or self.cloud_servers_path_json.get(machine, {}).get("token", ""),
                     ui_url=self.cloud_servers_path_json.get(machine, {}).get(
                         "ui_url", ""
                     ),
                     tests=tests,
+                    api_key=self.cloud_servers_api_keys_json.get(machine, {}).get(
+                        "api-key"
+                    ),
+                    auth_id=self.cloud_servers_api_keys_json.get(machine, {}).get(
+                        "x-xdr-auth-id"
+                    ),
+                    token=self.cloud_servers_api_keys_json.get(machine, {}).get(
+                        "token"
+                    ),
                 )
             )
         return servers_list
@@ -1901,7 +1898,6 @@ def test_modeling_rule(
         cloud_machine_ids=cloud_machine_ids,
         cloud_servers_path=cloud_servers_path,
         cloud_servers_api_keys=cloud_servers_api_keys,
-        cloud_servers_tokens=cloud_servers_tokens,
         service_account=service_account,
         artifacts_bucket=artifacts_bucket,
         machine_assignment=machine_assignment,

@@ -990,8 +990,10 @@ def validate_modeling_rule(
     modeling_rule_test_suite.add_property(
         "file_name", modeling_rule_file_name
     )  # used in the convert to jira issue.
-    modeling_rule_test_suite.filepath = get_relative_path_to_content(  # type:ignore[arg-type]
-        modeling_rule.path
+    modeling_rule_test_suite.filepath = (
+        get_relative_path_to_content(  # type:ignore[arg-type]
+            modeling_rule.path
+        )
     )
     modeling_rule_test_suite.add_property(
         "modeling_rule_path", get_relative_path_to_content(modeling_rule.path)
@@ -1806,13 +1808,6 @@ def test_modeling_rule(
         "-csak",
         "--cloud_servers_api_keys",
         help="Path to file with cloud Servers api keys.",
-        show_default=False,
-    ),
-    cloud_servers_tokens: str = typer.Option(
-        "",
-        "-cst",
-        "--cloud_servers_tokens",
-        help="Path to file with cloud Servers tokens.",
         show_default=False,
     ),
     machine_assignment: str = typer.Option(

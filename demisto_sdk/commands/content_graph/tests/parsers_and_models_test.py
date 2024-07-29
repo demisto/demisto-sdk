@@ -3010,12 +3010,12 @@ def test_get_related_text_file():
     assert pack.readme.file_content == "This is a test"
 
 
-def test_release_notes_header_and_from_release_note_header():
+def test_convert_content_type_to_rn_header_and_from_release_note_header():
     """
     Given:
         - A ContentType enum value, such as ContentType.MAPPER, ContentType.PREPROCESS_RULE, or ContentType.TRIGGER.
     When:
-        - Calling release_notes_header(content_type) with the ContentType enum value.
+        - Calling convert_content_type_to_rn_header(content_type) with the ContentType enum value.
         - Calling from_release_note_header(header) with the generated header string.
     Then:
         - Assert that the ContentType enum value returned by from_release_note_header(header) matches the original ContentType enum value.
@@ -3058,6 +3058,6 @@ def test_release_notes_header_and_from_release_note_header():
         ContentType.CASE_LAYOUT,
     ]
     for content_type in test_cases:
-        assert content_type == ContentType.from_release_note_header(
-            content_type.release_notes_header
+        assert content_type == ContentType.convert_header_to_content_type(
+            content_type.convert_content_type_to_rn_header
         )

@@ -9,7 +9,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
     IsReleaseNotesFilledOutValidator,
 )
-from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
+from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_convert_content_type_to_rn_header import (
     ReleaseNoteHeaderValidator,
 )
 
@@ -107,6 +107,32 @@ def test_release_note_header_validator_valid():
         release_note_content="#### Integrations\n"
         "##### TestIntegration\n"
         "This is an exemple\n"
+    )
+    integrations = [
+        create_integration_object(["name"], ["TestIntegration"]),
+    ]
+    pack.content_items.integration.extend(integrations)
+    results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
+    assert len(results) == 0
+
+
+def test_release_note_header_validator_edge_cases_valid():
+    """
+    Given:
+    - content_items.
+        pack_metadata:
+            - Trigger (edge case).
+            - Mapper (edge case).
+    When:
+    - Calling the ReleaseNoteHeaderValidator is_valid function.
+
+    Then:
+    - Make sure the validation passes.
+    """
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content=
         "#### Triggers Recommendations\n"
         "##### NGFW Scanning Alerts\n"
         "- This trigger is responsible for handling alerts.\n"
@@ -114,13 +140,8 @@ def test_release_note_header_validator_valid():
         "##### GitHub Mapper\n"
         "- Added an incoming Mapper (Available from Cortex XSOAR 6.5.0)\n ",
     )
-    integrations = [
-        create_integration_object(["name"], ["TestIntegration"]),
-    ]
-    pack.content_items.integration.extend(integrations)
     pack.content_items.trigger.extend([create_trigger_object()])
     pack.content_items.mapper.extend([create_incoming_mapper_object()])
-    # pack.content_items.mapper.extend([create_outgoing_mapper_object()])
     results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
     assert len(results) == 0
 

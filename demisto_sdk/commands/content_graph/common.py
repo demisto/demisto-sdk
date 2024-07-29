@@ -277,7 +277,10 @@ class ContentType(StrEnum):
         raise ValueError(f"Could not find content type in path {path}")
 
     @property
-    def release_notes_header(self) -> str:
+    def convert_content_type_to_rn_header(self) -> str:
+        """
+        Convert ContentType to the Release note header.
+        """
         if self == ContentType.PREPROCESS_RULE:
             return "PreProcess Rules"
         elif self == ContentType.TRIGGER:
@@ -326,6 +329,9 @@ class ContentType(StrEnum):
 
     @staticmethod
     def convert_header_to_content_type(header: str) -> "ContentType":
+        """
+        Convert Release note header to ContentType.
+        """
         if header == "Triggers Recommendations":
             return ContentType.TRIGGER
         elif header == "Preprocess Rules":

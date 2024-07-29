@@ -49,7 +49,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             (
                 invalid_headers_content_type,
                 invalid_headers_content_item,
-            ) = self.validate_release_notes_headers(content_item)
+            ) = self.validate_convert_content_type_to_rn_headers(content_item)
             content_type_message = (
                 f"Content types: {', '.join(invalid_headers_content_type)}\n"
                 if invalid_headers_content_type
@@ -128,7 +128,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             True if the content type is valid, False otherwise.
         """
         return (
-            ContentType.convert_header_to_content_type(header).release_notes_header
+            ContentType.convert_header_to_content_type(header).convert_content_type_to_rn_header
             == header
         )
 
@@ -161,7 +161,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 missing_display_names[header] = missing
         return missing_display_names
 
-    def validate_release_notes_headers(self, pack: Pack) -> Tuple[List[str], List[str]]:
+    def validate_convert_content_type_to_rn_headers(self, pack: Pack) -> Tuple[List[str], List[str]]:
         """
         Validate that the release notes headers are valid:
         - Validate that the release notes 1st headers are a valid content entity.

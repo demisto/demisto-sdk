@@ -184,7 +184,7 @@ IS_CONTEXT_DYNAMIC_MODEL = create_dynamic_model(
 
 
 class _LeftOrRight(BaseStrictModel):
-    value: Any
+    value: Any  # VALUE_DYNAMIC_MODEL doesn't have the raw 'value', only its variations
 
 
 LeftOrRight = create_model(

@@ -8,6 +8,7 @@ from demisto_sdk.commands.content_graph.objects import (
     IndicatorField,
     Layout,
     LayoutRule,
+    Playbook,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -26,6 +27,7 @@ ContentTypes = Union[
     Classifier,
     Layout,
     LayoutRule,
+    Playbook,
 ]
 
 

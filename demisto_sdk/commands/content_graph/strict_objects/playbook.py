@@ -43,7 +43,6 @@ class _PlaybookOutput(BaseStrictModel):
     contextPath: str
     type: Optional[str] = None
     description: str
-    description_x2: Optional[str] = None
 
 
 PlaybookOutput = create_model(
@@ -75,7 +74,6 @@ class _InputPlaybook(BaseStrictModel):
     key: str
     value: Any
     description: str
-    description_x2: Optional[str] = None
     required: Optional[bool] = None
     playbook_input_query: Any = Field(None, alias="playbookInputQuery")
 
@@ -149,17 +147,11 @@ class _SubTaskPlaybook(BaseStrictModel):
     id: str
     version: int
     name: str
-    name_x2: Optional[str] = None
     playbookName: Optional[str] = None
-    playbookName_x2: Optional[str] = None
     playbookId: Optional[str] = None
-    playbookId_x2: Optional[str] = None
     description: str
-    description_x2: Optional[str] = None
     scriptName: Optional[str] = None
-    scriptName_x2: Optional[str] = None
     script: Optional[str] = None
-    script_x2: Optional[str] = None
     tags: Optional[List[str]] = None
     type: Optional[str] = None
     iscommand: bool
@@ -187,7 +179,6 @@ class _Loop(BaseStrictModel):
     built_in_condition: Optional[List[ArgFilters]] = Field(
         None, alias="builtincondition"
     )
-    script_id_x2: Optional[str] = Field(None, alias="scriptId_x2")
     exit_condition: Optional[str] = Field(None, alias="exitCondition")
     max: Optional[int] = None
     wait: Optional[int] = None
@@ -274,13 +265,10 @@ class StrictPlaybook(BaseStrictModel):
         None, alias="elasticcommonfields"
     )
     id_: str = Field(alias="id")
-    id_x2: Optional[str] = None
     version: int
     source_playbook_id: Optional[str] = Field(None, alias="sourceplaybookid")
     name: str
-    name_x2: Optional[str] = None
     description: str
-    description_x2: Optional[str] = None
     hidden: Optional[bool] = None
     deprecated: Optional[bool] = None
     start_task_id: str = Field(alias="starttaskid")

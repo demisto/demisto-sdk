@@ -67,7 +67,7 @@ class BaseOptionalVersionYaml(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toversion")
 
 
-class BaseVersionJson(BaseStrictModel):
+class BaseOptionalVersionJson(BaseStrictModel):
     from_version: Optional[str] = Field(None, alias="fromVersion")
     to_version: Optional[str] = Field(None, alias="toVersion")
 
@@ -174,6 +174,6 @@ StrictGenericIncidentType = create_model(
         _StrictGenericIncidentType,
         NAME_DYNAMIC_MODEL,
         ID_DYNAMIC_MODEL,
-        BaseVersionJson,
+        BaseOptionalVersionJson,
     ),
 )

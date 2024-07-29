@@ -4,7 +4,7 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    BaseVersionJson,
+    BaseOptionalVersionJson,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
@@ -46,6 +46,6 @@ StrictClassifier = create_model(
         NAME_DYNAMIC_MODEL,
         ID_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
-        BaseVersionJson,
+        BaseOptionalVersionJson,
     ),
 )

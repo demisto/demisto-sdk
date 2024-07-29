@@ -111,7 +111,7 @@ class YAMLContentItemParser(ContentItemParser):
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return self.get_marketplaces(self.yml_data)
-    
+
     @property
     def support(self) -> Optional[str]:
         return self.get_support(self.yml_data)

@@ -99,7 +99,7 @@ class JSONContentItemParser(ContentItemParser):
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return self.get_marketplaces(self.json_data)
-    
+
     @property
     def support(self) -> Optional[str]:
         return self.get_support(self.json_data)

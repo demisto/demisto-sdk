@@ -54,7 +54,7 @@ class ContentItem(BaseContent):
     description: Optional[str] = ""
     is_test: bool = False
     pack: Any = Field(None, exclude=True, repr=False)
-    support: str =""
+    support: Optional[str] = ""
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -75,9 +75,11 @@ class ContentItem(BaseContent):
     @property
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
-    
+
     @validator("pack", always=True)
     def validate_pack(cls, v: Any, values) -> Optional["Pack"]:
+        # Validate that we have the pack containing the content item.
+        # The pack is either provided directly or needs to be located.
 
         pack = cls.get_pack(values.get("pack"), values.get("relationships_data"), values.get("path"))
         if v and not isinstance(v, fields.FieldInfo):
@@ -124,7 +126,8 @@ class ContentItem(BaseContent):
 
     @validator("support", always=True)
     def validate_support(cls, v: str, values) -> str:
-        #pack = cls.get_pack(values.get("pack"), values.get("relationships_data"), values.get("path"))
+        # Ensure the 'support' field is present.
+        # If not directly provided, the support level from the associated pack will be used.
         return v or (values.get("pack").support if values.get("pack") and values.get("pack").support else "")
 
 

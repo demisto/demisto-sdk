@@ -180,12 +180,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @abstractmethod
     def display_name(self) -> Optional[str]:
         pass
-    
+
     @property
     @abstractmethod
     def support(self) -> Optional[str]:
         pass
-    
+
     def get_support(self, data: dict) -> Optional[str]:
         return data.get("supportlevelheader") or ""
 

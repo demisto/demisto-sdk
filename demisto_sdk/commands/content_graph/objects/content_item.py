@@ -128,8 +128,13 @@ class ContentItem(BaseContent):
     def validate_support(cls, v: str, values) -> str:
         # Ensure the 'support' field is present.
         # If not directly provided, the support level from the associated pack will be used.
-        return v or (values.get("pack").support if values.get("pack") and values.get("pack").support else "")
+        if v:
+            return v
+        pack = values.get("pack")
+        if pack and pack.support:
+            return pack.support
 
+        return ""
 
     @property
     def ignored_errors(self) -> List[str]:

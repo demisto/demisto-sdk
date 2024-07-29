@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import Field
 
@@ -66,11 +66,22 @@ SectionSchema = create_model(
 
 
 class TabsSchema(BaseStrictModel):
-    __root__: Any  # Assuming tabs can be any type
+    id_: str = Field(alias="id")
+    type_: str = Field(alias="type")
+    name: str
+    sections: Optional[List[Dict[str, Any]]] = None
+    hidden: Optional[str] = None
+    filters: Optional[Any] = None
+    show_empty_fields: Optional[bool] = Field(None, alias="showEmptyFields")
+    report: Optional[bool] = None
+    read_only: Optional[bool] = Field(None, alias="readOnly")
+    roles: Optional[List[str]] = None
+    mobile_hidden: Optional[bool] = Field(None, alias="mobileHidden")
+    web_hidden: Optional[bool] = Field(None, alias="webHidden")
 
 
 class MappingSchema(BaseStrictModel):
-    tabs: Optional[List[TabsSchema]] = None
+    tabs: Optional[List[TabsSchema]] = None  # type:ignore[valid-type]
     sections: Optional[List[SectionSchema]] = None  # type:ignore[valid-type]
 
 

@@ -1,8 +1,10 @@
 import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
+    create_incoming_mapper_object,
     create_integration_object,
     create_pack_object,
+    create_trigger_object,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
     IsReleaseNotesFilledOutValidator,
@@ -10,7 +12,7 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_not
 from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
     ReleaseNoteHeaderValidator,
 )
-from demisto_sdk.commands.content_graph.tests.test_tools import load_json
+
 
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
@@ -89,8 +91,10 @@ def test_release_note_header_validator_valid():
     """
     Given:
     - content_items.
-        pack_metadata: pack with valid release note headers.
-
+        pack_metadata:
+            1. valid release note headers.
+            2. Trigger (edge case).
+            3. Mapper (edge case).
     When:
     - Calling the ReleaseNoteHeaderValidator is_valid function.
 
@@ -102,12 +106,21 @@ def test_release_note_header_validator_valid():
         values=["2.0.5"],
         release_note_content="#### Integrations\n"
         "##### TestIntegration\n"
-        "This is an exemple\n\n",
+        "This is an exemple\n"
+        "#### Triggers Recommendations\n"
+        "##### NGFW Scanning Alerts\n"
+        "- This trigger is responsible for handling alerts.\n"
+        "#### Mappers\n"
+        "##### GitHub Mapper\n"
+        "- Added an incoming Mapper (Available from Cortex XSOAR 6.5.0)\n ",
     )
     integrations = [
         create_integration_object(["name"], ["TestIntegration"]),
     ]
     pack.content_items.integration.extend(integrations)
+    pack.content_items.trigger.extend([create_trigger_object()])
+    pack.content_items.mapper.extend([create_incoming_mapper_object()])
+    # pack.content_items.mapper.extend([create_outgoing_mapper_object()])
     results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
     assert len(results) == 0
 
@@ -144,38 +157,3 @@ def test_release_note_header_validator_invalid():
     pack.content_items.integration.extend(integrations)
     results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
     assert expected_error == results[0].message
-
-
-def test_release_note_header_validator_edge_cases():
-    """
-    mapper and a trigger (edge cases)
-    Given:
-    - content_items.
-        pack_metadata: pack with valid release note headers.
-
-    When:
-    - Calling the ReleaseNoteHeaderValidator is_valid function.
-
-    Then:
-    - Make sure the validation passes.
-    """
-    from demisto_sdk.commands.content_graph.objects.trigger import Trigger
-
-    pack = create_pack_object(
-        paths=["version"],
-        values=["2.0.5"],
-        release_note_content="#### Mappers"
-        "##### New: Hello World - Incoming Mapper"
-        " - New: This is an example\n\n."
-        "##### User Profile - Hello World - Outgoing Mapper"
-        "- fix."
-        "#### Triggers Recommendations"
-        "##### Alibaba ActionTrail - Multiple Unauthorized Action Attempts Detected By a User Alerts"
-        "- This trigger is responsible for handling alerts.",
-    )
-    pack.updated()
-    create_pack_object(["TestTrigger"], [load_json("trigger.json")]),
-
-    pack.content_items.integration.extend(integrations)
-    results = ReleaseNoteHeaderValidator().is_valid(content_items=[pack])
-    assert len(results) == 0

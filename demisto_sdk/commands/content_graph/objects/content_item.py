@@ -173,27 +173,27 @@ class ContentItem(BaseContent):
     def pack_version(self) -> Optional[Version]:
         return self.in_pack.pack_version if self.in_pack else None
 
-    @property
-    def in_pack(self) -> Optional["Pack"]:
-        """
-        This returns the Pack which the content item is in.
+    # @property
+    # def in_pack(self) -> Optional["Pack"]:
+    #     """
+    #     This returns the Pack which the content item is in.
 
-        Returns:
-            Pack: Pack model.
-        """
-        pack = self.pack
-        if not pack or isinstance(pack, fields.FieldInfo):
-            pack = None
-            if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
-                pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
-        if not pack:
-            if pack_name := get_pack_name(self.path):
-                pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
-                )  # type: ignore[assignment]
-        if pack:
-            self.pack = pack
-        return pack  # type: ignore[return-value]
+    #     Returns:
+    #         Pack: Pack model.
+    #     """
+    #     pack = self.pack
+    #     if not pack or isinstance(pack, fields.FieldInfo):
+    #         pack = None
+    #         if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
+    #             pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+    #     if not pack:
+    #         if pack_name := get_pack_name(self.path):
+    #             pack = BaseContent.from_path(
+    #                 CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
+    #             )  # type: ignore[assignment]
+    #     if pack:
+    #         self.pack = pack
+    #     return pack  # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:

@@ -9,7 +9,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
     IsReleaseNotesFilledOutValidator,
 )
-from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_convert_content_type_to_rn_header import (
+from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
     ReleaseNoteHeaderValidator,
 )
 

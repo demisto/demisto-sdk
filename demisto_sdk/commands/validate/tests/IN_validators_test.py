@@ -4968,8 +4968,10 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
             ),
         ]
 
-        results = IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
-            content_items
+        results = (
+            IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
+                content_items
+            )
         )
 
     assert len(results) == 0
@@ -5036,8 +5038,10 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
             ),
         ]
 
-        results = IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
-            content_items
+        results = (
+            IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
+                content_items
+            )
         )
 
     expected_msgs = [
@@ -5053,6 +5057,7 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
 
 def test_IsContainingFromLicenseInParamsValidator_fix():
     """
@@ -5248,6 +5253,7 @@ def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_i
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
 
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
@@ -5487,6 +5493,7 @@ def test_IsPartnerCollectorHasXsoarSupportLevelValidator_obtain_invalid_content_
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
 
 def test_IsPartnerCollectorHasXsoarSupportLevelValidator_fix():
     """

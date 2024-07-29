@@ -22,7 +22,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     create_model,
 )
 
-TASKS_REGEX = r"^[0-9]+(:?(xsoar|marketplacev2|xpanse|xsoar_saas|xsoar_on_prem))?$"
+TASKS_REGEX = r"^[0-9]+(:?(" + "|".join(MarketplaceVersions) + "))?$"
 
 
 class ContentItemFields(BaseStrictModel):
@@ -40,7 +40,7 @@ class ElasticCommonFields(BaseStrictModel):
 
 
 class _PlaybookOutput(BaseStrictModel):
-    contextPath: str
+    context_path: str = Field(alias="contextPath")
     type: Optional[str] = None
     description: str
 
@@ -70,7 +70,7 @@ OutputsSectionPlaybook = create_model(
 )
 
 
-class _InputPlaybook(BaseStrictModel):
+class _PlaybookInput(BaseStrictModel):
     key: str
     value: Any
     description: str
@@ -81,7 +81,7 @@ class _InputPlaybook(BaseStrictModel):
 InputPlaybook = create_model(
     model_name="InputPlaybook",
     base_models=(
-        _InputPlaybook,
+        _PlaybookInput,
         KEY_DYNAMIC_MODEL,
         VALUE_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
@@ -91,7 +91,7 @@ InputPlaybook = create_model(
 )
 
 
-class _InputsSectionPlaybook(BaseStrictModel):
+class _PlaybookInputsSection(BaseStrictModel):
     name: str
     description: str
     inputs: List[str]
@@ -100,7 +100,7 @@ class _InputsSectionPlaybook(BaseStrictModel):
 InputsSectionPlaybook = create_model(
     model_name="InputsSectionPlaybook",
     base_models=(
-        _InputsSectionPlaybook,
+        _PlaybookInputsSection,
         NAME_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
     ),
@@ -226,10 +226,10 @@ class _TaskPlaybook(BaseStrictModel):
     is_auto_switched_to_quiet_mode: Optional[bool] = Field(
         None, alias="isautoswitchedtoquietmode"
     )
-    quiet: Optional[bool]
+    quiet: Optional[bool] = None
     evidence_data: Optional[EvidenceData] = Field(None, alias="evidencedata")
     task: SubTaskPlaybook  # type:ignore[valid-type]
-    note: Optional[bool]
+    note: Optional[bool] = None
     next_tasks: Optional[Dict[constr(regex=r".+"), List[str]]] = Field(  # type:ignore[valid-type]
         None, alias="nexttasks"
     )

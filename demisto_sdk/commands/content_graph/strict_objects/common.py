@@ -49,13 +49,13 @@ class BaseStrictModel(BaseModel, ABC):
             "playbook_id",
             "query",
             "playbook_input_query",
-            "suppression_duration",
-            "suppression_fields",
-            "user_defined_category",
-            "user_defined_severity",
-            "investigation_query_link",
-            "cron_tab",
-            "search_window",
+            "suppression_duration", # correlation rules
+            "suppression_fields", # correlation rules
+            "user_defined_category", # correlation rules
+            "user_defined_severity", # correlation rules
+            "investigation_query_link", # correlation rules
+            "cron_tab", # correlation rules
+            "search_window", # correlation rules
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"
@@ -191,8 +191,7 @@ IS_CONTEXT_DYNAMIC_MODEL = create_dynamic_model(
 
 
 class _LeftOrRight(BaseStrictModel):
-    value: Any
-    value_x2: Optional[Any] = None
+    value: Any  # VALUE_DYNAMIC_MODEL doesn't have the raw 'value', only its variations
 
 
 LeftOrRight = create_model(

@@ -6,7 +6,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictM
     DESCRIPTION_DYNAMIC_MODEL, NAME_DYNAMIC_MODEL
 
 
-class _CorrelationRule(BaseStrictModel):
+class _StrictCorrelationRule(BaseStrictModel):
     global_rule_id: str
     name: str
     alert_name: str
@@ -31,8 +31,8 @@ class _CorrelationRule(BaseStrictModel):
     mapping_strategy: Optional[str] = None
 
 
-CorrelationRule = create_model(model_name="CorrelationRule",
-                               base_models=(_CorrelationRule,
-                                            BaseOptionalVersionYaml,
-                                            DESCRIPTION_DYNAMIC_MODEL,
-                                            NAME_DYNAMIC_MODEL))
+StrictCorrelationRule = create_model(model_name="StrictCorrelationRule",
+                                     base_models=(_StrictCorrelationRule,
+                                                  BaseOptionalVersionYaml,
+                                                  DESCRIPTION_DYNAMIC_MODEL,
+                                                  NAME_DYNAMIC_MODEL))

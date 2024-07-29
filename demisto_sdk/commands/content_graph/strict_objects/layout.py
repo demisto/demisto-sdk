@@ -51,7 +51,7 @@ class _Section(BaseStrictModel):
     query: Optional[Any] = None
     query_type: Optional[str] = Field(None, alias="queryType")
     sort_values: Optional[str] = Field(None, alias="sortValues")
-    fields: Optional[List[Field]] = None  # type:ignore[valid-type]
+    fields: Optional[List[SectionField]] = None  # type:ignore[valid-type]
 
 
 Section = create_model(
@@ -103,9 +103,7 @@ class _StrictLayout(BaseStrictModel):
     marketplaces: Optional[List[MarketplaceVersions]] = None
     edit: Optional[Mapping] = None
     indicators_details: Optional[Mapping] = Field(None, alias="indicatorsDetails")
-    indicators_quick_view: Optional[Mapping] = Field(
-        None, alias="indicatorsQuickView"
-    )
+    indicators_quick_view: Optional[Mapping] = Field(None, alias="indicatorsQuickView")
     quick_view: Optional[Mapping] = Field(None, alias="quickView")
     close: Optional[Mapping] = None
     details: Optional[Mapping] = None

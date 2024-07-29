@@ -62,7 +62,7 @@ Argument = create_model(
 )
 
 
-class BaseVersionYaml(BaseStrictModel):
+class BaseOptionalVersionYaml(BaseStrictModel):
     from_version: Optional[str] = Field(None, alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")
 
@@ -122,7 +122,7 @@ BaseIntegrationScript = create_model(
         _BaseIntegrationScript,
         NAME_DYNAMIC_MODEL,
         DEPRECATED_DYNAMIC_MODEL,
-        BaseVersionYaml,
+        BaseOptionalVersionYaml,
     ),
 )
 

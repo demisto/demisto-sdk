@@ -185,7 +185,6 @@ IS_CONTEXT_DYNAMIC_MODEL = create_dynamic_model(
 
 class _LeftOrRight(BaseStrictModel):
     value: Any
-    value_x2: Optional[Any] = None
 
 
 LeftOrRight = create_model(

@@ -106,7 +106,7 @@ def test_release_note_header_validator_valid():
         values=["2.0.5"],
         release_note_content="#### Integrations\n"
         "##### TestIntegration\n"
-        "This is an exemple\n"
+        "This is an exemple\n",
     )
     integrations = [
         create_integration_object(["name"], ["TestIntegration"]),
@@ -132,8 +132,7 @@ def test_release_note_header_validator_edge_cases_valid():
     pack = create_pack_object(
         paths=["version"],
         values=["2.0.5"],
-        release_note_content=
-        "#### Triggers Recommendations\n"
+        release_note_content="#### Triggers Recommendations\n"
         "##### NGFW Scanning Alerts\n"
         "- This trigger is responsible for handling alerts.\n"
         "#### Mappers\n"

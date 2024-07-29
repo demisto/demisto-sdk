@@ -1,0 +1,65 @@
+from __future__ import annotations
+
+from typing import Iterable, List
+
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    ValidationResult,
+)
+
+ContentTypes = Integration
+
+REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE = ("An incremental feed should not have the"
+                                        "suddenDeath option as an expiration policy.")
+MISSING_SUDDEN_DEATH_ERROR_MESSAGE = ("The feed's expiration policy does not contain the suddenDeath option."
+                                      "Either add this option or mark feed as incremental.")
+BAD_TYPE_OR_DISPLAY = "The feed's expiration policy type must be 17 and display must be an empty string."
+
+
+class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
+    error_code = "IN163"
+    description = (
+        "Validate feedExpirationPolicy parameter is in the right format for both incremental and fully fetched feeds"
+    )
+    rationale = ""
+    error_message = "The feed's expiration policy is not in the correct format."
+    related_field = "feedExpirationPolicy"
+    is_auto_fixable = True
+
+    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        invalid_content_items = []
+        for content_item in content_items:
+            incremental_feed_param = next((param for param in content_item.params if
+                                          param.name == 'feedIncremental' and
+                                          param.hidden is True and
+                                          param.type == 8 and
+                                          param.defaultvalue is True), None)
+            expiration_policy = next(param for param in content_item.params if param.name == 'feedExpirationPolicy')
+
+            if expiration_policy.display != "" or expiration_policy.type != 17:
+                invalid_content_items.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message + BAD_TYPE_OR_DISPLAY,
+                        content_object=content_item,
+                    )
+                )
+
+            elif incremental_feed_param and 'suddenDeath' in expiration_policy.options:
+                invalid_content_items.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message + REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE,
+                        content_object=content_item,
+                    )
+                )
+            elif not incremental_feed_param and 'suddenDeath' not in expiration_policy.options:
+                invalid_content_items.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message + MISSING_SUDDEN_DEATH_ERROR_MESSAGE,
+                        content_object=content_item,
+                    )
+                )
+        return invalid_content_items

@@ -70,7 +70,6 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
 
-ENV_RESULTS_PATH = "./artifacts/env_results.json"
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
 XSIAM_CLIENT_SLEEP_INTERVAL = 60
 XSIAM_CLIENT_RETRY_ATTEMPTS = 5
@@ -1436,29 +1435,29 @@ class TestResults:
 class BuildContext:
     def __init__(
         self,
-        nightly,
-        build_number,
-        branch_name,
-        retry_attempts,
-        sleep_interval,
+        nightly: bool,
+        build_number: Optional[str],
+        branch_name: Optional[str],
+        retry_attempts: int,
+        sleep_interval: int,
         logging_module: ParallelLoggingManager,
         cloud_machine_ids,
         cloud_servers_path,
         cloud_servers_api_keys,
         cloud_servers_tokens,
-        service_account,
-        artifacts_bucket,
-        xsiam_url,
-        xsiam_token,
-        api_key,
-        auth_id,
-        collector_token,
-        inputs,
-        machine_assignment,
-        push,
-        interactive,
-        delete_existing_dataset,
-        ctx,
+        service_account: Optional[str],
+        artifacts_bucket: Optional[str],
+        xsiam_url: Optional[str],
+        xsiam_token: Optional[str],
+        api_key: Optional[str],
+        auth_id: Optional[str],
+        collector_token: Optional[str],
+        inputs: Optional[List[Path]],
+        machine_assignment: str,
+        push: bool,
+        interactive: bool,
+        delete_existing_dataset: bool,
+        ctx: typer.Context,
     ):
         # --------------------------- overall build configuration -------------------------------
         self.logging_module: ParallelLoggingManager = logging_module
@@ -1487,7 +1486,7 @@ class BuildContext:
         self.cloud_servers_path = cloud_servers_path
 
         cloud_conf = get_json_file(self.cloud_servers_path)
-        self.env_json = {
+        self.cloud_servers_path_json = {
             machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
         }
         self.cloud_servers_api_keys = cloud_servers_api_keys
@@ -1508,12 +1507,11 @@ class BuildContext:
         self.servers = self.create_servers()
 
     @staticmethod
-    def _load_env_results_json():
-        if not Path(ENV_RESULTS_PATH).is_file():
-            return {}
-
-        with open(ENV_RESULTS_PATH) as json_file:
-            return json.load(json_file)
+    def prefix_with_packs(path_str: Union[str, Path]) -> Path:
+        path = Path(path_str)
+        if path.parts[0] == "Packs":
+            return path
+        return Path("Packs") / path
 
     def create_servers(self):
         """
@@ -1525,30 +1523,45 @@ class BuildContext:
                 CloudServerContext(
                     self,
                     base_url=self.xsiam_url,
-                    api_key=self.api_key,
-                    auth_id=self.auth_id,
-                    token=self.xsiam_token,
+                    api_key=self.api_key,  # type: ignore[arg-type]
+                    auth_id=self.auth_id,  # type: ignore[arg-type]
+                    token=self.xsiam_token,  # type: ignore[arg-type]
                     collector_token=self.collector_token,
                     ui_url=get_ui_url(self.xsiam_url),
-                    tests=self.inputs,
+                    tests=[BuildContext.prefix_with_packs(test) for test in self.inputs]
+                    if self.inputs
+                    else [],
                 )
             ]
-        return [
-            CloudServerContext(
-                self,
-                base_url=self.env_json.get(machine, {}).get("base_url", ""),
-                api_key=self.cloud_servers_api_keys_json.get(machine, {}).get(
-                    "api_key", ""
-                ),
-                auth_id=self.cloud_servers_path.get(machine, {}).get("auth_id", ""),
-                token=self.cloud_servers_tokens_json.get(machine, {}).get("token", ""),
-                ui_url=self.env_json.get(machine, {}).get("ui_url", ""),
-                tests=self.env_json.get(machine, {})
-                .get("tests", {})
-                .get("TestModelingRules", []),
+        servers_list = []
+        for machine, assignment in self.machine_assignment_json.items():
+            tests = [
+                BuildContext.prefix_with_packs(test)
+                for test in assignment.get("tests", {}).get("TestModelingRules", [])
+            ]
+            if not tests:
+                logger.info(f"No modeling rules found for machine {machine}")
+                continue
+            servers_list.append(
+                CloudServerContext(
+                    self,
+                    base_url=self.cloud_servers_path_json.get(machine, {}).get(
+                        "base_url", ""
+                    ),
+                    api_key=self.cloud_servers_api_keys_json.get(machine)
+                    or self.cloud_servers_path_json.get(machine, {}).get("api_key", ""),
+                    auth_id=self.cloud_servers_path_json.get(machine, {}).get(
+                        "x-xdr-auth-id"
+                    ),
+                    token=self.cloud_servers_tokens_json.get(machine)
+                    or self.cloud_servers_path_json.get(machine, {}).get("token", ""),
+                    ui_url=self.cloud_servers_path_json.get(machine, {}).get(
+                        "ui_url", ""
+                    ),
+                    tests=tests,
+                )
             )
-            for machine in self.machine_assignment_json
-        ]
+        return servers_list
 
 
 class CloudServerContext:
@@ -1674,7 +1687,7 @@ class CloudServerContext:
 def test_modeling_rule(
     ctx: typer.Context,
     inputs: List[Path] = typer.Argument(
-        ...,
+        None,
         exists=True,
         dir_okay=True,
         resolve_path=True,
@@ -1881,15 +1894,6 @@ def test_modeling_rule(
             )
             raise typer.Exit(1)
 
-    logging_manager.info(
-        "[cyan]Test Modeling Rules directories to test:[/cyan]",
-    )
-
-    for modeling_rule_directory in inputs:
-        logging_manager.info(
-            f"[cyan]\t{get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
-        )
-
     start_time = datetime.now(timezone.utc)
 
     build_context = BuildContext(
@@ -1917,6 +1921,17 @@ def test_modeling_rule(
         collector_token=collector_token,
         inputs=inputs,
     )
+
+    logging_manager.info(
+        "[cyan]Test Modeling Rules to test:[/cyan]",
+    )
+
+    for build_context_server in build_context.servers:
+        for modeling_rule_directory in build_context_server.tests:
+            logging_manager.info(
+                f"[cyan]\tmachine:{build_context_server.base_url} - "
+                f"{get_relative_path_to_content(modeling_rule_directory)}[/cyan]"
+            )
 
     threads_list = []
     for index, server in enumerate(build_context.servers, start=1):

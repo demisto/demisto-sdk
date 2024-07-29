@@ -1,109 +1,78 @@
-from pathlib import Path
-from typing import Any, Dict, List
+import os
+import stat
+from typing import Dict, List
 
 import typer
-from git import Blob
 
-from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger, logging_setup
 
 main = typer.Typer()
 
+HELP_CHANGED_FILES = "The files to check, e.g. dir/f1 f2 f3.py"
+
+
+def is_executable(file_path: str) -> bool:
+    """
+    Checks whether a file has executable bits set or not.
+
+    Arguments:
+    - `file_path` (``str``): The file path to check.
+
+    Returns:
+    - `True` if the file has executable bits set, `False` otherwise.
+    """
+
+    # Retrieve the file's status
+    file_stat = os.stat(file_path)
+
+    # Check if the file is executable by owner, group, or others
+    is_owner_executable = file_stat.st_mode & stat.S_IXUSR
+    is_group_executable = file_stat.st_mode & stat.S_IXGRP
+    is_other_executable = file_stat.st_mode & stat.S_IXOTH
+
+    if is_owner_executable or is_group_executable or is_other_executable:
+        return True
+    else:
+        return False
+
 
 @main.command(help="Validate that file modes were not changed")
 def validate_changed_files_permissions(
-    changed_files: List[Path] = typer.Argument(
-        default=None,
-        help="The files to check, e.g. dir/f1 f2 f3.py",
-        exists=True,
+    changed_files: List[str] = typer.Argument(
+        default=...,
+        help=HELP_CHANGED_FILES,
         file_okay=True,
+        exists=True,
         dir_okay=False,
     ),
-    ci: bool = typer.Option(envvar="CI", default=False),
 ) -> None:
     """
     Validate whether the file mode was modified. Exit code 0 if no files
     modes were modified, 1 otherwise.
 
     Args:
-    - `changed_files` (``List[Path]``): The files to check, e.g. 'test/f1 f2 f3.py'.
-    - `ci` (``bool``): Whether we're in a CI environment or not.
+    - `changed_files` (``List[str]``): The files to check, e.g. 'test/f1 f2 f3.py'.
     """
 
     exit_code = 0
 
     logging_setup()
-    git_util = GitUtil.from_content_path()
-
-    logger.debug(f"Running in CI environment: {ci}")
-
-    logger.debug(f"Input {changed_files=}")
-
-    if not changed_files:
-        logger.debug(
-            f"Getting changed files from git branch '{DEMISTO_GIT_PRIMARY_BRANCH}'..."
-        )
-        git_util = GitUtil.from_content_path()
-        changed_files = [
-            Path(git_util.git_path()) / Path(path)
-            for path in git_util.get_all_changed_files(
-                DEMISTO_GIT_PRIMARY_BRANCH, include_untracked=True
-            )
-        ]
-
-    logger.debug(
-        f"Iterating over '{changed_files=}' to check for global mypy type ignore..."
-    )
 
     if changed_files:
+        logger.debug(
+            f"Iterating over {len(changed_files)} changed files to check if their permissions flags have changed..."
+        )
 
-        result: Dict[str, Any] = {}
+        result: Dict[str, bool] = {}
 
         for changed_file in changed_files:
-            result[
-                str(changed_file.absolute())
-            ] = git_util.has_file_permissions_changed(
-                file_path=str(changed_file), ci=ci
-            )
+            result[changed_file] = is_executable(changed_file)
 
-        for filename, (is_changed, old_permission, new_permission) in result.items():
-            if is_changed:
+        for filename, executable in result.items():
+            if executable:
                 logger.error(
-                    f"File '{filename}' permission was changed from {old_permission} to {new_permission}"
+                    f"File '{filename}' has executable bits set. Please revert using command 'chmod -x {filename}'"
                 )
-                msg = get_revert_permission_message(Path(filename), new_permission)
-                logger.info(msg)
                 exit_code = 1
-    else:
-        logger.info("No changed files supplied. Terminating...")
 
     raise typer.Exit(code=exit_code)
-
-
-def get_revert_permission_message(file_path: Path, new_permission: str) -> str:
-    """
-    Helper method that returns an output message explaining
-    to the user how to revert the file permissions.
-
-    Args:
-    - `file_path` (``Path``): The path to the file.
-    - `new_permission` ((`str``)): The new permission bits.
-
-    Returns:
-    - `str` with a message how to revert the permission changes.
-    """
-
-    try:
-        if new_permission == oct(Blob.file_mode)[2:]:
-            cmd = f"chmod +x {file_path.absolute()}"
-        elif new_permission == oct(Blob.executable_mode)[2:]:
-            cmd = f"chmod -x {file_path.absolute()}"
-        else:
-            cmd = f"chmod +||- {file_path.absolute()}"
-        message = f"Please revert the file permissions using the command '{cmd}'"
-    except IndexError as e:
-        logger.warning(f"Unable to get the blob file permissions: {e}")
-        message = f"Unable to get the blob file permissions for file '{file_path.absolute()}': {e}"
-    finally:
-        return message

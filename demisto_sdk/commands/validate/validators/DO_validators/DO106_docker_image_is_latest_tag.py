@@ -64,7 +64,9 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
             # return true if docker-image exist, but has a wrong tag
             return True
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         invalid_content_items = []
         for content_item in content_items:
             if not content_item.is_javascript:
@@ -79,7 +81,6 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
                     )
                     continue
                 try:
-
                     docker_image_latest_tag = str(docker_image.latest_tag)
                 except DockerHubRequestException as error:
                     logger.error(f"DO106 - Error when fetching latest tag:\n{error}")

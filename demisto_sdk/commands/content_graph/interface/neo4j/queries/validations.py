@@ -308,3 +308,18 @@ def validate_duplicate_ids(
         (item.get("content_item"), item.get("duplicate_content_items"))
         for item in run_query(tx, query)
     ]
+
+
+def validate_test_playbook_in_use(tx: Transaction, test_playbook_ids: List[str], tests_skipped: List[str]) -> List[graph.Node]:
+    query = f"""
+MATCH (tp:TestPlaybook)
+WHERE tp.object_id IN {test_playbook_ids}
+AND NOT EXISTS {{ MATCH ()-[:TESTED_BY]->(tp) }}
+AND tp.deprecated = false
+AND NOT (tp.object_id IN {tests_skipped})
+MATCH (tp)-[:IN_PACK]->(p:Pack)
+WHERE p.support = "xsoar"
+AND p.deprecated = false
+RETURN collect(tp) AS content_items
+"""
+    return [item.get("content_items") for item in run_query(tx, query) if item.get("content_items")][0]

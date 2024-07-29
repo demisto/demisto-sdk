@@ -12,7 +12,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 )
 
 
-class ArgFilterSchema(BaseStrictModel):
+class ArgFilter(BaseStrictModel):
     operator: str
     ignore_case: Optional[bool] = Field(None, alias="ignorecase")
     left: dict = Field(..., example={"value": Any, "isContext": bool})
@@ -20,26 +20,26 @@ class ArgFilterSchema(BaseStrictModel):
     type_: Optional[str] = Field(None, alias="type")
 
 
-class ArgFiltersSchema(BaseStrictModel):
-    __root__: List[ArgFilterSchema]
+class ArgFilters(BaseStrictModel):
+    __root__: List[ArgFilter]
 
 
-class _FieldSchema(BaseStrictModel):
+class _SectionField(BaseStrictModel):
     id: Optional[str] = None
     version: Optional[float] = None
     modified: Optional[str] = None
     field_id: Optional[str] = Field(None, alias="fieldId")
     is_visible: Optional[bool] = Field(None, alias="isVisible")
     sort_values: Optional[str] = Field(None, alias="sortValues")
-    filters: Optional[List[ArgFiltersSchema]] = None
+    filters: Optional[List[ArgFilters]] = None
 
 
-FieldSchema = create_model(
-    model_name="FieldSchema", base_models=(_FieldSchema, ID_DYNAMIC_MODEL)
+SectionField = create_model(
+    model_name="SectionField", base_models=(_SectionField, ID_DYNAMIC_MODEL)
 )
 
 
-class _SectionSchema(BaseStrictModel):
+class _Section(BaseStrictModel):
     id: Optional[str] = None
     version: Optional[float] = None
     modified: Optional[str] = None
@@ -51,13 +51,13 @@ class _SectionSchema(BaseStrictModel):
     query: Optional[Any] = None
     query_type: Optional[str] = Field(None, alias="queryType")
     sort_values: Optional[str] = Field(None, alias="sortValues")
-    fields: Optional[List[FieldSchema]] = None  # type:ignore[valid-type]
+    fields: Optional[List[Field]] = None  # type:ignore[valid-type]
 
 
-SectionSchema = create_model(
-    model_name="SectionSchema",
+Section = create_model(
+    model_name="Section",
     base_models=(
-        _SectionSchema,
+        _Section,
         ID_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
         NAME_DYNAMIC_MODEL,
@@ -65,7 +65,7 @@ SectionSchema = create_model(
 )
 
 
-class TabsSchema(BaseStrictModel):
+class Tabs(BaseStrictModel):
     id_: str = Field(alias="id")
     type_: str = Field(alias="type")
     name: str
@@ -80,9 +80,9 @@ class TabsSchema(BaseStrictModel):
     web_hidden: Optional[bool] = Field(None, alias="webHidden")
 
 
-class MappingSchema(BaseStrictModel):
-    tabs: Optional[List[TabsSchema]] = None  # type:ignore[valid-type]
-    sections: Optional[List[SectionSchema]] = None  # type:ignore[valid-type]
+class Mapping(BaseStrictModel):
+    tabs: Optional[List[Tabs]] = None  # type:ignore[valid-type]
+    sections: Optional[List[Section]] = None  # type:ignore[valid-type]
 
 
 class _StrictLayout(BaseStrictModel):
@@ -101,16 +101,16 @@ class _StrictLayout(BaseStrictModel):
     description: Optional[str] = None
     system: Optional[bool] = None
     marketplaces: Optional[List[MarketplaceVersions]] = None
-    edit: Optional[MappingSchema] = None
-    indicators_details: Optional[MappingSchema] = Field(None, alias="indicatorsDetails")
-    indicators_quick_view: Optional[MappingSchema] = Field(
+    edit: Optional[Mapping] = None
+    indicators_details: Optional[Mapping] = Field(None, alias="indicatorsDetails")
+    indicators_quick_view: Optional[Mapping] = Field(
         None, alias="indicatorsQuickView"
     )
-    quick_view: Optional[MappingSchema] = Field(None, alias="quickView")
-    close: Optional[MappingSchema] = None
-    details: Optional[MappingSchema] = None
-    details_v2: Optional[MappingSchema] = Field(None, alias="detailsV2")
-    mobile: Optional[MappingSchema] = None
+    quick_view: Optional[Mapping] = Field(None, alias="quickView")
+    close: Optional[Mapping] = None
+    details: Optional[Mapping] = None
+    details_v2: Optional[Mapping] = Field(None, alias="detailsV2")
+    mobile: Optional[Mapping] = None
 
 
 StrictLayout = create_model(

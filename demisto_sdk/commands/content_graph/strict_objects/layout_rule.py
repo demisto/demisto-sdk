@@ -8,31 +8,31 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     create_model,
 )
 
-SCHEMAS = Union["FilterSchema", "OrSchema", "AndSchema"]
+SCHEMAS = Union["Filter", "Or", "And"]
 
 
-class FilterSchema(BaseStrictModel):
+class Filter(BaseStrictModel):
     SEARCH_FIELD: str
     SEARCH_TYPE: str
     SEARCH_VALUE: str
 
 
-class AndSchema(BaseStrictModel):
+class And(BaseStrictModel):
     AND: Optional[List[SCHEMAS]] = None
 
 
-class OrSchema(BaseStrictModel):
+class Or(BaseStrictModel):
     OR: Optional[List[SCHEMAS]] = None
 
 
 # Forward references to resolve circular dependencies
-FilterSchema.update_forward_refs()
-AndSchema.update_forward_refs()
-OrSchema.update_forward_refs()
+Filter.update_forward_refs()
+And.update_forward_refs()
+Or.update_forward_refs()
 
 
 class AlertsFilter(BaseStrictModel):
-    filter: Optional[Union[OrSchema, AndSchema]] = None
+    filter: Optional[Union[Or, And]] = None
 
 
 class _StrictLayoutRule(BaseStrictModel):

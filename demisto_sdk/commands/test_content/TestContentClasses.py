@@ -650,9 +650,7 @@ class TestPlaybook:
         end_time = time.time() + timeout
         while True:
             try:
-                self.log_debug(f"Started search for incidents {datetime.now(timezone.utc)} with {search_filter=}")
                 incidents = client.search_incidents(filter=search_filter)
-                self.log_debug(f"Finished search for incidents {datetime.now(timezone.utc)}")
                 if len(incidents.data):
                     return incidents.data[0]
             except ApiException:

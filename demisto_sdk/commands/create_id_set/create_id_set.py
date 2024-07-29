@@ -119,7 +119,7 @@ class IDSetCreator:
                 intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
                 os.makedirs(intermediate_dirs, exist_ok=True)
             with open(self.output, "w+") as id_set_file:
-                json.dump(self.id_set, id_set_file, indent=4)
+                json.dump(self.id_set, id_set_file)
 
 
 def get_id_set(id_set_path: str) -> dict:

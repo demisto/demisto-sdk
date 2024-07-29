@@ -17,13 +17,14 @@ ContentTypes = TestPlaybook
 class IsTestPlaybookInUseValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR106"
     description = (
-        "Ensure that each test playbook is linked to at least one content item."
+        "Checks that every test playbook is linked to at least one content item."
+        " (the content item has a 'tests:' key with the id of the test playbook)"
     )
     rationale = (
-        "Proper linkage of test playbooks ensures comprehensive testing. For guidelines,"
-        " visit: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-the-playbook-to-your-project"
+        "In the demisto/content repo, unlinked test playbooks are not run in PRs unless the test playbook itself is modified. Proper linkage of test playbooks ensures content quality. "
+        "See  https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-the-playbook-to-your-project"
     )
-    error_message = "Test playbook '{}' is not linked to any content item. Please ensure it is properly utilized."
+    error_message = "Test playbook '{}' is not linked to any content item. Make sure at least one integration, script or playbook mention it under the `tests:` key."
     related_field = "tests"
     is_auto_fixable = False
     conf_data = ConfJSON.from_path(CONTENT_PATH / "Tests/conf.json")
@@ -36,7 +37,7 @@ class IsTestPlaybookInUseValidator(BaseValidator[ContentTypes], ABC):
         test_playbook_ids_to_validate = (
             [item.object_id for item in content_items] if not validate_all_files else []
         )
-        invalid_content_items = self.graph.find_test_playbook_without_uses(
+        invalid_content_items = self.graph.find_unused_test_playbook(
                 test_playbook_ids_to_validate, self.skipped_tests_keys
             )
         validation_results = []

@@ -568,7 +568,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_test_playbook_without_uses(
+    def find_unused_test_playbook(
         self, test_playbook_ids: List[str], skipped_tests_keys: list
     ) -> List[TestPlaybook]:
          with self.driver.session() as session:

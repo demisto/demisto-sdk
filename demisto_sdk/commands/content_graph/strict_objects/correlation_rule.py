@@ -1,9 +1,16 @@
-from pydantic import Field
-from typing import Optional, Any
+from typing import Any, Optional
 
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseOptionalVersionYaml
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model, \
-    DESCRIPTION_DYNAMIC_MODEL, NAME_DYNAMIC_MODEL
+from pydantic import Field
+
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseOptionalVersionYaml,
+)
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    DESCRIPTION_DYNAMIC_MODEL,
+    NAME_DYNAMIC_MODEL,
+    BaseStrictModel,
+    create_model,
+)
 
 
 class _StrictCorrelationRule(BaseStrictModel):
@@ -16,8 +23,8 @@ class _StrictCorrelationRule(BaseStrictModel):
     alert_fields: Optional[Any] = None
     cron_tab: Optional[str] = Field(None, alias="crontab")
     dataset: str
-    drill_down_query_timeframe: str = Field(..., alias='drilldown_query_timeframe')
-    execution_mode: str = Field(..., enum=['REAL_TIME', 'SCHEDULED'])
+    drill_down_query_timeframe: str = Field(..., alias="drilldown_query_timeframe")
+    execution_mode: str = Field(..., enum=["REAL_TIME", "SCHEDULED"])
     mitre_defs: Optional[Any] = None
     search_window: Optional[str] = None
     severity: str
@@ -31,8 +38,12 @@ class _StrictCorrelationRule(BaseStrictModel):
     mapping_strategy: Optional[str] = None
 
 
-StrictCorrelationRule = create_model(model_name="StrictCorrelationRule",
-                                     base_models=(_StrictCorrelationRule,
-                                                  BaseOptionalVersionYaml,
-                                                  DESCRIPTION_DYNAMIC_MODEL,
-                                                  NAME_DYNAMIC_MODEL))
+StrictCorrelationRule = create_model(
+    model_name="StrictCorrelationRule",
+    base_models=(
+        _StrictCorrelationRule,
+        BaseOptionalVersionYaml,
+        DESCRIPTION_DYNAMIC_MODEL,
+        NAME_DYNAMIC_MODEL,
+    ),
+)

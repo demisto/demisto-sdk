@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, List, Optional
 
 from pydantic import Field, constr
@@ -22,7 +23,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     create_model,
 )
 
-TASKS_REGEX = r"^[0-9]+(:?(xsoar|marketplacev2|xpanse|xsoar_saas|xsoar_on_prem))?$"
+TASKS_REGEX = r"^[0-9]+(:?(" + "|".join(MarketplaceVersions) + "))?$"
 
 
 class ContentItemFields(BaseStrictModel):

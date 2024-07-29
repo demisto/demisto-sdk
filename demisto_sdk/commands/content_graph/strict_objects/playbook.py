@@ -40,7 +40,7 @@ class ElasticCommonFields(BaseStrictModel):
 
 
 class _PlaybookOutput(BaseStrictModel):
-    contextPath: str
+    context_path: str = Field(alias="contextPath")
     type: Optional[str] = None
     description: str
 

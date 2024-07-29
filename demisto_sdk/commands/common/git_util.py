@@ -52,7 +52,6 @@ class GitUtil:
         path: Optional[Union[str, Path, Repo]] = None,
         search_parent_directories: bool = True,
     ):
-
         if isinstance(path, str):
             repo_path = Path(path)
         elif isinstance(path, self.REPO_CLS):
@@ -76,7 +75,6 @@ class GitUtil:
         return cls(path)
 
     def path_from_git_root(self, path: Union[Path, str]) -> Path:
-
         """
         Given an absolute path, return the path to the file/directory from the
         repo/git root. For example, `/<some_local_path>/Packs/HelloWorld/pack_metadata.json`
@@ -205,7 +203,6 @@ class GitUtil:
     def is_file_exist_in_commit_or_branch(
         self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
     ) -> bool:
-
         try:
             commit = self.get_commit(commit_or_branch, from_remote=from_remote)
         except CommitOrBranchNotFoundError:
@@ -254,7 +251,10 @@ class GitUtil:
 
         # get all renamed files - some of these can be identified as modified by git,
         # but we want to identify them as renamed - so will remove them from the returned files.
-        renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}  # type: ignore[index]
+        renamed = {
+            item[0]  # type: ignore[index]
+            for item in self.renamed_files(prev_ver, committed_only, staged_only)
+        }
 
         # handle a case where a file is wrongly recognized as renamed (not 100% score) and
         # is actually of modified status
@@ -310,14 +310,10 @@ class GitUtil:
             untracked = self._get_untracked_files("M")
 
         # get all the files that are staged on the branch and identified as modified.
-        staged = (
-            {
-                Path(os.path.join(item.a_path))
-                for item in self.repo.head.commit.diff().iter_change_type("M")
-            }
-            .union(untracked)
-            .union(untrue_rename_staged)
-        )
+        staged = {
+            Path(os.path.join(item.a_path))
+            for item in self.repo.head.commit.diff().iter_change_type("M")
+        }.union(untracked).union(untrue_rename_staged)
 
         # If a file is Added in regards to prev_ver
         # and is then modified locally after being committed - it is identified as modified

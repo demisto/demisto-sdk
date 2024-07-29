@@ -167,7 +167,7 @@ def main():
 
     similarity_vector = get_similar_texts(incident_text, candidates_text)
     similar_incidents = []
-    for (i, similarity) in enumerate(similarity_vector):
+    for i, similarity in enumerate(similarity_vector):
         candidates[i]["similarity"] = similarity
         if similarity >= THRESHOLD:
             similar_incidents.append(candidates[i])

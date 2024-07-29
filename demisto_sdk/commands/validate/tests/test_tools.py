@@ -32,6 +32,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
+from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
@@ -64,6 +65,7 @@ def create_integration_object(
     description_content: Optional[str] = None,
     name: Optional[str] = None,
     code: Optional[str] = None,
+    unit_test_name: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -91,6 +93,9 @@ def create_integration_object(
 
     if name is not None:
         additional_params["name"] = name
+
+    if unit_test_name:
+        additional_params["unit_test_name"] = unit_test_name
 
     integration = pack.create_integration(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"
@@ -736,7 +741,7 @@ def create_generic_module_object(
 
 def create_incoming_mapper_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Mapper:
     """Creating an incoming_mapper object with altered fields from a default incoming_mapper json structure.
 
     Args:
@@ -750,7 +755,7 @@ def create_incoming_mapper_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_mapper(name="incoming_mapper", content=json_content)
-    return BaseContent.from_path(Path(pack.mappers[0].path))
+    return cast(Mapper, BaseContent.from_path(Path(pack.mappers[0].path)))
 
 
 def create_outgoing_mapper_object(

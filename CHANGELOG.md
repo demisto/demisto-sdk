@@ -1,4 +1,31 @@
 # Changelog
+## 1.31.5
+* Added new validation ST110. Checks schema validness for *Integration*, *Script*, *Incident Field*, *Indicator Field* and *Generic Type* objects. [#4399](https://github.com/demisto/demisto-sdk/pull/4399)
+* Added support for pack doc_files upload. [#4438](https://github.com/demisto/demisto-sdk/pull/4438)
+* Fixed an issue in BA124 validation where the validation wasn't case sensitive. [#4450](https://github.com/demisto/demisto-sdk/pull/4450)
+* Fixed an issue in the **download** command where a 'missing content' error was shown on playbook-type tasks of an uploaded playbook that was initially downloaded using this command. [#4445](https://github.com/demisto/demisto-sdk/pull/4445)
+* Replaced project formatter from *Black* to *ruff-format* and removed the *Black* dev-dependency. [#4435](https://github.com/demisto/demisto-sdk/pull/4435)
+* Modified the new validate **is_valid** method name to **obtain_invalid_content_items**. [#4448](https://github.com/demisto/demisto-sdk/pull/4448)
+* Moved IN147 validation to the new validate format as code BC114. The validation ensures no fields were removed/modified from the integration yml for a predefined list of fields. [#4449](https://github.com/demisto/demisto-sdk/pull/4449)
+* Moved PB124 validation to the new validate format. The validation ensures there're unhandled condition tasks in the playbook. [#4424](https://github.com/demisto/demisto-sdk/pull/4424)
+* Added support for different api key file structure in **test-content** command. [#4442](https://github.com/demisto/demisto-sdk/pull/4442)
+* Moved Tests/markteplace/Core_* and Approved_* files in content repo under the *Config* folder. [#4417](https://github.com/demisto/demisto-sdk/pull/4417)
+
+## 1.31.4
+* Removed DO106 - docker_not_on_the_latest_tag validation for the old validate. [#4429](https://github.com/demisto/demisto-sdk/pull/4429)
+* Added documentation improvements to the **pre-commit** command. [#4421](https://github.com/demisto/demisto-sdk/pull/4421)
+* Added support to replace incident to alert for deprecated content. [#4440](https://github.com/demisto/demisto-sdk/pull/4440)
+* Fixed an issue in the **test-modeling-rule** command, where the table wasn't left aligned. [#4419](https://github.com/demisto/demisto-sdk/pull/4419)
+* Added Improvements to ***validate-file-permission-changes*** **pre-commit** hook. [#4434](https://github.com/demisto/demisto-sdk/pull/4434)
+* Fixed an issue where old validate failed without listing the invalid content items. [#4432](https://github.com/demisto/demisto-sdk/pull/4432)
+* Added DS104 to the new validation format. The validation verifies that a Description file is present for an integration. [#4393](https://github.com/demisto/demisto-sdk/pull/4393)
+* Added MR107 to the new validation format. Validate that the dataset name of a modeling rule shows in the xif and schema files match. [#4429](https://github.com/demisto/demisto-sdk/pull/4429)
+* Moved MP107 and MP108 validations to the new validate format as BC113. The validation ensures no incident types and incident fields were removed from the mapper. [#4433](https://github.com/demisto/demisto-sdk/pull/4433)
+* Added PR101 and MR108 to the new validate format. The validations check if the rule id and the rule name end with the correct suffixes. [#4415](https://github.com/demisto/demisto-sdk/pull/4415)
+* Removed the following arguments from the (internal) **test-content** command: circleci, xsiam-machine, xsiam-servers-path, xsiam-servers-api-keys-path. [#4422](https://github.com/demisto/demisto-sdk/pull/4422)
+* Added the *verbose=False* parameter to the *fetch* method call to minimize unnecessary output messages. [#4427](https://github.com/demisto/demisto-sdk/pull/4427)
+* Removed the **validate-file-permissions-changes** pre-commit hook. [#4436](https://github.com/demisto/demisto-sdk/pull/4436)
+
 ## 1.31.3
 * Removed IN150 due to invalid_siem_integration_name from both old and new validate flows. [#4420](https://github.com/demisto/demisto-sdk/pull/4420)
 * Removed RM108 and RM112 from the old validate format. [#4408](https://github.com/demisto/demisto-sdk/pull/4408)

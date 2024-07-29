@@ -182,10 +182,11 @@ class TestDockerImage:
         docker_image_validator = mock_docker_image_validator()
         docker_image_validator.docker_image_latest_tag = "1.0.3"
         docker_image_validator.docker_image_name = "demisto/python"
-        assert (
-            "demisto/python"
-        ), "1.3-alpine" == docker_image_validator.parse_docker_image(
-            docker_image="demisto/python:1.3-alpine"
+        assert "demisto/python", (
+            "1.3-alpine"
+            == docker_image_validator.parse_docker_image(
+                docker_image="demisto/python:1.3-alpine"
+            )
         )
         assert "demisto/slack", "1.2.3.4" == docker_image_validator.parse_docker_image(
             docker_image="demisto/slack:1.2.3.4"

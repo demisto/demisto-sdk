@@ -8,6 +8,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.indicator_field import (
+    StrictIndicatorField,
+)
 
 
 class IndicatorFieldParser(
@@ -24,6 +27,10 @@ class IndicatorFieldParser(
         self.select_values = self.json_data.get("selectValues")
 
         self.connect_to_dependencies()
+
+    @property
+    def strict_object(self):
+        return StrictIndicatorField
 
     @cached_property
     def field_mapping(self):

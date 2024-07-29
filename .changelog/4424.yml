@@ -1,4 +1,0 @@
-changes:
-- description: Moved PB124 validation to the new validate format, The validation ensures there're unhandled condition tasks in the playbook.
-  type: internal
-pr_number: 4424

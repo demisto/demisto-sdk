@@ -1,4 +1,0 @@
-changes:
-- description: renamed the new validate **is_valid** method to **obtain_invalid_content_items** for more clarity.
-  type: internal
-pr_number: 4448

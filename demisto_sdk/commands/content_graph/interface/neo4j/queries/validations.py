@@ -18,7 +18,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
     versioned,
 )
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
 
 def validate_unknown_content(

@@ -22,7 +22,8 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate feedExpirationPolicy parameter is in the right format for both incremental and fully fetched feeds"
     )
-    rationale = ""
+    rationale = ("Malformed expiration policy can lead to errors or incomplete data."
+                 "For more details, see https://xsoar.pan.dev/docs/integrations/feeds")
     error_message = "The feed's expiration policy is not in the correct format."
     related_field = "feedExpirationPolicy"
     is_auto_fixable = True

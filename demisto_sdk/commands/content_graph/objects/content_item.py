@@ -81,11 +81,12 @@ class ContentItem(BaseContent):
         # Validate that we have the pack containing the content item.
         # The pack is either provided directly or needs to be located.
 
-        pack = cls.get_pack(values.get("pack"), values.get("relationships_data"), values.get("path"))
+        pack = cls.get_pack(
+            values.get("pack"), values.get("relationships_data"), values.get("path")
+        )
         if v and not isinstance(v, fields.FieldInfo):
             return v
         return pack
-
 
     @property
     def in_pack(self) -> Optional["Pack"]:
@@ -99,11 +100,10 @@ class ContentItem(BaseContent):
             self.pack = pack
         return pack  # type: ignore[return-value]
 
-
     @staticmethod
     def get_pack(
         pack: Any,
-        relationships_data : dict,
+        relationships_data: dict,
         path: Path,
     ) -> Optional["Pack"]:
         """
@@ -122,7 +122,6 @@ class ContentItem(BaseContent):
                     CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
                 )  # type: ignore[assignment]
         return pack  # type: ignore[return-value]
-
 
     @validator("support", always=True)
     def validate_support(cls, v: str, values) -> str:

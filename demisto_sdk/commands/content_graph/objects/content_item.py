@@ -78,6 +78,7 @@ class ContentItem(BaseContent):
     
     @validator("pack", always=True)
     def validate_pack(cls, v: Any, values) -> Optional["Pack"]:
+
         pack = cls.get_pack(values.get("pack"), values.get("relationships_data"), values.get("path"))
         if v and not isinstance(v, fields.FieldInfo):
             return v
@@ -124,7 +125,7 @@ class ContentItem(BaseContent):
     @validator("support", always=True)
     def validate_support(cls, v: str, values) -> str:
         #pack = cls.get_pack(values.get("pack"), values.get("relationships_data"), values.get("path"))
-        return v or values.get("pack").support if values.get("pack") and values.get("pack").support else ""
+        return v or (values.get("pack").support if values.get("pack") and values.get("pack").support else "")
 
 
     @property

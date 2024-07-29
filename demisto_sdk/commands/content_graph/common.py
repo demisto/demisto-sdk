@@ -347,6 +347,8 @@ class ContentType(StrEnum):
         elif header == "Object Fields":
             return ContentType.GENERIC_FIELD
         normalized_header = header.rstrip("s").replace(" ", "_").upper()
+        if not ContentType.__dict__.get(normalized_header):
+            raise ValueError
         return ContentType[normalized_header]
 
 

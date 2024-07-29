@@ -131,6 +131,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         return (
             header_to_content_type.convert_content_type_to_rn_header == header
             if header_to_content_type
+            and ContentType.__dict__.get(header_to_content_type)
             else False
         )
 
@@ -181,6 +182,8 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         """
         headers = self.extract_rn_headers(pack.release_note.file_content)
         pack_items_by_types = pack.content_items.items_by_type()
+        if not pack_items_by_types:
+            return [], []
         invalid_content_type: List[str] = [
             header_type
             for header_type in headers

@@ -28,7 +28,9 @@ def has_global_type_ignore(file_path: Path) -> Union[int, None]:
     lines = file_path.read_text().splitlines()
 
     for line_num, line in enumerate(lines):
-        if MYPY_GLOBAL_IGNORE_PATTERN.fullmatch(line) or MYPY_DISABLE_ERROR_CODE_PATTERN.fullmatch(line):
+        if MYPY_GLOBAL_IGNORE_PATTERN.fullmatch(
+            line
+        ) or MYPY_DISABLE_ERROR_CODE_PATTERN.fullmatch(line):
             return line_num + 1
 
     return None
@@ -57,7 +59,6 @@ def prevent_mypy_global_ignore(
     logging_setup()
 
     if changed_files:
-
         result: Dict[str, Union[int, None]] = {}
 
         for changed_file in changed_files:

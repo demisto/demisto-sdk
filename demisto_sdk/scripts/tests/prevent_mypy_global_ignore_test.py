@@ -4,7 +4,6 @@ from typer.testing import CliRunner
 
 
 class TestValidateMyPyGlobalIgnore:
-
     from demisto_sdk.scripts.prevent_mypy_global_ignore import main as func
 
     added_code = "print('some added code')"

@@ -19,7 +19,7 @@ class IsRNAddedToNewPackValidator(BaseValidator[ContentTypes]):
     rationale = (
         "New Packs doesn't require release notes since they don't have any updates."
     )
-    error_message = "The Pack is a new pack and contains release notes, please remove all release notes and ensure the pack version is 1.0.0."
+    error_message = "The Pack is a new pack and contains release notes, please remove all release notes."
     related_field = "Release notes"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED]

@@ -117,7 +117,7 @@ class CoverageReport:
                 txt_file.write(self.report_str)
         if "html" in self.report_types:
             export_report(
-                self.cov.html_report,
+                self.cov.html_report(skip_covered=True, skip_empty=True),
                 "html",
                 os.path.join(self.cov.config.html_dir, "index.html"),
             )

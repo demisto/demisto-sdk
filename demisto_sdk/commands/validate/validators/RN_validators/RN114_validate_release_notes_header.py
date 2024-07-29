@@ -127,11 +127,11 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         Return:
             True if the content type is valid, False otherwise.
         """
+        header_to_content_type = ContentType.convert_header_to_content_type(header)
         return (
-            ContentType.convert_header_to_content_type(
-                header
-            ).convert_content_type_to_rn_header
-            == header
+            header_to_content_type.convert_content_type_to_rn_header == header
+            if header_to_content_type
+            else False
         )
 
     def validate_content_item_header(

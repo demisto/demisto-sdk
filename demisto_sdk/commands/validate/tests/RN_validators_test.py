@@ -158,9 +158,9 @@ def test_release_note_header_validator_invalid():
     - Make sure the right amount of pack metadata failed, and that the right error message is returned.
     """
     expected_error = (
-        "The following headers that were found were invalid:\n"
-        "Headers Content Types: InvalidHeader\n\n"
-        "Headers Content Items: Integrations: Not exist content item\n\n"
+        "The following release note headers are invalid:\n"
+        "Content types: InvalidHeader\n\n"
+        "Content items: Integrations: Not exist content item\n\n"
     )
     pack = create_pack_object(
         paths=["version"],

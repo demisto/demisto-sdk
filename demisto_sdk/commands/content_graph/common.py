@@ -328,7 +328,7 @@ class ContentType(StrEnum):
         return f"{self.value}s"
 
     @staticmethod
-    def convert_header_to_content_type(header: str) -> "ContentType":
+    def convert_header_to_content_type(header: str) -> "ContentType | None":
         """
         Convert Release note header to ContentType.
         """
@@ -347,7 +347,11 @@ class ContentType(StrEnum):
         elif header == "Object Fields":
             return ContentType.GENERIC_FIELD
         normalized_header = header.rstrip("s").replace(" ", "_").upper()
-        return ContentType[normalized_header]
+        return (
+            ContentType[normalized_header]
+            if ContentType.__dict__.get(normalized_header)
+            else None
+        )
 
 
 class Relationship(BaseModel):

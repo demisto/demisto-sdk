@@ -139,11 +139,16 @@ def test_filter_validators(
         (
             None,
             ExecutionMode.USE_GIT,
-            {"use_git": {"select": ["BA101", "BC100", "PA108"]}, "ignorable_errors": ["E002", "W001"]},
-            ConfiguredValidations(["BA101", "BC100", "PA108"], [], ['E002', 'W001'], {}),
+            {
+                "use_git": {"select": ["BA101", "BC100", "PA108"]},
+                "ignorable_errors": ["E002", "W001"],
+            },
+            ConfiguredValidations(
+                ["BA101", "BC100", "PA108"], [], ["E002", "W001"], {}
+            ),
             False,
             [],
-            ["E002", "W001"]
+            ["E002", "W001"],
         ),
         (
             "custom_category",
@@ -158,7 +163,7 @@ def test_filter_validators(
             ConfiguredValidations(["BA101", "BC100", "PA108"], [], ["BA101"], {}),
             False,
             [],
-            ["BA101"]
+            ["BA101"],
         ),
         (
             None,
@@ -167,7 +172,7 @@ def test_filter_validators(
             ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
             False,
             [],
-            []
+            [],
         ),
         (
             None,
@@ -184,7 +189,7 @@ def test_filter_validators(
             ),
             False,
             [],
-            []
+            [],
         ),
         (
             None,
@@ -196,7 +201,7 @@ def test_filter_validators(
             ConfiguredValidations(["TE105", "TE106", "TE107"], [], [], {}),
             True,
             [],
-            []
+            [],
         ),
         (
             None,
@@ -205,7 +210,7 @@ def test_filter_validators(
             ConfiguredValidations(["TE100", "TE101"], [], [], {}),
             False,
             ["TE100", "TE101"],
-            []
+            [],
         ),
     ],
 )
@@ -244,7 +249,9 @@ def test_gather_validations_from_conf(
         category=category_to_run, explicitly_selected=specific_validations
     )
     results: ConfiguredValidations = config_reader.read(
-        mode=execution_mode, ignore_support_level=ignore_support_level, codes_to_ignore=codes_to_ignore
+        mode=execution_mode,
+        ignore_support_level=ignore_support_level,
+        codes_to_ignore=codes_to_ignore,
     )
     assert results.select == expected_results.select
     assert results.ignorable_errors == expected_results.ignorable_errors

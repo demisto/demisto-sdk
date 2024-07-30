@@ -129,7 +129,7 @@ class TestValidateMyPyGlobalIgnore:
 
         actual_output = result.stdout.splitlines()
         assert (
-            f"File '{py_file_path}#L1' sets global mypy ignore. Please remove."
+            f"File '{py_file_path}' in line 1 sets global mypy ignore. Please remove it."
             in actual_output[1]
         )
 
@@ -159,7 +159,7 @@ class TestValidateMyPyGlobalIgnore:
 
         actual_output = result.stdout.splitlines()
         assert (
-            f"File '{py_file_path}#L1' sets global mypy ignore. Please remove."
+            f"File '{py_file_path}' in line 1 sets global mypy ignore. Please remove it."
             in actual_output[1]
         )
 
@@ -189,7 +189,7 @@ class TestValidateMyPyGlobalIgnore:
 
         actual_output = result.stdout.splitlines()
         assert (
-            f"File '{py_file_path}#L1' sets global mypy ignore. Please remove."
+            f"File '{py_file_path}' in line 1 sets global mypy ignore. Please remove it."
             in actual_output[1]
         )
 
@@ -219,7 +219,7 @@ class TestValidateMyPyGlobalIgnore:
 
         actual_output = result.stdout.splitlines()
         assert (
-            f"File '{py_file_path}#L1' sets global mypy ignore. Please remove."
+            f"File '{py_file_path}' in line 1 sets global mypy ignore. Please remove it."
             in actual_output[1]
         )
 
@@ -247,7 +247,7 @@ class TestValidateMyPyGlobalIgnore:
         assert result.exit_code == 1
         actual_output = result.stdout.splitlines()
         assert (
-            f"File '{py_file_path}#L2' sets global mypy ignore. Please remove."
+            f"File '{py_file_path}' in line 2 sets global mypy ignore. Please remove it."
             in actual_output[1]
         )
 
@@ -275,7 +275,7 @@ class TestValidateMyPyGlobalIgnore:
         assert result.exit_code == 1
         actual_output = result.stdout.splitlines()
         assert (
-            f"File '{py_file_path}#L2' sets global mypy ignore. Please remove."
+            f"File '{py_file_path}' in line 2 sets global mypy ignore. Please remove it."
             in actual_output[1]
         )
 
@@ -305,7 +305,7 @@ class TestValidateMyPyGlobalIgnore:
         assert result.exit_code == 1
         actual_output = result.stdout.splitlines()
         assert (
-            f"File '{py_file_path}#L2' sets global mypy ignore. Please remove."
+            f"File '{py_file_path}' in line 2 sets global mypy ignore. Please remove it."
             in actual_output[1]
         )
 
@@ -335,6 +335,6 @@ class TestValidateMyPyGlobalIgnore:
         assert result.exit_code == 1
         actual_output = result.stdout.splitlines()
         assert (
-            f"File '{py_file_path}#L2' sets global mypy ignore. Please remove."
+            f"File '{py_file_path}' in line 2 sets global mypy ignore. Please remove it."
             in actual_output[1]
         )

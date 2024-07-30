@@ -392,14 +392,13 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
         ]
         old_content_items = [create_integration_object(), create_script_object()]
 
-        modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
-            XSIAM_MARKETPLACE
-        )
+        modified_content_items[0].marketplaces = modified_content_items[
+            1
+        ].marketplaces = XSIAM_MARKETPLACE
         old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
             old_marketplaces
         )
         create_old_file_pointers(modified_content_items, old_content_items)
-
 
         assert (
             WasMarketplaceModifiedValidator().obtain_invalid_content_items(
@@ -441,14 +440,13 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
         ]
         old_content_items = [create_integration_object(), create_script_object()]
 
-        modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
-            XSIAM_MARKETPLACE
-        )
+        modified_content_items[0].marketplaces = modified_content_items[
+            1
+        ].marketplaces = XSIAM_MARKETPLACE
         old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
             old_marketplaces
         )
         create_old_file_pointers(modified_content_items, old_content_items)
-
 
         results = WasMarketplaceModifiedValidator().obtain_invalid_content_items(
             modified_content_items
@@ -492,9 +490,9 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__pas
         ]
         old_content_items = [create_integration_object(), create_script_object()]
 
-        modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
-            modified_marketplaces
-        )
+        modified_content_items[0].marketplaces = modified_content_items[
+            1
+        ].marketplaces = modified_marketplaces
         old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
             XSIAM_MARKETPLACE
         )
@@ -533,9 +531,9 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__fai
         ]
         old_content_items = [create_integration_object(), create_script_object()]
 
-        modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
-            modified_marketplaces
-        )
+        modified_content_items[0].marketplaces = modified_content_items[
+            1
+        ].marketplaces = modified_marketplaces
         old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
             XSIAM_MARKETPLACE
         )
@@ -731,7 +729,9 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
             create_integration_object(
                 pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}
             ),
-            create_script_object(pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}),
+            create_script_object(
+                pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}
+            ),
         ]
         renamed_content_items[0].git_status = renamed_content_items[1].git_status = (
             GitStatuses.RENAMED

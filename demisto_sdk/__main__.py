@@ -796,6 +796,7 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "--ignore",
     default=None,
+    multiple=True,
     help="Error codes to ignore. Must be a subset of the `ignorable_errors` in the configuration file",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))

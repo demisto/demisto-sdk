@@ -2709,7 +2709,7 @@ class TestContext:
             server_url = get_ui_url(self.client.api_client.configuration.host)
 
             if self.build_context.server_type == XSOAR_SAAS_SERVER_TYPE:
-                investigation_url = f"{server_url}/WorkPlan/{investigation_id}"
+                investigation_url = f"{self.server_context.cloud_ui_path}WorkPlan/{investigation_id}"
             elif self.build_context.server_type == XSIAM_SERVER_TYPE:
                 investigation_url = (
                     f"{self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="

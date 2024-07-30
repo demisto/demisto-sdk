@@ -546,9 +546,7 @@ def pre_commit_manager(
         all_files=all_files,
         prev_version=prev_version,
     )
-    logger.info(  # DELETE
-        f"\n[cyan]{files_to_run=}"
-    )
+    logger.info(f"\n{files_to_run=}")
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
         return 0
@@ -668,31 +666,15 @@ def preprocess_files(
         if contribution_flow:
             """
             If this command runs on a build triggered by an external contribution PR,
-            the relevant modified files would have an "untracked" status in git.
-            The following code segment retrieves all relevant untracked file paths that were changed in the external contribution PR
-            and adds them to `raw_files`. See CIAC-10490 for more info.
+            the relevant modified files initially have an "untracked" status in git.
+            They are staged by Utils/update_contribution_pack_in_base_branch.py (Infra) which runs before pre-commit is triggered,
+            so that pre-commit hooks can detect and run on said files.
+            See CIAC-10968 for more info.
             """
-            # logger.info( #DELETE
-            #     "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
-            # )
             logger.info(
                 "\n[cyan]CONTRIB_BRANCH environment variable found, running pre-commit in contribution flow "
-                "on files staged in Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
+                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
             )
-            # relative_untracked_files_paths: Set[Path] = set() #DELETE
-
-            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py and read file paths
-            # with open(
-            #     "contribution_files_relative_paths.txt", "r"
-            # ) as contribution_files:
-            #     for line in contribution_files:
-            #         clean_line: str = line.rstrip("\n")
-            #         relative_untracked_files_paths.add(Path(clean_line))
-            # logger.info(
-            #     f"\n######## - Modified untracked:\n{relative_untracked_files_paths}"
-            # )
-            # raw_files = raw_files.union(relative_untracked_files_paths)
-            # logger.info(f"\n######## - Running on collected files:\n{raw_files}")
     elif all_files:
         raw_files = all_git_files
     else:
@@ -711,9 +693,5 @@ def preprocess_files(
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file
         for file in files_to_run
     }
-    logger.info(  # DELETE
-        f"\n[cyan]{relative_paths & all_git_files=}"
-    )
-    """filter out files that are not in the content git repo (e.g in .gitignore)
-    excluding the contribution flow which gets its "git diff" manually from a file"""
+    """filter out files that are not in the content git repo (e.g in .gitignore)"""
     return relative_paths & all_git_files

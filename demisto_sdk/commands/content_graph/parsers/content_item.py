@@ -187,7 +187,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         pass
 
     def get_support(self, data: dict) -> Optional[str]:
-        return data.get("supportlevelheader") or ""
+        return data.get("supportlevelheader")
 
     @property
     def version(self) -> int:

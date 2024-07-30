@@ -3022,42 +3022,7 @@ def test_convert_content_type_to_rn_header_and_from_release_note_header():
     """
     from demisto_sdk.commands.content_graph.common import ContentType
 
-    test_cases = [
-        ContentType.PLAYBOOK,
-        ContentType.INTEGRATION,
-        ContentType.SCRIPT,
-        ContentType.INCIDENT_FIELD,
-        ContentType.INDICATOR_FIELD,
-        ContentType.INCIDENT_TYPE,
-        ContentType.CLASSIFIER,
-        ContentType.LAYOUT,
-        ContentType.REPORT,
-        ContentType.WIDGET,
-        ContentType.DASHBOARD,
-        ContentType.CONNECTION,
-        ContentType.MAPPER,
-        ContentType.PREPROCESS_RULE,
-        ContentType.GENERIC_DEFINITION,
-        ContentType.GENERIC_MODULE,
-        ContentType.GENERIC_TYPE,
-        ContentType.GENERIC_FIELD,
-        ContentType.LIST,
-        ContentType.JOB,
-        ContentType.PARSING_RULE,
-        ContentType.MODELING_RULE,
-        ContentType.CORRELATION_RULE,
-        ContentType.XSIAM_DASHBOARD,
-        ContentType.XSIAM_REPORT,
-        ContentType.TRIGGER,
-        ContentType.WIZARD,
-        ContentType.XDRC_TEMPLATE,
-        ContentType.LAYOUT_RULE,
-        ContentType.ASSETS_MODELING_RULE,
-        ContentType.CASE_LAYOUT_RULE,
-        ContentType.CASE_FIELD,
-        ContentType.CASE_LAYOUT,
-    ]
-    for content_type in test_cases:
+    for content_type in ContentType:
         assert content_type == ContentType.convert_header_to_content_type(
             content_type.convert_content_type_to_rn_header
         )

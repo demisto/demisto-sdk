@@ -262,7 +262,12 @@ def create_xsiam_build(
 
     xsiam_api_keys_path = tmp_file / "xsiam_api_keys_path.json"
     xsiam_api_keys_path.write_text(
-        json.dumps({"qa2-test-111111": "api_key", "qa2-test-222222": "api_key"})
+        json.dumps(
+            {
+                "qa2-test-111111": {"api-key": "api_key", "x-xdr-auth-id": 1},
+                "qa2-test-222222": {"api-key": "api_key", "x-xdr-auth-id": 1},
+            }
+        )
     )
 
     env_results_path = tmp_file / "env_results_path"

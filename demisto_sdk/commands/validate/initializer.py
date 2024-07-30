@@ -251,25 +251,15 @@ class Initializer:
         if os.getenv("CONTRIB_BRANCH"):
             """
             If this command runs on a build triggered by an external contribution PR,
-            the relevant modified files initially have an "untracked" status in git.
-            They are staged by Utils/update_contribution_pack_in_base_branch.py (Infra) which runs before validate is triggered,
-            so that validate can detect and run on said files.
+            the relevant modified files would have an "untracked" status in git.
+            The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
             See CIAC-10968 for more info.
             """
             logger.info(
                 "\n[cyan]CONTRIB_BRANCH environment variable found, running validate in contribution flow "
                 "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
             )
-            # """
-            # If this command runs on a build triggered by an external contribution PR,
-            # the relevant modified files would have an "untracked" status in git.
-            # The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
-            # and adds them to `modified_files`. See CIAC-10490 for more info.
-            # """
-            # logger.info(
-            #     "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
-            # )
-            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py and read file paths
+            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
             relative_untracked_files_paths: Set[Path] = set()
 
             with open(

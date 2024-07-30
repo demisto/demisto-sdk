@@ -157,12 +157,11 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN161_is_siem_integr
 from demisto_sdk.commands.validate.validators.IN_validators.IN162_is_partner_collector_has_xsoar_support_level import (
     IsPartnerCollectorHasXsoarSupportLevelValidator,
 )
-
 from demisto_sdk.commands.validate.validators.IN_validators.IN163_is_valid_feed_expiration_policy import (
-    IsValidFeedExpirationPolicyValidator,
+    BAD_TYPE_OR_DISPLAY,
     MISSING_SUDDEN_DEATH_ERROR_MESSAGE,
     REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE,
-    BAD_TYPE_OR_DISPLAY
+    IsValidFeedExpirationPolicyValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -5795,6 +5794,7 @@ def test_IsValidDbotValidator_obtain_invalid_content_items(
         ]
     )
 
+
 def test_IsValidFeedExpirationPolicy_no_display_parameter():
     """
     Given:
@@ -5804,18 +5804,26 @@ def test_IsValidFeedExpirationPolicy_no_display_parameter():
     Then:
     - Should fail.
     """
-    feed = create_integration_object(paths=["configuration"], values=[[
-        {
-            "name": "feedExpirationPolicy",
-            "type": 17,
-            "options": ["never", "interval", "indicatorType", "suddenDeath"]
-        }
-    ]])
-    validation_results = IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    feed = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "options": ["never", "interval", "indicatorType", "suddenDeath"],
+                }
+            ]
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
     assert len(validation_results) == 1
     assert validation_results[0].message == (
-            IsValidFeedExpirationPolicyValidator.error_message + BAD_TYPE_OR_DISPLAY
+        IsValidFeedExpirationPolicyValidator.error_message + BAD_TYPE_OR_DISPLAY
     )
+
 
 def test_IsValidFeedExpirationPolicy_incremental_feed_with_suddenDeath():
     """
@@ -5826,24 +5834,32 @@ def test_IsValidFeedExpirationPolicy_incremental_feed_with_suddenDeath():
     Then:
     - Should fail.
     """
-    feed = create_integration_object(paths=["configuration"], values=[[
-        {
-            "name": "feedIncremental",
-            "hidden": True,
-            "type": 8,
-            "defaultvalue": True
-        },
-        {
-            "name": "feedExpirationPolicy",
-            "type": 17,
-            "display": "",
-            "options": ["never", "interval", "indicatorType", "suddenDeath"]
-        }
-    ]])
-    validation_results = IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    feed = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "feedIncremental",
+                    "hidden": True,
+                    "type": 8,
+                    "defaultvalue": True,
+                },
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "display": "",
+                    "options": ["never", "interval", "indicatorType", "suddenDeath"],
+                },
+            ]
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
     assert len(validation_results) == 1
     assert validation_results[0].message == (
-            IsValidFeedExpirationPolicyValidator.error_message + REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE
+        IsValidFeedExpirationPolicyValidator.error_message
+        + REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE
     )
 
 
@@ -5856,21 +5872,28 @@ def test_IsValidFeedExpirationPolicy_incremental_feed_no_suddenDeath():
     Then:
     - Should pass.
     """
-    feed = create_integration_object(paths=["configuration"], values=[[
-        {
-            "name": "feedIncremental",
-            "hidden": True,
-            "type": 8,
-            "defaultvalue": True
-        },
-        {
-            "name": "feedExpirationPolicy",
-            "display": "",
-            "type": 17,
-            "options": ["never", "interval", "indicatorType"]
-        }
-    ]])
-    validation_results = IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    feed = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "feedIncremental",
+                    "hidden": True,
+                    "type": 8,
+                    "defaultvalue": True,
+                },
+                {
+                    "name": "feedExpirationPolicy",
+                    "display": "",
+                    "type": 17,
+                    "options": ["never", "interval", "indicatorType"],
+                },
+            ]
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
     assert len(validation_results) == 0
 
 
@@ -5883,18 +5906,28 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_no_suddenDeath():
     Then:
     - Should fail.
     """
-    feed = create_integration_object(paths=["configuration"], values=[[
-        {
-            "name": "feedExpirationPolicy",
-            "type": 17,
-            "display": "",
-            "options": ["never", "interval", "indicatorType"]
-        }
-    ]])
-    validation_results = IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    feed = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "display": "",
+                    "options": ["never", "interval", "indicatorType"],
+                }
+            ]
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
     assert len(validation_results) == 1
-    assert validation_results[0].message == (IsValidFeedExpirationPolicyValidator.error_message +
-                                             MISSING_SUDDEN_DEATH_ERROR_MESSAGE)
+    assert validation_results[0].message == (
+        IsValidFeedExpirationPolicyValidator.error_message
+        + MISSING_SUDDEN_DEATH_ERROR_MESSAGE
+    )
+
 
 def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
     """
@@ -5905,13 +5938,20 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
     Then:
     - Should pass.
     """
-    feed = create_integration_object(paths=["configuration"], values=[[
-        {
-            "name": "feedExpirationPolicy",
-            "type": 17,
-            "display": "",
-            "options": ["never", "interval", "indicatorType", "suddenDeath"]
-        }
-    ]])
-    validation_results = IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    feed = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "display": "",
+                    "options": ["never", "interval", "indicatorType", "suddenDeath"],
+                }
+            ]
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
     assert len(validation_results) == 0

@@ -269,19 +269,19 @@ class Initializer:
             # logger.info(
             #     "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
             # )
-            # # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py and read file paths
-            # relative_untracked_files_paths: Set[Path] = set()
+            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py and read file paths
+            relative_untracked_files_paths: Set[Path] = set()
 
-            # with open(
-            #     "contribution_files_relative_paths.txt", "r"
-            # ) as contribution_files:
-            #     for line in contribution_files:
-            #         clean_line: str = line.rstrip("\n")
-            #         relative_untracked_files_paths.add(Path(clean_line))
-            # logger.info(
-            #     f"\n######## - Modified untracked:\n{relative_untracked_files_paths}"
-            # )
-            # modified_files = modified_files.union(relative_untracked_files_paths)
+            with open(
+                "contribution_files_relative_paths.txt", "r"
+            ) as contribution_files:
+                for line in contribution_files:
+                    clean_line: str = line.rstrip("\n")
+                    relative_untracked_files_paths.add(Path(clean_line))
+            logger.info(
+                f"\n######## - Modified untracked:\n{relative_untracked_files_paths}"
+            )
+            modified_files = modified_files.union(relative_untracked_files_paths)
 
         return modified_files, added_files, renamed_files
 

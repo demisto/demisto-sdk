@@ -1458,11 +1458,11 @@ class BuildContext:
         delete_existing_dataset: bool,
         ctx: typer.Context,
     ):
-        # --------------------------- overall build configuration -------------------------------
         self.logging_module: ParallelLoggingManager = logging_module
         self.retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
-
         self.ctx = ctx
+
+        # --------------------------- overall build configuration -------------------------------
         self.is_nightly = nightly
         self.build_number = build_number
         self.build_name = branch_name
@@ -1475,21 +1475,22 @@ class BuildContext:
         self.collector_token = collector_token
         self.inputs = inputs
 
+        # --------------------------- Pushing data settings -------------------------------
+
         self.push = push
         self.interactive = interactive
         self.delete_existing_dataset = delete_existing_dataset
 
         # --------------------------- Machine preparation -------------------------------
 
-        self.cloud_machines = cloud_machine_ids.split(",")
-        self.cloud_servers_path = cloud_servers_path
-
-        cloud_conf = get_json_file(self.cloud_servers_path)
-        self.cloud_servers_path_json = {
-            machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
-        }
-        self.cloud_servers_api_keys = cloud_servers_api_keys
-        self.cloud_servers_api_keys_json = get_json_file(self.cloud_servers_api_keys)
+        self.cloud_machines_ids = cloud_machine_ids.split(",")
+        self.cloud_servers_path_json = get_json_file(cloud_servers_path)
+        self.cloud_servers_api_keys_json = get_json_file(cloud_servers_api_keys)
+        self.machine_assignment_json = get_json_file(machine_assignment)
+        logger.info(f"Cloud machines: {self.cloud_machines_ids}")
+        logger.info(f"Cloud servers path: {self.cloud_servers_path_json}")
+        logger.info(f"Cloud servers api keys: {self.cloud_servers_api_keys_json}")
+        logger.info(f"Machine assignment: {self.machine_assignment_json}")
 
         # --------------------------- Testing preparation -------------------------------
 
@@ -1497,7 +1498,6 @@ class BuildContext:
             service_account,
             artifacts_bucket,
         )
-        self.machine_assignment_json = get_json_file(machine_assignment)
 
         # --------------------------- Machine preparation logic -------------------------------
 

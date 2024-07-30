@@ -417,3 +417,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @property
     def strict_object(self) -> Optional[Type[BaseModel]]:
         return None
+
+
+def test():
+    pass

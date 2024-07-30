@@ -269,9 +269,10 @@ class Initializer:
                     clean_line: str = line.rstrip("\n")
                     relative_untracked_files_paths.add(Path(clean_line))
             logger.info(
-                f"\n######## - Modified untracked:\n{relative_untracked_files_paths}"
+                f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
             )
-            modified_files = modified_files.union(relative_untracked_files_paths)
+            # modified_files = modified_files.union(relative_untracked_files_paths)
+            added_files = added_files.union(relative_untracked_files_paths)
 
         return modified_files, added_files, renamed_files
 

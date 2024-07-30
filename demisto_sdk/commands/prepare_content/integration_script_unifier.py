@@ -485,25 +485,30 @@ class IntegrationScriptUnifier(Unifier):
         :param pack_version: The pack version
         :return: The integration script with the pack version appended if needed, otherwise returns the original script
         """
-        if script_type == ".js":
-            return (
-                script_code
-                if "// pack version:" in script_code
-                else f"// pack version: {pack_version}\n{script_code}"
-            )
-        elif script_type == ".ps1":
+        if script_type == ".ps1":
             return (
                 script_code
                 if "### pack version:" in script_code
                 else f"### pack version: {pack_version}\n{script_code}"
             )
-        elif script_type == ".py":
-            if "### pack version:" not in script_code:
-                script_code = f"### pack version: {pack_version}\n{script_code}"
-            if "os.environ['PACK_VERSION'] =" not in script_code:
-                script_code = f"os.environ['PACK_VERSION'] = '{pack_version}'\n{script_code}"
-            return script_code
+        elif script_type == ".js":
+            debug_pattern_js = r"logDebug\('pack version = .*?\)"
+            new_debug_statement = f"logDebug('pack version = {pack_version}')"
 
+            if re.search(debug_pattern_js, script_code):
+                script_code = re.sub(debug_pattern_js, new_debug_statement, script_code)
+            else:
+                script_code = f"{new_debug_statement}\n{script_code}"
+            return script_code
+        elif script_type == ".py":
+            debug_pattern_py = r"demisto\.debug\('pack version = .*?\)"
+            new_debug_statement = f"demisto.debug('pack version = {pack_version}')"
+
+            if re.search(debug_pattern_py, script_code):
+                script_code = re.sub(debug_pattern_py, new_debug_statement, script_code)
+            else:
+                script_code = f"{new_debug_statement}\n{script_code}"
+            return script_code
         return script_code
 
     @staticmethod

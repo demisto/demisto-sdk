@@ -102,7 +102,11 @@ def test_IsRNAddedToNewPackValidator_obtain_invalid_content_items():
     valid_content_items = [create_pack_object()]
     validator = IsRNAddedToNewPackValidator()
     assert not validator.obtain_invalid_content_items(valid_content_items)
-    invalid_content_items = [create_pack_object(paths = ["version"], values = ["1.0.1"], release_note_content="should fail")]
+    invalid_content_items = [
+        create_pack_object(
+            paths=["version"], values=["1.0.1"], release_note_content="should fail"
+        )
+    ]
     invalid_content_items[0].current_version = "1.0.0"
     invalid_results = validator.obtain_invalid_content_items(invalid_content_items)
     assert len(invalid_results) == 1

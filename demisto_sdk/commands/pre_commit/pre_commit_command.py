@@ -681,23 +681,27 @@ def preprocess_files(
             The following code segment retrieves all relevant untracked file paths that were changed in the external contribution PR
             and adds them to `raw_files`. See CIAC-10490 for more info.
             """
+            # logger.info( #DELETE
+            #     "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
+            # )
             logger.info(
-                "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
+                "\n[cyan]CONTRIB_BRANCH environment variable found, running pre-commit in contribution flow "
+                "on files staged in Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
             )
-            relative_untracked_files_paths: Set[Path] = set()
+            # relative_untracked_files_paths: Set[Path] = set() #DELETE
 
             # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py and read file paths
-            with open(
-                "contribution_files_relative_paths.txt", "r"
-            ) as contribution_files:
-                for line in contribution_files:
-                    clean_line: str = line.rstrip("\n")
-                    relative_untracked_files_paths.add(Path(clean_line))
-            logger.info(
-                f"\n######## - Modified untracked:\n{relative_untracked_files_paths}"
-            )
-            raw_files = raw_files.union(relative_untracked_files_paths)
-            logger.info(f"\n######## - Running on collected files:\n{raw_files}")
+            # with open(
+            #     "contribution_files_relative_paths.txt", "r"
+            # ) as contribution_files:
+            #     for line in contribution_files:
+            #         clean_line: str = line.rstrip("\n")
+            #         relative_untracked_files_paths.add(Path(clean_line))
+            # logger.info(
+            #     f"\n######## - Modified untracked:\n{relative_untracked_files_paths}"
+            # )
+            # raw_files = raw_files.union(relative_untracked_files_paths)
+            # logger.info(f"\n######## - Running on collected files:\n{raw_files}")
     elif all_files:
         raw_files = all_git_files
     else:

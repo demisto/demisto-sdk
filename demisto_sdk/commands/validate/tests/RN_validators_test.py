@@ -112,7 +112,9 @@ def test_release_note_header_validator_valid():
         create_integration_object(["name"], ["TestIntegration"]),
     ]
     pack.content_items.integration.extend(integrations)
-    results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(content_items=[pack])
+    results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(
+        content_items=[pack]
+    )
     assert len(results) == 0
 
 
@@ -141,7 +143,9 @@ def test_release_note_header_validator_edge_cases_valid():
     )
     pack.content_items.trigger.extend([create_trigger_object()])
     pack.content_items.mapper.extend([create_incoming_mapper_object()])
-    results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(content_items=[pack])
+    results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(
+        content_items=[pack]
+    )
     assert len(results) == 0
 
 
@@ -171,5 +175,7 @@ def test_release_note_header_validator_invalid():
         create_integration_object(),
     ]
     pack.content_items.integration.extend(integrations)
-    results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(content_items=[pack])
+    results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(
+        content_items=[pack]
+    )
     assert expected_error == results[0].message

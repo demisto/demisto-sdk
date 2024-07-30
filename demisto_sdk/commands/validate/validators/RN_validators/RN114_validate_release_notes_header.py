@@ -38,7 +38,9 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
 
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         validator_results: List[ValidationResult] = []
         for content_item in content_items:
             if content_item.pack_metadata_dict and content_item.pack_metadata_dict.get(

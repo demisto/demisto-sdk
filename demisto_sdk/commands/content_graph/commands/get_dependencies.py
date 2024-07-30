@@ -158,7 +158,7 @@ def get_dependencies(
         )
         if output:
             (output / COMMAND_OUTPUTS_FILENAME).write_text(
-                json.dumps(result, indent=4),
+                json.dumps(result),
             )
 
 

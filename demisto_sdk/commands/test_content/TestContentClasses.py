@@ -1642,7 +1642,7 @@ class TestResults:
         with open(
             self.artifacts_path / "test_playbooks_report.json", "w"
         ) as test_playbooks_report_file:
-            json.dump(self.playbook_report, test_playbooks_report_file, indent=4)
+            json.dump(self.playbook_report, test_playbooks_report_file)
 
         self.test_results_xml_file.write(
             (self.artifacts_path / "test_playbooks_report.xml").as_posix(), pretty=True

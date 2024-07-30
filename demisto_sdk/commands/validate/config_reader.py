@@ -17,7 +17,7 @@ class ConfiguredValidations(NamedTuple):
     select: List[str] = []
     warning: List[str] = []
     ignorable_errors: List[str] = []
-    support_level_dict: Dict[str, str] = {}
+    support_level_dict: Dict[str, Dict[str, List[str]]] = {}
 
 
 class ConfigReader:

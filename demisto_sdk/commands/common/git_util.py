@@ -216,6 +216,33 @@ class GitUtil:
         except KeyError:
             return False
 
+    def list_files_in_dir(
+        self,
+        target_dir: Union[Path, str],
+        commit_or_branch: str,
+        from_remote: bool = True,
+    ) -> bool:
+        try:
+            commit = self.get_commit(commit_or_branch, from_remote=from_remote)
+        except CommitOrBranchNotFoundError:
+            logger.exception(f"Could not get commit {commit_or_branch}")
+            return False
+
+        tree = commit.tree / target_dir
+
+        files = []
+
+        def traverse_tree(tree, base_path=""):
+            for item in tree:
+                item_path = f"{base_path}/{item.name}" if base_path else item.name
+                if item.type == "blob":  # File
+                    files.append(item_path)
+                elif item.type == "tree":  # Directory
+                    traverse_tree(item, item_path)
+
+        traverse_tree(tree)
+        return files
+
     @lru_cache
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files("-z").split("\x00")))

@@ -223,11 +223,14 @@ class GitUtil:
         from_remote: bool = True,
     ) -> bool:
         try:
-            commit = self.get_commit(commit_or_branch, from_remote=from_remote)
+            commit = self.repo.commit(commit_or_branch)
+            # commit = self.get_commit(commit_or_branch, from_remote=from_remote)
         except CommitOrBranchNotFoundError:
             logger.exception(f"Could not get commit {commit_or_branch}")
             return False
 
+        target_dir = self.path_from_git_root(target_dir)
+        target_dir = str(target_dir)
         tree = commit.tree / target_dir
 
         files = []

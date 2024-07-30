@@ -8,6 +8,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.incident_field import (
+    StrictIncidentField,
+)
 
 
 class IncidentFieldParser(
@@ -28,6 +31,10 @@ class IncidentFieldParser(
         self.group = self.json_data.get("group")
 
         self.connect_to_dependencies()
+
+    @property
+    def strict_object(self):
+        return StrictIncidentField
 
     @cached_property
     def field_mapping(self):

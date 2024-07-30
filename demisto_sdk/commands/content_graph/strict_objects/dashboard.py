@@ -91,7 +91,7 @@ class _StrictDashboard(BaseStrictModel):
     is_predefined: bool = Field(alias="isPredefined")
     from_date: Optional[str] = Field(None, alias="fromDate")
     to_date: Optional[str] = Field(None, alias="toDate")
-    period: Optional[dict] = Field(default_factory=dict)
+    period: Optional[Dict[str, Any]] = Field(default_factory=dict)
     layout: Optional[List[DashboardLayout]] = Field(default_factory=list)  # type:ignore[valid-type]
     marketplaces: Optional[List[MarketplaceVersions]] = None
 

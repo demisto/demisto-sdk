@@ -261,7 +261,6 @@ class BaseContent(BaseNode):
         """
         raise NotImplementedError
 
-
     def dump(
         self,
         path: DirectoryPath,

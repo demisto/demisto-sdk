@@ -172,8 +172,6 @@ class ContentItem(BaseContent):
     def pack_version(self) -> Optional[Version]:
         return self.in_pack.pack_version if self.in_pack else None
 
-
-
     @property
     def uses(self) -> List["RelationshipData"]:
         """

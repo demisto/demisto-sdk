@@ -190,7 +190,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def pack_version(self) -> Optional[Version]:
         return Version(self.current_version) if self.current_version else None
 
-
     @property
     def depends_on(self) -> List["RelationshipData"]:
         """

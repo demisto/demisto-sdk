@@ -1,4 +1,0 @@
-changes:
-- description: Moved IN147 validation to the new validate format as code BC114. The validation ensures no fields were removed/modified from the integration yml for a predefined list of fields..
-  type: internal
-pr_number: 4449

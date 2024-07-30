@@ -1,4 +1,0 @@
-changes:
-- description: Replaced project formatter from `Black` to `ruff-format` and removed the `Black` dev-dependency
-  type: internal
-pr_number: 4435

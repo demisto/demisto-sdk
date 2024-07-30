@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue in BA124 validation where the validation wasn't case sensitive.
-  type: fix
-pr_number: 4450

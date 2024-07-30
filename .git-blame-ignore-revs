@@ -13,3 +13,6 @@
 
 # apply the Black formatting to the whole repo
 c798d7368c7e10e79de16de80a1c02423c57e1a9
+
+# added the `toml-sort` hook
+06c0fde41fbeca6854fbb09a0b2e2eb677e173df

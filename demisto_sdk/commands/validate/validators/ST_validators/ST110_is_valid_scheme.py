@@ -1,10 +1,15 @@
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects import (
+    Classifier,
+    CorrelationRule,
     GenericType,
     IncidentField,
     IncidentType,
     IndicatorField,
+    Layout,
+    LayoutRule,
+    Playbook,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -14,7 +19,17 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[
-    Integration, Script, IncidentField, IndicatorField, IncidentType, GenericType
+    Integration,
+    Script,
+    IncidentField,
+    IndicatorField,
+    IncidentType,
+    GenericType,
+    Classifier,
+    Layout,
+    LayoutRule,
+    Playbook,
+    CorrelationRule,
 ]
 
 

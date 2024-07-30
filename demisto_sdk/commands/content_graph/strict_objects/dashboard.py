@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from pydantic import Field
 
@@ -15,13 +15,16 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     create_model,
 )
 
+
 class DashboardWidget(BaseStrictModel):
     cache: Optional[str] = Field(None, alias="Cache")
     cache_versn: Optional[int] = Field(None, alias="cacheVersn")
     category: Optional[str] = None
     created: Optional[str] = None
     data_type: Optional[str] = Field(None, alias="dataType")
-    date_range: Optional[Dict[str, Any]] = Field(alias="dateRange", default_factory=dict)
+    date_range: Optional[Dict[str, Any]] = Field(
+        alias="dateRange", default_factory=dict
+    )
     definition_id: Optional[str] = Field(None, alias="definitionId")
     from_server_version: Optional[str] = Field(None, alias="fromServerVersion")
     id_: Optional[str] = Field(None, alias="id")
@@ -32,7 +35,9 @@ class DashboardWidget(BaseStrictModel):
     name: Optional[str] = None
     pack_id: Optional[str] = Field(None, alias="packID")
     pack_name: Optional[str] = Field(None, alias="packName")
-    pack_propagation_labels: Optional[List[str]] = Field(None, alias="packPropagationLabels")
+    pack_propagation_labels: Optional[List[str]] = Field(
+        None, alias="packPropagationLabels"
+    )
     params: Optional[Dict[str, Any]] = Field(default_factory=dict)
     prev_name: Optional[str] = Field(None, alias="prevName")
     primary_term: Optional[int] = Field(None, alias="primaryTerm")
@@ -41,7 +46,9 @@ class DashboardWidget(BaseStrictModel):
     sequence_number: Optional[int] = Field(None, alias="sequenceNumber")
     size_in_bytes: Optional[int] = Field(None, alias="sizeInBytes")
     to_server_version: Optional[str] = Field(None, alias="toServerVersion")
-    vc_should_keep_item_legacy_prod_machine: Optional[str] = Field(None, alias="vcShouldKeepItemLegacyProdMachine")
+    vc_should_keep_item_legacy_prod_machine: Optional[str] = Field(
+        None, alias="vcShouldKeepItemLegacyProdMachine"
+    )
     version: Optional[int] = None
     widget_type: Optional[str] = Field(None, alias="widgetType")
     commit_message: Optional[str] = Field(None, alias="commitMessage")
@@ -53,6 +60,7 @@ class DashboardWidget(BaseStrictModel):
     description: Optional[str] = None
     from_version: Optional[str] = Field(None, alias="fromVersion")
     locked: Optional[bool] = None
+
 
 class _DashboardLayout(BaseStrictModel):
     force_range: bool = Field(alias="forceRange")

@@ -89,23 +89,31 @@ def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_c
         content_items = (
             create_script_object(
                 paths=["name", "args"],
-                values=["InvalidScript", [{"name": "incident-id", "description": "test"}]],
+                values=[
+                    "InvalidScript",
+                    [{"name": "incident-id", "description": "test"}],
+                ],
                 pack_info={"name": "PackWithInvalidScript"},
             ),
             create_script_object(
                 paths=["args"],
                 values=[
-                    [{"name": "incident-id", "description": "test", "deprecated": True}],
+                    [
+                        {
+                            "name": "incident-id",
+                            "description": "test",
+                            "deprecated": True,
+                        }
+                    ],
                 ],
                 pack_info={"name": "PackWithValidScript"},
             ),
             create_script_object(),
         )
 
-
         results = IsScriptArgumentsContainIncidentWordValidatorCorePacks().obtain_invalid_content_items(
-                content_items
-            )
+            content_items
+        )
     assert len(results) == 1
     assert results[0].content_object.name == "InvalidScript"
 

@@ -112,7 +112,13 @@ class RNRelatedFile(TextFiles):
         self, main_file_path: Path, latest_rn: str, git_sha: Optional[str] = None
     ) -> None:
         self.latest_rn_version = latest_rn
-        self.all_rns = GitUtil.from_content_path().list_files_in_dir(main_file_path / RELEASE_NOTES_DIR, git_sha, True) if git_sha else []
+        self.all_rns = (
+            GitUtil.from_content_path().list_files_in_dir(
+                main_file_path / RELEASE_NOTES_DIR, git_sha, True
+            )
+            if git_sha
+            else []
+        )
         super().__init__(main_file_path, git_sha)
 
     def get_optional_paths(self) -> List[Path]:

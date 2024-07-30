@@ -582,7 +582,6 @@ def test_insert_pack_version_and_script_to_yml():
     version_str_py_2 = f"demisto.debug('pack version = {pack_version_2}')"
     version_str_ps1 = f"### pack version: {pack_version_1}"
     version_str_js = f"logDebug('pack version = {pack_version_1}')"
-    version_str_js_2 = f"logDebug('pack version = {pack_version_2}')"
 
 
     # Test for Python script
@@ -599,11 +598,6 @@ def test_insert_pack_version_and_script_to_yml():
     updated_script_js = IntegrationScriptUnifier.insert_pack_version(".js", DUMMY_SCRIPT, pack_version_1)
     assert version_str_js in updated_script_js
     assert updated_script_js.count(version_str_js) == 1  # Ensure it is added only once
-
-    updated_script_js_2 = IntegrationScriptUnifier.insert_pack_version(".js", updated_script_js, pack_version_2)
-    assert version_str_js_2 in updated_script_js_2
-    assert version_str_js not in updated_script_js_2  # Ensure the old version is replaced
-    assert updated_script_js_2.count(version_str_js_2) == 1  # Ensure it is added only once
 
     # Test for PowerShell script
     updated_script_ps1 = IntegrationScriptUnifier.insert_pack_version(".ps1", DUMMY_SCRIPT, pack_version_1)

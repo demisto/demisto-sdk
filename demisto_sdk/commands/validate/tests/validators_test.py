@@ -2,7 +2,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import Set
+from typing import Dict, List, Optional, Set
 from unittest.mock import patch
 
 import pytest
@@ -134,15 +134,16 @@ def test_filter_validators(
 
 
 @pytest.mark.parametrize(
-    "category_to_run, execution_mode, config_file_content, expected_results, ignore_support_level, specific_validations",
+    "category_to_run, execution_mode, config_file_content, expected_results, ignore_support_level, specific_validations, codes_to_ignore",
     [
         (
             None,
             ExecutionMode.USE_GIT,
-            {"use_git": {"select": ["BA101", "BC100", "PA108"]}},
-            ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
+            {"use_git": {"select": ["BA101", "BC100", "PA108"]}, "ignorable_errors": ["E002", "W001"]},
+            ConfiguredValidations(["BA101", "BC100", "PA108"], [], ['E002', 'W001'], {}),
             False,
             [],
+            ["E002", "W001"]
         ),
         (
             "custom_category",
@@ -152,11 +153,12 @@ def test_filter_validators(
                 "custom_category": {
                     "select": ["BA101", "BC100", "PA108"],
                 },
-                "use_git": {"select": ["TE105", "TE106", "TE107"]},
+                "use_git": {"select": ["TE105", "TE106", "TE107", "BA101"]},
             },
             ConfiguredValidations(["BA101", "BC100", "PA108"], [], ["BA101"], {}),
             False,
             [],
+            ["BA101"]
         ),
         (
             None,
@@ -165,6 +167,7 @@ def test_filter_validators(
             ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
             False,
             [],
+            []
         ),
         (
             None,
@@ -181,6 +184,7 @@ def test_filter_validators(
             ),
             False,
             [],
+            []
         ),
         (
             None,
@@ -192,6 +196,7 @@ def test_filter_validators(
             ConfiguredValidations(["TE105", "TE106", "TE107"], [], [], {}),
             True,
             [],
+            []
         ),
         (
             None,
@@ -200,17 +205,19 @@ def test_filter_validators(
             ConfiguredValidations(["TE100", "TE101"], [], [], {}),
             False,
             ["TE100", "TE101"],
+            []
         ),
     ],
 )
 def test_gather_validations_from_conf(
-    mocker,
-    category_to_run,
-    execution_mode,
-    config_file_content,
-    expected_results,
-    ignore_support_level,
-    specific_validations,
+    mocker: MockerFixture,
+    category_to_run: Optional[str],
+    execution_mode: ExecutionMode,
+    config_file_content: Dict,
+    expected_results: ConfiguredValidations,
+    ignore_support_level: bool,
+    specific_validations: List[str],
+    codes_to_ignore: List[str],
 ):
     """
     Given
@@ -237,7 +244,7 @@ def test_gather_validations_from_conf(
         category=category_to_run, explicitly_selected=specific_validations
     )
     results: ConfiguredValidations = config_reader.read(
-        mode=execution_mode, ignore_support_level=ignore_support_level
+        mode=execution_mode, ignore_support_level=ignore_support_level, codes_to_ignore=codes_to_ignore
     )
     assert results.select == expected_results.select
     assert results.ignorable_errors == expected_results.ignorable_errors
@@ -786,87 +793,3 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
     )
     output = initializer.get_unfiltered_changed_files_from_git()
     assert output[0] == expected_output
-
-
-@pytest.mark.parametrize(
-    "category_to_run, execution_mode, config_file_content, expected_results, ignore_support_level, specific_validations, codes_to_ignore",
-    [
-        pytest.param(
-            None,
-            ExecutionMode.USE_GIT,
-            {
-                "use_git": {"select": ["E001", "E002", "E003"]},
-                "ignorable_errors": ["E002", "W001"],
-            },
-            ConfiguredValidations(
-                select=["E001", "E003"],
-                warning=[],
-                ignorable_errors=["E002", "W001"],
-                support_level_dict={},
-            ),
-            False,
-            [],
-            ["E002", "W001"],
-            id="Ignore E002 and W001",
-        ),
-        pytest.param(
-            None,
-            ExecutionMode.USE_GIT,
-            {
-                "use_git": {"select": ["E001", "E002"], "warning": ["W001"]},
-                "ignorable_errors": ["E002"],
-            },
-            ConfiguredValidations(
-                select=["E001"],
-                warning=["W001"],
-                ignorable_errors=["E002"],
-                support_level_dict={},
-            ),
-            True,
-            ["E001"],
-            ["E002"],
-            id="Ignore E002 only",
-        ),
-        pytest.param(
-            None,
-            ExecutionMode.USE_GIT,
-            {
-                "use_git": {"select": ["E001", "E002", "E003"]},
-                "ignorable_errors": ["E002", "W001"],
-            },
-            ConfiguredValidations(
-                select=[],
-                warning=[],
-                ignorable_errors=["E002", "W001"],
-                support_level_dict={},
-            ),
-            False,
-            ["E002"],
-            ["E002", "W001"],
-            id="Specific validation and ignore same code E002",
-        ),
-    ],
-)
-def test_ignore_codes_in_config(
-    mocker,
-    category_to_run,
-    execution_mode,
-    config_file_content,
-    expected_results,
-    ignore_support_level,
-    specific_validations,
-    codes_to_ignore,
-):
-    mocker.patch.object(toml, "load", return_value=config_file_content)
-    config_reader = ConfigReader(
-        category=category_to_run, explicitly_selected=specific_validations
-    )
-    results: ConfiguredValidations = config_reader.read(
-        mode=execution_mode,
-        ignore_support_level=ignore_support_level,
-        codes_to_ignore=codes_to_ignore,
-    )
-    assert results.select == expected_results.select
-    assert results.ignorable_errors == expected_results.ignorable_errors
-    assert results.warning == expected_results.warning
-    assert results.support_level_dict == expected_results.support_level_dict

@@ -1,10 +1,19 @@
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseOptionalVersionJson
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model, ID_DYNAMIC_MODEL, \
-    DESCRIPTION_DYNAMIC_MODEL, NAME_DYNAMIC_MODEL, create_dynamic_model
-
 from typing import List, Optional
+
 from pydantic import Field
+
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseOptionalVersionJson,
+)
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    DESCRIPTION_DYNAMIC_MODEL,
+    ID_DYNAMIC_MODEL,
+    NAME_DYNAMIC_MODEL,
+    BaseStrictModel,
+    create_dynamic_model,
+    create_model,
+)
 
 
 class _DashboardLayout(BaseStrictModel):
@@ -18,11 +27,13 @@ class _DashboardLayout(BaseStrictModel):
     reflect_dimensions: Optional[bool] = Field(None, alias="reflectDimensions")
 
 
-DashboardLayout = create_model(model_name="DashboardLayout",
-                               base_models=(_DashboardLayout,
-                                            ID_DYNAMIC_MODEL,
-                                            )
-                               )
+DashboardLayout = create_model(
+    model_name="DashboardLayout",
+    base_models=(
+        _DashboardLayout,
+        ID_DYNAMIC_MODEL,
+    ),
+)
 
 
 class _StrictDashboard(BaseStrictModel):
@@ -35,7 +46,7 @@ class _StrictDashboard(BaseStrictModel):
     from_date: Optional[str] = Field(None, alias="fromDate")
     to_date: Optional[str] = Field(None, alias="toDate")
     period: Optional[dict] = Field(default_factory=dict)
-    layout: Optional[List[DashboardLayout]] = Field(default_factory=list)
+    layout: Optional[List[DashboardLayout]] = Field(default_factory=list)  # type:ignore[valid-type]
     marketplaces: Optional[List[MarketplaceVersions]] = None
 
 
@@ -46,9 +57,13 @@ ID_DASHBOARD_DYNAMIC_MODEL = create_dynamic_model(
     default=None,
 )
 
-StrictDashboard = create_model(model_name="StrictDashboard",
-                               base_models=(_StrictDashboard,
-                                            BaseOptionalVersionJson,
-                                            DESCRIPTION_DYNAMIC_MODEL,
-                                            NAME_DYNAMIC_MODEL,
-                                            ID_DASHBOARD_DYNAMIC_MODEL))
+StrictDashboard = create_model(
+    model_name="StrictDashboard",
+    base_models=(
+        _StrictDashboard,
+        BaseOptionalVersionJson,
+        DESCRIPTION_DYNAMIC_MODEL,
+        NAME_DYNAMIC_MODEL,
+        ID_DASHBOARD_DYNAMIC_MODEL,
+    ),
+)

@@ -133,7 +133,7 @@ class ContentItem(BaseContent):
         if pack and pack.support:
             return pack.support
 
-        return
+        return None
 
     @property
     def ignored_errors(self) -> List[str]:

@@ -9,8 +9,8 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
-    ID_JUST_WITH_SUFFIX_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
+    SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
     create_model,
 )
@@ -103,6 +103,6 @@ StrictDashboard = create_model(
         BaseOptionalVersionJson,
         DESCRIPTION_DYNAMIC_MODEL,
         NAME_DYNAMIC_MODEL,
-        ID_JUST_WITH_SUFFIX_DYNAMIC_MODEL,
+        SUFFIXED_ID_DYNAMIC_MODEL,
     ),
 )

@@ -3,8 +3,8 @@ from typing import Optional
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
-    ID_JUST_WITH_SUFFIX_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
+    SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
     create_model,
 )
@@ -28,6 +28,6 @@ StrictGenericDefinition = create_model(
     base_models=(
         _StrictGenericDefinition,
         NAME_DYNAMIC_MODEL,
-        ID_JUST_WITH_SUFFIX_DYNAMIC_MODEL,
+        SUFFIXED_ID_DYNAMIC_MODEL,
     ),
 )

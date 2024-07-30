@@ -217,7 +217,7 @@ RIGHT_DYNAMIC_MODEL = create_dynamic_model(
     include_without_suffix=True,
 )
 
-ID_JUST_WITH_SUFFIX_DYNAMIC_MODEL = create_dynamic_model(
+SUFFIXED_ID_DYNAMIC_MODEL = create_dynamic_model(
     # creating here with include_without_suffix == False
     field_name="id",
     type_=Optional[str],

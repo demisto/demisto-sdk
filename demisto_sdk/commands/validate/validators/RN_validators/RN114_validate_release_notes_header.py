@@ -169,9 +169,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                 missing_display_names[header] = missing
         return missing_display_names
 
-    def validate_convert_content_type_to_rn_headers(
-        self, pack: Pack
-    ) -> Tuple[List[str], List[str]]:
+    def validate_release_notes_headers(self, pack: Pack) -> Tuple[List[str], List[str]]:
         """
         Validate that the release notes headers are valid:
         - Validate that the release notes 1st headers are a valid content entity.

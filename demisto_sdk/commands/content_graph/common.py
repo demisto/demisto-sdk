@@ -291,16 +291,6 @@ class ContentType(StrEnum):
             return "XDRC Templates"
         elif self == ContentType.XSIAM_DASHBOARD:
             return "XSIAM Dashboards"
-        elif self == ContentType.INCIDENT_FIELD:
-            return "Incident Fields"
-        elif self == ContentType.INCIDENT_TYPE:
-            return "Incident Types"
-        elif self == ContentType.INDICATOR_FIELD:
-            return "Indicator Fields"
-        elif self == ContentType.INDICATOR_TYPE:
-            return "Indicator Types"
-        elif self == ContentType.PREPROCESS_RULE:
-            return "PreProcess Rules"
         elif self == ContentType.GENERIC_TYPE:
             return "Object Types"
         elif self == ContentType.GENERIC_FIELD:
@@ -309,23 +299,8 @@ class ContentType(StrEnum):
             return "Objects"
         elif self == ContentType.GENERIC_MODULE:
             return "Modules"
-        elif self == ContentType.PARSING_RULE:
-            return "Parsing Rules"
-        elif self == ContentType.MODELING_RULE:
-            return "Modeling Rules"
-        elif self == ContentType.CORRELATION_RULE:
-            return "Correlation Rules"
-        elif self == ContentType.LAYOUT_RULE:
-            return "Layout Rules"
-        elif self == ContentType.ASSETS_MODELING_RULE:
-            return "Assets Modeling Rules"
-        elif self == ContentType.CASE_LAYOUT_RULE:
-            return "Case Layout Rules"
-        elif self == ContentType.CASE_FIELD:
-            return "Case Fields"
-        elif self == ContentType.CASE_LAYOUT:
-            return "Case Layouts"
-        return f"{self.value}s"
+        separated_str = re.sub(r"(?<!^)(?<![A-Z])(?=[A-Z])", " ", self)
+        return f"{separated_str}s"
 
     @staticmethod
     def convert_header_to_content_type(header: str) -> "ContentType":
@@ -347,7 +322,7 @@ class ContentType(StrEnum):
         elif header == "Object Fields":
             return ContentType.GENERIC_FIELD
         normalized_header = header.rstrip("s").replace(" ", "_").upper()
-        return ContentType(normalized_header)
+        return ContentType[normalized_header]
 
 
 class Relationship(BaseModel):

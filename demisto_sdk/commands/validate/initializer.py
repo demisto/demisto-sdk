@@ -261,8 +261,6 @@ class Initializer:
             )
             # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
             relative_untracked_files_paths: Set[Path] = set()
-            staged_files = self.git_util._get_staged_files
-            logger.info(f"\n######## - Staged files:\n{staged_files}")
             with open(
                 "contribution_files_relative_paths.txt", "r"
             ) as contribution_files:
@@ -451,7 +449,6 @@ class Initializer:
         ) = self.git_paths_to_basecontent_set(
             statuses_dict_with_renamed_files_tuple, git_sha=self.prev_ver
         )
-        logger.info(f"{basecontent_with_path_set=}")
         return basecontent_with_path_set, invalid_content_items, non_content_items
 
     def paths_to_basecontent_set(

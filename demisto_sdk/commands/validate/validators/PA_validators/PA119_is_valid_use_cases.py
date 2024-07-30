@@ -39,9 +39,10 @@ class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                non_approved_usecases := self.get_non_approved_usecases(
+                content_item.old_base_content_object.release_note.all_rns and
+                (non_approved_usecases := self.get_non_approved_usecases(
                     approved_usecases, content_item
-                )
+                ))
             )
         ]
 

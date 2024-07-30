@@ -220,11 +220,18 @@ class GitUtil:
         self,
         target_dir: Union[Path, str],
         commit_or_branch: str,
-        from_remote: bool = True,
     ) -> list:
+        """Retrieve the list of files under a given target_dir in a given commit or branch.
+
+        Args:
+            target_dir (Union[Path, str]): The target dir to retrieve from.
+            commit_or_branch (str): The commit or branch to retrieve from.
+
+        Returns:
+            list: The list of files under the given target_dir in the given commit or branch.
+        """
         try:
             commit = self.repo.commit(commit_or_branch)
-            # commit = self.get_commit(commit_or_branch, from_remote=from_remote)
         except CommitOrBranchNotFoundError:
             logger.exception(f"Could not get commit {commit_or_branch}")
             return []

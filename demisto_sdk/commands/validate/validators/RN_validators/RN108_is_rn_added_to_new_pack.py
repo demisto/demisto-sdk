@@ -35,5 +35,5 @@ class IsRNAddedToNewPackValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (content_item.release_note.exist)
+            if (content_item.release_note.all_rns)
         ]

@@ -1,7 +1,13 @@
-from pydantic import Field
 from typing import Optional
 
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model, NAME_DYNAMIC_MODEL
+from pydantic import Field
+
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    ID_JUST_WITH_SUFFIX_DYNAMIC_MODEL,
+    NAME_DYNAMIC_MODEL,
+    BaseStrictModel,
+    create_model,
+)
 
 
 class _StrictGenericDefinition(BaseStrictModel):
@@ -16,14 +22,12 @@ class _StrictGenericDefinition(BaseStrictModel):
     from_version: str = Field(alias="fromVersion")
     plural_name: Optional[str] = Field(None, alias="pluralName")
 
-    id_xsoar: Optional[str] = Field(None, alias='id:xsoar')
-    id_marketplacev2: Optional[str] = Field(None, alias='id:marketplacev2')
-    id_xpanse: Optional[str] = Field(None, alias='id:xpanse')
-    id_xsoar_saas: Optional[str] = Field(None, alias='id:xsoar_saas')
-    id_xsoar_on_prem: Optional[str] = Field(None, alias='id:xsoar_on_prem')
 
-
-StrictGenericDefinition = create_model(model_name="StrictGenericDefinition",
-                                       base_models=(_StrictGenericDefinition,
-                                                    NAME_DYNAMIC_MODEL,
-                                                    ))
+StrictGenericDefinition = create_model(
+    model_name="StrictGenericDefinition",
+    base_models=(
+        _StrictGenericDefinition,
+        NAME_DYNAMIC_MODEL,
+        ID_JUST_WITH_SUFFIX_DYNAMIC_MODEL,
+    ),
+)

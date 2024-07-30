@@ -570,17 +570,8 @@ def pre_commit_manager(
     if not pre_commit_template_path:
         if PRECOMMIT_TEMPLATE_PATH.exists():
             pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
-            logger.info(  # DELETE
-                f"\n[cyan]{PRECOMMIT_TEMPLATE_PATH=}"
-            )
         else:
             pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
-            logger.info(  # DELETE
-                f"\n[cyan]{DEFAULT_PRE_COMMIT_TEMPLATE_PATH=}"
-            )
-    logger.info(  # DELETE
-        f"\n[cyan]{pre_commit_template_path=}"
-    )
     if pre_commit_template_path and not pre_commit_template_path.exists():
         logger.error(
             f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
@@ -721,11 +712,8 @@ def preprocess_files(
         for file in files_to_run
     }
     logger.info(  # DELETE
-        f"\n[cyan]{relative_paths=}"
-    )
-    logger.info(  # DELETE
         f"\n[cyan]{relative_paths & all_git_files=}"
     )
     """filter out files that are not in the content git repo (e.g in .gitignore)
     excluding the contribution flow which gets its "git diff" manually from a file"""
-    return relative_paths if contribution_flow else relative_paths & all_git_files
+    return relative_paths & all_git_files

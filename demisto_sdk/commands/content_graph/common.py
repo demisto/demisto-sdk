@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_json,
     get_remote_file,
+    pascalToSpace,
 )
 
 NEO4J_ADMIN_DOCKER = ""
@@ -299,7 +300,7 @@ class ContentType(StrEnum):
             return "Objects"
         elif self == ContentType.GENERIC_MODULE:
             return "Modules"
-        separated_str = re.sub(r"(?<!^)(?<![A-Z])(?=[A-Z])", " ", self)
+        separated_str = pascalToSpace(self)
         return f"{separated_str}s"
 
     @staticmethod

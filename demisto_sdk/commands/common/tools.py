@@ -4625,23 +4625,24 @@ def get_json_file(path):
             logger.debug(f"An unexpected error occurred: {e}")
     return file_content
 
+
 def pascalToSpace(s):
     """
-       Converts pascal strings to human readable (e.g. "ThreatScore" -> "Threat Score")
+    Converts pascal strings to human readable (e.g. "ThreatScore" -> "Threat Score")
 
-       :type s: ``str``
-       :param s: The string to be converted (required)
+    :type s: ``str``
+    :param s: The string to be converted (required)
 
-       :return: The converted string
-       :rtype: ``str``
+    :return: The converted string
+    :rtype: ``str``
     """
-    pascalRegex = re.compile('([A-Z]?[a-z]+)')
+    pascalRegex = re.compile("([A-Z]?[a-z]+)")
     if not isinstance(s, str):
         return s
 
     # double space to handle capital words like IP/URL/DNS that not included in the regex
-    s = re.sub(pascalRegex, lambda match: r' {} '.format(match.group(1).title()), s)
+    s = re.sub(pascalRegex, lambda match: r" {} ".format(match.group(1).title()), s)
 
     # split and join: to remove double spacing caused by previous workaround
-    s = ' '.join(s.split())
+    s = " ".join(s.split())
     return s

@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from threading import Thread
 from time import sleep
@@ -77,6 +77,11 @@ XSIAM_CLIENT_RETRY_ATTEMPTS = 5
 app = typer.Typer()
 
 
+def get_utc_now() -> datetime:
+    """Get the current time in UTC, with timezone aware."""
+    return datetime.now(tz=pytz.UTC)
+
+
 def duration_since_start_time(start_time: datetime) -> float:
     """Get the duration since the given start time, in seconds.
 
@@ -86,7 +91,7 @@ def duration_since_start_time(start_time: datetime) -> float:
     Returns:
         float: Duration since the given start time, in seconds.
     """
-    return (datetime.now(timezone.utc) - start_time).total_seconds()
+    return (get_utc_now() - start_time).total_seconds()
 
 
 def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
@@ -624,13 +629,13 @@ def check_dataset_exists(
     dataset_set_test_case = TestCase(
         "Check if dataset exists in tenant", classname="Check dataset exists"
     )
-    dataset_set_test_case_start_time = datetime.now(timezone.utc)
+    dataset_set_test_case_start_time = get_utc_now()
     test_case_results = []
     logger.debug(
         f"Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly."
     )
     sleep(init_sleep_time)
-    start_time = datetime.now(tz=pytz.UTC)
+    start_time = get_utc_now()
     results_exist = False
     dataset_exist = False
     logger.info(
@@ -668,10 +673,8 @@ def check_dataset_exists(
         if print_errors:
             logger.error(f"[red]{err}[/red]", extra={"markup": True})
 
-    duration = datetime.now(tz=pytz.UTC) - start_time
-    logger.info(
-        f"Processing Dataset {dataset} finished after {duration.total_seconds():.2f} seconds"
-    )
+    duration = duration_since_start_time(start_time)
+    logger.info(f"Processing Dataset {dataset} finished after {duration:.2f} seconds")
     # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
     process_failed |= not (dataset_exist and results_exist)
 
@@ -703,7 +706,7 @@ def push_test_data_to_tenant(
         f"Push test data to tenant {mr.path}",
         classname="Push test data to tenant",
     )
-    push_test_data_test_case_start_time = datetime.now(timezone.utc)
+    push_test_data_test_case_start_time = get_utc_now()
     system_errors = []
     for rule in mr.rules:
         events_test_data = [
@@ -1607,7 +1610,7 @@ class CloudServerContext:
                 f"Starts tests with server url - {get_ui_url(self.ui_url)}",
                 real_time=True,
             )
-            start_time = datetime.utcnow()
+            start_time = get_utc_now()
             self.build_context.logging_module.info(
                 f"Running the following tests: {self.tests}",
                 real_time=True,
@@ -1886,7 +1889,7 @@ def test_modeling_rule(
             )
             raise typer.Exit(1)
 
-    start_time = datetime.now(timezone.utc)
+    start_time = get_utc_now()
 
     build_context = BuildContext(
         nightly=nightly,

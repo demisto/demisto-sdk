@@ -499,12 +499,18 @@ class IntegrationScriptUnifier(Unifier):
             )
         elif script_type == ".py":
             existing_pack_info_debug_log_re = r"demisto\.debug\('pack version = .*?\)"
-            pack_info_debug_statement= f"demisto.debug('pack version = {pack_version}')"
+            pack_info_debug_statement = (
+                f"demisto.debug('pack version = {pack_version}')"
+            )
 
-            if re.search(debug_pattern_py, script_code):
-                script_code = re.sub(debug_pattern_py, new_debug_statement, script_code) # replace existing (edge case)
-            else: # common case
-                script_code = f"{new_debug_statement}\n{script_code}"
+            if re.search(existing_pack_info_debug_log_re, script_code):
+                script_code = re.sub(
+                    existing_pack_info_debug_log_re,
+                    pack_info_debug_statement,
+                    script_code,
+                )  # replace existing (edge case)
+            else:  # common case
+                script_code = f"{pack_info_debug_statement}\n{script_code}"
             return script_code
         return script_code
 

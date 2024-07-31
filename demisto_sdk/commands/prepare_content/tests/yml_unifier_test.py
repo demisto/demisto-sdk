@@ -581,29 +581,41 @@ def test_insert_pack_version_and_script_to_yml():
     version_str_py = f"demisto.debug('pack version = {pack_version_1}')"
     version_str_py_2 = f"demisto.debug('pack version = {pack_version_2}')"
     version_str_ps1 = f"### pack version: {pack_version_1}"
-    version_str_js = f"logDebug('pack version = {pack_version_1}')"
-
+    version_str_js = f"// pack version: {pack_version_1}"
 
     # Test for Python script
-    updated_script_py = IntegrationScriptUnifier.insert_pack_version(".py", DUMMY_SCRIPT, pack_version_1)
+    updated_script_py = IntegrationScriptUnifier.insert_pack_version(
+        ".py", DUMMY_SCRIPT, pack_version_1
+    )
     assert version_str_py in updated_script_py
     assert updated_script_py.count(version_str_py) == 1  # Ensure it is added only once
 
-    updated_script_py_2 = IntegrationScriptUnifier.insert_pack_version(".py", updated_script_py, pack_version_2)
+    updated_script_py_2 = IntegrationScriptUnifier.insert_pack_version(
+        ".py", updated_script_py, pack_version_2
+    )
     assert version_str_py_2 in updated_script_py_2
-    assert version_str_py not in updated_script_py_2  # Ensure the old version is replaced
-    assert updated_script_py_2.count(version_str_py_2) == 1  # Ensure it is added only once
+    assert (
+        version_str_py not in updated_script_py_2
+    )  # Ensure the old version is replaced
+    assert (
+        updated_script_py_2.count(version_str_py_2) == 1
+    )  # Ensure it is added only once
 
     # Test for JavaScript script
-    updated_script_js = IntegrationScriptUnifier.insert_pack_version(".js", DUMMY_SCRIPT, pack_version_1)
+    updated_script_js = IntegrationScriptUnifier.insert_pack_version(
+        ".js", DUMMY_SCRIPT, pack_version_1
+    )
     assert version_str_js in updated_script_js
     assert updated_script_js.count(version_str_js) == 1  # Ensure it is added only once
 
     # Test for PowerShell script
-    updated_script_ps1 = IntegrationScriptUnifier.insert_pack_version(".ps1", DUMMY_SCRIPT, pack_version_1)
+    updated_script_ps1 = IntegrationScriptUnifier.insert_pack_version(
+        ".ps1", DUMMY_SCRIPT, pack_version_1
+    )
     assert version_str_ps1 in updated_script_ps1
-    assert updated_script_ps1.count(version_str_ps1) == 1  # Ensure it is added only once
-
+    assert (
+        updated_script_ps1.count(version_str_ps1) == 1
+    )  # Ensure it is added only once
 
 
 def get_generated_module_code(import_name, api_module_name):

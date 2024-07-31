@@ -4,6 +4,7 @@ from demisto_sdk.commands.content_graph.objects import (
     Classifier,
     CorrelationRule,
     Dashboard,
+    GenericDefinition,
     GenericType,
     IncidentField,
     IncidentType,
@@ -32,6 +33,7 @@ ContentTypes = Union[
     Playbook,
     CorrelationRule,
     Dashboard,
+    GenericDefinition,
 ]
 
 

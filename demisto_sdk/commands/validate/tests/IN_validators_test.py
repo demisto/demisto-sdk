@@ -5805,15 +5805,16 @@ def test_IsValidFeedExpirationPolicy_no_display_parameter():
     - Should fail.
     """
     feed = create_integration_object(
-        paths=["configuration"],
+        paths=["script.feed", "configuration"],
         values=[
+            True,
             [
                 {
                     "name": "feedExpirationPolicy",
                     "type": 17,
                     "options": ["never", "interval", "indicatorType", "suddenDeath"],
                 }
-            ]
+            ],
         ],
     )
     validation_results = (
@@ -5835,8 +5836,9 @@ def test_IsValidFeedExpirationPolicy_incremental_feed_with_suddenDeath():
     - Should fail.
     """
     feed = create_integration_object(
-        paths=["configuration"],
+        paths=["script.feed", "configuration"],
         values=[
+            True,
             [
                 {
                     "name": "feedIncremental",
@@ -5850,7 +5852,7 @@ def test_IsValidFeedExpirationPolicy_incremental_feed_with_suddenDeath():
                     "display": "",
                     "options": ["never", "interval", "indicatorType", "suddenDeath"],
                 },
-            ]
+            ],
         ],
     )
     validation_results = (
@@ -5873,8 +5875,9 @@ def test_IsValidFeedExpirationPolicy_incremental_feed_no_suddenDeath():
     - Should pass.
     """
     feed = create_integration_object(
-        paths=["configuration"],
+        paths=["script.feed", "configuration"],
         values=[
+            True,
             [
                 {
                     "name": "feedIncremental",
@@ -5888,7 +5891,7 @@ def test_IsValidFeedExpirationPolicy_incremental_feed_no_suddenDeath():
                     "type": 17,
                     "options": ["never", "interval", "indicatorType"],
                 },
-            ]
+            ],
         ],
     )
     validation_results = (
@@ -5907,8 +5910,9 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_no_suddenDeath():
     - Should fail.
     """
     feed = create_integration_object(
-        paths=["configuration"],
+        paths=["script.feed", "configuration"],
         values=[
+            True,
             [
                 {
                     "name": "feedExpirationPolicy",
@@ -5916,7 +5920,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_no_suddenDeath():
                     "display": "",
                     "options": ["never", "interval", "indicatorType"],
                 }
-            ]
+            ],
         ],
     )
     validation_results = (
@@ -5939,8 +5943,9 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
     - Should pass.
     """
     feed = create_integration_object(
-        paths=["configuration"],
+        paths=["script.feed", "configuration"],
         values=[
+            True,
             [
                 {
                     "name": "feedExpirationPolicy",
@@ -5948,7 +5953,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
                     "display": "",
                     "options": ["never", "interval", "indicatorType", "suddenDeath"],
                 }
-            ]
+            ],
         ],
     )
     validation_results = (

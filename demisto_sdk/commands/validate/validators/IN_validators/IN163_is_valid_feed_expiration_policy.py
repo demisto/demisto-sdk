@@ -50,7 +50,6 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         invalid_content_items = []
         for content_item in content_items:
-
             incremental_feed_param = next(
                 (
                     param
@@ -100,11 +99,14 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                         )
                     )
 
-                elif not incremental_feed_param and not is_sudden_death(expiration_policy):
+                elif not incremental_feed_param and not is_sudden_death(
+                    expiration_policy
+                ):
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message + MISSING_SUDDEN_DEATH_ERROR_MESSAGE,
+                            message=self.error_message
+                            + MISSING_SUDDEN_DEATH_ERROR_MESSAGE,
                             content_object=content_item,
                         )
                     )

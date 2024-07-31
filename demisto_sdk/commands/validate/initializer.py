@@ -271,7 +271,7 @@ class Initializer:
                 f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
             )
             # modified_files = modified_files.union(relative_untracked_files_paths)
-            added_files = added_files.union(relative_untracked_files_paths)
+            added_files = set(added_files).union(relative_untracked_files_paths)
 
         return modified_files, added_files, renamed_files
 

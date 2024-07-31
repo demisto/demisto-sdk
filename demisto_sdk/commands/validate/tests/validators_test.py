@@ -789,7 +789,7 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
             file.write(f"{line}\n")
 
     output = initializer.get_unfiltered_changed_files_from_git()
-    assert output[0] == expected_output
+    assert output[1] == expected_output
 
     if Path.exists(temp_file):
         Path.unlink(temp_file)

@@ -5,13 +5,14 @@ from demisto_sdk.commands.content_graph.objects import (
     CorrelationRule,
     Dashboard,
     GenericDefinition,
+    GenericField,
     GenericType,
     IncidentField,
     IncidentType,
     IndicatorField,
     Layout,
     LayoutRule,
-    Playbook, GenericField,
+    Playbook,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script

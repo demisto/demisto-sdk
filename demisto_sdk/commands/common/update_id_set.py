@@ -2580,7 +2580,7 @@ def merge_id_sets_from_files(
 
     if unified_id_set:
         with open(output_id_set_path, mode="w", encoding="utf-8") as f:
-            json.dump(unified_id_set.get_dict(), f, indent=4)
+            json.dump(unified_id_set.get_dict(), f)
 
     return unified_id_set, duplicates
 

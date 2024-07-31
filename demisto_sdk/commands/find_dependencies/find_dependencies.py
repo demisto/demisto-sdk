@@ -179,7 +179,7 @@ def update_pack_metadata_with_dependencies(
         pack_metadata["displayedImages"] = list(first_level_dependencies.keys())
 
         pack_metadata_file.seek(0)
-        json.dump(pack_metadata, pack_metadata_file, indent=4)
+        json.dump(pack_metadata, pack_metadata_file)
         pack_metadata_file.truncate()
 
 
@@ -3175,7 +3175,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
         logger.info("[green]Finished dependencies calculation[/green]")
 
         with open(output_path, "w") as pack_dependencies_file:
-            json.dump(pack_dependencies_result, pack_dependencies_file, indent=4)
+            json.dump(pack_dependencies_result, pack_dependencies_file)
     return pack_dependencies_result
 
 
@@ -3246,7 +3246,7 @@ def get_packs_dependent_on_given_packs(
 
         if output_path:
             with open(output_path, "w") as pack_dependencies_file:
-                json.dump(dependent_on_results, pack_dependencies_file, indent=4)
+                json.dump(dependent_on_results, pack_dependencies_file)
     return dependent_on_results, set(dependent_packs_list)
 
 
@@ -3278,7 +3278,7 @@ def find_dependencies_between_two_packs(
     )
     if input_pack_name in dependent_items:
         packs_dependencies = dependent_items.get(input_pack_name)
-        dependencies = json.dumps(packs_dependencies, indent=4)
+        dependencies = json.dumps(packs_dependencies)
 
         return dependencies
 
@@ -3399,7 +3399,7 @@ def save_dict_of_sets(file_path: str, excluded_items_to_save: dict):
     for key in excluded_items_as_lists:
         excluded_items_as_lists[key] = list(excluded_items_as_lists[key])
     with open(file_path, "w") as json_file:
-        json.dump(excluded_items_as_lists, json_file, indent=4)
+        json.dump(excluded_items_as_lists, json_file)
 
 
 def calculate_dependencies(

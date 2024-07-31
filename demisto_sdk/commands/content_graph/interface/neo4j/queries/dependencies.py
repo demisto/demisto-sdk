@@ -180,5 +180,5 @@ RETURN
         artifacts_folder
     ).exists():
         with open(f"{artifacts_folder}/depends_on.json", "w") as fp:
-            json.dump(outputs, fp, indent=4)
+            json.dump(outputs, fp)
     return outputs

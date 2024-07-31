@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 import pydantic
 from pydantic import BaseModel, Extra, validator
@@ -48,6 +48,17 @@ class BaseStrictModel(BaseModel, ABC):
             "sort_values",
             "playbook_id",
             "query",
+            "playbook_input_query",
+            "suppression_duration",  # correlation rules
+            "suppression_fields",  # correlation rules
+            "user_defined_category",  # correlation rules
+            "user_defined_severity",  # correlation rules
+            "investigation_query_link",  # correlation rules
+            "cron_tab",  # correlation rules
+            "search_window",  # correlation rules
+            "sort",  # widget
+            "params",  # widget
+            "cache",  # widget
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"
@@ -126,6 +137,82 @@ DEFAULT_DYNAMIC_MODEL_LOWER_CASE = create_dynamic_model(
 ID_DYNAMIC_MODEL = create_dynamic_model(
     field_name="id",
     type_=Optional[Any],
+    default=None,
+    include_without_suffix=True,
+)
+KEY_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="key",
+    type_=Optional[str],
+    default=None,
+)
+VALUE_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="value",
+    type_=Optional[Any],
+    default=None,
+)
+PLAYBOOK_INPUT_QUERY_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="playbookInputQuery",
+    type_=Optional[Any],
+    default=None,
+)
+FORM_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="form",
+    type_=Optional[Dict],
+    default=None,
+    include_without_suffix=True,
+)
+MESSAGE_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="message",
+    type_=Optional[Dict],
+    default=None,
+    include_without_suffix=True,
+)
+SCRIPT_ARGUMENTS_LOWER_CASE_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="scriptarguments",
+    type_=Optional[Dict],
+    default=None,
+    include_without_suffix=True,
+)
+SCRIPT_ARGUMENTS_UPPER_CASE_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="scriptArguments",
+    type_=Optional[Dict],
+    default=None,
+    include_without_suffix=True,
+)
+SCRIPT_ID_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="scriptId",
+    type_=Optional[str],
+    default=None,
+    include_without_suffix=True,
+)
+IS_CONTEXT_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="iscontext",
+    type_=Optional[bool],
+    default=None,
+    include_without_suffix=True,
+)
+
+
+class _LeftOrRight(BaseStrictModel):
+    value: Any  # VALUE_DYNAMIC_MODEL doesn't have the raw 'value', only its variations
+
+
+LeftOrRight = create_model(
+    model_name="LeftOrRight",
+    base_models=(_LeftOrRight, VALUE_DYNAMIC_MODEL, IS_CONTEXT_DYNAMIC_MODEL),
+)
+
+
+LEFT_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="left",
+    type_=Optional[LeftOrRight],
+    default=None,
+    include_without_suffix=True,
+)
+
+RIGHT_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="right",
+    type_=Optional[LeftOrRight],
     default=None,
     include_without_suffix=True,
 )

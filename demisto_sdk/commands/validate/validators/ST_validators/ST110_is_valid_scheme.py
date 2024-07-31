@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.objects import (
     IndicatorField,
     Layout,
     LayoutRule,
-    Playbook,
+    Playbook, GenericField,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -34,6 +34,7 @@ ContentTypes = Union[
     CorrelationRule,
     Dashboard,
     GenericDefinition,
+    GenericField,
 ]
 
 

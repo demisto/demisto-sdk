@@ -10,8 +10,8 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
+    SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
-    create_dynamic_model,
     create_model,
 )
 
@@ -96,13 +96,6 @@ class _StrictDashboard(BaseStrictModel):
     marketplaces: Optional[List[MarketplaceVersions]] = None
 
 
-ID_DASHBOARD_DYNAMIC_MODEL = create_dynamic_model(
-    # creating here with include_without_suffix == False
-    field_name="id",
-    type_=Optional[str],
-    default=None,
-)
-
 StrictDashboard = create_model(
     model_name="StrictDashboard",
     base_models=(
@@ -110,6 +103,6 @@ StrictDashboard = create_model(
         BaseOptionalVersionJson,
         DESCRIPTION_DYNAMIC_MODEL,
         NAME_DYNAMIC_MODEL,
-        ID_DASHBOARD_DYNAMIC_MODEL,
+        SUFFIXED_ID_DYNAMIC_MODEL,
     ),
 )

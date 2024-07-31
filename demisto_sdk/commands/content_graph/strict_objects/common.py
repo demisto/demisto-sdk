@@ -56,6 +56,9 @@ class BaseStrictModel(BaseModel, ABC):
             "investigation_query_link",  # correlation rules
             "cron_tab",  # correlation rules
             "search_window",  # correlation rules
+            "sort",  # widget
+            "params",  # widget
+            "cache",  # widget
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"
@@ -212,4 +215,11 @@ RIGHT_DYNAMIC_MODEL = create_dynamic_model(
     type_=Optional[LeftOrRight],
     default=None,
     include_without_suffix=True,
+)
+
+SUFFIXED_ID_DYNAMIC_MODEL = create_dynamic_model(
+    # creating here with include_without_suffix == False
+    field_name="id",
+    type_=Optional[str],
+    default=None,
 )

@@ -1,10 +1,16 @@
 import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
+    create_incoming_mapper_object,
+    create_integration_object,
     create_pack_object,
+    create_trigger_object,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
     IsReleaseNotesFilledOutValidator,
+)
+from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
+    ReleaseNoteHeaderValidator,
 )
 
 
@@ -79,3 +85,97 @@ def test_release_note_filled_out_validator(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_release_note_header_validator_valid():
+    """
+    Given:
+    - content_items.
+        pack_metadata:
+            1. valid release note headers.
+            2. Trigger (edge case).
+            3. Mapper (edge case).
+    When:
+    - Calling the ReleaseNoteHeaderValidator is_valid function.
+
+    Then:
+    - Make sure the validation passes.
+    """
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Integrations\n"
+        "##### TestIntegration\n"
+        "This is an exemple\n",
+    )
+    integrations = [
+        create_integration_object(["name"], ["TestIntegration"]),
+    ]
+    pack.content_items.integration.extend(integrations)
+    results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(
+        content_items=[pack]
+    )
+    assert len(results) == 0
+
+
+def test_release_note_header_validator_edge_cases_valid():
+    """
+    Given:
+    - content_items.
+        pack_metadata:
+            - Trigger (edge case).
+            - Mapper (edge case).
+    When:
+    - Calling the ReleaseNoteHeaderValidator is_valid function.
+
+    Then:
+    - Make sure the validation passes.
+    """
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Triggers Recommendations\n"
+        "##### NGFW Scanning Alerts\n"
+        "- This trigger is responsible for handling alerts.\n"
+        "#### Mappers\n"
+        "##### GitHub Mapper\n"
+        "- Added an incoming Mapper (Available from Cortex XSOAR 6.5.0)\n ",
+    )
+    pack.content_items.trigger.extend([create_trigger_object()])
+    pack.content_items.mapper.extend([create_incoming_mapper_object()])
+    results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(
+        content_items=[pack]
+    )
+    assert len(results) == 0
+
+
+def test_release_note_header_validator_invalid():
+    """
+    Given:
+    - content_items.
+        pack_metadata: pack with invalid release note headers.
+
+    When:
+    - Calling the ReleaseNoteHeaderValidator is_valid function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+    """
+    expected_error = "The following release note headers are invalid:\nContent types: InvalidHeader\n\nContent items: Integrations: Not exist content item\n\n"
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Integrations\n"
+        "##### Not exist content item\n"
+        "This is an example\n"
+        "#### InvalidHeader\n"
+        "##### playbook A\n",
+    )
+    integrations = [
+        create_integration_object(),
+    ]
+    pack.content_items.integration.extend(integrations)
+    results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(
+        content_items=[pack]
+    )
+    assert expected_error == results[0].message

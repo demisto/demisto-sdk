@@ -6,13 +6,14 @@ from demisto_sdk.commands.content_graph.objects import (
     Dashboard,
     GenericDefinition,
     GenericField,
+    GenericModule,
     GenericType,
     IncidentField,
     IncidentType,
     IndicatorField,
     Layout,
     LayoutRule,
-    Playbook, GenericModule,
+    Playbook,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Integration,
+    Parameter,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -21,15 +24,19 @@ MISSING_SUDDEN_DEATH_ERROR_MESSAGE = (
 BAD_TYPE_OR_DISPLAY = (
     "The feed's expiration policy type must be 17 and display must be an empty string."
 )
-MISSING_EXPIRATION_POLICY = (
-    "Missing feedExpirationPolicy parameter."
-)
+MISSING_EXPIRATION_POLICY = "Missing feedExpirationPolicy parameter."
+
+
+def is_sudden_death(expiration_policy: Parameter):
+    return expiration_policy.options and "suddenDeath" in expiration_policy.options
 
 
 class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
     error_code = "IN163"
-    description = ("Validate feedExpirationPolicy parameter is in the right format"
-                   "for both incremental and fully fetched feeds")
+    description = (
+        "Validate feedExpirationPolicy parameter is in the right format"
+        "for both incremental and fully fetched feeds"
+    )
     rationale = (
         "Malformed expiration policy can lead to errors or incomplete data."
         "For more details, see https://xsoar.pan.dev/docs/integrations/feeds"
@@ -61,7 +68,7 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                     for param in content_item.params
                     if param.name == "feedExpirationPolicy"
                 ),
-                None
+                None,
             )
 
             if not expiration_policy:
@@ -82,11 +89,7 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                     )
                 )
 
-            is_sudden_death = (
-                    expiration_policy.options and "suddenDeath" in expiration_policy.options
-            )
-
-            if incremental_feed_param and is_sudden_death:
+            elif incremental_feed_param and is_sudden_death(expiration_policy):
                 invalid_content_items.append(
                     ValidationResult(
                         validator=self,
@@ -96,7 +99,7 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                     )
                 )
 
-            elif not incremental_feed_param and not is_sudden_death:
+            elif not incremental_feed_param and not is_sudden_death(expiration_policy):
                 invalid_content_items.append(
                     ValidationResult(
                         validator=self,

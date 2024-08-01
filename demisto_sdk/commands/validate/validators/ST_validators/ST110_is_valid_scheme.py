@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.objects import (
     IncidentField,
     IncidentType,
     IndicatorField,
+    Job,
     Layout,
     LayoutRule,
     Playbook,
@@ -38,6 +39,7 @@ ContentTypes = Union[
     GenericDefinition,
     GenericField,
     GenericModule,
+    Job,
 ]
 
 

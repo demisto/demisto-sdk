@@ -61,9 +61,9 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                     param
                     for param in content_item.params
                     if param.name == "feedIncremental"
-                    and param.hidden is True
+                    and param.hidden
                     and param.type == INCREMENTAL_FEED_PARAMETER_TYPE_NUMBER
-                    and param.defaultvalue is True
+                    and param.defaultvalue
                 ),
                 None,
             )
@@ -77,12 +77,15 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                 None,
             )
 
-            elaborate_error_message = ''
+            elaborate_error_message = ""
 
             if not expiration_policy:
                 elaborate_error_message = MISSING_EXPIRATION_POLICY
 
-            elif expiration_policy.display != "" or expiration_policy.type != EXPIRATION_POLICY_PARAMETER_TYPE_NUMBER:
+            elif (
+                expiration_policy.display != ""
+                or expiration_policy.type != EXPIRATION_POLICY_PARAMETER_TYPE_NUMBER
+            ):
                 elaborate_error_message = BAD_TYPE_OR_DISPLAY
 
             elif incremental_feed_param and is_sudden_death(expiration_policy):
@@ -91,11 +94,13 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
             elif not incremental_feed_param and not is_sudden_death(expiration_policy):
                 elaborate_error_message = MISSING_SUDDEN_DEATH_ERROR_MESSAGE
 
-            invalid_content_items.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message + elaborate_error_message,
-                    content_object=content_item,
+            if elaborate_error_message:
+                invalid_content_items.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message + elaborate_error_message,
+                        content_object=content_item,
+                    )
                 )
-            )
+
         return invalid_content_items

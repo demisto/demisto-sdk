@@ -61,9 +61,9 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                     param
                     for param in content_item.params
                     if param.name == "feedIncremental"
-                    and param.hidden is True
+                    and param.hidden
                     and param.type == INCREMENTAL_FEED_PARAMETER_TYPE_NUMBER
-                    and param.defaultvalue is True
+                    and param.defaultvalue
                 ),
                 None,
             )

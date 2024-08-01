@@ -17,6 +17,7 @@ from demisto_sdk.commands.content_graph.objects import (
     Playbook,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.list import List as List_Graph_Object
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -40,6 +41,7 @@ ContentTypes = Union[
     GenericField,
     GenericModule,
     Job,
+    List_Graph_Object,
 ]
 
 

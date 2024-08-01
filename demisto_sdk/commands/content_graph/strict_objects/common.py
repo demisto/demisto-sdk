@@ -59,6 +59,7 @@ class BaseStrictModel(BaseModel, ABC):
             "sort",  # widget
             "params",  # widget
             "cache",  # widget
+            "tags",  # modeling rule
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"

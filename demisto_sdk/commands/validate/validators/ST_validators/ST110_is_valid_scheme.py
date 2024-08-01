@@ -15,7 +15,7 @@ from demisto_sdk.commands.content_graph.objects import (
     Layout,
     LayoutRule,
     Mapper,
-    Playbook,
+    Playbook, ModelingRule,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as List_Graph_Object
@@ -44,6 +44,7 @@ ContentTypes = Union[
     Job,
     List_Graph_Object,
     Mapper,
+    ModelingRule,
 ]
 
 

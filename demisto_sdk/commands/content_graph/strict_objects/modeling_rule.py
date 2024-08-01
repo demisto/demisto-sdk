@@ -1,0 +1,25 @@
+from typing import Optional
+from pydantic import Field
+
+from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model, NAME_DYNAMIC_MODEL, \
+    DEPRECATED_DYNAMIC_MODEL, SUFFIXED_ID_DYNAMIC_MODEL
+
+
+class _StrictModelingRule(BaseStrictModel):
+    id_: str = Field(alias="id")
+    name: str
+    from_version: str = Field(alias="fromversion")
+    to_version: Optional[str] = Field(None, alias="toversion")
+    tags: Optional[str] = None
+    rules: Optional[str] = None
+    schema_: Optional[str] = Field(None, alias="schema")
+    comment: Optional[str] = None
+    deprecated: Optional[bool] = None
+
+
+StrictModelingRule = create_model(model_name="StrictModelingRule",
+                                  base_models=(_StrictModelingRule,
+                                               NAME_DYNAMIC_MODEL,
+                                               DEPRECATED_DYNAMIC_MODEL,
+                                               SUFFIXED_ID_DYNAMIC_MODEL,
+                                               ))

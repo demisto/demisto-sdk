@@ -1,4 +1,4 @@
 changes:
-- description: Added 'GenericField', 'GenericModule', 'Job', 'List', 'Mapper' and 'ModelingRule' to the `ST110` validation.
+- description: Added 'GenericField', 'GenericModule', 'Job', 'List', 'Mapper', 'ModelingRule' and 'ParsingRule' to the `ST110` validation.
   type: feature
 pr_number: 4470

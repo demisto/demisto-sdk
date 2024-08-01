@@ -1,5 +1,6 @@
-from typing import Any, Generator, List
+from typing import Any, Dict, Generator, List
 
+from more_itertools import map_reduce
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -107,6 +108,9 @@ class PackContentItems(BaseModel):
         """Defines the iteration of the object. Each iteration yields a single content item."""
         for content_items in vars(self).values():
             yield from content_items
+
+    def items_by_type(self) -> Dict[ContentType, List[ContentItem]]:
+        return map_reduce(iter(self), lambda i: i.content_type)
 
     def __bool__(self) -> bool:
         """Used for easier determination of content items existence in a pack."""

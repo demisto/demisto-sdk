@@ -216,6 +216,47 @@ class GitUtil:
         except KeyError:
             return False
 
+    def list_files_in_dir(
+        self,
+        target_dir: Union[Path, str],
+        git_sha: str,
+    ) -> List[str]:
+        """Retrieve the list of files under a given target_dir in a given commit.
+
+        Args:
+            target_dir (Union[Path, str]): The target dir to retrieve from.
+            git_sha (str): The git_sha to retrieve from.
+
+        Returns:
+            list: The list of files under the given target_dir in the given git_sha.
+        """
+        try:
+            files = []
+            commit = self.repo.commit(git_sha)
+
+            target_dir = self.path_from_git_root(target_dir)
+            target_dir = str(target_dir)
+            tree = commit.tree / target_dir
+
+            def traverse_tree(tree, base_path=""):
+                for item in tree:
+                    item_path = f"{base_path}/{item.name}" if base_path else item.name
+                    if item.type == "blob":  # File
+                        files.append(item_path)
+                    elif item.type == "tree":  # Directory
+                        traverse_tree(item, item_path)
+
+            traverse_tree(tree)
+            return files
+        except CommitOrBranchNotFoundError:
+            logger.exception(f"Could not get commit {git_sha}")
+        except Exception as e:
+            logger.exception(
+                f"Could not get files from {target_dir=} with {git_sha=}, reason: {e}"
+            )
+        finally:
+            return files
+
     @lru_cache
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files("-z").split("\x00")))

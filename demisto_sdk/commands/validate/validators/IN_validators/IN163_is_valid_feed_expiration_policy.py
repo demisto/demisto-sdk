@@ -14,11 +14,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE = (
-    "An incremental feed should not have the"
+    "An incremental feed should not have the "
     "suddenDeath option as an expiration policy."
 )
 MISSING_SUDDEN_DEATH_ERROR_MESSAGE = (
-    "The feed's expiration policy does not contain the suddenDeath option."
+    "The feed's expiration policy does not contain the suddenDeath option. "
     "Either add this option or mark feed as incremental."
 )
 BAD_TYPE_OR_DISPLAY = (
@@ -98,7 +98,7 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                 invalid_content_items.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message + elaborate_error_message,
+                        message=self.error_message + ' ' + elaborate_error_message,
                         content_object=content_item,
                     )
                 )

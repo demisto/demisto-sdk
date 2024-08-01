@@ -15,7 +15,8 @@ from demisto_sdk.commands.content_graph.objects import (
     Layout,
     LayoutRule,
     Mapper,
-    Playbook, ModelingRule,
+    ModelingRule,
+    Playbook,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as List_Graph_Object

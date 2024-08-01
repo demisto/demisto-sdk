@@ -1,8 +1,14 @@
 from typing import Optional
+
 from pydantic import Field
 
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model, NAME_DYNAMIC_MODEL, \
-    DEPRECATED_DYNAMIC_MODEL, SUFFIXED_ID_DYNAMIC_MODEL
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    DEPRECATED_DYNAMIC_MODEL,
+    NAME_DYNAMIC_MODEL,
+    SUFFIXED_ID_DYNAMIC_MODEL,
+    BaseStrictModel,
+    create_model,
+)
 
 
 class _StrictModelingRule(BaseStrictModel):
@@ -17,9 +23,12 @@ class _StrictModelingRule(BaseStrictModel):
     deprecated: Optional[bool] = None
 
 
-StrictModelingRule = create_model(model_name="StrictModelingRule",
-                                  base_models=(_StrictModelingRule,
-                                               NAME_DYNAMIC_MODEL,
-                                               DEPRECATED_DYNAMIC_MODEL,
-                                               SUFFIXED_ID_DYNAMIC_MODEL,
-                                               ))
+StrictModelingRule = create_model(
+    model_name="StrictModelingRule",
+    base_models=(
+        _StrictModelingRule,
+        NAME_DYNAMIC_MODEL,
+        DEPRECATED_DYNAMIC_MODEL,
+        SUFFIXED_ID_DYNAMIC_MODEL,
+    ),
+)

@@ -25,6 +25,8 @@ BAD_TYPE_OR_DISPLAY = (
     "The feed's expiration policy type must be 17 and display must be an empty string."
 )
 MISSING_EXPIRATION_POLICY = "Missing feedExpirationPolicy parameter."
+EXPIRATION_POLICY_PARAMETER_TYPE_NUMBER = 17
+INCREMENTAL_FEED_PARAMETER_TYPE_NUMBER = 8
 
 
 def is_sudden_death(expiration_policy: Parameter):
@@ -49,14 +51,18 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         invalid_content_items = []
+
         for content_item in content_items:
+            if not content_item.is_feed:
+                continue
+
             incremental_feed_param = next(
                 (
                     param
                     for param in content_item.params
                     if param.name == "feedIncremental"
                     and param.hidden is True
-                    and param.type == 8
+                    and param.type == INCREMENTAL_FEED_PARAMETER_TYPE_NUMBER
                     and param.defaultvalue is True
                 ),
                 None,
@@ -70,44 +76,26 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                 ),
                 None,
             )
-            if content_item.is_feed:
-                if not expiration_policy:
-                    invalid_content_items.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message + MISSING_EXPIRATION_POLICY,
-                            content_object=content_item,
-                        )
-                    )
 
-                elif expiration_policy.display != "" or expiration_policy.type != 17:
-                    invalid_content_items.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message + BAD_TYPE_OR_DISPLAY,
-                            content_object=content_item,
-                        )
-                    )
+            elaborate_error_message = ''
 
-                elif incremental_feed_param and is_sudden_death(expiration_policy):
-                    invalid_content_items.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message
-                            + REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE,
-                            content_object=content_item,
-                        )
-                    )
+            if not expiration_policy:
+                elaborate_error_message = MISSING_EXPIRATION_POLICY
 
-                elif not incremental_feed_param and not is_sudden_death(
-                    expiration_policy
-                ):
-                    invalid_content_items.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message
-                            + MISSING_SUDDEN_DEATH_ERROR_MESSAGE,
-                            content_object=content_item,
-                        )
-                    )
+            elif expiration_policy.display != "" or expiration_policy.type != EXPIRATION_POLICY_PARAMETER_TYPE_NUMBER:
+                elaborate_error_message = BAD_TYPE_OR_DISPLAY
+
+            elif incremental_feed_param and is_sudden_death(expiration_policy):
+                elaborate_error_message = REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE
+
+            elif not incremental_feed_param and not is_sudden_death(expiration_policy):
+                elaborate_error_message = MISSING_SUDDEN_DEATH_ERROR_MESSAGE
+
+            invalid_content_items.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message + elaborate_error_message,
+                    content_object=content_item,
+                )
+            )
         return invalid_content_items

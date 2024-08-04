@@ -9,6 +9,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
     IsReleaseNotesFilledOutValidator,
 )
+from demisto_sdk.commands.validate.validators.RN_validators.RN108_is_rn_added_to_new_pack import (
+    IsRNAddedToNewPackValidator,
+)
 from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
     ReleaseNoteHeaderValidator,
 )
@@ -84,6 +87,36 @@ def test_release_note_filled_out_validator(
             result.message == expected_msg
             for result, expected_msg in zip(results, expected_msgs)
         ]
+    )
+
+
+def test_IsRNAddedToNewPackValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - content_items.
+        - Case 1: A new pack metadata without RNs.
+        - Case 2: A new pack metadata with RN.
+    When:
+    - Calling the IsRNAddedToNewPackValidator obtain_invalid_content_items function.
+    Then:
+    - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Case 1: Should pass.
+        - Case 2: Should fail.
+    """
+    valid_content_items = [create_pack_object()]
+    validator = IsRNAddedToNewPackValidator()
+    assert not validator.obtain_invalid_content_items(valid_content_items)
+    invalid_content_items = [
+        create_pack_object(
+            paths=["version"], values=["1.0.1"], release_note_content="should fail"
+        )
+    ]
+    invalid_content_items[0].current_version = "1.0.0"
+    invalid_results = validator.obtain_invalid_content_items(invalid_content_items)
+    assert len(invalid_results) == 1
+    assert (
+        invalid_results[0].message
+        == "The Pack is a new pack and contains release notes, please remove all release notes."
     )
 
 

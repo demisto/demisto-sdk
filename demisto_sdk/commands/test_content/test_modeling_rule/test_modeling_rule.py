@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 from datetime import datetime
 from pathlib import Path
 from threading import Thread
@@ -1673,7 +1672,7 @@ class CloudServerContext:
             )
         except Exception:
             self.build_context.logging_module.exception("~~ Thread failed ~~")
-            raise
+            self.build_context.tests_data_keeper.errors = True
         finally:
             self.build_context.logging_module.execute_logs()
 
@@ -1940,13 +1939,6 @@ def test_modeling_rule(
         t.join()
 
     logging_manager.info("Finished running tests.")
-    for server in build_context.servers:
-        if not server.tests:
-            logging_manager.critical(
-                "Not all tests have been executed. Not destroying instances. Exiting",
-                real_time=True,
-            )
-            sys.exit(1)
 
     if output_junit_file:
         logger.info(

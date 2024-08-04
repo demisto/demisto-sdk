@@ -263,9 +263,9 @@ class Initializer:
             relative_untracked_files_paths: Set[Path] = set()
             with open(
                 "contribution_files_relative_paths.txt", "r"
-            ) as contribution_files:
-                for line in contribution_files:
-                    clean_line: str = line.rstrip("\n")
+            ) as contribution_file:
+                for single_line in contribution_file:
+                    clean_line: str = single_line.rstrip("\n")
                     relative_untracked_files_paths.add(Path(clean_line))
             logger.info(
                 f"\n######## - Added untracked:\n{relative_untracked_files_paths}"

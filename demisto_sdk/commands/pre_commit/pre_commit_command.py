@@ -546,7 +546,6 @@ def pre_commit_manager(
         all_files=all_files,
         prev_version=prev_version,
     )
-    logger.info(f"\n{files_to_run=}")
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
         return 0
@@ -693,5 +692,5 @@ def preprocess_files(
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file
         for file in files_to_run
     }
-    """filter out files that are not in the content git repo (e.g in .gitignore)"""
+    # filter out files that are not in the content git repo (e.g in .gitignore)
     return relative_paths & all_git_files

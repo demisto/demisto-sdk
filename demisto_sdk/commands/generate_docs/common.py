@@ -20,7 +20,7 @@ class HEADER_TYPE:
 
 
 class CONFIGURATION_SECTION_STEPS(Enum):
-    STEP_1 = "1. Navigate to **Settings** > **Integrations** > **Servers & Services**."
+    STEP_1 = "1. {}"
     STEP_2_TEMPLATE = "2. Search for {}."
     STEP_3 = (
         "3. Click **Add instance** to create and configure a new integration instance."

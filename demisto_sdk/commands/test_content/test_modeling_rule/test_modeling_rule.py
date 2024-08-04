@@ -1038,7 +1038,23 @@ def validate_modeling_rule(
             f"Checking that event data was added to the test data file[/cyan]",
             extra={"markup": True},
         )
-        test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
+        try:
+            test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
+        except ValueError as ex:
+            err = f"Failed to parse test data file {get_relative_path_to_content(modeling_rule.testdata_path)} as JSON"
+            logger.error(
+                f"[red]{err}[/red]",
+                extra={"markup": True},
+            )
+            test_case = TestCase(
+                "Failed to parse test data file as JSON",
+                classname="Modeling Rule",
+            )
+            test_case.system_err = str(ex)
+            test_case.result += [Error(err)]
+            modeling_rule_test_suite.add_testcase(test_case)
+            return False, modeling_rule_test_suite
+
         modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(
             to_version=modeling_rule.to_version,
             from_version=modeling_rule.from_version,

@@ -9,6 +9,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_valid import (
+    IsImagePathValidValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
@@ -17,6 +20,15 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM106_is_contain_demisto_word import (
     IsContainDemistoWordValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM107_is_template_sentence_in_readme import (
+    IsTemplateInReadmeValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_integration_image_path_valid import (
+    IntegrationRelativeImagePathValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_readme_image_path_valid import (
+    ReadmeRelativeImagePathValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
@@ -50,7 +62,7 @@ from TestSuite.repo import ChangeCWD
         ),
     ],
 )
-def test_IsContainCopyRightSectionValidator_is_valid(
+def test_IsContainCopyRightSectionValidator_obtain_invalid_content_items(
     content_items,
     expected_number_of_failures,
     expected_msgs,
@@ -63,13 +75,15 @@ def test_IsContainCopyRightSectionValidator_is_valid(
             - 1 pack with an empty readme.
         - Case 2: One invalid pack_metadata with 2 lines contain copyright words
     When
-    - Calling the IsContainCopyRightSectionValidator is_valid function.
+    - Calling the IsContainCopyRightSectionValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Should pass all.
         - Case 3: Should fail.
     """
-    results = IsContainCopyRightSectionValidator().is_valid(content_items)
+    results = IsContainCopyRightSectionValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -137,18 +151,84 @@ def test_empty_readme_validator(
         - Case 3: One invalid pack_metadata with empty readme and playbooks.
 
     When:
-    - Calling the EmptyReadmeValidator is_valid function.
+    - Calling the EmptyReadmeValidator obtain_invalid_content_items function.
 
     Then:
     - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
     """
 
-    results = EmptyReadmeValidator().is_valid(content_items)
+    results = EmptyReadmeValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
             result.message == expected_msg
             for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        ([create_integration_object()], 0),
+        (
+            [
+                create_integration_object(
+                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+        (
+            [
+                create_script_object(
+                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+        (
+            [
+                create_playbook_object(
+                    readme_content='<img src="https://github.com/demisto/content/blob/path/to/image.jpg" alt="Alt text">'
+                )
+            ],
+            1,
+        ),
+    ],
+)
+def test_is_image_path_validator(content_items, expected_number_of_failures):
+    """
+    Given:
+        - A list of content items with their respective readme contents.
+    When:
+        - The IsImagePathValidValidator is run on the provided content items.
+            - A content item with no images (expected failures: 0).
+            - A content item with a non-raw image URL in the readme (expected failures: 1).
+            - A script object with a non-raw image URL in the readme (expected failures: 1).
+            - A pack object with a non-raw image URL in the readme (expected failures: 1).
+            - A playbook object with a non-raw image URL in the readme (expected failures: 1).
+
+    Then:
+        - Validate that the number of detected invalid image paths matches the expected number of failures.
+        - Ensure that each failure message correctly identifies the non-raw GitHub image URL and suggests the proper raw URL format.
+    """
+    results = IsImagePathValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message.endswith(
+                "detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
+            )
+            for result in results
         ]
     )
 
@@ -203,7 +283,7 @@ def test_empty_readme_validator(
         ),
     ],
 )
-def test_IsImageExistsInReadmeValidator_is_valid(
+def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
     mocker,
     content_items,
     is_file_exist,
@@ -213,7 +293,9 @@ def test_IsImageExistsInReadmeValidator_is_valid(
     mocker.patch.object(Path, "is_file", return_value=is_file_exist)
 
     with ChangeCWD(REPO.path):
-        results = IsImageExistsInReadmeValidator().is_valid(content_items)
+        results = IsImageExistsInReadmeValidator().obtain_invalid_content_items(
+            content_items
+        )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -228,7 +310,7 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_not_valid():
     Given:
         - Pack with a readme pack equal to the description
     When:
-        - run IsPackReadmeNotEqualPackDescriptionValidator is_valid function
+        - run IsPackReadmeNotEqualPackDescriptionValidator obtain_invalid_content_items function
     Then:
         - Ensure that the error msg returned is as expected
     """
@@ -240,7 +322,9 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_not_valid():
             values=["This readme text and pack_metadata description are equal"],
         )
     ]
-    assert IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)
+    assert IsPackReadmeNotEqualPackDescriptionValidator().obtain_invalid_content_items(
+        content_items
+    )
 
 
 def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
@@ -248,7 +332,7 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
     Given:
         - Pack with different readme and description
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
     """
@@ -259,7 +343,11 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
             values=["Pack_metadata description"],
         ),
     ]
-    assert not IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)
+    assert (
+        not IsPackReadmeNotEqualPackDescriptionValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
 
 
 @pytest.mark.parametrize(
@@ -297,19 +385,19 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
         ),
     ],
 )
-def test_IsReadmeExistsValidator_is_valid(
+def test_IsReadmeExistsValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given:
         - Integration, Script and Playbook objects- one have and one does not have README file
     When:
-        - run is_valid method from IsReadmeExistsValidator
+        - run obtain_invalid_content_items method from IsReadmeExistsValidator
     Then:
         - Ensure that for each test only one ValidationResult returns with the correct message
     """
     content_items[1].readme.exist = False
-    results = IsReadmeExistsValidator().is_valid(content_items)
+    results = IsReadmeExistsValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -319,14 +407,14 @@ def test_IsReadmeExistsValidator_is_valid(
     )
 
 
-def test_IsContainDemistoWordValidator_is_valid():
+def test_IsContainDemistoWordValidator_obtain_invalid_content_items():
     """
     Given
     content_items.
         - Two valid pack_metadatas:
             - 1 pack with valid readme text.
             - 1 pack with an empty readme.    When
-    - Calling the IsContainDemistoWordValidator is_valid function.
+    - Calling the IsContainDemistoWordValidator obtain_invalid_content_items function.
     Then
         - Make sure that the pack isn't failing.
         - Should pass all.
@@ -335,7 +423,9 @@ def test_IsContainDemistoWordValidator_is_valid():
         create_pack_object(readme_text="This is a valid readme."),
         create_pack_object(readme_text=""),
     ]
-    results = IsContainDemistoWordValidator().is_valid(content_items)
+    results = IsContainDemistoWordValidator().obtain_invalid_content_items(
+        content_items
+    )
     expected_msg = []
     assert len(results) == 0
     assert all(
@@ -352,7 +442,7 @@ def test_IsContainDemistoWordValidator_is_invalid():
     content_items.
         - One invalid pack_metadata with a readme that contains the word 'demisto'.
     When
-    - Calling the IsContainDemistoWordValidator is_valid function.
+    - Calling the IsContainDemistoWordValidator obtain_invalid_content_items function.
     Then
     - Make sure the right amount of pack failed, and that the right error message is returned.
     """
@@ -362,6 +452,187 @@ def test_IsContainDemistoWordValidator_is_invalid():
         )
     ]
     expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
-    results = IsContainDemistoWordValidator().is_valid(content_items)
+    results = IsContainDemistoWordValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 1
     assert results[0].message == expected_msg
+
+
+def test_ImagePathIntegrationValidator_obtain_invalid_content_items_valid_case():
+    """
+    Given
+    content_items.
+    - Pack with valid readme and valid description contain only relative paths.
+    When
+    - Calling the ImagePathIntegrationValidator obtain_invalid_content_items function.
+    Then
+    - Make sure that the pack isn't failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="![Example Image](../doc_files/image.png)",
+            description_content="valid description ![Example Image](../doc_files/image.png)",
+        ),
+    ]
+    assert not IntegrationRelativeImagePathValidator().obtain_invalid_content_items(
+        content_items
+    )
+
+
+def test_ImagePathIntegrationValidator_obtain_invalid_content_items_invalid_case():
+    """
+        Given
+        content_items.
+        - Pack with:
+            1. invalid readme that contains absolute path.
+            2. description contains relative path that saved not under dec_files.
+    demisto_sdk/commands/validate/sdk_validation_config.toml
+
+        When
+        - Calling the ImagePathIntegrationValidator obtain_invalid_content_items function.
+        Then
+        - Make sure that the pack is failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
+            " ![Example Image](https://www.example.com/images/example_image.jpg)",
+            description_content="valid description ![Example Image](../../content/image.jpg)",
+        ),
+    ]
+    expected = (
+        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links "
+        "provided below.:\nhttps://www.example.com/images/example_image.jpg\n\nRelative image paths have been"
+        " identified outside the pack's 'doc_files' directory. Please relocate the following images to the"
+        " 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add"
+        " images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    )
+    result = IntegrationRelativeImagePathValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert result[0].message == expected
+
+
+def test_ImagePathOnlyReadMeValidator_obtain_invalid_content_items_valid_case():
+    """
+    Given
+    content_items.
+    - Pack with valid readme contains only relative paths.
+    When
+    - Calling the ImagePathIntegrationValidator obtain_invalid_content_items function.
+    Then
+    - Make sure that the pack isn't failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="![Example Image](../doc_files/image.png)",
+        ),
+    ]
+    assert not ReadmeRelativeImagePathValidator().obtain_invalid_content_items(
+        content_items
+    )
+
+
+def test_ImagePathOnlyReadMeValidator_obtain_invalid_content_items_invalid_case():
+    """
+    Given
+    content_items.
+    - Pack with:
+        1. invalid readme that contains absolute path and contains
+         relative path that saved not under dec_files.
+
+    When
+    - Calling the ImagePathOnlyReadMeValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure that the pack is failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
+            " ![Example Image](https://www.example.com/images/example_image.jpg)"
+            " ![Example Image](../../content/image.jpg)",
+        ),
+    ]
+    expected = (
+        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links"
+        " provided below.:\nhttps://www.example.com/images/example_image.jpg\n\nRelative image paths have been"
+        " identified outside the pack's 'doc_files' directory. Please relocate the following images to the"
+        " 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add"
+        " images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    )
+
+    result = ReadmeRelativeImagePathValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert result[0].message == expected
+
+
+def test_VerifyTemplateInReadmeValidator_valid_case(repo):
+    """
+    Given
+    content_items.
+    - Integration with readme that contains %%FILL HERE%% template substring.
+    - Script with readme that contains %%FILL HERE%% template substring.
+    - Playbook with readme that contains %%FILL HERE%% template substring.
+    - Pack with readme that contains %%FILL HERE%% template substring.
+    When
+    - Calling the IsTemplateInReadmeValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure that the validator return the list of the content items, which has %%FILL HERE%% in the readme file.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+        create_script_object(
+            readme_content="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+        create_playbook_object(
+            readme_content="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+        create_pack_object(
+            readme_text="This checks if we have the sentence %%FILL HERE%% in the README.",
+        ),
+    ]
+
+    expected_error_message = "The template '%%FILL HERE%%' exists in the following lines of the README content: 1."
+    validator_results = IsTemplateInReadmeValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert validator_results
+    for validator_result in validator_results:
+        assert validator_result.message == expected_error_message
+
+
+def test_VerifyTemplateInReadmeValidator_invalid_case(repo):
+    """
+    Given
+    content_items.
+    - Integration with readme without %%FILL HERE%% template substring.
+    - Script with readme without %%FILL HERE%% template substring.
+    - Playbook with readme without %%FILL HERE%% template substring.
+    - Pack with readme without %%FILL HERE%% template substring.
+    When
+    - Calling the IsTemplateInReadmeValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure that the validator return empty list.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content="The specific template substring is not in the README.",
+        ),
+        create_script_object(
+            readme_content="The specific template substring is not in the README.",
+        ),
+        create_playbook_object(
+            readme_content="The specific template substring is not in the README.",
+        ),
+        create_pack_object(
+            readme_text="The specific template substring is not in the README.",
+        ),
+    ]
+    assert not IsTemplateInReadmeValidator().obtain_invalid_content_items(content_items)

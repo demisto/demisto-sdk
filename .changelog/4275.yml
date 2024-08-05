@@ -1,4 +1,0 @@
-changes:
-- description: Combined RN103 and RN104 into the new validation format. Validates that the pack contains a full and valid release note file.
-  type: internal
-pr_number: 4275

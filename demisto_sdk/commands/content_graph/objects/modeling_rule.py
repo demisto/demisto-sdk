@@ -2,6 +2,8 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
+from pydantic.fields import Field
+
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
@@ -20,6 +22,9 @@ json = JSON_Handler()
 
 
 class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  # type: ignore[call-arg]
+    rules_key: Optional[str] = Field(default="", alias="rules")
+    schema_key: Optional[str] = Field(default="", alias="schema")
+
     def summary(
         self,
         marketplace: Optional[MarketplaceVersions] = None,
@@ -32,7 +37,7 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
-        **kwargs
+        **kwargs,
     ) -> dict:
         if not kwargs.get("unify_only"):
             data = super().prepare_for_upload(current_marketplace)

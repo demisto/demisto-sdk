@@ -483,8 +483,8 @@ class TestValidators:
 
         test_package = list()
 
-        for (dummy_file, file_type) in changelog_needed:
-            for (release_notes_file, answer) in changelog_files_answer:
+        for dummy_file, file_type in changelog_needed:
+            for release_notes_file, answer in changelog_files_answer:
                 if file_type == "Script":
                     test_package.append(
                         (
@@ -671,9 +671,6 @@ class TestValidators:
             IntegrationValidator, "is_api_token_in_credential_type", return_value=True
         )
         mocker.patch.object(ReadMeValidator, "verify_image_exist", return_value=True)
-        mocker.patch.object(
-            ReadMeValidator, "verify_readme_image_paths", return_value=True
-        )
         mocker.patch.object(OldValidateManager, "is_node_exist", return_value=True)
         validate_manager = OldValidateManager(file_path=file_path, skip_conf_json=True)
         integration_yml = (
@@ -822,14 +819,14 @@ class TestValidators:
         )
 
         validate_manager.validate_pack_unique_files(
-            pack.path, pack_error_ignore_list={}
+            str(pack.path), pack_error_ignore_list={}
         )
         assert not str_in_call_args_list(logger_error.call_args_list, err_msg)
         assert not str_in_call_args_list(logger_error.call_args_list, err_code)
 
         Path(pack.pack_metadata.path).unlink()
         validate_manager.validate_pack_unique_files(
-            pack.path, pack_error_ignore_list={}
+            str(pack.path), pack_error_ignore_list={}
         )
         assert all(
             [
@@ -910,9 +907,6 @@ class TestValidators:
             PackUniqueFilesValidator,
             "validate_pack_readme_and_pack_description",
             return_value=True,
-        )
-        mocker.patch.object(
-            PackUniqueFilesValidator, "validate_pack_readme_images", return_value=True
         )
         mocker.patch.object(
             PackUniqueFilesValidator, "_read_metadata_content", return_value=dict()
@@ -1665,21 +1659,21 @@ class TestValidators:
             script3 = pack1.create_script("Script3")
             script.yml.write_dict(
                 {
-                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200b\n"
                     "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
                     "deprecated": True,
                 }
             )
             script2.yml.write_dict(
                 {
-                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200b\n"
                     "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
                     "deprecated": False,
                 }
             )
             script3.yml.write_dict(
                 {
-                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                    "script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200b\n"
                     "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n"
                 }
             )
@@ -3064,6 +3058,7 @@ pack_metadata_invalid_tags = {
     "tags": ["Use Case"],
     "useCases": [],
     "keywords": [],
+    "marketplaces": ["xsoar"],
 }
 
 

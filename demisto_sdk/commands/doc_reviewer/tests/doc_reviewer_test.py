@@ -327,7 +327,6 @@ class TestDocReviewPack:
 
 
 class TestDocReviewXSOAROnly:
-
     """
     Tests for the `--xsoar-only` flag.
     """
@@ -335,7 +334,6 @@ class TestDocReviewXSOAROnly:
     default_args = ["--xsoar-only"]
 
     class CommandResultCode(Enum):
-
         """
         Holds result code for the execution of `doc-review` command.
         """
@@ -344,7 +342,6 @@ class TestDocReviewXSOAROnly:
         FAIL = 1
 
     def run_doc_review_cmd(self, cmd_args: List[str]) -> Result:
-
         """
         Uses the Click CLI runner to invoke a command with input arguments and returns the result
         """
@@ -354,7 +351,6 @@ class TestDocReviewXSOAROnly:
         return CliRunner().invoke(__main__.doc_review, args)
 
     def test_valid_supported_pack(self, supported_pack: Pack):
-
         """
         Given -
             An XSOAR-supported Pack with correct spelling.
@@ -376,7 +372,6 @@ class TestDocReviewXSOAROnly:
         assert result.exit_code == self.CommandResultCode.SUCCESS.value
 
     def test_valid_non_supported_pack(self, non_supported_pack: Pack):
-
         """
         Given -
             A non-XSOAR-supported Pack with correct spelling.
@@ -398,7 +393,6 @@ class TestDocReviewXSOAROnly:
         assert result.exit_code == self.CommandResultCode.SUCCESS.value
 
     def test_valid_multiple_supported_packs(self, supported_packs: List[Pack]):
-
         """
         Given -
             2 XSOAR-supported Packs with correct spelling.
@@ -420,7 +414,6 @@ class TestDocReviewXSOAROnly:
         assert result.exit_code == self.CommandResultCode.SUCCESS.value
 
     def test_invalid_non_supported_pack(self, non_supported_pack_mispelled: Pack):
-
         """
         Given -
             A non-XSOAR-supported Pack with incorrect spelling.
@@ -442,7 +435,6 @@ class TestDocReviewXSOAROnly:
         assert result.exit_code == self.CommandResultCode.SUCCESS.value
 
     def test_invalid_supported_pack(self, supported_pack_mispelled: Pack):
-
         """
         Given -
             A XSOAR-supported Pack with incorrect spelling.
@@ -464,7 +456,6 @@ class TestDocReviewXSOAROnly:
         assert result.exit_code == self.CommandResultCode.FAIL.value
 
     def test_invalid_mix_packs(self, mix_invalid_packs: List[Pack]):
-
         """
         Given -
             2 Packs, one community, one XSOAR-supported with incorrect spelling.
@@ -670,11 +661,11 @@ class TestDocReviewPrinting:
         cmd_args: List[str] = []
         for pack in mix_invalid_packs:
             cmd_args.append("--input")
-            cmd_args.append(pack.path)
+            cmd_args.append(str(pack.path))
 
-            if is_xsoar_supported_pack(pack.path):
+            if is_xsoar_supported_pack(str(pack.path)):
                 expected_supported = (
-                    f"Words that might be misspelled were found in {pack.path}"
+                    f"Words that might be misspelled were found in {str(pack.path)}"
                 )
             else:
                 expected_not_supported_readme = f"File '{pack.readme.path}' was skipped because it does not belong to an XSOAR-supported Pack"
@@ -1341,11 +1332,11 @@ def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
     # add a yml script directly into Scripts folder
     pack._create_yaml_based(
         name=script1_name,
-        dir_path=f"{pack.path}//Scripts",
+        dir_path=f"{str(pack.path)}//Scripts",
         content={"name": script1_name},
     )
     # add a .md file script directly into Scripts folder
-    pack._create_text_based("bla.md", "", dir_path=Path(f"{pack.path}//Scripts"))
+    pack._create_text_based("bla.md", "", dir_path=Path(f"{str(pack.path)}//Scripts"))
     # add a script into second_script folder
     script2 = pack.create_script(name="second_script")
     rn_file = pack.create_release_notes(

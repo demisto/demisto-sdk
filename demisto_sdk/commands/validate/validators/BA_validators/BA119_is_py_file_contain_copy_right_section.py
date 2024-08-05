@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List, Union
 
-from demisto_sdk.commands.common.tools import check_text_content_contain_sub_text
+from demisto_sdk.commands.common.tools import search_substrings_by_line
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -11,6 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
+DISALLOWED_PHRASES = ["BSD", "MIT", "Copyright", "proprietary"]
 ContentTypes = Union[Integration, Script]
 
 
@@ -22,7 +23,9 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
     related_field = "Python code file, Python test code file."
     related_file_type = [RelatedFileType.CODE_FILE, RelatedFileType.TEST_CODE_FILE]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -45,20 +48,18 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
         malformed_files = {}
         if "CommonServerPython" in content_item.name:
             return {}
-        if content_item.code_file.exist and (
-            invalid_lines := check_text_content_contain_sub_text(
-                sub_text_list=["BSD", "MIT", "Copyright", "proprietary"],
-                to_split=True,
-                text=content_item.code_file.file_content,
-            )
+
+        for nickname, file in (
+            ("code file", content_item.code_file),
+            ("test code file", content_item.test_code_file),
         ):
-            malformed_files["code file"] = invalid_lines
-        if content_item.test_code_file.exist and (
-            invalid_lines := check_text_content_contain_sub_text(
-                sub_text_list=["BSD", "MIT", "Copyright", "proprietary"],
-                to_split=True,
-                text=content_item.test_code_file.file_content,
-            )
-        ):
-            malformed_files["test code file"] = invalid_lines
+            if file.exist and (
+                invalid_lines := search_substrings_by_line(
+                    phrases_to_search=DISALLOWED_PHRASES,
+                    search_whole_word=True,
+                    text=file.file_content,
+                )
+            ):
+                malformed_files[nickname] = invalid_lines
+
         return malformed_files

@@ -21,12 +21,12 @@ class IsInputKeyNotInTasksValidator(BaseValidator[ContentTypes]):
     description = "Validate that all inputs described in the playbooks input section are used in tasks."
     rationale = "For more info, see: https://xsoar.pan.dev/docs/playbooks/playbooks-overview#inputs-and-outputs"
     error_message = "The playbook '{playbook_name}' contains the following inputs that are not used in any of its tasks: {inputs_not_in_use}"
-    fix_message = ""
     related_field = "input"
-    is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         """Check whether all playbook inputs (defined in the "inputs" section) are in use in any of the tasks
         Args:
             - content_items (Iterable[ContentTypes]): The content items to check.

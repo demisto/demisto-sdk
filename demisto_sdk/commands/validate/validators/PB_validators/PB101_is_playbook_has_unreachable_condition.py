@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import PlaybookTaskType
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -30,7 +31,9 @@ class IsAskConditionHasUnreachableConditionValidator(BaseValidator[ContentTypes]
     related_field = "tasks"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         """Checks whether a builtin conditional task branches are handled properly
         Args:
             - content_items (Iterable[ContentTypes]): The content items to check.
@@ -60,15 +63,14 @@ class IsAskConditionHasUnreachableConditionValidator(BaseValidator[ContentTypes]
         invalid_tasks = {}
         tasks = playbook.tasks
         for task in tasks.values():
-            if task.get("type") == "condition" and task.get("message"):
-
-                next_tasks: dict = task.get("nexttasks", {})
+            if task.type == PlaybookTaskType.CONDITION and task.message:
+                next_tasks: dict = task.nexttasks or {}
                 # Rename the keys in dictionary to upper case
                 next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
 
                 # ADD all replyOptions to unhandled_reply_options (UPPER)
                 unhandled_reply_options = set(
-                    map(str.upper, task.get("message", {}).get("replyOptions", []))
+                    map(str.upper, task.message.get("replyOptions", []))
                 )
 
                 # Remove all nexttasks from unhandled_reply_options (UPPER)
@@ -83,6 +85,6 @@ class IsAskConditionHasUnreachableConditionValidator(BaseValidator[ContentTypes]
                         if key_to_remove:
                             unhandled_reply_options.remove(key_to_remove)
                         else:
-                            invalid_tasks[task.get("id")] = next_task_branch
+                            invalid_tasks[task.id] = next_task_branch
 
         return invalid_tasks

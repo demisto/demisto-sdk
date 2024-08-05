@@ -14,7 +14,7 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import ExecutionMode, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_abstract_class
@@ -95,6 +95,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
+    expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -107,6 +108,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         content_item: ContentTypes,
         ignorable_errors: list,
         support_level_dict: dict,
+        running_execution_mode: ExecutionMode,
     ) -> bool:
         """check whether to run validation on the given content item or not.
 
@@ -114,6 +116,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             content_item (BaseContent): The content item to run the validation on.
             ignorable_errors (list): The list of the errors that can be ignored.
             support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
+            running_execution_mode (ExecutionMode): the execution mode of the current running
 
         Returns:
             bool: True if the validation should run. Otherwise, return False.
@@ -122,6 +125,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             [
                 isinstance(content_item, self.get_content_types()),
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
+                should_run_on_execution_mode(
+                    self.expected_execution_mode, running_execution_mode
+                ),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),
@@ -137,7 +143,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             ]
         )
 
-    def is_valid(
+    def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
@@ -325,3 +331,20 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     if content_item.deprecated and not run_on_deprecated:
         return False
     return True
+
+
+def should_run_on_execution_mode(
+    expected_execution_mode: Optional[list[ExecutionMode]],
+    running_execution_mode: ExecutionMode,
+):
+    """
+    Check if the running_execution_mode is in the expected_execution_mode of validation.
+    Args:
+        expected_execution_mode (Optional[list[ExecutionMode]]): The validation's expected execution_mode, if None then validation should run on all execution modes.
+        running_execution_mode (ExecutionMode): The running execution_mode.
+    Returns:
+        bool: True if the given validation should run on the running_execution_mode. Otherwise, return False.
+    """
+    if not expected_execution_mode or running_execution_mode in expected_execution_mode:
+        return True
+    return False

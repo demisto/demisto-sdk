@@ -20,7 +20,9 @@ class IsValidDescriptionFieldValidator(BaseValidator[ContentTypes]):
     error_message = "Pack metadata description field is invalid. Please fill valid pack description."
     related_field = "description"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

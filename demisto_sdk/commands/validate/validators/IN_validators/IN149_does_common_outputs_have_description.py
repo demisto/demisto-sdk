@@ -24,7 +24,9 @@ class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
     invalid_commands: ClassVar[Dict[str, Dict[str, List[str]]]] = {}
     default: ClassVar[dict] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         self.default.update(get_default_output_description())
         return [
             ValidationResult(

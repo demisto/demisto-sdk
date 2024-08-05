@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.tools import get_yaml
 
 class IntegrationDiffDetector:
     def __init__(self, new: str = "", old: str = "", docs_format: bool = False):
-
         if not Path(new).exists():
             logger.error(
                 "[red]No such file or directory for the new integration version.[/red]"
@@ -153,7 +152,6 @@ class IntegrationDiffDetector:
 
         for argument in old_command_arguments:
             if argument not in new_command_arguments:
-
                 new_command_argument = IntegrationDiffDetector.check_if_element_exist(
                     argument, new_command_arguments, "name"
                 )
@@ -212,7 +210,6 @@ class IntegrationDiffDetector:
 
         for field in fields_to_check:
             if field in changed_fields:
-
                 # We want to return the element only if his field was False and changed to be True.
                 if (field == "required" or field == "isArray") and not element[field]:
                     continue
@@ -290,7 +287,6 @@ class IntegrationDiffDetector:
 
         for output in old_command_outputs:
             if output not in new_command_outputs:
-
                 new_command_output = IntegrationDiffDetector.check_if_element_exist(
                     output, new_command_outputs, "contextPath"
                 )
@@ -393,7 +389,6 @@ class IntegrationDiffDetector:
         """
 
         for element in list_of_elements:
-
             if (
                 field_to_check in element_to_check
                 and element[field_to_check] == element_to_check[field_to_check]
@@ -590,6 +585,33 @@ class IntegrationDiffDetector:
         ]
 
         return list(set(new_cmds).difference(old_cmds))
+
+    def get_renamed_commands(self) -> List[Tuple[str, str]]:
+        """
+        Helper function to return the list of renamed commands.
+
+        Returns:
+        - `List[Tuple[str, str]]` with the names of the renamed commands.
+        The first element in the tuple is the original command name,
+        the second element is the changed command name.
+        """
+
+        renamed_cmds: List[Tuple[str, str]] = []
+
+        logger.debug("Getting renamed commands...")
+        for i, new_cmd in enumerate(self.new_yaml_data["script"]["commands"]):
+            try:
+                old_cmd = self.old_yaml_data["script"]["commands"][i]
+                diff = list(dictdiffer.diff(new_cmd, old_cmd))
+                if diff and diff[0][0] == "change" and diff[0][1] == "name":
+                    renamed_cmds.append((diff[0][2][1], diff[0][2][0]))
+            except IndexError:
+                logger.debug(
+                    f"Unable to find {i}th command in old integration. Skipping the rest..."
+                )
+                break
+
+        return renamed_cmds
 
     def is_configuration_different(self) -> bool:
         """

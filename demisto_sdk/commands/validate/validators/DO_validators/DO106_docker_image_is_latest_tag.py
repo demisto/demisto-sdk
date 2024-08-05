@@ -6,6 +6,7 @@ from typing import Iterable, List, Union
 import requests
 from dateparser import parse
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,
@@ -27,9 +28,13 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
     description = "Validate that the given content-item's docker image isn't outdated."
     rationale = "Updated Docker images ensure that the code doesn't use outdated dependencies, including bug fixes and fixed vulnerabilities."
     error_message = "docker image {0}'s tag {1} is outdated. The latest tag is {2}"
-
     fix_message = "docker image {0} has been updated to {1}"
     related_field = "Docker image"
+    expected_git_statuses = [
+        GitStatuses.RENAMED,
+        GitStatuses.MODIFIED,
+        GitStatuses.ADDED,
+    ]
     is_auto_fixable = True
 
     @staticmethod
@@ -59,7 +64,9 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
             # return true if docker-image exist, but has a wrong tag
             return True
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         invalid_content_items = []
         for content_item in content_items:
             if not content_item.is_javascript:
@@ -74,7 +81,6 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
                     )
                     continue
                 try:
-
                     docker_image_latest_tag = str(docker_image.latest_tag)
                 except DockerHubRequestException as error:
                     logger.error(f"DO106 - Error when fetching latest tag:\n{error}")

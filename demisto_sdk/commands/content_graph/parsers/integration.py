@@ -9,6 +9,9 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.integration import (
+    StrictIntegration,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -33,6 +36,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
+        self.is_beta = self.yml_data.get("beta", False)
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
@@ -43,13 +47,16 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_remote_sync_in = self.script_info.get("isremotesyncin", False)
         self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
         self.is_feed = self.script_info.get("feed", False)
-        self.is_beta = self.script_info.get("beta", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.is_long_running = self.script_info.get("longRunning", False)
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_tests()
+
+    @property
+    def strict_object(self):
+        return StrictIntegration
 
     @cached_property
     def field_mapping(self):
@@ -146,6 +153,4 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         else:
             return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
                 self.path, self.git_sha, self.yml_data
-            )[
-                1
-            ]
+            )[1]

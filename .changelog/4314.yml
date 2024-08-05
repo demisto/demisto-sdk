@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the `pre-commit` command would fail on simple repository of the missing `docker_native_image_config.json` file.
-  type: fix
-pr_number: 4314

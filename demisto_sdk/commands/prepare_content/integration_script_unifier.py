@@ -40,7 +40,7 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-    replace_markdown_urls_and_upload_to_artifacts,
+    update_markdown_images_with_urls_and_rel_paths,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
@@ -228,7 +228,7 @@ class IntegrationScriptUnifier(Unifier):
                 with tempfile.NamedTemporaryFile(mode="r+", delete=False) as tempf:
                     tempf.write(desc_data)
                     tempf.flush()
-                    replace_markdown_urls_and_upload_to_artifacts(
+                    update_markdown_images_with_urls_and_rel_paths(
                         Path(tempf.name),
                         marketplace,
                         pack_name,

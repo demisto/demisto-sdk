@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Dashboard
 
-FIELDS_TO_INCLUDE = ["fromDate", "toDate", "fromDateLicense"]
+FIELDS_TO_INCLUDE = {"fromDate", "toDate", "fromDateLicense"}
 
 
 class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
@@ -26,11 +26,13 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
     related_field = "layout"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         results = []
-        error_messages = []
         for content_item in content_items:
-            dashboard_missing_fields = self.dashboard_missing_necessary_fields(
+            error_messages = []
+            dashboard_missing_fields = FIELDS_TO_INCLUDE.difference(
                 content_item.data_dict
             )
             widget_missing_fields = self.widget_missing_necessary_fields(content_item)
@@ -61,18 +63,11 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
 
         return results
 
-    def dashboard_missing_necessary_fields(self, dashboard):
-        return [field for field in FIELDS_TO_INCLUDE if dashboard.get(field) is None]
-
-    def widget_missing_necessary_fields(self, dashboard: ContentTypes):
-        widgets = self.get_widgets_from_dashboard(dashboard)
-        missing_fields = dict()
-        for widget in widgets:
-            fields = [field for field in FIELDS_TO_INCLUDE if widget.get(field) is None]
-            if fields:
-                missing_fields[widget.get("id")] = fields
-        return missing_fields
-
     @staticmethod
-    def get_widgets_from_dashboard(dashboard: ContentTypes) -> list:
-        return [item.get("widget") for item in dashboard.layout]
+    def widget_missing_necessary_fields(dashboard: ContentTypes):
+        widgets = [item.get("widget", {}) for item in dashboard.layout]
+        return {
+            widget.get("id"): fields
+            for widget in widgets
+            if (fields := FIELDS_TO_INCLUDE.difference(widget.get("dateRange", {})))
+        }

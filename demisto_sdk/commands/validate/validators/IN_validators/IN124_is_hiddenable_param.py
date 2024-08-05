@@ -4,6 +4,7 @@ from typing import ClassVar, Dict, Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     ALLOWED_HIDDEN_PARAMS,
+    GitStatuses,
     MarketplaceVersions,
     ParameterType,
 )
@@ -34,9 +35,12 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
     fix_message = "Unhiddened the following params {0}."
     related_field = "configuration, hidden"
     is_auto_fixable = True
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     invalid_params: ClassVar[Dict[str, list]] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -44,28 +48,21 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                invalid_params := self.get_invalid_hidden_params(
-                    content_item.name, content_item.params
-                )
-            )
+            if (invalid_params := self.get_invalid_hidden_params(content_item))
         ]
 
-    def get_invalid_hidden_params(
-        self, integration_name: str, params: List[Parameter]
-    ) -> List[str]:
+    def get_invalid_hidden_params(self, content_item: Integration) -> List[str]:
         """Collect the unhiddenable hidden params.
 
         Args:
-            integration_name (str): The name of the current integration to validate.
-            params (List[dict]): The list of the integration params.
+            content_item (Integration): The integration object..
 
         Returns:
             List[str]: The invalid params by name.
         """
         invalid_params = [
             param.name
-            for param in params
+            for param in content_item.params
             if (
                 param.hidden in ("true", True)
                 or (
@@ -83,12 +80,34 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
                         ParameterType.TEXT_AREA.value,
                         ParameterType.TEXT_AREA_ENCRYPTED.value,
                     )
-                    and self._is_replaced_by_type9(param.display or "", params)
+                    and self._is_replaced_by_type9(
+                        param.display or "", content_item.params
+                    )
                 )
+                or self.is_param_already_hidden(content_item, param)
             )
         ]
-        self.invalid_params[integration_name] = invalid_params
+        self.invalid_params[content_item.name] = invalid_params
         return invalid_params
+
+    def is_param_already_hidden(
+        self, content_item: Integration, param: Parameter
+    ) -> bool:
+        """
+        Return True if the param was already set to True in the old content object.
+        Args:
+            content_item (Integration): The integration to test.
+            param (Parameter): The current param to check.
+
+        Returns:
+            bool: True if the param was already set to True in the old content object. Otherwise, return False.
+        """
+        return bool(
+            (old_obj := content_item.old_base_content_object)
+            and (old_param := old_obj.params)  # type: ignore[attr-defined]
+            and (old_param := find_param(old_param, param.name))
+            and old_param.hidden == param.hidden
+        )
 
     def _is_replaced_by_type9(self, display_name: str, params: List[Parameter]) -> bool:
         """Validate that there's an existing replacement for a given param display name with type 9.

@@ -35,7 +35,7 @@ from TestSuite.repo import Repo
 
 
 def content_items_to_node_ids(
-    content_items_dict: Dict[ContentType, List[str]]
+    content_items_dict: Dict[ContentType, List[str]],
 ) -> Set[str]:
     """A helper method that converts a dict of content items to a set of their node ids."""
     return {
@@ -696,7 +696,7 @@ class TestParsersAndModels:
         ContentItemModelVerifier.run(
             model,
             expected_id="urlRep",
-            expected_name="URL",
+            expected_name="urlRep",
             expected_path=indicator_type_path,
             expected_content_type=ContentType.INDICATOR_TYPE,
             expected_fromversion="5.5.0",
@@ -1272,7 +1272,14 @@ class TestParsersAndModels:
 
     @pytest.mark.parametrize(
         "raw_value, expected_value",
-        [("false", False), ("true", True), ("tRue", True), ("something", True)],
+        [
+            (False, False),
+            (True, True),
+            ("true", True),
+            ("false", False),
+            ("tRue", True),
+            ("faLse", False),
+        ],
     )
     def test_script_parser_set_autoupdate(self, raw_value, expected_value, pack: Pack):
         """
@@ -3001,3 +3008,30 @@ def test_get_related_text_file():
     """
     pack = create_pack_object(readme_text="This is a test")
     assert pack.readme.file_content == "This is a test"
+
+
+def test_convert_content_type_to_rn_header_and_from_release_note_header():
+    """
+    Given:
+        - A ContentType enum value, such as ContentType.MAPPER, ContentType.PREPROCESS_RULE, or ContentType.TRIGGER.
+    When:
+        - Calling convert_content_type_to_rn_header(content_type) with the ContentType enum value.
+        - Calling from_release_note_header(header) with the generated header string.
+    Then:
+        - Assert that the ContentType enum value returned by from_release_note_header(header) matches the original ContentType enum value.
+    """
+    from demisto_sdk.commands.content_graph.common import ContentType
+
+    for content_type in ContentType:
+        if content_type in (
+            ContentType.BASE_CONTENT,
+            ContentType.BASE_NODE,
+            ContentType.BASE_PLAYBOOK,
+            ContentType.COMMAND_OR_SCRIPT,
+            ContentType.COMMAND,
+            ContentType.CONNECTION,
+        ):
+            continue
+        assert content_type == ContentType.convert_header_to_content_type(
+            content_type.convert_content_type_to_rn_header
+        )

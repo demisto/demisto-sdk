@@ -2,6 +2,7 @@
 NOTE: This is not a standard Content item. There's no model for it.
 I's only used (at least at the time of writing these lines) in the validate_conf_json.py script
 """
+
 import itertools
 from collections import defaultdict
 from pathlib import Path

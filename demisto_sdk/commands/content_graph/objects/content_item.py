@@ -97,8 +97,8 @@ class ContentItem(BaseContent):
             Pack: Pack model.
         """
         if not self.pack:
-            self.pack = ContentItem.get_pack(self.relationships_data, self.path):
-        return pack # type: ignore[return-value]
+            self.pack = ContentItem.get_pack(self.relationships_data, self.path)
+        return self.pack # type: ignore[return-value]
 
     @staticmethod
     def get_pack(

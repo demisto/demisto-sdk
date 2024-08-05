@@ -82,7 +82,7 @@ class ContentItem(BaseContent):
         # The pack is either provided directly or needs to be located.
 
         pack = cls.get_pack(
-            values.get("pack"), values.get("relationships_data"), values.get("path")
+            values.get("relationships_data"), values.get("path")
         )
         if v and not isinstance(v, fields.FieldInfo):
             return v
@@ -96,13 +96,12 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        if pack := ContentItem.get_pack(self.pack, self.relationships_data, self.path):
-            self.pack = pack
-        return pack  # type: ignore[return-value]
+        if not self.pack:
+            self.pack = ContentItem.get_pack(self.relationships_data, self.path):
+        return pack # type: ignore[return-value]
 
     @staticmethod
     def get_pack(
-        pack: Any,
         relationships_data: dict,
         path: Path,
     ) -> Optional["Pack"]:
@@ -112,16 +111,16 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        if not pack or isinstance(pack, fields.FieldInfo):
-            pack = None
-            if in_pack := relationships_data[RelationshipType.IN_PACK]:
-                pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        pack = None
+        if in_pack := relationships_data[RelationshipType.IN_PACK]:
+            pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
         if not pack:
             if pack_name := get_pack_name(path):
                 pack = BaseContent.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
                 )  # type: ignore[assignment]
         return pack  # type: ignore[return-value]
+
 
     @validator("support", always=True)
     def validate_support(cls, v: str, values) -> Optional[str]:

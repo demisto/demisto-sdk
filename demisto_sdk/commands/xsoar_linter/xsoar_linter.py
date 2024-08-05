@@ -36,7 +36,7 @@ ERROR_CODE_REGEX = r"^/[^:\n]+:\d+:\d+: E\d+ .*$"
 
 
 def build_xsoar_linter_command(
-    support_level: str = "base", formatting_script: bool = False
+    support_level: Optional[str] = "base", formatting_script: bool = False
 ) -> List[str]:
     """
     Build the xsoar linter command.

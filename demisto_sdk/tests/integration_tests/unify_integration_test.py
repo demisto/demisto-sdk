@@ -292,7 +292,7 @@ class TestIntegrationScriptUnifier:
 
 
 class TestLayoutUnifer:
-    def test_layout_unify(self, repo, mocker, monkeypatch):
+    def test_layout_unify(self, mocker, monkeypatch):
         """
         Given:
             - layout that has 'fromVersion' field and 'toVersion' filed.

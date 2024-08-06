@@ -1,4 +1,0 @@
-changes:
-- description: applied the `toml-sort` hook on toml files in the repo.
-  type: internal
-pr_number: 4453

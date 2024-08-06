@@ -84,6 +84,7 @@ __all__ = [
     "TestPlaybook",
     "TestResults",
     "ServerContext",
+    "OnPremServerContext",
 ]
 
 
@@ -475,7 +476,7 @@ class TestPlaybook:
             skipped_tests_collected[self.configuration.playbook_id] = (
                 f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
             )
-            return False  # test has a marketplace value that doesn't matched the build server marketplace
+            return False  # test has a marketplace value that doesn't match the build server marketplace
 
         return (
             in_filtered_tests()

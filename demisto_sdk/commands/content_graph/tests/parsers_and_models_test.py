@@ -162,6 +162,7 @@ class ContentItemModelVerifier:
         expected_deprecated: Optional[bool] = None,
         expected_fromversion: Optional[str] = None,
         expected_toversion: Optional[str] = None,
+        expected_support: Optional[str] = None,
     ) -> None:
         assert expected_id is None or model.object_id == expected_id
         assert expected_name is None or model.name == expected_name
@@ -173,6 +174,7 @@ class ContentItemModelVerifier:
         assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_fromversion is None or model.fromversion == expected_fromversion
         assert expected_toversion is None or model.toversion == expected_toversion
+        assert expected_support is None or model.support == expected_support
 
 
 class PackModelVerifier:

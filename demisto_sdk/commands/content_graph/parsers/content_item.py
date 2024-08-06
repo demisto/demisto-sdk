@@ -311,7 +311,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         )
 
     def is_above_marketplace_min_version(self) -> bool:
-        return Version(self.toversion) >= Version(MARKETPLACE_MIN_VERSION)
+        return False
 
     def add_relationship(
         self,

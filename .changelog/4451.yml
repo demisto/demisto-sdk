@@ -1,4 +1,0 @@
-changes:
-- description: Modified **pre-commit** and **validate** commands to use a specific file's list during the contribution flow instead of relying on Git diff.
-  type: internal
-pr_number: 4451

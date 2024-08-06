@@ -1,6 +1,0 @@
-changes:
-- description: Moved RN108 validation to the new validate format. The validation ensures a new pack doesn't have any release notes.
-  type: internal
-- description: Fixed an issue where Integration and Script save failed due to Enum parsing issues.
-  type: fix
-pr_number: 4459

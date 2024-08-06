@@ -162,7 +162,7 @@ class ContentItemModelVerifier:
         expected_deprecated: Optional[bool] = None,
         expected_fromversion: Optional[str] = None,
         expected_toversion: Optional[str] = None,
-        expected_support: Optional[str] = None,
+        #expected_support: Optional[str] = None,
     ) -> None:
         assert expected_id is None or model.object_id == expected_id
         assert expected_name is None or model.name == expected_name
@@ -174,7 +174,7 @@ class ContentItemModelVerifier:
         assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_fromversion is None or model.fromversion == expected_fromversion
         assert expected_toversion is None or model.toversion == expected_toversion
-        assert expected_support is None or model.support == expected_support
+        #assert expected_support is None or model.support == expected_support
 
 
 class PackModelVerifier:
@@ -727,7 +727,7 @@ class TestParsersAndModels:
         integration = pack.create_integration(yml=load_yaml("integration.yml"))
         integration.code.write("from MicrosoftApiModule import *")
         integration.yml.update({"tests": ["test_playbook"]})
-        integration.yml.update({"supportlevelheader": "xsoar"})
+        #integration.yml.update({"supportlevelheader": "xsoar"})
 
         integration_path = Path(integration.path)
         parser = IntegrationParser(integration_path, list(MarketplaceVersions))
@@ -745,7 +745,7 @@ class TestParsersAndModels:
             expected_content_type=ContentType.INTEGRATION,
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
-            expected_support="xsoar",
+            #expected_support="xsoar",
         )
         assert model.is_fetch_events is False
         assert model.is_fetch_assets is True

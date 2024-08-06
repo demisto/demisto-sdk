@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.validate.tests.test_tools import REPO
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD,
     GENERIC_MODULE,
@@ -313,7 +314,7 @@ class TestLayoutUnifer:
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
-        pack = repo.create_pack("test")
+        pack = REPO.create_pack("test")
         layout = pack.create_layoutcontainer(
             name="test",
             content=json.load(
@@ -325,7 +326,7 @@ class TestLayoutUnifer:
 
         output = "test.json"
 
-        with ChangeCWD(pack.repo_path):
+        with ChangeCWD(REPO.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]
@@ -333,9 +334,7 @@ class TestLayoutUnifer:
 
             assert result.exit_code == 0
             assert not result.exception
-            #!!!!!!
-            # TODO: Fix this test to b 0
-            assert logger_warning.call_count == 1
+            assert logger_warning.call_count == 0
             assert logger_error.call_count == 0
 
             with open(Path(output).name) as updated_layout:

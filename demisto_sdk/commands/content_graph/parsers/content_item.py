@@ -304,7 +304,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             bool: Whether or not this content item should be parsed.
         """
-        return True
+        return not all(
+            [
+                self.is_above_marketplace_min_version(),
+            ]
+        )
 
     def is_above_marketplace_min_version(self) -> bool:
         return Version(self.toversion) >= Version(MARKETPLACE_MIN_VERSION)

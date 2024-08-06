@@ -1,3 +1,4 @@
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS
 from demisto_sdk.commands.test_content.mock_server import MITMProxy
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext,
@@ -42,7 +43,7 @@ def test_execute_tests(mocker, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": filtered_tests,
+            "tests": {TEST_PLAYBOOKS: filtered_tests},
         }
     }
     # Setting up the content conf.json

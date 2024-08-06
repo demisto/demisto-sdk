@@ -685,7 +685,7 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": filtered_tests,
+            "tests": {TEST_PLAYBOOKS: filtered_tests},
         }
     }
     # Setting up the content conf.json

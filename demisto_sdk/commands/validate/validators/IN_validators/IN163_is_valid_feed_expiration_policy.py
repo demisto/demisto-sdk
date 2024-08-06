@@ -98,7 +98,7 @@ class IsValidFeedExpirationPolicyValidator(BaseValidator[ContentTypes]):
                 invalid_content_items.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message + ' ' + elaborate_error_message,
+                        message=self.error_message + " " + elaborate_error_message,
                         content_object=content_item,
                     )
                 )

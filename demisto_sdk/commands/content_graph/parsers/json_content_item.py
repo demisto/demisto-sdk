@@ -28,11 +28,13 @@ class JSONContentItemParser(ContentItemParser):
         self.original_json_data: Dict[str, Any] = self.json_data
         self.structure_errors = self.validate_structure()
         if not isinstance(self.json_data, dict):
+            print("in the error raise no 1")
             raise InvalidContentItemException(
                 f"The content of {self.path} must be in a JSON dictionary format"
             )
 
         if self.should_skip_parsing():
+            print("in the error raise no 2")
             raise NotAContentItemException
 
     @property

@@ -33,6 +33,252 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
 
+
+def content_items_to_node_ids(
+    content_items_dict: Dict[ContentType, List[str]],
+) -> Set[str]:
+    """A helper method that converts a dict of content items to a set of their node ids."""
+    return {
+        f"{content_type}:{content_item_id}"
+        for content_type, content_items in content_items_dict.items()
+        for content_item_id in content_items
+    }
+
+
+class RelationshipsVerifier:
+    @staticmethod
+    def verify_uses(
+        relationships: Relationships,
+        relationship_type: RelationshipType,
+        expected_targets: Dict[str, ContentType],
+    ) -> None:
+        targets = {
+            relationship.get("target"): relationship.get("target_type")
+            for relationship in relationships.get(relationship_type, [])
+        }
+        assert targets == expected_targets
+
+    @staticmethod
+    def verify_command_executions(
+        relationships: Relationships,
+        expected_commands: List[str],
+    ) -> None:
+        targets = {
+            relationship.get("target")
+            for relationship in relationships.get(
+                RelationshipType.USES_COMMAND_OR_SCRIPT, []
+            )
+        }
+        expected_targets = {command for command in expected_commands}
+        assert targets == expected_targets
+
+    @staticmethod
+    def verify_playbook_executions(
+        relationships: Relationships,
+        expected_playbooks: List[str],
+    ) -> None:
+        targets = {
+            relationship.get("target")
+            for relationship in relationships.get(RelationshipType.USES_PLAYBOOK, [])
+        }
+        expected_targets = {playbook for playbook in expected_playbooks}
+        assert targets == expected_targets
+
+    @staticmethod
+    def verify_integration_commands(
+        relationships: Relationships,
+        expected_commands: List[str],
+    ) -> None:
+        targets = {
+            relationship.get("target")
+            for relationship in relationships.get(RelationshipType.HAS_COMMAND, [])
+        }
+        expected_targets = set(expected_commands)
+        assert targets == expected_targets
+
+    @staticmethod
+    def verify_tests(
+        relationships: Relationships,
+        expected_tests: List[str],
+    ) -> None:
+        targets = {
+            relationship.get("target")
+            for relationship in relationships.get(RelationshipType.TESTED_BY, [])
+        }
+        expected_targets = set(expected_tests)
+        assert targets == expected_targets
+
+    @staticmethod
+    def verify_imports(
+        relationships: Relationships,
+        expected_imports: List[str],
+    ) -> None:
+        targets = {
+            relationship.get("target")
+            for relationship in relationships.get(RelationshipType.IMPORTS, [])
+        }
+        expected_targets = set(expected_imports)
+        assert targets == expected_targets
+
+    @staticmethod
+    def run(
+        relationships: Relationships,
+        dependency_ids: Dict[str, ContentType] = {},
+        dependency_names: Dict[str, ContentType] = {},
+        commands_or_scripts_executions: List[str] = [],
+        playbook_executions: List[str] = [],
+        tests: List[str] = [],
+        imports: List[str] = [],
+        integration_commands: List[str] = [],
+    ) -> None:
+        RelationshipsVerifier.verify_uses(
+            relationships, RelationshipType.USES_BY_ID, dependency_ids
+        )
+        RelationshipsVerifier.verify_uses(
+            relationships, RelationshipType.USES_BY_NAME, dependency_names
+        )
+        RelationshipsVerifier.verify_tests(relationships, tests)
+        RelationshipsVerifier.verify_imports(relationships, imports)
+        RelationshipsVerifier.verify_command_executions(
+            relationships, commands_or_scripts_executions
+        )
+        RelationshipsVerifier.verify_playbook_executions(
+            relationships, playbook_executions
+        )
+        RelationshipsVerifier.verify_integration_commands(
+            relationships, integration_commands
+        )
+
+
+class ContentItemModelVerifier:
+    @staticmethod
+    def run(
+        model: ContentItem,
+        expected_id: Optional[str] = None,
+        expected_name: Optional[str] = None,
+        expected_path: Optional[Path] = None,
+        expected_content_type: Optional[ContentType] = None,
+        expected_description: Optional[str] = None,
+        expected_deprecated: Optional[bool] = None,
+        expected_fromversion: Optional[str] = None,
+        expected_toversion: Optional[str] = None,
+    ) -> None:
+        assert expected_id is None or model.object_id == expected_id
+        assert expected_name is None or model.name == expected_name
+        assert expected_path is None or model.path == expected_path
+        assert (
+            expected_content_type is None or model.content_type == expected_content_type
+        )
+        assert expected_description is None or model.description == expected_description
+        assert expected_deprecated is None or model.deprecated == expected_deprecated
+        assert expected_fromversion is None or model.fromversion == expected_fromversion
+        assert expected_toversion is None or model.toversion == expected_toversion
+
+
+class PackModelVerifier:
+    @staticmethod
+    def run(
+        model: PackModel,
+        expected_id: Optional[str] = None,
+        expected_name: Optional[str] = None,
+        expected_path: Optional[Path] = None,
+        expected_description: Optional[str] = None,
+        expected_created: Optional[str] = None,
+        expected_updated: Optional[str] = None,
+        expected_legacy: Optional[bool] = None,
+        expected_eulaLink: Optional[str] = None,
+        expected_author_image: Optional[str] = None,
+        expected_support: Optional[str] = None,
+        expected_email: Optional[str] = None,
+        expected_url: Optional[str] = None,
+        expected_author: Optional[str] = None,
+        expected_certification: Optional[str] = None,
+        expected_hidden: Optional[bool] = None,
+        expected_server_min_version: Optional[str] = None,
+        expected_current_version: Optional[str] = None,
+        expected_tags: Optional[List[str]] = None,
+        expected_categories: Optional[List[str]] = None,
+        expected_use_cases: Optional[List[str]] = None,
+        expected_keywords: Optional[List[str]] = None,
+        expected_price: Optional[int] = None,
+        expected_premium: Optional[bool] = None,
+        expected_vendor_id: Optional[str] = None,
+        expected_vendor_name: Optional[str] = None,
+        expected_preview_only: Optional[bool] = None,
+        expected_marketplaces: Optional[List[MarketplaceVersions]] = None,
+        expected_content_items: Dict[str, ContentType] = {},
+        expected_deprecated: Optional[bool] = None,
+    ) -> None:
+        assert model.content_type == ContentType.PACK
+        assert expected_id is None or model.object_id == expected_id
+        assert expected_name is None or model.name == expected_name
+        assert expected_path is None or model.path == expected_path
+        assert expected_description is None or model.description == expected_description
+        assert expected_created is None or model.created == expected_created
+        assert expected_updated is None or model.updated == expected_updated
+        assert expected_support is None or model.support == expected_support
+        assert expected_legacy is None or model.legacy == expected_legacy
+        assert expected_eulaLink is None or model.eulaLink == expected_eulaLink
+        assert (
+            expected_author_image is None or model.author_image == expected_author_image
+        )
+        assert expected_email is None or model.email == expected_email
+        assert expected_deprecated is None or model.deprecated == expected_deprecated
+        assert expected_url is None or model.url == expected_url
+        assert expected_author is None or model.author == expected_author
+        assert (
+            expected_certification is None
+            or model.certification == expected_certification
+        )
+        assert expected_hidden is None or model.hidden == expected_hidden
+        assert (
+            expected_server_min_version is None
+            or model.server_min_version == expected_server_min_version
+        )
+        assert (
+            expected_current_version is None
+            or model.current_version == expected_current_version
+        )
+        assert expected_tags is None or model.tags == expected_tags
+        assert expected_categories is None or model.categories == expected_categories
+        assert expected_use_cases is None or model.use_cases == expected_use_cases
+        assert expected_keywords is None or model.keywords == expected_keywords
+        assert expected_price is None or model.price == expected_price
+        assert expected_premium is None or model.premium == expected_premium
+        assert expected_vendor_id is None or model.vendor_id == expected_vendor_id
+        assert expected_vendor_name is None or model.vendor_name == expected_vendor_name
+        assert (
+            expected_preview_only is None or model.preview_only == expected_preview_only
+        )
+        assert (
+            expected_marketplaces is None or model.marketplaces == expected_marketplaces
+        )
+
+        content_items = {
+            content_item.object_id: content_item.content_type
+            for content_item in model.content_items
+        }
+        assert content_items == expected_content_items
+
+        for content_item in model.content_items:
+            assert content_item.in_pack == model
+            if content_item.content_type == ContentType.CLASSIFIER:
+                assert content_item.ignored_errors == ["SC100"]
+
+
+class PackRelationshipsVerifier:
+    @staticmethod
+    def run(
+        relationships: Relationships,
+        expected_content_items: Dict[str, ContentType] = {},
+    ) -> None:
+        content_items = {
+            relationship.get("source_id"): relationship.get("source_type")
+            for relationship in relationships.get(RelationshipType.IN_PACK, [])
+        }
+        assert content_items == expected_content_items
+
+
 class TestParsersAndModels:
     def test_classifier_parser_below_min_marketplace_version(self, pack: Pack):
         """
@@ -1572,254 +1818,6 @@ class TestParsersAndModels:
         assert model.python_version == expected_python_version
         # make sure that only after we called directly to the lazy property of the model, its loaded into the model
         assert "python_version" in str(model)
-
-def content_items_to_node_ids(
-    content_items_dict: Dict[ContentType, List[str]],
-) -> Set[str]:
-    """A helper method that converts a dict of content items to a set of their node ids."""
-    return {
-        f"{content_type}:{content_item_id}"
-        for content_type, content_items in content_items_dict.items()
-        for content_item_id in content_items
-    }
-
-
-class RelationshipsVerifier:
-    @staticmethod
-    def verify_uses(
-        relationships: Relationships,
-        relationship_type: RelationshipType,
-        expected_targets: Dict[str, ContentType],
-    ) -> None:
-        targets = {
-            relationship.get("target"): relationship.get("target_type")
-            for relationship in relationships.get(relationship_type, [])
-        }
-        assert targets == expected_targets
-
-    @staticmethod
-    def verify_command_executions(
-        relationships: Relationships,
-        expected_commands: List[str],
-    ) -> None:
-        targets = {
-            relationship.get("target")
-            for relationship in relationships.get(
-                RelationshipType.USES_COMMAND_OR_SCRIPT, []
-            )
-        }
-        expected_targets = {command for command in expected_commands}
-        assert targets == expected_targets
-
-    @staticmethod
-    def verify_playbook_executions(
-        relationships: Relationships,
-        expected_playbooks: List[str],
-    ) -> None:
-        targets = {
-            relationship.get("target")
-            for relationship in relationships.get(RelationshipType.USES_PLAYBOOK, [])
-        }
-        expected_targets = {playbook for playbook in expected_playbooks}
-        assert targets == expected_targets
-
-    @staticmethod
-    def verify_integration_commands(
-        relationships: Relationships,
-        expected_commands: List[str],
-    ) -> None:
-        targets = {
-            relationship.get("target")
-            for relationship in relationships.get(RelationshipType.HAS_COMMAND, [])
-        }
-        expected_targets = set(expected_commands)
-        assert targets == expected_targets
-
-    @staticmethod
-    def verify_tests(
-        relationships: Relationships,
-        expected_tests: List[str],
-    ) -> None:
-        targets = {
-            relationship.get("target")
-            for relationship in relationships.get(RelationshipType.TESTED_BY, [])
-        }
-        expected_targets = set(expected_tests)
-        assert targets == expected_targets
-
-    @staticmethod
-    def verify_imports(
-        relationships: Relationships,
-        expected_imports: List[str],
-    ) -> None:
-        targets = {
-            relationship.get("target")
-            for relationship in relationships.get(RelationshipType.IMPORTS, [])
-        }
-        expected_targets = set(expected_imports)
-        assert targets == expected_targets
-
-    @staticmethod
-    def run(
-        relationships: Relationships,
-        dependency_ids: Dict[str, ContentType] = {},
-        dependency_names: Dict[str, ContentType] = {},
-        commands_or_scripts_executions: List[str] = [],
-        playbook_executions: List[str] = [],
-        tests: List[str] = [],
-        imports: List[str] = [],
-        integration_commands: List[str] = [],
-    ) -> None:
-        RelationshipsVerifier.verify_uses(
-            relationships, RelationshipType.USES_BY_ID, dependency_ids
-        )
-        RelationshipsVerifier.verify_uses(
-            relationships, RelationshipType.USES_BY_NAME, dependency_names
-        )
-        RelationshipsVerifier.verify_tests(relationships, tests)
-        RelationshipsVerifier.verify_imports(relationships, imports)
-        RelationshipsVerifier.verify_command_executions(
-            relationships, commands_or_scripts_executions
-        )
-        RelationshipsVerifier.verify_playbook_executions(
-            relationships, playbook_executions
-        )
-        RelationshipsVerifier.verify_integration_commands(
-            relationships, integration_commands
-        )
-
-
-class ContentItemModelVerifier:
-    @staticmethod
-    def run(
-        model: ContentItem,
-        expected_id: Optional[str] = None,
-        expected_name: Optional[str] = None,
-        expected_path: Optional[Path] = None,
-        expected_content_type: Optional[ContentType] = None,
-        expected_description: Optional[str] = None,
-        expected_deprecated: Optional[bool] = None,
-        expected_fromversion: Optional[str] = None,
-        expected_toversion: Optional[str] = None,
-        expected_support: Optional[str] = None,
-    ) -> None:
-        assert expected_id is None or model.object_id == expected_id
-        assert expected_name is None or model.name == expected_name
-        assert expected_path is None or model.path == expected_path
-        assert (
-            expected_content_type is None or model.content_type == expected_content_type
-        )
-        assert expected_description is None or model.description == expected_description
-        assert expected_deprecated is None or model.deprecated == expected_deprecated
-        assert expected_fromversion is None or model.fromversion == expected_fromversion
-        assert expected_toversion is None or model.toversion == expected_toversion
-        assert expected_support is None or model.support == expected_support
-
-
-class PackModelVerifier:
-    @staticmethod
-    def run(
-        model: PackModel,
-        expected_id: Optional[str] = None,
-        expected_name: Optional[str] = None,
-        expected_path: Optional[Path] = None,
-        expected_description: Optional[str] = None,
-        expected_created: Optional[str] = None,
-        expected_updated: Optional[str] = None,
-        expected_legacy: Optional[bool] = None,
-        expected_eulaLink: Optional[str] = None,
-        expected_author_image: Optional[str] = None,
-        expected_support: Optional[str] = None,
-        expected_email: Optional[str] = None,
-        expected_url: Optional[str] = None,
-        expected_author: Optional[str] = None,
-        expected_certification: Optional[str] = None,
-        expected_hidden: Optional[bool] = None,
-        expected_server_min_version: Optional[str] = None,
-        expected_current_version: Optional[str] = None,
-        expected_tags: Optional[List[str]] = None,
-        expected_categories: Optional[List[str]] = None,
-        expected_use_cases: Optional[List[str]] = None,
-        expected_keywords: Optional[List[str]] = None,
-        expected_price: Optional[int] = None,
-        expected_premium: Optional[bool] = None,
-        expected_vendor_id: Optional[str] = None,
-        expected_vendor_name: Optional[str] = None,
-        expected_preview_only: Optional[bool] = None,
-        expected_marketplaces: Optional[List[MarketplaceVersions]] = None,
-        expected_content_items: Dict[str, ContentType] = {},
-        expected_deprecated: Optional[bool] = None,
-    ) -> None:
-        assert model.content_type == ContentType.PACK
-        assert expected_id is None or model.object_id == expected_id
-        assert expected_name is None or model.name == expected_name
-        assert expected_path is None or model.path == expected_path
-        assert expected_description is None or model.description == expected_description
-        assert expected_created is None or model.created == expected_created
-        assert expected_updated is None or model.updated == expected_updated
-        assert expected_support is None or model.support == expected_support
-        assert expected_legacy is None or model.legacy == expected_legacy
-        assert expected_eulaLink is None or model.eulaLink == expected_eulaLink
-        assert (
-            expected_author_image is None or model.author_image == expected_author_image
-        )
-        assert expected_email is None or model.email == expected_email
-        assert expected_deprecated is None or model.deprecated == expected_deprecated
-        assert expected_url is None or model.url == expected_url
-        assert expected_author is None or model.author == expected_author
-        assert (
-            expected_certification is None
-            or model.certification == expected_certification
-        )
-        assert expected_hidden is None or model.hidden == expected_hidden
-        assert (
-            expected_server_min_version is None
-            or model.server_min_version == expected_server_min_version
-        )
-        assert (
-            expected_current_version is None
-            or model.current_version == expected_current_version
-        )
-        assert expected_tags is None or model.tags == expected_tags
-        assert expected_categories is None or model.categories == expected_categories
-        assert expected_use_cases is None or model.use_cases == expected_use_cases
-        assert expected_keywords is None or model.keywords == expected_keywords
-        assert expected_price is None or model.price == expected_price
-        assert expected_premium is None or model.premium == expected_premium
-        assert expected_vendor_id is None or model.vendor_id == expected_vendor_id
-        assert expected_vendor_name is None or model.vendor_name == expected_vendor_name
-        assert (
-            expected_preview_only is None or model.preview_only == expected_preview_only
-        )
-        assert (
-            expected_marketplaces is None or model.marketplaces == expected_marketplaces
-        )
-
-        content_items = {
-            content_item.object_id: content_item.content_type
-            for content_item in model.content_items
-        }
-        assert content_items == expected_content_items
-
-        for content_item in model.content_items:
-            assert content_item.in_pack == model
-            if content_item.content_type == ContentType.CLASSIFIER:
-                assert content_item.ignored_errors == ["SC100"]
-
-
-class PackRelationshipsVerifier:
-    @staticmethod
-    def run(
-        relationships: Relationships,
-        expected_content_items: Dict[str, ContentType] = {},
-    ) -> None:
-        content_items = {
-            relationship.get("source_id"): relationship.get("source_type")
-            for relationship in relationships.get(RelationshipType.IN_PACK, [])
-        }
-        assert content_items == expected_content_items
-
-
 
 
 class TestFindContentType:

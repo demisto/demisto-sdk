@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Set
 
 import pytest
 
+from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -28,6 +29,8 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
+    create_classifier_object,
     create_pack_object,
 )
 from TestSuite.pack import Pack
@@ -296,13 +299,15 @@ class TestParsersAndModels:
             ClassifierParser,
         )
 
-        classifier = pack.create_classifier(
-            "TestClassifier", load_json("classifier.json")
-        )
-        classifier.update({"toVersion": "5.9.9"})
-        classifier_path = Path(classifier.path)
-        with pytest.raises(NotAContentItemException):
-            ClassifierParser(classifier_path, list(MarketplaceVersions))
+        # classifier = pack.create_classifier(
+        #     "TestClassifier", load_json("classifier.json")
+        # )
+        # classifier.update({"toVersion": "5.9.9"})
+        with ChangeCWD(REPO.path):
+            classifier = create_classifier_object(paths=["toVersion"], values=["5.9.9"])
+            classifier_path = Path(classifier.path)
+            with pytest.raises(NotAContentItemException):
+                ClassifierParser(classifier_path, list(MarketplaceVersions))
 
     def test_classifier_parser(self, pack: Pack):
         """

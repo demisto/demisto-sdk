@@ -161,7 +161,7 @@ def test_filter_validators(
                 },
                 "use_git": {"select": ["TE105", "TE106", "TE107", "BA101"]},
             },
-            ConfiguredValidations(["BA101", "BC100", "PA108"], [], ["BA101"], {}),
+            ConfiguredValidations(["BC100", "PA108"], [], ["BA101"], {}),
             False,
             [],
             ["BA101"],

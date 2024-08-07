@@ -27,6 +27,7 @@ from tenacity import (
 from typer.main import get_command_from_info
 
 from demisto_sdk.commands.common.constants import (
+    TEST_MODELING_RULES,
     XSIAM_SERVER_TYPE,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
@@ -1965,7 +1966,7 @@ def test_modeling_rule(
             output_junit_file.as_posix(), pretty=True
         )
         if nightly:
-            build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(
+            build_context.tests_data_keeper.upload_modeling_rules_result_json_to_bucket(
                 XSIAM_SERVER_TYPE,
                 f"test_modeling_rules_report_{build_number}.xml",
                 output_junit_file,

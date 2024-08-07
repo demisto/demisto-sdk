@@ -1,4 +1,5 @@
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -79,7 +80,7 @@ def playbook(mocker):
 
 
 @pytest.mark.parametrize("incident_configuration, expected", INCIDENT_CASES)
-def test_create_module(mocker, playbook, incident_configuration, expected):
+def test_create_module(mocker, playbook, incident_configuration, expected, request):
     """
     Given:
         incident configuration with only incident type
@@ -132,6 +133,10 @@ def test_create_module(mocker, playbook, incident_configuration, expected):
     mocker.patch.object(ServerContext, "_get_tests_to_run", return_value=("", ""))
     mocker.patch.object(ServerContext, "_get_all_integration_config")
 
+    def delete_temp_logs():
+        Path("temp_log").unlink(missing_ok=True)
+
+    request.addfinalizer(delete_temp_logs)
     test_integration = Integration(
         BuildContext(test_build_params, ParallelLoggingManager("temp_log")),
         "example_integration",

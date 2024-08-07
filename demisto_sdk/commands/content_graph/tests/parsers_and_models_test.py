@@ -303,6 +303,7 @@ class TestParsersAndModels:
         #     "TestClassifier", load_json("classifier.json")
         # )
         # classifier.update({"toVersion": "5.9.9"})
+
         with ChangeCWD(REPO.path):
             classifier = create_classifier_object(paths=["toVersion"], values=["5.9.9"])
             classifier_path = Path(classifier.path)

@@ -29,6 +29,7 @@ from urllib3.exceptions import ReadTimeoutError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    TEST_PLAYBOOKS,
     XPANSE_SERVER_TYPE,
     XSIAM_SERVER_TYPE,
     XSOAR_SAAS_SERVER_TYPE,

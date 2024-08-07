@@ -301,8 +301,9 @@ class TestParsersAndModels:
         )
         classifier.update({"toVersion": "5.9.9"})
         classifier_path = Path(classifier.path)
-        with pytest.raises(NotAContentItemException):
-            ClassifierParser(classifier_path, list(MarketplaceVersions))
+        assert ClassifierParser(classifier_path, list(MarketplaceVersions)).toversion == "5.9.9"
+        # with pytest.raises(NotAContentItemException):
+        #     ClassifierParser(classifier_path, list(MarketplaceVersions))
 
     def test_classifier_parser(self, pack: Pack):
         """

@@ -1419,7 +1419,7 @@ class TestResults:
         self.service_account = service_account
         self.artifacts_bucket = artifacts_bucket
 
-    def upload_playbook_result_json_to_bucket(
+    def upload_modeling_rules_result_json_to_bucket(
         self,
         repository_name: str,
         file_name,
@@ -1432,9 +1432,9 @@ class TestResults:
           original_file_path: The path to the JSON file to upload.
           repository_name: The name of the repository within the bucket.
           file_name: The desired filename for the uploaded JSON data.
-          logging_module: Logging module to use for upload_playbook_result_json_to_bucket.
+          logging_module: Logging module to use for upload_modeling_rules_result_json_to_bucket.
         """
-        logging_module.info("Start uploading playbook results file to bucket")
+        logging_module.info("Start uploading modeling rules results file to bucket")
 
         storage_client = storage.Client.from_service_account_json(self.service_account)
         storage_bucket = storage_client.bucket(self.artifacts_bucket)
@@ -1447,7 +1447,7 @@ class TestResults:
             content_type="application/xml",
         )
 
-        logging_module.info("Finished uploading playbook results file to bucket")
+        logging_module.info("Finished uploading modeling rules results file to bucket")
 
 
 class BuildContext:
@@ -1552,7 +1552,7 @@ class BuildContext:
         for machine, assignment in self.machine_assignment_json.items():
             tests = [
                 BuildContext.prefix_with_packs(test)
-                for test in assignment.get("tests", {}).get("TestModelingRules", [])
+                for test in assignment.get("tests", {}).get(TEST_MODELING_RULES, [])
             ]
             if not tests:
                 logger.info(f"No modeling rules found for machine {machine}")

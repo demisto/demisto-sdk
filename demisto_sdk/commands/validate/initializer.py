@@ -55,7 +55,7 @@ class Initializer:
         committed_only=None,
         prev_ver=None,
         file_path=None,
-        execution_mode=None,
+        execution_mode: Optional[ExecutionMode] = None,
     ):
         self.staged = staged
         self.file_path = file_path

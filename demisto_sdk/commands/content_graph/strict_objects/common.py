@@ -216,3 +216,10 @@ RIGHT_DYNAMIC_MODEL = create_dynamic_model(
     default=None,
     include_without_suffix=True,
 )
+
+SUFFIXED_ID_DYNAMIC_MODEL = create_dynamic_model(
+    # creating here with include_without_suffix == False
+    field_name="id",
+    type_=Optional[str],
+    default=None,
+)

@@ -1,4 +1,4 @@
 changes:
-- description: Added to the ***unify*** command that appends to content-item of type Python, logging with the pack version.
+- description: The ***unify*** command now logs the pack name and version in Python files.
   type: feature
 pr_number: 4437

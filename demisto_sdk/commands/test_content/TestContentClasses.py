@@ -85,6 +85,7 @@ __all__ = [
     "TestResults",
     "ServerContext",
     "OnPremServerContext",
+    "CloudServerContext",
 ]
 
 
@@ -1236,7 +1237,7 @@ class CloudServerContext(ServerContext):
         self.filtered_tests = (
             self.build_context.machine_assignment_json.get(cloud_machine, {})
             .get("tests", {})
-            .get("TestPlaybooks", [])
+            .get(TEST_PLAYBOOKS, [])
         )
         (
             self.mockable_tests_to_run,
@@ -1433,7 +1434,7 @@ class OnPremServerContext(ServerContext):
         self.filtered_tests = (
             self.build_context.machine_assignment_json.get("xsoar-machine", {})
             .get("tests", {})
-            .get("TestPlaybooks", [])
+            .get(TEST_PLAYBOOKS, [])
         )
         (
             self.mockable_tests_to_run,

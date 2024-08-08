@@ -261,7 +261,7 @@ def test_depth_one_pass(folder: str):
         InvalidIntegrationScriptFileName,
         InvalidXDRCTemplatesFileName,
         InvalidModelingRuleFileName,
-        InvalidXSIAMParsingRuleFileName
+        InvalidXSIAMParsingRuleFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.

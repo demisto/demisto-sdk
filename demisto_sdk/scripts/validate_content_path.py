@@ -311,7 +311,8 @@ def _validate(path: Path) -> None:
             raise InvalidXSIAMReportFileName
 
         if first_level_folder == XSIAM_DASHBOARDS_DIR and not (
-            path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix in (".json", ".png")
+            path.stem.startswith(f"{parts_after_packs[0]}_")
+            and path.suffix in (".json", ".png")
         ):
             raise InvalidXSIAMDashboardFileName
 

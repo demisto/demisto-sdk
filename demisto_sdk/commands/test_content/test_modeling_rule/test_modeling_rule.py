@@ -46,6 +46,7 @@ from demisto_sdk.commands.common.tools import (
     get_json_file,
     is_epoch_datetime,
     parse_int_or_default,
+    string_to_bool,
 )
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
@@ -1834,8 +1835,8 @@ def test_modeling_rule(
         help="The build number.",
         show_default=True,
     ),
-    nightly: bool = typer.Option(
-        False,
+    nightly: str = typer.Option(
+        "false",
         "--nightly",
         "-n",
         help="Whether the command is being run in nightly mode.",
@@ -1893,9 +1894,9 @@ def test_modeling_rule(
             raise typer.Exit(1)
 
     start_time = get_utc_now()
-
+    is_nightly = string_to_bool(nightly)
     build_context = BuildContext(
-        nightly=nightly,
+        nightly=is_nightly,
         build_number=build_number,
         branch_name=branch_name,
         retry_attempts=retry_attempts,

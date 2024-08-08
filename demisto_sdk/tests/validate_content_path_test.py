@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
     TESTS_DIRECTORIES,
     XDRC_TEMPLATE_DIR,
-    PARSING_RULES_DIR
+    PARSING_RULES_DIR,
 )
 from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
@@ -92,12 +92,12 @@ def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
 
 def test_xsiam_dashboard_file__valid():
     """
-        Given:
-                A valid XSIAM dashboard file
-        When:
-                Running validate_path
-        Then:
-                Make sure the validation passes
+    Given:
+            A valid XSIAM dashboard file
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation passes
     """
     pack_name = "myPack"
     pack_path = Path("content", "Packs", pack_name)
@@ -113,29 +113,31 @@ def test_xsiam_dashboard_file__valid():
 )
 def test_xsiam_dashboard_file__invalid(file_prefix: str, suffix: str):
     """
-        Given:
-                An invalid XSIAM dashboard file
-                Case 1: wrong prefix - file name does not start with pack name
-                Case 2: wrong suffix - file name does not end with .json
-        When:
-                Running validate_path
-        Then:
-                Make sure the validation raises InvalidXSIAMDashboardFileName
+    Given:
+            An invalid XSIAM dashboard file
+            Case 1: wrong prefix - file name does not start with pack name
+            Case 2: wrong suffix - file name does not end with .json
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation raises InvalidXSIAMDashboardFileName
     """
     pack_name = "myPack"
     pack_path = Path("content", "Packs", pack_name)
     with pytest.raises(InvalidXSIAMDashboardFileName):
-        _validate(pack_path / XSIAM_DASHBOARDS_DIR / f"{file_prefix}_dashboard.{suffix}")
+        _validate(
+            pack_path / XSIAM_DASHBOARDS_DIR / f"{file_prefix}_dashboard.{suffix}"
+        )
 
 
 def test_xsiam_parsing_rule_file__valid():
     """
-        Given:
-                A valid XSIAM parsing rule file
-        When:
-                Running validate_path
-        Then:
-                Make sure the validation passes
+    Given:
+            A valid XSIAM parsing rule file
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation passes
     """
     pack_name = "myPack"
     pack_path = Path("content", "Packs", pack_name)

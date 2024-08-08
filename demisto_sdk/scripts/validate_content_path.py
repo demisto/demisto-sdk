@@ -179,11 +179,15 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
 class InvalidXSIAMReportFileName(InvalidPathException):
     message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
 
+
 class InvalidXSIAMDashboardFileName(InvalidPathException):
     message = "An XSIAM dashboard file must have a .json extension and its name must start with the pack's name, e.g., myPack_dashboard1.json."
 
+
 class InvalidXSIAMParsingRuleFileName(InvalidPathException):
-    message = "An XSIAM Parsing Rule file name must be the same as the parent folder name."
+    message = (
+        "An XSIAM Parsing Rule file name must be the same as the parent folder name."
+    )
 
 
 class InvalidImageFileName(InvalidPathException):

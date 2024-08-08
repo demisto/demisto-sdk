@@ -21,6 +21,7 @@ from demisto_sdk.scripts.validate_content_path import (
     DIRS_ALLOWING_SPACE_IN_FILENAMES,
     MODELING_RULES_DIR,
     XSIAM_REPORTS_DIR,
+    XSIAM_DASHBOARDS_DIR,
     ZERO_DEPTH_FILES,
     InvalidClassifier,
     InvalidDepthOneFile,
@@ -34,6 +35,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidSuffix,
     InvalidXDRCTemplatesFileName,
     InvalidXSIAMReportFileName,
+    InvalidXSIAMDashboardFileName,
     PathIsFolder,
     PathIsTestData,
     PathIsUnified,
@@ -84,6 +86,44 @@ def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
     pack_path = Path("content", "Packs", pack_name)
     with pytest.raises(InvalidXSIAMReportFileName):
         _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")
+
+
+def test_xsiam_dashboard_file_valid():
+    """
+        Given:
+                A valid XSIAM dashboard file
+        When:
+                Running validate_path
+        Then:
+                Make sure the validation passes
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    _validate(pack_path / XSIAM_DASHBOARDS_DIR / f"{pack_name}_dashboard.json")
+
+
+@pytest.mark.parametrize(
+    "file_prefix, suffix",
+    (
+        pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
+        pytest.param("myPack", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xsiam_dashboard_file_invalid(file_prefix: str, suffix: str):
+    """
+        Given:
+                An invalid XSIAM dashboard file
+                Case 1: wrong prefix - file name does not start with pack name
+                Case 2: wrong suffix - file name does not end with .json
+        When:
+                Running validate_path
+        Then:
+                Make sure the validation raises InvalidXSIAMDashboardFileName
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    with pytest.raises(InvalidXSIAMDashboardFileName):
+        _validate(pack_path / XSIAM_DASHBOARDS_DIR / f"{file_prefix}_dashboard.{suffix}")
 
 
 def test_content_entities_dir_length():

@@ -179,6 +179,9 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
 class InvalidXSIAMReportFileName(InvalidPathException):
     message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
 
+class InvalidXSIAMDashboardFileName(InvalidPathException):
+    message = "An XSIAM dashboard file must have a .json extension and its name must start with the pack's name, e.g., myPack_dashboard1.json."
+
 
 class InvalidImageFileName(InvalidPathException):
     message = "Name of image files may only contain only latin letters, digits, underscores or hyphens."
@@ -299,6 +302,11 @@ def _validate(path: Path) -> None:
             path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix == ".json"
         ):
             raise InvalidXSIAMReportFileName
+
+        if first_level_folder == XSIAM_DASHBOARDS_DIR and not (
+            path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix == ".json"
+        ):
+            raise InvalidXSIAMDashboardFileName
 
         if (
             first_level_folder == DOC_FILES_DIR

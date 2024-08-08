@@ -3,7 +3,6 @@ from typing import Dict, List, Optional, Set
 
 import pytest
 
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -35,6 +34,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
 def content_items_to_node_ids(

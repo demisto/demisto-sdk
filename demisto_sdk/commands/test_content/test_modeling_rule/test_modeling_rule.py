@@ -1460,7 +1460,6 @@ class BuildContext:
         retry_attempts: int,
         sleep_interval: int,
         logging_module: ParallelLoggingManager,
-        cloud_machine_ids: str,
         cloud_servers_path: str,
         cloud_servers_api_keys: str,
         service_account: Optional[str],
@@ -1502,14 +1501,9 @@ class BuildContext:
 
         # --------------------------- Machine preparation -------------------------------
 
-        self.cloud_machines_ids = cloud_machine_ids.split(",")
         self.cloud_servers_path_json = get_json_file(cloud_servers_path)
         self.cloud_servers_api_keys_json = get_json_file(cloud_servers_api_keys)
         self.machine_assignment_json = get_json_file(machine_assignment)
-        logger.info(f"Cloud machines: {self.cloud_machines_ids}")
-        logger.info(f"Cloud servers path: {self.cloud_servers_path_json}")
-        logger.info(f"Cloud servers api keys: {self.cloud_servers_api_keys_json}")
-        logger.info(f"Machine assignment: {self.machine_assignment_json}")
 
         # --------------------------- Testing preparation -------------------------------
 
@@ -1805,13 +1799,6 @@ def test_modeling_rule(
         help="GCP service account.",
         show_default=False,
     ),
-    cloud_machine_ids: str = typer.Option(
-        "",
-        "-cm",
-        "--cloud_machine_ids",
-        help="Cloud machine ids to use.",
-        show_default=False,
-    ),
     cloud_servers_path: str = typer.Option(
         "",
         "-csp",
@@ -1914,7 +1901,6 @@ def test_modeling_rule(
         retry_attempts=retry_attempts,
         sleep_interval=sleep_interval,
         logging_module=logging_manager,
-        cloud_machine_ids=cloud_machine_ids,
         cloud_servers_path=cloud_servers_path,
         cloud_servers_api_keys=cloud_servers_api_keys,
         service_account=service_account,

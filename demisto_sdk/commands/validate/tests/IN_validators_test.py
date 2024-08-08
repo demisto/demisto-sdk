@@ -4931,123 +4931,126 @@ def test_IsValidFetchValidator_obtain_invalid_content_items(
     )
 
 
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(pack_info={"support": XSOAR_SUPPORT}),
-                create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
-                create_integration_object(pack_info={"support": DEVELOPER_SUPPORT}),
-                create_integration_object(pack_info={"support": COMMUNITY_SUPPORT}),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "insecure",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "fromlicense": "encrypted",
-                            }
-                        ]
-                    ],
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "fromlicense": "encrypted",
-                            }
-                        ]
-                    ],
-                    pack_info={"support": PARTNER_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_2",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "fromlicense": "encrypted",
-                            }
-                        ]
-                    ],
-                    pack_info={"support": DEVELOPER_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_3",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "fromlicense": "encrypted",
-                            }
-                        ]
-                    ],
-                    pack_info={"support": COMMUNITY_SUPPORT},
-                ),
-            ],
-            3,
-            [
-                'The following parameters contain the "fromlicense" field: test_1. The field is not allowed for contributors, please remove it.',
-                'The following parameters contain the "fromlicense" field: test_2. The field is not allowed for contributors, please remove it.',
-                'The following parameters contain the "fromlicense" field: test_3. The field is not allowed for contributors, please remove it.',
-            ],
-        ),
-    ],
-)
-def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items(
-    content_items: List[Integration],
-    expected_number_of_failures: int,
-    expected_msgs: List[str],
-):
+def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__all_valid():
     """
     Given
-    content_items iterables.
-        - Case 1: Five valid integrations:
-            - One Xsoar supported integration without fromlicense field in any of the integration params.
-            - One Partner supported integration without fromlicense field in any of the integration params.
-            - One Developer supported integration without fromlicense field in any of the integration params.
-            - One Community supported integration without fromlicense field in any of the integration params.
-            - One Xsoar supported integration with fromlicense field in one of the integration params.
-        - Case 2: Three invalid integrations:
-            - One Partner supported integration with fromlicense field in one of the integration params.
-            - One Developer supported integration with fromlicense field in one of the integration params.
-            - One Community supported integration with fromlicense field in one of the integration params.
+    - Five valid integrations:
+        - One Xsoar supported integration without fromlicense field in any of the integration params.
+        - One Partner supported integration without fromlicense field in any of the integration params.
+        - One Developer supported integration without fromlicense field in any of the integration params.
+        - One Community supported integration without fromlicense field in any of the integration params.
+        - One Xsoar supported integration with fromlicense field in one of the integration params.
     When
     - Calling the IsContainingFromLicenseInParamsValidator is valid function.
     Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail all.
+    - Make sure the validation pass for all.
     """
     with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(pack_info={"support": XSOAR_SUPPORT}),
+            create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
+            create_integration_object(pack_info={"support": DEVELOPER_SUPPORT}),
+            create_integration_object(pack_info={"support": COMMUNITY_SUPPORT}),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "insecure",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "fromlicense": "encrypted",
+                        }
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
         results = (
             IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
                 content_items
             )
         )
-    assert len(results) == expected_number_of_failures
+
+    assert len(results) == 0
+
+
+def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__all_invalid():
+    """
+    Given
+    - Three invalid integrations:
+        - One Partner supported integration with fromlicense field in one of the integration params.
+        - One Developer supported integration with fromlicense field in one of the integration params.
+        - One Community supported integration with fromlicense field in one of the integration params.
+    When
+    - Calling the IsContainingFromLicenseInParamsValidator is valid function.
+    Then
+    - Make sure the validation fail and the right error message is returned.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "fromlicense": "encrypted",
+                        }
+                    ]
+                ],
+                pack_info={"support": PARTNER_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_2",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "fromlicense": "encrypted",
+                        }
+                    ]
+                ],
+                pack_info={"support": DEVELOPER_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_3",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "fromlicense": "encrypted",
+                        }
+                    ]
+                ],
+                pack_info={"support": COMMUNITY_SUPPORT},
+            ),
+        ]
+
+        results = (
+            IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
+                content_items
+            )
+        )
+
+    expected_msgs = [
+        'The following parameters contain the "fromlicense" field: test_1. The field is not allowed for contributors, please remove it.',
+        'The following parameters contain the "fromlicense" field: test_2. The field is not allowed for contributors, please remove it.',
+        'The following parameters contain the "fromlicense" field: test_3. The field is not allowed for contributors, please remove it.',
+    ]
+
+    assert len(results) == 3
     assert all(
         [
             result.message == expected_msg
@@ -5096,151 +5099,154 @@ def test_IsContainingFromLicenseInParamsValidator_fix():
     assert not any([param.fromlicense for param in content_item.params])
 
 
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": True,
-                            },
-                            {
-                                "name": "test_2",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": False,
-                            },
-                        ]
-                    ],
-                    pack_info={"support": PARTNER_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": True,
-                            },
-                            {
-                                "name": "test_2",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": False,
-                            },
-                        ]
-                    ],
-                    pack_info={"support": DEVELOPER_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": True,
-                            },
-                            {
-                                "name": "test_2",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": False,
-                            },
-                        ]
-                    ],
-                    pack_info={"support": COMMUNITY_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": True,
-                            },
-                            {
-                                "name": "test_3",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                            },
-                        ]
-                    ],
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": False,
-                            }
-                        ]
-                    ],
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-            ],
-            1,
-            [
-                "In order to allow fetching the following params: test from an external vault, the type of the parameters should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'.\nFor more details, check the convention for credentials - https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
-            ],
-        ),
-    ],
-)
-def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items(
-    content_items, expected_number_of_failures, expected_msgs
-):
+def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_valid():
     """
     Given
-    content_items iterables.
-        - Case 1: Five valid integrations:
-            - One Partner supported integration with one hidden and one non-hidden type 4 params.
-            - One Developer supported integration with one hidden and one non-hidden type 4 params.
-            - One Community supported integration with one hidden and one non-hidden type 4 params.
-            - One Xsoar supported integration with one hidden type 4 param, and one non-hidden non type 4 param.
-        - Case 2: One invalid integration with a non-hidden type 4 param.
+    - Four valid integrations:
+        - One Partner supported integration with one hidden and one non-hidden type 4 params.
+        - One Developer supported integration with one hidden and one non-hidden type 4 params.
+        - One Community supported integration with one hidden and one non-hidden type 4 params.
+        - One Xsoar supported integration with one hidden type 4 param, and one non-hidden non type 4 param.
     When
     - Calling the IsAPITokenInCredentialTypeValidator is valid function.
     Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail.
+    - Make sure the validation pass for all.
     """
     with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": True,
+                        },
+                        {
+                            "name": "test_2",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": False,
+                        },
+                    ]
+                ],
+                pack_info={"support": PARTNER_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": True,
+                        },
+                        {
+                            "name": "test_2",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": False,
+                        },
+                    ]
+                ],
+                pack_info={"support": DEVELOPER_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": True,
+                        },
+                        {
+                            "name": "test_2",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": False,
+                        },
+                    ]
+                ],
+                pack_info={"support": COMMUNITY_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": True,
+                        },
+                        {
+                            "name": "test_3",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
         results = IsAPITokenInCredentialTypeValidator().obtain_invalid_content_items(
             content_items
         )
-    assert len(results) == expected_number_of_failures
+
+    assert len(results) == 0
+
+
+def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_invalid():
+    """
+    Given
+    - One invalid integration with a non-hidden type 4 param.
+    When
+    - Calling the IsAPITokenInCredentialTypeValidator is valid function.
+    Then
+    - Make sure the validation fail and the right error message is returned.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": False,
+                        }
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
+        results = IsAPITokenInCredentialTypeValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+    expected_msgs = [
+        "In order to allow fetching the following params: test from an external vault, the type of the parameters should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'.\nFor more details, check the convention for credentials - https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
+    ]
+
+    assert len(results) == 1
     assert all(
         [
             result.message == expected_msg
@@ -5400,87 +5406,87 @@ def test_IsNameContainIncidentInCorePackValidator_obtain_invalid_content_items(
     )
 
 
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(
-                    pack_info={"support": XSOAR_SUPPORT},
-                    paths=["script.isfetchevents"],
-                    values=[True],
-                ),
-                create_integration_object(
-                    pack_info={"support": PARTNER_SUPPORT},
-                    paths=["supportlevelheader", "script.isfetchevents"],
-                    values=[XSOAR_SUPPORT, True],
-                ),
-                create_integration_object(
-                    pack_info={"support": XSOAR_SUPPORT},
-                    paths=["script.isfetcheventsandassets"],
-                    values=[True],
-                ),
-                create_integration_object(
-                    pack_info={"support": PARTNER_SUPPORT},
-                    paths=["supportlevelheader", "script.isfetcheventsandassets"],
-                    values=[XSOAR_SUPPORT, True],
-                ),
-                create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    pack_info={"support": PARTNER_SUPPORT},
-                    paths=["script.isfetchevents"],
-                    values=[True],
-                ),
-                create_integration_object(
-                    pack_info={"support": PARTNER_SUPPORT},
-                    paths=["script.isfetcheventsandassets"],
-                    values=[True],
-                ),
-            ],
-            2,
-            [
-                "The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key supportlevelheader = xsoar in its yml.",
-                "The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key supportlevelheader = xsoar in its yml.",
-            ],
-        ),
-    ],
-)
-def test_IsPartnerCollectorHasXsoarSupportLevelValidator_obtain_invalid_content_items(
-    content_items: List[Integration],
-    expected_number_of_failures: int,
-    expected_msgs: List[str],
-):
+def test_IsPartnerCollectorHasXsoarSupportLevelValidator_obtain_invalid_content_items__all_valid():
     """
     Given
-    content_items iterables.
-        - Case 1: Five valid integrations:
-            - One Xsoar supported events fetching integration.
-            - One Partner supported events fetching integration with support level header = Xsoar.
-            - One Xsoar supported events&assets fetching integration.
-            - One Xsoar supported events&assets fetching integration with support level header = Xsoar.
-            - One non-fetching Partner supported integration without support level header = Xsoar.
-        - Case 2: Two invalid integrations:
-            - One Partner supported events fetching integration without support level header = Xsoar.
-            - One Xsoar supported events&assets fetching integration without support level header = Xsoar.
+    - Five valid integrations:
+        - One Xsoar supported events fetching integration.
+        - One Partner supported events fetching integration with support level header = Xsoar.
+        - One Xsoar supported events&assets fetching integration.
+        - One Xsoar supported events&assets fetching integration with support level header = Xsoar.
+        - One non-fetching Partner supported integration without support level header = Xsoar.
     When
     - Calling the IsPartnerCollectorHasXsoarSupportLevelValidator is valid function.
     Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail all.
+    - Make sure the validation pass for all.
     """
-
     with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                pack_info={"support": XSOAR_SUPPORT},
+                paths=["script.isfetchevents"],
+                values=[True],
+            ),
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT},
+                paths=["supportlevelheader", "script.isfetchevents"],
+                values=[XSOAR_SUPPORT, True],
+            ),
+            create_integration_object(
+                pack_info={"support": XSOAR_SUPPORT},
+                paths=["script.isfetcheventsandassets"],
+                values=[True],
+            ),
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT},
+                paths=["supportlevelheader", "script.isfetcheventsandassets"],
+                values=[XSOAR_SUPPORT, True],
+            ),
+            create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
+        ]
+
         results = IsPartnerCollectorHasXsoarSupportLevelValidator().obtain_invalid_content_items(
             content_items
         )
-    assert len(results) == expected_number_of_failures
+
+    assert len(results) == 0
+
+
+def test_IsPartnerCollectorHasXsoarSupportLevelValidator_obtain_invalid_content_items__all_invalid():
+    """
+    Given
+    - Two invalid integrations:
+        - One Partner supported events fetching integration without support level header = Xsoar.
+        - One Xsoar supported events&assets fetching integration without support level header = Xsoar.
+    When
+    - Calling the IsPartnerCollectorHasXsoarSupportLevelValidator is valid function.
+    Then
+    - Make sure the validation fail and the right error message is returned.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT},
+                paths=["script.isfetchevents"],
+                values=[True],
+            ),
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT},
+                paths=["script.isfetcheventsandassets"],
+                values=[True],
+            ),
+        ]
+
+        results = IsPartnerCollectorHasXsoarSupportLevelValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+    expected_msgs = [
+        "The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key supportlevelheader = xsoar in its yml.",
+        "The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key supportlevelheader = xsoar in its yml.",
+    ]
+
+    assert len(results) == 2
     assert all(
         [
             result.message == expected_msg

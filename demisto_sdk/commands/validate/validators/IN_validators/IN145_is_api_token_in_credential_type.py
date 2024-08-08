@@ -38,7 +38,7 @@ class IsAPITokenInCredentialTypeValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.support_level == XSOAR_SUPPORT
+            if content_item.support == XSOAR_SUPPORT
             and (invalid_params := self.get_invalid_params(content_item.params))
         ]
 

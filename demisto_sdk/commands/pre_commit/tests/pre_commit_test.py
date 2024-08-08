@@ -56,7 +56,7 @@ class Obj:
     object_id: str = "id1"
     is_powershell: bool = False
     docker_image: str = "dockerimage"
-    support_level: str = "xsoar"
+    support: str = "xsoar"
 
     @property
     def docker_images(self):
@@ -638,7 +638,7 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {
         "2.7": {(Path("file1.py"), Obj())},
-        "3.8": {(Path("file2.py"), Obj(support_level="community"))},
+        "3.8": {(Path("file2.py"), Obj(support="community"))},
     }
     pre_commit_context = pre_commit_command.PreCommitContext(
         None,

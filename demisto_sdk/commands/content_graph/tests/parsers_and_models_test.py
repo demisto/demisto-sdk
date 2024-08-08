@@ -28,10 +28,13 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
+    create_classifier_object,
     create_pack_object,
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
 def content_items_to_node_ids(
@@ -162,6 +165,7 @@ class ContentItemModelVerifier:
         expected_deprecated: Optional[bool] = None,
         expected_fromversion: Optional[str] = None,
         expected_toversion: Optional[str] = None,
+        expected_support: Optional[str] = None,
     ) -> None:
         assert expected_id is None or model.object_id == expected_id
         assert expected_name is None or model.name == expected_name
@@ -173,6 +177,7 @@ class ContentItemModelVerifier:
         assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_fromversion is None or model.fromversion == expected_fromversion
         assert expected_toversion is None or model.toversion == expected_toversion
+        assert expected_support is None or model.support == expected_support
 
 
 class PackModelVerifier:
@@ -293,14 +298,11 @@ class TestParsersAndModels:
         from demisto_sdk.commands.content_graph.parsers.classifier import (
             ClassifierParser,
         )
-
-        classifier = pack.create_classifier(
-            "TestClassifier", load_json("classifier.json")
-        )
-        classifier.update({"toVersion": "5.9.9"})
-        classifier_path = Path(classifier.path)
-        with pytest.raises(NotAContentItemException):
-            ClassifierParser(classifier_path, list(MarketplaceVersions))
+        with ChangeCWD(REPO.path):
+            classifier = create_classifier_object(paths=["toVersion"], values=["5.9.9"])
+            classifier_path = Path(classifier.path)
+            with pytest.raises(NotAContentItemException):
+                ClassifierParser(classifier_path, list(MarketplaceVersions))
 
     def test_classifier_parser(self, pack: Pack):
         """
@@ -725,6 +727,7 @@ class TestParsersAndModels:
         integration = pack.create_integration(yml=load_yaml("integration.yml"))
         integration.code.write("from MicrosoftApiModule import *")
         integration.yml.update({"tests": ["test_playbook"]})
+        integration.yml.update({"supportlevelheader": "xsoar"})
 
         integration_path = Path(integration.path)
         parser = IntegrationParser(integration_path, list(MarketplaceVersions))
@@ -742,6 +745,7 @@ class TestParsersAndModels:
             expected_content_type=ContentType.INTEGRATION,
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            expected_support="xsoar",
         )
         assert model.is_fetch_events is False
         assert model.is_fetch_assets is True

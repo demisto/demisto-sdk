@@ -40,7 +40,7 @@ class IsHaveUnitTestFileValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                content_item.support_level in [PARTNER_SUPPORT, XSOAR_SUPPORT]
+                content_item.support in [PARTNER_SUPPORT, XSOAR_SUPPORT]
                 and content_item.type == TYPE_PYTHON
                 and content_item.path.with_name(f"{content_item.path.stem}.py").exists()
                 and not self.case_sensitive_exists(

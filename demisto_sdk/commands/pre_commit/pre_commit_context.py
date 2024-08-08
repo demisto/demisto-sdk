@@ -114,11 +114,11 @@ class PreCommitContext:
         }
 
     @cached_property
-    def support_level_to_files(self) -> Dict[str, Set[Path]]:
+    def support_level_to_files(self) -> Dict[Optional[str], Set[Path]]:
         support_level_to_files = defaultdict(set)
         for path, obj in self.files_to_run_with_objects:
             if obj is not None:
-                support_level_to_files[obj.support_level].add(path)
+                support_level_to_files[obj.support].add(path)
         return support_level_to_files
 
     def _get_hooks(self, pre_commit_config: dict) -> dict:

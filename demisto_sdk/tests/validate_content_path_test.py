@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
     TESTS_DIRECTORIES,
     XDRC_TEMPLATE_DIR,
+    PARSING_RULES_DIR
 )
 from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
@@ -36,6 +37,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidXDRCTemplatesFileName,
     InvalidXSIAMReportFileName,
     InvalidXSIAMDashboardFileName,
+    InvalidXSIAMParsingRuleFileName,
     PathIsFolder,
     PathIsTestData,
     PathIsUnified,
@@ -88,7 +90,7 @@ def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
         _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")
 
 
-def test_xsiam_dashboard_file_valid():
+def test_xsiam_dashboard_file__valid():
     """
         Given:
                 A valid XSIAM dashboard file
@@ -109,7 +111,7 @@ def test_xsiam_dashboard_file_valid():
         pytest.param("myPack", "py", id="good name, bad suffix"),
     ),
 )
-def test_xsiam_dashboard_file_invalid(file_prefix: str, suffix: str):
+def test_xsiam_dashboard_file__invalid(file_prefix: str, suffix: str):
     """
         Given:
                 An invalid XSIAM dashboard file
@@ -124,6 +126,46 @@ def test_xsiam_dashboard_file_invalid(file_prefix: str, suffix: str):
     pack_path = Path("content", "Packs", pack_name)
     with pytest.raises(InvalidXSIAMDashboardFileName):
         _validate(pack_path / XSIAM_DASHBOARDS_DIR / f"{file_prefix}_dashboard.{suffix}")
+
+
+def test_xsiam_parsing_rule_file__valid():
+    """
+        Given:
+                A valid XSIAM parsing rule file
+        When:
+                Running validate_path
+        Then:
+                Make sure the validation passes
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    folder_name = f"{pack_name}_{PARSING_RULES_DIR}"
+    _validate(pack_path / PARSING_RULES_DIR / folder_name / f"{folder_name}.yml")
+
+
+@pytest.mark.parametrize(
+    "file_name, suffix",
+    (
+        pytest.param("wrongName", "json", id="bad name, good suffix"),
+        pytest.param("myPack_ParsingRules", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xsiam_parsing_rule_file__invalid(file_name: str, suffix: str):
+    """
+    Given:
+            An invalid XSIAM parsing rule file
+            Case 1: wrong name - file name is not identical to the folder name
+            Case 2: wrong suffix - file name does not end with .yml or.xif
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation raises InvalidXSIAMParsingRuleFileName
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    folder_name = f"{pack_name}_{PARSING_RULES_DIR}"
+    with pytest.raises(InvalidXSIAMParsingRuleFileName):
+        _validate(pack_path / PARSING_RULES_DIR / folder_name / f"{file_name}.{suffix}")
 
 
 def test_content_entities_dir_length():

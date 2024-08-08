@@ -182,6 +182,9 @@ class InvalidXSIAMReportFileName(InvalidPathException):
 class InvalidXSIAMDashboardFileName(InvalidPathException):
     message = "An XSIAM dashboard file must have a .json extension and its name must start with the pack's name, e.g., myPack_dashboard1.json."
 
+class InvalidXSIAMParsingRuleFileName(InvalidPathException):
+    message = "An XSIAM Parsing Rule file name must be the same as the parent folder name."
+
 
 class InvalidImageFileName(InvalidPathException):
     message = "Name of image files may only contain only latin letters, digits, underscores or hyphens."
@@ -334,6 +337,11 @@ def _validate(path: Path) -> None:
             )
         ):
             raise InvalidModelingRuleFileName
+
+        elif first_level_folder == PARSING_RULES_DIR and not (
+            path.stem == path.parent.name and path.suffix in {".yml", ".xif"}
+        ):
+            raise InvalidXSIAMParsingRuleFileName
 
 
 def _validate_image_file_name(image_name: str):

@@ -965,6 +965,7 @@ def validate_modeling_rule(
     interactive: bool,
     ctx: typer.Context,
     delete_existing_dataset: bool,
+    is_nightly: bool,
     xsiam_client: XsiamApiClient,
     tenant_demisto_version: Version,
 ) -> Tuple[bool, Union[TestSuite, None]]:
@@ -978,6 +979,7 @@ def validate_modeling_rule(
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
         delete_existing_dataset (bool): Whether to delete the existing dataset in the tenant.
+        is_nightly (bool): Whether the command is being run in nightly mode.
         xsiam_client (XsiamApiClient): The XSIAM client used to do API calls to the tenant.
         tenant_demisto_version (Version): The demisto version of the XSIAM tenant.
     """
@@ -1275,6 +1277,22 @@ def validate_modeling_rule(
                     extra={"markup": True},
                 )
         else:
+            if is_nightly:
+                # Running in nightly mode, don't fail the test if no test data file is found.
+                err = f"No test data file for {get_relative_path_to_content(modeling_rule_directory)} found. "
+                logger.warning(
+                    f"[red]{err}[/red]",
+                    extra={"markup": True},
+                )
+                test_data_test_case = TestCase(
+                    "Test data file does not exist",
+                    classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",  # type:ignore[arg-type]
+                )
+                test_data_test_case.result += [Skipped(err)]  # type:ignore[arg-type]
+                modeling_rule_test_suite.add_testcase(test_data_test_case)
+                return True, modeling_rule_test_suite
+
+            # Not running in nightly mode, fail the test if no test data file is found.
             err = (
                 f"Please create a test data file for {get_relative_path_to_content(modeling_rule_directory)} "
                 f"and then rerun\n{executed_command}"
@@ -1650,6 +1668,7 @@ class CloudServerContext:
                     self.build_context.interactive,
                     self.build_context.ctx,
                     self.build_context.delete_existing_dataset,
+                    self.build_context.is_nightly,
                     xsiam_client=xsiam_client,
                     tenant_demisto_version=tenant_demisto_version,
                 )

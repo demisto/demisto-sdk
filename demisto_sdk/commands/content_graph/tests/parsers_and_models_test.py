@@ -285,7 +285,7 @@ class PackRelationshipsVerifier:
 
 
 class TestParsersAndModels:
-    def test_classifier_parser_below_min_marketplace_version(self, pack: Pack):
+    def test_classifier_parser_below_min_marketplace_version(self):
         """
         Given:
             - A pack with a classifier.

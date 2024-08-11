@@ -21,6 +21,7 @@ from demisto_sdk.commands.content_graph.objects import (
     PreProcessRule,
     Report,
     Widget,
+    Wizard,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
@@ -54,6 +55,7 @@ ContentTypes = Union[
     PreProcessRule,
     Report,
     Widget,
+    Wizard,
 ]
 
 

@@ -181,12 +181,12 @@ class InvalidXSIAMReportFileName(InvalidPathException):
 
 
 class InvalidXSIAMDashboardFileName(InvalidPathException):
-    message = "An XSIAM dashboard file must have a .json extension and its name must start with the pack's name, e.g., myPack_dashboard1.json."
+    message = "Only .json and .png file extension are supported for XSIAM dashboard. File must be named  <pack_name>_<dashboard_name>.json."
 
 
 class InvalidXSIAMParsingRuleFileName(InvalidPathException):
     message = (
-        "An XSIAM Parsing Rule file name must be the same as the parent folder name."
+    "Only .yml and .xif file extension are supported for XSIAM Parsing Rule. File must be named as the parent folder name."
     )
 
 

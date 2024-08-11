@@ -62,6 +62,7 @@ class BaseStrictModel(BaseModel, ABC):
             "tags",  # modeling rule
             "to_value",  # report
             "from_value",  # report
+            "description",  # xsiam_dashboard
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"

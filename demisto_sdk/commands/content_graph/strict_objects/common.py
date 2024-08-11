@@ -60,6 +60,8 @@ class BaseStrictModel(BaseModel, ABC):
             "params",  # widget
             "cache",  # widget
             "tags",  # modeling rule
+            "to_value",  # report
+            "from_value",  # report
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"
@@ -76,12 +78,12 @@ def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:
 
 
 def create_dynamic_model(
-    field_name: str,
-    type_: Any,
-    default: Any = ...,
-    suffixes: Sequence[str] = marketplace_suffixes,
-    alias: Optional[str] = None,
-    include_without_suffix: bool = False,
+        field_name: str,
+        type_: Any,
+        default: Any = ...,
+        suffixes: Sequence[str] = marketplace_suffixes,
+        alias: Optional[str] = None,
+        include_without_suffix: bool = False,
 ) -> BaseModel:
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
@@ -202,7 +204,6 @@ LeftOrRight = create_model(
     model_name="LeftOrRight",
     base_models=(_LeftOrRight, VALUE_DYNAMIC_MODEL, IS_CONTEXT_DYNAMIC_MODEL),
 )
-
 
 LEFT_DYNAMIC_MODEL = create_dynamic_model(
     field_name="left",

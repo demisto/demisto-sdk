@@ -30,6 +30,7 @@ from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_classifier_object,
+    create_integration_object,
     create_pack_object,
 )
 from TestSuite.pack import Pack
@@ -165,7 +166,6 @@ class ContentItemModelVerifier:
         expected_deprecated: Optional[bool] = None,
         expected_fromversion: Optional[str] = None,
         expected_toversion: Optional[str] = None,
-        expected_support: Optional[str] = None,
     ) -> None:
         assert expected_id is None or model.object_id == expected_id
         assert expected_name is None or model.name == expected_name
@@ -177,7 +177,6 @@ class ContentItemModelVerifier:
         assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_fromversion is None or model.fromversion == expected_fromversion
         assert expected_toversion is None or model.toversion == expected_toversion
-        assert expected_support is None or model.support == expected_support
 
 
 class PackModelVerifier:
@@ -727,7 +726,6 @@ class TestParsersAndModels:
         integration = pack.create_integration(yml=load_yaml("integration.yml"))
         integration.code.write("from MicrosoftApiModule import *")
         integration.yml.update({"tests": ["test_playbook"]})
-        integration.yml.update({"supportlevelheader": "xsoar"})
 
         integration_path = Path(integration.path)
         parser = IntegrationParser(integration_path, list(MarketplaceVersions))
@@ -745,7 +743,6 @@ class TestParsersAndModels:
             expected_content_type=ContentType.INTEGRATION,
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
-            expected_support="xsoar",
         )
         assert model.is_fetch_events is False
         assert model.is_fetch_assets is True
@@ -3039,3 +3036,27 @@ def test_convert_content_type_to_rn_header_and_from_release_note_header():
         assert content_type == ContentType.convert_header_to_content_type(
             content_type.convert_content_type_to_rn_header
         )
+
+
+@pytest.mark.parametrize(
+    "pack_support, integration_support, expected_support",
+    [
+        ("pack_support", "integration_support", "integration_support"),
+        ("pack_support", "", "pack_support"),
+        ("", "integration_support", "integration_support"),
+    ],
+)
+def test_support_attribute_in_integration_object(pack_support, integration_support, expected_support):
+    """
+    Given:
+        - A pack support level and an integration support level.
+    When:
+        - Creating an Integration object with the given support levels.
+    Then:
+        - Ensure that the support attribute of the Integration object is set to the expected support level, e.g., the integration support level if it is not an empty string, or the pack support level otherwise.
+    """
+    with ChangeCWD(REPO.path):
+        test_integration = create_integration_object(paths=["supportlevelheader"],
+                                                     values=[integration_support],
+                                                     pack_info={"support": pack_support})
+        assert test_integration.support == expected_support

@@ -626,12 +626,11 @@ def test_insert_pack_version_and_script_to_yml_python_script(
     updated_script = IntegrationScriptUnifier.insert_pack_version(
         ".py", dummy_script, pack_version
     )
+
+    debug_log_with_pack_version_count = updated_script.count(expected_version_str)
     assert (
-        expected_version_str in updated_script
-    ), "Pack version string not found in the updated script"
-    assert (
-        updated_script.count(expected_version_str) == 1
-    ), "Pack version string found more than once in the updated script"
+        debug_log_with_pack_version_count == 1
+    ), f"Pack version found {debug_log_with_pack_version_count} times in updated script, expected only once"
 
 
 def get_generated_module_code(import_name, api_module_name):

@@ -185,9 +185,7 @@ class InvalidXSIAMDashboardFileName(InvalidPathException):
 
 
 class InvalidXSIAMParsingRuleFileName(InvalidPathException):
-    message = (
-    "Only .yml and .xif file extension are supported for XSIAM Parsing Rule. File must be named as the parent folder name."
-    )
+    message = "Only .yml and .xif file extension are supported for XSIAM Parsing Rule. File must be named as the parent folder name."
 
 
 class InvalidImageFileName(InvalidPathException):

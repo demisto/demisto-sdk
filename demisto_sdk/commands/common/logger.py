@@ -7,7 +7,7 @@ import re
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 # NOTE: Do not add internal imports here, as it may cause circular imports.
 from demisto_sdk.commands.common.constants import (
@@ -354,11 +354,12 @@ class NoColorFileFormatter(logging.Formatter):
         return message
 
 
-def get_logging_color_formatter() -> logging.Formatter:
+def get_logging_color_formatter(fmt: Optional[str] = None) -> logging.Formatter:
+    kwargs: Dict[str, Any] = {"fmt": fmt} if fmt is not None else {}
     return (
-        ColorConsoleFormatter()
+        ColorConsoleFormatter(**kwargs)
         if not environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS)
-        else NoColorFileFormatter()
+        else NoColorFileFormatter(**kwargs)
     )
 
 

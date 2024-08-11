@@ -124,7 +124,7 @@ class ParallelLoggingManager:
             _add_logging_level("SUCCESS", 25)
         self.real_time_logs_only = real_time_logs_only
         self.log_file_name = log_file_name
-        formatter = get_logging_color_formatter()
+        formatter = get_logging_color_formatter(LOGGING_FORMAT)
         self.console_handler = logging.StreamHandler(sys.stdout)
         self.console_handler.setFormatter(formatter)
         log_file_path = (

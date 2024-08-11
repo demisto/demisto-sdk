@@ -78,12 +78,12 @@ def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:
 
 
 def create_dynamic_model(
-        field_name: str,
-        type_: Any,
-        default: Any = ...,
-        suffixes: Sequence[str] = marketplace_suffixes,
-        alias: Optional[str] = None,
-        include_without_suffix: bool = False,
+    field_name: str,
+    type_: Any,
+    default: Any = ...,
+    suffixes: Sequence[str] = marketplace_suffixes,
+    alias: Optional[str] = None,
+    include_without_suffix: bool = False,
 ) -> BaseModel:
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.

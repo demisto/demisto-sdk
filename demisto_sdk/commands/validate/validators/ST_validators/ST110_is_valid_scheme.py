@@ -18,7 +18,8 @@ from demisto_sdk.commands.content_graph.objects import (
     ModelingRule,
     ParsingRule,
     Playbook,
-    PreProcessRule, Report,
+    PreProcessRule,
+    Report,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject

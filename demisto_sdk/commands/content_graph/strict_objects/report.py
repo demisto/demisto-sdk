@@ -1,9 +1,17 @@
-from pydantic import Field, constr
-from typing import List, Optional, Any, Dict
+from typing import Any, Dict, List, Optional
 
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseOptionalVersionJson
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model, NAME_DYNAMIC_MODEL, \
-    ID_DYNAMIC_MODEL, DESCRIPTION_DYNAMIC_MODEL
+from pydantic import Field, constr
+
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseOptionalVersionJson,
+)
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    DESCRIPTION_DYNAMIC_MODEL,
+    ID_DYNAMIC_MODEL,
+    NAME_DYNAMIC_MODEL,
+    BaseStrictModel,
+    create_model,
+)
 
 
 class Period(BaseStrictModel):
@@ -34,10 +42,9 @@ class _Widget(BaseStrictModel):
     date_range: Optional[DateRange] = Field(None, alias="dateRange")
 
 
-Widget = create_model(model_name="Widget",
-                      base_models=(_Widget,
-                                   NAME_DYNAMIC_MODEL,
-                                   ID_DYNAMIC_MODEL))
+Widget = create_model(
+    model_name="Widget", base_models=(_Widget, NAME_DYNAMIC_MODEL, ID_DYNAMIC_MODEL)
+)
 
 
 class _Layout(BaseStrictModel):
@@ -47,11 +54,10 @@ class _Layout(BaseStrictModel):
     i: Optional[str] = None
     w: Optional[int] = None
     h: Optional[int] = None
-    widget: Optional[Widget] = None
+    widget: Optional[Widget] = None  # type:ignore[valid-type]
 
 
-Layout = create_model(model_name="Layout",
-                      base_models=(_Layout, ID_DYNAMIC_MODEL))
+Layout = create_model(model_name="Layout", base_models=(_Layout, ID_DYNAMIC_MODEL))
 
 
 class _Dashboard(BaseStrictModel):
@@ -63,23 +69,24 @@ class _Dashboard(BaseStrictModel):
     name: Optional[str] = None
     is_predefined: Optional[bool] = Field(None, alias="isPredefined")
     period: Optional[Period]
-    layout: Optional[List[Layout]] = None
+    layout: Optional[List[Layout]] = None  # type:ignore[valid-type]
 
 
-Dashboard = create_model(model_name="Dashboard",
-                         base_models=(_Dashboard,
-                                      NAME_DYNAMIC_MODEL,
-                                      ID_DYNAMIC_MODEL))
+Dashboard = create_model(
+    model_name="Dashboard",
+    base_models=(_Dashboard, NAME_DYNAMIC_MODEL, ID_DYNAMIC_MODEL),
+)
 
 
 class _DecoderItem(BaseStrictModel):
-    type: str = Field(enum=['string', 'date', 'duration', 'image'])
+    type: str = Field(enum=["string", "date", "duration", "image"])
     value: Optional[Any] = None
     description: Optional[str]
 
 
-DecoderItem = create_model(model_name="DecoderItem",
-                           base_models=(_DecoderItem, DESCRIPTION_DYNAMIC_MODEL))
+DecoderItem = create_model(
+    model_name="DecoderItem", base_models=(_DecoderItem, DESCRIPTION_DYNAMIC_MODEL)
+)
 
 
 class _StrictReport(BaseStrictModel):
@@ -91,8 +98,8 @@ class _StrictReport(BaseStrictModel):
     created_by: str = Field(alias="createdBy")
     latest_report_name: Optional[str] = Field(None, alias="latestReportName")
     modified: Optional[str] = None
-    type_: str = Field(alias="type", enum=['pdf', 'csv', 'docx'])
-    orientation: str = Field(enum=['landscape', 'portrait', ''])
+    type_: str = Field(alias="type", enum=["pdf", "csv", "docx"])
+    orientation: str = Field(enum=["landscape", "portrait", ""])
     recipients: List[str]
     system: Optional[bool] = None
     locked: Optional[bool] = None
@@ -103,7 +110,9 @@ class _StrictReport(BaseStrictModel):
     next_scheduled_time: Optional[str] = Field(None, alias="nextScheduledTime")
     ending_date: Optional[str] = Field(None, alias="endingDate")
     timezone_offset: Optional[int] = Field(None, alias="timezoneOffset")
-    latest_scheduled_report_time: Optional[str] = Field(None, alias="latestScheduledReportTime")
+    latest_scheduled_report_time: Optional[str] = Field(
+        None, alias="latestScheduledReportTime"
+    )
     latest_report_time: Optional[str] = Field(None, alias="latestReportTime")
     cron_view: Optional[bool] = Field(None, alias="cronView")
     scheduled: Optional[bool] = None
@@ -112,15 +121,18 @@ class _StrictReport(BaseStrictModel):
     latest_report_username: Optional[str] = Field(None, alias="latestReportUsername")
     sensitive: Optional[bool] = None
     disable_header: Optional[bool] = Field(None, alias="disableHeader")
-    dashboard: Optional[Dashboard] = None
-    decoder: Optional[Dict[constr(regex=r".+"), DecoderItem]] = None
+    dashboard: Optional[Dashboard] = None  # type:ignore[valid-type]
+    decoder: Optional[Dict[constr(regex=r".+"), DecoderItem]] = None  # type:ignore[valid-type]
     sections: Any
 
 
-StrictReport = create_model(model_name="StrictReport",
-                            base_models=(_StrictReport,
-                                         BaseOptionalVersionJson,
-                                         NAME_DYNAMIC_MODEL,
-                                         DESCRIPTION_DYNAMIC_MODEL,
-                                         ID_DYNAMIC_MODEL
-                                         ))
+StrictReport = create_model(
+    model_name="StrictReport",
+    base_models=(
+        _StrictReport,
+        BaseOptionalVersionJson,
+        NAME_DYNAMIC_MODEL,
+        DESCRIPTION_DYNAMIC_MODEL,
+        ID_DYNAMIC_MODEL,
+    ),
+)

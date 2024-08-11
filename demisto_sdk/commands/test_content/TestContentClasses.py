@@ -1216,16 +1216,9 @@ class CloudServerContext(ServerContext):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.machine = cloud_machine
         self.server_url = self.server_ip
-        cloud_machine_details = self.build_context.api_key.get(cloud_machine, {})
-        self.api_key = (
-            cloud_machine_details.get("api-key")
-            if isinstance(cloud_machine_details, dict)
-            else self.build_context.api_key.get(cloud_machine)
-        )
-        self.auth_id = (
-            cloud_machine_details.get("x-xdr-auth-id")
-            if isinstance(cloud_machine_details, dict)
-            else self.build_context.env_json.get(cloud_machine, {}).get("x-xdr-auth-id")
+        self.api_key = self.build_context.api_key.get(cloud_machine, {}).get("api-key")
+        self.auth_id = self.build_context.api_key.get(cloud_machine, {}).get(
+            "x-xdr-auth-id"
         )
         os.environ.pop(
             "DEMISTO_USERNAME", None

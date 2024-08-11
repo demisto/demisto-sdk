@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where an error was raised if the value in the "cloud_servers_api_keys" file provided was not a dict.
+- description: Started supporting only the a dict value for "cloud_servers_api_keys" file provided.
   type: internal
 pr_number: 4480

@@ -185,6 +185,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
                 Path(json_dct["path"]).relative_to(CONTENT_PATH)
             ).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
+        json_dct["support"] = self.support
         return json_dct
 
     def add_relationship(

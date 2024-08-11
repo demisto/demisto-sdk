@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where an error was raised if the value in the "cloud_servers_api_keys" file provided was not a dict.
+  type: internal
+pr_number: 4480

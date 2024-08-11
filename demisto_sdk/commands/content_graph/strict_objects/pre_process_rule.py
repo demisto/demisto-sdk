@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Dict, Union
 
 from pydantic import Field
 
@@ -30,7 +30,7 @@ class _StrictPreProcessRule(BaseStrictModel):
     locked: bool
     name: str
     description: Optional[str] = None
-    new_event_filters: List[Dict[str, Union[str, Dict[str, Any]]]] = Field(default_factory=list, alias="newEventFilters")
+    new_event_filters: List[List[Dict[str, Union[str, Dict[str, Any]]]]] = Field(default_factory=list, alias="newEventFilters")
     pack_id: str = Field(alias="packID")
     period: Optional[Period] = None
     ready_existing_events_filters: List[Any] = Field(

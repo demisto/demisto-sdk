@@ -56,7 +56,9 @@ def test_integration_run_non_existing_command(
     monkeypatch.setenv("COLUMNS", "1000")
     mocker.patch.object(DefaultApi, "investigation_add_entries_sync", return_value=None)
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
-    result = CliRunner(mix_stderr=False,).invoke(
+    result = CliRunner(
+        mix_stderr=False,
+    ).invoke(
         main,
         [
             "run",

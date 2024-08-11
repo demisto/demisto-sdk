@@ -117,7 +117,9 @@ class IsFromVersionSufficientAllItemsValidator(
 
     error_message = "The {0} from version field is either missing or insufficient, need at least {1}, current is {2}."
 
-    def is_valid(self, content_items: Iterable[ContentItem]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentItem]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

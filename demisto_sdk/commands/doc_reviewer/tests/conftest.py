@@ -104,7 +104,6 @@ def valid_spelled_xsoar_supported_content_packs(tmp_path: PosixPath) -> List[Pac
         temp_pack_dir.mkdir()
 
     for i in range(2):
-
         temp_repo = SimpleNamespace()
         setattr(temp_repo, "path", str(temp_pack_dir / ".git"))
 

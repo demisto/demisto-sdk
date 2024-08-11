@@ -1,6 +1,7 @@
 """
 This is module to store the git configuration of the content repo
 """
+
 import enum
 import os
 from functools import lru_cache
@@ -108,7 +109,10 @@ class GitContentConfig:
                 if git_provider == GitProvider.GitHub
                 else GitContentConfig.GITLAB
             )
-        self.repo_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(self.repo_hostname, self.repo_hostname)  # type: ignore[arg-type]
+        self.repo_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(
+            self.repo_hostname,  # type: ignore[arg-type]
+            self.repo_hostname,
+        )
 
         parsed_git = GitContentConfig._get_repository_properties()
 

@@ -383,7 +383,6 @@ class PlaybookTestsGenerator:
             )
 
             for command in yaml_obj.get("script").get("commands"):
-
                 # Skip the commands that not specified in the `commands` argument
                 if self.commands and command.get("name") not in self.commands.split(
                     ","

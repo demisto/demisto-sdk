@@ -1,4 +1,0 @@
-changes:
-- description: Add a pre-commit hook to validate file permission/mode changes in Packs directory.
-  type: feature
-pr_number: 4389

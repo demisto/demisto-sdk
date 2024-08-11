@@ -17,6 +17,8 @@ mapping:
 schema;templates_data_schema:
   type: map
   mapping:
+    metadata:
+      type: str
     global_id:
       type: str
       required: true

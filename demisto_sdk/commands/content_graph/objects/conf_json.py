@@ -78,6 +78,7 @@ class ConfJSON(StrictBaseModel):
     tests: List[Test]
     skipped_tests: Dict[str, str]
     skipped_integrations: Dict[str, str]
+    native_nightly_packs: List[str]
     nightly_packs: List[str]
     unmockable_integrations: Dict[str, str]
     parallel_integrations: List[str]
@@ -127,6 +128,10 @@ class ConfJSON(StrictBaseModel):
             (
                 ContentType.PACK,
                 (self.nightly_packs,),
+            ),
+            (
+                ContentType.PACK,
+                (self.native_nightly_packs,),
             ),
         ):
             for id_source in id_sources:

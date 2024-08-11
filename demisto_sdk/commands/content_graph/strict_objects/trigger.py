@@ -1,9 +1,14 @@
-from typing import List, Optional, Union, Dict
-from pydantic import Field
+from typing import Optional
 
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseOptionalVersionJson, AlertsFilter
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model, \
-    DESCRIPTION_DYNAMIC_MODEL
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    AlertsFilter,
+    BaseOptionalVersionJson,
+)
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    DESCRIPTION_DYNAMIC_MODEL,
+    BaseStrictModel,
+    create_model,
+)
 
 
 class _StrictTrigger(BaseStrictModel):
@@ -15,8 +20,11 @@ class _StrictTrigger(BaseStrictModel):
     alerts_filter: Optional[AlertsFilter] = None
 
 
-StrictTrigger = create_model(model_name="StrictTrigger",
-                             base_models=(_StrictTrigger,
-                                          BaseOptionalVersionJson,
-                                          DESCRIPTION_DYNAMIC_MODEL,
-                                          ))
+StrictTrigger = create_model(
+    model_name="StrictTrigger",
+    base_models=(
+        _StrictTrigger,
+        BaseOptionalVersionJson,
+        DESCRIPTION_DYNAMIC_MODEL,
+    ),
+)

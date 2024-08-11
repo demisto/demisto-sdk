@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Dict, Optional, Sequence, List, Union
+from typing import Any, Dict, Optional, Sequence
 
 import pydantic
 from pydantic import BaseModel, Extra, validator

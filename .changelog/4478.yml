@@ -1,4 +1,4 @@
 changes:
-- description: Added 'Report', 'Trigger', 'Widget' and 'Wizard' to the `ST110` validation.
+- description: Added 'Report', 'Trigger', 'Widget', 'Wizard' and 'XDRCTemplate' to the `ST110` validation.
   type: feature
 pr_number: 4478

@@ -575,23 +575,22 @@ def test_insert_pack_version_and_script_to_yml_js_and_ps1():
      - Ensure unsupported script types do not get the pack version added.
     """
     pack_version = "1.0.3"
-    version_str_ps1 = f"### pack version: {pack_version}"
-    version_str_js = f"// pack version: {pack_version}"
 
     # Test for JavaScript script
     updated_script_js = IntegrationScriptUnifier.insert_pack_version(
         ".js", DUMMY_SCRIPT, pack_version
     )
-    assert version_str_js in updated_script_js
-    assert updated_script_js.count(version_str_js) == 1  # Ensure it is added only once
+
+    assert (
+        updated_script_js.count(f"// pack version: {pack_version}") == 1
+    )  # Ensure it is added only once
 
     # Test for PowerShell script
     updated_script_ps1 = IntegrationScriptUnifier.insert_pack_version(
         ".ps1", DUMMY_SCRIPT, pack_version
     )
-    assert version_str_ps1 in updated_script_ps1
     assert (
-        updated_script_ps1.count(version_str_ps1) == 1
+        updated_script_ps1.count(f"### pack version: {pack_version}") == 1
     )  # Ensure it is added only once
 
 

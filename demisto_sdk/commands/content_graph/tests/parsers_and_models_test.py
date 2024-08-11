@@ -297,6 +297,7 @@ class TestParsersAndModels:
         from demisto_sdk.commands.content_graph.parsers.classifier import (
             ClassifierParser,
         )
+
         with ChangeCWD(REPO.path):
             classifier = create_classifier_object(paths=["toVersion"], values=["5.9.9"])
             classifier_path = Path(classifier.path)
@@ -3046,7 +3047,9 @@ def test_convert_content_type_to_rn_header_and_from_release_note_header():
         ("", "integration_support", "integration_support"),
     ],
 )
-def test_support_attribute_in_integration_object(pack_support, integration_support, expected_support):
+def test_support_attribute_in_integration_object(
+    pack_support, integration_support, expected_support
+):
     """
     Given:
         - A pack support level and an integration support level.
@@ -3056,7 +3059,9 @@ def test_support_attribute_in_integration_object(pack_support, integration_suppo
         - Ensure that the support attribute of the Integration object is set to the expected support level, e.g., the integration support level if it is not an empty string, or the pack support level otherwise.
     """
     with ChangeCWD(REPO.path):
-        test_integration = create_integration_object(paths=["supportlevelheader"],
-                                                     values=[integration_support],
-                                                     pack_info={"support": pack_support})
+        test_integration = create_integration_object(
+            paths=["supportlevelheader"],
+            values=[integration_support],
+            pack_info={"support": pack_support},
+        )
         assert test_integration.support == expected_support

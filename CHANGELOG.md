@@ -1,4 +1,17 @@
 # Changelog
+## 1.31.6
+* Added **Classifier**, **Layout** and **LayoutRule** to the ST110 validation. [#4447](https://github.com/demisto/demisto-sdk/pull/4447)
+* Added **Playbook** to the ST110 validation. [#4461](https://github.com/demisto/demisto-sdk/pull/4461)
+* Added **CorrelationRule** to the ST110 validation. [#4462](https://github.com/demisto/demisto-sdk/pull/4462)
+* Added **Dashboard** to the ST110 validation. [#4467](https://github.com/demisto/demisto-sdk/pull/4467)
+* Added **GenericDefinition** to the ST110 validation. [#4469](https://github.com/demisto/demisto-sdk/pull/4469)
+* ֹMoved RN114 validation to the new format. The validation verifies the release note's headers are valid. [#4327](https://github.com/demisto/demisto-sdk/pull/4327)
+* Fixed an issue where **Integration** and **Script** save failed due to Enum parsing issues. [#4459](https://github.com/demisto/demisto-sdk/pull/4459)
+* Fixed an issue where **XSIAM Report** objects would fail structure ***validate*** checks for having the *metadata* field, It's now added as optional. [#4472](https://github.com/demisto/demisto-sdk/pull/4472)
+* Moved RN108 validation to the new validate format. The validation ensures a new pack doesn't have any release notes. [#4459](https://github.com/demisto/demisto-sdk/pull/4459)
+* Applied the *toml-sort* hook on toml files in the repo. [#4453](https://github.com/demisto/demisto-sdk/pull/4453)
+* Modified ***pre-commit*** and ***validate*** commands to use a specific files list during the contribution flow instead of relying on Git diff. [#4451](https://github.com/demisto/demisto-sdk/pull/4451)
+
 ## 1.31.5
 * Added new validation ST110. Checks schema validness for *Integration*, *Script*, *Incident Field*, *Indicator Field* and *Generic Type* objects. [#4399](https://github.com/demisto/demisto-sdk/pull/4399)
 * Added support for pack doc_files upload. [#4438](https://github.com/demisto/demisto-sdk/pull/4438)

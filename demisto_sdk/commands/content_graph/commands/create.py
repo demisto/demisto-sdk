@@ -40,7 +40,6 @@ def create_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    logger.info("This is my graph...")
     builder = ContentGraphBuilder(content_graph_interface)
     builder.init_database()
     builder.create_graph()

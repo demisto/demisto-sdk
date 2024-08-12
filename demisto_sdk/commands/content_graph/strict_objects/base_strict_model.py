@@ -189,11 +189,11 @@ class Filter(BaseStrictModel):
 
 
 class And(BaseStrictModel):
-    AND: Optional[List[SCHEMAS]] = None
+    AND: Optional[List[OPERATORS]] = None
 
 
 class Or(BaseStrictModel):
-    OR: Optional[List[SCHEMAS]] = None
+    OR: Optional[List[OPERATORS]] = None
 
 
 # Forward references to resolve circular dependencies

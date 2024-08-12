@@ -179,7 +179,7 @@ StrictGenericIncidentType = create_model(
 )
 
 
-SCHEMAS = Union["Filter", "Or", "And"]
+OPERATORS = Union["Filter", "Or", "And"]
 
 
 class Filter(BaseStrictModel):

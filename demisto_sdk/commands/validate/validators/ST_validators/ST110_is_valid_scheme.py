@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.objects import (
     IncidentField,
     IncidentType,
     IndicatorField,
+    IndicatorType,
     Job,
     Layout,
     LayoutRule,
@@ -62,6 +63,7 @@ ContentTypes = Union[
     XDRCTemplate,
     XSIAMDashboard,
     XSIAMReport,
+    IndicatorType,
 ]
 
 

@@ -62,6 +62,16 @@ Argument = create_model(
 )
 
 
+class BaseOptionalVersionYaml(BaseStrictModel):
+    from_version: Optional[str] = Field(None, alias="fromversion")
+    to_version: Optional[str] = Field(None, alias="toversion")
+
+
+class BaseOptionalVersionJson(BaseStrictModel):
+    from_version: Optional[str] = Field(None, alias="fromVersion")
+    to_version: Optional[str] = Field(None, alias="toVersion")
+
+
 class Output(BaseStrictModel):
     content_path: Optional[str] = Field(None, alias="contentPath")
     context_path: Optional[str] = Field(None, alias="contextPath")
@@ -98,8 +108,6 @@ class StructureError(BaseStrictModel):
 class _BaseIntegrationScript(BaseStrictModel):
     name: str
     deprecated: Optional[bool] = None
-    from_version: Optional[str] = Field(None, alias="fromversion")
-    to_version: Optional[str] = Field(None, alias="toversion")
     system: Optional[bool] = None
     tests: Optional[List[str]] = None
     auto_update_docker_image: Optional[bool] = Field(
@@ -110,9 +118,13 @@ class _BaseIntegrationScript(BaseStrictModel):
 
 BaseIntegrationScript = create_model(
     model_name="BaseIntegrationScript",
-    base_models=(_BaseIntegrationScript, NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL),
+    base_models=(
+        _BaseIntegrationScript,
+        NAME_DYNAMIC_MODEL,
+        DEPRECATED_DYNAMIC_MODEL,
+        BaseOptionalVersionYaml,
+    ),
 )
-
 
 REPUTATION = Literal[tuple(range(4))]  # type:ignore[misc]
 
@@ -125,8 +137,6 @@ class ExtractSettings(BaseStrictModel):
 
 
 class _StrictGenericIncidentType(BaseStrictModel):
-    id_: str = Field(..., alias="id")
-    version: int
     vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     locked: Optional[bool] = None
@@ -152,10 +162,10 @@ class _StrictGenericIncidentType(BaseStrictModel):
     reputation_calc: Optional[REPUTATION] = Field(None, alias="reputationCalc")  # type:ignore[valid-type]
     on_change_rep_alg: Optional[REPUTATION] = Field(None, alias="onChangeRepAlg")  # type:ignore[valid-type]
     detached: Optional[bool] = None
-    from_version: Optional[str] = Field(None, alias="fromVersion")
-    to_version: Optional[str] = Field(None, alias="toVersion")
     layout: Optional[str] = None
     extract_settings: Optional[ExtractSettings] = Field(None, alias="extractSettings")
+    id_: str = Field(..., alias="id")
+    version: int
 
 
 StrictGenericIncidentType = create_model(
@@ -164,5 +174,33 @@ StrictGenericIncidentType = create_model(
         _StrictGenericIncidentType,
         NAME_DYNAMIC_MODEL,
         ID_DYNAMIC_MODEL,
+        BaseOptionalVersionJson,
     ),
 )
+
+
+OPERATORS = Union["Filter", "Or", "And"]
+
+
+class Filter(BaseStrictModel):
+    SEARCH_FIELD: str
+    SEARCH_TYPE: str
+    SEARCH_VALUE: str
+
+
+class And(BaseStrictModel):
+    AND: Optional[List[OPERATORS]] = None
+
+
+class Or(BaseStrictModel):
+    OR: Optional[List[OPERATORS]] = None
+
+
+# Forward references to resolve circular dependencies
+Filter.update_forward_refs()
+And.update_forward_refs()
+Or.update_forward_refs()
+
+
+class AlertsFilter(BaseStrictModel):
+    filter: Optional[Union[Or, And]] = None

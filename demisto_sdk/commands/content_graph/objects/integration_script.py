@@ -60,7 +60,7 @@ class Argument(BaseModel):
         """
         dictified_arg = self.dict(exclude_none=True)
         if "auto" in dictified_arg:
-            dictified_arg["auto"] = str(dictified_arg["auto"])
+            dictified_arg["auto"] = dictified_arg["auto"].value
         return dictified_arg
 
 

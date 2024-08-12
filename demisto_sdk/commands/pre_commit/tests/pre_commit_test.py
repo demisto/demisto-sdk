@@ -550,7 +550,7 @@ class TestPreprocessFiles:
     ):
         """
         This UT verifies changes made to pre commit command to support collection of
-        untracked files when running the build on an external contribution PR.
+        staged (modified) files when running the build on an external contribution PR.
 
         Given:
             - A content build is running on external contribution PR, meaning:
@@ -574,11 +574,6 @@ class TestPreprocessFiles:
         mocker.patch(
             "git.repo.base.Repo._get_untracked_files",
             return_value=untracked_files,
-        )
-        mocker.patch.object(
-            pre_commit_command,
-            "get_untracked_files_in_content",
-            return_value=untracked_files_in_content,
         )
 
         output = preprocess_files(use_git=True)

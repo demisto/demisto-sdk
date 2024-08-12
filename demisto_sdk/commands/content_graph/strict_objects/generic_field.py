@@ -1,30 +1,31 @@
-from typing import Any, List, Optional, Union
+from typing import Any, Optional
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionJson,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
-    ID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
+    SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
     create_model,
 )
 
 
-class _StrictIndicatorField(BaseStrictModel):
+class _StrictGenericField(BaseStrictModel):
+    id: str
+    version: Optional[int] = None
     modified: Optional[str] = None
     name: str
     owner_only: Optional[bool] = Field(None, alias="ownerOnly")
-    place_holder: Optional[str] = Field(None, alias="placeholder")
+    placeholder: Optional[str] = None
     description: Optional[str] = None
     field_calc_script: Optional[str] = Field(None, alias="fieldCalcScript")
-    cli_name: str = Field(..., alias="cliName")
-    type_: str = Field(..., alias="type")
+    cli_name: str = Field(alias="cliName")
+    type_: str = Field(alias="type")
     close_form: Optional[bool] = Field(None, alias="closeForm")
     edit_form: Optional[bool] = Field(None, alias="editForm")
     required: Optional[bool] = None
@@ -36,6 +37,9 @@ class _StrictIndicatorField(BaseStrictModel):
     use_as_kpi: Optional[bool] = Field(None, alias="useAsKpi")
     locked: Optional[bool] = None
     system: Optional[bool] = None
+    run_script_after_inc_update: Optional[bool] = Field(
+        None, alias="runScriptAfterIncUpdate"
+    )
     group: Optional[int] = None
     hidden: Optional[bool] = None
     columns: Optional[Any] = None
@@ -50,23 +54,29 @@ class _StrictIndicatorField(BaseStrictModel):
     unmapped: Optional[bool] = None
     content: Optional[bool] = None
     unsearchable: Optional[bool] = None
+    extract_indicator_types_ids: Optional[Any] = Field(
+        None, alias="extractIndicatorTypesIDs"
+    )
+    is_extracting_specific_indicator_types: Optional[bool] = Field(
+        None, alias="isExtractingSpecificIndicatorTypes"
+    )
     item_version: Optional[str] = Field(None, alias="itemVersion")
     propagation_labels: Optional[Any] = Field(None, alias="propagationLabels")
     to_server_version: Optional[str] = Field(None, alias="toServerVersion")
+    definition_id: str = Field(alias="definitionId")
+    generic_module_id: str = Field(alias="genericModuleId")
+    template: Optional[str] = None
     open_ended: Optional[bool] = Field(None, alias="openEnded")
-    marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
-    id_: str = Field(..., alias="id")
-    version: int
 
 
-StrictIndicatorField = create_model(
-    model_name="StrictIndicatorField",
+StrictGenericField = create_model(
+    model_name="StrictGenericField",
     base_models=(
-        _StrictIndicatorField,
-        NAME_DYNAMIC_MODEL,
-        REQUIRED_DYNAMIC_MODEL,
-        DESCRIPTION_DYNAMIC_MODEL,
-        ID_DYNAMIC_MODEL,
+        _StrictGenericField,
         BaseOptionalVersionJson,
+        NAME_DYNAMIC_MODEL,
+        DESCRIPTION_DYNAMIC_MODEL,
+        REQUIRED_DYNAMIC_MODEL,
+        SUFFIXED_ID_DYNAMIC_MODEL,
     ),
 )

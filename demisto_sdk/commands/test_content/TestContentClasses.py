@@ -1216,12 +1216,10 @@ class CloudServerContext(ServerContext):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.machine = cloud_machine
         self.server_url = self.server_ip
-        self.api_key = self.build_context.api_key.get(cloud_machine, {}).get(
-            "api-key"
-        ) or self.build_context.api_key.get(cloud_machine)
+        self.api_key = self.build_context.api_key.get(cloud_machine, {}).get("api-key")
         self.auth_id = self.build_context.api_key.get(cloud_machine, {}).get(
             "x-xdr-auth-id"
-        ) or self.build_context.env_json.get(cloud_machine, {}).get("x-xdr-auth-id")
+        )
         os.environ.pop(
             "DEMISTO_USERNAME", None
         )  # we use client without demisto username
@@ -2707,15 +2705,20 @@ class TestContext:
             )
 
             server_url = get_ui_url(self.client.api_client.configuration.host)
-            if self.build_context.is_saas_server_type:
-                self.playbook.log_info(
-                    f"Investigation URL: {self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
+
+            if self.build_context.server_type == XSOAR_SAAS_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}WorkPlan/{investigation_id}"
+                )
+            elif self.build_context.server_type == XSIAM_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
                     f"{investigation_id}&action:openAlertDetails={investigation_id}-work_plan"
                 )
             else:
-                self.playbook.log_info(
-                    f"Investigation URL: {server_url}/#/WorkPlan/{investigation_id}"
-                )
+                investigation_url = f"{server_url}/#/WorkPlan/{investigation_id}"
+
+            self.playbook.log_info(f"Investigation URL: {investigation_url}")
             playbook_state = self._poll_for_playbook_state()
             self.playbook.log_info(
                 f"Got incident: {investigation_id} status: {playbook_state}."

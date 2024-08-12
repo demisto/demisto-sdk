@@ -78,7 +78,7 @@ class ConfJSON(StrictBaseModel):
     tests: List[Test]
     skipped_tests: Dict[str, str]
     skipped_integrations: Dict[str, str]
-    native_nightly_packs: List[str]
+    native_nightly_packs: Optional[List[str]]
     nightly_packs: List[str]
     unmockable_integrations: Dict[str, str]
     parallel_integrations: List[str]

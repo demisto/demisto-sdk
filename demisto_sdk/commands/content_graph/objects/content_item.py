@@ -81,10 +81,22 @@ class ContentItem(BaseContent):
         # Validate that we have the pack containing the content item.
         # The pack is either provided directly or needs to be located.
 
-        pack = cls.get_pack(values.get("relationships_data"), values.get("path"))
         if v and not isinstance(v, fields.FieldInfo):
+            raise ValueError("interesting case")
+            #return v
+        return cls.get_pack(values.get("relationships_data"), values.get("path"))
+
+    @validator("support", always=True)
+    def validate_support(cls, v: str, values) -> Optional[str]:
+        # Ensure the 'support' field is present.
+        # If not directly provided, the support level from the associated pack will be used.
+        if v:
             return v
-        return pack
+        pack = values.get("pack")
+        if pack and pack.support:
+            return pack.support
+
+        return None
 
     @property
     def in_pack(self) -> Optional["Pack"]:
@@ -119,17 +131,6 @@ class ContentItem(BaseContent):
                 )  # type: ignore[assignment]
         return pack  # type: ignore[return-value]
 
-    @validator("support", always=True)
-    def validate_support(cls, v: str, values) -> Optional[str]:
-        # Ensure the 'support' field is present.
-        # If not directly provided, the support level from the associated pack will be used.
-        if v:
-            return v
-        pack = values.get("pack")
-        if pack and pack.support:
-            return pack.support
-
-        return None
 
     @property
     def ignored_errors(self) -> List[str]:

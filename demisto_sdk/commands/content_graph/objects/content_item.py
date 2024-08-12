@@ -82,8 +82,7 @@ class ContentItem(BaseContent):
         # The pack is either provided directly or needs to be located.
 
         if v and not isinstance(v, fields.FieldInfo):
-            raise ValueError("interesting case")
-            #return v
+            return v
         return cls.get_pack(values.get("relationships_data"), values.get("path"))
 
     @validator("support", always=True)

@@ -60,6 +60,9 @@ class BaseStrictModel(BaseModel, ABC):
             "params",  # widget
             "cache",  # widget
             "tags",  # modeling rule
+            "to_value",  # report
+            "from_value",  # report
+            "description",  # xsiam_dashboard
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"
@@ -202,7 +205,6 @@ LeftOrRight = create_model(
     model_name="LeftOrRight",
     base_models=(_LeftOrRight, VALUE_DYNAMIC_MODEL, IS_CONTEXT_DYNAMIC_MODEL),
 )
-
 
 LEFT_DYNAMIC_MODEL = create_dynamic_model(
     field_name="left",

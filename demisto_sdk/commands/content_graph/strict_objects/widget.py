@@ -29,8 +29,8 @@ class _StrictWidget(BaseStrictModel):
     sort: Optional[List[Any]] = None
     category: Optional[str] = None
     modified: Optional[str] = None
-    marketplaces: Optional[List[str]] = Field(
-        None, enum=["xsoar", "xsoar_saas", "xsoar_on_prem"]
+    marketplaces: Optional[List[MarketplaceVersion]] = Field(
+        None, enum=[MarketplaceVersion.XSOAR, MarketplaceVersion.XSOAR_SAAS, MarketplaceVersion.XSOAR_ON_PREM]
     )
 
 

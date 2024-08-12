@@ -130,7 +130,6 @@ class ContentItem(BaseContent):
                 )  # type: ignore[assignment]
         return pack  # type: ignore[return-value]
 
-
     @property
     def ignored_errors(self) -> List[str]:
         if ignored_errors := self.get_ignored_errors(self.path.name):

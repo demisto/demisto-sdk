@@ -127,11 +127,7 @@ class ConfJSON(StrictBaseModel):
             ),
             (
                 ContentType.PACK,
-                (self.nightly_packs,),
-            ),
-            (
-                ContentType.PACK,
-                (self.native_nightly_packs,),
+                (self.nightly_packs, self.native_nightly_packs),
             ),
         ):
             for id_source in id_sources:

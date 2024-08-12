@@ -1,4 +1,4 @@
 changes:
-- description: Added the `native_nightly_packs` list to the conf file metadata schema to support native nightly builds.
+- description: Added the `native_nightly_packs` attribute to the conf.json schema.
   type: feature
 pr_number: 4479

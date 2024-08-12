@@ -54,7 +54,7 @@ class ContentItem(BaseContent):
     description: Optional[str] = ""
     is_test: bool = False
     pack: Any = Field(None, exclude=True, repr=False)
-    support: Optional[str]
+    support: str
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -86,7 +86,7 @@ class ContentItem(BaseContent):
         return cls.get_pack(values.get("relationships_data"), values.get("path"))
 
     @validator("support", always=True)
-    def validate_support(cls, v: str, values) -> Optional[str]:
+    def validate_support(cls, v: str, values) -> str:
         # Ensure the 'support' field is present.
         # If not directly provided, the support level from the associated pack will be used.
         if v:
@@ -95,7 +95,7 @@ class ContentItem(BaseContent):
         if pack and pack.support:
             return pack.support
 
-        return None
+        return ""
 
     @property
     def in_pack(self) -> Optional["Pack"]:

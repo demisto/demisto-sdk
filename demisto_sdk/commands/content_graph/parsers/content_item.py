@@ -183,7 +183,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @property
     @abstractmethod
-    def support(self) -> Optional[str]:
+    def support(self) -> str:
         pass
 
     def get_support(self, data: dict) -> Optional[str]:

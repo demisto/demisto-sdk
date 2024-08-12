@@ -52,7 +52,7 @@ class _WidgetsData(BaseStrictModel):
     title: Optional[str] = None
     creation_time: Optional[int] = None
     description: Optional[str] = None
-    data: Optional[dict] = Field(default_factory=dict)
+    data: dict = Field(default_factory=dict)
     support_time_range: Optional[bool] = None
     additional_info: dict = Field(default_factory=dict)
 

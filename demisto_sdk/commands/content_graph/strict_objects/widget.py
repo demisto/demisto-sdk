@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionJson,
 )
@@ -29,8 +30,13 @@ class _StrictWidget(BaseStrictModel):
     sort: Optional[List[Any]] = None
     category: Optional[str] = None
     modified: Optional[str] = None
-    marketplaces: Optional[List[MarketplaceVersion]] = Field(
-        None, enum=[MarketplaceVersion.XSOAR, MarketplaceVersion.XSOAR_SAAS, MarketplaceVersion.XSOAR_ON_PREM]
+    marketplaces: Optional[List[MarketplaceVersions]] = Field(
+        None,
+        enum=[
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        ],
     )
 
 

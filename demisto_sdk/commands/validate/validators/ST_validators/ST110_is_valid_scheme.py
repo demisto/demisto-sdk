@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.objects import (
     IncidentField,
     IncidentType,
     IndicatorField,
+    IndicatorType,
     Job,
     Layout,
     LayoutRule,
@@ -19,6 +20,12 @@ from demisto_sdk.commands.content_graph.objects import (
     ParsingRule,
     Playbook,
     PreProcessRule,
+    Report,
+    Widget,
+    Wizard,
+    XDRCTemplate,
+    XSIAMDashboard,
+    XSIAMReport,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
@@ -50,6 +57,13 @@ ContentTypes = Union[
     ModelingRule,
     ParsingRule,
     PreProcessRule,
+    Report,
+    Widget,
+    Wizard,
+    XDRCTemplate,
+    XSIAMDashboard,
+    XSIAMReport,
+    IndicatorType,
 ]
 
 

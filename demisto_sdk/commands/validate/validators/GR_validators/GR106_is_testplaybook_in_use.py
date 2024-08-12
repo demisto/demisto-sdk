@@ -33,21 +33,20 @@ class IsTestPlaybookInUseValidator(BaseValidator[ContentTypes], ABC):
     def is_valid_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        
         test_playbook_ids_to_validate = (
             [item.object_id for item in content_items] if not validate_all_files else []
         )
         invalid_content_items = self.graph.find_unused_test_playbook(
-                test_playbook_ids_to_validate, self.skipped_tests_keys
-            )
+            test_playbook_ids_to_validate, self.skipped_tests_keys
+        )
         validation_results = []
         for content_item in invalid_content_items:
-                validation_results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(content_item.object_id),
-                        content_object=content_item,
-                    )
+            validation_results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(content_item.object_id),
+                    content_object=content_item,
                 )
+            )
 
         return validation_results

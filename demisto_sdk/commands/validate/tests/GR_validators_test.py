@@ -276,9 +276,12 @@ def test_IsTestPlaybookInUseValidatorListFiles_is_valid(prepared_graph_repo: Rep
     validation_results = IsTestPlaybookInUseValidatorListFiles().is_valid(
         [playbook_no_in_use]
     )
-    assert validation_results[0].message == (  # the test playbook not in use
-        "Test playbook 'TestPlaybookNoInUse' is not linked to any content item. "
-        "Please ensure it is properly utilized."
+    assert (
+        validation_results[0].message
+        == (  # the test playbook not in use
+            "Test playbook 'TestPlaybookNoInUse' is not linked to any content item. "
+            "Please ensure it is properly utilized."
+        )
     )
 
     playbook_deprecated = (

@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
 from TestSuite.case_layout_rule import CaseLayoutRule
@@ -100,7 +99,7 @@ class Pack(TestSuiteBase):
         self.widgets: List[Widget] = list()
         self.lists: List[ContentList] = list()
         self.playbooks: List[Playbook] = list()
-        self.test_playbooks: List[TestPlaybook] = list()
+        self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
         self.release_notes_config: List[JSONBased] = list()
         self.jobs: List[Job] = list()

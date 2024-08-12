@@ -1,4 +1,29 @@
 # Changelog
+## 1.31.6
+* Added **Classifier**, **Layout** and **LayoutRule** to the ST110 validation. [#4447](https://github.com/demisto/demisto-sdk/pull/4447)
+* Added **Playbook** to the ST110 validation. [#4461](https://github.com/demisto/demisto-sdk/pull/4461)
+* Added **CorrelationRule** to the ST110 validation. [#4462](https://github.com/demisto/demisto-sdk/pull/4462)
+* Added **Dashboard** to the ST110 validation. [#4467](https://github.com/demisto/demisto-sdk/pull/4467)
+* Added **GenericDefinition** to the ST110 validation. [#4469](https://github.com/demisto/demisto-sdk/pull/4469)
+* ֹMoved RN114 validation to the new format. The validation verifies the release note's headers are valid. [#4327](https://github.com/demisto/demisto-sdk/pull/4327)
+* Fixed an issue where **Integration** and **Script** save failed due to Enum parsing issues. [#4459](https://github.com/demisto/demisto-sdk/pull/4459)
+* Fixed an issue where **XSIAM Report** objects would fail structure ***validate*** checks for having the *metadata* field, It's now added as optional. [#4472](https://github.com/demisto/demisto-sdk/pull/4472)
+* Moved RN108 validation to the new validate format. The validation ensures a new pack doesn't have any release notes. [#4459](https://github.com/demisto/demisto-sdk/pull/4459)
+* Applied the *toml-sort* hook on toml files in the repo. [#4453](https://github.com/demisto/demisto-sdk/pull/4453)
+* Modified ***pre-commit*** and ***validate*** commands to use a specific files list during the contribution flow instead of relying on Git diff. [#4451](https://github.com/demisto/demisto-sdk/pull/4451)
+
+## 1.31.5
+* Added new validation ST110. Checks schema validness for *Integration*, *Script*, *Incident Field*, *Indicator Field* and *Generic Type* objects. [#4399](https://github.com/demisto/demisto-sdk/pull/4399)
+* Added support for pack doc_files upload. [#4438](https://github.com/demisto/demisto-sdk/pull/4438)
+* Fixed an issue in BA124 validation where the validation wasn't case sensitive. [#4450](https://github.com/demisto/demisto-sdk/pull/4450)
+* Fixed an issue in the **download** command where a 'missing content' error was shown on playbook-type tasks of an uploaded playbook that was initially downloaded using this command. [#4445](https://github.com/demisto/demisto-sdk/pull/4445)
+* Replaced project formatter from *Black* to *ruff-format* and removed the *Black* dev-dependency. [#4435](https://github.com/demisto/demisto-sdk/pull/4435)
+* Modified the new validate **is_valid** method name to **obtain_invalid_content_items**. [#4448](https://github.com/demisto/demisto-sdk/pull/4448)
+* Moved IN147 validation to the new validate format as code BC114. The validation ensures no fields were removed/modified from the integration yml for a predefined list of fields. [#4449](https://github.com/demisto/demisto-sdk/pull/4449)
+* Moved PB124 validation to the new validate format. The validation ensures there're unhandled condition tasks in the playbook. [#4424](https://github.com/demisto/demisto-sdk/pull/4424)
+* Added support for different api key file structure in **test-content** command. [#4442](https://github.com/demisto/demisto-sdk/pull/4442)
+* Moved Tests/markteplace/Core_* and Approved_* files in content repo under the *Config* folder. [#4417](https://github.com/demisto/demisto-sdk/pull/4417)
+
 ## 1.31.4
 * Removed DO106 - docker_not_on_the_latest_tag validation for the old validate. [#4429](https://github.com/demisto/demisto-sdk/pull/4429)
 * Added documentation improvements to the **pre-commit** command. [#4421](https://github.com/demisto/demisto-sdk/pull/4421)

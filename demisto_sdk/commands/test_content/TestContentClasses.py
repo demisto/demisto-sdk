@@ -260,10 +260,12 @@ class TestPlaybook:
         )
 
         self.test_suite.add_property(
-            "playbook.is_mockable", self.is_mockable  # type:ignore[arg-type]
+            "playbook.is_mockable",
+            self.is_mockable,  # type:ignore[arg-type]
         )
         self.test_suite.add_property(
-            "is_mockable", self.configuration.is_mockable  # type:ignore[arg-type]
+            "is_mockable",
+            self.configuration.is_mockable,  # type:ignore[arg-type]
         )
         self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
         self.test_suite.add_property("from_version", self.configuration.from_version)
@@ -330,9 +332,9 @@ class TestPlaybook:
                 msg = f"Skipping {self} because it's not in filtered tests"
                 self.log_debug(msg)
                 self.close_test_suite([Skipped(msg)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "not in filtered tests"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    "not in filtered tests"
+                )
                 return False
             return True
 
@@ -347,9 +349,9 @@ class TestPlaybook:
                     self.log_warning(log_message)
                 else:
                     self.log_debug(log_message)
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "nightly test in a non nightly build"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    "nightly test in a non nightly build"
+                )
                 return True
             return False
 
@@ -384,9 +386,9 @@ class TestPlaybook:
                 )
                 self.log_warning(log_message)
                 self.close_test_suite([Skipped(log_message)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
+                )
                 return True
             return False
 
@@ -401,7 +403,6 @@ class TestPlaybook:
                 )
                 results: List[Result] = []
                 for integration in skipped_integrations:
-
                     if (
                         self.server_context.filtered_tests
                         and self.configuration.playbook_id
@@ -420,9 +421,9 @@ class TestPlaybook:
                         self.log_warning(log_message)
                         results.append(Skipped(msg))
 
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f'The integrations:{",".join(skipped_integrations)} are skipped'
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    f'The integrations:{",".join(skipped_integrations)} are skipped'
+                )
                 self.test_suite.add_property(
                     "skipped_integrations", ",".join(skipped_integrations)
                 )
@@ -470,9 +471,9 @@ class TestPlaybook:
                 self.log_warning(log_message)
             else:
                 self.log_debug(log_message)
-            skipped_tests_collected[
-                self.configuration.playbook_id
-            ] = f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
+            skipped_tests_collected[self.configuration.playbook_id] = (
+                f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
+            )
             return False  # test has a marketplace value that doesn't matched the build server marketplace
 
         return (
@@ -760,7 +761,6 @@ class TestPlaybook:
 
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
-
         # --------------------------- overall build configuration -------------------------------
 
         self.server_type = kwargs["server_type"]
@@ -982,7 +982,6 @@ class ServerContext:
         server_private_ip: str,
         use_retries_mechanism: bool = True,
     ):
-
         # --------------------------- Overall build configuration -------------------------------
 
         self.auth_id = None
@@ -1217,8 +1216,8 @@ class CloudServerContext(ServerContext):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.machine = cloud_machine
         self.server_url = self.server_ip
-        self.api_key = self.build_context.api_key.get(cloud_machine)
-        self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(
+        self.api_key = self.build_context.api_key.get(cloud_machine, {}).get("api-key")
+        self.auth_id = self.build_context.api_key.get(cloud_machine, {}).get(
             "x-xdr-auth-id"
         )
         os.environ.pop(
@@ -1593,7 +1592,9 @@ class Conf:
         self.skipped_tests: Dict[str, str] = conf.get("skipped_tests")  # type: ignore
         self.skipped_integrations: Dict[str, str] = conf.get("skipped_integrations")  # type: ignore
         self.skipped_integrations_set = set(self.skipped_integrations.keys())
-        self.unmockable_integrations: Dict[str, str] = conf.get("unmockable_integrations")  # type: ignore
+        self.unmockable_integrations: Dict[str, str] = conf.get(
+            "unmockable_integrations"
+        )  # type: ignore
         self.parallel_integrations: List[str] = conf["parallel_integrations"]
         self.docker_thresholds = conf.get("docker_thresholds", {}).get("images", {})
 
@@ -1813,9 +1814,9 @@ class Integration:
         self.name = integration_name
         self.instance_names = potential_integration_instance_names
         self.instance_name = ""
-        self.configuration: Optional[
-            IntegrationConfiguration
-        ] = IntegrationConfiguration({"name": self.name, "params": {}})
+        self.configuration: Optional[IntegrationConfiguration] = (
+            IntegrationConfiguration({"name": self.name, "params": {}})
+        )
         self.docker_image: list = []
         self.integration_configuration_from_server: dict = {}
         self.integration_type: str = ""
@@ -2386,7 +2387,6 @@ class TestContext:
                 response_type="object",
             )
         except ApiException as err:
-
             self.playbook.log_debug(f"{err=}", real_time=True)
             self.playbook.log_debug(f"{err.status=}", real_time=True)
             if err.status == 401:
@@ -2705,15 +2705,20 @@ class TestContext:
             )
 
             server_url = get_ui_url(self.client.api_client.configuration.host)
-            if self.build_context.is_saas_server_type:
-                self.playbook.log_info(
-                    f"Investigation URL: {self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
+
+            if self.build_context.server_type == XSOAR_SAAS_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}WorkPlan/{investigation_id}"
+                )
+            elif self.build_context.server_type == XSIAM_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
                     f"{investigation_id}&action:openAlertDetails={investigation_id}-work_plan"
                 )
             else:
-                self.playbook.log_info(
-                    f"Investigation URL: {server_url}/#/WorkPlan/{investigation_id}"
-                )
+                investigation_url = f"{server_url}/#/WorkPlan/{investigation_id}"
+
+            self.playbook.log_info(f"Investigation URL: {investigation_url}")
             playbook_state = self._poll_for_playbook_state()
             self.playbook.log_info(
                 f"Got incident: {investigation_id} status: {playbook_state}."

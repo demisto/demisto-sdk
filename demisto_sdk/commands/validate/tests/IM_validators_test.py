@@ -29,7 +29,7 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM111_invalid_image_
 )
 
 
-def test_ImageExistsValidator_is_valid_image_path():
+def test_ImageExistsValidator_obtain_invalid_content_items_image_path():
     """
     Given:
     content_items with 2 integrations:
@@ -37,7 +37,7 @@ def test_ImageExistsValidator_is_valid_image_path():
         - One integration with an existing image.
 
     When:
-        - Calling the ImageExistsValidator is_valid function.
+        - Calling the ImageExistsValidator obtain_invalid_content_items function.
 
     Then:
         - Make sure the right amount of integration image path failed, and that the right error message is returned.
@@ -46,7 +46,7 @@ def test_ImageExistsValidator_is_valid_image_path():
     """
     content_items = [create_integration_object(), create_integration_object()]
     content_items[0].image.exist = False
-    results = ImageExistsValidator().is_valid(content_items)
+    results = ImageExistsValidator().obtain_invalid_content_items(content_items)
     assert len(results) == 1
     assert all(
         "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at TestIntegration_image.png."
@@ -81,7 +81,7 @@ def test_ImageExistsValidator_is_valid_image_path():
         ),
     ],
 )
-def test_ImageTooLargeValidator_is_valid(
+def test_ImageTooLargeValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -91,14 +91,14 @@ def test_ImageTooLargeValidator_is_valid(
         - Case 2: Integration with an image that is in a valid size.
 
     When:
-        - Calling the ImageTooLargeValidator is_valid function.
+        - Calling the ImageTooLargeValidator obtain_invalid_content_items function.
 
     Then:
         - Make sure the right amount of integration image path failed, and that the right error message is returned.
         - Case 1: Should fail.
         - Case 2: Shouldn't fail.
     """
-    results = ImageTooLargeValidator().is_valid(content_items)
+    results = ImageTooLargeValidator().obtain_invalid_content_items(content_items)
     assert all(
         [
             result.message == expected_msg
@@ -121,7 +121,7 @@ def test_ImageTooLargeValidator_is_valid(
         ),
     ],
 )
-def test_InvalidImageDimensionsValidator_is_valid(
+def test_InvalidImageDimensionsValidator_obtain_invalid_content_items(
     mocker, image_resolution, expected_message
 ):
     mocker.patch(
@@ -132,13 +132,15 @@ def test_InvalidImageDimensionsValidator_is_valid(
         create_integration_object(paths=["image"], values=["very nice image"])
     ]
 
-    results = InvalidImageDimensionsValidator().is_valid(content_items)
+    results = InvalidImageDimensionsValidator().obtain_invalid_content_items(
+        content_items
+    )
 
     if len(results) > 0:
         assert results[0].message == expected_message
 
 
-def test_AuthorImageExistsValidator_is_valid_image_path():
+def test_AuthorImageExistsValidator_obtain_invalid_content_items_image_path():
     """
     Given:
     content_items (Pack).
@@ -148,7 +150,7 @@ def test_AuthorImageExistsValidator_is_valid_image_path():
         - Case 4: Author image path doesn't exist for community support pack.
 
     When:
-        - Calling the AuthorImageExistsValidator is_valid function.
+        - Calling the AuthorImageExistsValidator obtain_invalid_content_items function.
 
     Then:
         - Make sure the right amount of pack author image path failed, and that the right error message is returned.
@@ -165,7 +167,7 @@ def test_AuthorImageExistsValidator_is_valid_image_path():
     ]
     content_items[2].author_image_file.exist = False
     content_items[3].author_image_file.exist = False
-    results = AuthorImageExistsValidator().is_valid(content_items)
+    results = AuthorImageExistsValidator().obtain_invalid_content_items(content_items)
     assert len(results) == 1
     assert all(
         "You've created/modified a yml or package in a partner supported pack without providing an author image as a .png file. Please make sure to add an image at"
@@ -185,7 +187,7 @@ def test_AuthorImageExistsValidator_is_valid_image_path():
         ),
     ],
 )
-def test_AuthorImageIsEmptyValidator_is_valid(
+def test_AuthorImageIsEmptyValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -195,13 +197,13 @@ def test_AuthorImageIsEmptyValidator_is_valid(
         - Case 2: Author image is empty.
 
     When
-    - Calling the AuthorImageIsEmptyValidator is_valid function.
+    - Calling the AuthorImageIsEmptyValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack author image failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Should fail.
     """
-    results = AuthorImageIsEmptyValidator().is_valid(content_items)
+    results = AuthorImageIsEmptyValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -211,14 +213,14 @@ def test_AuthorImageIsEmptyValidator_is_valid(
     )
 
 
-def test_DefaultImageValidator_is_valid(mocker: MockerFixture):
+def test_DefaultImageValidator_obtain_invalid_content_items(mocker: MockerFixture):
     """
     Given:
         - First integration with a default image.
         - Second integration with a sample image
 
     When:
-        - Calling the DefaultImageValidator is_valid function.
+        - Calling the DefaultImageValidator obtain_invalid_content_items function.
 
     Then:
         - Make sure the right amount of integration image validation failed, and that the right error message is returned.
@@ -239,10 +241,11 @@ def test_DefaultImageValidator_is_valid(mocker: MockerFixture):
     mocker.patch.object(
         content_items[1].image, "load_image", return_value=sample_image.load_image()
     )
-    results = DefaultImageValidator().is_valid(content_items)
+    results = DefaultImageValidator().obtain_invalid_content_items(content_items)
     assert len(results) == 1
-    assert results[
-        0
-    ].message == "The integration is using the default image at {0}, please change to the integration image.".format(
-        DEFAULT_IMAGE
+    assert (
+        results[0].message
+        == "The integration is using the default image at {0}, please change to the integration image.".format(
+            DEFAULT_IMAGE
+        )
     )

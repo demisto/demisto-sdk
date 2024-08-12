@@ -23,6 +23,7 @@ class Integration(TestSuiteBase):
         repo,
         create_unified: Optional[bool] = False,
         _type: str = "python",
+        unit_test_name: Optional[str] = None,
     ):
         # Save entities
         self.name = name
@@ -47,7 +48,8 @@ class Integration(TestSuiteBase):
                 self._tmpdir_integration_path / f"{self.name}.js", self._repo.path
             )
         self.test = File(
-            self._tmpdir_integration_path / f"{self.name}_test.py", self._repo.path
+            self._tmpdir_integration_path / f"{unit_test_name or self.name}_test.py",
+            self._repo.path,
         )
         self.yml = YAML(
             self._tmpdir_integration_path / f"{self.name}.yml", self._repo.path

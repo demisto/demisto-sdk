@@ -521,7 +521,6 @@ def validate_schema_aligned_with_test_data(
                 if (
                     event_val is None
                 ):  # if event_val is None, warn and continue looping.
-
                     info = f"{event_key=} is null on {event_log.test_data_event_id} event for {dataset=}, ignoring {event_key=}"
                     logger.warning(f"[yellow]{info}[/yellow]", extra={"markup": True})
                     results.append(Skipped(info))
@@ -983,9 +982,7 @@ def validate_modeling_rule(
     modeling_rule_test_suite.add_property(
         "file_name", modeling_rule_file_name
     )  # used in the convert to jira issue.
-    modeling_rule_test_suite.filepath = get_relative_path_to_content(
-        modeling_rule.path
-    )  # type:ignore[arg-type]
+    modeling_rule_test_suite.filepath = get_relative_path_to_content(modeling_rule.path)  # type:ignore[arg-type]
     modeling_rule_test_suite.add_property(
         "modeling_rule_path", get_relative_path_to_content(modeling_rule.path)
     )
@@ -1006,14 +1003,17 @@ def validate_modeling_rule(
     )
     modeling_rule_test_suite.add_property("push", push)  # type:ignore[arg-type]
     modeling_rule_test_suite.add_property(
-        "interactive", interactive  # type:ignore[arg-type]
+        "interactive",
+        interactive,  # type:ignore[arg-type]
     )
     modeling_rule_test_suite.add_property("xsiam_url", xsiam_url)
     modeling_rule_test_suite.add_property(
-        "from_version", modeling_rule.from_version  # type:ignore[arg-type]
+        "from_version",
+        modeling_rule.from_version,  # type:ignore[arg-type]
     )  #
     modeling_rule_test_suite.add_property(
-        "to_version", modeling_rule.to_version  # type:ignore[arg-type]
+        "to_version",
+        modeling_rule.to_version,  # type:ignore[arg-type]
     )  #
     modeling_rule_test_suite.add_property(
         "pack_id", containing_pack.id
@@ -1101,7 +1101,8 @@ def validate_modeling_rule(
                 )
 
                 success, results = validate_schema_aligned_with_test_data(
-                    test_data=test_data, schema=schema  # type:ignore[arg-type]
+                    test_data=test_data,
+                    schema=schema,  # type:ignore[arg-type]
                 )
                 schema_test_case.result += results
                 if not success:
@@ -1567,7 +1568,8 @@ def test_modeling_rule(
             )
         if modeling_rule_test_suite:
             modeling_rule_test_suite.add_property(
-                "start_time", start_time  #  type:ignore[arg-type]
+                "start_time",
+                start_time,  #  type:ignore[arg-type]
             )
             xml.add_testsuite(modeling_rule_test_suite)
 

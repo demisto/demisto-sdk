@@ -303,7 +303,6 @@ class ColorConsoleFormatter(logging.Formatter):
 
         current_message = record.getMessage()
         while ColorConsoleFormatter._string_starts_with_escapes(current_message):
-
             # Record starts with escapes - Extract them
             current_escape = current_message[: current_message.find("]") + 1]
             ret_value += current_escape

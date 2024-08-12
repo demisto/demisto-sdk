@@ -88,7 +88,7 @@ class MarketplacesFieldValidator(BaseValidator[ContentTypes], ABC):
     related_field = "marketplaces"
     is_auto_fixable = False
 
-    def is_valid_using_graph(
+    def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files=False
     ) -> List[ValidationResult]:
         validation_results = []

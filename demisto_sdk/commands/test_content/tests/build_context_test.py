@@ -144,7 +144,6 @@ def generate_xsiam_servers_data():
         "qa2-test-111111": {
             "ui_url": "https://xsiam1.paloaltonetworks.com/",
             "instance_name": "qa2-test-111111",
-            "x-xdr-auth-id": 1,
             "base_url": "https://api1.paloaltonetworks.com/",
             "xsiam_version": "3.2.0",
             "demisto_version": "99.99.98",
@@ -152,7 +151,6 @@ def generate_xsiam_servers_data():
         "qa2-test-222222": {
             "ui_url": "https://xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com/",
             "instance_name": "qa2-test-222222",
-            "x-xdr-auth-id": 1,
             "base_url": "https://api-xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com",
             "xsiam_version": "3.2.0",
             "demisto_version": "99.99.98",
@@ -262,7 +260,12 @@ def create_xsiam_build(
 
     xsiam_api_keys_path = tmp_file / "xsiam_api_keys_path.json"
     xsiam_api_keys_path.write_text(
-        json.dumps({"qa2-test-111111": "api_key", "qa2-test-222222": "api_key"})
+        json.dumps(
+            {
+                "qa2-test-111111": {"api-key": "api_key", "x-xdr-auth-id": 1},
+                "qa2-test-222222": {"api-key": "api_key", "x-xdr-auth-id": 1},
+            }
+        )
     )
 
     env_results_path = tmp_file / "env_results_path"

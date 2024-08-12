@@ -139,7 +139,6 @@ class InvalidReportType(Exception):
 
 
 def export_report(report_call, format, dest):
-
     logger.info(f"exporting {format} coverage report to {dest}")
     try:
         report_call()

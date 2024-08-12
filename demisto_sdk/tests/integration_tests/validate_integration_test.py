@@ -913,9 +913,9 @@ class TestDeprecatedIntegration:
         )
         valid_integration_yml["deprecated"] = True
         valid_integration_yml["display"] = "ServiceNow (Deprecated)"
-        valid_integration_yml[
-            "description"
-        ] = "Deprecated. Use the ServiceNow v2 integration instead."
+        valid_integration_yml["description"] = (
+            "Deprecated. Use the ServiceNow v2 integration instead."
+        )
         integration = pack.create_integration(yml=valid_integration_yml)
 
         with ChangeCWD(pack.repo_path):
@@ -1145,9 +1145,9 @@ class TestDeprecatedIntegration:
         valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml["deprecated"] = True
         valid_integration_yml["display"] = "ServiceNow (Deprecated)"
-        valid_integration_yml[
-            "description"
-        ] = "Deprecated. Use the ServiceNow v2 integration instead."
+        valid_integration_yml["description"] = (
+            "Deprecated. Use the ServiceNow v2 integration instead."
+        )
         valid_integration_yml["commonfields"]["version"] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
@@ -1206,9 +1206,9 @@ class TestDeprecatedIntegration:
         valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml["deprecated"] = True
         valid_integration_yml["display"] = "ServiceNow (Deprecated)"
-        valid_integration_yml[
-            "description"
-        ] = "Deprecated. Use the ServiceNow v2 integration instead."
+        valid_integration_yml["description"] = (
+            "Deprecated. Use the ServiceNow v2 integration instead."
+        )
         valid_integration_yml["commonfields"]["version"] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         modified_files = {integration.yml.rel_path}
@@ -4676,9 +4676,9 @@ class TestScriptDeprecatedValidation:
         pack = repo.create_pack("PackName")
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml["deprecated"] = True
-        valid_script_yml[
-            "comment"
-        ] = "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        valid_script_yml["comment"] = (
+            "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        )
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -4767,9 +4767,9 @@ class TestScriptDeprecatedValidation:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml["deprecated"] = True
         valid_script_yml["commonfields"]["version"] = -2
-        valid_script_yml[
-            "comment"
-        ] = "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        valid_script_yml["comment"] = (
+            "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        )
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -4823,9 +4823,9 @@ class TestScriptDeprecatedValidation:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml["deprecated"] = True
         valid_script_yml["commonfields"]["version"] = -2
-        valid_script_yml[
-            "comment"
-        ] = "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        valid_script_yml["comment"] = (
+            "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        )
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
         mocker.patch.object(
@@ -6432,7 +6432,6 @@ def test_local_node_server_up_and_down():
 
     assert not mdx_server_is_up()
     with start_local_MDX_server():
-
         assert mdx_server_is_up()
         assert_successful_mdx_call()
     sleep(1)

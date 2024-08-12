@@ -26,6 +26,7 @@ class JSONContentItemParser(ContentItemParser):
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.path = self.get_path_with_suffix(".json") if not git_sha else self.path
         self.original_json_data: Dict[str, Any] = self.json_data
+        self.structure_errors = self.validate_structure()
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(
                 f"The content of {self.path} must be in a JSON dictionary format"
@@ -33,6 +34,10 @@ class JSONContentItemParser(ContentItemParser):
 
         if self.should_skip_parsing():
             raise NotAContentItemException
+
+    @property
+    def raw_data(self) -> dict:
+        return self.json_data
 
     @cached_property
     def field_mapping(self):

@@ -43,21 +43,20 @@ def prepare_descriptions_and_names(
 
     # Descriptions and names for all tasks
     for task_key, task_value in data.get("tasks", {}).items():
-
         if description := task_value.get("task", {}).get("description", ""):
             if description != "commands.local.cmd.set.incident":
                 # Since it is a server key, we do not want to change it
-                data["tasks"][task_key]["task"][
-                    "description"
-                ] = prepare_descriptions_and_names_classifier(
-                    description, replace_incident_to_alert
+                data["tasks"][task_key]["task"]["description"] = (
+                    prepare_descriptions_and_names_classifier(
+                        description, replace_incident_to_alert
+                    )
                 )
 
         if name := task_value.get("task", {}).get("name", ""):
-            data["tasks"][task_key]["task"][
-                "name"
-            ] = prepare_descriptions_and_names_classifier(
-                name, replace_incident_to_alert
+            data["tasks"][task_key]["task"]["name"] = (
+                prepare_descriptions_and_names_classifier(
+                    name, replace_incident_to_alert
+                )
             )
 
     # The external playbook's description
@@ -208,8 +207,7 @@ def replace_script_access_fields_recursively(
             if isinstance(value, str):
                 if key in {"id", "comment", "description"} or (
                     # To avoid replacing the name of the arguments
-                    key == "name"
-                    and "commonfields" in data
+                    key == "name" and "commonfields" in data
                 ):
                     data[key] = edit_ids_names_and_descriptions_for_script(
                         value, incident_to_alert

@@ -456,7 +456,6 @@ class ReleaseNotesValidator(BaseValidator):
         validations = [self.validate_first_level_header_exists()]
         self.filter_rn_headers(headers=headers)
         for content_type, content_items in headers.items():
-
             validations.append(
                 self.rn_valid_header_format(
                     content_type=content_type, content_items=content_items

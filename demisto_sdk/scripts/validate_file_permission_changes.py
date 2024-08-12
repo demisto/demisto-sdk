@@ -44,7 +44,7 @@ def validate_changed_files_permissions(
         file_okay=True,
         exists=True,
         dir_okay=False,
-    )
+    ),
 ) -> None:
     """
     Validate whether the file mode was modified. Exit code 0 if no files
@@ -59,7 +59,6 @@ def validate_changed_files_permissions(
     logging_setup()
 
     if changed_files:
-
         logger.debug(
             f"Iterating over {len(changed_files)} changed files to check if their permissions flags have changed..."
         )

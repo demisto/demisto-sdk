@@ -1,19 +1,38 @@
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects import (
+    AssetsModelingRule,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
     Classifier,
     CorrelationRule,
     Dashboard,
     GenericDefinition,
+    GenericField,
+    GenericModule,
     GenericType,
     IncidentField,
     IncidentType,
     IndicatorField,
+    IndicatorType,
+    Job,
     Layout,
     LayoutRule,
+    Mapper,
+    ModelingRule,
+    ParsingRule,
     Playbook,
+    PreProcessRule,
+    Report,
+    Widget,
+    Wizard,
+    XDRCTemplate,
+    XSIAMDashboard,
+    XSIAMReport,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -34,6 +53,25 @@ ContentTypes = Union[
     CorrelationRule,
     Dashboard,
     GenericDefinition,
+    GenericField,
+    GenericModule,
+    Job,
+    ListObject,
+    Mapper,
+    ModelingRule,
+    ParsingRule,
+    PreProcessRule,
+    Report,
+    Widget,
+    Wizard,
+    XDRCTemplate,
+    XSIAMDashboard,
+    XSIAMReport,
+    IndicatorType,
+    AssetsModelingRule,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
 ]
 
 

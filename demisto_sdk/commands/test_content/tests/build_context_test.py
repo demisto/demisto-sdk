@@ -1,5 +1,6 @@
 from typing import Union
 
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.test_content.mock_server import MITMProxy
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
@@ -144,7 +145,6 @@ def generate_xsiam_servers_data():
         "qa2-test-111111": {
             "ui_url": "https://xsiam1.paloaltonetworks.com/",
             "instance_name": "qa2-test-111111",
-            "x-xdr-auth-id": 1,
             "base_url": "https://api1.paloaltonetworks.com/",
             "xsiam_version": "3.2.0",
             "demisto_version": "99.99.98",
@@ -152,7 +152,6 @@ def generate_xsiam_servers_data():
         "qa2-test-222222": {
             "ui_url": "https://xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com/",
             "instance_name": "qa2-test-222222",
-            "x-xdr-auth-id": 1,
             "base_url": "https://api-xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com",
             "xsiam_version": "3.2.0",
             "demisto_version": "99.99.98",
@@ -178,7 +177,7 @@ def get_mocked_build_context(
         content_conf_json: The contents of conf.json to load in the BuildContext instance
         secret_conf_json: The contents of content-test-conf conf.json to load in the BuildContext instance
         env_results_content: The contents of env_results.json to load in the BuildContext instance
-        machine_assignment_content: The contents of packs_to_install_by_machine.json to load in the BuildContext instance
+        machine_assignment_content: The contents of machine_assignment.json to load in the BuildContext instance
         nightly: Indicates whether this build is a nightly build
         server_version: The server version to run the instance on
     """
@@ -206,7 +205,7 @@ def get_mocked_build_context(
         str(env_results_path),
     )
 
-    machine_assignment_path = tmp_file / "packs_to_install_by_machine.json"
+    machine_assignment_path = tmp_file / "machine_assignment.json"
     machine_assignment_path.write_text(
         json.dumps(machine_assignment_content or {}) or "{}"
     )
@@ -277,7 +276,7 @@ def create_xsiam_build(
         str(env_results_path),
     )
 
-    machine_assignment_path = tmp_file / "packs_to_install_by_machine.json"
+    machine_assignment_path = tmp_file / "machine_assignment.json"
     machine_assignment_path.write_text(
         json.dumps(machine_assignment_content or {}) or "{}"
     )
@@ -324,7 +323,7 @@ def test_build_creation(mocker, tmp_path):
     machine_assignment_content_xsiam = {
         "qa2-test-111111": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": [],
+            "tests": {TEST_PLAYBOOKS: []},
         }
     }
     build_contex = create_xsiam_build(
@@ -347,7 +346,7 @@ def test_non_filtered_tests_are_skipped(mocker, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": ["test_that_should_run"],
+            "tests": {TEST_PLAYBOOKS: ["test_that_should_run"]},
         }
     }
     tests = [
@@ -411,7 +410,7 @@ def test_playbook_with_skipped_integrations_is_skipped(mocker, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": ["test_with_skipped_integrations"],
+            "tests": {TEST_PLAYBOOKS: ["test_with_skipped_integrations"]},
         }
     }
 
@@ -453,7 +452,7 @@ def test_nightly_playbook_skipping(mocker, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": ["nightly_playbook"],
+            "tests": {TEST_PLAYBOOKS: ["nightly_playbook"]},
         }
     }
 
@@ -493,7 +492,7 @@ def test_playbook_with_integration(mocker, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": ["playbook_with_integration"],
+            "tests": {TEST_PLAYBOOKS: ["playbook_with_integration"]},
         }
     }
 
@@ -531,7 +530,7 @@ def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": ["playbook_with_version_mismatch"],
+            "tests": {TEST_PLAYBOOKS: ["playbook_with_version_mismatch"]},
         }
     }
 
@@ -570,13 +569,13 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
     machine_assignment_content_xsiam = {
         "qa2-test-111111": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": ["xsiam_playbook_with_marketplaces_mismatch"],
+            "tests": {TEST_PLAYBOOKS: ["xsiam_playbook_with_marketplaces_mismatch"]},
         }
     }
     machine_assignment_content_xsoar = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": ["xsoar_playbook_with_marketplaces_mismatch"],
+            "tests": {TEST_PLAYBOOKS: ["xsoar_playbook_with_marketplaces_mismatch"]},
         }
     }
 
@@ -638,7 +637,7 @@ def test_unmockable_playbook_configuration(mocker, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": ["unmockable_playbook"],
+            "tests": {TEST_PLAYBOOKS: ["unmockable_playbook"]},
         }
     }
 
@@ -675,7 +674,7 @@ def test_mockable_playbook_configuration(mocker, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": ["mockable_playbook"],
+            "tests": {TEST_PLAYBOOKS: ["mockable_playbook"]},
         }
     }
 

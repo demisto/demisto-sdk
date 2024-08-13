@@ -94,6 +94,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA125_customer_facin
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_context_path_depth import (
+    IsValidContextPathDepthValidator,
+)
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
 
@@ -2043,6 +2046,95 @@ def test_IsFolderNameHasSeparatorsValidator_is_valid(
     content_items, expected_number_of_failures, expected_msg
 ):
     result = IsFolderNameHasSeparatorsValidator().is_valid(content_items)
+
+    assert len(result) == expected_number_of_failures
+
+    if result:
+        assert result[0].message == expected_msg
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msg",
+    [
+        (
+            [
+                create_script_object(
+                    paths=["outputs"],
+                    values=[[{"contextPath": "File.EntryID", "description": "test_3"},
+                             {"contextPath": "test.test.1.2.3.4.5.6", "description": "test_4"}]],
+                ),
+            ],
+            1,
+            "The level of depth for context output path for command or script: myScript In the yml should be less or equal to 5 check the following outputs:\ntest.test.1.2.3.4.5.6"
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextPath": "path_1.2.3.4.5.6",
+                                        "description": "description_1",
+                                    },
+                                    {
+                                        "name": "output_2",
+                                        "contextPath": "path_2",
+                                        "description": "description_2",
+                                    },
+                                ],
+                            },
+                        ]
+                    ],
+                )
+            ],
+            1,
+            "The level of depth for context output path for command or script: ip In the yml should be less or equal to 5 check the following outputs:\npath_1.2.3.4.5.6"
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextPath": "path_1",
+                                        "description": "description_1",
+                                    },
+                                    {
+                                        "name": "output_2",
+                                        "contextPath": "path_2",
+                                        "description": "description_2",
+                                    },
+                                ],
+                            },
+                        ]
+                    ],
+                )
+            ],
+            0,
+            ""
+        ),
+    ],
+)
+def test_is_valid_context_path_depth(
+    content_items, expected_number_of_failures, expected_msg
+):
+    result = IsValidContextPathDepthValidator().is_valid(content_items)
 
     assert len(result) == expected_number_of_failures
 

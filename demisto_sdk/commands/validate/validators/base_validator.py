@@ -137,12 +137,14 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     content_item,
                     self.related_file_type,
                 ),
-                not is_support_level_support_validation(
-                    self.error_code,
-                    support_level_dict,
-                    content_item.support,
-                ),
             ]
+        ) and (
+            isinstance(content_item, BaseContent)       #this is to avoid mypy error
+            or not is_support_level_support_validation(
+                self.error_code,
+                support_level_dict,
+                content_item.support,
+            )
         )
 
     def obtain_invalid_content_items(

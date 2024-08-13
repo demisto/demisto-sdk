@@ -21,12 +21,13 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
     error_message = "The level of depth for context output path for command or script: {0} In the yml should be less or equal to 5 check the following outputs:\n{1}"
     related_field = ""
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED]
+    #expected_git_statuses = [GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         invalid_paths: str = ""
         for content_item in content_items:
+            if content_item.support_level != 'xsoar':
             old_content_item = content_item.old_base_content_object
             if isinstance(content_item, Script):
                 invalid_paths = self.is_context_depth_less_or_equal_to_5_script(content_item, old_content_item)

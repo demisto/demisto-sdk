@@ -101,7 +101,7 @@ class JSONContentItemParser(ContentItemParser):
         return self.get_marketplaces(self.json_data)
 
     @property
-    def support(self) -> Optional[str]:
+    def support(self) -> str:
         return self.get_support(self.json_data)
 
     @cached_property

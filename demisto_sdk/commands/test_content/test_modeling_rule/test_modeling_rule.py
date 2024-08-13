@@ -1896,7 +1896,7 @@ def test_modeling_rule(
     )
     handle_deprecated_args(ctx.args)
 
-    logging_manager = ParallelLoggingManager(
+    logging_module = ParallelLoggingManager(
         "test_modeling_rules.log", real_time_logs_only=not nightly
     )
 
@@ -1920,7 +1920,7 @@ def test_modeling_rule(
         branch_name=branch_name,
         retry_attempts=retry_attempts,
         sleep_interval=sleep_interval,
-        logging_module=logging_manager,
+        logging_module=logging_module,
         cloud_servers_path=cloud_servers_path,
         cloud_servers_api_keys=cloud_servers_api_keys,
         service_account=service_account,
@@ -1938,15 +1938,15 @@ def test_modeling_rule(
         inputs=inputs,
     )
 
-    logging_manager.info(
-        "[cyan]Test Modeling Rules to test:[/cyan]",
+    logging_module.info(
+        "Test Modeling Rules to test:",
     )
 
     for build_context_server in build_context.servers:
         for modeling_rule_directory in build_context_server.tests:
-            logging_manager.info(
-                f"[cyan]\tmachine:{build_context_server.base_url} - "
-                f"{get_relative_path_to_content(modeling_rule_directory)}[/cyan]"
+            logging_module.info(
+                f"\tmachine:{build_context_server.base_url} - "
+                f"{get_relative_path_to_content(modeling_rule_directory)}"
             )
 
     threads_list = []
@@ -1954,14 +1954,14 @@ def test_modeling_rule(
         thread_name = f"Thread-{index} (execute_tests)"
         threads_list.append(Thread(target=server.execute_tests, name=thread_name))
 
-    logging_manager.info("Finished creating configurations, starting to run tests.")
+    logging_module.info("Finished creating configurations, starting to run tests.")
     for thread in threads_list:
         thread.start()
 
     for t in threads_list:
         t.join()
 
-    logging_manager.info("Finished running tests.")
+    logging_module.info("Finished running tests.")
 
     if output_junit_file:
         logger.info(
@@ -1972,12 +1972,18 @@ def test_modeling_rule(
             output_junit_file.as_posix(), pretty=True
         )
         if nightly:
-            build_context.tests_data_keeper.upload_modeling_rules_result_json_to_bucket(
-                XSIAM_SERVER_TYPE,
-                f"test_modeling_rules_report_{build_number}.xml",
-                output_junit_file,
-                logging_manager,
-            )
+            if service_account and artifacts_bucket:
+                build_context.tests_data_keeper.upload_modeling_rules_result_json_to_bucket(
+                    XSIAM_SERVER_TYPE,
+                    f"test_modeling_rules_report_{build_number}.xml",
+                    output_junit_file,
+                    logging_module,
+                )
+            else:
+                logger.warning(
+                    "[yellow]Service account or artifacts bucket not provided, skipping uploading JUnit XML to bucket[/yellow]",
+                    extra={"markup": True},
+                )
     else:
         logger.info(
             "[cyan]No JUnit XML file path was passed - skipping writing JUnit XML[/cyan]",

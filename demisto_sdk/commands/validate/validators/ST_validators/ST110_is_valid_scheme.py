@@ -27,7 +27,7 @@ from demisto_sdk.commands.content_graph.objects import (
     Wizard,
     XDRCTemplate,
     XSIAMDashboard,
-    XSIAMReport,
+    XSIAMReport, CaseLayout,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
@@ -68,6 +68,7 @@ ContentTypes = Union[
     IndicatorType,
     AssetsModelingRule,
     CaseField,
+    CaseLayout,
 ]
 
 
@@ -79,8 +80,8 @@ class SchemaValidator(BaseValidator[ContentTypes]):
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def is_valid(
-        self,
-        content_items: Iterable[ContentTypes],
+            self,
+            content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -89,7 +90,7 @@ class SchemaValidator(BaseValidator[ContentTypes]):
                     f"problematic field: {error.field_name} | error message: {error.error_message} |"
                     f" error type : {error.error_type}"
                     for error in (
-                        content_item.structure_errors or ()
+                            content_item.structure_errors or ()
                     )  # TODO remove the 'or' when done with ST
                 ),
                 content_object=content_item,

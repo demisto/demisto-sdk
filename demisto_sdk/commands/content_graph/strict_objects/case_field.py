@@ -1,18 +1,27 @@
+from typing import Any, List, Literal, Optional, Union
+
 from pydantic import Field
-from typing import List, Optional, Any
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions, IncidentFieldType
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import BaseOptionalVersionJson
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model
+from demisto_sdk.commands.common.constants import IncidentFieldType, MarketplaceVersions
+from demisto_sdk.commands.common.StrEnum import StrEnum
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseOptionalVersionJson,
+)
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    BaseStrictModel,
+    create_model,
+)
 
-class AliasesTypes(IncidentFieldType):
-    TAGS_SELECT = 'tagsSelect'
-    INTERNAL = 'internal'
+
+class AliasesTypes(StrEnum):
+    TAGS_SELECT = "tagsSelect"
+    INTERNAL = "internal"
+
 
 class StrictAliases(BaseStrictModel):
     cli_name: str = Field(alias="cliName")
     name: str
-    type: AliasesTypes
+    type: Union[IncidentFieldType, AliasesTypes]
 
 
 class _StrictCaseField(BaseStrictModel):
@@ -36,7 +45,9 @@ class _StrictCaseField(BaseStrictModel):
     use_as_kpi: Optional[bool] = Field(None, alias="useAsKpi")
     locked: Optional[bool] = None
     system: Optional[bool] = None
-    run_script_after_inc_update: Optional[bool] = Field(None, alias="runScriptAfterIncUpdate")
+    run_script_after_inc_update: Optional[bool] = Field(
+        None, alias="runScriptAfterIncUpdate"
+    )
     group: Optional[int] = None
     hidden: Optional[bool] = None
     columns: Optional[Any] = None
@@ -56,13 +67,18 @@ class _StrictCaseField(BaseStrictModel):
     to_server_version: Optional[str] = Field(None, alias="toServerVersion")
     open_ended: Optional[bool] = Field(None, alias="openEnded")
     template: Optional[str] = None
-    marketplaces: Optional[List[MarketplaceVersions.MarketplaceV2]] = None
+    marketplaces: Literal[MarketplaceVersions.MarketplaceV2] = Field(
+        default_factory=list
+    )
     aliases: Optional[List[StrictAliases]] = Field(None, alias="Aliases")
     x2_fields: Optional[str] = None
     alias_to: Optional[str] = Field(None, alias="aliasTo")
 
 
-StrictCaseField = create_model(model_name="StrictCaseField",
-                               base_models=(_StrictCaseField,
-                                            BaseOptionalVersionJson,
-                                            ))
+StrictCaseField = create_model(
+    model_name="StrictCaseField",
+    base_models=(
+        _StrictCaseField,
+        BaseOptionalVersionJson,
+    ),
+)

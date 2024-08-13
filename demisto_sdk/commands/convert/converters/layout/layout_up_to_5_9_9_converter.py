@@ -100,7 +100,7 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
 
     @staticmethod
     def layout_to_indicators_or_incidents_dict(
-        indicators_or_incidents: Iterator[Union[IncidentType, IndicatorType]]
+        indicators_or_incidents: Iterator[Union[IncidentType, IndicatorType]],
     ) -> Dict[str, List[str]]:
         """
         Iterates through incident/indicator types in the pack, builds a

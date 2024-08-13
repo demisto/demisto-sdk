@@ -173,7 +173,7 @@ $class_declaration
     related_field = "$related_field"
     is_auto_fixable = $is_auto_fixable$expected_git_statuses$support_deprecated$related_files
 
-    $is_valid_method
+    $obtain_invalid_content_items_method
 
     $fix_method
 """
@@ -476,7 +476,7 @@ Fill the content types as the numbers they appear as: """
         self.generate_git_section()
         self.generate_imports()
         self.generate_supported_content_types_section()
-        self.generate_is_valid_function()
+        self.generate_obtain_invalid_content_items_function()
         self.generate_fix_function()
         self.generate_file_info()
         if self.using_graph:
@@ -556,13 +556,13 @@ Fill the content types as the numbers they appear as: """
                 f"ContentTypes = Union{(supported_content_types)}"
             ).replace("'", "")
 
-    def generate_is_valid_function(self):
+    def generate_obtain_invalid_content_items_function(self):
         """
-        Generate the is_valid function.
+        Generate the obtain_invalid_content_items function.
         """
         if not self.using_graph:
-            self.is_valid_method = """
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+            self.obtain_invalid_content_items_method = """
+    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -577,8 +577,8 @@ Fill the content types as the numbers they appear as: """
         """
 
         else:
-            self.is_valid_method = """
-    def is_valid_using_graph(self, content_items: Iterable[ContentTypes], validate_all_files: bool) -> List[ValidationResult]:
+            self.obtain_invalid_content_items_method = """
+    def obtain_invalid_content_items_using_graph(self, content_items: Iterable[ContentTypes], validate_all_files: bool) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -653,8 +653,8 @@ from demisto_sdk.commands.validate.validators.{self.error_code[:2]}_validators.{
 class {self.class_name}{execution_mode}({self.class_name}, BaseValidator[ContentTypes]):
     expected_execution_mode = {expected_execution_mode}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return self.is_valid_using_graph(content_items, {all_files})
+    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        return self.obtain_invalid_content_items_using_graph(content_items, {all_files})
         """
 
     """ Create new py file """
@@ -679,7 +679,7 @@ class {self.class_name}{execution_mode}({self.class_name}, BaseValidator[Content
                 is_auto_fixable=self.support_fix,
                 expected_git_statuses=self.git_statuses,
                 related_files=self.related_files,
-                is_valid_method=self.is_valid_method,
+                obtain_invalid_content_items_method=self.obtain_invalid_content_items_method,
                 fix_method=self.fix_method,
                 support_deprecated=self.run_on_deprecated,
             )

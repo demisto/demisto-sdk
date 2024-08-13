@@ -768,7 +768,6 @@ class OpenAPIIntegration:
         def extract(
             extracted_object: Union[dict, list], prop_arr: list, current_context: list
         ) -> list:
-
             if isinstance(extracted_object, list):
                 for item in extracted_object:
                     extract(item, prop_arr, current_context)
@@ -953,9 +952,9 @@ class OpenAPIIntegration:
                                         new_ref_arg["properties"][ck]["type"] = cv.get(
                                             "type", "string"
                                         )
-                                        new_ref_arg["properties"][ck][
-                                            "description"
-                                        ] = cv.get("description", "")
+                                        new_ref_arg["properties"][ck]["description"] = (
+                                            cv.get("description", "")
+                                        )
                                         new_ref_arg["properties"][ck]["required"] = (
                                             True
                                             if ck

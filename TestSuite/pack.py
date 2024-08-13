@@ -267,6 +267,7 @@ class Pack(TestSuiteBase):
         create_unified=False,
         commands_txt: Optional[str] = None,
         test: Optional[str] = None,
+        unit_test_name: Optional[str] = None,
     ) -> Integration:
         if name is None:
             name = f"integration_{len(self.integrations)}"
@@ -297,6 +298,7 @@ class Pack(TestSuiteBase):
             self._repo,
             create_unified=create_unified,
             _type=yml.get("script", {}).get("type", "python"),
+            unit_test_name=unit_test_name,
         )
         integration.build(
             code, yml, readme, description, changelog, image, commands_txt, test
@@ -511,7 +513,6 @@ class Pack(TestSuiteBase):
         return layoutcontainer
 
     def create_report(self, name: str = None, content: dict = None) -> Report:
-
         if not name:
             name = f"report{len(self.reports)}"
         report = Report(name, self._report_path, content)
@@ -558,7 +559,6 @@ class Pack(TestSuiteBase):
         return wizard
 
     def create_list(self, name: str = None, content: dict = None) -> ContentList:
-
         if not name:
             name = f"list{len(self.lists)}"
         content_list = ContentList(name, self._lists_path, content)

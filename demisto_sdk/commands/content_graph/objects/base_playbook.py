@@ -36,7 +36,7 @@ class Task(BaseModel):
     script: Optional[str] = None
     script_x2: Optional[str] = None
     tags: Optional[List[str]] = None
-    type: Optional[str] = None
+    type: Optional[PlaybookTaskType] = None
     iscommand: Optional[bool] = None
     elasticcommonfields: Optional[Dict[str, str]] = None
     brand: Optional[str] = None
@@ -76,7 +76,7 @@ class Task(BaseModel):
             "script": self.script,
             "script_x2": self.script_x2,
             "tags": self.tags,
-            "type": self.type,
+            "type": self.type.value if self.type else None,
             "iscommand": self.iscommand,
             "elasticcommonfields": self.elasticcommonfields,
             "brand": self.brand,

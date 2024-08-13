@@ -88,7 +88,6 @@ class LintManager:
         check_dependent_api_module: bool = False,
         show_deprecation_message: bool = True,
     ):
-
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver
@@ -244,7 +243,9 @@ class LintManager:
         logger.debug("creating docker client from env")
 
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="LintManager")  # type: ignore
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="LintManager"
+            )  # type: ignore
             logger.debug("pinging docker daemon")
             docker_client.ping()
         except (
@@ -290,7 +291,9 @@ class LintManager:
         """
         pkgs: list
         if all_packs or git:
-            pkgs = LintManager._get_all_packages(content_dir=content_repo.repo.working_dir)  # type: ignore
+            pkgs = LintManager._get_all_packages(
+                content_dir=content_repo.repo.working_dir  # type: ignore[arg-type]
+            )
         else:  # specific pack as input, -i flag has been used
             pkgs = []
             if isinstance(input, str):

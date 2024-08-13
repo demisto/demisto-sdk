@@ -26,7 +26,9 @@ class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     non_approved_usecases_dict: ClassVar[dict] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         non_approved_usecases = set()
         approved_usecases = get_current_usecases()
         return [

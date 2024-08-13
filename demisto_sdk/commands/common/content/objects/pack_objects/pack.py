@@ -127,7 +127,6 @@ class Pack:
                 FileType.TEST_PLAYBOOK.value,
                 FileType.TEST_SCRIPT.value,
             ]:
-
                 object_id = content_object.get_id()
                 if is_object_in_id_set(
                     object_id, content_object.type().value, self._pack_info_from_id_set
@@ -501,8 +500,9 @@ class Pack:
         Returns whether a pack is deprecated.
         """
         pack_metadata = self.pack_metadata_as_dict()
-        pack_name, pack_desc = pack_metadata.get("name", ""), pack_metadata.get(
-            "description", ""
+        pack_name, pack_desc = (
+            pack_metadata.get("name", ""),
+            pack_metadata.get("description", ""),
         )
 
         return regex.match(PACK_NAME_DEPRECATED_REGEX, pack_name) and (

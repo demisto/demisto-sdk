@@ -1,6 +1,7 @@
 """
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
+
 import os
 import re
 from pathlib import Path

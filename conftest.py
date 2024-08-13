@@ -1,5 +1,5 @@
-"""Configuring tests for the content suite
-"""
+"""Configuring tests for the content suite"""
+
 import shutil
 from pathlib import Path
 from typing import Generator

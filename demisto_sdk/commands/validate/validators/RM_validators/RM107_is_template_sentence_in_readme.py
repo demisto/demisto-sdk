@@ -23,7 +23,9 @@ class IsTemplateInReadmeValidator(BaseValidator[ContentTypes]):
     related_field = "readme"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         """
         Checks if there are the generic sentence '%%FILL HERE%%' in the README content.
 

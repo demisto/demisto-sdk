@@ -31,7 +31,7 @@ def compare_ast(node1, node2):
     if type(node1) is not type(node2):
         return False
     if isinstance(node1, ast.AST):
-        for (k, v) in vars(node1).items():
+        for k, v in vars(node1).items():
             if k in ("lineno", "col_offset", "ctx"):
                 continue
             if not compare_ast(v, getattr(node2, k)):

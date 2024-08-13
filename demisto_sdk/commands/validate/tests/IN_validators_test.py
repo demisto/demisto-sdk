@@ -275,7 +275,7 @@ INVALID_HIDDEN_PARAM_INTEGRATIONS = [
         ),
     ],
 )
-def test_ValidSubtypeValidator_is_valid(
+def test_ValidSubtypeValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures: int, expected_msgs: List[str]
 ):
     """
@@ -294,7 +294,7 @@ def test_ValidSubtypeValidator_is_valid(
         - Case 3: Should'nt fail at all.
         - Case 4: Should fail all content items.
     """
-    results = ValidSubtypeValidator().is_valid(content_items)
+    results = ValidSubtypeValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -379,7 +379,7 @@ def test_ValidSubtypeValidator_is_valid(
         ),
     ],
 )
-def test_IsIntegrationRunnableValidator_is_valid(
+def test_IsIntegrationRunnableValidator_obtain_invalid_content_items(
     content_items: List[Integration], expected_number_of_failures: int
 ):
     """
@@ -400,7 +400,9 @@ def test_IsIntegrationRunnableValidator_is_valid(
         - Case 4: Should pass.
         - Case 5: Should pass.
     """
-    results = IsIntegrationRunnableValidator().is_valid(content_items)
+    results = IsIntegrationRunnableValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert (
         not results
@@ -513,7 +515,7 @@ def test_IsIntegrationRunnableValidator_is_valid(
         ),
     ],
 )
-def test_IsValidProxyAndInsecureValidator_is_valid(
+def test_IsValidProxyAndInsecureValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -538,7 +540,9 @@ def test_IsValidProxyAndInsecureValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidProxyAndInsecureValidator().is_valid(content_items)
+    results = IsValidProxyAndInsecureValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -659,7 +663,7 @@ def test_IsValidProxyAndInsecureValidator_fix():
         ),
     ],
 )
-def test_IsValidCheckboxDefaultFieldValidator_is_valid(
+def test_IsValidCheckboxDefaultFieldValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -678,7 +682,9 @@ def test_IsValidCheckboxDefaultFieldValidator_is_valid(
         - Make sure the validation fail when it needs to and the right error message is returned.
         - Case 1: Should fail only the first param of the last integration.
     """
-    results = IsValidCheckboxDefaultFieldValidator().is_valid(content_items)
+    results = IsValidCheckboxDefaultFieldValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -746,7 +752,7 @@ def test_IsValidCheckboxDefaultFieldValidator_fix():
         ),
     ],
 )
-def test_IsValidCategoryValidator_is_valid(
+def test_IsValidCategoryValidator_obtain_invalid_content_items(
     mocker,
     content_items: List[Integration],
     expected_number_of_failures: int,
@@ -761,7 +767,7 @@ def test_IsValidCategoryValidator_is_valid(
             - Two integrations with a valid category.
             - One integration with an invalid category.
     When
-    - Calling the IsValidCategoryValidator is_valid function.
+    - Calling the IsValidCategoryValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -773,7 +779,7 @@ def test_IsValidCategoryValidator_is_valid(
         "demisto_sdk.commands.validate.validators.IN_validators.IN104_is_valid_category.get_current_categories",
         return_value=["Network Security", "Utilities", "Forensics & Malware Analysis"],
     )
-    results = IsValidCategoryValidator().is_valid(content_items)
+    results = IsValidCategoryValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -816,7 +822,7 @@ def test_IsValidCategoryValidator_is_valid(
         ),
     ],
 )
-def test_IsIdContainBetaValidator_is_valid(
+def test_IsIdContainBetaValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -837,7 +843,7 @@ def test_IsIdContainBetaValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail both.
     """
-    results = IsIdContainBetaValidator().is_valid(content_items)
+    results = IsIdContainBetaValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -899,7 +905,7 @@ def test_IsIdContainBetaValidator_fix():
         ),
     ],
 )
-def test_IsNameContainBetaValidator_is_valid(
+def test_IsNameContainBetaValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -920,7 +926,7 @@ def test_IsNameContainBetaValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail both.
     """
-    results = IsNameContainBetaValidator().is_valid(content_items)
+    results = IsNameContainBetaValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -978,7 +984,7 @@ def test_IsNameContainBetaValidator_fix():
         ),
     ],
 )
-def test_IsDisplayContainBetaValidator_is_valid(
+def test_IsDisplayContainBetaValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -998,7 +1004,9 @@ def test_IsDisplayContainBetaValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail.
     """
-    results = IsDisplayContainBetaValidator().is_valid(content_items)
+    results = IsDisplayContainBetaValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1133,7 +1141,7 @@ def test_IsDisplayContainBetaValidator_is_valid(
         ),
     ],
 )
-def test_IsCommandArgsContainDuplicationsValidator_is_valid(
+def test_IsCommandArgsContainDuplicationsValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1153,7 +1161,9 @@ def test_IsCommandArgsContainDuplicationsValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail.
     """
-    results = IsCommandArgsContainDuplicationsValidator().is_valid(content_items)
+    results = IsCommandArgsContainDuplicationsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1196,7 +1206,7 @@ def test_IsCommandArgsContainDuplicationsValidator_is_valid(
         ),
     ],
 )
-def test_IsParamsContainDuplicationsValidator_is_valid(
+def test_IsParamsContainDuplicationsValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1215,7 +1225,9 @@ def test_IsParamsContainDuplicationsValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsParamsContainDuplicationsValidator().is_valid(content_items)
+    results = IsParamsContainDuplicationsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1366,7 +1378,7 @@ def test_IsParamsContainDuplicationsValidator_is_valid(
         ),
     ],
 )
-def test_IsValidContextPathValidator_is_valid(
+def test_IsValidContextPathValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1388,7 +1400,7 @@ def test_IsValidContextPathValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail all.
     """
-    results = IsValidContextPathValidator().is_valid(content_items)
+    results = IsValidContextPathValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1484,7 +1496,7 @@ def test_IsValidContextPathValidator_is_valid(
         ),
     ],
 )
-def test_ShouldHaveDisplayFieldValidator_is_valid(
+def test_ShouldHaveDisplayFieldValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1506,7 +1518,9 @@ def test_ShouldHaveDisplayFieldValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all the type 17 with display names.
     """
-    results = ShouldHaveDisplayFieldValidator().is_valid(content_items)
+    results = ShouldHaveDisplayFieldValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1646,7 +1660,7 @@ def test_ShouldHaveDisplayFieldValidator_fix():
         ),
     ],
 )
-def test_IsMissingDisplayFieldValidator_is_valid(
+def test_IsMissingDisplayFieldValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1668,7 +1682,9 @@ def test_IsMissingDisplayFieldValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all the type 8 / 10 without display names.
     """
-    results = IsMissingDisplayFieldValidator().is_valid(content_items)
+    results = IsMissingDisplayFieldValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1744,7 +1760,7 @@ def test_IsMissingDisplayFieldValidator_is_valid(
         ),
     ],
 )
-def test_IsValidMaxFetchParamValidator_is_valid(
+def test_IsValidMaxFetchParamValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1764,7 +1780,9 @@ def test_IsValidMaxFetchParamValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all the type 8 / 10 without display names.
     """
-    results = IsValidMaxFetchParamValidator().is_valid(content_items)
+    results = IsValidMaxFetchParamValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1866,7 +1884,7 @@ def test_IsValidMaxFetchParamValidator_fix():
         ),
     ],
 )
-def test_IsValidFetchIntegrationValidator_is_valid(
+def test_IsValidFetchIntegrationValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1893,7 +1911,9 @@ def test_IsValidFetchIntegrationValidator_is_valid(
             - Second integration should fail due to missing first_fetch.
             - Third integration should fail due to missing max_fetch.
     """
-    results = IsValidFetchIntegrationValidator().is_valid(content_items)
+    results = IsValidFetchIntegrationValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1940,7 +1960,7 @@ def test_IsValidFetchIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsValidAsMappableIntegrationValidator_is_valid(
+def test_IsValidAsMappableIntegrationValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1961,7 +1981,9 @@ def test_IsValidAsMappableIntegrationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsValidAsMappableIntegrationValidator().is_valid(content_items)
+    results = IsValidAsMappableIntegrationValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2019,7 +2041,7 @@ def test_IsValidAsMappableIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsContainingMultipleDefaultArgsValidator_is_valid(
+def test_IsContainingMultipleDefaultArgsValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -2039,7 +2061,9 @@ def test_IsContainingMultipleDefaultArgsValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsContainingMultipleDefaultArgsValidator().is_valid(content_items)
+    results = IsContainingMultipleDefaultArgsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2130,7 +2154,7 @@ def test_IsContainingMultipleDefaultArgsValidator_is_valid(
         ),
     ],
 )
-def test_IsValidParamDisplayValidator_is_valid(
+def test_IsValidParamDisplayValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2150,7 +2174,7 @@ def test_IsValidParamDisplayValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail and mention only the invalid params in the message.
     """
-    results = IsValidParamDisplayValidator().is_valid(content_items)
+    results = IsValidParamDisplayValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2248,7 +2272,7 @@ def test_IsValidParamDisplayValidator_fix():
         ),
     ],
 )
-def test_IsSiemIntegrationValidMarketplaceValidator_is_valid(
+def test_IsSiemIntegrationValidMarketplaceValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs, marketplaces
 ):
     """
@@ -2267,7 +2291,9 @@ def test_IsSiemIntegrationValidMarketplaceValidator_is_valid(
     """
     for content_item in content_items:
         content_item.marketplaces = marketplaces
-    results = IsSiemIntegrationValidMarketplaceValidator().is_valid(content_items)
+    results = IsSiemIntegrationValidMarketplaceValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2327,7 +2353,7 @@ def test_IsSiemIntegrationValidMarketplaceValidator_fix():
         ),
     ],
 )
-def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
+def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2345,7 +2371,7 @@ def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsValidDisplayNameForNonDeprecatedIntegrationValidator().is_valid(
+    results = IsValidDisplayNameForNonDeprecatedIntegrationValidator().obtain_invalid_content_items(
         content_items
     )
     assert len(results) == expected_number_of_failures
@@ -2394,7 +2420,7 @@ def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsValidDescriptionForNonDeprecatedIntegrationValidator_is_valid(
+def test_IsValidDescriptionForNonDeprecatedIntegrationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2412,7 +2438,7 @@ def test_IsValidDescriptionForNonDeprecatedIntegrationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsValidDescriptionForNonDeprecatedIntegrationValidator().is_valid(
+    results = IsValidDescriptionForNonDeprecatedIntegrationValidator().obtain_invalid_content_items(
         content_items
     )
     assert len(results) == expected_number_of_failures
@@ -2498,7 +2524,7 @@ def test_IsValidDescriptionForNonDeprecatedIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsMissingReliabilityParamValidator_is_valid(
+def test_IsMissingReliabilityParamValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2518,7 +2544,9 @@ def test_IsMissingReliabilityParamValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsMissingReliabilityParamValidator().is_valid(content_items)
+    results = IsMissingReliabilityParamValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2594,7 +2622,7 @@ def test_IsMissingReliabilityParamValidator_is_valid(
         ),
     ],
 )
-def test_IsValidUrlDefaultValueValidator_is_valid(
+def test_IsValidUrlDefaultValueValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -2615,7 +2643,9 @@ def test_IsValidUrlDefaultValueValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidUrlDefaultValueValidator().is_valid(content_items)
+    results = IsValidUrlDefaultValueValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2755,7 +2785,7 @@ def test_IsValidUrlDefaultValueValidator_fix():
         ),
     ],
 )
-def test_IsValidDefaultValueForCheckboxParamValidator_is_valid(
+def test_IsValidDefaultValueForCheckboxParamValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -2778,7 +2808,11 @@ def test_IsValidDefaultValueForCheckboxParamValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidDefaultValueForCheckboxParamValidator().is_valid(content_items)
+    results = (
+        IsValidDefaultValueForCheckboxParamValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2904,7 +2938,7 @@ def test_IsValidDefaultValueForCheckboxParamValidator_fix():
         ),
     ],
 )
-def test_IsNoneCommandArgsValidator_is_valid(
+def test_IsNoneCommandArgsValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2923,7 +2957,7 @@ def test_IsNoneCommandArgsValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsNoneCommandArgsValidator().is_valid(content_items)
+    results = IsNoneCommandArgsValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3087,7 +3121,7 @@ def test_IsNoneCommandArgsValidator_fix():
         ),
     ],
 )
-def test_DoesCommonOutputsHaveDescriptionValidator_is_valid(
+def test_DoesCommonOutputsHaveDescriptionValidator_obtain_invalid_content_items(
     mocker, content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3113,7 +3147,9 @@ def test_DoesCommonOutputsHaveDescriptionValidator_is_valid(
             "Test.Test_3": "This is test 3 output.",
         },
     )
-    results = DoesCommonOutputsHaveDescriptionValidator().is_valid(content_items)
+    results = DoesCommonOutputsHaveDescriptionValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3336,7 +3372,7 @@ def test_DoesCommonOutputsHaveDescriptionValidator_fix():
         ),
     ],
 )
-def test_IsValidEndpointCommandValidator_is_valid(
+def test_IsValidEndpointCommandValidator_obtain_invalid_content_items(
     mocker, content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3363,7 +3399,9 @@ def test_IsValidEndpointCommandValidator_is_valid(
             "Test.Test_3": "This is test 3 output.",
         },
     )
-    results = IsValidEndpointCommandValidator().is_valid(content_items)
+    results = IsValidEndpointCommandValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3492,7 +3530,7 @@ def test_IsValidEndpointCommandValidator_is_valid(
         ),
     ],
 )
-def test_IsContainingDefaultAdditionalInfoValidator_is_valid(
+def test_IsContainingDefaultAdditionalInfoValidator_obtain_invalid_content_items(
     mocker,
     content_items: List[Integration],
     expected_number_of_failures: int,
@@ -3527,7 +3565,9 @@ def test_IsContainingDefaultAdditionalInfoValidator_is_valid(
             "Source Reliability": "Reliability of the source providing the intelligence data.",
         },
     )
-    results = IsContainingDefaultAdditionalInfoValidator().is_valid(content_items)
+    results = IsContainingDefaultAdditionalInfoValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3626,7 +3666,7 @@ def test_IsContainingDefaultAdditionalInfoValidator_fix():
         ),
     ],
 )
-def test_IsValidDeprecatedIntegrationDisplayNameValidator_is_valid(
+def test_IsValidDeprecatedIntegrationDisplayNameValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3644,7 +3684,11 @@ def test_IsValidDeprecatedIntegrationDisplayNameValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsValidDeprecatedIntegrationDisplayNameValidator().is_valid(content_items)
+    results = (
+        IsValidDeprecatedIntegrationDisplayNameValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3781,7 +3825,7 @@ def test_IsValidDeprecatedIntegrationDisplayNameValidator_fix():
         ),
     ],
 )
-def test_IsValidRepCommandValidator_is_valid(
+def test_IsValidRepCommandValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3801,7 +3845,7 @@ def test_IsValidRepCommandValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail only the ip commands for for both integrations.
     """
-    results = IsValidRepCommandValidator().is_valid(content_items)
+    results = IsValidRepCommandValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3938,7 +3982,7 @@ def test_IsValidRepCommandValidator_is_valid(
         ),
     ],
 )
-def test_IsMissingReputationOutputValidator_is_valid(
+def test_IsMissingReputationOutputValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3957,7 +4001,9 @@ def test_IsMissingReputationOutputValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsMissingReputationOutputValidator().is_valid(content_items)
+    results = IsMissingReputationOutputValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4132,7 +4178,7 @@ def test_IsMissingReputationOutputValidator_is_valid(
         ),
     ],
 )
-def test_IsValidFeedIntegrationValidator_is_valid(
+def test_IsValidFeedIntegrationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -4152,7 +4198,9 @@ def test_IsValidFeedIntegrationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail and mention only the format of feedReliability and feedExpirationPolicy in the first msg and feed, feedReputation, and feedReliability in the second msg.
     """
-    results = IsValidFeedIntegrationValidator().is_valid(content_items)
+    results = IsValidFeedIntegrationValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4257,7 +4305,7 @@ def test_IsValidFeedIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsHiddenableParamValidator_is_valid(
+def test_IsHiddenableParamValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -4284,7 +4332,7 @@ def test_IsHiddenableParamValidator_is_valid(
         - Case 2: Should fail all.
     """
 
-    results = IsHiddenableParamValidator().is_valid(content_items)
+    results = IsHiddenableParamValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4294,7 +4342,7 @@ def test_IsHiddenableParamValidator_is_valid(
     )
 
 
-def test_IsHiddenableParamValidator_with_old_content_object_is_valid():
+def test_IsHiddenableParamValidator_with_old_content_object_obtain_invalid_content_items():
     """
     Given
     content_items iterables.
@@ -4312,7 +4360,7 @@ def test_IsHiddenableParamValidator_with_old_content_object_is_valid():
     content_items = INVALID_HIDDEN_PARAM_INTEGRATIONS
     old_content_items = copy.deepcopy(content_items)
     create_old_file_pointers(content_items, old_content_items)
-    assert not IsHiddenableParamValidator().is_valid(content_items)
+    assert not IsHiddenableParamValidator().obtain_invalid_content_items(content_items)
 
 
 def test_IsHiddenableParamValidator_fix():
@@ -4475,7 +4523,7 @@ def test_IsHiddenableParamValidator_fix():
         ),
     ],
 )
-def test_IsValidHiddenValueValidator_is_valid(
+def test_IsValidHiddenValueValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -4505,7 +4553,7 @@ def test_IsValidHiddenValueValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidHiddenValueValidator().is_valid(content_items)
+    results = IsValidHiddenValueValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4708,7 +4756,7 @@ def test_IsValidHiddenValueValidator_is_valid(
         ),
     ],
 )
-def test_IsValidReputationCommandContextPathCapitalizationValidator_is_valid(
+def test_IsValidReputationCommandContextPathCapitalizationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -4731,7 +4779,7 @@ def test_IsValidReputationCommandContextPathCapitalizationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidReputationCommandContextPathCapitalizationValidator().is_valid(
+    results = IsValidReputationCommandContextPathCapitalizationValidator().obtain_invalid_content_items(
         content_items
     )
     assert len(results) == expected_number_of_failures
@@ -4848,7 +4896,7 @@ def test_IsValidReputationCommandContextPathCapitalizationValidator_is_valid(
         ),
     ],
 )
-def test_IsValidFetchValidator_is_valid(
+def test_IsValidFetchValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -4873,7 +4921,7 @@ def test_IsValidFetchValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all and mention only the missing display (and nothing about isFetch) for the last integration.
     """
-    results = IsValidFetchValidator().is_valid(content_items)
+    results = IsValidFetchValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4968,7 +5016,7 @@ def test_IsValidFetchValidator_is_valid(
         ),
     ],
 )
-def test_IsContainingFromLicenseInParamsValidator_is_valid(
+def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -4994,7 +5042,11 @@ def test_IsContainingFromLicenseInParamsValidator_is_valid(
         - Case 2: Should fail all.
     """
     with ChangeCWD(REPO.path):
-        results = IsContainingFromLicenseInParamsValidator().is_valid(content_items)
+        results = (
+            IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
+                content_items
+            )
+        )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5165,7 +5217,7 @@ def test_IsContainingFromLicenseInParamsValidator_fix():
         ),
     ],
 )
-def test_IsAPITokenInCredentialTypeValidator_is_valid(
+def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -5185,7 +5237,9 @@ def test_IsAPITokenInCredentialTypeValidator_is_valid(
         - Case 2: Should fail.
     """
     with ChangeCWD(REPO.path):
-        results = IsAPITokenInCredentialTypeValidator().is_valid(content_items)
+        results = IsAPITokenInCredentialTypeValidator().obtain_invalid_content_items(
+            content_items
+        )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5309,7 +5363,7 @@ def test_IsAPITokenInCredentialTypeValidator_is_valid(
         ),
     ],
 )
-def test_IsNameContainIncidentInCorePackValidator_is_valid(
+def test_IsNameContainIncidentInCorePackValidator_obtain_invalid_content_items(
     mocker, content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -5332,7 +5386,11 @@ def test_IsNameContainIncidentInCorePackValidator_is_valid(
         return_value=["pack_no_1", "pack_no_2", "pack_no_4"],
     )
     with ChangeCWD(REPO.path):
-        results = IsNameContainIncidentInCorePackValidator().is_valid(content_items)
+        results = (
+            IsNameContainIncidentInCorePackValidator().obtain_invalid_content_items(
+                content_items
+            )
+        )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5393,7 +5451,7 @@ def test_IsNameContainIncidentInCorePackValidator_is_valid(
         ),
     ],
 )
-def test_IsPartnerCollectorHasXsoarSupportLevelValidator_is_valid(
+def test_IsPartnerCollectorHasXsoarSupportLevelValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -5419,7 +5477,7 @@ def test_IsPartnerCollectorHasXsoarSupportLevelValidator_is_valid(
     """
 
     with ChangeCWD(REPO.path):
-        results = IsPartnerCollectorHasXsoarSupportLevelValidator().is_valid(
+        results = IsPartnerCollectorHasXsoarSupportLevelValidator().obtain_invalid_content_items(
             content_items
         )
     assert len(results) == expected_number_of_failures
@@ -5454,7 +5512,7 @@ def test_IsPartnerCollectorHasXsoarSupportLevelValidator_fix():
     assert content_item.data.get(SUPPORT_LEVEL_HEADER) == XSOAR_SUPPORT
 
 
-def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
+def test_IntegrationDisplayNameVersionedCorrectlyValidator_obtain_invalid_content_items():
     """
     Given:
      - 1 integration with valid versioned display-name
@@ -5472,7 +5530,7 @@ def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
         create_integration_object(paths=["display"], values=["test V3"]),
     ]
 
-    results = IntegrationDisplayNameVersionedCorrectlyValidator().is_valid(
+    results = IntegrationDisplayNameVersionedCorrectlyValidator().obtain_invalid_content_items(
         content_items
     )
     assert len(results) == 1
@@ -5566,7 +5624,7 @@ def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
         ),
     ],
 )
-def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
+def test_IsRepCommandContainIsArrayArgumentValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -5584,7 +5642,11 @@ def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsRepCommandContainIsArrayArgumentValidator().is_valid(content_items)
+    results = (
+        IsRepCommandContainIsArrayArgumentValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5698,7 +5760,7 @@ def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
         ),
     ],
 )
-def test_IsValidDbotValidator_is_valid(
+def test_IsValidDbotValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -5717,7 +5779,7 @@ def test_IsValidDbotValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidDbotValidator().is_valid(content_items)
+    results = IsValidDbotValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [

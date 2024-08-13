@@ -87,7 +87,7 @@ def execute_test_content(**kwargs):
 
     threads_list = []
     for index, server in enumerate(build_context.servers):
-        thread_name = f"Thread-{index} (execute_tests)"
+        thread_name = f"{server.machine}-{index} (execute_tests)"
         threads_list.append(Thread(target=server.execute_tests, name=thread_name))
 
     logging_manager.info("Finished creating configurations, starting to run tests.")
@@ -126,7 +126,9 @@ def execute_test_content(**kwargs):
     if kwargs["nightly"]:
         build_number = kwargs["build_number"]
         build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(
-            kwargs["server_type"], f"playbook_report_{build_number}", logging_manager
+            kwargs["server_type"],
+            f"playbook_report_{build_number}.xml",
+            logging_manager,
         )
     if build_context.tests_data_keeper.failed_playbooks:
         logging_manager.critical(

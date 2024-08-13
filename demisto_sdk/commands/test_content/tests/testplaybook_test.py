@@ -2,6 +2,7 @@ from unittest.mock import ANY
 
 import pytest
 
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS
 from demisto_sdk.commands.test_content.TestContentClasses import (
     Integration,
     IntegrationConfiguration,
@@ -102,7 +103,7 @@ def test_close_incident(mocker, tmp_path, expected_res, client_res):
     machine_assignment_content_xsiam = {
         "qa2-test-111111": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": [],
+            "tests": {TEST_PLAYBOOKS: []},
         }
     }
     build_context = create_xsiam_build(

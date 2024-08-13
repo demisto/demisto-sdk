@@ -62,7 +62,7 @@ def _create_table(validators: Iterable[BaseValidator]) -> str:
 
 
 def cli(
-    output_path: Annotated[Path, typer.Argument(dir_okay=False, exists=False)]
+    output_path: Annotated[Path, typer.Argument(dir_okay=False, exists=False)],
 ) -> None:
     TextFile.write(generate_validate_docs(), output_path)
 

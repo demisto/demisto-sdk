@@ -7,7 +7,7 @@ from queue import Queue
 from threading import Lock, current_thread
 from typing import Any, Dict, Set
 
-from demisto_sdk.commands.common.logger import get_logging_color_formatter
+import coloredlogs
 
 ARTIFACTS_PATH = os.environ.get("ARTIFACTS_FOLDER", ".")
 LOGGING_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s"
@@ -124,7 +124,9 @@ class ParallelLoggingManager:
             _add_logging_level("SUCCESS", 25)
         self.real_time_logs_only = real_time_logs_only
         self.log_file_name = log_file_name
-        formatter = get_logging_color_formatter(LOGGING_FORMAT)
+        formatter = coloredlogs.ColoredFormatter(
+            fmt=LOGGING_FORMAT, level_styles=LEVEL_STYLES
+        )
         self.console_handler = logging.StreamHandler(sys.stdout)
         self.console_handler.setFormatter(formatter)
         log_file_path = (

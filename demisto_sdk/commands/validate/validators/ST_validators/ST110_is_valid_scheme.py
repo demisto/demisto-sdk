@@ -1,6 +1,10 @@
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects import (
+    AssetsModelingRule,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
     Classifier,
     CorrelationRule,
     Dashboard,
@@ -64,6 +68,10 @@ ContentTypes = Union[
     XSIAMDashboard,
     XSIAMReport,
     IndicatorType,
+    AssetsModelingRule,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
 ]
 
 

@@ -141,7 +141,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             ]
         )
 
-        if isinstance(content_item, ContentItem):   # this is for mypy not to complain
+        if isinstance(content_item, ContentItem):  # this is for mypy not to complain
             return base_conditions and not is_support_level_support_validation(
                 self.error_code,
                 support_level_dict,

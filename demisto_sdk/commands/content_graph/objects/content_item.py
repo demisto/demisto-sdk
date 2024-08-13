@@ -81,7 +81,7 @@ class ContentItem(BaseContent):
         # Validate that we have the pack containing the content item.
         # The pack is either provided directly or needs to be located.
 
-        if v:
+        if v and not isinstance(v, fields.FieldInfo):
             return v
         return cls.get_pack(values.get("relationships_data"), values.get("path"))
 

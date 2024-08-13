@@ -2026,7 +2026,6 @@ def test_get_commands_sections():
 
 
 class TestIntegrationDocUpdate:
-
     repo_dir_name = "content"
     pack_name = integration_name = "AHA"
 

@@ -310,7 +310,6 @@ class SecretsValidator:
                             white_list_string.lower() in string_.lower()
                             for white_list_string in secrets_white_list
                         ):
-
                             entropy = self.calculate_shannon_entropy(string_)
                             if entropy >= ENTROPY_THRESHOLD:
                                 secret_to_location_mapping[file_path][

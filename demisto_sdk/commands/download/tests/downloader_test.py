@@ -1532,3 +1532,30 @@ def test_invalid_regex_error(mocker):
         logger_error.call_args_list,
         "Error: Invalid regex pattern provided: '*invalid-regex*'.",
     )
+
+
+def test_download_with_subplaybook(mocker):
+    """
+    Given: A downloader object.
+    When: Downloading a custom playbook with task of subplaybook.
+    Then: Ensure that "playbookId" attribute of the sub-playbook task is replaced with "playbookName" attribute
+    """
+    playbook_path = (
+        TESTS_DATA_FOLDER / "custom_content" / "playbook-task_with_sub-playbook.yml"
+    )
+
+    filtered_custom_content_objects = {
+        "playbook-task_with_sub-playbook": {
+            "id": "1111-111-111",
+            "name": "task_with_sub-playbook",
+            "type": "playbook",
+            "data": get_yaml(playbook_path),
+        }
+    }
+    format_playbook_task(
+        filtered_custom_content_objects["playbook-task_with_sub-playbook"]
+    )
+    returned_playbookName_value = filtered_custom_content_objects[
+        "playbook-task_with_sub-playbook"
+    ]["data"]["tasks"]["1"]["task"]["playbookName"]
+    assert returned_playbookName_value == "test2"

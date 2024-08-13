@@ -28,7 +28,9 @@ class IsDefaultNotOnlyConditionValidator(BaseValidator[ContentTypes]):
     related_field = "conditions"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         validation_results = []
         for content_item in content_items:
             failed_tasks = []

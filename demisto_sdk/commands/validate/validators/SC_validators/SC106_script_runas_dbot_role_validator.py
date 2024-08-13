@@ -18,7 +18,9 @@ class ScriptRunAsIsNotDBotRoleValidator(BaseValidator[ContentTypes]):
     error_message = "The script {0} runas field = DBotRole, it may cause access and exposure of sensitive data."
     related_field = "runas"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

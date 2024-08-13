@@ -21,7 +21,6 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 
 
 class TestMapperValidator:
-
     INCOMING_MAPPER = {
         "mapping": {
             "0": {"internalMapping": {"Incident Field": {"simple": "Incident Field"}}}

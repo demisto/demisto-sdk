@@ -17,6 +17,7 @@ class IndicatorIncidentField(ContentItem):
     content: bool = Field(None, exclude=True)
     system: bool = Field(None, exclude=True)
     group: int = Field(None, exclude=True)
+    unsearchable: Optional[bool] = Field(None, exclude=True)
     version: Optional[int] = 0
 
     def _upload(

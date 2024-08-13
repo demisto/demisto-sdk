@@ -4,10 +4,10 @@ import sys
 from logging.handlers import QueueHandler, QueueListener
 from pathlib import Path
 from queue import Queue
-from threading import Lock, currentThread
+from threading import Lock, current_thread
 from typing import Any, Dict, Set
 
-import coloredlogs
+from demisto_sdk.commands.common.logger import get_logging_color_formatter
 
 ARTIFACTS_PATH = os.environ.get("ARTIFACTS_FOLDER", ".")
 LOGGING_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s"
@@ -124,9 +124,7 @@ class ParallelLoggingManager:
             _add_logging_level("SUCCESS", 25)
         self.real_time_logs_only = real_time_logs_only
         self.log_file_name = log_file_name
-        formatter = coloredlogs.ColoredFormatter(
-            fmt=LOGGING_FORMAT, level_styles=LEVEL_STYLES
-        )
+        formatter = get_logging_color_formatter(LOGGING_FORMAT)
         self.console_handler = logging.StreamHandler(sys.stdout)
         self.console_handler.setFormatter(formatter)
         log_file_path = (
@@ -181,7 +179,7 @@ class ParallelLoggingManager:
             message: The log message
             real_time: Whether to log the message now or after the next 'execute_logs' method execution.
         """
-        thread_name = currentThread().getName()
+        thread_name = current_thread().name
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
@@ -200,7 +198,7 @@ class ParallelLoggingManager:
             message: The log message
             real_time: Whether to log the message now or after the next 'execute_logs' method execution.
         """
-        thread_name = currentThread().getName()
+        thread_name = current_thread().name
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
@@ -219,7 +217,7 @@ class ParallelLoggingManager:
             message: The log message
             real_time: Whether to log the message now or after the next 'execute_logs' method execution.
         """
-        thread_name = currentThread().getName()
+        thread_name = current_thread().name
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
@@ -231,14 +229,14 @@ class ParallelLoggingManager:
 
     def error(self, message: str, real_time: bool = False) -> None:
         """
-        Executes a error log.
+        Executes an error log.
         If real_time is given - will use the real_time_logger, if not - will use the thread's logger.
         If the thread logger is used - the log will not be written until 'execute_logs' is called.
         Args:
             message: The log message
             real_time: Whether to log the message now or after the next 'execute_logs' method execution.
         """
-        thread_name = currentThread().getName()
+        thread_name = current_thread().name
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
@@ -257,7 +255,7 @@ class ParallelLoggingManager:
             message: The log message
             real_time: Whether to log the message now or after the next 'execute_logs' method execution.
         """
-        thread_name = currentThread().getName()
+        thread_name = current_thread().name
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
@@ -269,14 +267,14 @@ class ParallelLoggingManager:
 
     def exception(self, message: str, real_time: bool = False) -> None:
         """
-        Executes a exception log.
+        Executes an exception log.
         If real_time is given - will use the real_time_logger, if not - will use the thread's logger.
         If the thread logger is used - the log will not be written until 'execute_logs' is called.
         Args:
             message: The log message
             real_time: Whether to log the message now or after the next 'execute_logs' method execution.
         """
-        thread_name = currentThread().getName()
+        thread_name = current_thread().name
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
@@ -295,7 +293,7 @@ class ParallelLoggingManager:
             message: The log message
             real_time: Whether to log the message now or after the next 'execute_logs' method execution.
         """
-        thread_name = currentThread().getName()
+        thread_name = current_thread().name
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
@@ -309,7 +307,7 @@ class ParallelLoggingManager:
         """
         Writes the logs from the queue to the handlers.
         """
-        thread_name = currentThread().getName()
+        thread_name = current_thread().name
         self.logs_lock.acquire()
         self.listeners[thread_name].start()
         self.listeners[thread_name].stop()

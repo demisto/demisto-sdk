@@ -522,7 +522,6 @@ class OldValidateManager:
     def validate_packs(
         self, all_packs: list, all_packs_valid: set, count: int, num_of_packs: int
     ) -> bool:
-
         if self.run_with_multiprocessing:
             with pebble.ProcessPool(max_workers=cpu_count()) as executor:
                 futures = []
@@ -856,11 +855,8 @@ class OldValidateManager:
             return True
 
         # id_set validation
-        if (
-            self.id_set_validations
-            and not self.id_set_validations.is_file_valid_in_set(
-                file_path, file_type, pack_error_ignore_list
-            )
+        if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(
+            file_path, file_type, pack_error_ignore_list
         ):
             return False
 

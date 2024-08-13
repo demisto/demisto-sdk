@@ -175,7 +175,6 @@ def get_dependencies_by_pack_path(
     include_deprecated: bool,
     include_hidden: bool,
 ) -> Dict[str, Any]:
-
     pack_path: Path = Path(PACKS_DIR) / pack_id
     depth: int = MAX_DEPTH if all_level_dependencies else 1
     retrieve_sources: bool = direction != Direction.TARGETS

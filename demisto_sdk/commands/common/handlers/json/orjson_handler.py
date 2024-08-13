@@ -23,7 +23,7 @@ class OrJSON_Handler(XSOAR_Handler):
         return orjson.dumps(
             data,
             option=self._indent_level(indent) | self._sort_keys(sort_keys),
-            **kwargs  # if JSON_Handler will be replaced to OrJson, make sure to extract kwargs to prevent from
+            **kwargs,  # if JSON_Handler will be replaced to OrJson, make sure to extract kwargs to prevent from
             # unwanted variables to be passed. See ujson dump implementation for example.
         )
 

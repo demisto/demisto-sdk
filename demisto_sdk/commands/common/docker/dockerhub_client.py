@@ -37,7 +37,6 @@ class DockerHubRequestException(Exception):
 
 @lru_cache
 class DockerHubClient:
-
     DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
     DOCKER_HUB_API_BASE_URL = "https://hub.docker.com/v2"
     TOKEN_URL = "https://auth.docker.io/token"
@@ -50,7 +49,6 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-
         self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")

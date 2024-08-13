@@ -7,12 +7,12 @@ from demisto_sdk.commands.validate.validators.DA_validators.DA101_dashboard_cont
 )
 
 
-def test_IsDashboardContainForbiddenFieldsValidator_is_valid():
+def test_IsDashboardContainForbiddenFieldsValidator_obtain_invalid_content_items():
     """
     Given:
-        - Dashboard content items
+        - Dashboard content items.
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method.
     Then:
         - Ensure that the ValidationResult returned
           for the Dashboard who has a field with name 'system'
@@ -33,7 +33,9 @@ def test_IsDashboardContainForbiddenFieldsValidator_is_valid():
     )
 
     # not valid
-    results = IsDashboardContainForbiddenFieldsValidator().is_valid([dashboard])
+    results = IsDashboardContainForbiddenFieldsValidator().obtain_invalid_content_items(
+        [dashboard]
+    )
     assert (
         "The 'system' fields need to be removed from Confluera Dashboard."
         in results[0].message
@@ -46,15 +48,19 @@ def test_IsDashboardContainForbiddenFieldsValidator_is_valid():
     # valid
     del dashboard.data_dict["system"]
     del dashboard.layout[0]["widget"]["owner"]
-    assert not IsDashboardContainForbiddenFieldsValidator().is_valid([dashboard])
+    assert (
+        not IsDashboardContainForbiddenFieldsValidator().obtain_invalid_content_items(
+            [dashboard]
+        )
+    )
 
 
-def test_IsDashboardContainNecessaryFieldsValidator_is_valid():
+def test_IsDashboardContainNecessaryFieldsValidator_obtain_invalid_content_items():
     """
     Given:
-        - Dashboard content items
+        - Dashboard content items.
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method.
     Then:
         - Ensure that no ValidationResult returned when all required fields exist.
         - Ensure that the ValidationResult returned
@@ -62,12 +68,18 @@ def test_IsDashboardContainNecessaryFieldsValidator_is_valid():
     """
     # valid
     dashboard = create_dashboard_object()
-    assert not IsDashboardContainNecessaryFieldsValidator().is_valid([dashboard])
+    assert (
+        not IsDashboardContainNecessaryFieldsValidator().obtain_invalid_content_items(
+            [dashboard]
+        )
+    )
 
     # not valid
     del dashboard.data_dict["fromDate"]
     del dashboard.layout[0]["widget"]["dateRange"]["toDate"]
-    result = IsDashboardContainNecessaryFieldsValidator().is_valid([dashboard])
+    result = IsDashboardContainNecessaryFieldsValidator().obtain_invalid_content_items(
+        [dashboard]
+    )
 
     assert (
         "The 'fromDate' fields are missing from Confluera Dashboard and need to be added."
@@ -94,6 +106,8 @@ def test_fix_IsDashboardContainForbiddenFieldsValidator():
 
     res = IsDashboardContainForbiddenFieldsValidator().fix(dashboard)
 
-    assert not IsDashboardContainForbiddenFieldsValidator().is_valid(
-        [res.content_object]
+    assert (
+        not IsDashboardContainForbiddenFieldsValidator().obtain_invalid_content_items(
+            [res.content_object]
+        )
     )

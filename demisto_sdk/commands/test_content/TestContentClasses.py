@@ -29,7 +29,11 @@ from urllib3.exceptions import ReadTimeoutError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    FILTER_CONF,
+    TEST_PLAYBOOKS,
+    XPANSE_SERVER_TYPE,
+    XSIAM_SERVER_TYPE,
+    XSOAR_SAAS_SERVER_TYPE,
+    XSOAR_SERVER_TYPE,
     MarketplaceVersions,
     PB_Status,
 )
@@ -61,11 +65,6 @@ DEFAULT_INTERVAL = 4
 MAX_RETRIES = 3
 RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
 
-SLACK_MEM_CHANNEL_ID = "CM55V7J8K"
-XSOAR_SERVER_TYPE = "XSOAR"
-XSIAM_SERVER_TYPE = "XSIAM"
-XPANSE_SERVER_TYPE = "XPANSE"
-XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
 
 MARKETPLACE_VERSIONS_TO_SERVER_TYPE = {
     MarketplaceVersions.XSOAR: {XSOAR_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE},
@@ -86,6 +85,8 @@ __all__ = [
     "TestPlaybook",
     "TestResults",
     "ServerContext",
+    "OnPremServerContext",
+    "CloudServerContext",
 ]
 
 
@@ -184,6 +185,7 @@ class TestPlaybook:
             test_configuration: The configuration from content conf.json file
             server_context (ServerContext): The ServerContext instance in which the TestPlaybook instance is created in
         """
+        self.start_time = datetime.now(timezone.utc)
         self.build_context = build_context
         self.server_context = server_context
 
@@ -192,7 +194,6 @@ class TestPlaybook:
             self.configuration.playbook_id not in server_context.unmockable_test_ids
         )
         self.test_suite = TestSuite(self.configuration.playbook_id)
-        self.start_time = datetime.now(timezone.utc)
         self.test_suite_system_out: List[str] = []
         self.test_suite_system_err: List[str] = []
         self.integrations: List[Integration] = [
@@ -241,7 +242,7 @@ class TestPlaybook:
         self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
         self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
         self.test_suite.add_property(
-            "is_saas_server_type", self.build_context.is_saas_server_type
+            "is_saas_server_type", str(self.build_context.is_saas_server_type)
         )
         self.test_suite.add_property("server_type", self.build_context.server_type)
         self.test_suite.add_property("product_type", self.build_context.product_type)
@@ -261,22 +262,26 @@ class TestPlaybook:
         )
 
         self.test_suite.add_property(
-            "playbook.is_mockable", self.is_mockable  # type:ignore[arg-type]
+            "playbook.is_mockable",
+            self.is_mockable,  # type:ignore[arg-type]
         )
         self.test_suite.add_property(
-            "is_mockable", self.configuration.is_mockable  # type:ignore[arg-type]
+            "is_mockable",
+            self.configuration.is_mockable,  # type:ignore[arg-type]
         )
         self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
         self.test_suite.add_property("from_version", self.configuration.from_version)
         self.test_suite.add_property("to_version", self.configuration.to_version)
-        self.test_suite.add_property("nightly_test", self.configuration.nightly_test)
+        self.test_suite.add_property(
+            "nightly_test", str(self.configuration.nightly_test)
+        )
         self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
         self.test_suite.add_property(
             "memory_threshold",
             self.configuration.memory_threshold,
         )
         self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
-        self.test_suite.add_property("timeout", self.configuration.timeout)
+        self.test_suite.add_property("timeout", str(self.configuration.timeout))
         self.test_suite.add_property(
             "playbook.test_instance_names",
             ",".join(self.configuration.test_instance_names),
@@ -331,9 +336,9 @@ class TestPlaybook:
                 msg = f"Skipping {self} because it's not in filtered tests"
                 self.log_debug(msg)
                 self.close_test_suite([Skipped(msg)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "not in filtered tests"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    "not in filtered tests"
+                )
                 return False
             return True
 
@@ -348,9 +353,9 @@ class TestPlaybook:
                     self.log_warning(log_message)
                 else:
                     self.log_debug(log_message)
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "nightly test in a non nightly build"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    "nightly test in a non nightly build"
+                )
                 return True
             return False
 
@@ -385,9 +390,9 @@ class TestPlaybook:
                 )
                 self.log_warning(log_message)
                 self.close_test_suite([Skipped(log_message)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
+                )
                 return True
             return False
 
@@ -402,7 +407,6 @@ class TestPlaybook:
                 )
                 results: List[Result] = []
                 for integration in skipped_integrations:
-
                     if (
                         self.server_context.filtered_tests
                         and self.configuration.playbook_id
@@ -421,9 +425,9 @@ class TestPlaybook:
                         self.log_warning(log_message)
                         results.append(Skipped(msg))
 
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f'The integrations:{",".join(skipped_integrations)} are skipped'
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    f'The integrations:{",".join(skipped_integrations)} are skipped'
+                )
                 self.test_suite.add_property(
                     "skipped_integrations", ",".join(skipped_integrations)
                 )
@@ -434,7 +438,7 @@ class TestPlaybook:
 
         def marketplaces_match_server_type() -> bool:
             """
-            Checks if the test has a marketplace value, and if so- if it matches the server machine we are on.
+            Checks if the test has a marketplace value, and if so- it matches the server machine we are on.
             A test playbook might have several entries, each with a different marketplace. This might cause the test playbook to
             be in the filtered tests list, even when the provided entry is not be the one that runs with the current sever
             machine marketplace. This function checks that the entry provided is the exact one that needs to run.
@@ -447,7 +451,7 @@ class TestPlaybook:
                 )
 
             if not test_server_types:
-                return True  # test doesn't have a marketplace value so it runs on all machines
+                return True  # test doesn't have a marketplace value, so it runs on all machines
 
             instance_names_log_message = (
                 f" for instance names: {', '.join(self.configuration.test_instance_names)}"
@@ -471,10 +475,10 @@ class TestPlaybook:
                 self.log_warning(log_message)
             else:
                 self.log_debug(log_message)
-            skipped_tests_collected[
-                self.configuration.playbook_id
-            ] = f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
-            return False  # test has a marketplace value that doesn't matched the build server marketplace
+            skipped_tests_collected[self.configuration.playbook_id] = (
+                f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
+            )
+            return False  # test has a marketplace value that doesn't match the build server marketplace
 
         return (
             in_filtered_tests()
@@ -761,7 +765,6 @@ class TestPlaybook:
 
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
-
         # --------------------------- overall build configuration -------------------------------
 
         self.server_type = kwargs["server_type"]
@@ -789,7 +792,6 @@ class BuildContext:
             else []
         )
         self.cloud_servers_path = kwargs.get("cloud_servers_path")
-        self.cloud_servers_api_keys_path = kwargs.get("cloud_servers_api_keys")
         self.use_retries_mechanism = kwargs.get("use_retries", False)
         self.conf, self.secret_conf = self._load_conf_files(
             kwargs["conf"], kwargs["secret"]
@@ -800,7 +802,7 @@ class BuildContext:
             self.env_json = {
                 machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
             }
-            self.api_key = get_json_file(self.cloud_servers_api_keys_path)
+            self.api_key = get_json_file(kwargs.get("cloud_servers_api_keys"))
         else:
             self.env_json = self._load_env_results_json()
             self.api_key = kwargs["api_key"]
@@ -821,19 +823,6 @@ class BuildContext:
         self.instances_ips = self._get_instances_ips()
         self.server_numeric_version = self._get_server_numeric_version()
         self.servers = self.create_servers()
-
-    @staticmethod
-    def _extract_filtered_tests() -> list:
-        """
-        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
-        in the current build
-        Returns:
-            A list of playbook IDs that should be run in the current build
-        """
-        with open(FILTER_CONF) as filter_file:
-            filtered_tests = [line.strip("\n") for line in filter_file.readlines()]
-
-        return filtered_tests
 
     def create_servers(self):
         """
@@ -997,7 +986,6 @@ class ServerContext:
         server_private_ip: str,
         use_retries_mechanism: bool = True,
     ):
-
         # --------------------------- Overall build configuration -------------------------------
 
         self.auth_id = None
@@ -1230,9 +1218,10 @@ class CloudServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.machine = cloud_machine
         self.server_url = self.server_ip
-        self.api_key = self.build_context.api_key.get(cloud_machine)
-        self.auth_id = self.build_context.env_json.get(cloud_machine, {}).get(
+        self.api_key = self.build_context.api_key.get(cloud_machine, {}).get("api-key")
+        self.auth_id = self.build_context.api_key.get(cloud_machine, {}).get(
             "x-xdr-auth-id"
         )
         os.environ.pop(
@@ -1244,9 +1233,11 @@ class CloudServerContext(ServerContext):
         self.cloud_ui_path = self.build_context.env_json.get(cloud_machine, {}).get(
             "ui_url"
         )
-        self.filtered_tests = self.build_context.machine_assignment_json.get(
-            cloud_machine, {}
-        ).get("playbooks_to_run")
+        self.filtered_tests = (
+            self.build_context.machine_assignment_json.get(cloud_machine, {})
+            .get("tests", {})
+            .get(TEST_PLAYBOOKS, [])
+        )
         (
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
@@ -1428,6 +1419,7 @@ class OnPremServerContext(ServerContext):
         use_retries_mechanism: bool = True,
     ):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.machine = self.server_ip
         self.server_url = f"https://{self.server_ip}"
         self.api_key = build_context.api_key
         self.configure_new_client()
@@ -1438,13 +1430,11 @@ class OnPremServerContext(ServerContext):
             build_number=self.build_context.build_number,
             branch_name=self.build_context.build_name,
         )
-        if self.build_context.machine_assignment_json:
-            self.filtered_tests = self.build_context.machine_assignment_json.get(
-                "xsoar-machine", {}
-            ).get("playbooks_to_run", [])
-        else:
-            self.filtered_tests = self.build_context._extract_filtered_tests()
-
+        self.filtered_tests = (
+            self.build_context.machine_assignment_json.get("xsoar-machine", {})
+            .get("tests", {})
+            .get(TEST_PLAYBOOKS, [])
+        )
         (
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
@@ -1609,7 +1599,9 @@ class Conf:
         self.skipped_tests: Dict[str, str] = conf.get("skipped_tests")  # type: ignore
         self.skipped_integrations: Dict[str, str] = conf.get("skipped_integrations")  # type: ignore
         self.skipped_integrations_set = set(self.skipped_integrations.keys())
-        self.unmockable_integrations: Dict[str, str] = conf.get("unmockable_integrations")  # type: ignore
+        self.unmockable_integrations: Dict[str, str] = conf.get(
+            "unmockable_integrations"
+        )  # type: ignore
         self.parallel_integrations: List[str] = conf["parallel_integrations"]
         self.docker_thresholds = conf.get("docker_thresholds", {}).get("images", {})
 
@@ -1829,9 +1821,9 @@ class Integration:
         self.name = integration_name
         self.instance_names = potential_integration_instance_names
         self.instance_name = ""
-        self.configuration: Optional[
-            IntegrationConfiguration
-        ] = IntegrationConfiguration({"name": self.name, "params": {}})
+        self.configuration: Optional[IntegrationConfiguration] = (
+            IntegrationConfiguration({"name": self.name, "params": {}})
+        )
         self.docker_image: list = []
         self.integration_configuration_from_server: dict = {}
         self.integration_type: str = ""
@@ -2402,7 +2394,6 @@ class TestContext:
                 response_type="object",
             )
         except ApiException as err:
-
             self.playbook.log_debug(f"{err=}", real_time=True)
             self.playbook.log_debug(f"{err.status=}", real_time=True)
             if err.status == 401:
@@ -2721,15 +2712,20 @@ class TestContext:
             )
 
             server_url = get_ui_url(self.client.api_client.configuration.host)
-            if self.build_context.is_saas_server_type:
-                self.playbook.log_info(
-                    f"Investigation URL: {self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
+
+            if self.build_context.server_type == XSOAR_SAAS_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}WorkPlan/{investigation_id}"
+                )
+            elif self.build_context.server_type == XSIAM_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
                     f"{investigation_id}&action:openAlertDetails={investigation_id}-work_plan"
                 )
             else:
-                self.playbook.log_info(
-                    f"Investigation URL: {server_url}/#/WorkPlan/{investigation_id}"
-                )
+                investigation_url = f"{server_url}/#/WorkPlan/{investigation_id}"
+
+            self.playbook.log_info(f"Investigation URL: {investigation_url}")
             playbook_state = self._poll_for_playbook_state()
             self.playbook.log_info(
                 f"Got incident: {investigation_id} status: {playbook_state}."
@@ -3217,6 +3213,7 @@ class TestContext:
         Returns:
             True if the test was executed by the instance else False
         """
+        self.playbook.start_time = datetime.now(timezone.utc)
         try:
             if not self._is_runnable_on_current_server_instance():
                 return False

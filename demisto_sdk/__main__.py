@@ -150,7 +150,7 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 def logging_setup_decorator(func, *args, **kwargs):
     def get_context_arg(args):
         for arg in args:
-            if type(arg) == click.core.Context:
+            if isinstance(arg, click.core.Context):
                 return arg
         print(  # noqa: T201
             "Error: Cannot find the Context arg. Is the command configured correctly?"
@@ -3040,7 +3040,6 @@ def openapi_codegen(ctx, **kwargs):
 @click.option("-n", "--nightly", type=bool, help="Run nightly tests")
 @click.option("-sa", "--service_account", help="GCP service account.")
 @click.option("-t", "--slack", help="The token for slack", required=True)
-@click.option("-a", "--circleci", help="The token for circleci")
 @click.option("-b", "--build-number", help="The build number", required=True)
 @click.option(
     "-g", "--branch-name", help="The current content branch name", required=True
@@ -3083,13 +3082,10 @@ def openapi_codegen(ctx, **kwargs):
 @click.option(
     "--cloud_servers_api_keys", help="Path to file with cloud Servers api keys."
 )
-@click.option("--machine_assignment", help="the path to the machine assignment file.")
 @click.option(
-    "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."
-)
-@click.option("--xsiam-servers-path", help="Path to secret xsiam server metadata file.")
-@click.option(
-    "--xsiam-servers-api-keys-path", help="Path to file with XSIAM Servers api keys."
+    "--machine_assignment",
+    help="Path to the machine assignment file.",
+    default="./machine_assignment.json",
 )
 @click.pass_context
 @logging_setup_decorator
@@ -3865,7 +3861,7 @@ def xsoar_linter(
         resolve_path=True,
         show_default=False,
         help=("The paths to run xsoar linter on. May pass multiple paths."),
-    )
+    ),
 ):
     """
     Runs the xsoar lint on the given paths.

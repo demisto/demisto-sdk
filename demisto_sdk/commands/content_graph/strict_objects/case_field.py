@@ -71,7 +71,6 @@ class _StrictCaseField(BaseStrictModel):
         default_factory=list
     )
     aliases: Optional[List[StrictAliases]] = Field(None, alias="Aliases")
-    x2_fields: Optional[str] = None
     alias_to: Optional[str] = Field(None, alias="aliasTo")
 
 

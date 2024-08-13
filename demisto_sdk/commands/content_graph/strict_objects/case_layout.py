@@ -1,5 +1,6 @@
+from typing import Any, List, Literal, Optional
+
 from pydantic import Field
-from typing import List, Optional, Any
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
@@ -50,7 +51,7 @@ class TabsAndSections(BaseStrictModel):
 
 class StrictCaseLayout(BaseStrictModel):
     id_: str = Field(alias="id")
-    group: str = Field(..., enum=['case'])
+    group: str = Field(..., enum=["case"])
     definition_id: Optional[str] = Field(None, alias="definitionId")
     version: int
     name: str
@@ -58,10 +59,14 @@ class StrictCaseLayout(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toVersion")
     description: Optional[str] = None
     system: Optional[bool] = None
-    marketplaces: Optional[List[MarketplaceVersions.MarketplaceV2]] = None
+    marketplaces: Optional[Literal[MarketplaceVersions.MarketplaceV2]] = None
     edit: Optional[TabsAndSections] = None
-    indicators_details: Optional[TabsAndSections] = Field(None, alias="indicatorsDetails")
-    indicators_quick_view: Optional[TabsAndSections] = Field(None, alias="indicatorsQuickView")
+    indicators_details: Optional[TabsAndSections] = Field(
+        None, alias="indicatorsDetails"
+    )
+    indicators_quick_view: Optional[TabsAndSections] = Field(
+        None, alias="indicatorsQuickView"
+    )
     quick_view: Optional[TabsAndSections] = Field(None, alias="quickView")
     close: Optional[TabsAndSections] = None
     details: Optional[TabsAndSections] = None

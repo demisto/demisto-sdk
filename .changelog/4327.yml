@@ -1,4 +1,0 @@
-changes:
-- description: ֹConverted the RN114 validation to the new format. The validation verifies the release note's headers are valid.
-  type: feature
-pr_number: 4327

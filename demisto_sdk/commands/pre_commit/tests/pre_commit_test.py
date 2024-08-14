@@ -56,7 +56,7 @@ class Obj:
     object_id: str = "id1"
     is_powershell: bool = False
     docker_image: str = "dockerimage"
-    support_level: str = "xsoar"
+    support: str = "xsoar"
 
     @property
     def docker_images(self):
@@ -550,7 +550,7 @@ class TestPreprocessFiles:
     ):
         """
         This UT verifies changes made to pre commit command to support collection of
-        untracked files when running the build on an external contribution PR.
+        staged (modified) files when running the build on an external contribution PR.
 
         Given:
             - A content build is running on external contribution PR, meaning:
@@ -574,11 +574,6 @@ class TestPreprocessFiles:
         mocker.patch(
             "git.repo.base.Repo._get_untracked_files",
             return_value=untracked_files,
-        )
-        mocker.patch.object(
-            pre_commit_command,
-            "get_untracked_files_in_content",
-            return_value=untracked_files_in_content,
         )
 
         output = preprocess_files(use_git=True)
@@ -643,7 +638,7 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {
         "2.7": {(Path("file1.py"), Obj())},
-        "3.8": {(Path("file2.py"), Obj(support_level="community"))},
+        "3.8": {(Path("file2.py"), Obj(support="community"))},
     }
     pre_commit_context = pre_commit_command.PreCommitContext(
         None,

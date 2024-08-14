@@ -80,28 +80,37 @@ def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_c
     Then:
      - make sure the script with the argument that has "incident" fails the validation
     """
-    mocker.patch(
-        "demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs.get_core_pack_list",
-        return_value=["PackWithInvalidScript"],
-    )
-
-    content_items = (
-        create_script_object(
-            paths=["name", "args"],
-            values=["InvalidScript", [{"name": "incident-id", "description": "test"}]],
-            pack_info={"name": "PackWithInvalidScript"},
-        ),
-        create_script_object(
-            paths=["args"],
-            values=[
-                [{"name": "incident-id", "description": "test", "deprecated": True}],
-            ],
-            pack_info={"name": "PackWithValidScript"},
-        ),
-        create_script_object(),
-    )
-
     with ChangeCWD(REPO.path):
+        mocker.patch(
+            "demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs.get_core_pack_list",
+            return_value=["PackWithInvalidScript"],
+        )
+
+        content_items = (
+            create_script_object(
+                paths=["name", "args"],
+                values=[
+                    "InvalidScript",
+                    [{"name": "incident-id", "description": "test"}],
+                ],
+                pack_info={"name": "PackWithInvalidScript"},
+            ),
+            create_script_object(
+                paths=["args"],
+                values=[
+                    [
+                        {
+                            "name": "incident-id",
+                            "description": "test",
+                            "deprecated": True,
+                        }
+                    ],
+                ],
+                pack_info={"name": "PackWithValidScript"},
+            ),
+            create_script_object(),
+        )
+
         results = IsScriptArgumentsContainIncidentWordValidatorCorePacks().obtain_invalid_content_items(
             content_items
         )

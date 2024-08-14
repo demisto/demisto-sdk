@@ -685,12 +685,13 @@ def test_description():
 
 
 @pytest.mark.parametrize(
-    "untracked_files, modified_files, untracked_files_in_content ,expected_output",
+    "untracked_files, modified_files, untracked_files_in_content, list_of_file_paths ,expected_output",
     [
         (
             ["Packs/untracked.txt"],
             set([Path("Packs/modified.txt")]),
             set([Path("Packs/untracked.txt")]),
+            ["Packs/modified.txt", "Packs/untracked.txt"],
             set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
         ),
         (
@@ -707,6 +708,7 @@ def test_description():
                     Path("Packs/untracked_2.txt"),
                 ]
             ),
+            ["Packs/modified.txt", "Packs/untracked_1.txt", "Packs/untracked_2.txt"],
             set(
                 [
                     Path("Packs/modified.txt"),
@@ -729,6 +731,7 @@ def test_description():
                     Path("Packs/untracked_2.txt"),
                 ]
             ),
+            ["Packs/untracked_1.txt", "Packs/untracked_2.txt"],
             set(
                 [
                     Path("Packs/untracked_1.txt"),
@@ -748,11 +751,14 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
     untracked_files,
     modified_files,
     untracked_files_in_content,
+    list_of_file_paths,
     expected_output,
 ):
     """
     This UT verifies changes made to validate command to support collection of
     untracked files when running the build on an external contribution PR.
+    The UT mocks reading form the contribution_files_relative_paths.txt created
+    in Utils/update_contribution_pack_in_base_branch.py (Infra) as part of this flow.
 
     Given:
         - A content build is running on external contribution PR, meaning:
@@ -776,10 +782,14 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
     mocker.patch(
         "git.repo.base.Repo._get_untracked_files", return_value=untracked_files
     )
-    mocker.patch.object(
-        initializer,
-        "get_untracked_files_in_content",
-        return_value=untracked_files_in_content,
-    )
+
+    with open("contribution_files_relative_paths.txt", "w") as file:
+        temp_file = Path("contribution_files_relative_paths.txt")
+        for line in list_of_file_paths:
+            file.write(f"{line}\n")
+
     output = initializer.get_unfiltered_changed_files_from_git()
-    assert output[0] == expected_output
+    assert output[1] == expected_output
+
+    if Path.exists(temp_file):
+        Path.unlink(temp_file)

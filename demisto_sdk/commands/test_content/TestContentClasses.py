@@ -29,6 +29,11 @@ from urllib3.exceptions import ReadTimeoutError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    TEST_PLAYBOOKS,
+    XPANSE_SERVER_TYPE,
+    XSIAM_SERVER_TYPE,
+    XSOAR_SAAS_SERVER_TYPE,
+    XSOAR_SERVER_TYPE,
     MarketplaceVersions,
     PB_Status,
 )
@@ -60,11 +65,6 @@ DEFAULT_INTERVAL = 4
 MAX_RETRIES = 3
 RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
 
-SLACK_MEM_CHANNEL_ID = "CM55V7J8K"
-XSOAR_SERVER_TYPE = "XSOAR"
-XSIAM_SERVER_TYPE = "XSIAM"
-XPANSE_SERVER_TYPE = "XPANSE"
-XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
 
 MARKETPLACE_VERSIONS_TO_SERVER_TYPE = {
     MarketplaceVersions.XSOAR: {XSOAR_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE},
@@ -85,6 +85,8 @@ __all__ = [
     "TestPlaybook",
     "TestResults",
     "ServerContext",
+    "OnPremServerContext",
+    "CloudServerContext",
 ]
 
 
@@ -183,6 +185,7 @@ class TestPlaybook:
             test_configuration: The configuration from content conf.json file
             server_context (ServerContext): The ServerContext instance in which the TestPlaybook instance is created in
         """
+        self.start_time = datetime.now(timezone.utc)
         self.build_context = build_context
         self.server_context = server_context
 
@@ -191,7 +194,6 @@ class TestPlaybook:
             self.configuration.playbook_id not in server_context.unmockable_test_ids
         )
         self.test_suite = TestSuite(self.configuration.playbook_id)
-        self.start_time = datetime.now(timezone.utc)
         self.test_suite_system_out: List[str] = []
         self.test_suite_system_err: List[str] = []
         self.integrations: List[Integration] = [
@@ -240,7 +242,7 @@ class TestPlaybook:
         self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
         self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
         self.test_suite.add_property(
-            "is_saas_server_type", self.build_context.is_saas_server_type
+            "is_saas_server_type", str(self.build_context.is_saas_server_type)
         )
         self.test_suite.add_property("server_type", self.build_context.server_type)
         self.test_suite.add_property("product_type", self.build_context.product_type)
@@ -270,14 +272,16 @@ class TestPlaybook:
         self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
         self.test_suite.add_property("from_version", self.configuration.from_version)
         self.test_suite.add_property("to_version", self.configuration.to_version)
-        self.test_suite.add_property("nightly_test", self.configuration.nightly_test)
+        self.test_suite.add_property(
+            "nightly_test", str(self.configuration.nightly_test)
+        )
         self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
         self.test_suite.add_property(
             "memory_threshold",
             self.configuration.memory_threshold,
         )
         self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
-        self.test_suite.add_property("timeout", self.configuration.timeout)
+        self.test_suite.add_property("timeout", str(self.configuration.timeout))
         self.test_suite.add_property(
             "playbook.test_instance_names",
             ",".join(self.configuration.test_instance_names),
@@ -434,7 +438,7 @@ class TestPlaybook:
 
         def marketplaces_match_server_type() -> bool:
             """
-            Checks if the test has a marketplace value, and if so- if it matches the server machine we are on.
+            Checks if the test has a marketplace value, and if so- it matches the server machine we are on.
             A test playbook might have several entries, each with a different marketplace. This might cause the test playbook to
             be in the filtered tests list, even when the provided entry is not be the one that runs with the current sever
             machine marketplace. This function checks that the entry provided is the exact one that needs to run.
@@ -447,7 +451,7 @@ class TestPlaybook:
                 )
 
             if not test_server_types:
-                return True  # test doesn't have a marketplace value so it runs on all machines
+                return True  # test doesn't have a marketplace value, so it runs on all machines
 
             instance_names_log_message = (
                 f" for instance names: {', '.join(self.configuration.test_instance_names)}"
@@ -474,7 +478,7 @@ class TestPlaybook:
             skipped_tests_collected[self.configuration.playbook_id] = (
                 f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
             )
-            return False  # test has a marketplace value that doesn't matched the build server marketplace
+            return False  # test has a marketplace value that doesn't match the build server marketplace
 
         return (
             in_filtered_tests()
@@ -1216,12 +1220,10 @@ class CloudServerContext(ServerContext):
         super().__init__(build_context, server_private_ip, use_retries_mechanism)
         self.machine = cloud_machine
         self.server_url = self.server_ip
-        self.api_key = self.build_context.api_key.get(cloud_machine, {}).get(
-            "api-key"
-        ) or self.build_context.api_key.get(cloud_machine)
+        self.api_key = self.build_context.api_key.get(cloud_machine, {}).get("api-key")
         self.auth_id = self.build_context.api_key.get(cloud_machine, {}).get(
             "x-xdr-auth-id"
-        ) or self.build_context.env_json.get(cloud_machine, {}).get("x-xdr-auth-id")
+        )
         os.environ.pop(
             "DEMISTO_USERNAME", None
         )  # we use client without demisto username
@@ -1231,9 +1233,11 @@ class CloudServerContext(ServerContext):
         self.cloud_ui_path = self.build_context.env_json.get(cloud_machine, {}).get(
             "ui_url"
         )
-        self.filtered_tests = self.build_context.machine_assignment_json.get(
-            cloud_machine, {}
-        ).get("playbooks_to_run")
+        self.filtered_tests = (
+            self.build_context.machine_assignment_json.get(cloud_machine, {})
+            .get("tests", {})
+            .get(TEST_PLAYBOOKS, [])
+        )
         (
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
@@ -1426,10 +1430,11 @@ class OnPremServerContext(ServerContext):
             build_number=self.build_context.build_number,
             branch_name=self.build_context.build_name,
         )
-        self.filtered_tests = self.build_context.machine_assignment_json.get(
-            "xsoar-machine", {}
-        ).get("playbooks_to_run", [])
-
+        self.filtered_tests = (
+            self.build_context.machine_assignment_json.get("xsoar-machine", {})
+            .get("tests", {})
+            .get(TEST_PLAYBOOKS, [])
+        )
         (
             self.mockable_tests_to_run,
             self.unmockable_tests_to_run,
@@ -2707,15 +2712,20 @@ class TestContext:
             )
 
             server_url = get_ui_url(self.client.api_client.configuration.host)
-            if self.build_context.is_saas_server_type:
-                self.playbook.log_info(
-                    f"Investigation URL: {self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
+
+            if self.build_context.server_type == XSOAR_SAAS_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}WorkPlan/{investigation_id}"
+                )
+            elif self.build_context.server_type == XSIAM_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
                     f"{investigation_id}&action:openAlertDetails={investigation_id}-work_plan"
                 )
             else:
-                self.playbook.log_info(
-                    f"Investigation URL: {server_url}/#/WorkPlan/{investigation_id}"
-                )
+                investigation_url = f"{server_url}/#/WorkPlan/{investigation_id}"
+
+            self.playbook.log_info(f"Investigation URL: {investigation_url}")
             playbook_state = self._poll_for_playbook_state()
             self.playbook.log_info(
                 f"Got incident: {investigation_id} status: {playbook_state}."
@@ -3203,6 +3213,7 @@ class TestContext:
         Returns:
             True if the test was executed by the instance else False
         """
+        self.playbook.start_time = datetime.now(timezone.utc)
         try:
             if not self._is_runnable_on_current_server_instance():
                 return False

@@ -26,6 +26,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseContentMetaclass,
 )
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
@@ -121,7 +122,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         Returns:
             bool: True if the validation should run. Otherwise, return False.
         """
-        return all(
+        base_conditions = all(
             [
                 isinstance(content_item, self.get_content_types()),
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
@@ -137,11 +138,19 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     content_item,
                     self.related_file_type,
                 ),
-                not is_support_level_support_validation(
-                    self.error_code, support_level_dict, content_item.support_level
-                ),
             ]
         )
+
+        if isinstance(
+            content_item, ContentItem
+        ):  # The support level condition is isolated because mypy necessitates the use of the ContentItem type.
+            return base_conditions and not is_support_level_support_validation(
+                self.error_code,
+                support_level_dict,
+                content_item.support,
+            )
+        else:
+            return base_conditions
 
     def obtain_invalid_content_items(
         self,

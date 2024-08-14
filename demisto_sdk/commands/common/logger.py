@@ -7,7 +7,7 @@ import re
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 # NOTE: Do not add internal imports here, as it may cause circular imports.
 from demisto_sdk.commands.common.constants import (
@@ -354,6 +354,15 @@ class NoColorFileFormatter(logging.Formatter):
         return message
 
 
+def get_logging_color_formatter(fmt: Optional[str] = None) -> logging.Formatter:
+    kwargs: Dict[str, Any] = {"fmt": fmt} if fmt is not None else {}
+    return (
+        ColorConsoleFormatter(**kwargs)
+        if not environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS)
+        else NoColorFileFormatter(**kwargs)
+    )
+
+
 def logging_setup(
     console_log_threshold: Union[int, str] = logging.INFO,
     file_log_threshold: Union[int, str] = logging.DEBUG,
@@ -381,12 +390,7 @@ def logging_setup(
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(console_log_threshold or logging.INFO)
-
-    if environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS):
-        console_handler.setFormatter(fmt=NoColorFileFormatter())
-    else:
-        console_handler.setFormatter(fmt=ColorConsoleFormatter())
-
+    console_handler.setFormatter(fmt=get_logging_color_formatter())
     log_handlers: List[logging.Handler] = [console_handler]
 
     # We set up the console handler separately before the file logger is ready, so that we can display log messages

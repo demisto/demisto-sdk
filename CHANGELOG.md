@@ -1,4 +1,34 @@
 # Changelog
+## 1.31.7
+* Added 'CaseLayoutRule' to the `ST110` validation. [#4491](https://github.com/demisto/demisto-sdk/pull/4491)
+* Added 'GenericField', 'GenericModule', 'Job', 'List', 'Mapper', 'ModelingRule', 'ParsingRule' and 'PreProcessRule' to the `ST110` validation. [#4470](https://github.com/demisto/demisto-sdk/pull/4470)
+* Added 'CaseLayout' to the `ST110` validation. [#4489](https://github.com/demisto/demisto-sdk/pull/4489)
+* Added the `native_nightly_packs` attribute to the conf.json schema. [#4479](https://github.com/demisto/demisto-sdk/pull/4479)
+* Added 'AssetsModelingRule' to the `ST110` validation. [#4486](https://github.com/demisto/demisto-sdk/pull/4486)
+* Added 'XSIAMReport' to the `ST110` validation. [#4484](https://github.com/demisto/demisto-sdk/pull/4484)
+* Modified the testing of modeling rules on XSIAM by splitting the process to multiple machines [#4441](https://github.com/demisto/demisto-sdk/pull/4441)
+* Added 'IndicatorType' to the `ST110` validation. [#4485](https://github.com/demisto/demisto-sdk/pull/4485)
+* Added 'CaseField' to the `ST110` validation. [#4488](https://github.com/demisto/demisto-sdk/pull/4488)
+* Added 'Report', 'Trigger', 'Widget', 'Wizard', 'XDRCTemplate' and 'XSIAMDashboard' to the `ST110` validation. [#4478](https://github.com/demisto/demisto-sdk/pull/4478)
+* Fixed an issue with the parallel logger not showing the thread id. [#4487](https://github.com/demisto/demisto-sdk/pull/4487)
+* Moved PR100 and XD100 validations to run the `validate-content-path` **pre-commit** hook. These validations ensure the ParsingRule and XSIAM Dashboard filenames are valid. [#4476](https://github.com/demisto/demisto-sdk/pull/4476)
+* Started supporting only a dict value for the "cloud_servers_api_keys" file provided. [#4480](https://github.com/demisto/demisto-sdk/pull/4480)
+* Removed the deprecated `types-pkg-resources` package dependency. demisto-sdk will use the `types-setuptools` package instead. [#4474](https://github.com/demisto/demisto-sdk/pull/4474)
+* Updated paramiko to v3.4.1, removing the warning that would occasionally show. [#4470](https://github.com/demisto/demisto-sdk/pull/4470)
+
+## 1.31.6
+* Added **Classifier**, **Layout** and **LayoutRule** to the ST110 validation. [#4447](https://github.com/demisto/demisto-sdk/pull/4447)
+* Added **Playbook** to the ST110 validation. [#4461](https://github.com/demisto/demisto-sdk/pull/4461)
+* Added **CorrelationRule** to the ST110 validation. [#4462](https://github.com/demisto/demisto-sdk/pull/4462)
+* Added **Dashboard** to the ST110 validation. [#4467](https://github.com/demisto/demisto-sdk/pull/4467)
+* Added **GenericDefinition** to the ST110 validation. [#4469](https://github.com/demisto/demisto-sdk/pull/4469)
+* ֹMoved RN114 validation to the new format. The validation verifies the release note's headers are valid. [#4327](https://github.com/demisto/demisto-sdk/pull/4327)
+* Fixed an issue where **Integration** and **Script** save failed due to Enum parsing issues. [#4459](https://github.com/demisto/demisto-sdk/pull/4459)
+* Fixed an issue where **XSIAM Report** objects would fail structure ***validate*** checks for having the *metadata* field, It's now added as optional. [#4472](https://github.com/demisto/demisto-sdk/pull/4472)
+* Moved RN108 validation to the new validate format. The validation ensures a new pack doesn't have any release notes. [#4459](https://github.com/demisto/demisto-sdk/pull/4459)
+* Applied the *toml-sort* hook on toml files in the repo. [#4453](https://github.com/demisto/demisto-sdk/pull/4453)
+* Modified ***pre-commit*** and ***validate*** commands to use a specific files list during the contribution flow instead of relying on Git diff. [#4451](https://github.com/demisto/demisto-sdk/pull/4451)
+
 ## 1.31.5
 * Added new validation ST110. Checks schema validness for *Integration*, *Script*, *Incident Field*, *Indicator Field* and *Generic Type* objects. [#4399](https://github.com/demisto/demisto-sdk/pull/4399)
 * Added support for pack doc_files upload. [#4438](https://github.com/demisto/demisto-sdk/pull/4438)

@@ -568,7 +568,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_unused_test_playbook(
-        self, test_playbook_ids: List[str], skipped_tests_keys: list
+        self, test_playbook_ids: List[str], skipped_tests_keys: List[str]
     ) -> List[BaseNode]:
         with self.driver.session() as session:
             results = session.execute_read(

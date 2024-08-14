@@ -28,6 +28,7 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         invalid_paths: str = ""
         for content_item in content_items:
             if content_item.support_level != 'xsoar':
+                continue
             old_content_item = content_item.old_base_content_object
             if isinstance(content_item, Script):
                 invalid_paths = self.is_context_depth_less_or_equal_to_5_script(content_item, old_content_item)

@@ -570,6 +570,19 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def find_unused_test_playbook(
         self, test_playbook_ids: List[str], skipped_tests_keys: List[str]
     ) -> List[BaseNode]:
+        """
+        Finds unused test playbooks.
+
+        This method checks which test playbooks from the provided list are not in use,
+        considering the skipped tests keys.
+
+        Args:
+            test_playbook_ids (List[str]): A list of test playbook IDs to check.
+            skipped_tests_keys (List[str]): A list of keys for tests that should be skipped.
+
+        Returns:
+            List[BaseNode]: A list of BaseNode objects representing the unused test playbooks.
+        """
         with self.driver.session() as session:
             results = session.execute_read(
                 validate_test_playbook_in_use, test_playbook_ids, skipped_tests_keys

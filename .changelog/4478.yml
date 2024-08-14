@@ -1,4 +1,0 @@
-changes:
-- description: Added 'Report', 'Trigger', 'Widget', 'Wizard', 'XDRCTemplate' and 'XSIAMDashboard' to the `ST110` validation.
-  type: feature
-pr_number: 4478

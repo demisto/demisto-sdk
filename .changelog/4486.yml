@@ -1,0 +1,4 @@
+changes:
+- description: Added 'AssetsModelingRule' to the `ST110` validation.
+  type: feature
+pr_number: 4486

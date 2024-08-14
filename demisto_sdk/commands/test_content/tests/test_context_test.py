@@ -3,7 +3,7 @@ from functools import partial
 import pytest
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import PB_Status
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS, PB_Status
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.TestContentClasses import (
@@ -103,7 +103,7 @@ def init_server_context(mocker, tmp_path, mockable=False):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": filtered_tests,
+            "tests": {TEST_PLAYBOOKS: filtered_tests},
         }
     }
     tests = [
@@ -685,7 +685,7 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
     machine_assignment_content = {
         "xsoar-machine": {
             "packs_to_install": ["TEST"],
-            "playbooks_to_run": filtered_tests,
+            "tests": {TEST_PLAYBOOKS: filtered_tests},
         }
     }
     # Setting up the content conf.json

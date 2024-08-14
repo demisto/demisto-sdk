@@ -177,3 +177,30 @@ StrictGenericIncidentType = create_model(
         BaseOptionalVersionJson,
     ),
 )
+
+
+OPERATORS = Union["Filter", "Or", "And"]
+
+
+class Filter(BaseStrictModel):
+    SEARCH_FIELD: str
+    SEARCH_TYPE: str
+    SEARCH_VALUE: str
+
+
+class And(BaseStrictModel):
+    AND: Optional[List[OPERATORS]] = None
+
+
+class Or(BaseStrictModel):
+    OR: Optional[List[OPERATORS]] = None
+
+
+# Forward references to resolve circular dependencies
+Filter.update_forward_refs()
+And.update_forward_refs()
+Or.update_forward_refs()
+
+
+class AlertsFilter(BaseStrictModel):
+    filter: Optional[Union[Or, And]] = None

@@ -4,6 +4,7 @@ from typing import List, Optional, Set
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.base_playbook import BasePlaybookParser
+from demisto_sdk.commands.content_graph.strict_objects.playbook import StrictPlaybook
 
 NON_CIRCLE_TESTS_DIRECTORY = "NonCircleTests"
 
@@ -37,3 +38,7 @@ class PlaybookParser(BasePlaybookParser, content_type=ContentType.PLAYBOOK):
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @property
+    def strict_object(self):
+        return StrictPlaybook

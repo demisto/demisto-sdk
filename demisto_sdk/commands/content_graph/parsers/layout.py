@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.layout import StrictLayout
 
 
 class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
@@ -97,3 +98,7 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
 
         get_values(self.json_data)
         return values
+
+    @property
+    def strict_object(self):
+        return StrictLayout

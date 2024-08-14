@@ -327,10 +327,6 @@ RETURN collect(tp) AS content_items
 """
     # when there a test playbooks that not in use, the query return a list with one item
     return first(
-        [
-            item.get("content_items")
-            for item in run_query(tx, query)
-            if item.get("content_items")
-        ],
+        filter(None, (item.get("content_items") for item in run_query(tx, query)))
         default=[],
     )

@@ -18,7 +18,7 @@ ContentTypes = TestPlaybook
 class IsTestPlaybookInUseValidatorAllFiles(
     IsTestPlaybookInUseValidator, BaseValidator[ContentTypes]
 ):
-    expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
+    expected_execution_mode = [ExecutionMode.ALL_FILES]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return self.is_valid_using_graph(content_items, True)

@@ -1,0 +1,4 @@
+changes:
+- description: Added a *support* attribute to all content items using the **content graph**.
+  type: internal
+pr_number: 4430

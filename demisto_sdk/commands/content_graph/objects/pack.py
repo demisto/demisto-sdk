@@ -191,10 +191,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return Version(self.current_version) if self.current_version else None
 
     @property
-    def support_level(self):
-        return self.support
-
-    @property
     def depends_on(self) -> List["RelationshipData"]:
         """
         This returns the packs which this content item depends on.

@@ -28,10 +28,14 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
+    create_classifier_object,
+    create_integration_object,
     create_pack_object,
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
 def content_items_to_node_ids(
@@ -280,7 +284,7 @@ class PackRelationshipsVerifier:
 
 
 class TestParsersAndModels:
-    def test_classifier_parser_below_min_marketplace_version(self, pack: Pack):
+    def test_classifier_parser_below_min_marketplace_version(self):
         """
         Given:
             - A pack with a classifier.
@@ -294,13 +298,11 @@ class TestParsersAndModels:
             ClassifierParser,
         )
 
-        classifier = pack.create_classifier(
-            "TestClassifier", load_json("classifier.json")
-        )
-        classifier.update({"toVersion": "5.9.9"})
-        classifier_path = Path(classifier.path)
-        with pytest.raises(NotAContentItemException):
-            ClassifierParser(classifier_path, list(MarketplaceVersions))
+        with ChangeCWD(REPO.path):
+            classifier = create_classifier_object(paths=["toVersion"], values=["5.9.9"])
+            classifier_path = Path(classifier.path)
+            with pytest.raises(NotAContentItemException):
+                ClassifierParser(classifier_path, list(MarketplaceVersions))
 
     def test_classifier_parser(self, pack: Pack):
         """
@@ -3035,3 +3037,31 @@ def test_convert_content_type_to_rn_header_and_from_release_note_header():
         assert content_type == ContentType.convert_header_to_content_type(
             content_type.convert_content_type_to_rn_header
         )
+
+
+@pytest.mark.parametrize(
+    "pack_support, integration_support, expected_support",
+    [
+        ("pack_support", "integration_support", "integration_support"),
+        ("pack_support", "", "pack_support"),
+        ("", "integration_support", "integration_support"),
+    ],
+)
+def test_support_attribute_in_integration_object(
+    pack_support, integration_support, expected_support
+):
+    """
+    Given:
+        - A pack support level and an integration support level.
+    When:
+        - Creating an Integration object with the given support levels.
+    Then:
+        - Ensure that the support attribute of the Integration object is set to the expected support level, e.g., the integration support level if it is not an empty string, or the pack support level otherwise.
+    """
+    with ChangeCWD(REPO.path):
+        test_integration = create_integration_object(
+            paths=["supportlevelheader"],
+            values=[integration_support],
+            pack_info={"support": pack_support},
+        )
+        assert test_integration.support == expected_support

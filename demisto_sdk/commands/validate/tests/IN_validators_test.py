@@ -5822,7 +5822,7 @@ def test_IsValidFeedExpirationPolicy_no_display_parameter():
     )
     assert len(validation_results) == 1
     assert validation_results[0].message == (
-        IsValidFeedExpirationPolicyValidator.error_message + " "+ BAD_TYPE_OR_DISPLAY
+        IsValidFeedExpirationPolicyValidator.error_message + " " + BAD_TYPE_OR_DISPLAY
     )
 
 
@@ -5861,7 +5861,8 @@ def test_IsValidFeedExpirationPolicy_incremental_feed_with_suddenDeath():
     assert len(validation_results) == 1
     assert validation_results[0].message == (
         IsValidFeedExpirationPolicyValidator.error_message
-        + " "+ REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE
+        + " "
+        + REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE
     )
 
 
@@ -5929,7 +5930,8 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_no_suddenDeath():
     assert len(validation_results) == 1
     assert validation_results[0].message == (
         IsValidFeedExpirationPolicyValidator.error_message
-        + " "+ MISSING_SUDDEN_DEATH_ERROR_MESSAGE
+        + " "
+        + MISSING_SUDDEN_DEATH_ERROR_MESSAGE
     )
 
 

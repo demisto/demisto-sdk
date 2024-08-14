@@ -3085,7 +3085,7 @@ def openapi_codegen(ctx, **kwargs):
 @click.option(
     "--machine_assignment",
     help="Path to the machine assignment file.",
-    default="./packs_to_install_by_machine.json",
+    default="./machine_assignment.json",
 )
 @click.pass_context
 @logging_setup_decorator

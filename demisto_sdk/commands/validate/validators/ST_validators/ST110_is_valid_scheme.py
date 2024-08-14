@@ -1,6 +1,10 @@
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects import (
+    AssetsModelingRule,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
     Classifier,
     CorrelationRule,
     Dashboard,
@@ -11,6 +15,7 @@ from demisto_sdk.commands.content_graph.objects import (
     IncidentField,
     IncidentType,
     IndicatorField,
+    IndicatorType,
     Job,
     Layout,
     LayoutRule,
@@ -24,6 +29,7 @@ from demisto_sdk.commands.content_graph.objects import (
     Wizard,
     XDRCTemplate,
     XSIAMDashboard,
+    XSIAMReport,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
@@ -60,6 +66,12 @@ ContentTypes = Union[
     Wizard,
     XDRCTemplate,
     XSIAMDashboard,
+    XSIAMReport,
+    IndicatorType,
+    AssetsModelingRule,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
 ]
 
 

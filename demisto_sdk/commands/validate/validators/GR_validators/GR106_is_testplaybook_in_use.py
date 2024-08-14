@@ -24,7 +24,7 @@ class IsTestPlaybookInUseValidator(BaseValidator[ContentTypes], ABC):
         "In the demisto/content repo, unlinked test playbooks are not run in PRs unless the test playbook itself is modified. Proper linkage of test playbooks ensures content quality. "
         "See  https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-the-playbook-to-your-project"
     )
-    error_message = "Test playbook '{}' is not linked to any content item. Make sure at least one integration, script or playbook mention it under the `tests:` key."
+    error_message = "Test playbook '{}' is not linked to any content item. Make sure at least one integration, script or playbook mentions the test-playbook id under the `tests:` key."
     related_field = "tests"
     is_auto_fixable = False
 

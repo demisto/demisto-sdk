@@ -92,9 +92,7 @@ class SchemaValidator(BaseValidator[ContentTypes]):
                 message="\n".join(
                     f"problematic field: {error.field_name} | error message: {error.error_message} |"
                     f" error type : {error.error_type}"
-                    for error in (
-                        content_item.structure_errors or ()
-                    )  # TODO remove the 'or' when done with ST
+                    for error in content_item.structure_errors
                 ),
                 content_object=content_item,
             )

@@ -25,7 +25,7 @@ class BaseStrictModel(BaseModel, ABC):
         There is a difference between an empty and missing field.
         Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
         """
-        # TODO - There is currently an exclusion for all fields which failed this validation on the Content repository
+        # There is currently an exclusion for all fields which failed this validation on the Content repository
         if field.name not in {
             "default_value",
             "defaultvalue",

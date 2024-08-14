@@ -93,26 +93,24 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self.relationships: Relationships = Relationships()
         self.git_sha: Optional[str] = git_sha
         # The validate_structure method is called in the first child(JsonContentItem, YamlContentItem)
-        self.structure_errors: Optional[List[StructureError]] = None
+        self.structure_errors: List[StructureError] = Field(default_factory=list)
 
     @property
     @abstractmethod
     def raw_data(self) -> dict:
         pass
 
-    def validate_structure(self) -> Optional[List[StructureError]]:
+    def validate_structure(self) -> List[StructureError]:
         """
         The method uses the parsed data and attempts to build a Pydantic object from it.
         Whenever data is invalid by the schema, we store the error in the 'structure_errors' attribute,
         It will fail validation (ST110).
         """
-        if not self.strict_object:
-            return None  # TODO - remove it
         try:
             self.strict_object(**self.raw_data)
         except pydantic.error_wrappers.ValidationError as e:
             return [StructureError(**error) for error in e.errors()]
-        return None
+        return []
 
     @staticmethod
     def from_path(
@@ -415,5 +413,5 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         )
 
     @property
-    def strict_object(self) -> Optional[Type[BaseModel]]:
-        return None
+    def strict_object(self) -> Type[BaseModel]:
+        raise NotImplementedError

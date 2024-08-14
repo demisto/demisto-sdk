@@ -1,6 +1,8 @@
 import pytest
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
     GR104_is_pack_display_name_already_exists,
@@ -244,7 +246,9 @@ def test_MarketplacesFieldValidatorAllFiles_obtain_invalid_content_items(
     assert expected_messages == {result.message for result in validation_results}
 
 
-def test_IsTestPlaybookInUseValidatorListFiles_is_valid(prepared_graph_repo: Repo):
+def test_IsTestPlaybookInUseValidatorListFiles_is_valid(
+    mocker: MockerFixture, prepared_graph_repo: Repo
+):
     """
     Tests the IsTestPlaybookInUseValidatorListFiles validator for different scenarios of test playbooks.
 
@@ -260,6 +264,8 @@ def test_IsTestPlaybookInUseValidatorListFiles_is_valid(prepared_graph_repo: Rep
     - Ensure that the validator correctly identifies the playbook not in use and returns an appropriate error message.
     - Ensure that the validator correctly identifies the deprecated playbook with no errors.
     """
+    mock_conf = ConfJSON.from_path("demisto_sdk/tests/test_files/conf.json")
+    mocker.patch.object(ConfJSON, "from_path", return_value=mock_conf)
     graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
     playbook_in_use = (
@@ -279,8 +285,8 @@ def test_IsTestPlaybookInUseValidatorListFiles_is_valid(prepared_graph_repo: Rep
     assert (
         validation_results[0].message
         == (  # the test playbook not in use
-            "Test playbook 'TestPlaybookNoInUse' is not linked to any content item. "
-            "Please ensure it is properly utilized."
+            "Test playbook 'TestPlaybookNoInUse' is not linked to any content item."
+            " Make sure at least one integration, script or playbook mention it under the `tests:` key."
         )
     )
 

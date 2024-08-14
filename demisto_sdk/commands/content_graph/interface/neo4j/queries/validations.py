@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
 
+from more_itertools import first
 from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import (
@@ -324,8 +325,12 @@ WHERE p.support = "xsoar"
 AND p.deprecated = false
 RETURN collect(tp) AS content_items
 """
-    return [
-        item.get("content_items")
-        for item in run_query(tx, query)
-        if item.get("content_items")
-    ][0]
+    # when there a test playbooks that not in use, the query return a list with one item
+    return first(
+        [
+            item.get("content_items")
+            for item in run_query(tx, query)
+            if item.get("content_items")
+        ],
+        [],
+    )

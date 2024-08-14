@@ -6,7 +6,7 @@
 * Added the `native_nightly_packs` attribute to the conf.json schema. [#4479](https://github.com/demisto/demisto-sdk/pull/4479)
 * Added 'AssetsModelingRule' to the `ST110` validation. [#4486](https://github.com/demisto/demisto-sdk/pull/4486)
 * Added 'XSIAMReport' to the `ST110` validation. [#4484](https://github.com/demisto/demisto-sdk/pull/4484)
-* Split the testing of modeling rules on XSIAM to multiple machines [#4441](https://github.com/demisto/demisto-sdk/pull/4441)
+* Modified the testing of modeling rules on XSIAM by splitting the process to multiple machines [#4441](https://github.com/demisto/demisto-sdk/pull/4441)
 * Added 'IndicatorType' to the `ST110` validation. [#4485](https://github.com/demisto/demisto-sdk/pull/4485)
 * Added 'CaseField' to the `ST110` validation. [#4488](https://github.com/demisto/demisto-sdk/pull/4488)
 * Added 'Report', 'Trigger', 'Widget', 'Wizard', 'XDRCTemplate' and 'XSIAMDashboard' to the `ST110` validation. [#4478](https://github.com/demisto/demisto-sdk/pull/4478)

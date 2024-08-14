@@ -332,5 +332,5 @@ RETURN collect(tp) AS content_items
             for item in run_query(tx, query)
             if item.get("content_items")
         ],
-        [],
+        default=[],
     )

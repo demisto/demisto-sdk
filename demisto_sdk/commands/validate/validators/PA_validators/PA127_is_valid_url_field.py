@@ -26,7 +26,9 @@ class IsValidURLFieldValidator(BaseValidator[ContentTypes]):
     fix_message = "Fixed the URL to include the issues endpoint. URL is now: {0}."
     is_auto_fixable = True
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

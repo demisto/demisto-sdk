@@ -7,6 +7,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.validators.base_validator import (
     FixResult,
     InvalidContentItemResult,
+    ValidationCaughtExceptionResult,
     ValidationResult,
 )
 
@@ -30,6 +31,9 @@ class ResultWriter:
         self.validation_results: List[ValidationResult] = []
         self.fixing_results: List[FixResult] = []
         self.invalid_content_item_results: List[InvalidContentItemResult] = []
+        self.validation_caught_exception_results: List[
+            ValidationCaughtExceptionResult
+        ] = []
         if json_file_path:
             self.json_file_path = (
                 os.path.join(json_file_path, "validate_outputs.json")
@@ -72,6 +76,9 @@ class ResultWriter:
         for result in self.invalid_content_item_results:
             logger.error(f"[red]{result.format_readable_message}[/red]")
             exit_code = 1
+        for result in self.validation_caught_exception_results:
+            logger.error(f"[red]{result.format_readable_message}[/red]")
+            exit_code = 1
         if not exit_code:
             logger.info("[green]All validations passed.[/green]")
         for fixed_object in fixed_objects_set:
@@ -89,13 +96,18 @@ class ResultWriter:
         json_fixing_list = [
             fixing_result.format_json_message for fixing_result in self.fixing_results
         ]
-        invalid_content_item_list = [
+        json_invalid_content_item_list = [
             result.format_json_message for result in self.invalid_content_item_results
+        ]
+        json_validation_caught_exception_list = [
+            result.format_json_message
+            for result in self.validation_caught_exception_results
         ]
         results = {
             "validations": json_validations_list,
             "fixed validations": json_fixing_list,
-            "invalid content items": invalid_content_item_list,
+            "invalid content items": json_invalid_content_item_list,
+            "Validations that caught exceptions": json_validation_caught_exception_list,
         }
 
         json_object = json.dumps(results, indent=4)
@@ -119,6 +131,18 @@ class ResultWriter:
             fixing_result (FixResult): the fixing result to append.
         """
         self.fixing_results.append(fixing_result)
+
+    def append_validation_caught_exception_results(
+        self, validation_caught_exception_results: ValidationCaughtExceptionResult
+    ):
+        """Append an item to the validation_caught_exception_results list.
+
+        Args:
+            validation_caught_exception_results (ValidationCaughtExceptionResult): the validation_caught_exception result to append.
+        """
+        self.validation_caught_exception_results.append(
+            validation_caught_exception_results
+        )
 
     def extend_validation_results(self, validation_results: List[ValidationResult]):
         """Extending the list of ValidationResult objects with a given list of validation results.
@@ -145,3 +169,15 @@ class ResultWriter:
             non_content_item_results (List[InvalidContentItemResult]): The List of InvalidContentItemResult objects to add to the existing list.
         """
         self.invalid_content_item_results.extend(invalid_content_item_results)
+
+    def extend_validation_caught_exception_results(
+        self, validation_caught_exception_results: List[ValidationCaughtExceptionResult]
+    ):
+        """Extending the list of ValidationCaughtExceptionResult objects with a given list of ValidationCaughtExceptionResult objects.
+
+        Args:
+            non_content_item_results (List[ValidationCaughtExceptionResult]): The List of ValidationCaughtExceptionResult objects to add to the existing list.
+        """
+        self.validation_caught_exception_results.extend(
+            validation_caught_exception_results
+        )

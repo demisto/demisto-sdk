@@ -1,6 +1,5 @@
 import logging
 import os
-from datetime import datetime
 from unittest import mock
 
 import pytest
@@ -142,7 +141,12 @@ class TestDockerImage:
     # disable-secrets-detection-end
 
     def test_lexical_find_latest_tag(self):
-        tag_list = ["2.0.2000", "2.1.2700", "2.1.373", "latest"]
+        """
+        Given: A list of docker image tags.
+        When: Looking for the latest numbered docker image tag.
+        Then: Ensure the right tag (the one with the largest build num, i.e 1.2.34 -> 34) is returned.
+        """
+        tag_list = ["2.0.2000", "2.1.2700", "2.1.373", "2.2.1500", "latest"]
         tag = DockerImageValidator.lexical_find_latest_tag(tag_list)
         assert tag == "2.1.2700"
 
@@ -178,10 +182,11 @@ class TestDockerImage:
         docker_image_validator = mock_docker_image_validator()
         docker_image_validator.docker_image_latest_tag = "1.0.3"
         docker_image_validator.docker_image_name = "demisto/python"
-        assert (
-            "demisto/python"
-        ), "1.3-alpine" == docker_image_validator.parse_docker_image(
-            docker_image="demisto/python:1.3-alpine"
+        assert "demisto/python", (
+            "1.3-alpine"
+            == docker_image_validator.parse_docker_image(
+                docker_image="demisto/python:1.3-alpine"
+            )
         )
         assert "demisto/slack", "1.2.3.4" == docker_image_validator.parse_docker_image(
             docker_image="demisto/slack:1.2.3.4"
@@ -299,84 +304,6 @@ class TestDockerImage:
         assert docker_image_validator.is_docker_image_latest_tag() is True
         assert docker_image_validator.is_latest_tag is True
         assert docker_image_validator.is_docker_image_valid() is True
-
-    # disable-secrets-detection-end
-    @pytest.mark.parametrize(
-        "return_value, expected_latest_tag_value, expected_function_results",
-        [
-            (
-                datetime.strptime(
-                    "2023-05-19T15:06:52.316769Z", "%Y-%m-%dT%H:%M:%S.%fZ"
-                ),
-                False,
-                False,
-            ),
-            (datetime.now(), False, True),
-        ],
-    )
-    def test_not_latest_docker_older_than_3_days(
-        self, mocker, return_value, expected_latest_tag_value, expected_function_results
-    ):
-        """
-        Given
-        - The default docker image - 'demisto/python:1.3-alpine'
-
-        When
-        - The most updated docker image in docker-hub is '1.0.3'
-
-        Then
-        -  Case 1: The current docker image is more than 3 days old and should fail the validation and set is_latest_tag to False.
-        -  Case 2: The current docker image is less than 3 days old and shouldn't fail the validation but set is_latest_tag to False.
-        """
-        docker_image_validator = mock_docker_image_validator()
-        docker_image_validator.docker_image_latest_tag = "1.0.3"
-        docker_image_validator.docker_image_name = "demisto/python"
-        docker_image_validator.code_type = "python"
-        docker_image_validator.is_latest_tag = True
-        docker_image_validator.print_as_warnings = True
-        docker_image_validator.docker_image_tag = "1.0.2"
-        docker_image_validator.is_valid = True
-        docker_image_validator.yml_docker_image = "demisto/python:1.0.2"
-        docker_image_validator.is_iron_bank = False
-        docker_image_validator.is_deprecated_image = ""
-        mocker.patch.object(
-            docker_image_validator,
-            "get_docker_image_creation_date",
-            return_value=return_value,
-        )
-        assert (
-            docker_image_validator.is_docker_image_latest_tag()
-            is expected_function_results
-        )
-        assert docker_image_validator.is_latest_tag is expected_latest_tag_value
-        assert True
-
-    def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated(self):
-        """
-        Given
-        - A docker image with '1.0.2' as tag
-
-        When
-        - The most updated docker image in docker-hub is '1.0.3'
-
-        Then
-        -  If the docker image is numeric and the most update one, it is Valid
-        -  If the docker image is not numeric and labeled "latest", it is Invalid
-        - If the docker image is not the most updated one it is invalid
-        """
-        docker_image_validator = mock_docker_image_validator()
-        docker_image_validator.docker_image_latest_tag = "1.0.3"
-        docker_image_validator.docker_image_name = "demisto/python"
-        docker_image_validator.code_type = "python"
-        docker_image_validator.is_latest_tag = True
-        docker_image_validator.docker_image_tag = "1.0.2"
-        docker_image_validator.is_valid = True
-        docker_image_validator.yml_docker_image = "demisto/python:1.0.2"
-        docker_image_validator.is_iron_bank = False
-        docker_image_validator.is_deprecated_image = ""
-        assert docker_image_validator.is_docker_image_latest_tag() is False
-        assert docker_image_validator.is_latest_tag is False
-        assert docker_image_validator.is_docker_image_valid() is False
 
     def test_is_docker_image_latest_tag_without_tag(self):
         """

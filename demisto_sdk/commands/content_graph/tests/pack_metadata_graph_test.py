@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -48,7 +50,7 @@ def repository(mocker):
     return repository
 
 
-def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
+def test_pack_metadata_xsoar(git_repo: Repo, tmp_path: Path, mocker):
     """
     Given:
         - A repository with a pack TestPack, containing multiple content items.
@@ -65,7 +67,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     )
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", return_value=set())
 
-    pack = repo.create_pack("TestPack")
+    pack = git_repo.create_pack("TestPack")
     pack.pack_metadata.write_json(load_json("pack_metadata.json"))
 
     integration = pack.create_integration()
@@ -105,13 +107,14 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     test_playbook = pack.create_test_playbook()
     test_playbook.create_default_test_playbook(name="TestTestPlaybook")
     test_playbook.yml.update({"fromversion": "6.2.0"})
+    with ChangeCWD(git_repo.path):
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, output_path=tmp_path)
+            content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
 
-    with ContentGraphInterface() as interface:
-        create_content_graph(interface, output_path=tmp_path)
-        content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
-
-    with ChangeCWD(repo.path):
-        content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
+        with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
+            content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
 
     assert (tmp_path / "TestPack" / "metadata.json").exists()
     metadata = get_json(tmp_path / "TestPack" / "metadata.json")
@@ -177,7 +180,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     assert metadata_playbook.get("name") == "MyPlaybook"
 
 
-def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
+def test_pack_metadata_marketplacev2(git_repo: Repo, tmp_path: Path, mocker):
     """
     Given:
         - A repository with a pack TestPack, containing multiple content items.
@@ -193,7 +196,7 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
     )
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", return_value=set())
 
-    pack = repo.create_pack("TestPack")
+    pack = git_repo.create_pack("TestPack")
     pack.pack_metadata.write_json(load_json("pack_metadata2.json"))
 
     integration = pack.create_integration()
@@ -236,13 +239,13 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
             "fromversion": "6.10.0",
         },
     )
-
-    with ContentGraphInterface() as interface:
-        create_content_graph(interface, output_path=tmp_path)
-        content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
-
-    with ChangeCWD(repo.path):
-        content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
+    with ChangeCWD(git_repo.path):
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, output_path=tmp_path)
+            content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
+        with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
+            content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
 
     assert (tmp_path / "TestPack" / "metadata.json").exists()
     metadata = get_json(tmp_path / "TestPack" / "metadata.json")

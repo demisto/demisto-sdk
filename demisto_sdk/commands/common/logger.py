@@ -7,7 +7,7 @@ import re
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 # NOTE: Do not add internal imports here, as it may cause circular imports.
 from demisto_sdk.commands.common.constants import (
@@ -117,12 +117,8 @@ LOG_FILE_COUNT = environment_variable_to_int(DEMISTO_SDK_LOG_FILE_COUNT, 10)
 
 FILE_LOG_RECORD_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s"
 
-if environment_variable_to_bool("CI"):
-    CONSOLE_LOG_RECORD_FORMAT = "[%(asctime)s] [%(levelname)s] %(message)s"
-    CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(asctime)s] [%(levelname)s] "
-else:
-    CONSOLE_LOG_RECORD_FORMAT = "[%(levelname)s] %(message)s"
-    CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(levelname)s] "
+CONSOLE_LOG_RECORD_FORMAT = "[%(asctime)s] [%(levelname)s] %(message)s"
+CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(asctime)s] [%(levelname)s] "
 
 
 CONSOLE_RECORD_FORMATS = {
@@ -307,7 +303,6 @@ class ColorConsoleFormatter(logging.Formatter):
 
         current_message = record.getMessage()
         while ColorConsoleFormatter._string_starts_with_escapes(current_message):
-
             # Record starts with escapes - Extract them
             current_escape = current_message[: current_message.find("]") + 1]
             ret_value += current_escape
@@ -359,6 +354,15 @@ class NoColorFileFormatter(logging.Formatter):
         return message
 
 
+def get_logging_color_formatter(fmt: Optional[str] = None) -> logging.Formatter:
+    kwargs: Dict[str, Any] = {"fmt": fmt} if fmt is not None else {}
+    return (
+        ColorConsoleFormatter(**kwargs)
+        if not environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS)
+        else NoColorFileFormatter(**kwargs)
+    )
+
+
 def logging_setup(
     console_log_threshold: Union[int, str] = logging.INFO,
     file_log_threshold: Union[int, str] = logging.DEBUG,
@@ -386,12 +390,7 @@ def logging_setup(
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(console_log_threshold or logging.INFO)
-
-    if environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS):
-        console_handler.setFormatter(fmt=NoColorFileFormatter())
-    else:
-        console_handler.setFormatter(fmt=ColorConsoleFormatter())
-
+    console_handler.setFormatter(fmt=get_logging_color_formatter())
     log_handlers: List[logging.Handler] = [console_handler]
 
     # We set up the console handler separately before the file logger is ready, so that we can display log messages

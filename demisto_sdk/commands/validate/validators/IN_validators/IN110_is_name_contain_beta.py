@@ -14,7 +14,7 @@ ContentTypes = Integration
 
 
 class IsNameContainBetaValidator(BaseValidator[ContentTypes]):
-    error_code = "IN109"
+    error_code = "IN110"
     description = "Validate that the name field doesn't include the substring 'beta'."
     rationale = "The name field in an integration should not contain the word 'beta'. This ensures unambiguous identification of production-ready integrations."
     error_message = (
@@ -24,7 +24,9 @@ class IsNameContainBetaValidator(BaseValidator[ContentTypes]):
     related_field = "name"
     is_auto_fixable = True
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

@@ -785,7 +785,7 @@ TEST_RELEASE_NOTES_INVALID_HEADERS = [
     ),
     (
         """#### Incident Fields
-                                  - *test**
+                                  - **test**
                                   - Added x y z""",
         "Incident Fields",
         {
@@ -805,7 +805,7 @@ TEST_RELEASE_NOTES_INVALID_HEADERS = [
         "Content type dose not exist",
         "Invalid special forms",
         "Invalid content type format",
-        "Invalid special forms missing star",
+        "Invalid special forms with stars",
     ],
 )
 def test_invalid_headers(mocker, repo, content, content_type, expected_result):

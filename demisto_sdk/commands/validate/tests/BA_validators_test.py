@@ -1,6 +1,16 @@
+import copy
+from pathlib import Path
+from typing import List
+
 import pytest
 
+from demisto_sdk.commands.common.constants import (
+    PACKS_FOLDER,
+    PARTNER_SUPPORT,
+    XSOAR_SUPPORT,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
     create_assets_modeling_rule_object,
     create_classifier_object,
     create_correlation_rule_object,
@@ -13,18 +23,24 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_incident_type_object,
     create_incoming_mapper_object,
     create_indicator_field_object,
+    create_indicator_type_object,
     create_integration_object,
     create_job_object,
     create_layout_object,
     create_list_object,
+    create_modeling_rule_object,
+    create_old_file_pointers,
     create_outgoing_mapper_object,
+    create_pack_object,
     create_parsing_rule_object,
     create_playbook_object,
     create_ps_integration_object,
     create_report_object,
     create_script_object,
+    create_trigger_object,
     create_widget_object,
     create_wizard_object,
+    create_xdrc_template_object,
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
 )
@@ -46,6 +62,12 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA108_is_folder_name_has_separators import (
+    IsFolderNameHasSeparatorsValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA109_file_name_has_separators import (
+    FileNameHasSeparatorsValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
     IsEntityTypeInEntityNameValidator,
 )
@@ -53,15 +75,36 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name
     ERROR_MSG_TEMPLATE,
     IsEntityNameContainExcludedWordValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
+    ContentTypes as ContentTypes113,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
+    IsContentItemNameContainTrailingSpacesValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA114_is_pack_changed import (
+    PackNameValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
     CliNameMatchIdValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_version_synched import (
     FromToVersionSyncedValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA119_is_py_file_contain_copy_right_section import (
+    IsPyFileContainCopyRightSectionValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA124_is_have_unit_test_file import (
+    IsHaveUnitTestFileValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA125_customer_facing_docs_disallowed_terms import (
+    CustomerFacingDocsDisallowedTermsValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
 )
+from TestSuite.repo import ChangeCWD
+
+VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
 
 
 @pytest.mark.parametrize(
@@ -121,7 +164,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_i
         ),
     ],
 )
-def test_IDNameValidator_is_valid(
+def test_IDNameValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -134,7 +177,7 @@ def test_IDNameValidator_is_valid(
         - Case 3: content_items with 1 Wizard without changes.
         - Case 2: content_items with 1 Wizard with its ID altered.
     When
-    - Calling the IDNameValidator is_valid function.
+    - Calling the IDNameValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Should fail 1 integration.
@@ -144,7 +187,7 @@ def test_IDNameValidator_is_valid(
         - Case 5: Should fail anything.
         - Case 6: Should fail the Wizard.
     """
-    results = IDNameValidator().is_valid(content_items)
+    results = IDNameValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -207,7 +250,7 @@ def test_IDNameValidator_fix(content_item, expected_name, expected_fix_msg):
         ),
     ],
 )
-def test_CliNameMatchIdValidator_is_valid(
+def test_CliNameMatchIdValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -217,13 +260,13 @@ def test_CliNameMatchIdValidator_is_valid(
         - Case 2: content_items with 1 indicator field, where the cliName is different from id.
 
     When
-    - Calling the CliNameMatchIdValidator is_valid function.
+    - Calling the CliNameMatchIdValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail the indicator field.
     """
-    results = CliNameMatchIdValidator().is_valid(content_items)
+    results = CliNameMatchIdValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -314,7 +357,7 @@ def test_CliNameMatchIdValidator_fix(content_item, expected_name, expected_fix_m
         ),
     ],
 )
-def test_IsFromVersionSufficientAllItemsValidator_is_valid(
+def test_IsFromVersionSufficientAllItemsValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -323,13 +366,15 @@ def test_IsFromVersionSufficientAllItemsValidator_is_valid(
         - Case 1: a list of content items with 1 item of each kind supported by the validation where the fromVersion field is valid.
         - Case 2: IncidentField, wizard, playbook, and genericField, all set to fromVersion = 4.5.0 (insufficient).
     When
-    - Calling the IsFromVersionSufficientAllItemsValidator is_valid function.
+    - Calling the IsFromVersionSufficientAllItemsValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail all 4 content items.
     """
-    results = IsFromVersionSufficientAllItemsValidator().is_valid(content_items)
+    results = IsFromVersionSufficientAllItemsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -416,7 +461,7 @@ def test_IsFromVersionSufficientAllItemsValidator_fix(
         ),
     ],
 )
-def test_FromToVersionSyncedValidator_is_valid(
+def test_FromToVersionSyncedValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -425,13 +470,13 @@ def test_FromToVersionSyncedValidator_is_valid(
         - Case 1: a list of content items with 1 item of each kind supported by the validation where the fromVersion < toVersion / toVersion field doesn't exist.
         - Case 2: IncidentType with the fromVersion = toVersion = 5.0.0, IncidentField, Widget, and Wizard, all set to toVersion = 4.5.0 < fromVersion (insufficient).
     When
-    - Calling the FromToVersionSyncedValidator is_valid function.
+    - Calling the FromToVersionSyncedValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail all 4 content items.
     """
-    results = FromToVersionSyncedValidator().is_valid(content_items)
+    results = FromToVersionSyncedValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -505,7 +550,7 @@ def test_FromToVersionSyncedValidator_is_valid(
         ),
     ],
 )
-def test_IsFromVersionSufficientIndicatorFieldValidator_is_valid(
+def test_IsFromVersionSufficientIndicatorFieldValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -527,7 +572,7 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_is_valid(
         - Case 4: One indicator field:
             - one with shortText type and fromVersion = 4.5.0.
     When
-    - Calling the IsFromVersionSufficientIndicatorFieldValidator is_valid function.
+    - Calling the IsFromVersionSufficientIndicatorFieldValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of content_items failed, and that the right error message is returned.
         - Case 1: Shouldn't fail any indicator field.
@@ -535,7 +580,11 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_is_valid(
         - Case 3: Should fail the third and fourth indicator fields.
         - Case 4: Should fail the indicator field.
     """
-    results = IsFromVersionSufficientIndicatorFieldValidator().is_valid(content_items)
+    results = (
+        IsFromVersionSufficientIndicatorFieldValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -696,7 +745,7 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_fix(
         ),
     ],
 )
-def test_IsFromVersionSufficientIntegrationValidator_is_valid(
+def test_IsFromVersionSufficientIntegrationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -717,7 +766,11 @@ def test_IsFromVersionSufficientIntegrationValidator_is_valid(
         - Case 4: Should fail only one integration.
         - Case 5: Should fail only one integration.
     """
-    results = IsFromVersionSufficientIntegrationValidator().is_valid(content_items)
+    results = (
+        IsFromVersionSufficientIntegrationValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -828,7 +881,7 @@ def test_IsFromVersionSufficientIntegrationValidator_fix(
         ),
     ],
 )
-def test_IDContainSlashesValidator_is_valid(
+def test_IDContainSlashesValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -837,13 +890,13 @@ def test_IDContainSlashesValidator_is_valid(
         - Case 1: A list of one of each content_item supported by the validation with a valid ID.
         - Case 2: A list of one IncidentType, IncidentField, List, and Integration, all with invalid ids with at least one /.
     When
-    - Calling the IDContainSlashesValidator is_valid function.
+    - Calling the IDContainSlashesValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail all 4 content items.
     """
-    results = IDContainSlashesValidator().is_valid(content_items)
+    results = IDContainSlashesValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -902,7 +955,7 @@ def test_IDContainSlashesValidator_fix(
     assert content_item.object_id == expected_id
 
 
-def test_IsDeprecatedCorrectlyValidator_is_valid():
+def test_IsDeprecatedCorrectlyValidator_obtain_invalid_content_items():
     """
     Given:
      - 1 integration and 1 script which are deprecated incorrectly
@@ -935,7 +988,9 @@ def test_IsDeprecatedCorrectlyValidator_is_valid():
         create_script_object(paths=["comment"], values=["Some description"]),
     ]
 
-    results = IsDeprecatedCorrectlyValidator().is_valid(content_items)
+    results = IsDeprecatedCorrectlyValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 2
     for result in results:
         assert result.content_object.deprecated
@@ -984,7 +1039,7 @@ def test_IsDeprecatedCorrectlyValidator_is_valid():
         ),
     ],
 )
-def test_IsValidVersionValidator_is_valid(
+def test_IsValidVersionValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -993,13 +1048,13 @@ def test_IsValidVersionValidator_is_valid(
         - Case 1: A list of one of each content_item supported by the validation with a valid ID.
         - Case 2: A list of one IncidentField, List, and Integration, all with invalid versions.
     When
-    - Calling the IsValidVersionValidator is_valid function.
+    - Calling the IsValidVersionValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail all 3 content items.
     """
-    results = IsValidVersionValidator().is_valid(content_items)
+    results = IsValidVersionValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1092,7 +1147,9 @@ def test_IsValidVersionValidator_fix():
         ),
     ],
 )
-def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg):
+def test_IsEntityTypeInEntityNameValidator_obtain_invalid_content_items(
+    content_items, expected_msg
+):
     """
     Given
     - Case 1: Two content items of type 'Integration' are validated.
@@ -1119,9 +1176,11 @@ def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg)
         - Don't fail the validation.
         - Fail the validation with a relevant message containing 'name' field.
     - Case 4:
-        - Don't fail the validation and is_valid function return empty array.
+        - Don't fail the validation and obtain_invalid_content_items function return empty array.
     """
-    result = IsEntityTypeInEntityNameValidator().is_valid(content_items)
+    result = IsEntityTypeInEntityNameValidator().obtain_invalid_content_items(
+        content_items
+    )
     if result:
         assert result[0].message == expected_msg
         assert len(result) == 1
@@ -1195,9 +1254,894 @@ def test_IsEntityNameContainExcludedWordValidator(
     - Case 7: Don't fail the validation.
     - Case 8: Fail the validation with a relevant message containing 'name' field.
     """
-    results = IsEntityNameContainExcludedWordValidator().is_valid(
+    results = IsEntityNameContainExcludedWordValidator().obtain_invalid_content_items(
         content_items=content_items
     )
     assert len(results) == expected_number_of_failures
     if results:
         assert results[0].message == expected_error_message
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [create_pack_object(), create_pack_object()],
+            1,
+            [
+                "Pack for content item '/newPackName' and all related files were changed from 'pack_171' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [create_integration_object(), create_integration_object()],
+            1,
+            [
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_173' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_parsing_rule_object(),
+                create_parsing_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'pack_175' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_correlation_rule_object(),
+                create_correlation_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'pack_177' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_playbook_object(),
+                create_playbook_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'pack_179' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_modeling_rule_object(),
+                create_modeling_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'pack_181' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_ps_integration_object(),
+                create_ps_integration_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_183' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_script_object(),
+                create_script_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'pack_185' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_classifier_object(),
+                create_classifier_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'pack_187' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_list_object(),
+                create_list_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'pack_189' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_job_object(),
+                create_job_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'pack_191' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_dashboard_object(),
+                create_dashboard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'pack_193' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_incident_type_object(),
+                create_incident_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'pack_195' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_incident_field_object(),
+                create_incident_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'pack_197' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_report_object(),
+                create_report_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'pack_199' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_xsiam_report_object(),
+                create_xsiam_report_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'pack_201' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_xsiam_dashboard_object(),
+                create_xsiam_dashboard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'pack_203' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_xdrc_template_object(),
+                create_xdrc_template_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from 'pack_205' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_assets_modeling_rule_object(),
+                create_assets_modeling_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'pack_207' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_trigger_object(),
+                create_trigger_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'pack_209' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_layout_object(),
+                create_layout_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'pack_211' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_widget_object(),
+                create_widget_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'pack_213' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_indicator_field_object(),
+                create_indicator_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'pack_215' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_wizard_object(),
+                create_wizard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'pack_217' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_definition_object(),
+                create_generic_definition_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'pack_219' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_field_object(),
+                create_generic_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'pack_221' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_type_object(),
+                create_generic_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'pack_223' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_generic_module_object(),
+                create_generic_module_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'pack_225' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_incoming_mapper_object(),
+                create_incoming_mapper_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'pack_227' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_outgoing_mapper_object(),
+                create_outgoing_mapper_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'pack_229' to 'newPackName', please undo."
+            ],
+        ),
+        (
+            [
+                create_indicator_type_object(),
+                create_indicator_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'pack_231' to 'newPackName', please undo."
+            ],
+        ),
+    ],
+)
+def test_ValidPackNameValidator_obtain_invalid_content_items(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given:
+    content_items.
+        31 content items.
+        Each test contains one object where the pack name was changed, and one where it was not.
+
+    When:
+        - Calling the PackNameValidator obtain_invalid_content_items function.
+
+    Then:
+        - Make sure the right amount of tests failed, and that the right error message is returned.
+        - For each test, one should fail while the other should pass.
+    """
+    old_content_items = copy.deepcopy(content_items)
+    create_old_file_pointers(content_items, old_content_items)
+    content_item_parts = list(content_items[1].path.parts)
+    packs_folder_index = content_item_parts.index(PACKS_FOLDER) + 1
+    content_item_parts[packs_folder_index] = "newPackName"
+    new_path = Path(*content_item_parts)
+    content_items[1].path = new_path
+    results = PackNameValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_error_message",
+    [
+        pytest.param([create_integration_object()], 0, "", id="valid: integration"),
+        pytest.param(
+            [create_integration_object(readme_content="test-module")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_233/Integrations/integration_0/README.md",
+            id="invalid: integration readme",
+        ),
+        pytest.param(
+            [create_integration_object(description_content="test-module")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_234/Integrations/integration_0/integration_0_description.md",
+            id="invalid: integration description",
+        ),
+        pytest.param([create_script_object()], 0, "", id="valid: script"),
+        pytest.param(
+            [create_script_object(readme_content="test-module ")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_236/Scripts/script0/README.md",
+            id="invalid: script readme",
+        ),
+        pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
+        pytest.param(
+            [create_playbook_object(readme_content="test-module ")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_238/Playbooks/playbook-0_README.md",
+            id="invalid: playbook readme",
+        ),
+        pytest.param([create_pack_object()], 0, "", id="valid: pack"),
+        pytest.param(
+            [create_pack_object(readme_text="test-module ")],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_240/README.md",
+            id="invalid: pack readme",
+        ),
+        pytest.param(
+            [
+                create_pack_object(
+                    ["version"], ["1.0.1"], release_note_content="test-module"
+                )
+            ],
+            1,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_241/ReleaseNotes/1_0_1.md",
+            id="invalid: pack release note",
+        ),
+    ],
+)
+def test_CustomerFacingDocsDisallowedTermsValidator(
+    content_items, expected_number_of_failures, expected_error_message
+):
+    """
+    Given
+    - Case 1: Content items containing disallowed terms in their related files.
+    - Case 2: Content items containing only valid terms in their related files.
+    When
+    - Running the CustomerFacingDocsDisallowedTermsValidator validation.
+    Then
+    - Case 1: Fail the validation with a relevant message containing the found disallowed terms.
+    - Case 2: Don't fail the validation.
+    """
+    results = CustomerFacingDocsDisallowedTermsValidator().obtain_invalid_content_items(
+        content_items=content_items
+    )
+    assert len(results) == expected_number_of_failures
+    if results:
+        assert results[0].message == expected_error_message
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        ([create_script_object(), create_integration_object()], 0, []),
+        (
+            [
+                create_script_object(code="BSD\nMIT"),
+                create_script_object(
+                    code="MIT", test_code="here we are going to fail\nproprietary"
+                ),
+                create_integration_object(code="Copyright"),
+            ],
+            3,
+            [
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1, 2.",
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1.\nThe test code file contains copyright key words in line(s) 2.",
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1.",
+            ],
+        ),
+    ],
+)
+def test_IsPyFileContainCopyRightSectionValidator(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    Content item iterables.
+    - Case 1: One script and one integration without any copyright keywords in the code/test code.
+    - Case 2: 3 content items:
+        - One integration with copyright keywords in both line 1 and 2 in the code_file.
+        - One script with copyright keyword in the code in line 1 and in the test_code in line 2.
+        - One script with copyright keyword in the code in line 1.
+    When
+    - Running the IsPyFileContainCopyRightSectionValidator validation.
+    Then
+    - Make sure the right number of content_items failed and the right error was returned.
+    - Case 1: Shouldn't fail anything.
+    - Case 2: Should fail all.
+    """
+    results = IsPyFileContainCopyRightSectionValidator().obtain_invalid_content_items(
+        content_items=content_items
+    )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items",
+    [
+        pytest.param(create_incident_field_object(), id="incident_field"),
+        pytest.param(create_widget_object(), id="widget"),
+        pytest.param(create_report_object(), id="report"),
+        pytest.param(create_xsiam_report_object(), id="xsiam_report"),
+        pytest.param(create_script_object(), id="script"),
+        pytest.param(create_dashboard_object(), id="dashboard"),
+        pytest.param(create_incident_type_object(), id="incident_type"),
+        pytest.param(create_generic_type_object(), id="generic_type"),
+        pytest.param(create_outgoing_mapper_object(), id="outgoing_mapper"),
+        pytest.param(create_generic_definition_object(), id="generic_definition"),
+        pytest.param(create_classifier_object(), id="classifier"),
+        pytest.param(create_xsiam_dashboard_object(), id="xsiam_dashboard"),
+        pytest.param(create_job_object(), id="job"),
+        pytest.param(create_list_object(), id="list"),
+        pytest.param(create_parsing_rule_object(), id="parsing_rule"),
+        pytest.param(create_playbook_object(), id="playbook"),
+        pytest.param(create_generic_field_object(), id="generic_field"),
+        pytest.param(create_correlation_rule_object(), id="correlation_rule"),
+        pytest.param(create_assets_modeling_rule_object(), id="assets_modeling_rule"),
+        pytest.param(create_layout_object(), id="layout"),
+    ],
+)
+def test_IsContentItemNameContainTrailingSpacesValidator_obtain_invalid_content_items_success(
+    content_items: ContentTypes113,
+):
+    """Test validate BA113 - Trailing spaces in content item name
+    Given:
+        A list of content items with names that have trailing spaces.
+    When:
+        The IsContentItemNameContainTrailingSpacesValidator's obtain_invalid_content_items method is called.
+    Then:
+        The method should return False, indicating that there are no validation failures.
+    """
+    assert not IsContentItemNameContainTrailingSpacesValidator().obtain_invalid_content_items(
+        [content_items]
+    )  # no failures
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_field_error_messages",
+    [
+        pytest.param(
+            create_classifier_object(
+                paths=["name", "id"],
+                values=[VALUE_WITH_TRAILING_SPACE, VALUE_WITH_TRAILING_SPACE],
+            ),
+            ["object_id, name"],
+            id="classifier_with_trailing_space",
+        ),
+        pytest.param(
+            create_integration_object(
+                paths=["name", "commonfields.id"],
+                values=[VALUE_WITH_TRAILING_SPACE, VALUE_WITH_TRAILING_SPACE],
+            ),
+            ["object_id, name"],
+            id="integration_with_trailing_space",
+        ),
+        pytest.param(
+            create_indicator_field_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="indicator_field_with_trailing_space",
+        ),
+        pytest.param(
+            create_wizard_object({"name": VALUE_WITH_TRAILING_SPACE}),
+            ["name"],
+            id="wizard_with_trailing_space",
+        ),
+        pytest.param(
+            create_correlation_rule_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="correlation_rule_with_trailing_space",
+        ),
+        pytest.param(
+            create_incident_type_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="incident_type_with_trailing_space",
+        ),
+        pytest.param(
+            create_dashboard_object(paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]),
+            ["name"],
+            id="dashboard_with_trailing_space",
+        ),
+        pytest.param(
+            create_generic_definition_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="generic_definition_with_trailing_space",
+        ),
+        pytest.param(
+            create_generic_type_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="generic_type_with_trailing_space",
+        ),
+        pytest.param(
+            create_generic_module_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="generic_module_with_trailing_space",
+        ),
+        pytest.param(
+            create_generic_field_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="generic_field_with_trailing_space",
+        ),
+        pytest.param(
+            create_layout_object(paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]),
+            ["name"],
+            id="layout_with_trailing_space",
+        ),
+        pytest.param(
+            create_modeling_rule_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="modeling_rule_with_trailing_space",
+        ),
+        pytest.param(
+            create_incoming_mapper_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="incoming_mapper_with_trailing_space",
+        ),
+        pytest.param(
+            create_parsing_rule_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="parsing_rule_with_trailing_space",
+        ),
+        pytest.param(
+            create_playbook_object(paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]),
+            ["name"],
+            id="playbook_with_trailing_space",
+        ),
+    ],
+)
+def test_IsContentItemNameContainTrailingSpacesValidator_obtain_invalid_content_items_failure(
+    content_items: ContentTypes113,
+    expected_field_error_messages: List[str],
+):
+    """
+    Given:
+        A list of content items with names that may contain trailing spaces.
+    When:
+        The `IsContentItemNameContainTrailingSpacesValidator.obtain_invalid_content_items` method is called.
+    Then:
+        The method should return the correct number of validation failures and the correct error messages.
+    """
+    results = (
+        IsContentItemNameContainTrailingSpacesValidator().obtain_invalid_content_items(
+            [content_items]
+        )
+    )
+    assert len(results) == 1  # one failure
+    assert (
+        results[0].message
+        == f"The following fields have a trailing spaces: {expected_field_error_messages[0]}."
+    )
+
+
+@pytest.mark.parametrize(
+    "content_item, fields_with_trailing_spaces",
+    [
+        pytest.param(
+            create_integration_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="case integration with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_classifier_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            {"name": "name"},
+            id="case classifier with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_dashboard_object(paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]),
+            ["name"],
+            id="case dashboard with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_incident_type_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
+            ["name"],
+            id="case incident type with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_wizard_object({"name": VALUE_WITH_TRAILING_SPACE}),
+            ["name"],
+            id="case wizard with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_classifier_object(
+                paths=["name", "id"],
+                values=[VALUE_WITH_TRAILING_SPACE, VALUE_WITH_TRAILING_SPACE],
+            ),
+            ["object_id", "name"],
+            id="classifier and integration with trailing spaces",
+        ),
+    ],
+)
+def test_IsContentItemNameContainTrailingSpacesValidator_fix(
+    content_item: ContentTypes113, fields_with_trailing_spaces: List[str]
+):
+    """
+    Test validate BA113 - Trailing spaces in content item name
+
+    Given:
+        - A content item with a name that has trailing spaces.
+    When:
+        - The IsContentItemNameContainTrailingSpacesValidator's fix method is called.
+    Then:
+        - The trailing spaces should be removed from the content item's name, and the fix message should indicate that the trailing spaces have been removed.
+
+    Test cases:
+        - Various content items (integrations, classifiers, dashboards, incident types, wizards) are created with trailing spaces in their names.
+            The validator should remove the trailing spaces and return a fix message for each.
+    """
+    validator = IsContentItemNameContainTrailingSpacesValidator()
+    validator.violations[content_item.object_id] = fields_with_trailing_spaces
+
+    assert content_item.name == VALUE_WITH_TRAILING_SPACE
+
+    results = validator.fix(content_item)
+    assert content_item.name == VALUE_WITH_TRAILING_SPACE.rstrip()
+    assert (
+        results.message
+        == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {VALUE_WITH_TRAILING_SPACE.rstrip()}"
+    )
+
+
+@pytest.mark.parametrize(
+    "content_item, expected_number_of_failures, expected_messages",
+    [
+        pytest.param(
+            create_integration_object(name="Test-Integration"),
+            1,
+            "The Integration files should be named without any separators in the base name:\n'Test-Integration.py' should be named 'TestIntegration.py'\n'Test-Integration.yml' should be named 'TestIntegration.yml'\n'Test-Integration_description.md' should be named 'TestIntegration_description.md'\n'Test-Integration_image.png' should be named 'TestIntegration_image.png'\n'Test-Integration_test.py' should be named 'TestIntegration_test.py'",
+            id="invalid integration",
+        ),
+        pytest.param(
+            create_integration_object(name="TestIntegration"),
+            0,
+            [""],
+            id="valid integration",
+        ),
+        pytest.param(
+            create_script_object(name="Test-Script"),
+            1,
+            "The Script files should be named without any separators in the base name:\n'Test-Script.py' should be named 'TestScript.py'\n'Test-Script.yml' should be named 'TestScript.yml'\n'Test-Script_description.md' should be named 'TestScript_description.md'\n'Test-Script_image.png' should be named 'TestScript_image.png'\n'Test-Script_test.py' should be named 'TestScript_test.py'",
+            id="invalid script",
+        ),
+        pytest.param(
+            create_script_object(name="TestScript"),
+            0,
+            [""],
+            id="valid script",
+        ),
+    ],
+)
+def test_FileNameHasSeparatorsValidator_obtain_invalid_content_items(
+    content_item, expected_number_of_failures, expected_messages
+):
+    """
+    Test validate BA109 FileNameHasSeparatorsValidator - File names with separators
+
+    Given:
+        A content item with a name that contains separators (e.g., hyphens) or not.
+
+    When:
+        The FileNameHasSeparatorsValidator's obtain_invalid_content_items method is called.
+
+    Then:
+        The method should return the expected number of validation failures and messages.
+        Failure with an appropriate message if the name contains separators.
+    """
+    validator = FileNameHasSeparatorsValidator()
+    ValidationResultList = validator.obtain_invalid_content_items([content_item])
+
+    assert len(ValidationResultList) == expected_number_of_failures
+
+    if ValidationResultList:
+        assert ValidationResultList[0].message == expected_messages
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msg",
+    [
+        pytest.param(
+            [
+                create_integration_object(name="invalid_integration_name"),
+            ],
+            1,
+            "The folder name 'invalid_integration_name' should not contain any of the following separators: '_', '-'",
+            id="an invalid integration name",
+        ),
+        pytest.param(
+            [
+                create_integration_object(name="invalidIntegrationName"),
+            ],
+            0,
+            "",
+            id="a valid integration name.",
+        ),
+        pytest.param(
+            [
+                create_script_object(name="invalid-script-name"),
+            ],
+            1,
+            "The folder name 'invalid-script-name' should not contain any of the following separators: '_', '-'",
+            id="an invalid script name",
+        ),
+        pytest.param(
+            [
+                create_script_object(name="invalidScriptName"),
+            ],
+            0,
+            "",
+            id="a valid script name",
+        ),
+    ],
+)
+def test_IsFolderNameHasSeparatorsValidator_obtain_invalid_content_items(
+    content_items, expected_number_of_failures, expected_msg
+):
+    result = IsFolderNameHasSeparatorsValidator().obtain_invalid_content_items(
+        content_items
+    )
+
+    assert len(result) == expected_number_of_failures
+
+    if result:
+        assert result[0].message == expected_msg
+
+
+def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items__all_valid():
+    """
+    Given
+    - Two valid integrations:
+        - One Xsoar supported integration with a valid unit test file name.
+        - One Partner supported integration with a valid unit test file name.
+    When
+    - Calling the IsHaveUnitTestFileValidator obtain_invalid_content_items function.
+    Then
+    - Make sure no failures are returned.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                name="MyIntegration0",
+                unit_test_name="MyIntegration0",
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+            create_integration_object(
+                name="MyIntegration0",
+                unit_test_name="MyIntegration0",
+                pack_info={"support": PARTNER_SUPPORT},
+            ),
+        ]
+
+        results = IsHaveUnitTestFileValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+    assert len(results) == 0
+
+
+def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items__invalid_item():
+    """
+    Given
+    - One invalid integration:
+        - One Xsoar supported integration with an invalid unit test file name.
+    When
+    - Calling the IsHaveUnitTestFileValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message is correct.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                name="MyIntegration0",
+                unit_test_name="myintegration0",
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
+        results = IsHaveUnitTestFileValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+    expected_msgs = [
+        "The given Integration is missing a unit test file, please make sure to add one with the following name MyIntegration0_test.py."
+    ]
+
+    assert len(results) == 1
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

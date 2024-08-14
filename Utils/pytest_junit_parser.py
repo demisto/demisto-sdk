@@ -1,19 +1,20 @@
-from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
 
 from junitparser import Failure, JUnitXml, Skipped, TestCase
 
+from demisto_sdk.commands.common.StrEnum import StrEnum
 
-class TestStatus(str, Enum):
+
+class TestStatus(StrEnum):
     PASSED = "PASSED"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
     UNKNOWN = "UNKNOWN"
 
 
-class TestType(str, Enum):
+class TestType(StrEnum):
     UNIT_TESTS = "unit-tests"
     INTEGRATION_TESTS = "integration-tests"
     GRAPH_TESTS = "graph-tests"
@@ -65,12 +66,11 @@ class TestResult:
         return (
             self.name == other.name
             and self.status == other.status
-            and self.time == other.status
             and self.message == other.message
         )
 
     def __hash__(self):
-        return hash((self.name, self.status, self.time, self.message))
+        return hash((self.name, self.status, self.message))
 
 
 class PytestTestSuite:

@@ -25,10 +25,11 @@ INTEGRATION_FROM_VERSION_DICT = {
 class IsFromVersionSufficientIntegrationValidator(
     IsFromVersionSufficientValidator, BaseValidator[ContentTypes]
 ):
-    description = "Validate that an integration has a high enough fromversion field according to whether it's a powershell/feed/regular."
     error_message = "The integration is a {0} integration and therefore require a fromversion field of at least {1}, current version is: {2}."
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

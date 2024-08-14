@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.run_cmd.runner import Runner
 
 STRING_TYPES = (str, bytes)  # type: ignore
+DEFAULT_ARG_DESCRIPTION = "No description provided."
 
 
 class HEADER_TYPE:

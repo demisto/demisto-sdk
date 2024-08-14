@@ -25,7 +25,7 @@ jobs:
       - name: Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Validate Changelog
         env:
@@ -53,23 +53,26 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
-      - name: Run Pre Commit
-        uses: pre-commit/action@v3.0.1
+      - name: Cache pre-commit
+        uses: actions/cache@v4
         with:
-          extra_args: --all-files
+          path: ~/.cache/pre-commit
+          key: pre-commit-3|3.11|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}
+
+      - name: Run pre-commit
+        run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files
 
       - name: Run Pytest collection
-        run: |
-          poetry run pytest --collect-only .
+        run: poetry run pytest --collect-only .
 
   unit-tests:
     name: Unit Tests / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     defaults:
       run:
@@ -114,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     defaults:
       run:
@@ -153,7 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     defaults:
       run:
@@ -193,10 +196,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
       - name: Download all artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
@@ -205,9 +208,13 @@ jobs:
           coverage combine **/.coverage
           coverage report
           coverage xml
-      - name: Coveralls
+      - name: Coveralls-Action
         uses: coverallsapp/github-action@v2
-      - name: Coveralls v2
+        continue-on-error: true
+      - name: Coveralls-Comment
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        continue-on-error: true
         run: |
           if [ -n "$COVERALLS_REPO_TOKEN" ]; then
             pip install coveralls
@@ -216,53 +223,9 @@ jobs:
             echo "Skipping coveralls"
           fi
 
-  test-content-infrastructure:
-    runs-on: ubuntu-latest
-    name: Test Content Infrastructure
-    steps:
-      - name: Checkout SDK
-        uses: actions/checkout@v4
-
-      - name: Checkout content
-        uses: actions/checkout@v4
-        with:
-          repository: demisto/content
-          path: content
-
-      - name: Get commit hash
-        id: get-commit
-        run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
-
-      - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_environment
-        with:
-          python-version: "3.10"
-          working-dir: content
-          poetry-install-arguments: "--with ci"
-
-      - name: Un-install content version of SDK
-        run: |
-          cd content
-          poetry run pip uninstall demisto-sdk -y
-      - name: Install current SDK branch
-        run: |
-          cd content
-          poetry run pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
-      - name: Run content unit tests
-        timeout-minutes: 60
-        env:
-          PYTHONPATH: ${{ github.workspace }}/content
-        run: |
-          cd content
-          poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
-          poetry run pytest ./Tests/Marketplace/Tests/ -v
-          poetry run pytest ./Tests/tests -v
-          poetry run pytest ./Tests/private_build/tests -v
-          poetry run pytest Utils -v
-
   test-pre-commit-command:
     runs-on: ubuntu-latest
-    name: Test Demisto-SDK Pre-Commit Command
+    name: Test Pre-Commit Command
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -290,7 +253,7 @@ jobs:
         run: |
           # Run only a specific validation to make sure validate is triggered successfully in demisto-sdk pre-commit
           cd content
-          echo -e "[validate]\nrun_specific_validations=BA101" > .demisto-sdk-conf
+          echo -e '[use_git]\nselect = ["BA100"]\n[path_based_validations]\nselect = ["BA100"]' > validation_config.toml
 
       - name: run pre-commit on changed files
         timeout-minutes: 60
@@ -305,15 +268,23 @@ jobs:
 
           echo "# test" >> Tests/collect_tests.py
           git add .
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
 
       - name: run pre-commit on input files
         timeout-minutes: 60
-        continue-on-error: true # TODO - fail if there is an error here
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
+
+      - name: run pre-commit with default pre-commit config shipped with the SDK
+        timeout-minutes: 60
+        run: |
+          source $(poetry env info --path)/bin/activate
+          cd content
+          rm -rf .pre-commit-config_template.yaml
+          rm -f Tests/docker_native_image_config.json
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
 
       - name: Upload artifacts
         if: always()
@@ -321,6 +292,44 @@ jobs:
         with:
           artifacts-path-dir: content/test-pre-commit-command
           artifact-name: test-demisto-sdk-pre-commit-command-artifacts
+
+  test-validate-content-path:
+    runs-on: ubuntu-latest
+    name: Test validate-content-path
+    steps:
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whether validate_content_path changed
+        id: files-changed
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            demisto_sdk/scripts/validate_content_path.py
+            demisto_sdk/tests/validate_content_path_test.py
+
+      - name: Checkout Content
+        if: steps.files-changed.outputs.any_changed == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          repository: demisto/content
+          path: content
+
+      - name: Setup Python Environment
+        if: steps.files-changed.outputs.any_changed == 'true'
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.11"
+
+      - name: Validate content master paths
+        if: steps.files-changed.outputs.any_changed == 'true'
+        run: |
+          source $(poetry env info --path)/bin/activate
+          validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown --skip-suffix
+
 
   test-graph-commands:
     runs-on: ubuntu-latest
@@ -332,7 +341,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Checkout content
         uses: actions/checkout@v4
@@ -378,7 +387,7 @@ jobs:
         with:
           artifacts-path-dir: test-old-validate-command
           artifact-name: test-old-validate-command-artifacts
-          validate-script-path: Tests/scripts/validate.sh
+          validate-arguments: "-a --graph --skip-pack-dependencies --skip-new-validate --run-old-validate --prev-ver origin/master"
 
   validate-files-new-validate:
     runs-on: ubuntu-latest
@@ -395,53 +404,7 @@ jobs:
         with:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
-          validate-script-path: Tests/scripts/new_validate.sh
-
-  test-lint:
-    runs-on: ubuntu-latest
-    name: Test Lint Command
-    timeout-minutes: 60
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python Environment
-        uses: ./.github/actions/setup_environment
-        with:
-          python-version: "3.10"
-
-      - name: Checkout content
-        uses: actions/checkout@v4
-        with:
-          repository: demisto/content
-          path: content
-
-      - name: Run lint on python and powershell files
-        run: |
-          source $(poetry env info --path)/bin/activate
-
-          cd content
-          mkdir -p test-lint
-
-          # python file (CommonServerPython lint is running over python 3 and 2)
-          demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython --coverage-report test-lint/coverage-report
-          if [[ -f test-lint/coverage-report/html/index.html && -f test-lint/coverage-report/coverage.xml ]]
-            then
-              echo "coverage files found."
-            else
-              echo "coverage files not found."
-              exit 1
-          fi
-          # ps file
-          demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
-
-      - name: Upload artifacts
-        if: always()
-        uses: ./.github/actions/upload_artifacts
-        with:
-          artifacts-path-dir: content/test-lint
-          artifact-name: test-lint-artifacts
+          validate-arguments: "-a --prev-ver origin/master --config-path sdk_validation_config.toml"
 
   slack-notify-master-failure:
     needs:
@@ -450,12 +413,10 @@ jobs:
         unit-tests,
         integration-tests,
         graph-tests,
-        test-content-infrastructure,
         test-pre-commit-command,
         test-graph-commands,
         validate-files-old-validate,
         validate-files-new-validate,
-        test-lint,
       ]
     if: failure() && github.ref_name == 'master'
     runs-on: ubuntu-latest
@@ -466,7 +427,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -474,3 +435,48 @@ jobs:
       - name: Notify Failed Jobs
         run: |
           poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
+  generate_validate_docs:
+    name: Generate Validate Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.11"
+
+      - name: Generate Docs
+        run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: validation_docs.md
+          if-no-files-found: error
+          name: validation_docs
+
+      - name: Output to GitHub Action Summary
+        run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY
+
+  verify-pip-installation:
+    name: Verify SDK Pip Installation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: pip intsall current project
+        run: pip install .
+
+      - name: Verify Installation
+        run: demisto-sdk --version

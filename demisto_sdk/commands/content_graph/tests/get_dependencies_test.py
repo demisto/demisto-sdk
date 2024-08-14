@@ -58,7 +58,7 @@ def create_mini_content(graph_repo: Repo):
         {"dependson": {"must": ["SampleScript2", "pack2-test-command"]}}
     )
 
-    pack4_test_playbook = pack4.create_test_playbook("SampleTestPlaybook")
+    pack4_test_playbook = pack4.create_test_playbook("SamplePlaybookTest")
     pack4_test_playbook.add_default_task("SampleScript")
 
 

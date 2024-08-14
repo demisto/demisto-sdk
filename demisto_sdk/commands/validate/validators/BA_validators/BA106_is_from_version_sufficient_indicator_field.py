@@ -26,12 +26,11 @@ ContentTypes = IndicatorField
 class IsFromVersionSufficientIndicatorFieldValidator(
     IsFromVersionSufficientValidator, BaseValidator[ContentTypes]
 ):
-    description = (
-        "Validate that the indicator fromversion is sufficient according to its type"
-    )
     error_message = "The fromversion of IndicatorField with type {0} must be at least {1}, current is {2}."
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

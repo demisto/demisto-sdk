@@ -15,12 +15,13 @@ from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseNode,
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Integration,
 )
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
     IntegrationScript,
+    Output,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_scripts_prepare import (
     MarketplaceIncidentToAlertScriptsPreparer,
@@ -32,6 +33,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
     skip_prepare: List[str]
     runas: str = ""
     args: List[Argument] = Field([], exclude=True)
+    outputs: List[Output] = Field([], exclude=True)
 
     def metadata_fields(self) -> Set[str]:
         return (
@@ -62,12 +64,12 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         return data
 
     @property
-    def imported_by(self) -> List[BaseNode]:
+    def imported_by(self) -> List[Integration]:
         return [
-            r.content_item_to
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.IMPORTS]
             if r.content_item_to.database_id == r.source_id
-        ]
+        ]  # type: ignore[return-value]
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
@@ -114,7 +116,6 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
                 marketplace == MarketplaceVersions.MarketplaceV2,
                 "incident" in self.name.lower(),
                 SKIP_PREPARE_SCRIPT_NAME not in self.skip_prepare,
-                not self.deprecated,
             )
         )
 

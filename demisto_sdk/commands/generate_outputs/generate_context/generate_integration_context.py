@@ -81,7 +81,7 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
 
 
 def _output_path_to_description(
-    command_outputs: List[Dict[str, str]]
+    command_outputs: List[Dict[str, str]],
 ) -> Dict[str, str]:
     """creates a mapping of contextPath -> description, if the description is not null."""
     descriptions = {}

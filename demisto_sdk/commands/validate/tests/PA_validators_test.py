@@ -3,6 +3,7 @@ import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
+    MARKETPLACE_KEY_PACK_METADATA,
     MODULES,
     PACK_METADATA_AUTHOR,
     PACK_METADATA_CATEGORIES,
@@ -13,7 +14,9 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
+    MarketplaceVersions,
 )
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFile
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_old_file_pointers,
@@ -78,8 +81,17 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA125_is_valid_pack_
 from demisto_sdk.commands.validate.validators.PA_validators.PA127_is_valid_url_field import (
     IsValidURLFieldValidator,
 )
+from demisto_sdk.commands.validate.validators.PA_validators.PA128_validate_pack_files import (
+    PackFilesValidator,
+)
 from demisto_sdk.commands.validate.validators.PA_validators.PA130_is_current_version_correct_format import (
     IsCurrentVersionCorrectFormatValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA131_is_default_data_source_provided import (
+    IsDefaultDataSourceProvidedValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA132_is_valid_default_datasource import (
+    IsValidDefaultDataSourceNameValidator,
 )
 
 
@@ -107,7 +119,7 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA130_is_current_ver
         ),
     ],
 )
-def test_PackMetadataNameValidator_is_valid(
+def test_PackMetadataNameValidator_obtain_invalid_content_items(
     expected_number_of_failures, packmetadatas_objects_list
 ):
     """
@@ -120,7 +132,7 @@ def test_PackMetadataNameValidator_is_valid(
         - Case 5: One pack_metadata with name which is the default template, and one pack_metadata with name which is an empty string.
         - Case 6: One name which is the default template, one name which is just a space, and one name which is a valid name.
     When
-    - Calling the PackMetadataNameValidator is_valid function.
+    - Calling the PackMetadataNameValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Should fail 1 pack meta data.
@@ -130,7 +142,9 @@ def test_PackMetadataNameValidator_is_valid(
         - Case 5: Should fail 2 pack metadatas.
         - Case 6: Should fail 2 pack metadatas.
     """
-    results = PackMetadataNameValidator().is_valid(packmetadatas_objects_list)
+    results = PackMetadataNameValidator().obtain_invalid_content_items(
+        packmetadatas_objects_list
+    )
     assert len(results) == expected_number_of_failures
     assert (
         not results
@@ -162,7 +176,7 @@ def test_PackMetadataNameValidator_is_valid(
         ),
     ],
 )
-def test_IsCreatedFieldInISOFormatValidator_is_valid(
+def test_IsCreatedFieldInISOFormatValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -172,14 +186,16 @@ def test_IsCreatedFieldInISOFormatValidator_is_valid(
         - Case 2: One pack_metadata with an invalid created field.
         - Case 3: One pack_metadata with one a valid created field and one pack_metadata with an invalid created field.
     When
-    - Calling the IsCreatedFieldInISOFormatValidator is_valid function.
+    - Calling the IsCreatedFieldInISOFormatValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail any pack meta data.
         - Case 2: Should fail 1 pack meta data (all).
         - Case 3: Should fail 1 pack meta data.
     """
-    results = IsCreatedFieldInISOFormatValidator().is_valid(content_items)
+    results = IsCreatedFieldInISOFormatValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -229,7 +245,7 @@ def test_IsCreatedFieldInISOFormatValidator_fix():
         ),
     ],
 )
-def test_IsCurrentVersionCorrectFormatValidator_is_valid(
+def test_IsCurrentVersionCorrectFormatValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures
 ):
     """
@@ -246,14 +262,16 @@ def test_IsCurrentVersionCorrectFormatValidator_is_valid(
             - One pack_metadata with a valid currentVersion field.
             - One pack_metadata with an invalid currentVersion field due to a triple digits in the middle of the version string.
     When
-    - Calling the IsCurrentVersionCorrectFormatValidator is_valid function.
+    - Calling the IsCurrentVersionCorrectFormatValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail any pack meta data.
         - Case 2: Should fail 1 pack meta data (all).
         - Case 3: Should fail 4 pack meta datas.
     """
-    results = IsCurrentVersionCorrectFormatValidator().is_valid(content_items)
+    results = IsCurrentVersionCorrectFormatValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert (
         not results
@@ -279,32 +297,35 @@ def test_IsCurrentVersionCorrectFormatValidator_is_valid(
                         PACK_METADATA_TAGS,
                         PACK_METADATA_USE_CASES,
                         PACK_METADATA_KEYWORDS,
+                        MARKETPLACE_KEY_PACK_METADATA,
                     ]
                 )
             ],
             1,
             [
-                f"The following fields are missing from the file: {', '.join([PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SUPPORT, PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_CATEGORIES, PACK_METADATA_TAGS, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS])}."
+                f"The following fields are missing from the file: {', '.join([PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SUPPORT, PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_CATEGORIES, PACK_METADATA_TAGS, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS, MARKETPLACE_KEY_PACK_METADATA])}."
             ],
         ),
     ],
 )
-def test_MissingFieldInPackMetadataValidator_is_valid(
+def test_MissingFieldInPackMetadataValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
     content_items.
         - Case 1: One pack_metadata without missing fields.
-        - Case 2: One pack_metadata with name, desc, support, currentVersion, author, url, categories, tags, use_cases, keywords fields missing.
+        - Case 2: One pack_metadata with name, desc, support, currentVersion, author, url, categories, tags, use_cases, keywords, marketplaces fields missing.
     When
-    - Calling the MissingFieldInPackMetadataValidator is_valid function.
+    - Calling the MissingFieldInPackMetadataValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Should fail.
     """
-    results = MissingFieldInPackMetadataValidator().is_valid(content_items)
+    results = MissingFieldInPackMetadataValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -338,7 +359,7 @@ def test_MissingFieldInPackMetadataValidator_is_valid(
         ),
     ],
 )
-def test_EmptyMetadataFieldsValidator_is_valid(
+def test_EmptyMetadataFieldsValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -351,7 +372,7 @@ def test_EmptyMetadataFieldsValidator_is_valid(
             - One pack_metadata with an empty useCases field value.
             - One pack_metadata with an empty useCases field value, and an empty keywords field.
     When
-    - Calling the EmptyMetadataFieldsValidator is_valid function.
+    - Calling the EmptyMetadataFieldsValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -361,7 +382,7 @@ def test_EmptyMetadataFieldsValidator_is_valid(
             - The second pack_metadata should fail due to an empty useCases field.
             - The third pack_metadata should fail due to an empty useCases field.
     """
-    results = EmptyMetadataFieldsValidator().is_valid(content_items)
+    results = EmptyMetadataFieldsValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -395,7 +416,7 @@ def test_EmptyMetadataFieldsValidator_is_valid(
         ),
     ],
 )
-def test_ValidTagsPrefixesValidator_is_valid(
+def test_ValidTagsPrefixesValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_sub_msg
 ):
     """
@@ -405,14 +426,14 @@ def test_ValidTagsPrefixesValidator_is_valid(
         - Case 2: One pack_metadata with valid tags
         - Case 3: One pack_metadata with invalid tags
     When
-    - Calling the ValidTagsPrefixesValidator is_valid function.
+    - Calling the ValidTagsPrefixesValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Shouldn't fail.
         - Case 3: Should fail the pack_metadata and include the tag in the message.
     """
-    results = ValidTagsPrefixesValidator().is_valid(content_items)
+    results = ValidTagsPrefixesValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert not len(results) or expected_sub_msg in results[0].message
 
@@ -462,7 +483,7 @@ def test_ValidTagsPrefixesValidator_fix():
         ),
     ],
 )
-def test_IsVersionMatchRnValidator_is_valid(
+def test_IsVersionMatchRnValidator_obtain_invalid_content_items(
     content_items, rn_versions, expected_number_of_failures, expected_msgs
 ):
     """
@@ -472,7 +493,7 @@ def test_IsVersionMatchRnValidator_is_valid(
         - Case 2: One pack_metadata with currentVersion = 1.0.0 and no latest_rn_version.
         - Case 3: Three pack_metadatas with mismatches between the currentVersion and latest_rn_version.
     When
-    - Calling the IsVersionMatchRnValidator is_valid function.
+    - Calling the IsVersionMatchRnValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -481,7 +502,7 @@ def test_IsVersionMatchRnValidator_is_valid(
     """
     for rn_version, content_item in zip(rn_versions, content_items):
         content_item.latest_rn_version = rn_version
-    results = IsVersionMatchRnValidator().is_valid(content_items)
+    results = IsVersionMatchRnValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -512,7 +533,7 @@ def test_IsVersionMatchRnValidator_is_valid(
         ),
     ],
 )
-def test_IsValidCategoriesValidator_is_valid(
+def test_IsValidCategoriesValidator_obtain_invalid_content_items(
     mocker, content_items, expected_number_of_failures
 ):
     """
@@ -525,7 +546,7 @@ def test_IsValidCategoriesValidator_is_valid(
             - One pack_metadata with an invalid category.
             - One pack_metadata with 2 valid categories.
     When
-    - Calling the IsValidCategoriesValidator is_valid function.
+    - Calling the IsValidCategoriesValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -537,7 +558,7 @@ def test_IsValidCategoriesValidator_is_valid(
         "demisto_sdk.commands.validate.validators.PA_validators.PA103_is_valid_categories.get_current_categories",
         return_value=["Network Security", "Utilities"],
     )
-    results = IsValidCategoriesValidator().is_valid(content_items)
+    results = IsValidCategoriesValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert not results or all(
         [
@@ -564,7 +585,9 @@ def test_IsValidCategoriesValidator_is_valid(
         ),
     ],
 )
-def test_IsValidModulesValidator_is_valid(content_items, expected_number_of_failures):
+def test_IsValidModulesValidator_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
     """
     Given
     content_items.
@@ -574,14 +597,14 @@ def test_IsValidModulesValidator_is_valid(content_items, expected_number_of_fail
             - One pack_metadata with a valid module and an invalid one.
             - One pack_metadata with an invalid module.
     When
-    - Calling the IsValidModulesValidator is_valid function.
+    - Calling the IsValidModulesValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Shouldn't fail.
         - Case 3: Should fail both.
     """
-    results = IsValidModulesValidator().is_valid(content_items)
+    results = IsValidModulesValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert not results or all(
         [
@@ -631,7 +654,7 @@ def test_IsValidModulesValidator_fix():
         ),
     ],
 )
-def test_ShouldIncludeModulesValidator_is_valid(
+def test_ShouldIncludeModulesValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures
 ):
     """
@@ -641,14 +664,16 @@ def test_ShouldIncludeModulesValidator_is_valid(
         - Case 2: One pack_metadata with a valid module and MPV2 in marketplaces section.
         - Case 3: One pack_metadata with a valid module and without MPV2 in marketplaces section.
     When
-    - Calling the ShouldIncludeModulesValidator is_valid function.
+    - Calling the ShouldIncludeModulesValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Shouldn't fail.
         - Case 3: Should fail.
     """
-    results = ShouldIncludeModulesValidator().is_valid(content_items)
+    results = ShouldIncludeModulesValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert not results or all(
         [
@@ -692,7 +717,7 @@ def test_ShouldIncludeModulesValidator_fix():
         ),
     ],
 )
-def test_IsValidDescriptionFieldValidator_is_valid(
+def test_IsValidDescriptionFieldValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures
 ):
     """
@@ -703,13 +728,15 @@ def test_IsValidDescriptionFieldValidator_is_valid(
             - One pack_metadata with an empty description.
             - One pack_metadata with "fill mandatory field" as description.
     When
-    - Calling the IsValidDescriptionFieldValidator is_valid function.
+    - Calling the IsValidDescriptionFieldValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Should fail both.
     """
-    results = IsValidDescriptionFieldValidator().is_valid(content_items)
+    results = IsValidDescriptionFieldValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert not results or all(
         [
@@ -720,6 +747,212 @@ def test_IsValidDescriptionFieldValidator_is_valid(
             for result in results
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "pack, integrations, expected_number_of_failures",
+    [
+        (
+            create_pack_object(),
+            [
+                create_integration_object(
+                    ["script.isfetch", "name"], ["true", "TestIntegration1"]
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            1,
+        ),
+        (
+            create_pack_object(["defaultDataSource"], ["defaultDataSourceValue"]),
+            [
+                create_integration_object(
+                    ["script.isfetch", "name"], ["true", "defaultDataSourceValue"]
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            0,
+        ),
+        (
+            create_pack_object(),
+            [create_integration_object(["script.isfetch"], ["true"])],
+            0,
+        ),
+        (
+            create_pack_object(["marketplaces"], [[MarketplaceVersions.XSOAR]]),
+            [
+                create_integration_object(
+                    ["script.isfetch", "name"], ["true", "TestIntegration1"]
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            0,
+        ),
+    ],
+)
+def test_IsDefaultDataSourceProvidedValidator_obtain_invalid_content_items(
+    pack, integrations, expected_number_of_failures
+):
+    """
+    Given
+    content_items.
+        - Case 1: One XSIAM pack_metadata with 2 integrations and no defaultDataSource.
+        - Case 2: One XSIAM pack_metadata with 2 integrations and a defaultDataSource.
+        - Case 3: One XSIAM pack_metadata with one integration and no defaultDataSource.
+        - Case 4: One non XSIAM pack_metadata with 2 integrations.
+
+    When
+        - Calling the IsDefaultDataSourceProvidedValidator obtain_invalid_content_items function.
+
+    Then
+        - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
+        - Case 3: Shouldn't fail.
+        - Case 4: Shouldn't fail.
+    """
+    pack.content_items.integration.extend(integrations)
+    results = IsDefaultDataSourceProvidedValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == expected_number_of_failures
+    assert not results or all(
+        [
+            (
+                result.message
+                == "The pack metadata does not contain the 'defaultDataSource' field. "
+                "Please specify a defaultDataSource from the following options: ['TestIntegration', 'TestIntegration']."
+            )
+            for result in results
+        ]
+    )
+
+
+def test_IsDefaultDataSourceProvidedValidator_fix():
+    """
+    Given
+        - A pack_metadata with no defaultDataSource, for a pack with one event collector
+
+    When
+        - Calling the IsDefaultDataSourceProvidedValidator fix function.
+
+    Then
+        - Make sure that the defaultDataSource is set to the event collector integration id
+    """
+    content_item = create_pack_object()
+    integrations = [
+        create_integration_object(
+            ["script.isfetchevents", "commonfields.id"],
+            ["true", "defaultDataSourceValue"],
+        ),
+        create_integration_object(["script.isfetch"], ["true"]),
+    ]
+    content_item.content_items.integration.extend(integrations)
+    assert not content_item.default_data_source_id
+    validator = IsDefaultDataSourceProvidedValidator()
+    assert validator.fix(content_item).message == (
+        "Set the 'defaultDataSource' for 'HelloWorld' pack to the "
+        "'defaultDataSourceValue' integration, as it is an event collector."
+    )
+    assert content_item.default_data_source_id == "defaultDataSourceValue"
+
+
+@pytest.mark.parametrize(
+    "pack, integrations, expected_number_of_failures",
+    [
+        (
+            create_pack_object(
+                ["defaultDataSource"], ["InvalidDefaultDataSourceValue"]
+            ),
+            [
+                create_integration_object(
+                    ["script.isfetch", "commonfields.id"], ["true", "TestIntegration1"]
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            1,
+        ),
+        (
+            create_pack_object(["defaultDataSource"], ["defaultDataSourceValue"]),
+            [
+                create_integration_object(
+                    ["script.isfetch", "commonfields.id"],
+                    ["true", "defaultDataSourceValue"],
+                ),
+                create_integration_object(["script.isfetch"], ["true"]),
+            ],
+            0,
+        ),
+        (
+            create_pack_object(),
+            [create_integration_object(["script.isfetch"], ["true"])],
+            0,
+        ),
+    ],
+)
+def test_IsValidDefaultDataSourceNameValidator_obtain_invalid_content_items(
+    pack, integrations, expected_number_of_failures
+):
+    """
+    Given
+        - Case 1: One XSIAM pack_metadata with 2 integrations and a defaultDataSource that is not one of the pack integrations.
+        - Case 2: One XSIAM pack_metadata with 2 integrations and a defaultDataSource that is one of the pack integrations.
+        - Case 3: One XSIAM pack_metadata with one integration and no defaultDataSource.
+
+    When
+        - Calling the IsValidDefaultDataSourceNameValidator obtain_invalid_content_items function.
+
+    Then
+        - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
+        - Case 3: Shouldn't fail.
+    """
+    pack.content_items.integration.extend(integrations)
+    results = IsValidDefaultDataSourceNameValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == expected_number_of_failures
+    assert not results or all(
+        [
+            (
+                result.message
+                == "Pack metadata contains an invalid 'defaultDataSource': InvalidDefaultDataSourceValue. "
+                "Please fill in a valid datasource integration, one of these options: ['TestIntegration1', 'TestIntegration']."
+            )
+            for result in results
+        ]
+    )
+
+
+def test_IsValidDefaultDataSourceNameValidator_fix():
+    """
+    Given
+        - A pack_metadata with a defaultDataSource value that holds the integration display name instead of integration id
+
+    When
+        - Calling the IsValidDefaultDataSourceNameValidator fix function.
+
+    Then
+        - Make sure that the defaultDataSource is set to the integration id
+    """
+    content_item = create_pack_object(
+        ["defaultDataSource"], ["Default Data Source Value"]
+    )
+    integrations = [
+        create_integration_object(
+            ["script.isfetch", "commonfields.id", "display"],
+            ["true", "defaultDataSourceValue", "Default Data Source Value"],
+        ),
+        create_integration_object(["script.isfetch"], ["true"]),
+    ]
+    content_item.content_items.integration.extend(integrations)
+    assert content_item.default_data_source_id == "Default Data Source Value"
+    validator = IsValidDefaultDataSourceNameValidator()
+    assert validator.fix(content_item).message == (
+        "Updated the 'defaultDataSource' for the 'HelloWorld' pack to use the 'defaultDataSourceValue' "
+        "integration ID instead of the display name that was previously used."
+    )
+    assert content_item.default_data_source_id == "defaultDataSourceValue"
 
 
 @pytest.mark.parametrize(
@@ -736,7 +969,7 @@ def test_IsValidDescriptionFieldValidator_is_valid(
         ),
     ],
 )
-def test_IsURLOrEmailExistsValidator_is_valid(
+def test_IsURLOrEmailExistsValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures
 ):
     """
@@ -748,13 +981,13 @@ def test_IsURLOrEmailExistsValidator_is_valid(
             - One pack_metadata partner supported without both url and email fields.
             - One pack_metadata developer supported without both url and email fields.
     When
-    - Calling the IsURLOrEmailExistsValidator is_valid function.
+    - Calling the IsURLOrEmailExistsValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Should fail the partner & developer supported metadatas.
     """
-    results = IsURLOrEmailExistsValidator().is_valid(content_items)
+    results = IsURLOrEmailExistsValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert not results or all(
         [
@@ -789,7 +1022,7 @@ def test_IsURLOrEmailExistsValidator_is_valid(
         ),
     ],
 )
-def test_IsValidSupportTypeValidator_is_valid(
+def test_IsValidSupportTypeValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -804,7 +1037,7 @@ def test_IsValidSupportTypeValidator_is_valid(
             - One developerr supported pack_metadata. (a valid support type with the laster letter duplicated).
             - One pack_metadata with a non-supported support type (someone).
     When
-    - Calling the IsValidSupportTypeValidator is_valid function.
+    - Calling the IsValidSupportTypeValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -813,7 +1046,7 @@ def test_IsValidSupportTypeValidator_is_valid(
         - Case 4: Shouldn't fail.
         - Case 5: Should fail all 3.
     """
-    results = IsValidSupportTypeValidator().is_valid(content_items)
+    results = IsValidSupportTypeValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -840,7 +1073,7 @@ def test_IsValidSupportTypeValidator_is_valid(
         ),
     ],
 )
-def test_IsValidCertificateValidator_is_valid(
+def test_IsValidCertificateValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -852,14 +1085,14 @@ def test_IsValidCertificateValidator_is_valid(
             - One pack_metadata with `certified` as certification.
             - One pack_metadata with `non-certified` as certification.
     When
-    - Calling the IsValidCertificateValidator is_valid function.
+    - Calling the IsValidCertificateValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Shouldn't fail.
         - Case 3: Should fail only the meta_data with `non-certified` as certification.
     """
-    results = IsValidCertificateValidator().is_valid(content_items)
+    results = IsValidCertificateValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -905,7 +1138,7 @@ def test_IsValidCertificateValidator_is_valid(
         ),
     ],
 )
-def test_IsPriceChangedValidator_is_valid(
+def test_IsPriceChangedValidator_obtain_invalid_content_items(
     content_items, old_content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -920,7 +1153,7 @@ def test_IsPriceChangedValidator_is_valid(
             - new pack_metadata with price compare to old one that doesn't have price.
             - new pack_metadata without price compare to old one that have price.
     When
-    - Calling the IsPriceChangedValidator is_valid function.
+    - Calling the IsPriceChangedValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -929,7 +1162,7 @@ def test_IsPriceChangedValidator_is_valid(
         - Case 4: Should fail both.
     """
     create_old_file_pointers(content_items, old_content_items)
-    results = IsPriceChangedValidator().is_valid(content_items)
+    results = IsPriceChangedValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -997,7 +1230,7 @@ def test_IsPriceChangedValidator_fix(
         ),
     ],
 )
-def test_IsValidURLFieldValidator_is_valid(
+def test_IsValidURLFieldValidator_obtain_invalid_content_items(
     mocker, content_items, expected_number_of_failures
 ):
     """
@@ -1011,7 +1244,7 @@ def test_IsValidURLFieldValidator_is_valid(
             - One developer supported pack_metadata with a valid url.
             - One partner supported pack_metadata with a valid url.
     When
-    - Calling the IsValidURLFieldValidator is_valid function.
+    - Calling the IsValidURLFieldValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -1025,7 +1258,7 @@ def test_IsValidURLFieldValidator_is_valid(
         "demisto_sdk.commands.validate.validators.PA_validators.PA103_is_valid_categories.get_current_categories",
         return_value=["Network Security", "Utilities"],
     )
-    results = IsValidURLFieldValidator().is_valid(content_items)
+    results = IsValidURLFieldValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert not results or all(
         [
@@ -1078,7 +1311,7 @@ def test_IsValidURLFieldValidator_fix():
         ),
     ],
 )
-def test_IsValidPackNameValidator_is_valid(
+def test_IsValidPackNameValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -1092,13 +1325,13 @@ def test_IsValidPackNameValidator_is_valid(
             - One pack with a name with the word pack.
             - One pack with a name with the word partner.
     When
-    - Calling the IsValidPackNameValidator is_valid function.
+    - Calling the IsValidPackNameValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Should fail all the last 4 packs.
     """
-    results = IsValidPackNameValidator().is_valid(content_items)
+    results = IsValidPackNameValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1130,7 +1363,7 @@ def test_IsValidPackNameValidator_is_valid(
         ),
     ],
 )
-def test_IsValidTagsValidator_is_valid(
+def test_IsValidTagsValidator_obtain_invalid_content_items(
     mocker, content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -1139,7 +1372,7 @@ def test_IsValidTagsValidator_is_valid(
         - Case 1: One pack_metadata with valid name.
         - Case 2: Four pack_metadatas: Two with approved tags and two with non-approved tags.
     When
-    - Calling the IsValidTagsValidator is_valid function.
+    - Calling the IsValidTagsValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -1160,7 +1393,7 @@ def test_IsValidTagsValidator_is_valid(
             "json",
         ),
     )
-    results = IsValidTagsValidator().is_valid(content_items)
+    results = IsValidTagsValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1217,7 +1450,7 @@ def test_IsValidTagsValidator_fix():
         ),
     ],
 )
-def test_IsValidUseCasesValidator_is_valid(
+def test_IsValidUseCasesValidator_obtain_invalid_content_items(
     mocker,
     content_items,
     approved_use_cases,
@@ -1235,7 +1468,7 @@ def test_IsValidUseCasesValidator_is_valid(
             - One pack_metadata with an invalid useCases section.
             - One pack_metadata with useCases section containing two valid and one invalid useCases.
     When
-    - Calling the IsValidUseCasesValidator is_valid function.
+    - Calling the IsValidUseCasesValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -1246,7 +1479,7 @@ def test_IsValidUseCasesValidator_is_valid(
         "demisto_sdk.commands.validate.validators.PA_validators.PA119_is_valid_use_cases.get_current_usecases",
         return_value=approved_use_cases,
     )
-    results = IsValidUseCasesValidator().is_valid(content_items)
+    results = IsValidUseCasesValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1322,7 +1555,7 @@ def test_IsValidUseCasesValidator_fix():
         ),
     ],
 )
-def test_ShouldPackBeDeprecatedValidator_is_valid(
+def test_ShouldPackBeDeprecatedValidator_obtain_invalid_content_items(
     pack,
     is_deprecated_pack,
     integrations,
@@ -1339,7 +1572,7 @@ def test_ShouldPackBeDeprecatedValidator_is_valid(
         - Case 3: A non deprecated pack with a deprecated integration and a non deprecated script
         - Case 4: A deprecated pack with a deprecated integration.
     When
-    - Calling the ShouldPackBeDeprecatedValidator is_valid function.
+    - Calling the ShouldPackBeDeprecatedValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of packs failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -1352,7 +1585,9 @@ def test_ShouldPackBeDeprecatedValidator_is_valid(
     pack.content_items.playbook.extend(playbooks)
     pack.content_items.script.extend(scripts)
     content_items = [pack]
-    results = ShouldPackBeDeprecatedValidator().is_valid(content_items)
+    results = ShouldPackBeDeprecatedValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1360,3 +1595,49 @@ def test_ShouldPackBeDeprecatedValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize("file_attribute", ("readme", "secrets_ignore", "pack_ignore"))
+def test_PackFilesValidator(file_attribute: str):
+    """
+    Given   A pack
+    When    Calling PackFilesValidator.obtain_invalid_content_items
+    Then    Make sure it only fails when one of the required files has exist=False
+    """
+    pack = create_pack_object()
+    meta_file: RelatedFile = getattr(pack, file_attribute)
+
+    assert meta_file.exist  # sanity check
+    assert not PackFilesValidator().obtain_invalid_content_items(
+        [pack]
+    )  # valid as default
+
+    meta_file.exist = False  # mock deleting the file
+    assert PackFilesValidator().obtain_invalid_content_items(
+        [pack]
+    )  # invalid once deleted
+
+
+@pytest.mark.parametrize("file_attribute", ("readme", "secrets_ignore", "pack_ignore"))
+def test_PackFilesValidator_fix(file_attribute: str):
+    """
+    Given   A pack
+    When    Calling PackFilesValidator.fix
+    Then    Make sure the file is created
+    """
+    pack = create_pack_object()
+    meta_file: RelatedFile = getattr(pack, file_attribute)
+
+    meta_file.file_path.unlink()
+    meta_file.exist = False
+
+    assert not meta_file.exist  # sanity check
+    assert not meta_file.file_path.exists()  # sanity check
+
+    assert PackFilesValidator().obtain_invalid_content_items(
+        [pack]
+    )  # invalid once deleted
+    PackFilesValidator().fix(pack)
+
+    assert meta_file.file_path.exists()
+    assert meta_file.exist  # changed in the fix

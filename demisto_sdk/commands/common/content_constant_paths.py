@@ -4,7 +4,7 @@ from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME, TESTS_
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_content_path
 
-CONTENT_PATH = Path(get_content_path())  # type: ignore
+CONTENT_PATH: Path = Path(get_content_path())  # type: ignore
 
 ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = CONTENT_PATH / "all_packs_dependencies.json"
 
@@ -41,3 +41,5 @@ else:
     logger.debug(
         "Could not add API modules to 'PYTHONPATH' as the base directory does not exist."
     )
+
+PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)

@@ -1,7 +1,7 @@
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Set
 
 import regex
 from git import InvalidGitRepositoryError
@@ -44,6 +44,11 @@ class PackContentItems:
     """A class that holds all pack's content items in lists by their types."""
 
     def __init__(self) -> None:
+        self.case_field = ContentItemsList(content_type=ContentType.CASE_FIELD)
+        self.case_layout = ContentItemsList(content_type=ContentType.CASE_LAYOUT)
+        self.case_layout_rule = ContentItemsList(
+            content_type=ContentType.CASE_LAYOUT_RULE
+        )
         self.classifier = ContentItemsList(content_type=ContentType.CLASSIFIER)
         self.correlation_rule = ContentItemsList(
             content_type=ContentType.CORRELATION_RULE
@@ -119,6 +124,7 @@ class PackMetadataParser:
     """A pack metadata parser."""
 
     def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
+        self._metadata: Dict[str, Any] = metadata
         self.name: str = metadata.get("name", "")
         self.display_name: str = metadata.get("name", "")
         self.description: str = metadata.get("description", "")
@@ -148,22 +154,10 @@ class PackMetadataParser:
             self.commit = ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
+        self.default_data_source_id: str = metadata.get("defaultDataSource") or ""
         self.keywords: List[str] = metadata.get("keywords", [])
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
-        self.marketplaces: List[str] = (
-            metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
-        )
-        if MarketplaceVersions.XSOAR.value in self.marketplaces:
-            # Since we want xsoar-saas and xsoar to contain the same content items.
-            self.marketplaces.append(MarketplaceVersions.XSOAR_SAAS.value)
-
-        if MarketplaceVersions.XSOAR_ON_PREM.value in self.marketplaces:
-            self.marketplaces.append(MarketplaceVersions.XSOAR.value)
-
-        marketplaces_set = set(self.marketplaces)
-        self.marketplaces = sorted(marketplaces_set)
-
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
         self.modules: List[str] = metadata.get("modules", [])
         self.integrations: List[str] = []
@@ -211,6 +205,16 @@ class PackMetadataParser:
     @property
     def use_cases(self):
         return [capital_case(c) for c in self.pack_metadata_dict.get("useCases", [])]
+
+    @property
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        marketplaces = self._metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
+        marketplace_set: Set[MarketplaceVersions] = (
+            BaseContentParser.update_marketplaces_set_with_xsoar_values(
+                {MarketplaceVersions(mp) for mp in marketplaces}
+            )
+        )
+        return sorted(list(marketplace_set))
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():
@@ -322,7 +326,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, [MarketplaceVersions(mp) for mp in self.marketplaces]
+                content_item_path, self.marketplaces
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)
@@ -344,7 +348,11 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def parse_ignored_errors(self, git_sha: Optional[str]):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {}) if not git_sha else {}  # type: ignore
+        self.ignored_errors_dict = (
+            dict(get_pack_ignore_content(self.path.name) or {})  # type:ignore[var-annotated]
+            if not git_sha
+            else {}
+        )
 
     def get_rn_info(self):
         self.latest_rn_version = get_pack_latest_rn_version(str(self.path))
@@ -373,4 +381,5 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "modules": "modules",
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
+            "default_data_source_id": "defaultDataSource",
         }

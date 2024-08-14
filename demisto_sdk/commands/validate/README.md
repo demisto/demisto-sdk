@@ -1,154 +1,107 @@
+This file contains information about our new validate flow. For more information about the old validate flow, refer to [old_validate_readme](demisto_sdk/commands/validate/old_validate_readme.md).
+
 ## Validate
 
-Makes sure your content repository files are in order and have valid yml file scheme.
-
-**Notes**
-
-In order to run the README validator:
-- Node should be installed on you machine
-- The modules '@mdx-js/mdx', 'fs-extra', 'commander' should be installed in node-modules folder.
-    If not installed, the validator will print a warning with the relevant module that is missing.
-    please install it using "npm install *missing_module_name*"
-- 'DEMISTO_README_VALIDATION' environment variable should be set to True.
-    To set the environment variables, run the following shell commands:
-    export DEMISTO_README_VALIDATION=True
-
-In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' or 'DEMISTO_SDK_GITLAB_TOKEN' validation of version bumps in files will be done with the local remote git branch.
+Makes sure your content repository files are in order and have a valid file scheme.
 
 **Use Cases**
-This command is used to make sure that the content repo files are valid and are able to be processed by Demisto.
-This is used in our validation process both locally and in Circle CI.
+This command is used to make sure that the content repo files are valid and are able to be processed by the platform.
+This is used in our validation process both locally and in gitlab.
 
 **Arguments**:
-* **--no-backward-comp**
-Whether to check backward compatibility or not.
-* **--no-conf-json**
-Skip conf.json validation.
-* **-s, --id-set**
-Perform validations using the id_set file.
-* **-idp, --id-set-path**
-The path of the id-set.json used for validations.
-* **--prev-ver**
-Previous branch or SHA1 commit to run checks against.
 * **-g, --use-git**
 Validate changes using git - this will check the current branch's changes against origin/master.
 If the **--post-commit** flag is supplied: validation will run only on the current branch's changed files that have been committed.
 If the **--post-commit** flag is not supplied: validation will run on all changed files in the current branch, both committed and not committed.
-* **-pc, --post-commit**
-Whether the validation should run only on the current branch's committed changed files. This applies only when the **-g** flag is supplied.
-* **-st, --staged**
-Whether the validation should run only on the current branch's staged files. This applies only when the **-g** flag is supplied.
-* **-iu, --include-untracked**
-Whether to include untracked files in the validation. This applies only when the **-g** flag is supplied.
 * **-a, --validate-all**
 Whether to run all validation on all files or not.
 * **-i, --input**
 The path of the content pack/file to validate specifically.
-* **---skip-pack-release-notes**
-Validation will not not be performed using the updated pack release notes format.
-* **--print-ignored-errors**
-Whether to print ignored errors as warnings.
-* **--print-ignored-files**
-Print which files were ignored by the command.
-* **--no-docker-checks**
-Whether to run docker image validation.
-* **--silence-init-prints**
-Whether to skip the initialization prints.
-* **--skip-pack-dependencies**
-Skip validation of pack dependencies.
-* **--create-id-set**
-Whether to create the id_set.json file.
+* **-pc, --post-commit**
+Whether the validation should run only on the current branch's committed changed files. This applies only when the **-g** flag is supplied.
+* **-st, --staged**
+Whether the validation should run only on the current branch's staged files. This applies only when the **-g** flag is supplied.
+* **--prev-ver**
+Previous branch or SHA1 commit to run checks against.
+* **--no-multiprocessing**
+Run validate all without multiprocessing, for debugging purposes.
 * **-j, --json-file**
 The JSON file path to which to output the command results.
-* **--skip-schema-check**
-Whether to skip the file schema check.
-* **--debug-git**
-Whether to print debug logs for git statuses.
-* **--print-pykwalify**
-Whether to print the pykwalify log errors.
-* **--quiet-bc-validation**
-Set backwards compatibility validation's errors as warnings.
-* **--allow-skipped**
-Don't fail on skipped integrations or when all test playbooks are skipped.
+* **--category-to-run**
+Run specific validations by stating the category they're listed under in the config file.
+* **-f, --fix**
+Whether to autofix failing validations with an available auto fix or not.
+* **--config-path**
+Path for a config file to run. If not given - will run the default path at: [demisto_sdk/commands/validate/default_config.toml](default_config.toml)
+* **--ignore-support-level**
+Whether to skip validations based on their support level or not.
+* **--run-old-validate**
+Whether to run the old validate flow or not. Alternatively, you can configure the RUN_OLD_VALIDATE env variable
+* **--skip-new-validate**
+Whether to skip the new validate flow or not. Alternatively, you can configure the SKIP_NEW_VALIDATE env variable.
 * **-sv, --run-specific-validations**
-Validate only specific validations by error codes.
-* **--graph**
-Whether use the content graph
+A comma separated list of validations to run stated the error codes.
 
 **Examples**:
-`demisto-sdk validate -g --no-backwards-comp`
-This will validate only changed files from content origin/master branch and will exclude backwards
-compatibility checks.
-<br><br>
 
 `demisto-sdk validate --prev-ver SHA1-HASH`
 This will validate only changed files from the branch given (SHA1).
-<br><br>
 
 `demisto-sdk validate --post-commit`
 This indicates that the command runs post commit.
-<br><br>
 
 `demisto-sdk validate -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml`
 This will validate the file Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml only.
-<br><br>
 
 `demisto-sdk validate -a`
-This will validate all files under `Packs` directory
-<br><br>
+This will validate all files under the `Packs` directory.
 
 `demisto-sdk validate -i Packs/HelloWorld`
-This will validate all files under the content pack `HelloWorld`
-<br><br>
+This will validate all files under the content pack `HelloWorld`.
 
-`demisto-sdk validate -i Packs/HelloWorld --run-specific-validations BA101`
-This will validate all files under the content pack `HelloWorld` using only the validation corresponds to the error code BA101.
-<br><br>
+`demisto-sdk validate --run-old-validate --skip-new-validate -a`
+This will validate all files in the repo using the old validate method.
 
-`demisto-sdk validate -i Packs/HelloWorld --run-specific-validations BA`
-This will validate all files under the content pack `HelloWorld` using only the validations from error type of BA.
-<br><br>
-
-### Notes
-* In external repositories (repos which contain the `.private-repo-settings` file in its root) **all** the validations are ignorable.
-
+`demisto-sdk validate --config-path {config_file_path} -a`
+This will validate all files in the repo using the settings configured in the config file in the given path.
 
 ### Error Codes and Ignoring Them
-Starting in version 1.0.9 of Demisto-SDK, each error found by validate (excluding `pykwalify` errors) has an error
-code attached to it - the code can be found in brackets preceding the error itself.
+Each error found by validate has an error code attached to it. The code can be found in brackets preceding the error itself.  
 For example: `path/to/file: [IN103] - The type field of the proxy parameter should be 8`
+In addition, each pack has a `.pack-ignore` file. In order to ignore a certain validation for a given file, the error-code needs to be listed in the **ignorable_errors** section in the config-file (see the [Config file section](#config-file)), and the user needs to mention the file name (only the name and extension, without the whole path), and the error code to ignore.
+For example: This .pack-ignore will not fail ipinfo_v2.yml on the validations with the codes BA108 & BA109.
+[file:ipinfo_v2.yml]
+ignore=BA108,BA109
 
-The first 2 letters indicate the error type and can be used to easily identify the cause of the error.
-| Code | Type |
-| --- | --- |
-| BA | Basic error |
-| BC | Backwards compatibility error |
-| CJ | Conf json error |
-| CL | Classifier error |
-| DA | Dashboard error |
-| DB | DBootScore error |
-| DO | Docker error |
-| DS | Description error |
-| ID | Id set error |
-| IF | Incident field or type error |
-| IM | Image error |
-| IN | Integration or script error |
-| IT | Incident type error |
-| MA | Mapper error |
-| PA | Pack files error (pack-metadata, pack-secrets, pack-ignore) |
-| PB | Playbook error |
-| RM | Readme error |
-| RN | Release notes error |
-| RP | Reputation error |
-| SC | Script error |
-| ST | Structure error |
-| WD | Widget error |
+### Config file
+You can define a config file to suit your business needs. If no file is defined, the  [default config file](default_config.toml) will be used.
+The default configuration covers basic validations, which prevents unsuccessful uploads of the validated content to Cortex XSOAR.
+#### How to define a configuration file
+You can define the following sections:
+**ignorable_errors** - a list of the error codes that can be ignored for individual content items in the .pack-ignore file.
+**path_based_validations** - the configurations to run when running with -a / -i flags.
+**use_git** - the configurations to run when running with -g flag.
+You can also define custom sections - which can be configured to run with the **category-to-run** flag.
+Two example custom categories are given with the default config file:
+**xsoar_best_practices_use_git** - our recommended set of validations to run when running with -g, may be modified from time to time.
+**xsoar_best_practices_path_based_validations** - our recommended set of validations to run when running with -a / -i, may be modified from time to time.
+Each section will have the following options:
+**select** - The validations to run.
+**warning** - Validations for which to only throw warnings (will not fail the flow).
+The config file can also configure which validations to ignore based on the content item support level using the section header support_level.<support_type> where support_type is one of  xsoar, partner, or community.
+If the user wishes to ignore this feature in some of the calls, he can use the **--ignore-support-level** flag.
 
-
-If you wish to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.
-```buildoutcfg
-[file:FILE_NAME]
-ignore=BA101
+**Examples**:
 ```
+[custom_category]
+select = ["BA101"]
+```
+Validate will run only BA101 validation.
 
-For more information, please see the following [document](https://xsoar.pan.dev/docs/reference/packs/content-management#development).
+```
+[custom_category]
+select = ["BA100", "BA101", "BA102"]
+[support_level.community]
+ignore = ["BA102"]
+```
+Validate will run all the validations with error codes "BA100", "BA101", "BA102" except for BA102 in case of community supported files.

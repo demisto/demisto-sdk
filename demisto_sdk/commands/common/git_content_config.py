@@ -1,6 +1,7 @@
 """
 This is module to store the git configuration of the content repo
 """
+
 import enum
 import os
 from functools import lru_cache
@@ -108,7 +109,10 @@ class GitContentConfig:
                 if git_provider == GitProvider.GitHub
                 else GitContentConfig.GITLAB
             )
-        self.repo_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(self.repo_hostname, self.repo_hostname)  # type: ignore[arg-type]
+        self.repo_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(
+            self.repo_hostname,  # type: ignore[arg-type]
+            self.repo_hostname,
+        )
 
         parsed_git = GitContentConfig._get_repository_properties()
 
@@ -223,19 +227,24 @@ class GitContentConfig:
                 self.repo_hostname = github_hostname
                 self.current_repository = github_repo
 
-    @staticmethod
-    def _print_private_repo_warning_if_needed():
+    def _print_private_repo_warning_if_needed(self):
         """
         Checks the class variable, prints if necessary, and sets the class variable to avoid multiple prints
         """
         if not GitContentConfig.NOTIFIED_PRIVATE_REPO:
+            provider = "github" if self.git_provider == GitProvider.GitHub else "gitlab"
+            token_name = (
+                GitCredentials.ENV_GITHUB_TOKEN_NAME
+                if provider == "github"
+                else GitCredentials.ENV_GITLAB_TOKEN_NAME
+            )
             logger.info(
-                "[yellow]Could not find the repository name on gitlab - defaulting to demisto/content[/yellow]"
+                f"[yellow]Could not find the repository name on {provider} - defaulting to demisto/content[/yellow]"
             )
             logger.info(
                 f"[yellow]If you are using a private gitlab repo, "
                 f"configure one of the following environment variables: "
-                f"`{GitCredentials.ENV_GITLAB_TOKEN_NAME}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`[/yellow]"
+                f"`{token_name}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`[/yellow] "
             )
             GitContentConfig.NOTIFIED_PRIVATE_REPO = True
 
@@ -262,6 +271,7 @@ class GitContentConfig:
         github_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(
             github_hostname, github_hostname
         )
+
         if (api_host, repo_name) in GitContentConfig.ALLOWED_REPOS:
             return github_hostname, repo_name
         github_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(api_host, api_host)
@@ -320,6 +330,7 @@ class GitContentConfig:
         """
         if (
             not gitlab_hostname
+            or "github" in gitlab_hostname
             or gitlab_hostname == GitContentConfig.GITHUB_USER_CONTENT
             or gitlab_hostname == GitContentConfig.GITHUB
         ):

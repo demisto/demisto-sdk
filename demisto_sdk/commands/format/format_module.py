@@ -99,6 +99,9 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "layoutrule": BaseUpdateJSON,
     "assetsmodelingrule": BaseUpdateYML,
     "assetsmodelingruleschema": BaseUpdateJSON,
+    "casefield": BaseUpdateJSON,
+    "caselayout": LayoutBaseFormat,
+    "caselayoutrule": BaseUpdateJSON,
 }
 
 UNFORMATTED_FILES = [
@@ -247,6 +250,7 @@ def format_manager(
                     deprecate=deprecate,
                     add_tests=add_tests,
                     graph=graph,
+                    clear_cache=clear_cache,
                 )
                 if err_res:
                     log_list.extend([(err_res, "red")])
@@ -273,9 +277,7 @@ def format_manager(
                         "red",
                     )
                 )
-        if (
-            graph
-        ):  # In case that the graph was activated, we need to call exit in order to close it.
+        if graph:  # In case that the graph was activated, we need to call exit in order to close it.
             graph.__exit__()
         update_content_entity_ids(files)
 

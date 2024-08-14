@@ -36,7 +36,7 @@ ERROR_CODE_REGEX = r"^/[^:\n]+:\d+:\d+: E\d+ .*$"
 
 
 def build_xsoar_linter_command(
-    support_level: str = "base", formatting_script: bool = False
+    support_level: Optional[str] = "base", formatting_script: bool = False
 ) -> List[str]:
     """
     Build the xsoar linter command.
@@ -71,31 +71,29 @@ def build_xsoar_linter_command(
 
     command = [
         f"{Path(sys.executable).parent}/pylint",
-        "-E",
         "--disable=all",
         "--fail-under=-100",
         "--fail-on=E",
         "--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'",  # Message format
     ]
-
-    checker_path = ""
-    message_enable = ""
+    checkers_to_use = []
+    errors_to_use = []
     if support_levels.get(support_level):
         checkers = support_levels.get(support_level)
         support = checkers.split(",") if checkers else []
         for checker in support:
-            checker_path += f"{checker},"
+            checkers_to_use.append(checker)
             checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
             if formatting_script and "W9008" in checker_msgs_list:
                 checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]
             for msg in checker_msgs_list:
-                message_enable += f"{msg},"
+                errors_to_use.append(msg)
 
     # Enable only Demisto Plugins errors.
-    command.append(f"--enable={message_enable}")
+    command.append(f"--enable={','.join(errors_to_use)}")
     # Load plugins
-    if checker_path:
-        command.append(f"--load-plugins={checker_path}")
+    if checkers_to_use:
+        command.append(f"--load-plugins={','.join(checkers_to_use)}")
 
     return command
 
@@ -160,7 +158,7 @@ def process_file(file_path: Path) -> ProcessResults:
 
         xsoar_linter_env = build_xsoar_linter_env_var(integration_script)
         env.update(xsoar_linter_env)
-        command = build_xsoar_linter_command(integration_script.support_level)
+        command = build_xsoar_linter_command(integration_script.support)
         command.append(str(file))
 
         try:

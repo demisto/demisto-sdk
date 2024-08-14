@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from packaging.version import Version, parse
 from pydantic import BaseModel, Field
@@ -19,6 +19,9 @@ from demisto_sdk.commands.content_graph.common import ContentType, PackTags
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
@@ -33,7 +36,7 @@ class PackMetadata(BaseModel):
     created: Optional[str] = Field(alias="firstCreated")
     updated: Optional[str] = Field("")
     legacy: Optional[bool]
-    support: Optional[str]
+    support: str = Field("")
     url: Optional[str]
     email: Optional[str]
     eulaLink: Optional[str]
@@ -57,6 +60,8 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
+    default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
+    default_data_source_name: Optional[str] = Field("", exclude=True)
 
     # For private packs
     premium: Optional[bool]
@@ -84,6 +89,8 @@ class PackMetadata(BaseModel):
             pack_id (str): The pack ID.
             content_items (PackContentItems): The pack content items object.
         """
+        if not self.hybrid:
+            self._set_default_data_source(content_items)
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = self._get_author(self.author, marketplace)
         # We want to add the pipeline_id only if this is called within our repo.
@@ -103,6 +110,7 @@ class PackMetadata(BaseModel):
         - Adding the content items display names.
         - Gathering the pack dependencies and adding the metadata.
         - Unifying the `url` and `email` into the `support_details` property.
+        - Adding the default data source if exists.
 
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
@@ -119,16 +127,48 @@ class PackMetadata(BaseModel):
             content_displays,
         ) = self._get_content_items_and_displays_metadata(marketplace, content_items)
 
+        default_data_source_value = (
+            {
+                "name": self.default_data_source_name,
+                "id": self.default_data_source_id,
+            }
+            if self.default_data_source_name
+            and self.default_data_source_id
+            and marketplace == MarketplaceVersions.MarketplaceV2
+            and not self.hybrid
+            else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
+        )
+
         _metadata.update(
             {
                 "contentItems": collected_content_items,
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
+                "defaultDataSource": default_data_source_value,
             }
         )
 
         return _metadata
+
+    @staticmethod
+    def _place_data_source_integration_first(
+        integration_list: List[Dict],
+        data_source_id: str,
+    ):
+        integration_metadata_object = [
+            integration
+            for integration in integration_list
+            if integration.get("id") == data_source_id
+        ]
+
+        if not integration_metadata_object:
+            logger.error(
+                f"Integration metadata object was not found for {data_source_id=} in {integration_list=}."
+            )
+        logger.info(f"Placing {data_source_id=} first in the integration_list.")
+        integration_list.remove(integration_metadata_object[0])
+        integration_list.insert(0, integration_metadata_object[0])
 
     def _get_content_items_and_displays_metadata(
         self, marketplace: MarketplaceVersions, content_items: PackContentItems
@@ -148,7 +188,6 @@ class PackMetadata(BaseModel):
         collected_content_items: dict = {}
         content_displays: dict = {}
         for content_item in content_items:
-
             if content_item.is_test:
                 logger.debug(
                     f"Skip loading the {content_item.name} test playbook/script into metadata.json"
@@ -161,9 +200,9 @@ class PackMetadata(BaseModel):
                 marketplace=marketplace,
             )
 
-            content_displays[
-                content_item.content_type.metadata_name
-            ] = content_item.content_type.metadata_display_name
+            content_displays[content_item.content_type.metadata_name] = (
+                content_item.content_type.metadata_display_name
+            )
 
         content_displays = {
             content_type: content_type_display
@@ -174,7 +213,18 @@ class PackMetadata(BaseModel):
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
-
+        if (
+            self.default_data_source_id
+            and self.default_data_source_name
+            and collected_content_items
+            and marketplace == MarketplaceVersions.MarketplaceV2
+            and not self.hybrid
+        ):
+            # order collected_content_items integration list so that the defaultDataSource will be first
+            self._place_data_source_integration_first(
+                collected_content_items[ContentType.INTEGRATION.metadata_name],
+                self.default_data_source_id,
+            )
         return collected_content_items, content_displays
 
     def _enhance_dependencies(
@@ -196,14 +246,17 @@ class PackMetadata(BaseModel):
                 "mandatory": r.mandatorily,
                 "minVersion": r.content_item_to.current_version,  # type:ignore[attr-defined]
                 "author": self._get_author(
-                    r.content_item_to.author, marketplace  # type:ignore[attr-defined]
+                    r.content_item_to.author,  # type:ignore[attr-defined]
+                    marketplace,
                 ),
                 "name": r.content_item_to.name,  # type:ignore[attr-defined]
                 "certification": r.content_item_to.certification  # type:ignore[attr-defined]
                 or "",
             }
             for r in dependencies
-            if r.is_direct and r.content_item_to.object_id not in self.excluded_dependencies and not r.content_item_to.hidden  # type: ignore
+            if r.is_direct
+            and r.content_item_to.object_id not in self.excluded_dependencies
+            and not r.content_item_to.hidden  # type: ignore
         }
 
     def _get_pack_tags(
@@ -282,7 +335,7 @@ class PackMetadata(BaseModel):
         )
         tags |= (
             {PackTags.DATA_SOURCE}
-            if self._is_data_source(content_items)
+            if self.is_data_source(content_items)
             and marketplace == MarketplaceVersions.MarketplaceV2
             else set()
         )
@@ -316,18 +369,78 @@ class PackMetadata(BaseModel):
 
         return tags
 
-    def _is_data_source(self, content_items: PackContentItems) -> bool:
-        """Returns a boolean result on whether the pack should considered as a "Data Source" pack."""
-        return (
-            len(
-                [
-                    MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-                    and (integration.is_fetch or integration.is_fetch_events)
-                    for integration in content_items.integration
-                ]
-            )
-            == 1
+    def is_data_source(self, content_items: PackContentItems) -> bool:
+        """Returns a boolean result on whether the pack should be considered as a "Data Source" pack."""
+        if self.hybrid:
+            # hybrid packs have a builtin data source
+            return False
+        if self.default_data_source_id and self.default_data_source_name:
+            return True
+        return any(self.get_valid_data_source_integrations(content_items))
+
+    def _set_default_data_source(self, content_items: PackContentItems) -> None:
+        """If there is more than one data source in the pack, return the default data source."""
+        data_sources: List[Dict[str, str]] = self.get_valid_data_source_integrations(  # type: ignore[assignment]
+            content_items, self.support, include_name=True
         )
+
+        if self.default_data_source_id and self.default_data_source_id in [
+            data_source.get("id") for data_source in data_sources
+        ]:
+            # the provided default_data_source_id is of a valid integration, keep it
+            self.default_data_source_name = [
+                data_source.get("name")
+                for data_source in data_sources
+                if data_source.get("id") == self.default_data_source_id
+            ][0]
+            logger.info(
+                f"Keeping the provided {self.default_data_source_id=} with {self.default_data_source_name=}"
+            )
+            return
+
+        if not data_sources:
+            return
+
+        logger.info(
+            f"No defaultDataSource provided ({self.default_data_source_id}) or it is not a valid data source,"
+            f" choosing default from {data_sources=}"
+        )
+        if len(data_sources) > 1:
+            # should not happen because of validation PA131
+            logger.info(
+                f"{self.name} has multiple data sources. Setting a default value."
+            )
+
+        # setting a value to the defaultDataSource in case there is a data source
+        self.default_data_source_name = (
+            data_sources[0].get("name") if data_sources else None
+        )
+        self.default_data_source_id = (
+            data_sources[0].get("id") if data_sources else None
+        )
+
+    @staticmethod
+    def get_valid_data_source_integrations(
+        content_items: PackContentItems,
+        support_level: str = None,
+        include_name: bool = False,
+    ) -> List[Union[Dict[str, str], str]]:
+        """
+        Find fetching integrations in XSIAM, not deprecated.
+        When a support level is provided, the returned display names are without the contribution suffix.
+        """
+        return [
+            {
+                "name": IntegrationScriptUnifier.remove_support_from_display_name(
+                    integration.display_name, support_level
+                ),
+                "id": integration.object_id,  # same as integration.name
+            }
+            if include_name
+            else integration.object_id
+            for integration in content_items.integration
+            if integration.is_data_source()
+        ]
 
     def _get_tags_from_landing_page(self, pack_id: str) -> set:
         """
@@ -419,7 +532,7 @@ class PackMetadata(BaseModel):
             )
 
             self._replace_item_if_has_higher_toversion(
-                content_item, content_item_metadata, content_item_summary
+                content_item, content_item_metadata, content_item_summary, marketplace
             )
 
         else:
@@ -448,6 +561,7 @@ class PackMetadata(BaseModel):
         content_item: ContentItem,
         content_item_metadata: dict,
         content_item_summary: dict,
+        marketplace: MarketplaceVersions,
     ):
         """
         Replaces the content item metadata object in the content items metadata list
@@ -457,7 +571,20 @@ class PackMetadata(BaseModel):
             content_item (ContentItem): The current content item to check.
             content_item_metadata (dict): The existing content item metadata object in the list.
             content_item_summary (dict): The current content item summary to update if needed.
+            marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
         """
+        if marketplace == MarketplaceVersions.XSOAR:
+            if parse(content_item.fromversion) > Version("7.9.9"):
+                logger.debug(
+                    f"Content_item: {content_item.name} has a fromversion {content_item.fromversion} higher than applicable for XSOAR6 marketplace. Skipping metadata update."
+                )
+                return
+            if parse(content_item_metadata["fromversion"]) >= Version("8.0.0"):
+                logger.debug(
+                    f'Content item:{content_item_metadata["name"]} fromversion: {content_item_metadata["fromversion"]} is not compatible with XSOAR6 marketplace. Replacing'
+                )
+                content_item_metadata.update(content_item_summary)
+                self._set_empty_toversion_if_default(content_item_metadata)
         if parse(content_item.toversion) > parse(
             content_item_metadata["toversion"] or DEFAULT_CONTENT_ITEM_TO_VERSION
         ):
@@ -490,7 +617,7 @@ class PackMetadata(BaseModel):
         item_type_key: Optional[str],
     ) -> Optional[dict]:
         """
-        Search an content item object in the content items metadata list by its ID and name.
+        Search a content item object in the content items metadata list by its ID and name.
 
         Args:
             collected_content_items (dict): The content items metadata list that were already collected.

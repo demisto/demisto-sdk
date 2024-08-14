@@ -8,6 +8,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.incident_field import (
+    StrictIncidentField,
+)
 
 
 class IncidentFieldParser(
@@ -21,13 +24,23 @@ class IncidentFieldParser(
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.field_type = self.json_data.get("type")
+        self.select_values = self.json_data.get("selectValues")
         self.associated_to_all = self.json_data.get("associatedToAll")
+        self.content = self.json_data.get("content")
+        self.system = self.json_data.get("system")
+        self.group = self.json_data.get("group")
 
         self.connect_to_dependencies()
 
+    @property
+    def strict_object(self):
+        return StrictIncidentField
+
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"object_id": "id", "cli_name": "cliName"})
+        super().field_mapping.update(
+            {"object_id": "id", "cli_name": "cliName", "unsearchable": "unsearchable"}
+        )
         return super().field_mapping
 
     @property
@@ -48,6 +61,10 @@ class IncidentFieldParser(
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @property
+    def unsearchable(self) -> Optional[bool]:
+        return get_value(self.json_data, self.field_mapping.get("unsearchable", ""))
 
     def connect_to_dependencies(self) -> None:
         """Collects incident types used as optional dependencies, and scripts as mandatory dependencies."""

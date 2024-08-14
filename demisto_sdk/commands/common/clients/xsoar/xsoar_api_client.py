@@ -3,7 +3,6 @@ import re
 import socket
 import time
 import urllib.parse
-from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -36,10 +35,11 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
 
 
-class ServerType(str, Enum):
+class ServerType(StrEnum):
     XSOAR = "xsoar-on-prem"
     XSOAR_SAAS = "xsoar-saas"
     XSIAM = "xsiam"
@@ -395,9 +395,9 @@ class XsoarClient:
         logger.info(
             f"Creating integration instance {instance_name} for integration {_id}"
         )
-        integrations_metadata: Dict[
-            str, Any
-        ] = self.get_integrations_module_configuration(_id)
+        integrations_metadata: Dict[str, Any] = (
+            self.get_integrations_module_configuration(_id)
+        )
         with contextlib.suppress(ValueError):
             instance = self.get_integration_instance(instance_name)
             logger.info(
@@ -426,9 +426,9 @@ class XsoarClient:
                 raise ValueError(
                     f"integrationLogLevel must be either Debug/Verbose and not {integration_log_level}"
                 )
-            integration_instance_body_request[
-                "integrationLogLevel"
-            ] = integration_log_level
+            integration_instance_body_request["integrationLogLevel"] = (
+                integration_log_level
+            )
 
         if is_long_running:
             integration_instance_body_request["isLongRunning"] = is_long_running
@@ -1036,9 +1036,9 @@ class XsoarClient:
             self._xsoar_client.investigation_add_entries_sync(update_entry=update_entry)
 
         update_entry = {"investigationId": investigation_id, "data": command}
-        war_room_entries: List[
-            Entry
-        ] = self._xsoar_client.investigation_add_entries_sync(update_entry=update_entry)
+        war_room_entries: List[Entry] = (
+            self._xsoar_client.investigation_add_entries_sync(update_entry=update_entry)
+        )
         logger.debug(
             f"Successfully run the command {command} in investigation {investigation_id}"
         )

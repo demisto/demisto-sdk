@@ -2,8 +2,9 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Type, cast
 
+import pydantic
 from packaging.version import Version
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
@@ -18,6 +19,9 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    StructureError,
+)
 
 
 class NotAContentItemException(Exception):
@@ -88,6 +92,27 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         super().__init__(path)
         self.relationships: Relationships = Relationships()
         self.git_sha: Optional[str] = git_sha
+        # The validate_structure method is called in the first child(JsonContentItem, YamlContentItem)
+        self.structure_errors: Optional[List[StructureError]] = None
+
+    @property
+    @abstractmethod
+    def raw_data(self) -> dict:
+        pass
+
+    def validate_structure(self) -> Optional[List[StructureError]]:
+        """
+        The method uses the parsed data and attempts to build a Pydantic object from it.
+        Whenever data is invalid by the schema, we store the error in the 'structure_errors' attribute,
+        It will fail validation (ST110).
+        """
+        if not self.strict_object:
+            return None  # TODO - remove it
+        try:
+            self.strict_object(**self.raw_data)
+        except pydantic.error_wrappers.ValidationError as e:
+            return [StructureError(**error) for error in e.errors()]
+        return None
 
     @staticmethod
     def from_path(
@@ -111,7 +136,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             content_type: ContentType = ContentType.by_path(path)
         except ValueError:
             try:
-                optional_content_type = ContentType.by_schema(path)
+                optional_content_type = ContentType.by_schema(path, git_sha=git_sha)
             except ValueError as e:
                 logger.error(f"Could not determine content type for {path}: {e}")
                 raise InvalidContentItemException from e
@@ -157,6 +182,14 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         pass
 
     @property
+    @abstractmethod
+    def support(self) -> str:
+        pass
+
+    def get_support(self, data: dict) -> str:
+        return data.get("supportlevelheader") or ""
+
+    @property
     def version(self) -> int:
         pass
 
@@ -180,27 +213,19 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             MarketplaceVersions(mp) for mp in data.get("marketplaces", [])
         ]:
             marketplaces = file_marketplaces
+            marketplaces = list(
+                ContentItemParser.update_marketplaces_set_with_xsoar_values(
+                    set(marketplaces)
+                )
+            )
         else:
+            # update_marketplaces_set_with_xsoar_values is already handeled as part of pack parser.
             marketplaces = self.pack_marketplaces
 
-        marketplaces_set = set(marketplaces).intersection(self.supported_marketplaces)
-        marketplaces_set = self.update_marketplaces_set_with_xsoar_values(
-            marketplaces_set
+        marketplaces_intersection = set(marketplaces).intersection(
+            self.supported_marketplaces
         )
-        return sorted(marketplaces_set)
-
-    @staticmethod
-    def update_marketplaces_set_with_xsoar_values(marketplaces_set: set) -> set:
-        if (
-            MarketplaceVersions.XSOAR in marketplaces_set
-            and MarketplaceVersions.XSOAR_ON_PREM not in marketplaces_set
-        ):
-            marketplaces_set.add(MarketplaceVersions.XSOAR_SAAS)
-
-        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_set:
-            marketplaces_set.add(MarketplaceVersions.XSOAR)
-
-        return marketplaces_set
+        return sorted(marketplaces_intersection)
 
     @property
     @abstractmethod
@@ -396,3 +421,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target_type=ContentType.COMMAND_OR_SCRIPT,
             mandatorily=is_mandatory,
         )
+
+    @property
+    def strict_object(self) -> Optional[Type[BaseModel]]:
+        return None

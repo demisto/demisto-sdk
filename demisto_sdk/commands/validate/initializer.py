@@ -20,16 +20,17 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_DIR,
     RELEASE_NOTES_DIR,
     SCRIPTS_DIR,
+    ExecutionMode,
     GitStatuses,
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
     get_file_by_status,
     get_relative_path_from_packs_dir,
+    is_external_repo,
     specify_files_from_directory,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -50,19 +51,17 @@ class Initializer:
 
     def __init__(
         self,
-        use_git=False,
         staged=None,
         committed_only=None,
         prev_ver=None,
         file_path=None,
-        all_files=False,
+        execution_mode=None,
     ):
         self.staged = staged
-        self.use_git = use_git
         self.file_path = file_path
-        self.all_files = all_files
         self.committed_only = committed_only
         self.prev_ver = prev_ver
+        self.execution_mode = execution_mode
 
     def validate_git_installed(self):
         """Initialize git util."""
@@ -71,7 +70,7 @@ class Initializer:
             self.branch_name = self.git_util.get_current_git_branch_or_hash()
         except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
-            if self.use_git:
+            if self.execution_mode == ExecutionMode.USE_GIT:
                 raise
             # if we are not using git - simply move on.
             else:
@@ -179,9 +178,12 @@ class Initializer:
             self.committed_only = True
 
         elif self.branch_name in ["master", "main", DEMISTO_GIT_PRIMARY_BRANCH]:
-            raise Exception(
-                "Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
-            )
+            self.git_util
+            message = "Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
+            if not is_external_repo() or self.committed_only:
+                logger.warning(message)
+            else:
+                raise Exception(message)
 
     def print_git_config(self):
         """Printing the git configurations - all the relevant flags."""
@@ -246,6 +248,30 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
+        if os.getenv("CONTRIB_BRANCH"):
+            """
+            If this command runs on a build triggered by an external contribution PR,
+            the relevant modified files would have an "untracked" status in git.
+            The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
+            See CIAC-10968 for more info.
+            """
+            logger.info(
+                "\n[cyan]CONTRIB_BRANCH environment variable found, running validate in contribution flow "
+                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
+            )
+            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
+            relative_untracked_files_paths: Set[Path] = set()
+            with open(
+                "contribution_files_relative_paths.txt", "r"
+            ) as contribution_file:
+                for single_line in contribution_file:
+                    clean_line: str = single_line.rstrip("\n")
+                    relative_untracked_files_paths.add(Path(clean_line))
+            logger.info(
+                f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
+            )
+            # modified_files = modified_files.union(relative_untracked_files_paths)
+            added_files = set(added_files).union(relative_untracked_files_paths)
 
         return modified_files, added_files, renamed_files
 
@@ -308,13 +334,13 @@ class Initializer:
         content_objects_to_run: Set[BaseContent] = set()
         invalid_content_items: Set[Path] = set()
         non_content_items: Set[Path] = set()
-        if self.use_git:
+        if self.execution_mode == ExecutionMode.USE_GIT:
             (
                 content_objects_to_run,
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
-        elif self.file_path:
+        elif self.execution_mode == ExecutionMode.SPECIFIC_FILES:
             (
                 content_objects_to_run,
                 invalid_content_items,
@@ -322,22 +348,26 @@ class Initializer:
             ) = self.paths_to_basecontent_set(
                 set(self.load_files(self.file_path.split(",")))
             )
-        elif self.all_files:
-            content_dto = ContentDTO.from_path(CONTENT_PATH)
+        elif self.execution_mode == ExecutionMode.ALL_FILES:
+            logger.info("Running validation on all files.")
+            content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)
         else:
-            self.use_git = (True,)
+            self.execution_mode = ExecutionMode.USE_GIT
             self.committed_only = True
             (
                 content_objects_to_run,
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
-        content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
-            content_objects_to_run
-        )
+        if self.execution_mode != ExecutionMode.USE_GIT:
+            content_objects_to_run_with_packs: Set[BaseContent] = (
+                self.get_items_from_packs(content_objects_to_run)
+            )
+        else:
+            content_objects_to_run_with_packs = content_objects_to_run
         for non_content_item in non_content_items:
             logger.warning(
                 f"Invalid content path provided: {str(non_content_item)}. Please provide a valid content item or pack path."
@@ -404,9 +434,9 @@ class Initializer:
         ] = {}
         for path, status in statuses_dict.items():
             if status == GitStatuses.RENAMED:
-                statuses_dict_with_renamed_files_tuple[
-                    (path, renamed_files[path])
-                ] = status
+                statuses_dict_with_renamed_files_tuple[(path, renamed_files[path])] = (
+                    status
+                )
             else:
                 statuses_dict_with_renamed_files_tuple[path] = status
         # Parsing the files.
@@ -424,7 +454,6 @@ class Initializer:
     def paths_to_basecontent_set(
         self, files_set: Set[Path]
     ) -> Tuple[Set[BaseContent], Set[Path], Set[Path]]:
-
         """Attempting to convert the given paths to a set of BaseContent.
 
         Args:
@@ -483,9 +512,15 @@ class Initializer:
                     obj.git_status = git_status
                     # Check if the file exists
                     if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
-                        obj.old_base_content_object = BaseContent.from_path(
-                            old_path, git_sha=git_sha, raise_on_exception=True
-                        )
+                        try:
+                            obj.old_base_content_object = BaseContent.from_path(
+                                old_path, git_sha=git_sha, raise_on_exception=True
+                            )
+                        except (NotAContentItemException, InvalidContentItemException):
+                            logger.debug(
+                                f"Could not parse the old_base_content_object for {obj.path}, setting a copy of the object as the old_base_content_object."
+                            )
+                            obj.old_base_content_object = obj.copy(deep=True)
                     else:
                         obj.old_base_content_object = obj.copy(deep=True)
                     if obj.old_base_content_object:
@@ -513,7 +548,10 @@ class Initializer:
                 elif self.is_code_file(path, path_str):
                     path = self.obtain_yml_from_code(path_str)
                     if path not in statuses_dict:
-                        statuses_dict[path] = git_status
+                        if git_status != GitStatuses.RENAMED:
+                            statuses_dict[path] = git_status
+                        else:
+                            statuses_dict[path] = None
                 elif f"_{PACKS_README_FILE_NAME}" in path_str:
                     path = Path(path_str.replace(f"_{PACKS_README_FILE_NAME}", ".yml"))
                     if path not in statuses_dict:

@@ -12,6 +12,8 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
     definition_id: Optional[str] = Field(alias="definitionId")
     field_type: Optional[str] = Field(alias="type")
     version: Optional[int] = 0
+    group: int = Field(None, exclude=True)
+    unsearchable: Optional[bool] = Field(None, exclude=True)
 
     def metadata_fields(self) -> Set[str]:
         return super().metadata_fields().union({"field_type"})
@@ -32,7 +34,8 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
             if (
                 "definitionId" in _dict
                 and _dict["definitionId"]
-                and _dict["definitionId"].lower() not in ["incident", "indicator"]
+                and _dict["definitionId"].lower()
+                not in ("incident", "indicator", "case")
                 and path.suffix == ".json"
             ):
                 # we don't want to match the generic type

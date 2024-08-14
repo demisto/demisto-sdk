@@ -6,7 +6,6 @@ from typing import Dict, Optional
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
-    ALLOWED_HIDDEN_PARAMS,
     BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES,
     DBOT_SCORES_DICT,
@@ -19,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH,
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
+    INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE,
     IOC_OUTPUTS_DICT,
     MANDATORY_REPUTATION_CONTEXT_NAMES,
     MAX_FETCH,
@@ -68,7 +68,6 @@ from demisto_sdk.commands.common.tools import (
     is_iron_bank_pack,
     is_str_bool,
     server_version_compare,
-    string_to_bool,
     strip_description,
 )
 from demisto_sdk.commands.validate.tools import (
@@ -161,7 +160,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_a_runnable(),
             self.is_valid_display_name(),
             self.is_valid_default_value_for_checkbox(),
-            self.is_valid_display_name_for_siem(),
             self.is_valid_xsiam_marketplace(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
@@ -1094,21 +1092,12 @@ class IntegrationValidator(ContentEntityValidator):
         """checks if some specific Fields in the yml file were changed from true to false or removed
         Returns True if valid, and False otherwise.
         """
-        fields = [
-            "feed",
-            "isfetch",
-            "longRunning",
-            "longRunningPort",
-            "ismappable",
-            "isremotesyncin",
-            "isremotesyncout",
-        ]
         currentscript = self.current_file.get("script", {})
         oldscript = self.old_file.get("script", {})
 
         removed, changed = {}, {}
 
-        for field in fields:
+        for field in INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE:
             old = oldscript.get(field)
             current = currentscript.get(field)
 
@@ -1310,8 +1299,12 @@ class IntegrationValidator(ContentEntityValidator):
             marketplaces = get_item_marketplaces(
                 item_path=self.file_path, item_data=self.current_file
             )
-            is_xsoar_marketplace = (
-                not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
+            is_xsoar_marketplace = not marketplaces or any(
+                [
+                    MarketplaceVersions.XSOAR.value in marketplaces,
+                    MarketplaceVersions.XSOAR_SAAS.value in marketplaces,
+                    MarketplaceVersions.XSOAR_ON_PREM.value in marketplaces,
+                ]
             )
             fetch_required_params = (
                 INCIDENT_FETCH_REQUIRED_PARAMS
@@ -1503,23 +1496,6 @@ class IntegrationValidator(ContentEntityValidator):
 
             return True
 
-    @error_codes("IN150")
-    def is_valid_display_name_for_siem(self) -> bool:
-        is_siem = self.current_file.get("script", {}).get("isfetchevents")
-
-        if is_siem:
-            display_name = self.current_file.get("display", "")
-            if not display_name.endswith("Event Collector"):
-                error_message, error_code = Errors.invalid_siem_integration_name(
-                    display_name
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    return False
-
-        return True
-
     def _is_replaced_by_type9(self, display_name: str) -> bool:
         """
         This function is used to check the case where a parameter is hidden but because is replaced by a type 9 parameter.
@@ -1534,7 +1510,7 @@ class IntegrationValidator(ContentEntityValidator):
                 return True
         return False
 
-    @error_codes("IN124,IN156")
+    @error_codes("IN156")
     def is_valid_hidden_params(self) -> bool:
         """
         Verify there are no non-allowed hidden integration parameters.
@@ -1550,8 +1526,6 @@ class IntegrationValidator(ContentEntityValidator):
 
         for param in self.current_file.get("configuration", ()):
             name = param.get("name", "")
-            display_name = param.get("display", "")
-            type_ = param.get("type")
             hidden = param.get("hidden")
 
             invalid_type = not isinstance(hidden, (type(None), bool, list, str))
@@ -1562,24 +1536,7 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(message, code, self.file_path):
                     valid = False
 
-            is_true = (hidden is True) or (
-                is_str_bool(hidden) and string_to_bool(hidden)
-            )
-            invalid_bool = is_true and name not in ALLOWED_HIDDEN_PARAMS
-            hidden_in_all_marketplaces = isinstance(hidden, list) and set(
-                hidden
-            ) == set(MarketplaceVersions)
-
-            if invalid_bool or hidden_in_all_marketplaces:
-                if type_ in (0, 4, 12, 14) and self._is_replaced_by_type9(display_name):
-                    continue
-                error_message, error_code = Errors.param_not_allowed_to_hide(name)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    valid = False
-
-            elif isinstance(hidden, list) and (
+            if isinstance(hidden, list) and (
                 invalid := set(hidden).difference(MarketplaceVersions)
             ):
                 # if the value is a list, all its values must be marketplace names
@@ -2304,7 +2261,10 @@ class IntegrationValidator(ContentEntityValidator):
                 if (
                     command in REPUTATION_COMMAND_NAMES
                 ):  # Integration has a reputation command
-                    (error_message, error_code,) = Errors.missing_reliability_parameter(
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.missing_reliability_parameter(
                         is_feed=False, command_name=command
                     )
 

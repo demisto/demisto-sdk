@@ -316,6 +316,9 @@ class OldValidateManager:
             FileType.PEM,
             FileType.METADATA,
             FileType.VULTURE_WHITELIST,
+            FileType.CASE_LAYOUT_RULE,
+            FileType.CASE_LAYOUT,
+            FileType.CASE_FIELD,
         )
 
         self.is_external_repo = is_external_repo
@@ -519,7 +522,6 @@ class OldValidateManager:
     def validate_packs(
         self, all_packs: list, all_packs_valid: set, count: int, num_of_packs: int
     ) -> bool:
-
         if self.run_with_multiprocessing:
             with pebble.ProcessPool(max_workers=cpu_count()) as executor:
                 futures = []
@@ -789,7 +791,11 @@ class OldValidateManager:
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
-            or (self.git_util and self.git_util._is_file_git_ignored(file_path))
+            or (
+                self.use_git
+                and self.git_util
+                and self.git_util._is_file_git_ignored(file_path)
+            )
             or detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):
@@ -849,11 +855,8 @@ class OldValidateManager:
             return True
 
         # id_set validation
-        if (
-            self.id_set_validations
-            and not self.id_set_validations.is_file_valid_in_set(
-                file_path, file_type, pack_error_ignore_list
-            )
+        if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(
+            file_path, file_type, pack_error_ignore_list
         ):
             return False
 

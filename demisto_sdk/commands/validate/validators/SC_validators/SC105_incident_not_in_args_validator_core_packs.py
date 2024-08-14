@@ -31,7 +31,9 @@ class IsScriptArgumentsContainIncidentWordValidatorCorePacks(
     error_message = "The following arguments {} contain the word incident, remove it"
     related_field = "args"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         core_packs = get_core_pack_list()
 
         invalid_content_items = []

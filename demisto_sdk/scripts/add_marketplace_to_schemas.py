@@ -8,9 +8,11 @@ from demisto_sdk.commands.common.tools import get_file, write_dict
 
 GIT_ROOT = Path(git_path())
 SCHEMA_FOLDER = GIT_ROOT / "demisto_sdk" / "commands" / "common" / "schemas"
-NON_SUPPORTED_KEYS = ["id"]
+NON_SUPPORTED_KEYS = [""]
 SUPPORTED_KEYS = [
+    "id",
     "isfetch",
+    "isfetchevents",
     "defaultValue",
     "defaultvalue",
     "required",
@@ -34,7 +36,6 @@ def add_key(mapping):
                 if f"{key}:{marketplace.value}:" in k
             )
         if value.get("type") != "map":
-
             if key in NON_SUPPORTED_KEYS or (key not in SUPPORTED_KEYS):
                 continue
             value = deepcopy(value)

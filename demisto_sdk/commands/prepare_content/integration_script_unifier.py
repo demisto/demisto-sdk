@@ -5,7 +5,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     COMMUNITY_SUPPORT,
     CONTRIBUTORS_LIST,
     DEFAULT_IMAGE_PREFIX,
+    DEVELOPER_SUPPORT,
     PARTNER_SUPPORT,
     SUPPORT_LEVEL_HEADER,
     TYPE_TO_EXTENSION,
@@ -39,7 +40,7 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-    replace_markdown_urls_and_upload_to_artifacts,
+    update_markdown_images_with_urls_and_rel_paths,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
@@ -227,7 +228,7 @@ class IntegrationScriptUnifier(Unifier):
                 with tempfile.NamedTemporaryFile(mode="r+", delete=False) as tempf:
                     tempf.write(desc_data)
                     tempf.flush()
-                    replace_markdown_urls_and_upload_to_artifacts(
+                    update_markdown_images_with_urls_and_rel_paths(
                         Path(tempf.name),
                         marketplace,
                         pack_name,
@@ -606,18 +607,14 @@ class IntegrationScriptUnifier(Unifier):
         if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
             contributor_type = support_level_header
 
-        if (
-            " Contribution)" not in unified_yml["display"]
-            and contributor_type != "xsoar"
-        ):
-            unified_yml["display"] += CONTRIBUTOR_DISPLAY_NAME.format(
-                contributor_type.capitalize()
-            )
+        unified_yml["display"] = IntegrationScriptUnifier.get_display_name(
+            unified_yml["display"], contributor_type
+        )
         existing_detailed_description = unified_yml.get("detaileddescription", "")
 
         if contributor_type == COMMUNITY_SUPPORT:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
-        elif contributor_type == PARTNER_SUPPORT:
+        elif contributor_type in (PARTNER_SUPPORT, DEVELOPER_SUPPORT):
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(
                 contributor_type.capitalize(), author
             )
@@ -645,6 +642,34 @@ class IntegrationScriptUnifier(Unifier):
             )
 
         return unified_yml
+
+    @staticmethod
+    def get_display_name(display_name: str, contributor_type: str):
+        if (
+            display_name
+            and contributor_type
+            and " Contribution)" not in display_name
+            and contributor_type != "xsoar"
+        ):
+            display_name += CONTRIBUTOR_DISPLAY_NAME.format(
+                contributor_type.capitalize()
+            )
+        return display_name
+
+    @staticmethod
+    def remove_support_from_display_name(
+        display_name: str, contributor_type: Optional[str]
+    ):
+        if (
+            display_name
+            and contributor_type
+            and " Contribution)" in display_name
+            and contributor_type != "xsoar"
+        ):
+            suffix = CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
+            if display_name.endswith(suffix):
+                display_name = display_name[: -len(suffix)]
+        return display_name
 
     @staticmethod
     def get_integration_doc_link(package_path: Path, unified_yml: Dict) -> str:

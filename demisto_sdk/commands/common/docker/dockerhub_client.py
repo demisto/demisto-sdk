@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timedelta
-from enum import Enum
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
@@ -11,6 +10,7 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
 
 DOCKERHUB_USER = "DOCKERHUB_USER"
@@ -18,7 +18,7 @@ DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
 DEFAULT_REPOSITORY = "demisto"
 
 
-class DockerHubAuthScope(str, Enum):
+class DockerHubAuthScope(StrEnum):
     PULL = "pull"  # Grants read-only access to the repository, allowing you to pull images.
     PUSH = "push"  # Grants write access to the repository, allowing you to push images.
     DELETE = "delete"  # Grants permission to delete images from the repository.
@@ -37,7 +37,6 @@ class DockerHubRequestException(Exception):
 
 @lru_cache
 class DockerHubClient:
-
     DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
     DOCKER_HUB_API_BASE_URL = "https://hub.docker.com/v2"
     TOKEN_URL = "https://auth.docker.io/token"
@@ -50,7 +49,6 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-
         self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
@@ -105,7 +103,15 @@ class DockerHubClient:
             logger.warning(
                 f"Error when trying to get dockerhub token, error\n:{_error}"
             )
-            if _error.response.status_code == requests.codes.unauthorized and self.auth:
+            if (
+                _error.response is not None
+                and (
+                    _error.response.status_code
+                    in (requests.codes.unauthorized, requests.codes.too_many_requests)
+                )
+                and self.auth
+            ):
+                # in case of rate-limits with a username:password, retrieve the token without username:password
                 logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
@@ -382,7 +388,10 @@ class DockerHubClient:
             self.get_image_tag_metadata(docker_image, tag=tag)
             return True
         except DockerHubRequestException as error:
-            if error.exception.response.status_code == requests.codes.not_found:
+            if (
+                error.exception.response
+                and error.exception.response.status_code == requests.codes.not_found
+            ):
                 logger.debug(
                     f"docker-image {docker_image}:{tag} does not exist in dockerhub"
                 )
@@ -420,16 +429,21 @@ class DockerHubClient:
                 f"The docker image {docker_image} does not have any tags"
             )
 
-        version_tags = []
+        max_version_tag = Version("0.0.0")
         for tag in raw_image_tags:
             try:
-                version_tags.append(Version(tag))
+                version_tag = Version(tag)
+                # the version_tag.release returns a tuple from the version numbers '1.2.3.45' -> (1, 2, 3, 45)
+                # The last place is always a build number, therefore always increasing.
+                if max_version_tag.release[-1] < version_tag.release[-1]:
+                    max_version_tag = version_tag
             except InvalidVersion:
                 logger.debug(
                     f"The tag {tag} has invalid version for docker-image {docker_image}, skipping it"
                 )
 
-        return max(version_tags)
+        # Return the version corresponding to the maximum build tag.
+        return max_version_tag
 
     def get_latest_docker_image(self, docker_image: str) -> str:
         """

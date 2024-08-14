@@ -130,32 +130,30 @@ def build_xsoar_linter_command(
         "certified_partner_level_checker": cert_partner_msg,
         "xsoar_level_checker": xsoar_msg,
     }
-
-    checker_path = ""
-    message_enable = ""
+    checkers_to_enable: List[str] = []
+    errors_to_enable: List[str] = []
     if support_levels.get(support_level):
         checkers = support_levels.get(support_level)
         support = checkers.split(",") if checkers else []
         for checker in support:
-            checker_path += f"{checker},"
+            checkers_to_enable.append(checker)
             checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
             if formatting_script and "W9008" in checker_msgs_list:
-                checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]
-            for msg in checker_msgs_list:
-                message_enable += f"{msg},"
+                checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]  # type:ignore[assignment]
+            errors_to_enable.extend(checker_msgs_list)
 
     command = "pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Disable all errors
-    command += " -E --disable=all"
+    command += " --disable=all"
     # Message format
     command += " --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
     # Enable only Demisto Plugins errors.
-    command += f" --enable={message_enable}"
+    command += f" --enable={','.join(errors_to_enable)}"
     # Load plugins
-    if checker_path:
-        command += f" --load-plugins {checker_path}"
+    if checkers_to_enable:
+        command += f" --load-plugins {','.join(checkers_to_enable)}"
     # Generating path patterns - file1 file2 file3,..
     files_list = [str(file) for file in files]
     command += " " + " ".join(files_list)
@@ -250,11 +248,8 @@ def build_pylint_command(
     command = "pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
-    # Prints only errors
-    command += " -E"
     # disable xsoar linter messages
     disable = ["bad-option-value"]
-    # TODO: remove when pylint will update its version to support py3.9
 
     if docker_version:
         py_ver = parse(docker_version)

@@ -49,14 +49,6 @@
   types: [python]
   exclude: tests/.*|demisto_sdk/commands/init/templates/.*
 
-- id: update-additional-dependencies
-  name: update-additional-dependencies
-  entry: update-additional-dependencies
-  language: python
-  files: poetry.lock
-  require_serial: true
-  pass_filenames: false
-
 - id: coverage-analyze
   name: coverage-analyze
   entry: demisto-sdk coverage-analyze
@@ -78,3 +70,15 @@
   language: python
   require_serial: true
   pass_filenames: false
+
+- id: validate-content-path
+  name: validate-content-path
+  entry: validate-content-path
+  language: python
+  pass_filenames: true
+
+- id: validate-xsoar-config
+  name: validate-xsoar-config
+  entry: validate-xsoar-config
+  language: python
+  pass_filenames: true

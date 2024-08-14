@@ -8,6 +8,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
+from demisto_sdk.commands.content_graph.objects.case_field import CaseField
+from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
+from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
@@ -23,7 +26,7 @@ from demisto_sdk.commands.content_graph.objects.incident_type import IncidentTyp
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
-from demisto_sdk.commands.content_graph.objects.list import List as LIST
+from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -48,7 +51,7 @@ ContentTypes = Union[
     GenericField,
     GenericModule,
     GenericType,
-    LIST,
+    ListObject,
     Mapper,
     Classifier,
     Widget,
@@ -68,6 +71,9 @@ ContentTypes = Union[
     IncidentField,
     AssetsModelingRule,
     LayoutRule,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
 ]
 
 FROM_VERSION_DICT: Dict[ContentType, str] = {
@@ -96,6 +102,9 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.WIDGET: "5.0.0",
     ContentType.DASHBOARD: "5.0.0",
     ContentType.INCIDENT_TYPE: "5.0.0",
+    ContentType.CASE_FIELD: "8.7.0",
+    ContentType.CASE_LAYOUT: "8.7.0",
+    ContentType.CASE_LAYOUT_RULE: "8.7.0",
 }
 
 
@@ -106,10 +115,11 @@ class IsFromVersionSufficientAllItemsValidator(
     This class is for cases where the IsFromVersionSufficientValidator need to run on items that are not dependent on the item's type.
     """
 
-    description = "Validate that the item's fromversion field is sufficient."
     error_message = "The {0} from version field is either missing or insufficient, need at least {1}, current is {2}."
 
-    def is_valid(self, content_items: Iterable[ContentItem]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentItem]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

@@ -1,18 +1,50 @@
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from unittest.mock import MagicMock
 
+from packaging.version import Version
+
 from demisto_sdk.commands.common.constants import (
+    RELEASE_NOTES_DIR,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
+from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
+    AssetsModelingRule,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
+from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
+from demisto_sdk.commands.content_graph.objects.generic_definition import (
+    GenericDefinition,
+)
+from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
+from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
+from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
+from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
+from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
+from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.job import Job
+from demisto_sdk.commands.content_graph.objects.layout import Layout
+from demisto_sdk.commands.content_graph.objects.list import List as ListObject
+from demisto_sdk.commands.content_graph.objects.mapper import Mapper
+from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.report import Report
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.objects.trigger import Trigger
+from demisto_sdk.commands.content_graph.objects.widget import Widget
+from demisto_sdk.commands.content_graph.objects.wizard import Wizard
+from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
+from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
+from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
@@ -30,6 +62,10 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    description_content: Optional[str] = None,
+    name: Optional[str] = None,
+    code: Optional[str] = None,
+    unit_test_name: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -42,25 +78,35 @@ def create_integration_object(
     """
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
+
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
 
     additional_params = {}
 
+    if description_content:
+        additional_params["description"] = description_content
+
     if readme_content is not None:
         additional_params["readme"] = readme_content
 
-    integration = pack.create_integration(yml=yml_content, **additional_params)
+    if name is not None:
+        additional_params["name"] = name
 
-    integration.code.write("from MicrosoftApiModule import *")
-    return BaseContent.from_path(Path(integration.path))  # type:ignore
+    if unit_test_name:
+        additional_params["unit_test_name"] = unit_test_name
+
+    integration = pack.create_integration(yml=yml_content, **additional_params)
+    code = code or "from MicrosoftApiModule import *"
+    integration.code.write(code)
+    return cast(Integration, BaseContent.from_path(Path(integration.path)))
 
 
 def create_parsing_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-):
+) -> ParsingRule:
     """Creating an parsing_rule object with altered fields from a default parsing_rule yml structure.
 
     Args:
@@ -81,7 +127,7 @@ def create_parsing_rule_object(
 def create_correlation_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-):
+) -> CorrelationRule:
     """Creating an correlation_rule object with altered fields from a default correlation_rule yml structure.
 
     Args:
@@ -95,7 +141,9 @@ def create_correlation_rule_object(
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     pack.create_correlation_rule(name="correlation_rule", content=yml_content)
-    return BaseContent.from_path(Path(pack.correlation_rules[0].path))  # type:ignore
+    return cast(
+        CorrelationRule, BaseContent.from_path(Path(pack.correlation_rules[0].path))
+    )
 
 
 def create_playbook_object(
@@ -103,8 +151,8 @@ def create_playbook_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
-):
-    """Creating an playbook object with altered fields from a default playbook yml structure.
+) -> Playbook:
+    """Creating a playbook object with altered fields from a default playbook yml structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
@@ -128,13 +176,15 @@ def create_playbook_object(
     playbook.create_default_playbook(name="sample")
     playbook.yml.update(yml_content)
     parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
-    return Playbook.from_orm(parser)  # type:ignore
+    return Playbook.from_orm(parser)
 
 
 def create_modeling_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-):
+    rules: Optional[str] = None,
+    schema: Optional[dict] = None,
+) -> ModelingRule:
     """Creating an modeling_rule object with altered fields from a default modeling_rule yml structure.
 
     Args:
@@ -147,8 +197,8 @@ def create_modeling_rule_object(
     yml_content = load_yaml("modeling_rule.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
-    pack.create_modeling_rule(yml=yml_content)
-    return BaseContent.from_path(Path(pack.modeling_rules[0].path))  # type:ignore
+    pack.create_modeling_rule(yml=yml_content, rules=rules, schema=schema)
+    return cast(ModelingRule, BaseContent.from_path(Path(pack.modeling_rules[0].path)))
 
 
 def create_ps_integration_object(
@@ -172,14 +222,18 @@ def create_ps_integration_object(
         Path(f"{integration.path}/integration_0.ps1"), integration.repo_path
     )
     integration.code.write(r". $PSScriptRoot\CommonServerPowerShell.ps1")
-    return BaseContent.from_path(Path(integration.path))  # type:ignore
+    return cast(Integration, BaseContent.from_path(Path(integration.path)))
 
 
 def create_script_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
-):
+    readme_content: Optional[str] = None,
+    name: Optional[str] = None,
+    code: Optional[str] = None,
+    test_code: Optional[str] = None,
+) -> Script:
     """Creating an script object with altered fields from a default script yml structure.
 
     Args:
@@ -190,14 +244,24 @@ def create_script_object(
     Returns:
         The script object.
     """
+    additional_params = {}
+    if name is not None:
+        additional_params["name"] = name
+
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
-    script = pack.create_script(yml=yml_content)
-    script.code.write("from MicrosoftApiModule import *")
-    return BaseContent.from_path(Path(script.path))
+    if readme_content is not None:
+        additional_params["readme"] = readme_content
+
+    script = pack.create_script(yml=yml_content, **additional_params)
+    code = code or "from MicrosoftApiModule import *"
+    script.code.write(code)
+    if test_code:
+        script.test.write(test_code)
+    return cast(Script, BaseContent.from_path(Path(script.path)))
 
 
 def create_pack_object(
@@ -208,6 +272,7 @@ def create_pack_object(
     image: Optional[str] = None,
     playbooks: int = 0,
     name: Optional[str] = None,
+    release_note_content: Optional[str] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -222,15 +287,31 @@ def create_pack_object(
     update_keys(json_content, paths, values)
     remove_fields_from_dict(json_content, fields_to_delete)
     pack = REPO.create_pack()
+    pack_path = Path(pack.path)
+
+    if release_note_content is not None:
+        if (version := Version(json_content.get("version", "1.0.0"))) == Version(
+            "1.0.0"
+        ):
+            raise ValueError(
+                "Can't write release notes for v1.0.0, set version to another value"
+            )
+        # Writes the release notes
+        (
+            pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".md")
+        ).write_text(release_note_content)
+
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
     pack.readme.write_text(readme_text)
+
     if image is not None:
         pack.author_image.write(image)
     if playbooks:
         for _ in range(playbooks):
             pack.create_playbook()
-    return BaseContent.from_path(Path(pack.path))
+
+    return cast(Pack, BaseContent.from_path(pack_path))
 
 
 def remove_fields_from_dict(
@@ -243,7 +324,7 @@ def remove_fields_from_dict(
 
 def create_classifier_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Classifier:
     """Creating an classifier object with altered fields from a default classifier json structure.
 
     Args:
@@ -257,12 +338,12 @@ def create_classifier_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_classifier(name="test_classifier", content=json_content)
-    return BaseContent.from_path(Path(pack.classifiers[0].path))
+    return cast(Classifier, BaseContent.from_path(Path(pack.classifiers[0].path)))
 
 
 def create_list_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> ListObject:
     """Creating an list object with altered fields from a default list json structure.
 
     Args:
@@ -276,12 +357,12 @@ def create_list_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_list(name="list", content=json_content)
-    return BaseContent.from_path(Path(pack.lists[0].path))
+    return cast(ListObject, BaseContent.from_path(Path(pack.lists[0].path)))
 
 
 def create_job_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Job:
     """Creating an job object with altered fields from a default job json structure.
 
     Args:
@@ -300,12 +381,12 @@ def create_job_object(
             update_keys(json_content, paths, values)
         with open(pack.jobs[0].path, "w") as fp:
             json.dump(json_content, fp)
-    return BaseContent.from_path(Path(pack.jobs[0].path))
+    return cast(Job, BaseContent.from_path(Path(pack.jobs[0].path)))
 
 
 def create_dashboard_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Dashboard:
     """Creating an dashboard object with altered fields from a default dashboard json structure.
 
     Args:
@@ -319,12 +400,12 @@ def create_dashboard_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_dashboard(name="dashboard", content=json_content)
-    return BaseContent.from_path(Path(pack.dashboards[0].path))
+    return cast(Dashboard, BaseContent.from_path(Path(pack.dashboards[0].path)))
 
 
 def create_incident_type_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> IncidentType:
     """Creating an incident_type object with altered fields from a default incident_type json structure.
 
     Args:
@@ -338,12 +419,14 @@ def create_incident_type_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_incident_type(name="incident_type", content=json_content)
-    return BaseContent.from_path(Path(pack.incident_types[0].path))
+    return cast(IncidentType, BaseContent.from_path(Path(pack.incident_types[0].path)))
 
 
 def create_incident_field_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+) -> IncidentField:
     """Creating an incident_field object with altered fields from a default incident_field json structure.
 
     Args:
@@ -356,13 +439,17 @@ def create_incident_field_object(
     json_content = load_json("incident_field.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
     pack.create_incident_field(name="incident_field", content=json_content)
-    return BaseContent.from_path(Path(pack.incident_fields[0].path))
+    return cast(
+        IncidentField, BaseContent.from_path(Path(pack.incident_fields[0].path))
+    )
 
 
 def create_report_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Report:
     """Creating an report object with altered fields from a default report json structure.
 
     Args:
@@ -376,12 +463,12 @@ def create_report_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_report(name="report", content=json_content)
-    return BaseContent.from_path(Path(pack.reports[0].path))
+    return cast(Report, BaseContent.from_path(Path(pack.reports[0].path)))
 
 
 def create_xsiam_report_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> XSIAMReport:
     """Creating an xsiam_report object with altered fields from a default xsiam_report json structure.
 
     Args:
@@ -395,12 +482,12 @@ def create_xsiam_report_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_xsiam_report(name="xsiam_report", content=json_content)
-    return BaseContent.from_path(Path(pack.xsiam_reports[0].path))
+    return cast(XSIAMReport, BaseContent.from_path(Path(pack.xsiam_reports[0].path)))
 
 
 def create_xsiam_dashboard_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> XSIAMDashboard:
     """Creating an xsiam_dashboard object with altered fields from a default xsiam_dashboard json structure.
 
     Args:
@@ -414,7 +501,9 @@ def create_xsiam_dashboard_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_xsiam_dashboard(name="xsiam_dashboard", content=json_content)
-    return BaseContent.from_path(Path(pack.xsiam_dashboards[0].path))
+    return cast(
+        XSIAMDashboard, BaseContent.from_path(Path(pack.xsiam_dashboards[0].path))
+    )
 
 
 def create_xdrc_template_object(
@@ -422,7 +511,7 @@ def create_xdrc_template_object(
     json_values: Optional[List[Any]] = None,
     yml_paths: Optional[List[str]] = None,
     yml_values: Optional[List[Any]] = None,
-):
+) -> XDRCTemplate:
     """Creating an xdrc_template object with altered fields from a default xdrc_template json and yml structures.
 
     Args:
@@ -442,7 +531,7 @@ def create_xdrc_template_object(
     pack.create_xdrc_template(
         name="xdrc_template", json_content=json_content, yaml_content=yml_content
     )
-    return BaseContent.from_path(Path(pack.xdrc_templates[0].path))
+    return cast(XDRCTemplate, BaseContent.from_path(Path(pack.xdrc_templates[0].path)))
 
 
 def create_assets_modeling_rule_object(
@@ -450,7 +539,7 @@ def create_assets_modeling_rule_object(
     json_values: Optional[List[Any]] = None,
     yml_paths: Optional[List[str]] = None,
     yml_values: Optional[List[Any]] = None,
-):
+) -> AssetsModelingRule:
     """Creating an assets_modeling_rule object with altered fields from a default assets_modeling_rule json and yml structures.
 
     Args:
@@ -470,12 +559,15 @@ def create_assets_modeling_rule_object(
     pack.create_assets_modeling_rule(
         name="assets_modeling_rule", schema=json_content, yml=yml_content
     )
-    return BaseContent.from_path(Path(pack.assets_modeling_rules[0].path))
+    return cast(
+        AssetsModelingRule,
+        BaseContent.from_path(Path(pack.assets_modeling_rules[0].path)),
+    )
 
 
 def create_trigger_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Trigger:
     """Creating an trigger object with altered fields from a default trigger json structure.
 
     Args:
@@ -489,12 +581,12 @@ def create_trigger_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_trigger(name="trigger", content=json_content)
-    return BaseContent.from_path(Path(pack.triggers[0].path))
+    return cast(Trigger, BaseContent.from_path(Path(pack.triggers[0].path)))
 
 
 def create_layout_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Layout:
     """Creating an layout object with altered fields from a default layout json structure.
 
     Args:
@@ -508,12 +600,12 @@ def create_layout_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_layout(name="layout", content=json_content)
-    return BaseContent.from_path(Path(pack.layouts[0].path))
+    return cast(Layout, BaseContent.from_path(Path(pack.layouts[0].path)))
 
 
 def create_widget_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Widget:
     """Creating an widget object with altered fields from a default widget json structure.
 
     Args:
@@ -527,12 +619,12 @@ def create_widget_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_widget(name="widget", content=json_content)
-    return BaseContent.from_path(Path(pack.widgets[0].path))
+    return cast(Widget, BaseContent.from_path(Path(pack.widgets[0].path)))
 
 
 def create_indicator_field_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> IndicatorField:
     """Creating an indicator_field object with altered fields from a default indicator_field json structure.
 
     Args:
@@ -546,10 +638,12 @@ def create_indicator_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_indicator_field(name="indicator_field", content=json_content)
-    return BaseContent.from_path(Path(pack.indicator_fields[0].path))
+    return cast(
+        IndicatorField, BaseContent.from_path(Path(pack.indicator_fields[0].path))
+    )
 
 
-def create_wizard_object(dict_to_update: Optional[Any] = None):
+def create_wizard_object(dict_to_update: Optional[Any] = None) -> Wizard:
     """Creating a wizard object with altered fields from a default wizard json structure.
 
     Args:
@@ -562,13 +656,12 @@ def create_wizard_object(dict_to_update: Optional[Any] = None):
     pack.create_wizard(name="test_wizard")
     if dict_to_update:
         pack.wizards[0].update(dict_to_update)
-    wizard_object = BaseContent.from_path(Path(pack.wizards[0].path))
-    return wizard_object
+    return cast(Wizard, BaseContent.from_path(Path(pack.wizards[0].path)))
 
 
 def create_generic_definition_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> GenericDefinition:
     """Creating an generic_definition object with altered fields from a default generic_definition json structure.
 
     Args:
@@ -582,12 +675,14 @@ def create_generic_definition_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_generic_definition(name="generic_definition", content=json_content)
-    return BaseContent.from_path(Path(pack.generic_definitions[0].path))
+    return cast(
+        GenericDefinition, BaseContent.from_path(Path(pack.generic_definitions[0].path))
+    )
 
 
 def create_generic_field_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> GenericField:
     """Creating an generic_field object with altered fields from a default generic_field json structure.
 
     Args:
@@ -601,12 +696,12 @@ def create_generic_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_generic_field(name="generic_field", content=json_content)
-    return BaseContent.from_path(Path(pack.generic_fields[0].path))
+    return cast(GenericField, BaseContent.from_path(Path(pack.generic_fields[0].path)))
 
 
 def create_generic_type_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> GenericType:
     """Creating an generic_type object with altered fields from a default generic_type json structure.
 
     Args:
@@ -620,12 +715,12 @@ def create_generic_type_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_generic_type(name="generic_type", content=json_content)
-    return BaseContent.from_path(Path(pack.generic_types[0].path))
+    return cast(GenericType, BaseContent.from_path(Path(pack.generic_types[0].path)))
 
 
 def create_generic_module_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> GenericModule:
     """Creating an generic_module object with altered fields from a default generic_module json structure.
 
     Args:
@@ -639,12 +734,14 @@ def create_generic_module_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_generic_module(name="generic_module", content=json_content)
-    return BaseContent.from_path(Path(pack.generic_modules[0].path))
+    return cast(
+        GenericModule, BaseContent.from_path(Path(pack.generic_modules[0].path))
+    )
 
 
 def create_incoming_mapper_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Mapper:
     """Creating an incoming_mapper object with altered fields from a default incoming_mapper json structure.
 
     Args:
@@ -658,7 +755,7 @@ def create_incoming_mapper_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_mapper(name="incoming_mapper", content=json_content)
-    return BaseContent.from_path(Path(pack.mappers[0].path))
+    return cast(Mapper, BaseContent.from_path(Path(pack.mappers[0].path)))
 
 
 def create_outgoing_mapper_object(
@@ -682,7 +779,7 @@ def create_outgoing_mapper_object(
 
 def create_indicator_type_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> IndicatorType:
     """Creating an indicator_type object with altered fields from a default indicator_type json structure.
 
     Args:
@@ -696,10 +793,18 @@ def create_indicator_type_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_indicator_type(name="indicator_type", content=json_content)
-    return BaseContent.from_path(Path(pack.indicator_types[0].path))
+    return cast(
+        IndicatorType, BaseContent.from_path(Path(pack.indicator_types[0].path))
+    )
 
 
-def create_old_file_pointers(content_items, old_content_items):
+def create_old_file_pointers(content_items, old_content_items) -> None:
+    """Given two iterables of content_items and their old_content_items, assign each content_item its matching old_content_item.
+
+    Args:
+        content_items (Iterable): Iterables object of content_items.
+        old_content_items (Iterable): Iterables object of olf_content_items.
+    """
     for content_item, old_content_item in zip(content_items, old_content_items):
         content_item.old_base_content_object = old_content_item
 

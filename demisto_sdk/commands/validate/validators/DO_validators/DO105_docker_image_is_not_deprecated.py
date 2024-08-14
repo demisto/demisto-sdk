@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import ClassVar, Dict, Iterable, List, Union
 
+from demisto_sdk.commands.common.constants import DOCKERFILES_REPO
 from demisto_sdk.commands.common.files.json_file import JsonFile
-from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -25,12 +25,13 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
         Dict[str, str]
     ] = {}  # map between deprecated docker to the reason its deprecated
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         if not self.deprecated_dockers_to_reasons:
             deprecated_dockers = JsonFile.read_from_github_api(
                 path="/docker/deprecated_images.json",
-                git_content_config=GitContentConfig(repo_name="demisto/dockerfiles"),
+                repo=DOCKERFILES_REPO,
                 verify_ssl=False,
             )
             DockerImageIsNotDeprecatedValidator.deprecated_dockers_to_reasons = {

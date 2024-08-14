@@ -14,7 +14,7 @@ ContentTypes = Integration
 class IsValidDisplayNameForNonDeprecatedIntegrationValidator(
     BaseValidator[ContentTypes]
 ):
-    error_code = "IN158"
+    error_code = "IN160"
     description = "Validate that the display name for non-deprecated integration doesn't end with '(Deprecated)'."
     rationale = (
         "This ensures accurate representation of the integration's status, avoiding confusion for users "
@@ -24,7 +24,9 @@ class IsValidDisplayNameForNonDeprecatedIntegrationValidator(
     related_field = "deprecated, display"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

@@ -3,6 +3,9 @@ from __future__ import annotations
 from typing import Dict, Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.content_graph.objects.case_field import CaseField
+from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
+from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -69,6 +72,9 @@ ContentTypes = Union[
     GenericType,
     XSIAMDashboard,
     XSIAMReport,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
 ]
 
 
@@ -86,7 +92,9 @@ class IdChangedValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     old_id: Dict[str, str] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

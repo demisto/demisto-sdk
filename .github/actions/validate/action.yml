@@ -13,10 +13,10 @@ inputs:
     type: string
     description: "The name of of the artifact to upload"
 
-  validate-script-path:
+  validate-arguments:
     required: false
     type: string
-    description: "The path to the validate script to run"
+    description: "The validate command arguments to run."
 
 
 runs:
@@ -40,9 +40,11 @@ runs:
       - name: Run Validate All
         run: |
           source $(poetry env info --path)/bin/activate
+          cp demisto_sdk/commands/validate/sdk_validation_config.toml content/
           cd content
+          git status
           mkdir -p ${{ inputs.artifacts-path-dir }}
-          ./${{ inputs.validate-script-path }}
+          demisto-sdk validate ${{inputs.validate-arguments}}
         shell: bash
 
       - name: Upload artifacts

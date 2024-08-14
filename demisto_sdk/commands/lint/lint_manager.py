@@ -67,14 +67,15 @@ class LintManager:
 
     Attributes:
         input(str): Directories to run lint on.
-        git(bool): Perform lint and test only on chaged packs.
+        git(bool): Perform lint and test only on changed packs.
         all_packs(bool): Whether to run on all packages.
         log_path(str): Path to all levels of logs.
         prev_ver(str): Previous branch or SHA1 commit to run checks against.
-        json_file_path(str): Path to a json file to write the run resutls to.
+        json_file_path(str): Path to a json file to write the run results to.
         id_set_path(str): Path to an existing id_set.json.
         check_dependent_api_module(bool): Whether to run lint also on the packs dependent on the modified api modules
         files.
+        show_deprecation_message (bool): Whether to show deprecation alert or not.
     """
 
     def __init__(
@@ -85,8 +86,8 @@ class LintManager:
         prev_ver: str,
         json_file_path: str = "",
         check_dependent_api_module: bool = False,
+        show_deprecation_message: bool = True,
     ):
-
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver
@@ -102,6 +103,7 @@ class LintManager:
             all_packs=all_packs,
             base_branch=self._prev_ver,
         )
+        self.show_deprecation_message = show_deprecation_message
 
         if check_dependent_api_module:
             dependent_on_api_module = self._get_api_module_dependent_items()
@@ -241,7 +243,9 @@ class LintManager:
         logger.debug("creating docker client from env")
 
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="LintManager")  # type: ignore
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="LintManager"
+            )  # type: ignore
             logger.debug("pinging docker daemon")
             docker_client.ping()
         except (
@@ -287,7 +291,9 @@ class LintManager:
         """
         pkgs: list
         if all_packs or git:
-            pkgs = LintManager._get_all_packages(content_dir=content_repo.repo.working_dir)  # type: ignore
+            pkgs = LintManager._get_all_packages(
+                content_dir=content_repo.repo.working_dir  # type: ignore[arg-type]
+            )
         else:  # specific pack as input, -i flag has been used
             pkgs = []
             if isinstance(input, str):
@@ -722,6 +728,12 @@ class LintManager:
                 return_exit_code = SUCCESS
             else:
                 return_exit_code = FAIL
+
+        if self.show_deprecation_message:
+            logger.error(
+                "This command is deprecated and will be removed soon. Use the `demisto-sdk pre-commit` command instead."
+            )
+
         return return_exit_code
 
     def _report_results(
@@ -1086,7 +1098,7 @@ class LintManager:
     def report_summary(
         pkg, pkgs_status: dict, lint_status: dict, all_packs: bool = False
     ):
-        """Log failed image creation if occured
+        """Log failed image creation if occurred
 
         Args:
             pkgs_status: The packs status

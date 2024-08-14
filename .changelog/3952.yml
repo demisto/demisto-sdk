@@ -1,6 +1,0 @@
-changes:
-- description: Added support for `run_isolated` field to the **pre-commit** configuration file.
-  type: feature
-- description: Added support for `pass_docker_extra_args` field to the **pre-commit** configuration file.
-  type: feature
-pr_number: 3952

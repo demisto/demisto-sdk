@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.constants import DOC_FILE_IMAGE_REGEX
 from demisto_sdk.commands.common.tools import (
     extract_image_paths_from_str,
     get_full_image_paths_from_relative,
+    get_pack_name,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -27,7 +29,9 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -40,9 +44,10 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                     invalid_lines := [
                         str(image_path)
                         for image_path in get_full_image_paths_from_relative(
-                            content_item.pack_name,
+                            get_pack_name(content_item.path),
                             extract_image_paths_from_str(
-                                text=content_item.readme.file_content
+                                text=content_item.readme.file_content,
+                                regex_str=DOC_FILE_IMAGE_REGEX,
                             ),
                         )
                         if image_path and not image_path.is_file()

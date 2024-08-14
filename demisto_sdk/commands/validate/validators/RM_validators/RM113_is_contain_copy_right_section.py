@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.tools import check_text_content_contain_sub_text
+from demisto_sdk.commands.common.tools import search_substrings_by_line
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -22,7 +22,9 @@ class IsContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -31,9 +33,9 @@ class IsContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                invalid_lines := check_text_content_contain_sub_text(
-                    sub_text_list=["BSD", "MIT", "Copyright", "proprietary"],
-                    to_split=True,
+                invalid_lines := search_substrings_by_line(
+                    phrases_to_search=["BSD", "MIT", "Copyright", "proprietary"],
+                    search_whole_word=True,
                     text=content_item.readme.file_content,
                 )
             )

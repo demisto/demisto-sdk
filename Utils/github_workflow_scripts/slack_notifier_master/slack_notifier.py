@@ -2,11 +2,12 @@ from pathlib import Path
 from typing import Collection, Dict, List, Optional, Set, Tuple
 
 import typer
-from github import Github, WorkflowRun
+from github import Github
+from github.WorkflowRun import WorkflowRun
 from slack_sdk import WebClient
 
 from demisto_sdk.commands.common.logger import logger
-from Utils.pytest_junit_parser import JunitParser
+from Utils.pytest_junit_parser import JunitParser, TestResult
 
 DEFAULT_SLACK_CHANNEL = "dmst-build-test"
 
@@ -46,31 +47,26 @@ def get_failed_tests() -> Tuple[List[str], List[str], List[str]]:
     Returns:
         a list of failed unit-tests, a list of failed integration-tests, a list of failed graph-tests.
     """
-    failed_unit_tests: Set[str] = set()
-    failed_integration_tests: Set[str] = set()
-    failed_graph_tests: Set[str] = set()
+    failed_unit_tests: Set[TestResult] = set()
+    failed_integration_tests: Set[TestResult] = set()
+    failed_graph_tests: Set[TestResult] = set()
 
     for path in Path(".").glob("*/junit.xml"):
         for test_suite in JunitParser(path).test_suites:
-            failed_unit_tests = failed_unit_tests.union(
-                {str(failed_test) for failed_test in test_suite.failed_unit_tests}
-            )
+            failed_unit_tests = failed_unit_tests.union(set(test_suite.failed_tests))
             failed_integration_tests = failed_integration_tests.union(
-                {
-                    str(failed_test)
-                    for failed_test in test_suite.failed_integration_tests
-                }
+                set(test_suite.failed_integration_tests)
             )
             failed_graph_tests = failed_graph_tests.union(
-                {str(failed_test) for failed_test in test_suite.failed_graph_tests}
+                set(test_suite.failed_graph_tests)
             )
 
         logger.info(f"Finished processing junit-file {path}")
 
     return (
-        list(failed_unit_tests),
-        list(failed_integration_tests),
-        list(failed_graph_tests),
+        [str(test) for test in failed_unit_tests],
+        [str(test) for test in failed_integration_tests],
+        [str(test) for test in failed_graph_tests],
     )
 
 
@@ -143,7 +139,10 @@ def construct_slack_message(
     return []
 
 
-main = typer.Typer(pretty_exceptions_enable=False)
+main = typer.Typer(
+    pretty_exceptions_enable=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 
 @main.command()

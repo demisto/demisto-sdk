@@ -55,6 +55,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
     create_relationships,
+    delete_all_graph_relationships,
     get_sources_by_path,
     get_targets_by_path,
 )
@@ -506,10 +507,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def find_uses_paths_with_invalid_marketplaces(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
-        """Searches and retrievs content items who use content items with invalid marketplaces.
+        """Searches and retrieves content items who use content items with invalid marketplaces.
 
         Args:
-            file_paths (List[str]): A list of content items' paths to check.
+            pack_ids (List[str]): A list of content items' pack_ids to check.
                 If not given, runs the query over all content items.
 
         Returns:
@@ -663,9 +664,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def clean_graph(self):
         with self.driver.session() as session:
+            session.execute_write(delete_all_graph_relationships)
             session.execute_write(delete_all_graph_nodes)
         self._id_to_obj = {}
-        super().clean_graph()
 
     def search(
         self,

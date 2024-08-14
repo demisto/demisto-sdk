@@ -417,7 +417,7 @@ def convert_request_to_command(item: dict):
 
 
 def generate_command_outputs(
-    body: Union[Dict, List]
+    body: Union[Dict, List],
 ) -> List[IntegrationGeneratorOutput]:
     """
     Parses postman body to list of command outputs.

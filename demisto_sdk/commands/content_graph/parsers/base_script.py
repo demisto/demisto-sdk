@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
@@ -41,9 +42,14 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
                 "type": "type",
                 "subtype": "subtype",
                 "alt_docker_images": "alt_dockerimages",
+                "outputs": "outputs",
             }
         )
         return super().field_mapping
+
+    @property
+    def outputs(self) -> List:
+        return get_value(self.yml_data, self.field_mapping.get("outputs", ""), []) or []
 
     def connect_to_dependencies(self) -> None:
         """Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.
@@ -81,9 +87,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         else:
             return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
                 self.path, self.git_sha, self.yml_data
-            )[
-                1
-            ]
+            )[1]
 
     def get_depends_on(self) -> Set[str]:
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])

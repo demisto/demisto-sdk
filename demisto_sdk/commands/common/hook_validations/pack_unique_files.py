@@ -1,6 +1,7 @@
 """
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
+
 import os
 import re
 from pathlib import Path
@@ -52,7 +53,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     check_timestamp_format,
@@ -279,36 +279,6 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
         return False
-
-    def validate_pack_readme_images(self):
-        readme_file_path = os.path.join(self.pack_path, self.readme_file)
-        readme_validator = ReadMeValidator(
-            readme_file_path,
-            ignored_errors=self.ignored_errors,
-            specific_validations=self.specific_validations,
-        )
-        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True)
-        errors += readme_validator.check_readme_absolute_image_paths(
-            is_pack_readme=True
-        )
-        if errors:
-            self._errors.extend(errors)
-            return False
-        return True
-
-    @error_codes("RM112")
-    def validate_pack_readme_relative_urls(self):
-        readme_file_path = os.path.join(self.pack_path, self.readme_file)
-        readme_validator = ReadMeValidator(
-            readme_file_path,
-            ignored_errors=self.ignored_errors,
-            specific_validations=self.specific_validations,
-        )
-        errors = readme_validator.check_readme_relative_url_paths(is_pack_readme=True)
-        if errors:
-            self._errors.extend(errors)
-            return False
-        return True
 
     @error_codes("IM109")
     def validate_author_image_exists(self):
@@ -984,9 +954,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             self.validate_pack_readme_file_is_not_empty()
             self.validate_pack_readme_and_pack_description()
-            self.validate_pack_readme_images()
             self.validate_author_image_exists()
-            self.validate_pack_readme_relative_urls()
 
             # We only check pack dependencies for -g flag
             if self.validate_dependencies:

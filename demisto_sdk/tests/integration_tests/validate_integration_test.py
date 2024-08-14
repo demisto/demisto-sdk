@@ -152,7 +152,15 @@ class TestGenericFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", generic_field_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    generic_field_path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -186,7 +194,15 @@ class TestGenericFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", generic_field_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    generic_field_path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 1
         assert all(
@@ -231,7 +247,15 @@ class TestGenericFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", generic_field_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    generic_field_path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 1
 
@@ -268,7 +292,15 @@ class TestGenericTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", generic_type_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    generic_type_path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -302,7 +334,17 @@ class TestGenericTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", generic_type_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    generic_type_path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 1
         assert all(
@@ -337,7 +379,15 @@ class TestGenericTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", generic_type_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    generic_type_path,
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 1
         assert all(
@@ -373,7 +423,15 @@ class TestGenericModuleValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", generic_module_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    generic_module_path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -407,7 +465,15 @@ class TestGenericModuleValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", generic_module_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    generic_module_path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 1
         assert all(
@@ -442,7 +508,15 @@ class TestGenericModuleValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", generic_module_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    generic_module_path,
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 1
         assert all(
@@ -480,7 +554,15 @@ class TestGenericDefinitionValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", genefic_def.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    genefic_def.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -515,7 +597,15 @@ class TestGenericDefinitionValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", genefic_def.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    genefic_def.path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 1
         assert all(
@@ -551,7 +641,15 @@ class TestGenericDefinitionValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", genefic_def.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    genefic_def.path,
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 1
         assert all(
@@ -587,7 +685,15 @@ class TestIncidentFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", incident_field_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    incident_field_path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -622,7 +728,15 @@ class TestIncidentFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", incident_field_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    incident_field_path,
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 1
         assert all(
@@ -688,6 +802,8 @@ class TestIncidentFieldValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     incident_field_path,
                     "-s",
@@ -748,6 +864,8 @@ class TestIncidentFieldValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     incident_field_path,
                     "-s",
@@ -795,16 +913,23 @@ class TestDeprecatedIntegration:
         )
         valid_integration_yml["deprecated"] = True
         valid_integration_yml["display"] = "ServiceNow (Deprecated)"
-        valid_integration_yml[
-            "description"
-        ] = "Deprecated. Use the ServiceNow v2 integration instead."
+        valid_integration_yml["description"] = (
+            "Deprecated. Use the ServiceNow v2 integration instead."
+        )
         integration = pack.create_integration(yml=valid_integration_yml)
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert all(
@@ -843,7 +968,14 @@ class TestDeprecatedIntegration:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert all(
@@ -881,7 +1013,14 @@ class TestDeprecatedIntegration:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
                 catch_exceptions=False,
             )
         assert str_in_call_args_list(logger_info.call_args_list, "IN160")
@@ -921,7 +1060,14 @@ class TestDeprecatedIntegration:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert str_in_call_args_list(logger_info.call_args_list, "IN158")
@@ -955,7 +1101,14 @@ class TestDeprecatedIntegration:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert str_in_call_args_list(
@@ -992,9 +1145,9 @@ class TestDeprecatedIntegration:
         valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml["deprecated"] = True
         valid_integration_yml["display"] = "ServiceNow (Deprecated)"
-        valid_integration_yml[
-            "description"
-        ] = "Deprecated. Use the ServiceNow v2 integration instead."
+        valid_integration_yml["description"] = (
+            "Deprecated. Use the ServiceNow v2 integration instead."
+        )
         valid_integration_yml["commonfields"]["version"] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
@@ -1003,6 +1156,8 @@ class TestDeprecatedIntegration:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     integration.yml.rel_path,
                     "--no-docker-checks",
@@ -1051,9 +1206,9 @@ class TestDeprecatedIntegration:
         valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml["deprecated"] = True
         valid_integration_yml["display"] = "ServiceNow (Deprecated)"
-        valid_integration_yml[
-            "description"
-        ] = "Deprecated. Use the ServiceNow v2 integration instead."
+        valid_integration_yml["description"] = (
+            "Deprecated. Use the ServiceNow v2 integration instead."
+        )
         valid_integration_yml["commonfields"]["version"] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         modified_files = {integration.yml.rel_path}
@@ -1074,6 +1229,8 @@ class TestDeprecatedIntegration:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--no-docker-checks",
                     "--print-ignored-files",
@@ -1122,6 +1279,8 @@ class TestDeprecatedIntegration:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     integration.yml.rel_path,
                     "--no-docker-checks",
@@ -1190,6 +1349,8 @@ class TestDeprecatedIntegration:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--no-docker-checks",
                     "--print-ignored-files",
@@ -1237,7 +1398,14 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert all(
@@ -1306,6 +1474,8 @@ class TestIntegrationValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     new_integration.yml.rel_path,
                     "--no-docker-checks",
@@ -1355,7 +1525,14 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert all(
@@ -1385,7 +1562,6 @@ class TestIntegrationValidation:
         - Ensure failure message on non-latest docker image.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         pack_integration_path = join(
             AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"
         )
@@ -1400,6 +1576,8 @@ class TestIntegrationValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     pack_integration_path,
                     "--no-conf-json",
@@ -1412,13 +1590,8 @@ class TestIntegrationValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {pack_integration_path} as integration",
-                    "You can check for the most updated version of demisto/python3 here:",
                 ]
             ]
-        )
-        assert str_in_call_args_list(
-            logger_error.call_args_list,
-            "The docker image tag is not the latest numeric tag, please update it",
         )
         assert result.exit_code == 1
 
@@ -1435,7 +1608,6 @@ class TestIntegrationValidation:
         - Ensure failure message on hidden params.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(
             IntegrationValidator,
             "has_no_fromlicense_key_in_contributions_integration",
@@ -1455,15 +1627,19 @@ class TestIntegrationValidation:
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [VALIDATE_CMD, "-i", integration_path, "--no-conf-json", "--allow-skipped"],
+            [
+                VALIDATE_CMD,
+                "--run-old-validate",
+                "--skip-new-validate",
+                "-i",
+                integration_path,
+                "--no-conf-json",
+                "--allow-skipped",
+            ],
         )
         assert result.exit_code == 1
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {integration_path} as integration"
-        )
-        assert str_in_call_args_list(
-            logger_error.call_args_list,
-            '[IN124] - Parameter: "credentials" can\'t be hidden in all marketplaces',
         )
 
     def test_positive_hidden_param(self, mocker):
@@ -1484,7 +1660,15 @@ class TestIntegrationValidation:
         runner = CliRunner(mix_stderr=False)
         runner.invoke(
             main,
-            [VALIDATE_CMD, "-i", integration_path, "--no-conf-json", "--allow-skipped"],
+            [
+                VALIDATE_CMD,
+                "--run-old-validate",
+                "--skip-new-validate",
+                "-i",
+                integration_path,
+                "--no-conf-json",
+                "--allow-skipped",
+            ],
         )
         assert all(
             [
@@ -1540,7 +1724,14 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert str_in_call_args_list(
@@ -1586,7 +1777,14 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert str_in_call_args_list(logger_info.call_args_list, "ST107")
@@ -1631,7 +1829,14 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    integration.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
             assert should_pass != str_in_call_args_list(
@@ -1687,7 +1892,15 @@ class TestPackValidation:
         runner = CliRunner(mix_stderr=False)
         runner.invoke(
             main,
-            [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json", "--allow-skipped"],
+            [
+                VALIDATE_CMD,
+                "--run-old-validate",
+                "--skip-new-validate",
+                "-i",
+                VALID_PACK_PATH,
+                "--no-conf-json",
+                "--allow-skipped",
+            ],
         )
         assert all(
             [
@@ -1737,6 +1950,8 @@ class TestPackValidation:
             main,
             [
                 VALIDATE_CMD,
+                "--run-old-validate",
+                "--skip-new-validate",
                 "-i",
                 AZURE_FEED_PACK_PATH,
                 "--no-conf-json",
@@ -1771,7 +1986,16 @@ class TestPackValidation:
         - See that the validation failed.
         """
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_INVALID_PACK_PATH])
+        result = runner.invoke(
+            main,
+            [
+                VALIDATE_CMD,
+                "--run-old-validate",
+                "--skip-new-validate",
+                "-i",
+                AZURE_FEED_INVALID_PACK_PATH,
+            ],
+        )
         assert "does not exist" in result.stderr
         assert result.exit_code == 2
 
@@ -1795,7 +2019,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    classifier.path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -1830,7 +2062,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -1867,7 +2107,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {classifier.path} as classifier"
@@ -1900,7 +2148,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {classifier.path} as classifier"
@@ -1932,7 +2188,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -1968,7 +2232,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2003,7 +2275,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_error.call_args_list,
@@ -2032,7 +2312,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert result.exit_code == 0
         assert all(
@@ -2066,7 +2354,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2101,7 +2397,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2135,7 +2439,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2171,7 +2483,15 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    classifier.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2209,7 +2529,15 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    mapper.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2243,7 +2571,15 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    mapper.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2280,7 +2616,15 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    mapper.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {mapper.path} as mapper"
@@ -2312,7 +2656,15 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    mapper.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2349,7 +2701,15 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    mapper.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {mapper.path} as mapper"
@@ -2380,7 +2740,15 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    mapper.path,
+                ],
+                catch_exceptions=False,
             )
         str_in_call_args_list(
             logger_info.call_args_list,
@@ -2408,7 +2776,15 @@ class TestDashboardValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", dashboard.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    dashboard.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2442,7 +2818,15 @@ class TestDashboardValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", dashboard.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    dashboard.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2481,7 +2865,15 @@ class TestConnectionValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", connection.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    connection.path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2517,7 +2909,15 @@ class TestConnectionValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", connection.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    connection.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2553,7 +2953,15 @@ class TestIndicatorFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", indicator_field_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    indicator_field_path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2588,7 +2996,15 @@ class TestIndicatorFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", indicator_field_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    indicator_field_path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2624,7 +3040,15 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    incident_type.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2658,7 +3082,15 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    incident_type.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list,
@@ -2719,7 +3151,15 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    incident_type.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2781,7 +3221,15 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    incident_type.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list,
@@ -2847,7 +3295,15 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    incident_type.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list,
@@ -2940,7 +3396,15 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    layout.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -2976,7 +3440,15 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    layout.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -3016,7 +3488,15 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    layout.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {layout.path} as layout"
@@ -3052,7 +3532,15 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    layout.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -3088,7 +3576,15 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    layout.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -3126,7 +3622,15 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    layout.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {layout.path} as layoutscontainer"
@@ -3167,7 +3671,13 @@ class TestLayoutValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", layoutscontainer.path],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    layoutscontainer.path,
+                ],
                 catch_exceptions=False,
             )
         str_in_call_args_list(
@@ -3203,7 +3713,15 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    layout.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {layout.path} as layout"
@@ -3261,6 +3779,8 @@ class TestLayoutValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     layoutscontainer.path,
                     "-s",
@@ -3331,6 +3851,8 @@ class TestLayoutValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     layoutscontainer.path,
                     "-s",
@@ -3400,6 +3922,8 @@ class TestLayoutValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     layout.path,
                     "-s",
@@ -3465,6 +3989,8 @@ class TestLayoutValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     layout.path,
                     "-s",
@@ -3513,6 +4039,8 @@ class TestPlaybookValidation:
             main,
             [
                 VALIDATE_CMD,
+                "--run-old-validate",
+                "--skip-new-validate",
                 "-i",
                 VALID_PLAYBOOK_FILE_PATH,
                 "--allow-skipped",
@@ -3551,6 +4079,8 @@ class TestPlaybookValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     INVALID_PLAYBOOK_FILE_PATH,
                     "--allow-skipped",
@@ -3593,6 +4123,8 @@ class TestPlaybookValidateDeprecated:
             main,
             [
                 VALIDATE_CMD,
+                "--run-old-validate",
+                "--skip-new-validate",
                 "-i",
                 VALID_DEPRECATED_PLAYBOOK_FILE_PATH,
                 "--no-conf-json",
@@ -3631,6 +4163,8 @@ class TestPlaybookValidateDeprecated:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     INVALID_DEPRECATED_PLAYBOOK_FILE_PATH,
                     "--no-conf-json",
@@ -3671,7 +4205,14 @@ class TestPlaybookValidateDeprecated:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", playbook.yml.rel_path, "--print-ignored-files"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    playbook.yml.rel_path,
+                    "--print-ignored-files",
+                ],
                 catch_exceptions=False,
             )
         assert all(
@@ -3730,6 +4271,8 @@ class TestPlaybookValidateDeprecated:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--print-ignored-files",
                     "--skip-pack-release-notes",
@@ -3771,7 +4314,14 @@ class TestPlaybookValidateDeprecated:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", playbook.yml.rel_path, "--print-ignored-files"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    playbook.yml.rel_path,
+                    "--print-ignored-files",
+                ],
                 catch_exceptions=False,
             )
         assert all(
@@ -3831,6 +4381,8 @@ class TestPlaybookValidateDeprecated:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--print-ignored-files",
                     "--skip-pack-release-notes",
@@ -3868,7 +4420,15 @@ class TestReportValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", report.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    report.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -3902,7 +4462,15 @@ class TestReportValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", report.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    report.path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {report.path} as report"
@@ -3934,7 +4502,15 @@ class TestReputationValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", reputation.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    reputation.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -3970,7 +4546,15 @@ class TestReputationValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", reputation.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    reputation.path,
+                ],
+                catch_exceptions=False,
             )
         str_in_call_args_list(
             logger_info.call_args_list, f"Validating {reputation.path} as reputation"
@@ -4006,7 +4590,14 @@ class TestScriptValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    script.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert all(
@@ -4043,7 +4634,14 @@ class TestScriptValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    script.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert str_in_call_args_list(
@@ -4078,15 +4676,22 @@ class TestScriptDeprecatedValidation:
         pack = repo.create_pack("PackName")
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml["deprecated"] = True
-        valid_script_yml[
-            "comment"
-        ] = "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        valid_script_yml["comment"] = (
+            "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        )
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    script.yml.rel_path,
+                    "--no-docker-checks",
+                ],
                 catch_exceptions=False,
             )
         assert all(
@@ -4123,7 +4728,14 @@ class TestScriptDeprecatedValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    script.yml.rel_path,
+                    "--no-docker-checks",
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
                 catch_exceptions=False,
             )
         assert str_in_call_args_list(
@@ -4155,9 +4767,9 @@ class TestScriptDeprecatedValidation:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml["deprecated"] = True
         valid_script_yml["commonfields"]["version"] = -2
-        valid_script_yml[
-            "comment"
-        ] = "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        valid_script_yml["comment"] = (
+            "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        )
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -4165,6 +4777,8 @@ class TestScriptDeprecatedValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     script.yml.rel_path,
                     "--no-docker-checks",
@@ -4209,9 +4823,9 @@ class TestScriptDeprecatedValidation:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml["deprecated"] = True
         valid_script_yml["commonfields"]["version"] = -2
-        valid_script_yml[
-            "comment"
-        ] = "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        valid_script_yml["comment"] = (
+            "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        )
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
         mocker.patch.object(
@@ -4231,6 +4845,8 @@ class TestScriptDeprecatedValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "-i",
                     script.yml.rel_path,
@@ -4275,6 +4891,8 @@ class TestScriptDeprecatedValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     script.yml.rel_path,
                     "--no-docker-checks",
@@ -4342,6 +4960,8 @@ class TestScriptDeprecatedValidation:
                     "--no-docker-checks",
                     "--print-ignored-files",
                     "--skip-pack-release-notes",
+                    "--run-old-validate",
+                    "--skip-new-validate",
                 ],
                 catch_exceptions=False,
             )
@@ -4376,7 +4996,15 @@ class TestWidgetValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", widget.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    widget.path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -4410,7 +5038,15 @@ class TestWidgetValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", widget.path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    widget.path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -4448,7 +5084,15 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", image_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    image_path,
+                ],
+                catch_exceptions=False,
             )
         assert all(
             [
@@ -4485,7 +5129,15 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", image_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    image_path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list,
@@ -4521,7 +5173,15 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", NOT_VALID_IMAGE_PATH], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    NOT_VALID_IMAGE_PATH,
+                ],
+                catch_exceptions=False,
             )
 
         assert str_in_call_args_list(
@@ -4553,7 +5213,15 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", image_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    image_path,
+                ],
+                catch_exceptions=False,
             )
         assert str_in_call_args_list(
             logger_info.call_args_list, f"Validating {image_path} as image"
@@ -4609,7 +5277,13 @@ class TestAuthorImageValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-i", pack.author_image.path],
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    pack.author_image.path,
+                ],
                 catch_exceptions=False,
             )
 
@@ -4659,7 +5333,15 @@ class TestAuthorImageValidation:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", author_image_path], catch_exceptions=False
+                main,
+                [
+                    VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                    "-i",
+                    author_image_path,
+                ],
+                catch_exceptions=False,
             )
 
         assert all(
@@ -4723,6 +5405,8 @@ class TestAllFilesValidator:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-a",
                     "--no-docker-checks",
                     "--no-conf-json",
@@ -4802,6 +5486,8 @@ class TestAllFilesValidator:
                     "--no-docker-checks",
                     "--no-conf-json",
                     "--no-multiprocessing",
+                    "--run-old-validate",
+                    "--skip-new-validate",
                 ],
                 catch_exceptions=False,
             )
@@ -4906,6 +5592,8 @@ class TestValidationUsingGit:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--no-docker-checks",
                     "--no-conf-json",
@@ -4996,6 +5684,8 @@ class TestValidationUsingGit:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--no-docker-checks",
                     "--no-conf-json",
@@ -5079,6 +5769,8 @@ class TestValidationUsingGit:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--no-docker-checks",
                     "--no-conf-json",
@@ -5155,6 +5847,8 @@ class TestValidationUsingGit:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--no-docker-checks",
                     "--no-conf-json",
@@ -5188,6 +5882,8 @@ class TestValidationUsingGit:
             main,
             [
                 VALIDATE_CMD,
+                "--run-old-validate",
+                "--skip-new-validate",
                 "-i",
                 join("Users", "MyPacks", "VMware"),
                 "--no-docker-checks",
@@ -5233,6 +5929,8 @@ class TestValidationUsingGit:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--no-docker-checks",
                     "--no-conf-json",
@@ -5308,6 +6006,8 @@ class TestValidationUsingGit:
                     "--skip-pack-release-notes",
                     "-i",
                     integration.yml.rel_path,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                 ],
                 catch_exceptions=False,
             )
@@ -5378,6 +6078,8 @@ class TestValidationUsingGit:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--no-docker-checks",
                     "--no-conf-json",
@@ -5465,12 +6167,14 @@ class TestValidationUsingGit:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--no-docker-checks",
                     "--no-conf-json",
                     "--skip-pack-release-notes",
                     "-i",
-                    pack_1.path,
+                    str(pack_1.path),
                 ],
                 catch_exceptions=False,
             )
@@ -5524,6 +6228,8 @@ class TestSpecificValidations:
                     reputation.path,
                     "--run-specific-validations",
                     "BA101",
+                    "--run-old-validate",
+                    "--skip-new-validate",
                 ],
                 catch_exceptions=False,
             )
@@ -5569,6 +6275,8 @@ class TestSpecificValidations:
                     reputation.path,
                     "--run-specific-validations",
                     "RP101",
+                    "--run-old-validate",
+                    "--skip-new-validate",
                 ],
                 catch_exceptions=False,
             )
@@ -5615,6 +6323,8 @@ class TestSpecificValidations:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-i",
                     reputation.path,
                     "--run-specific-validations",
@@ -5695,6 +6405,8 @@ class TestBasicValidation:
                 main,
                 [
                     VALIDATE_CMD,
+                    "--run-old-validate",
+                    "--skip-new-validate",
                     "-g",
                     "--post-commit",
                     "--skip-pack-release-notes",
@@ -5720,7 +6432,6 @@ def test_local_node_server_up_and_down():
 
     assert not mdx_server_is_up()
     with start_local_MDX_server():
-
         assert mdx_server_is_up()
         assert_successful_mdx_call()
     sleep(1)

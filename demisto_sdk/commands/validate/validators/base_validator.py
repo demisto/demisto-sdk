@@ -14,9 +14,10 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import ExecutionMode, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import is_abstract_class
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -25,9 +26,47 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseContentMetaclass,
 )
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
+
+VALIDATION_CATEGORIES = {
+    "BA": "Basic",
+    "BC": "Backward Compatability",
+    "CJ": "Conf.json",
+    "CL": "Classifier",
+    "DA": "Dashboard",
+    "DB": "DBot",
+    "DO": "Docker Image",
+    "DS": "Description",
+    "IF": "Incident Field",
+    "IM": "Author Image",
+    "IN": "Integration",
+    "IT": "Incident Type",
+    "PA": "Pack",
+    "PB": "Playbook",
+    "RM": "Readme",
+    "RP": "Reputation (Incident Type)",
+    "SC": "Script",
+    "GF": "Generic Field",
+    "LI": "List",
+    "LO": "Layout",
+    "MP": "Mapper",
+    "PP": "Pre-Process Rule",
+    "RN": "Release Note",
+    "ST": "Structure",
+    "WD": "Widget",
+    "XC": "XSOAR Configuration",
+    "WZ": "Wizard",
+    "MR": "Modeling Rule",
+    "CR": "Correlation Rule",
+    "XR": "XSIAM Report",
+    "PR": "Parsing Rule",
+    "XT": "XDRC Template",
+    "XD": "XSIAM Dashboard",
+    "GR": "Graph",
+}
 
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
@@ -57,6 +96,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
+    expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -69,6 +109,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         content_item: ContentTypes,
         ignorable_errors: list,
         support_level_dict: dict,
+        running_execution_mode: ExecutionMode,
     ) -> bool:
         """check whether to run validation on the given content item or not.
 
@@ -76,14 +117,18 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             content_item (BaseContent): The content item to run the validation on.
             ignorable_errors (list): The list of the errors that can be ignored.
             support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
+            running_execution_mode (ExecutionMode): the execution mode of the current running
 
         Returns:
             bool: True if the validation should run. Otherwise, return False.
         """
-        return all(
+        base_conditions = all(
             [
                 isinstance(content_item, self.get_content_types()),
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
+                should_run_on_execution_mode(
+                    self.expected_execution_mode, running_execution_mode
+                ),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),
@@ -93,13 +138,21 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     content_item,
                     self.related_file_type,
                 ),
-                not is_support_level_support_validation(
-                    self.error_code, support_level_dict, content_item.support_level
-                ),
             ]
         )
 
-    def is_valid(
+        if isinstance(
+            content_item, ContentItem
+        ):  # The support level condition is isolated because mypy necessitates the use of the ContentItem type.
+            return base_conditions and not is_support_level_support_validation(
+                self.error_code,
+                support_level_dict,
+                content_item.support,
+            )
+        else:
+            return base_conditions
+
+    def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
@@ -132,6 +185,18 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         )
         # Exclude the properties from the repr
         fields = {"graph": {"exclude": True}, "dockerhub_client": {"exclude": True}}
+
+    @property
+    def error_category(self) -> str:
+        return self.error_code[:2]
+
+
+def get_all_validators() -> List[BaseValidator]:
+    return [
+        validator()
+        for validator in BaseValidator.__subclasses__()
+        if not is_abstract_class(validator)
+    ]
 
 
 class BaseResult(BaseModel):
@@ -175,13 +240,16 @@ def is_error_ignored(
     if err_code not in ignorable_errors:
         return False
     if related_file_type:
-        content_item_as_dict = content_item.dict()
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:
-            if related_file_object := content_item_as_dict.get(related_file.value):
-                return err_code in content_item.ignored_errors_related_files(
-                    related_file_object.path
-                )
+            try:
+                related_file_object = getattr(content_item, related_file.value)
+                if err_code in content_item.ignored_errors_related_files(
+                    related_file_object.file_path
+                ):
+                    return True
+            except Exception:
+                continue
         return False
     else:
         # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
@@ -205,13 +273,33 @@ class InvalidContentItemResult(BaseResult, BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.path.relative_to(CONTENT_PATH))}: [{self.error_code}] - {self.message}"
+        path: Path = self.path
+        if path.is_absolute():
+            path = path.relative_to(CONTENT_PATH)
+        return f"{path}: [{self.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
         return {
             "file path": str(self.path.relative_to(CONTENT_PATH)),
             "error code": self.error_code,
+            "message": self.message,
+        }
+
+
+class ValidationCaughtExceptionResult(BaseResult, BaseModel):
+    validator: Optional[BaseValidator] = None  # type: ignore[assignment]
+    message: str
+    content_object: Optional[BaseContent] = None  # type: ignore[assignment]
+    error_code: Optional[str] = None  # type: ignore[assignment]
+
+    @property
+    def format_readable_message(self):
+        return self.message
+
+    @property
+    def format_json_message(self):
+        return {
             "message": self.message,
         }
 
@@ -252,3 +340,20 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     if content_item.deprecated and not run_on_deprecated:
         return False
     return True
+
+
+def should_run_on_execution_mode(
+    expected_execution_mode: Optional[list[ExecutionMode]],
+    running_execution_mode: ExecutionMode,
+):
+    """
+    Check if the running_execution_mode is in the expected_execution_mode of validation.
+    Args:
+        expected_execution_mode (Optional[list[ExecutionMode]]): The validation's expected execution_mode, if None then validation should run on all execution modes.
+        running_execution_mode (ExecutionMode): The running execution_mode.
+    Returns:
+        bool: True if the given validation should run on the running_execution_mode. Otherwise, return False.
+    """
+    if not expected_execution_mode or running_execution_mode in expected_execution_mode:
+        return True
+    return False

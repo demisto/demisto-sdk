@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List, Set
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import is_abstract_class
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -15,7 +14,9 @@ from demisto_sdk.commands.validate.validation_results import (
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     InvalidContentItemResult,
+    ValidationCaughtExceptionResult,
     ValidationResult,
+    get_all_validators,
 )
 
 
@@ -25,13 +26,11 @@ class ValidateManager:
         validation_results: ResultWriter,
         config_reader: ConfigReader,
         initializer: Initializer,
-        validate_all=False,
         file_path=None,
         allow_autofix=False,
         ignore_support_level=False,
     ):
         self.ignore_support_level = ignore_support_level
-        self.validate_all = validate_all
         self.file_path = file_path
         self.allow_autofix = allow_autofix
         self.validation_results = validation_results
@@ -43,11 +42,11 @@ class ValidateManager:
             self.objects_to_run,
             self.invalid_items,
         ) = self.initializer.gather_objects_to_run_on()
-        self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
-            self.config_reader.gather_validations_to_run(
-                use_git=self.use_git, ignore_support_level=self.ignore_support_level
+            self.config_reader.gather_validations_from_conf(
+                execution_mode=self.initializer.execution_mode,
+                ignore_support_level=self.ignore_support_level,
             )
         )
         self.validators = self.filter_validators()
@@ -62,33 +61,47 @@ class ValidateManager:
         """
         logger.info("Starting validate items.")
         for validator in self.validators:
+            logger.debug(f"Starting execution for {validator.error_code} validator.")
             if filtered_content_objects_for_validator := list(
                 filter(
                     lambda content_object: validator.should_run(
-                        content_object,
-                        self.configured_validations.ignorable_errors,
-                        self.configured_validations.support_level_dict,
+                        content_item=content_object,
+                        ignorable_errors=self.configured_validations.ignorable_errors,
+                        support_level_dict=self.configured_validations.support_level_dict,
+                        running_execution_mode=self.initializer.execution_mode,
                     ),
                     self.objects_to_run,
                 )
             ):
-                validation_results: List[ValidationResult] = validator.is_valid(filtered_content_objects_for_validator)  # type: ignore
-                if self.allow_autofix and validator.is_auto_fixable:
-                    for validation_result in validation_results:
-                        try:
-                            self.validation_results.append_fix_results(
-                                validator.fix(validation_result.content_object)  # type: ignore
-                            )
-                        except Exception:
-                            logger.error(
-                                f"Could not fix {validation_result.validator.error_code} error for content item {str(validation_result.content_object.path)}"
-                            )
-                            self.validation_results.append_validation_results(
-                                validation_result
-                            )
-                else:
-                    self.validation_results.extend_validation_results(
-                        validation_results
+                validation_results: List[ValidationResult] = (
+                    validator.obtain_invalid_content_items(
+                        filtered_content_objects_for_validator
+                    )
+                )  # type: ignore
+                try:
+                    if self.allow_autofix and validator.is_auto_fixable:
+                        for validation_result in validation_results:
+                            try:
+                                self.validation_results.append_fix_results(
+                                    validator.fix(validation_result.content_object)  # type: ignore
+                                )
+                            except Exception:
+                                logger.error(
+                                    f"Could not fix {validation_result.validator.error_code} error for content item {str(validation_result.content_object.path)}"
+                                )
+                                self.validation_results.append_validation_results(
+                                    validation_result
+                                )
+                    else:
+                        self.validation_results.extend_validation_results(
+                            validation_results
+                        )
+                except Exception as e:
+                    validation_caught_exception_result = ValidationCaughtExceptionResult(
+                        message=f"Encountered an error when validating {validator.error_code} validator: {e}"
+                    )
+                    self.validation_results.append_validation_caught_exception_results(
+                        validation_caught_exception_result
                     )
         if BaseValidator.graph_interface:
             logger.info("Closing graph.")
@@ -106,16 +119,11 @@ class ValidateManager:
         Returns:
             List[BaseValidator]: the list of the filtered validators
         """
-        # gather validator from validate package
-        validators: List[BaseValidator] = []
-        for validator in BaseValidator.__subclasses__():
-            if (
-                not is_abstract_class(validator)
-                and validator.error_code
-                in self.configured_validations.validations_to_run
-            ):
-                validators.append(validator())
-        return validators
+        return [
+            validator
+            for validator in get_all_validators()
+            if validator.error_code in self.configured_validations.validations_to_run
+        ]
 
     def add_invalid_content_items(self):
         """Create results for all the invalid_content_items.

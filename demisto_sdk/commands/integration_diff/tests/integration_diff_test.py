@@ -2,6 +2,8 @@ import copy
 import logging
 import os
 
+import pytest
+
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
@@ -14,274 +16,289 @@ TEST_FILES = os.path.join(DEMISTO_SDK_PATH, "commands", "integration_diff", "tes
 
 
 class TestIntegrationDiffDetector:
+    NEW_INTEGRATION_YAML = {}
+    OLD_INTEGRATION_YAML = {}
+    DIFFERENCES_REPORT = {}
 
-    NEW_INTEGRATION_YAML = {
-        "configuration": [
-            {
-                "display": "Credentials",
-                "name": "credentials",
-                "required": "true",
-                "type": "9",
+    @pytest.fixture(autouse=True)
+    def reset_dicts(self):
+        self.NEW_INTEGRATION_YAML = {
+            "configuration": [
+                {
+                    "display": "Credentials",
+                    "name": "credentials",
+                    "required": "true",
+                    "type": "9",
+                },
+                {
+                    "display": "API key",
+                    "name": "api_key",
+                    "required": "false",
+                    "type": "0",
+                },
+                {"display": "URL", "name": "url", "required": "true", "type": "0"},
+            ],
+            "script": {
+                "commands": [
+                    {
+                        "arguments": [
+                            {
+                                "default": False,
+                                "description": "",
+                                "isArray": False,
+                                "name": "argument",
+                                "required": False,
+                            }
+                        ],
+                        "deprecated": False,
+                        "description": "",
+                        "name": "command_1",
+                        "outputs": [
+                            {
+                                "contextPath": "contextPath_1",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_2",
+                                "description": "",
+                                "type": "bool",
+                            },
+                            {
+                                "contextPath": "contextPath_3",
+                                "description": "",
+                                "type": "String",
+                            },
+                        ],
+                    },
+                    {
+                        "arguments": [
+                            {
+                                "default": False,
+                                "description": "",
+                                "isArray": False,
+                                "name": "argument_1",
+                                "required": False,
+                            },
+                            {
+                                "default": False,
+                                "description": "",
+                                "isArray": False,
+                                "name": "argument_2",
+                                "required": False,
+                            },
+                        ],
+                        "deprecated": False,
+                        "description": "",
+                        "name": "command_2",
+                        "outputs": [
+                            {
+                                "contextPath": "contextPath_1",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_2",
+                                "description": "",
+                                "type": "bool",
+                            },
+                            {
+                                "contextPath": "contextPath_3",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_4",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_5",
+                                "description": "",
+                                "type": "bool",
+                            },
+                        ],
+                    },
+                    {
+                        "arguments": [],
+                        "deprecated": False,
+                        "description": "",
+                        "name": "command_3",
+                        "outputs": [
+                            {
+                                "contextPath": "contextPath_1",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_2",
+                                "description": "",
+                                "type": "bool",
+                            },
+                            {
+                                "contextPath": "contextPath_3",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_4",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_5",
+                                "description": "",
+                                "type": "bool",
+                            },
+                            {
+                                "contextPath": "contextPath_6",
+                                "description": "",
+                                "type": "bool",
+                            },
+                        ],
+                    },
+                ]
             },
-            {"display": "API key", "name": "api_key", "required": "false", "type": "0"},
-            {"display": "URL", "name": "url", "required": "true", "type": "0"},
-        ],
-        "script": {
+        }
+
+        self.OLD_INTEGRATION_YAML = {
+            "configuration": [
+                {
+                    "display": "Credentials",
+                    "name": "credentials",
+                    "required": "true",
+                    "type": "9",
+                },
+                {
+                    "display": "API key",
+                    "name": "api_key",
+                    "required": "false",
+                    "type": "0",
+                },
+            ],
+            "script": {
+                "commands": [
+                    {
+                        "arguments": [
+                            {
+                                "default": False,
+                                "description": "",
+                                "isArray": False,
+                                "name": "argument",
+                                "required": False,
+                            }
+                        ],
+                        "deprecated": False,
+                        "description": "",
+                        "name": "command_1",
+                        "outputs": [
+                            {
+                                "contextPath": "contextPath_1",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_2",
+                                "description": "",
+                                "type": "bool",
+                            },
+                            {
+                                "contextPath": "contextPath_3",
+                                "description": "",
+                                "type": "String",
+                            },
+                        ],
+                    },
+                    {
+                        "arguments": [
+                            {
+                                "default": False,
+                                "description": "",
+                                "isArray": False,
+                                "name": "argument_1",
+                                "required": False,
+                            },
+                            {
+                                "default": False,
+                                "description": "",
+                                "isArray": False,
+                                "name": "argument_2",
+                                "required": False,
+                            },
+                        ],
+                        "deprecated": False,
+                        "description": "",
+                        "name": "command_2",
+                        "outputs": [
+                            {
+                                "contextPath": "contextPath_1",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_2",
+                                "description": "",
+                                "type": "bool",
+                            },
+                            {
+                                "contextPath": "contextPath_3",
+                                "description": "",
+                                "type": "String",
+                            },
+                            {
+                                "contextPath": "contextPath_4",
+                                "description": "",
+                                "type": "String",
+                            },
+                        ],
+                    },
+                ]
+            },
+        }
+
+        self.DIFFERENCES_REPORT = {
+            "parameters": [
+                {
+                    "type": "parameters",
+                    "name": "Credentials",
+                    "message": "Missing the parameter 'Credentials'.",
+                },
+                {
+                    "type": "parameters",
+                    "name": "API key",
+                    "message": "The parameter `API key` - Is now required.",
+                    "changed_field": "required",
+                    "changed_value": "true",
+                },
+            ],
             "commands": [
                 {
-                    "arguments": [
-                        {
-                            "default": False,
-                            "description": "",
-                            "isArray": False,
-                            "name": "argument",
-                            "required": False,
-                        }
-                    ],
-                    "deprecated": False,
                     "description": "",
+                    "type": "commands",
                     "name": "command_1",
-                    "outputs": [
-                        {
-                            "contextPath": "contextPath_1",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_2",
-                            "description": "",
-                            "type": "bool",
-                        },
-                        {
-                            "contextPath": "contextPath_3",
-                            "description": "",
-                            "type": "String",
-                        },
-                    ],
+                    "message": "Missing the command 'command_1'.",
                 },
+            ],
+            "arguments": [
                 {
-                    "arguments": [
-                        {
-                            "default": False,
-                            "description": "",
-                            "isArray": False,
-                            "name": "argument_1",
-                            "required": False,
-                        },
-                        {
-                            "default": False,
-                            "description": "",
-                            "isArray": False,
-                            "name": "argument_2",
-                            "required": False,
-                        },
-                    ],
-                    "deprecated": False,
-                    "description": "",
-                    "name": "command_2",
-                    "outputs": [
-                        {
-                            "contextPath": "contextPath_1",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_2",
-                            "description": "",
-                            "type": "bool",
-                        },
-                        {
-                            "contextPath": "contextPath_3",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_4",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_5",
-                            "description": "",
-                            "type": "bool",
-                        },
-                    ],
-                },
+                    "type": "arguments",
+                    "name": "argument_2",
+                    "command_name": "command_2",
+                    "message": "The argument `argument_2` in the command `command_2` - Now supports comma separated values.",
+                    "changed_field": "isArray",
+                    "changed_value": "true",
+                }
+            ],
+            "outputs": [
                 {
-                    "arguments": [],
-                    "deprecated": False,
-                    "description": "",
-                    "name": "command_3",
-                    "outputs": [
-                        {
-                            "contextPath": "contextPath_1",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_2",
-                            "description": "",
-                            "type": "bool",
-                        },
-                        {
-                            "contextPath": "contextPath_3",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_4",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_5",
-                            "description": "",
-                            "type": "bool",
-                        },
-                        {
-                            "contextPath": "contextPath_6",
-                            "description": "",
-                            "type": "bool",
-                        },
-                    ],
-                },
-            ]
-        },
-    }
-
-    OLD_INTEGRATION_YAML = {
-        "configuration": [
-            {
-                "display": "Credentials",
-                "name": "credentials",
-                "required": "true",
-                "type": "9",
-            },
-            {"display": "API key", "name": "api_key", "required": "false", "type": "0"},
-        ],
-        "script": {
-            "commands": [
-                {
-                    "arguments": [
-                        {
-                            "default": False,
-                            "description": "",
-                            "isArray": False,
-                            "name": "argument",
-                            "required": False,
-                        }
-                    ],
-                    "deprecated": False,
-                    "description": "",
-                    "name": "command_1",
-                    "outputs": [
-                        {
-                            "contextPath": "contextPath_1",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_2",
-                            "description": "",
-                            "type": "bool",
-                        },
-                        {
-                            "contextPath": "contextPath_3",
-                            "description": "",
-                            "type": "String",
-                        },
-                    ],
-                },
-                {
-                    "arguments": [
-                        {
-                            "default": False,
-                            "description": "",
-                            "isArray": False,
-                            "name": "argument_1",
-                            "required": False,
-                        },
-                        {
-                            "default": False,
-                            "description": "",
-                            "isArray": False,
-                            "name": "argument_2",
-                            "required": False,
-                        },
-                    ],
-                    "deprecated": False,
-                    "description": "",
-                    "name": "command_2",
-                    "outputs": [
-                        {
-                            "contextPath": "contextPath_1",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_2",
-                            "description": "",
-                            "type": "bool",
-                        },
-                        {
-                            "contextPath": "contextPath_3",
-                            "description": "",
-                            "type": "String",
-                        },
-                        {
-                            "contextPath": "contextPath_4",
-                            "description": "",
-                            "type": "String",
-                        },
-                    ],
-                },
-            ]
-        },
-    }
-
-    DIFFERENCES_REPORT = {
-        "parameters": [
-            {
-                "type": "parameters",
-                "name": "Credentials",
-                "message": "Missing the parameter 'Credentials'.",
-            },
-            {
-                "type": "parameters",
-                "name": "API key",
-                "message": "The parameter `API key` - Is now required.",
-                "changed_field": "required",
-                "changed_value": "true",
-            },
-        ],
-        "commands": [
-            {
-                "description": "",
-                "type": "commands",
-                "name": "command_1",
-                "message": "Missing the command 'command_1'.",
-            },
-        ],
-        "arguments": [
-            {
-                "type": "arguments",
-                "name": "argument_2",
-                "command_name": "command_2",
-                "message": "The argument `argument_2` in the command `command_2` - Now supports comma separated values.",
-                "changed_field": "isArray",
-                "changed_value": "true",
-            }
-        ],
-        "outputs": [
-            {
-                "type": "outputs",
-                "name": "contextPath_2",
-                "command_name": "command_2",
-                "message": "The output 'contextPath_2' in the command 'command_2' was changed in field 'type'.",
-                "changed_field": "type",
-            }
-        ],
-    }
+                    "type": "outputs",
+                    "name": "contextPath_2",
+                    "command_name": "command_2",
+                    "message": "The output 'contextPath_2' in the command 'command_2' was changed in field 'type'.",
+                    "changed_field": "type",
+                }
+            ],
+        }
 
     def test_valid_integration_diff(self, pack):
         """
@@ -348,9 +365,9 @@ class TestIntegrationDiffDetector:
         new_integration_yaml["script"]["commands"].remove(
             new_integration_yaml["script"]["commands"][0]
         )
-        new_integration_yaml["script"]["commands"][0]["arguments"][1][
-            "isArray"
-        ] = "true"
+        new_integration_yaml["script"]["commands"][0]["arguments"][1]["isArray"] = (
+            "true"
+        )
         new_integration_yaml["script"]["commands"][0]["outputs"][1]["type"] = "String"
 
         old_integration = pack.create_integration(
@@ -888,3 +905,119 @@ class TestIntegrationDiffDetector:
         actual = integration_detector.get_modified_commands()
 
         assert not actual
+
+    def test_get_renamed_commands(self, pack: Pack):
+        """
+        Test whether the renamed commands method works as expected when
+        supplied a command name that was changed.
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with a changed command name.
+
+        Then:
+        - Original and modified command names should be returned.
+        """
+
+        changed_command_name = "command_1_1"
+
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[0]["name"] = (
+            changed_command_name
+        )
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.get_renamed_commands()
+        assert actual
+        assert actual[0] == ("command_1", changed_command_name)
+
+    def test_get_renamed_commands_added_commands(self, pack: Pack):
+        """
+        Test what happens when the new integration has an added command
+        but no modified commands.
+
+        Given:
+        - 2 integrations, one old, one new.
+
+        When:
+        - The new integration has an added command.
+
+        Then:
+        - No renamed commands should be returned.
+        """
+
+        added_cmd = {
+            "arguments": [
+                {
+                    "default": False,
+                    "description": "",
+                    "isArray": False,
+                    "name": "argument_1",
+                    "required": False,
+                }
+            ],
+            "deprecated": False,
+            "description": "",
+            "name": "command_5",
+            "outputs": [],
+        }
+
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", []).append(
+            added_cmd
+        )
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        assert not integration_detector.get_renamed_commands()
+
+    def test_get_renamed_commands_not_name(self, pack: Pack):
+        """
+        Test what happens when the new integration has an added command
+        but no modified commands.
+
+        Given:
+        - 2 integrations, one old, one new.
+
+        When:
+        - The new integration modifies a command description.
+
+        Then:
+        - No renamed commands should be returned.
+        """
+
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[0][
+            "description"
+        ] = "changed description"
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        assert not integration_detector.get_renamed_commands()

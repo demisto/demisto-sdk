@@ -3,6 +3,9 @@ from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (
     ASSETS_MODELING_RULES_DIR,
+    CASE_FIELDS_DIR,
+    CASE_LAYOUT_RULES_DIR,
+    CASE_LAYOUTS_DIR,
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
     LAYOUT_RULES_DIR,
@@ -13,6 +16,9 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
+from TestSuite.case_field import CaseField
+from TestSuite.case_layout import CaseLayout
+from TestSuite.case_layout_rule import CaseLayoutRule
 from TestSuite.classifier import Classifier
 from TestSuite.content_list import ContentList
 from TestSuite.correlation_rule import CorrelationRule
@@ -70,6 +76,8 @@ class Pack(TestSuiteBase):
     def __init__(self, packs_dir: Path, name: str, repo):
         # Initiate lists:
         self.name = name
+        self.object_id = name
+        self.node_id = name
         self._repo = repo
         self.repo_path = repo.path
         self.integrations: List[Integration] = list()
@@ -105,11 +113,14 @@ class Pack(TestSuiteBase):
         self.xdrc_templates: List[XDRCTemplate] = list()
         self.layout_rules: List[LayoutRule] = list()
         self.assets_modeling_rules: List[Rule] = list()
+        self.case_fields: List[CaseField] = list()
+        self.case_layouts: List[CaseLayout] = list()
+        self.case_layout_rules: List[CaseLayoutRule] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
         self._pack_path.mkdir()
-        self.path = str(self._pack_path)
+        self.path = self._pack_path
 
         # Create repo structure
         self._integrations_path = self._pack_path / "Integrations"
@@ -227,6 +238,15 @@ class Pack(TestSuiteBase):
         self._xsiam_layout_rules_path = self._pack_path / LAYOUT_RULES_DIR
         self._xsiam_layout_rules_path.mkdir()
 
+        self._case_layout_rules_path = self._pack_path / CASE_LAYOUT_RULES_DIR
+        self._case_layout_rules_path.mkdir()
+
+        self._case_layouts_path = self._pack_path / CASE_LAYOUTS_DIR
+        self._case_layouts_path.mkdir()
+
+        self._case_fields_path = self._pack_path / CASE_FIELDS_DIR
+        self._case_fields_path.mkdir()
+
         self.contributors: Optional[TextBased] = None
 
         self._assets_modeling_rules_path = self._pack_path / ASSETS_MODELING_RULES_DIR
@@ -247,6 +267,7 @@ class Pack(TestSuiteBase):
         create_unified=False,
         commands_txt: Optional[str] = None,
         test: Optional[str] = None,
+        unit_test_name: Optional[str] = None,
     ) -> Integration:
         if name is None:
             name = f"integration_{len(self.integrations)}"
@@ -277,6 +298,7 @@ class Pack(TestSuiteBase):
             self._repo,
             create_unified=create_unified,
             _type=yml.get("script", {}).get("type", "python"),
+            unit_test_name=unit_test_name,
         )
         integration.build(
             code, yml, readme, description, changelog, image, commands_txt, test
@@ -491,7 +513,6 @@ class Pack(TestSuiteBase):
         return layoutcontainer
 
     def create_report(self, name: str = None, content: dict = None) -> Report:
-
         if not name:
             name = f"report{len(self.reports)}"
         report = Report(name, self._report_path, content)
@@ -538,7 +559,6 @@ class Pack(TestSuiteBase):
         return wizard
 
     def create_list(self, name: str = None, content: dict = None) -> ContentList:
-
         if not name:
             name = f"list{len(self.lists)}"
         content_list = ContentList(name, self._lists_path, content)
@@ -763,6 +783,30 @@ class Pack(TestSuiteBase):
         layout_rule = LayoutRule(name, self._xsiam_layout_rules_path, content)
         self.layout_rules.append(layout_rule)
         return layout_rule
+
+    def create_case_layout_rule(
+        self, name: str = None, content: dict = None
+    ) -> CaseLayoutRule:
+        if not name:
+            name = f"case_layout_rule{len(self.case_layout_rules)}"
+        case_layout_rule = CaseLayoutRule(name, self._case_layout_rules_path, content)
+        self.case_layout_rules.append(case_layout_rule)
+        return case_layout_rule
+
+    def create_case_layout(self, name: str = None, content: dict = None) -> CaseLayout:
+        if not name:
+            name = f"case_layout{len(self.case_layouts)}"
+        case_layout = CaseLayout(name, self._case_layouts_path, content)
+        self.case_layouts.append(case_layout)
+        return case_layout
+
+    def create_case_field(self, name: str = None, content: dict = None) -> CaseField:
+        if not name:
+            name = f"casefield{len(self.incident_fields)}"
+        case_field = CaseField(name, self._case_fields_path, content)
+
+        self.case_fields.append(case_field)
+        return case_field
 
     def set_data(self, **key_path_to_val):
         self.pack_metadata.set_data(**key_path_to_val)

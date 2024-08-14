@@ -7,6 +7,8 @@ from typing import Dict, List
 
 from packaging.version import Version
 
+from demisto_sdk.commands.common.StrEnum import StrEnum
+
 # Note: Do NOT add imports of internal modules here, as it may cause circular imports.
 
 
@@ -107,6 +109,9 @@ WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
 LAYOUT_RULES_DIR = "LayoutRules"
 ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
+CASE_LAYOUT_RULES_DIR = "CaseLayoutRules"
+CASE_LAYOUTS_DIR = "CaseLayouts"
+CASE_FIELDS_DIR = "CaseFields"
 
 # NAMES OF ENTITIES
 
@@ -138,6 +143,7 @@ CANVAS = "canvas"
 OLD_REPUTATION = "reputations.json"
 PACK_VERIFY_KEY = "content.pack.verify"
 XSOAR_CONFIG_FILE = "xsoar_config.json"
+DEMISTO_SDK_CONFIG_FILE = ".demisto-sdk-conf"
 GENERIC_FIELD = "genericfield"
 GENERIC_TYPE = "generictype"
 GENERIC_MODULE = "genericmodule"
@@ -155,6 +161,9 @@ LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 EVENT_COLLECTOR = "EventCollector"
 ASSETS_MODELING_RULE = "assetsmodelingrule"
+CASE_LAYOUT_RULE = "caselayoutrule"
+CASE_FIELD = "casefield"
+CASE_LAYOUT = "caselayout"
 
 # Marketplaces
 
@@ -164,8 +173,19 @@ DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
+# Server Types
+XSOAR_SERVER_TYPE = "XSOAR"
+XSIAM_SERVER_TYPE = "XSIAM"
+XPANSE_SERVER_TYPE = "XPANSE"
+XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
 
-class FileType(str, Enum):
+# Product Types
+XSOAR_PRODUCT_TYPE = "XSOAR"
+XSIAM_PRODUCT_TYPE = "XSIAM"
+XPANSE_PRODUCT_TYPE = "XPANSE"
+
+
+class FileType(StrEnum):
     INTEGRATION = "integration"
     SCRIPT = "script"
     TEST_SCRIPT = "testscript"
@@ -246,6 +266,9 @@ class FileType(str, Enum):
     ASSETS_MODELING_RULE_SCHEMA = "assetsmodelingruleschema"
     ASSETS_MODELING_RULE = "assetsmodelingrule"
     ASSETS_MODELING_RULE_XIF = "assetsmodelingrulexif"
+    CASE_LAYOUT_RULE = "caselayoutrule"
+    CASE_FIELD = "casefield"
+    CASE_LAYOUT = "caselayout"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -284,6 +307,9 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.XDRC_TEMPLATE: "XDRC Templates",
     FileType.LAYOUT_RULE: "Layout Rules",
     FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
+    FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
+    FileType.CASE_FIELD: "Case Fields",
+    FileType.CASE_LAYOUT: "Case Layouts",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -326,6 +352,9 @@ ENTITY_TYPE_TO_DIR = {
     FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
     FileType.ASSETS_MODELING_RULE.value: ASSETS_MODELING_RULES_DIR,
+    FileType.CASE_FIELD.value: CASE_FIELDS_DIR,
+    FileType.CASE_LAYOUT.value: CASE_LAYOUTS_DIR,
+    FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -338,6 +367,9 @@ SIEM_ONLY_ENTITIES = [
     FileType.XDRC_TEMPLATE.value,
     FileType.LAYOUT_RULE.value,
     FileType.ASSETS_MODELING_RULE,
+    FileType.CASE_LAYOUT_RULE.value,
+    FileType.CASE_FIELD.value,
+    FileType.CASE_LAYOUT.value,
 ]
 
 CONTENT_FILE_ENDINGS = ["py", "yml", "png", "json", "md"]
@@ -384,6 +416,9 @@ CONTENT_ENTITIES_DIRS = [
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
     ASSETS_MODELING_RULES_DIR,
+    CASE_LAYOUT_RULES_DIR,
+    CASE_FIELDS_DIR,
+    CASE_LAYOUTS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -405,19 +440,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     WIZARDS_DIR,
 ]
 
-RN_CONTENT_ENTITY_WITH_STARS = [
-    FileType.CONNECTION,
-    FileType.INCIDENT_TYPE,
-    FileType.REPUTATION,
-    FileType.LAYOUT,
-    FileType.INCIDENT_FIELD,
-    FileType.INDICATOR_FIELD,
-    FileType.TRIGGER,
-    FileType.GENERIC_DEFINITION,
-    FileType.GENERIC_MODULE,
-    FileType.GENERIC_TYPE,
-    FileType.GENERIC_FIELD,
-]
+DEFAULT_IMAGE = "demisto_sdk/tests/test_files/default_image.png"
 
 DEFAULT_IMAGE_PREFIX = "data:image/png;base64,"
 DEFAULT_IMAGE_BASE64 = (
@@ -587,6 +610,8 @@ PNG_IMAGE_REGEX = r".*\.png$"
 SVG_IMAGE_REGEX = r".*\.svg$"
 DESCRIPTION_REGEX = r".*\.md"
 SCHEMA_REGEX = "Tests/schemas/.*.yml"
+# Checks if playbookID is a UUID format
+INVALID_PLAYBOOK_ID = r"[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}"
 
 # regex pattern used to convert incident/indicator fields to their CLI names
 NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r"[^a-zA-Z0-9]")
@@ -807,6 +832,8 @@ INCIDENT_FIELD_FILE_NAME_REGEX = r"incidentfield-.*\.json"
 
 LAYOUT_FILE_NAME__REGEX = r"layout.*\.json"
 
+VALID_INDICATOR_TYPE_REGEX = "^[A-Za-z0-9_& ]*$"
+
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
@@ -854,6 +881,7 @@ MANDATORY_PACK_METADATA_FIELDS = (
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
     PACK_METADATA_KEYWORDS,
+    MARKETPLACE_KEY_PACK_METADATA,
 )
 PACK_METADATA_MANDATORY_FILLED_FIELDS = [
     PACK_METADATA_KEYWORDS,
@@ -917,12 +945,13 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
-PACKS_README_FILE_NAME = (
-    INTEGRATIONS_README_FILE_NAME
-) = SCRIPTS_README_FILE_NAME = "README.md"
+PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAME = (
+    "README.md"
+)
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
+GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
 
@@ -1230,15 +1259,20 @@ TYPE_TO_EXTENSION = {
     TYPE_PWSH: ".ps1",
 }
 
-TESTS_AND_DOC_DIRECTORIES = [
+TESTS_DIRECTORIES = [
     "testdata",
     "test_data",
     "data_test",
     "tests_data",
-    "doc_files",
-    "doc_imgs",
     "TestData",
 ]
+
+DOCS_DIRECTORIES = [
+    "doc_files",
+    "doc_imgs",
+]
+
+TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",
@@ -1255,11 +1289,17 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
 )
 
 
-class GitStatuses(str, Enum):
+class GitStatuses(StrEnum):
     RENAMED = "R"
     MODIFIED = "M"
     ADDED = "A"
     DELETED = "D"
+
+
+class ExecutionMode(StrEnum):
+    ALL_FILES = "-a"
+    USE_GIT = "-g"
+    SPECIFIC_FILES = "-i"
 
 
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
@@ -1294,7 +1334,6 @@ OFFICIAL_INDEX_JSON_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETP
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
-FILTER_CONF = "./artifacts/filter_file.txt"
 
 GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com"
 
@@ -1501,7 +1540,7 @@ GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union(
     {"send-mail", "send-notification", "cve-latest", "cve-search"}
 )
 
-DBOT_SCORES_DICT = {
+DBOT_SCORES_DICT: Dict[str, str] = {
     "DBotScore.Indicator": "The indicator that was tested.",
     "DBotScore.Type": "The indicator type.",
     "DBotScore.Vendor": "The vendor used to calculate the score.",
@@ -1570,6 +1609,9 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.LAYOUT_RULE: "6.10.0",
     FileType.XSIAM_DASHBOARD: "6.10.0",
     FileType.ASSETS_MODELING_RULE: "6.2.1",
+    FileType.CASE_LAYOUT_RULE: "8.7.0",
+    FileType.CASE_FIELD: "8.7.0",
+    FileType.CASE_LAYOUT: "8.7.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1590,7 +1632,7 @@ GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 
 FEATURE_BRANCHES = ["v4.5.0"]
 VERSION_REGEX = r"(\d{1,2}\.){2}\d{1,2}$"
-
+DOC_FILE_IMAGE_REGEX = r"[\.\./]*doc_files/[a-zA-Z0-9_-]+\.png"
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"
@@ -1798,6 +1840,16 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
     "blocked",
 ]
 
+INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE = [
+    "feed",
+    "isfetch",
+    "longRunning",
+    "longRunningPort",
+    "ismappable",
+    "isremotesyncin",
+    "isremotesyncout",
+]
+
 CONTEXT_OUTPUT_README_TABLE_HEADER = "| **Path** | **Type** | **Description** |"
 
 ARGUMENT_FIELDS_TO_CHECK = ["defaultValue", "required", "isArray"]
@@ -1824,7 +1876,7 @@ BUILD_IN_COMMANDS = [
 ]
 
 
-class Auto(str, Enum):
+class Auto(StrEnum):
     PREDEFINED = "PREDEFINED"
 
 
@@ -1859,6 +1911,9 @@ class ContentItems(Enum):
     XDRC_TEMPLATE = "xdrctemplate"
     LAYOUT_RULES = "layoutrule"
     ASSETS_MODELING_RULES = "assetsmodelingrule"
+    CASE_LAYOUT_RULES = "caselayoutrule"
+    CASE_FIELDS = "casefield"
+    CASE_LAYOUTS = "caselayout"
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1887,6 +1942,9 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     XDRC_TEMPLATE_DIR,
     LAYOUT_RULES_DIR,
     ASSETS_MODELING_RULES_DIR,
+    CASE_LAYOUT_RULES_DIR,
+    CASE_FIELDS_DIR,
+    CASE_LAYOUTS_DIR,
 }
 
 
@@ -1909,7 +1967,7 @@ class IronBankDockers:
     API_LINK = "https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F"
 
 
-class MarketplaceVersions(str, Enum):
+class MarketplaceVersions(StrEnum):
     XSOAR = "xsoar"
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
@@ -1925,11 +1983,11 @@ MarketplaceVersionToMarketplaceName = {
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
-    MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_ON_PREM: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
-    MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
+    MarketplaceVersions.XSOAR: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_SAAS: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
+    MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
+    MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
 }
 
 
@@ -2028,6 +2086,26 @@ class ParameterType(Enum):
     DAY_DROPDOWN = 21
 
 
+class IncidentFieldType(
+    StrEnum
+):  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
+    SHORT_TEXT = "shortText"
+    LONG_TEXT = "longText"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    SINGLE_SELECT = "singleSelect"
+    MULTI_SELECT = "multiSelect"
+    DATE = "date"
+    MARKDOWN = "markdown"
+    HTML = "html"
+    URL = "url"
+    USER = "user"
+    ROLE = "role"
+    ATTACHMENTS = "attachments"
+    SLA = "sla"
+    GRID = "grid"
+
+
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
@@ -2051,6 +2129,9 @@ TABLE_INCIDENT_TO_ALERT = {
 FORMATTING_SCRIPT = "indicator-format"
 
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
+DOCKERFILES_INFO_REPO_PRIMARY_BRANCH = "master"
+DOCKERFILES_REPO = "demisto/dockerfiles"
+CONTENT_REPO = "demisto/content"
 
 TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
 
@@ -2084,6 +2165,7 @@ XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
 XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
+MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 STRING_TO_BOOL_MAP = {
@@ -2091,25 +2173,29 @@ STRING_TO_BOOL_MAP = {
     "1": True,
     "yes": True,
     "true": True,
+    "True": True,
     "n": False,
     "0": False,
     "no": False,
     "false": False,
+    "False": False,
     "t": True,
     "f": False,
 }
+
+SCHEMA_FILE_VALID_ATTRIBUTES_TYPE = {"string", "int", "float", "datetime", "boolean"}
 
 
 #  date formats:
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
-class ImagesFolderNames(str, Enum):
+class ImagesFolderNames(StrEnum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
 
 
-class InvestigationPlaybookState(str, Enum):
+class InvestigationPlaybookState(StrEnum):
     NEW = "new"  # indicates that playbook not executed yet
     IN_PROGRESS = "inprogress"  # indicates that playbook in progress
     PAUSED = "paused"  # indicates that playbook paused
@@ -2118,11 +2204,22 @@ class InvestigationPlaybookState(str, Enum):
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
-class IncidentState(str, Enum):
-    NEW = 0  # the incident is new
-    IN_PROGRESS = 1  # the incident is in progress
-    CLOSED = 2  # the incident is closed
-    ACKNOWLEDGED = 3  # the incident is archived
+class IncidentState(StrEnum):
+    NEW = "NEW"
+    IN_PROGRESS = "IN_PROGRESS"
+    CLOSED = "CLOSED"
+    ACKNOWLEDGED = "ACKNOWLEDGED"
+
+
+class PlaybookTaskType(StrEnum):
+    REGULAR = "regular"
+    PLAYBOOK = "playbook"
+    CONDITION = "condition"
+    START = "start"
+    TITLE = "title"
+    SECTION = "section"
+    STANDARD = "standard"
+    COLLECTION = "collection"
 
 
 # Used to format the writing of the yml/json file
@@ -2134,3 +2231,11 @@ PACK_DEFAULT_MARKETPLACES: List = [
     MarketplaceVersions.XSOAR.value,
     MarketplaceVersions.MarketplaceV2.value,
 ]
+
+INVALID_IMAGE_PATH_REGEX = (
+    r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")"
+)
+
+# Test types:
+TEST_PLAYBOOKS = "TestPlaybooks"
+TEST_MODELING_RULES = "TestModelingRules"

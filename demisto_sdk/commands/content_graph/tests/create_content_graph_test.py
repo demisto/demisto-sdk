@@ -1,8 +1,11 @@
+import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Tuple
 from zipfile import ZipFile
 
 import pytest
+from pydantic import ValidationError
 
 from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
@@ -11,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
+    Relationships,
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.objects import IncidentField, Layout, Mapper
@@ -42,8 +46,8 @@ def repository(mocker):
         packs=[],
     )
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
-        return_value=[repository],
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
+        return_value=repository,
     )
     return repository
 
@@ -559,7 +563,9 @@ class TestCreateContentGraph:
         }
         assert returned_scripts == {"SampleScript", "TestApiModule"}
         with ChangeCWD(repo.path):
-            content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
+            with TemporaryDirectory() as dir:
+                mocker.patch.object(os, "getenv", return_value=dir)
+                content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
         assert (tmp_path / "TestPack").exists()
         assert (tmp_path / "TestPack" / "metadata.json").exists()
         assert (
@@ -775,7 +781,7 @@ class TestCreateContentGraph:
         assert not interface.search()
 
     def test_create_content_graph_incident_to_alert_scripts(
-        self, graph_repo: Repo, tmp_path: Path
+        self, mocker, graph_repo: Repo, tmp_path: Path
     ):
         """
         Given:
@@ -811,7 +817,9 @@ class TestCreateContentGraph:
         assert len(all_content_items) == 3
 
         with ChangeCWD(graph_repo.path):
-            content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
+            with TemporaryDirectory() as dir:
+                mocker.patch.object(os, "getenv", return_value=dir)
+                content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
         scripts_path = tmp_path / pack.name / "Scripts"
         assert (scripts_path / "script-getIncident.yml").exists()
         assert (scripts_path / "script-getAlert.yml").exists()
@@ -913,3 +921,61 @@ class TestCreateContentGraph:
         )
         assert expected_python_version == integrations[0].python_version
         assert dockerhub_api_mocker.called == is_taken_from_dockerhub
+
+
+@pytest.mark.parametrize("true_as_string", ["True", "true"])
+def test_add_relationship__to_Pydentic_and_back(true_as_string):
+    """
+    Given:
+        - A set of relationship data
+    When:
+        - This data is added to a Relationship object using the 'add' method
+    Then:
+        - Verify that the data was added through the Pydantic 'Relationship' object and complies with its specifications:
+            - Convert boolean strings to boolean objects.
+            - Include only properties defined in the Pydantic model.
+            - Exclude properties with a value of None from the object.
+        - Verify that the data was converted back into a dictionary.
+    """
+    relationships = Relationships()
+    relationships.add(
+        RelationshipType.DEPENDS_ON,
+        mandatorily=true_as_string,
+        source=None,
+        non_define_attribute="fake",
+    )
+
+    added_relationship = relationships[RelationshipType.DEPENDS_ON][0]
+    assert added_relationship == {"mandatorily": True}
+
+
+@pytest.mark.parametrize(
+    "target_type, source_marketplaces,source_type,  mandatorily",
+    [
+        (None, None, None, "disallowed"),
+        (None, None, "disallowed", None),
+        (None, "disallowed", None, None),
+        ("disallowed", None, None, None),
+    ],
+)
+def test_add_relationship__to_Pydentic_and_back___assertion_error(
+    target_type, source_marketplaces, source_type, mandatorily
+):
+    """
+    Given:
+        - A set of relationship data where all properties are None, except for one property that has an disallowed value.
+    When:
+        - This data is added to a Relationship object using the 'add' method
+    Then:
+        - Verify that the data was added through the Pydantic 'Relationship' object and will fail with an "AssertionError" due to the disallowed value.
+    """
+    relationships = Relationships()
+    with pytest.raises(ValidationError) as e:
+        relationships.add(
+            relationship=RelationshipType.DEPENDS_ON,
+            target_type=target_type,
+            source_marketplaces=source_marketplaces,
+            source_type=source_type,
+            mandatorily=mandatorily,
+        )
+        assert e._assert_start_repr == "AssertionError('assert "

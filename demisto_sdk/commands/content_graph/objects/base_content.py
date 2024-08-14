@@ -1,3 +1,4 @@
+import inspect
 from abc import ABC
 from collections import defaultdict
 from functools import cached_property, lru_cache
@@ -12,7 +13,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    Union,
     cast,
 )
 
@@ -44,6 +44,9 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    StructureError,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -88,6 +91,7 @@ class BaseContentMetaclass(ModelMetaclass):
             if isinstance(getattr(super_cls, attr), LazyProperty)
         }:
             model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]
+
         return model_cls
 
 
@@ -160,11 +164,26 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         Returns:
             Dict[str, Any]: JSON dictionary representation of the class.
         """
-        self.__add_lazy_properties()
 
-        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
+        self.__add_lazy_properties()
+        cached_properties = {
+            name
+            for name, value in inspect.getmembers(self.__class__)
+            if isinstance(value, cached_property)
+        }
+        json_dct = json.loads(
+            self.json(
+                exclude={
+                    "commands",
+                    "database_id",
+                }
+                | cached_properties
+            )
+        )
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
-            json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
+            json_dct["path"] = (
+                Path(json_dct["path"]).relative_to(CONTENT_PATH)
+            ).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct
 
@@ -184,12 +203,14 @@ class BaseContent(BaseNode):
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
+    structure_errors: Optional[List[StructureError]] = Field(None, exclude=True)
 
     def _save(
         self,
         path: Path,
         data: dict,
         predefined_keys_to_keep: Optional[Tuple[str, ...]] = None,
+        fields_to_exclude: List[str] = [],
     ):
         """Save the class vars into the dict data.
 
@@ -202,7 +223,7 @@ class BaseContent(BaseNode):
             attr = getattr(self, key)
             if key == "docker_image":
                 attr = str(attr)
-            elif key in ["params"]:
+            elif key in fields_to_exclude:
                 continue
             elif key == "marketplaces":
                 if (
@@ -229,7 +250,7 @@ class BaseContent(BaseNode):
     def ignored_errors(self) -> List[str]:
         raise NotImplementedError
 
-    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+    def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         """Return the errors that should be ignored for the given related file path.
 
         Args:
@@ -238,10 +259,6 @@ class BaseContent(BaseNode):
         Returns:
             list: The list of the ignored error codes.
         """
-        raise NotImplementedError
-
-    @property
-    def support_level(self) -> str:
         raise NotImplementedError
 
     def dump(
@@ -329,8 +346,7 @@ class UnknownContent(BaseNode):
     object_id: str = ""
     name: str = ""
 
-    def dump(self, _, __):
-        ...
+    def dump(self, _, __): ...
 
     @property
     def identifier(self):

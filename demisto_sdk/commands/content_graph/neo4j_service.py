@@ -41,11 +41,13 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):  # type: ign
         docker_client (docker.DockerClient): The docker client to use
     """
     try:
-        neo4j_docker = docker_client.containers.get("neo4j-content")
-        if not neo4j_docker:
+        containers = docker_client.containers.list(filters={"name": "neo4j-content"})
+        if containers:
+            container = containers[0]
+        else:
             return
-        neo4j_docker.stop()
-        neo4j_docker.remove(force=True)
+        container.stop()
+        container.remove(force=True)
     except Exception as e:
         logger.debug(f"Could not remove neo4j container: {e}")
 

@@ -23,6 +23,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
         self.type = self.json_data.get("type")
         self.definition_id = self.json_data.get("definitionId")
         self.connect_to_dependencies()
+        self.mapping = self.json_data.get("mapping", {})
 
     @cached_property
     def field_mapping(self):

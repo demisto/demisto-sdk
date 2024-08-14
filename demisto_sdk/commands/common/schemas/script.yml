@@ -12,6 +12,16 @@ mapping:
       version:
         type: int
         required: true
+      id:xsoar:
+        type: str
+      id:marketplacev2:
+        type: str
+      id:xpanse:
+        type: str
+      id:xsoar_saas:
+        type: str
+      id:xsoar_on_prem:
+        type: str
   name:
     type: str
     required: true

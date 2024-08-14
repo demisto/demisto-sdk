@@ -95,6 +95,10 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="try-except-main-doesnt-exists",
                 node=node_b,
+                line=5,
+                col_offset=0,
+                end_line=5,
+                end_col_offset=8,
             ),
         ):
             self.checker.visit_functiondef(node_b)
@@ -161,6 +165,10 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="return-error-does-not-exist-in-main",
                 node=node_b,
+                line=5,
+                col_offset=0,
+                end_line=5,
+                end_col_offset=8,
             ),
         ):
             self.checker.visit_functiondef(node_b)
@@ -192,6 +200,10 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="return-error-does-not-exist-in-main",
                 node=node_b,
+                line=5,
+                col_offset=0,
+                end_line=5,
+                end_col_offset=8,
             ),
         ):
             self.checker.visit_functiondef(node_b)
@@ -259,6 +271,10 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="too-many-return-error",
                 node=node_b,
+                line=9,
+                col_offset=8,
+                end_line=9,
+                end_col_offset=30,
             ),
         ):
             self.checker.visit_call(node_b)

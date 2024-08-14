@@ -30,6 +30,13 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 )
 
 
+class Output(BaseModel):
+    description: Optional[str] = ""
+    contentPath: Optional[str] = None
+    contextPath: Optional[str] = None
+    type: Optional[str] = None
+
+
 class Argument(BaseModel):
     name: str
     description: str = ""
@@ -53,7 +60,7 @@ class Argument(BaseModel):
         """
         dictified_arg = self.dict(exclude_none=True)
         if "auto" in dictified_arg:
-            dictified_arg["auto"] = str(dictified_arg["auto"])
+            dictified_arg["auto"] = dictified_arg["auto"].value
         return dictified_arg
 
 

@@ -1276,31 +1276,6 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
 
-    V2_VALID_SIEM_1 = {"display": "PhishTank v2", "script": {"isfetchevents": False}}
-    V2_VALID_SIEM_2 = {
-        "display": "PhishTank v2 Event Collector",
-        "script": {"isfetchevents": True},
-    }
-    V2_VALID_SIEM_3 = {"display": "PhishTank v2 Event Collector", "script": {}}
-    V2_VALID_SIEM_4 = {"display": "PhishTank v2 Event Collector"}
-    V2_INVALID_SIEM = {"display": "PhishTank v2", "script": {"isfetchevents": True}}
-
-    V2_SIEM_NAME_INPUTS = [
-        (V2_VALID_SIEM_1, True),
-        (V2_VALID_SIEM_2, True),
-        (V2_VALID_SIEM_3, True),
-        (V2_VALID_SIEM_4, True),
-        (V2_INVALID_SIEM, False),
-    ]
-
-    @pytest.mark.parametrize("current, answer", V2_SIEM_NAME_INPUTS)
-    def test_is_valid_display_name_siem(self, current, answer):
-        structure = mock_structure("", current)
-        validator = IntegrationValidator(structure)
-        validator.current_file = current
-
-        assert validator.is_valid_display_name_for_siem() is answer
-
     V2_VALID_SIEM_1 = {
         "display": "Test Event Collector",
         "script": {"isfetchevents": True},
@@ -1912,16 +1887,6 @@ class TestIntegrationValidator:
             (["true"], False),
             (["True"], False),
             (MarketplaceVersions.XSOAR, False),
-            (
-                [
-                    MarketplaceVersions.XSOAR,
-                    MarketplaceVersions.MarketplaceV2,
-                    MarketplaceVersions.XPANSE,
-                    MarketplaceVersions.XSOAR_SAAS,
-                    MarketplaceVersions.XSOAR_ON_PREM,
-                ],
-                False,
-            ),
             ("🥲", False),
             ("Trüe", False),
             ([MarketplaceVersions.XSOAR, None], False),
@@ -2388,16 +2353,16 @@ class TestIsFeedParamsExist:
     IS_VALID_HIDDEN_PARAMS = [
         (NO_HIDDEN, True),
         (HIDDEN_FALSE, True),
-        (HIDDEN_TRUE, False),
-        (HIDDEN_TRUE_AND_FALSE, False),
+        (HIDDEN_TRUE, True),
+        (HIDDEN_TRUE_AND_FALSE, True),
         (HIDDEN_ALLOWED_TRUE, True),
         (HIDDEN_ALLOWED_FEED_REPUTATION, True),
         (HIDDEN_TRUE_BUT_REPLACED_TYPE_0, True),
         (HIDDEN_TRUE_BUT_REPLACED_TYPE_12, True),
         (HIDDEN_TRUE_BUT_REPLACED_TYPE_14, True),
-        (HIDDEN_TRUE_BUT_REPLACED_BY_NOT_ALLOWED, False),
+        (HIDDEN_TRUE_BUT_REPLACED_BY_NOT_ALLOWED, True),
         (HIDDEN_TRUE_BUT_REPLACED_4, True),
-        (HIDDEN_ONE_REPLACED_TO_9_OTHER_NOT, False),
+        (HIDDEN_ONE_REPLACED_TO_9_OTHER_NOT, True),
     ]
 
     @pytest.mark.parametrize("current, answer", IS_VALID_HIDDEN_PARAMS)

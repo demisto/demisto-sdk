@@ -17,20 +17,27 @@
 - Ignore the json suffix, it is not a real dashboard.
 
 #### Incident Fields
-- **test1**
-- New: **test2**
+##### test1
+- Added x y z
+
+##### New: test2
+- New: Added x y z
 
 #### Incident Types
-- **test**
+##### test
+- Added x y z
 
 #### Indicator Fields
-- **test**
+##### test
+- Added x y z
 
 #### Indicator Types
-- **test**
+##### test
+- Added x y z
 
 #### Layouts
-- **test**
+##### test
+- Added x y z
 
 #### Mappers
 ##### New: test
@@ -57,4 +64,5 @@
 - Ignore the json suffix, it is not a real dashboard.
 
 #### Triggers Recommendations
-- **test**
+##### test
+- Added x y z

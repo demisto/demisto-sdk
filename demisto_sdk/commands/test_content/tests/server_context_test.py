@@ -1,6 +1,8 @@
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS
 from demisto_sdk.commands.test_content.mock_server import MITMProxy
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext,
+    OnPremServerContext,
     ServerContext,
 )
 from demisto_sdk.commands.test_content.tests.build_context_test import (
@@ -29,6 +31,7 @@ def test_execute_tests(mocker, tmp_path):
         - Ensure the mockable and unmockable tests queues were emptied
         - Ensure no test has failed during that test
     """
+
     # Setting up the build context
     filtered_tests = [
         "playbook_without_integrations",
@@ -36,6 +39,13 @@ def test_execute_tests(mocker, tmp_path):
         "playbook_with_unmockable_integration",
         "skipped_playbook",
     ]
+
+    machine_assignment_content = {
+        "xsoar-machine": {
+            "packs_to_install": ["TEST"],
+            "tests": {TEST_PLAYBOOKS: filtered_tests},
+        }
+    }
     # Setting up the content conf.json
     tests = [
         generate_test_configuration(playbook_id="playbook_without_integrations"),
@@ -61,6 +71,10 @@ def test_execute_tests(mocker, tmp_path):
         for integration_name in integration_names
     ]
     secret_test_conf = generate_secret_conf_json(integrations_configurations)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.BuildContext.create_servers",
+        return_value=set(),
+    )
 
     # Setting up the build_context instance
     build_context = get_mocked_build_context(
@@ -68,13 +82,14 @@ def test_execute_tests(mocker, tmp_path):
         tmp_path,
         content_conf_json=content_conf_json,
         secret_conf_json=secret_test_conf,
-        filtered_tests_content=filtered_tests,
+        machine_assignment_content=machine_assignment_content,
     )
     # Setting up the client
     mocked_demisto_client = DemistoClientMock(integrations=integration_names)
     server_context = generate_mocked_server_context(
         build_context, mocked_demisto_client, mocker
     )
+    build_context.servers = {server_context}
     server_context.execute_tests()
 
     # Validating all tests were executed
@@ -82,8 +97,8 @@ def test_execute_tests(mocker, tmp_path):
         assert test in server_context.executed_tests
 
     # Validating all queues were emptied
-    assert build_context.mockable_tests_to_run.all_tasks_done
-    assert build_context.unmockable_tests_to_run.all_tasks_done
+    assert next(iter(build_context.servers)).mockable_tests_to_run.all_tasks_done
+    assert next(iter(build_context.servers)).unmockable_tests_to_run.all_tasks_done
 
     # Validating no failed playbooks
     assert not build_context.tests_data_keeper.failed_playbooks
@@ -128,12 +143,10 @@ def generate_mocked_server_context(
         "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
         return_value=False,
     )
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._notify_failed_test"
-    )
+
     mocker.patch.object(MITMProxy, "__init__", lambda *args, **kwargs: None)
     mocker.patch("time.sleep")
     # Executing the test
-    server_context = ServerContext(build_context, "1.1.1.1")
+    server_context = OnPremServerContext(build_context, "1.1.1.1")
     server_context.proxy = mocker.MagicMock()
     return server_context

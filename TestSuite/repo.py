@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.commands.create import create_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
+from demisto_sdk.commands.content_graph.objects.repository import from_path
 from TestSuite.conf_json import ConfJSON
 from TestSuite.docker_native_image_config import DockerNativeImageConfiguration
 from TestSuite.global_secrets import GlobalSecrets
@@ -35,6 +36,8 @@ class Repo:
     """
 
     def __init__(self, tmpdir: Path, init_git: bool = False):
+        # clear the cache of the content DTO if we create a repo parser
+        from_path.cache_clear()
         self.packs: List[Pack] = list()
         self._tmpdir = tmpdir
         self._packs_path: Path = tmpdir / "Packs"
@@ -124,9 +127,9 @@ class Repo:
         integration.yml.update({"name": f"{name}_integration"})
         integration.yml.update({"display": f"{name}_integration"})
         integration_content = integration.yml.read_dict()
-        integration_content["script"]["commands"][0][
-            "name"
-        ] = f"command_{name}_integration"
+        integration_content["script"]["commands"][0]["name"] = (
+            f"command_{name}_integration"
+        )
         integration.yml.write_dict(integration_content)
 
         classifier = pack.create_classifier(f"{name}_classifier")
@@ -186,7 +189,7 @@ class Repo:
         dashboard = pack.create_dashboard(f"{name}_dashboard")
         dashboard.write_json({"id": f"{name} - dashboard"})
         dashboard.update({"name": f"{name} - dashboard"})
-        dashboard.update({"layout": ""})
+        dashboard.update({"layout": []})
 
         report = pack.create_report(f"{name}_report")
         report.write_json({"id": f"{name} - report"})
@@ -329,6 +332,7 @@ class Repo:
             self.git_util = GitUtil(self.path)
             self.git_util.commit_files("Initial Commit")
             self.git_util.repo.create_head(DEMISTO_GIT_PRIMARY_BRANCH)
+            self.git_util.repo.create_remote("origin", "dummy_url")
 
     def working_dir(self):
         return self.path

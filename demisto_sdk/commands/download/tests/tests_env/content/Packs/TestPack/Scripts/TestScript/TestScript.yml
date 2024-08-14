@@ -9,8 +9,8 @@ pswd: ""
 runas: DBotWeakRole
 runonce: false
 script: ''
-fromversion: TEST
-toversion: TEST
+fromversion: 1.0.0
+toversion: 1.0.0
 alt_dockerimages: TEST
 scripttarget: 0
 subtype: python3

@@ -20,7 +20,3 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             is_test_script=False,
             git_sha=git_sha,
         )
-
-    @property
-    def strict_object(self):
-        return StrictScript

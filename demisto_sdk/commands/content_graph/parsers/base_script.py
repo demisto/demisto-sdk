@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -98,3 +99,6 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         if not code:
             raise ValueError("Script code is not available")
         return set(EXECUTE_CMD_PATTERN.findall(code))
+
+    def strict_object(self):
+        return StrictScript

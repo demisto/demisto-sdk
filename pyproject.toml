@@ -139,6 +139,7 @@ validate-conf-json = "demisto_sdk.scripts.validate_conf_json:main"
 init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission_changes:main"
+prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
 
 [tool.ruff]
 exclude = [

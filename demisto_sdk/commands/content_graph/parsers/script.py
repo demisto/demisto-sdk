@@ -4,7 +4,6 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
-from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
 
 
 class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):

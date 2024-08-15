@@ -82,3 +82,17 @@
   entry: validate-xsoar-config
   language: python
   pass_filenames: true
+
+- id: validate-file-permission-changes
+  name: validate-file-permission-changes
+  description: Validate that file permissions haven't been changed.
+  entry: validate-file-permission-changes
+  language: python
+  files: ^Packs/
+
+- id: prevent-mypy-global-ignore
+  name: prevent-mypy-global-ignore
+  description: Prevent Python files from setting global mypy ignore
+  entry: prevent-mypy-global-ignore
+  language: python
+  files: .*Packs/.*/(?:Integrations|Scripts)/.*.py$

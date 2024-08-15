@@ -1,4 +1,0 @@
-changes:
-- description: Split the testing of modeling rules on XSIAM to multiple machines
-  type: feature
-pr_number: 4441

@@ -314,10 +314,13 @@ def validate_duplicate_ids(
 def validate_test_playbook_in_use(
     tx: Transaction, test_playbook_ids: List[str], tests_skipped: List[str]
 ) -> List[graph.Node]:
-    query = f"""
-MATCH (tp:TestPlaybook)
-WHERE tp.object_id IN {test_playbook_ids}
-AND NOT EXISTS {{ MATCH ()-[:TESTED_BY]->(tp) }}
+    query = """
+MATCH (tp:TestPlaybook) WHERE
+"""
+    if test_playbook_ids:
+        query += f" tp.object_id IN {test_playbook_ids} AND"
+    query += f"""
+ NOT EXISTS {{ MATCH ()-[:TESTED_BY]->(tp) }}
 AND tp.deprecated = false
 AND NOT (tp.object_id IN {tests_skipped})
 MATCH (tp)-[:IN_PACK]->(p:Pack)

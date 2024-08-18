@@ -20,5 +20,7 @@ class IsTestPlaybookInUseValidatorAllFiles(
 ):
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return self.is_valid_using_graph(content_items, True)
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
+        return self.obtain_invalid_content_items_using_graph(content_items, True)

@@ -28,7 +28,7 @@ class IsTestPlaybookInUseValidator(BaseValidator[ContentTypes], ABC):
     related_field = "tests"
     is_auto_fixable = False
 
-    def is_valid_using_graph(
+    def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
         conf_data = ConfJSON.from_path(CONTENT_PATH / "Tests/conf.json")

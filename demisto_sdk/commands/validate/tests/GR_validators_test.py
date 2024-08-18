@@ -19,6 +19,9 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_displa
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_list_files import (
     IsPackDisplayNameAlreadyExistsValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_all_files import (
+    IsTestPlaybookInUseValidatorAllFiles,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_list_files import (
     IsTestPlaybookInUseValidatorListFiles,
 )
@@ -72,7 +75,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_obtain_invalid_content
 
 
 def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_obtain_invalid_content_items(
-    mocker, graph_repo: Repo
+    mocker: MockerFixture, graph_repo: Repo
 ):
     """
     Given
@@ -246,18 +249,18 @@ def test_MarketplacesFieldValidatorAllFiles_obtain_invalid_content_items(
     assert expected_messages == {result.message for result in validation_results}
 
 
-def test_IsTestPlaybookInUseValidatorListFiles_is_valid(
+def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
     mocker: MockerFixture, prepared_graph_repo: Repo
 ):
     """
-    Tests the IsTestPlaybookInUseValidatorListFiles validator for different scenarios of test playbooks.
+    Tests the IsTestPlaybookInUseValidatorAllFiles validator for different scenarios of test playbooks.
 
     Given:
     - A graph interface with prepared repository data.
     - Three test playbooks: one in use, one not in use, and one deprecated.
 
     When:
-    - Validating each test playbook using the IsTestPlaybookInUseValidatorListFiles.
+    - Validating each test playbook using the IsTestPlaybookInUseValidatorAllFiles.
 
     Then:
     - Ensure that the validator correctly identifies the playbook in use with no errors.
@@ -271,29 +274,35 @@ def test_IsTestPlaybookInUseValidatorListFiles_is_valid(
     playbook_in_use = (
         prepared_graph_repo.packs[1].test_playbooks[0].get_graph_object(graph_interface)
     )
-    validation_results = IsTestPlaybookInUseValidatorListFiles().is_valid(
-        [playbook_in_use]
+    validation_results = (
+        IsTestPlaybookInUseValidatorListFiles().obtain_invalid_content_items(
+            [playbook_in_use]
+        )
     )
     assert validation_results == []  # the test playbook in use
 
     playbook_no_in_use = (
         prepared_graph_repo.packs[1].test_playbooks[1].get_graph_object(graph_interface)
     )
-    validation_results = IsTestPlaybookInUseValidatorListFiles().is_valid(
-        [playbook_no_in_use]
+    validation_results = (
+        IsTestPlaybookInUseValidatorAllFiles().obtain_invalid_content_items(
+            [playbook_no_in_use]
+        )
     )
     assert (
         validation_results[0].message
         == (  # the test playbook not in use
             "Test playbook 'TestPlaybookNoInUse' is not linked to any content item."
-            " Make sure at least one integration, script or playbook mention it under the `tests:` key."
+            " Make sure at least one integration, script or playbook mentions the test-playbook id under the `tests:` key."
         )
     )
 
     playbook_deprecated = (
         prepared_graph_repo.packs[1].test_playbooks[2].get_graph_object(graph_interface)
     )
-    validation_results = IsTestPlaybookInUseValidatorListFiles().is_valid(
-        [playbook_deprecated]
+    validation_results = (
+        IsTestPlaybookInUseValidatorListFiles().obtain_invalid_content_items(
+            [playbook_deprecated]
+        )
     )
     assert validation_results == []  # the test playbook is deprecated

@@ -219,4 +219,4 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
 
     @property
     def strict_object(self):
-        return StrictPlaybook
+        return StrictPlaybook  # both for Playbooks and TPBs

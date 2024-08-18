@@ -35,7 +35,9 @@ class MarketplaceKeysHaveDefaultValidator(BaseValidator[ContentTypes]):
     bad_paths_dict: dict = dict()
     is_auto_fixable = True
 
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         validation_results = []
 
         for content_item in content_items:

@@ -1525,16 +1525,17 @@ def test_IsValidUseCasesValidator_fix():
     "pack, is_deprecated_pack, integrations, playbooks, scripts, modeling_rules, expected_number_of_failures, "
     "expected_msgs",
     [
-        (create_pack_object(), False, [], [], [], 0, []),
+        (create_pack_object(), False, [], [], [], [], 0, []),
         (
             create_pack_object(),
             False,
             [create_integration_object(["deprecated"], [True])],
             [],
             [],
+            [],
             1,
             [
-                "The Pack HelloWorld should be deprecated, as all its integrations, playbooks and scripts are deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated).\nThe description of the pack in the pack_metadata.json should be one of the following formats:\n1. 'Deprecated. Use <PACK_NAME> instead.'\n2. 'Deprecated. <REASON> No available replacement.'"
+                "The Pack HelloWorld should be deprecated, as all its content items are deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated).\nThe description of the pack in the pack_metadata.json should be one of the following formats:\n1. 'Deprecated. Use <PACK_NAME> instead.'\n2. 'Deprecated. <REASON> No available replacement.'"
             ],
         ),
         (
@@ -1543,6 +1544,7 @@ def test_IsValidUseCasesValidator_fix():
             [],
             [create_playbook_object(["deprecated"], [True])],
             [create_script_object()],
+            [],
             0,
             [],
         ),
@@ -1552,14 +1554,16 @@ def test_IsValidUseCasesValidator_fix():
             [create_integration_object(["deprecated"], [True])],
             [],
             [],
+            [],
             0,
             [],
         ),
         (
             create_pack_object(),
             False,
-            [],
             [create_integration_object(["deprecated"], [True])],
+            [],
+            [],
             [create_modeling_rule_object()],
             0,
             [],

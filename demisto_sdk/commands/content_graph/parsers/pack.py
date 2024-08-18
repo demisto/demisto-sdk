@@ -34,6 +34,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
     NotAContentItemException,
+    StrictObjectNotExistException,
 )
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
     ContentItemsList,
@@ -383,3 +384,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "content_commit_hash": "contentCommitHash",
             "default_data_source_id": "defaultDataSource",
         }
+
+    @property
+    def strict_object(self):
+        return StrictObjectNotExistException

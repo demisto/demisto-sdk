@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where reusing the Content-Graph after a long period of inactivity resulted in a 409 error.
+  type: fix
+pr_number: 4495

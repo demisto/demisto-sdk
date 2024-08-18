@@ -1,4 +1,0 @@
-changes:
-- description: Added the `native_nightly_packs` attribute to the conf.json schema.
-  type: feature
-pr_number: 4479

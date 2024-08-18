@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
-    StrictObjectNotExistException,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
@@ -97,6 +96,3 @@ class RepositoryParser:
 
     def clear(self):
         self.packs = []
-
-    def strict_object(self):
-        raise StrictObjectNotExistException

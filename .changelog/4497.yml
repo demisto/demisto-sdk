@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where PA102 failed when there were valid modeling_rules in a pack.
+  type: fix
+pr_number: 4497

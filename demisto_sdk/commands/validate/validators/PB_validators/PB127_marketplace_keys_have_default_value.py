@@ -52,9 +52,9 @@ class MarketplaceKeysHaveDefaultValidator(BaseValidator[ContentTypes]):
                         content_object=content_item,
                     )
                 )
-                self.bad_paths_dict[
-                    content_item.name
-                ] = marketplace_keys_with_no_default
+                self.bad_paths_dict[content_item.name] = (
+                    marketplace_keys_with_no_default
+                )
 
         return validation_results
 

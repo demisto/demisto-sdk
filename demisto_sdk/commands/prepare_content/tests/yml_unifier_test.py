@@ -561,33 +561,75 @@ def test_insert_hierarchy_api_module(mocker):
     )
 
 
-def test_insert_pack_version_and_script_to_yml():
+def test_insert_pack_version_and_script_to_yml_js_and_ps1():
     """
     Given:
-     - A pack name.
+     - A pack version.
 
     When:
-     - calling insert_pack_version.
+     - Calling insert_pack_version for different script types (.ps1, .js).
 
     Then:
-     - Ensure the code returned contains the pack version in it.
+     - Ensure the code returned contains the correct pack version.
+     - Ensure the pack version is added only once.
+     - Ensure unsupported script types do not get the pack version added.
     """
-    version_str = "### pack version: 1.0.3"
-    assert version_str not in DUMMY_SCRIPT
-    assert version_str in IntegrationScriptUnifier.insert_pack_version(
-        ".py", DUMMY_SCRIPT, "1.0.3"
+    pack_version = "1.0.3"
+
+    # Test for JavaScript script
+    updated_script_js = IntegrationScriptUnifier.insert_pack_version(
+        ".js", DUMMY_SCRIPT, pack_version
     )
-    assert version_str in IntegrationScriptUnifier.insert_pack_version(
-        ".ps1", DUMMY_SCRIPT, "1.0.3"
+
+    assert (
+        updated_script_js.count(f"// pack version: {pack_version}") == 1
+    )  # Ensure it is added only once
+
+    # Test for PowerShell script
+    updated_script_ps1 = IntegrationScriptUnifier.insert_pack_version(
+        ".ps1", DUMMY_SCRIPT, pack_version
     )
-    assert version_str not in IntegrationScriptUnifier.insert_pack_version(
-        ".js", DUMMY_SCRIPT, "1.0.3"
+    assert (
+        updated_script_ps1.count(f"### pack version: {pack_version}") == 1
+    )  # Ensure it is added only once
+
+
+@pytest.mark.parametrize(
+    "dummy_script, pack_version, expected_version_str",
+    [
+        pytest.param(
+            """
+            def main():
+            """,
+            "1.0.3",
+            "demisto.debug('pack version = 1.0.3')",
+            id="script without version",
+        ),
+        pytest.param(
+            """
+            demisto.debug('pack version = 1.0.3')
+            def main():
+            """,
+            "1.0.4",
+            "demisto.debug('pack version = 1.0.4')",
+            id="script with version",
+        ),
+    ],
+)
+def test_insert_pack_version_and_script_to_yml_python_script(
+    dummy_script: str, pack_version: str, expected_version_str: str
+):
+    """
+    Test that the pack version is correctly inserted into the Python script.
+    """
+    updated_script = IntegrationScriptUnifier.insert_pack_version(
+        ".py", dummy_script, pack_version
     )
-    version_str_js = "// pack version: 1.0.3"
-    assert version_str_js not in DUMMY_SCRIPT
-    assert version_str_js in IntegrationScriptUnifier.insert_pack_version(
-        ".js", DUMMY_SCRIPT, "1.0.3"
-    )
+
+    debug_log_with_pack_version_count = updated_script.count(expected_version_str)
+    assert (
+        debug_log_with_pack_version_count == 1
+    ), f"Pack version found {debug_log_with_pack_version_count} times in updated script, expected only once"
 
 
 def get_generated_module_code(import_name, api_module_name):

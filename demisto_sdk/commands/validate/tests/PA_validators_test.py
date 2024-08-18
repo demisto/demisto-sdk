@@ -1587,7 +1587,7 @@ def test_ShouldPackBeDeprecatedValidator_obtain_invalid_content_items(
         - Case 2: A non deprecated pack with a deprecated integration.
         - Case 3: A non deprecated pack with a deprecated integration and a non deprecated script
         - Case 4: A deprecated pack with a deprecated integration.
-        - Case 3: A non deprecated pack with a deprecated integration and a non deprecated modeling_rule
+        - Case 5: A non deprecated pack with a deprecated integration and a non deprecated modeling_rule
     When
     - Calling the ShouldPackBeDeprecatedValidator obtain_invalid_content_items function.
     Then

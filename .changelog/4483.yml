@@ -1,0 +1,4 @@
+changes:
+- description: Introduces the `marketplaces` new field in the breaking changes release notes ".json" file. This supports choosing on which marketplace the braking changes message will appear.
+  type: feature
+pr_number: 4483

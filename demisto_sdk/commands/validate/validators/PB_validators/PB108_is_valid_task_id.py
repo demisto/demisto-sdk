@@ -21,7 +21,9 @@ class IsValidTaskIdValidator(BaseValidator[ContentTypes]):
     related_field = "taskid"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         """Check whether all playbook tasks has valid taskid and the 'id' under the 'task' field is valid as well.
         Args:
             - content_items (Iterable[ContentTypes]): The content items to check.

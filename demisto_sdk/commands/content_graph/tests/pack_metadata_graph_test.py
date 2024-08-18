@@ -240,7 +240,6 @@ def test_pack_metadata_marketplacev2(git_repo: Repo, tmp_path: Path, mocker):
         },
     )
     with ChangeCWD(git_repo.path):
-
         with ContentGraphInterface() as interface:
             create_content_graph(interface, output_path=tmp_path)
             content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)

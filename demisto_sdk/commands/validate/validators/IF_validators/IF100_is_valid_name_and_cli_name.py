@@ -38,7 +38,9 @@ class IsValidNameAndCliNameValidator(BaseValidator[ContentTypes]):
     error_message = "The following words cannot be used as a name: {words}."
     related_field = "name,cliName"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

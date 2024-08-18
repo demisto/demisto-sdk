@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where old validate failed without listing the invalid content items.
-  type: fix
-pr_number: 4432

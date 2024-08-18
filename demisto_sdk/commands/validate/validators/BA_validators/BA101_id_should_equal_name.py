@@ -22,7 +22,9 @@ class IDNameValidator(BaseValidator, ABC):
     related_field = "name"
     is_auto_fixable = True
 
-    def is_valid(self, content_items: Iterable[ContentItem]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentItem]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

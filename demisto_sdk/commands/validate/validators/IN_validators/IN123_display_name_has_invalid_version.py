@@ -27,7 +27,9 @@ class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTyp
     related_field = "display"
     integration_display_name_to_correct_version: ClassVar[Dict[str, str]] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         invalid_content_items = []
         for integration in content_items:
             display_name = integration.display_name

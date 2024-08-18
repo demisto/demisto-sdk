@@ -1,4 +1,0 @@
-changes:
-- description: "Removed the following arguments from the (internal) **test-content** command: circleci, xsiam-machine, xsiam-servers-path, xsiam-servers-api-keys-path."
-  type: internal
-pr_number: 4422

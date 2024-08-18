@@ -44,6 +44,9 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    StructureError,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -178,7 +181,9 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             )
         )
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
-            json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
+            json_dct["path"] = (
+                Path(json_dct["path"]).relative_to(CONTENT_PATH)
+            ).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct
 
@@ -198,6 +203,7 @@ class BaseContent(BaseNode):
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
+    structure_errors: Optional[List[StructureError]] = Field(None, exclude=True)
 
     def _save(
         self,
@@ -253,10 +259,6 @@ class BaseContent(BaseNode):
         Returns:
             list: The list of the ignored error codes.
         """
-        raise NotImplementedError
-
-    @property
-    def support_level(self) -> str:
         raise NotImplementedError
 
     def dump(
@@ -344,8 +346,7 @@ class UnknownContent(BaseNode):
     object_id: str = ""
     name: str = ""
 
-    def dump(self, _, __):
-        ...
+    def dump(self, _, __): ...
 
     @property
     def identifier(self):

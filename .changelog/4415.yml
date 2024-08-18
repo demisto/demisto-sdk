@@ -1,4 +1,0 @@
-changes:
-- description: Added PR101 and MR108 to the new validate format. The validations check if the rule id and the rule name end with the correct suffixes.
-  type: internal
-pr_number: 4415

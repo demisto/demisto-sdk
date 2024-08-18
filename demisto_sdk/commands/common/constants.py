@@ -173,6 +173,17 @@ DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
+# Server Types
+XSOAR_SERVER_TYPE = "XSOAR"
+XSIAM_SERVER_TYPE = "XSIAM"
+XPANSE_SERVER_TYPE = "XPANSE"
+XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
+
+# Product Types
+XSOAR_PRODUCT_TYPE = "XSOAR"
+XSIAM_PRODUCT_TYPE = "XSIAM"
+XPANSE_PRODUCT_TYPE = "XPANSE"
+
 
 class FileType(StrEnum):
     INTEGRATION = "integration"
@@ -934,9 +945,9 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
-PACKS_README_FILE_NAME = (
-    INTEGRATIONS_README_FILE_NAME
-) = SCRIPTS_README_FILE_NAME = "README.md"
+PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAME = (
+    "README.md"
+)
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
@@ -1829,6 +1840,16 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
     "blocked",
 ]
 
+INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE = [
+    "feed",
+    "isfetch",
+    "longRunning",
+    "longRunningPort",
+    "ismappable",
+    "isremotesyncin",
+    "isremotesyncout",
+]
+
 CONTEXT_OUTPUT_README_TABLE_HEADER = "| **Path** | **Type** | **Description** |"
 
 ARGUMENT_FIELDS_TO_CHECK = ["defaultValue", "required", "isArray"]
@@ -1962,11 +1983,11 @@ MarketplaceVersionToMarketplaceName = {
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
-    MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_ON_PREM: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
-    MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
+    MarketplaceVersions.XSOAR: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_SAAS: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
+    MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
+    MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
 }
 
 
@@ -2065,7 +2086,9 @@ class ParameterType(Enum):
     DAY_DROPDOWN = 21
 
 
-class IncidentFieldType:  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
+class IncidentFieldType(
+    StrEnum
+):  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
     SHORT_TEXT = "shortText"
     LONG_TEXT = "longText"
     NUMBER = "number"
@@ -2212,3 +2235,7 @@ PACK_DEFAULT_MARKETPLACES: List = [
 INVALID_IMAGE_PATH_REGEX = (
     r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")"
 )
+
+# Test types:
+TEST_PLAYBOOKS = "TestPlaybooks"
+TEST_MODELING_RULES = "TestModelingRules"

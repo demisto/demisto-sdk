@@ -1,6 +1,7 @@
 """
 Integration tests for general demisto-sdk functionalities which are related to all SDK commands.
 """
+
 import logging
 
 from click.testing import CliRunner

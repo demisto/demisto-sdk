@@ -120,5 +120,5 @@ class IncidentFieldValidator(FieldBaseValidator):
             prohibited_cli_names,
             ignored_errors,
             json_file_path=json_file_path,
-            **kwargs
+            **kwargs,
         )

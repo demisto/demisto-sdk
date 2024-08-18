@@ -2,8 +2,9 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Type, cast
 
+import pydantic
 from packaging.version import Version
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
@@ -18,6 +19,9 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    StructureError,
+)
 
 
 class NotAContentItemException(Exception):
@@ -88,6 +92,27 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         super().__init__(path)
         self.relationships: Relationships = Relationships()
         self.git_sha: Optional[str] = git_sha
+        # The validate_structure method is called in the first child(JsonContentItem, YamlContentItem)
+        self.structure_errors: Optional[List[StructureError]] = None
+
+    @property
+    @abstractmethod
+    def raw_data(self) -> dict:
+        pass
+
+    def validate_structure(self) -> Optional[List[StructureError]]:
+        """
+        The method uses the parsed data and attempts to build a Pydantic object from it.
+        Whenever data is invalid by the schema, we store the error in the 'structure_errors' attribute,
+        It will fail validation (ST110).
+        """
+        if not self.strict_object:
+            return None  # TODO - remove it
+        try:
+            self.strict_object(**self.raw_data)
+        except pydantic.error_wrappers.ValidationError as e:
+            return [StructureError(**error) for error in e.errors()]
+        return None
 
     @staticmethod
     def from_path(
@@ -155,6 +180,14 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @abstractmethod
     def display_name(self) -> Optional[str]:
         pass
+
+    @property
+    @abstractmethod
+    def support(self) -> str:
+        pass
+
+    def get_support(self, data: dict) -> str:
+        return data.get("supportlevelheader") or ""
 
     @property
     def version(self) -> int:
@@ -388,3 +421,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target_type=ContentType.COMMAND_OR_SCRIPT,
             mandatorily=is_mandatory,
         )
+
+    @property
+    def strict_object(self) -> Optional[Type[BaseModel]]:
+        return None

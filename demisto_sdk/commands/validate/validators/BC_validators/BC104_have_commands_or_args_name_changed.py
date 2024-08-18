@@ -12,6 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
+
 # This validator checks for changes in command and argument names within the integration file.
 # BC103 performs a similar validation but specifically for script arguments.
 class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
@@ -22,7 +23,9 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
     related_field = "script.commands.arguments.name"
     expected_git_statuses = [GitStatuses.MODIFIED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
             old_content_item = content_item.old_base_content_object

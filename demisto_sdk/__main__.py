@@ -150,7 +150,7 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 def logging_setup_decorator(func, *args, **kwargs):
     def get_context_arg(args):
         for arg in args:
-            if type(arg) == click.core.Context:
+            if isinstance(arg, click.core.Context):
                 return arg
         print(  # noqa: T201
             "Error: Cannot find the Context arg. Is the command configured correctly?"
@@ -3085,7 +3085,7 @@ def openapi_codegen(ctx, **kwargs):
 @click.option(
     "--machine_assignment",
     help="Path to the machine assignment file.",
-    default="./packs_to_install_by_machine.json",
+    default="./machine_assignment.json",
 )
 @click.pass_context
 @logging_setup_decorator
@@ -3861,7 +3861,7 @@ def xsoar_linter(
         resolve_path=True,
         show_default=False,
         help=("The paths to run xsoar linter on. May pass multiple paths."),
-    )
+    ),
 ):
     """
     Runs the xsoar lint on the given paths.

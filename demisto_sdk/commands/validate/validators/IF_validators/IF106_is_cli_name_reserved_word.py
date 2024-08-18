@@ -72,7 +72,9 @@ class IsCliNameReservedWordValidator(BaseValidator[ContentTypes]):
     error_message = "`cliName` field can not be `{cli_name}` as it's a builtin key."
     related_field = "cliName"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

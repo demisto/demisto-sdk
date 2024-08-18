@@ -60,7 +60,6 @@ def test_find_primary_branch():
 
 
 class TestHasFilePermissionsChanged:
-
     file = Path("testfile")
 
     def test_new_file(self, git_repo: Repo):

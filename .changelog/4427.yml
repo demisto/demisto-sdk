@@ -1,4 +1,0 @@
-changes:
-- description: Added the `verbose=False` parameter to the `fetch` method call to minimize unnecessary output messages.
-  type: internal
-pr_number: 4427

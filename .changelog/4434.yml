@@ -1,4 +1,0 @@
-changes:
-- description: Improved the implementation of the **pre-commit** hook ***validate-file-permission-changes***.
-  type: fix
-pr_number: 4434

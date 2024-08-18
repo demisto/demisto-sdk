@@ -51,6 +51,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB122_does_playbook_
 from demisto_sdk.commands.validate.validators.PB_validators.PB123_is_conditional_task_has_unhandled_reply_options import (
     IsAskConditionHasUnhandledReplyOptionsValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB124_is_playbook_contain_unhandled_script_condition_branches import (
+    IsPlaybookContainUnhandledScriptConditionBranchesValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB125_playbook_only_default_next import (
     PlaybookOnlyDefaultNextValidator,
 )
@@ -100,7 +103,7 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB127_marketplace_ke
         ),
     ],
 )
-def test_is_valid_all_inputs_in_use(content_item, expected_result):
+def test_obtain_invalid_content_items_all_inputs_in_use(content_item, expected_result):
     """
     Given:
     - A playbook with inputs in some tasks and inputs defined in the inputs section
@@ -117,7 +120,9 @@ def test_is_valid_all_inputs_in_use(content_item, expected_result):
         Case 2: The playbook is valid since all inputs defined in the inputs section are in use in the playbook
         Case 3: The playbook is invalid
     """
-    result = IsInputKeyNotInTasksValidator().is_valid([content_item])
+    result = IsInputKeyNotInTasksValidator().obtain_invalid_content_items(
+        [content_item]
+    )
 
     assert (
         result == expected_result
@@ -146,7 +151,7 @@ def test_using_input_not_provided():
             {"first_input": "inputs.input_name1", "another 1 ": "inputs.input_name3"},
         ],
     )
-    result = CheckInputsUsedExist().is_valid([playbook])
+    result = CheckInputsUsedExist().obtain_invalid_content_items([playbook])
     assert len(result) == 1
     assert (
         result[0].message
@@ -165,7 +170,7 @@ def test_playbook_quiet_mode_regular_playbook_pass():
 
     """
     playbook = create_playbook_object(["quiet"], [False])
-    assert PlaybookQuietModeValidator().is_valid([playbook]) == []
+    assert PlaybookQuietModeValidator().obtain_invalid_content_items([playbook]) == []
 
 
 def test_indicator_pb_must_be_quiet():
@@ -192,7 +197,7 @@ def test_indicator_pb_must_be_quiet():
             False,
         ],
     )
-    result = PlaybookQuietModeValidator().is_valid([playbook])
+    result = PlaybookQuietModeValidator().obtain_invalid_content_items([playbook])
     assert len(result) == 1
     assert (
         result[0].message
@@ -240,7 +245,7 @@ def test_is_no_rolename(content_item, expected_result):
         Case 2: The playbook is invalid
         Case 3: The playbook is invalid
     """
-    result = IsNoRolenameValidator().is_valid([content_item])
+    result = IsNoRolenameValidator().obtain_invalid_content_items([content_item])
 
     assert (
         result == expected_result
@@ -286,7 +291,7 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
         Case 3: The playbook is deprecated and has invalid description.
 
     When:
-    - calling DeprecatedDescriptionValidator.is_valid.
+    - calling DeprecatedDescriptionValidator.obtain_invalid_content_items.
 
     Then:
     - The results should be as expected:
@@ -294,7 +299,9 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
         Case 2: The playbook is valid
         Case 3: The playbook is invalid
     """
-    result = DeprecatedDescriptionValidator().is_valid([content_item])
+    result = DeprecatedDescriptionValidator().obtain_invalid_content_items(
+        [content_item]
+    )
 
     assert (
         result == expected_result
@@ -336,7 +343,11 @@ def test_does_playbook_have_unhandled_conditions__valid():
             task={"id": ""},
         ),
     }
-    errors = DoesPlaybookHaveUnhandledConditionsValidator().is_valid([playbook])
+    errors = (
+        DoesPlaybookHaveUnhandledConditionsValidator().obtain_invalid_content_items(
+            [playbook]
+        )
+    )
     assert len(errors) == 0
 
 
@@ -375,7 +386,11 @@ def test_does_playbook_have_unhandled_conditions__invalid():
             task={"id": ""},
         ),
     }
-    errors = DoesPlaybookHaveUnhandledConditionsValidator().is_valid([playbook])
+    errors = (
+        DoesPlaybookHaveUnhandledConditionsValidator().obtain_invalid_content_items(
+            [playbook]
+        )
+    )
     assert len(errors) == len(playbook.tasks)
     assert any(
         "ID: invalid_2" in error.message
@@ -387,7 +402,9 @@ def test_does_playbook_have_unhandled_conditions__invalid():
 
 def test_IsAskConditionHasUnreachableConditionValidator():
     playbook = create_playbook_object()
-    assert not IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
+    assert not IsAskConditionHasUnreachableConditionValidator().obtain_invalid_content_items(
+        [playbook]
+    )
     playbook.tasks = {
         "0": TaskConfig(
             **{
@@ -400,12 +417,18 @@ def test_IsAskConditionHasUnreachableConditionValidator():
             }
         )
     }
-    assert IsAskConditionHasUnreachableConditionValidator().is_valid([playbook])
+    assert (
+        IsAskConditionHasUnreachableConditionValidator().obtain_invalid_content_items(
+            [playbook]
+        )
+    )
 
 
 def test_IsAskConditionHasUnhandledReplyOptionsValidator():
     playbook = create_playbook_object()
-    assert not IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+    assert not IsAskConditionHasUnhandledReplyOptionsValidator().obtain_invalid_content_items(
+        [playbook]
+    )
     playbook.tasks = {
         "0": TaskConfig(
             **{
@@ -418,7 +441,11 @@ def test_IsAskConditionHasUnhandledReplyOptionsValidator():
             }
         )
     }
-    assert IsAskConditionHasUnhandledReplyOptionsValidator().is_valid([playbook])
+    assert (
+        IsAskConditionHasUnhandledReplyOptionsValidator().obtain_invalid_content_items(
+            [playbook]
+        )
+    )
 
 
 def test_indicator_pb_must_stop_on_error():
@@ -440,7 +467,7 @@ def test_indicator_pb_must_stop_on_error():
             ],
         ],
     )
-    res = IsStoppingOnErrorValidator().is_valid([playbook])
+    res = IsStoppingOnErrorValidator().obtain_invalid_content_items([playbook])
     assert len(res) == 0
 
 
@@ -465,7 +492,7 @@ def test_indicator_pb_must_stop_on_error_invalid():
             True,
         ],
     )
-    res = IsStoppingOnErrorValidator().is_valid([playbook])
+    res = IsStoppingOnErrorValidator().obtain_invalid_content_items([playbook])
     assert len(res) == 1
     bad_task = playbook.tasks
     assert res[0].message == error_message.format([bad_task.get("0")])
@@ -478,7 +505,7 @@ def test_IsTasksQuietModeValidator_fail_case():
     - An invalid playbook to fix
 
     When:
-    - calling IsTasksQuietModeValidator.is_valid.
+    - calling IsTasksQuietModeValidator.obtain_invalid_content_items.
     - calling IsTasksQuietModeValidator.fix
 
     Then:
@@ -521,14 +548,14 @@ def test_IsTasksQuietModeValidator_fail_case():
         pack_info={},
     )
     validator = IsTasksQuietModeValidator()
-    validate_res = validator.is_valid([playbook])
+    validate_res = validator.obtain_invalid_content_items([playbook])
     assert len(validate_res) == 1
     assert (
         (validate_res[0]).message
         == "Playbook 'Detonate File - JoeSecurity V2' contains tasks that are not in quiet mode (quietmode: 2) The tasks names is: 'test fail task No1, test fail task No2'."
     )
     fix_playbook = validator.fix(playbook).content_object
-    assert len(validator.is_valid([fix_playbook])) == 0
+    assert len(validator.obtain_invalid_content_items([fix_playbook])) == 0
 
 
 def test_IsTasksQuietModeValidator_pass_case():
@@ -537,7 +564,7 @@ def test_IsTasksQuietModeValidator_pass_case():
     - A valid playbook with tasks that "quietmode" field is 1
 
     When:
-    - calling IsTasksQuietModeValidator.is_valid.
+    - calling IsTasksQuietModeValidator.obtain_invalid_content_items.
     - calling IsTasksQuietModeValidator.fix
 
     Then:
@@ -570,7 +597,7 @@ def test_IsTasksQuietModeValidator_pass_case():
         ],
     )
     validator = IsTasksQuietModeValidator()
-    assert len(validator.is_valid([playbook])) == 0
+    assert len(validator.obtain_invalid_content_items([playbook])) == 0
     fix_playbook = validator.fix(playbook).content_object
     assert fix_playbook == playbook
 
@@ -581,13 +608,15 @@ def test_PB125_playbook_only_default_next_valid():
     - A default standard playbook.
 
     When:
-    - calling PlaybookOnlyDefaultNextValidator.is_valid.
+    - calling PlaybookOnlyDefaultNextValidator.obtain_invalid_content_items.
 
     Then:
     - The results should be empty as expected without validation error results.
     """
     playbook = create_playbook_object()
-    assert not PlaybookOnlyDefaultNextValidator().is_valid([playbook])
+    assert not PlaybookOnlyDefaultNextValidator().obtain_invalid_content_items(
+        [playbook]
+    )
 
 
 def test_PB125_playbook_only_default_next_not_valid():
@@ -596,7 +625,7 @@ def test_PB125_playbook_only_default_next_not_valid():
     - A playbook with a condition task with only a default nexttask.
 
     When:
-    - calling PlaybookOnlyDefaultNextValidator.is_valid.
+    - calling PlaybookOnlyDefaultNextValidator.obtain_invalid_content_items.
 
     Then:
     - The results should contain a validation error object.
@@ -616,7 +645,7 @@ def test_PB125_playbook_only_default_next_not_valid():
             }
         ],
     )
-    result = PlaybookOnlyDefaultNextValidator().is_valid([playbook])
+    result = PlaybookOnlyDefaultNextValidator().obtain_invalid_content_items([playbook])
     assert result[0].message == (
         "Playbook has conditional tasks with an only default condition. Tasks IDs: ['0'].\n"
         "Please remove these tasks or add another non-default condition to these conditional tasks."
@@ -651,7 +680,7 @@ def test_IsValidTaskIdValidator(playbook):
         Case 3: The playbook isn't valid, the 'id' under the 'task' field is invalid.
 
     When:
-    - calling IsValidTaskIdValidator.is_valid.
+    - calling IsValidTaskIdValidator.obtain_invalid_content_items.
 
     Then:
     - The results should be as expected:
@@ -661,17 +690,21 @@ def test_IsValidTaskIdValidator(playbook):
     """
     # Case 1
     playbook_valid = create_playbook_object()
-    results_valid = IsValidTaskIdValidator().is_valid([playbook_valid])
+    results_valid = IsValidTaskIdValidator().obtain_invalid_content_items(
+        [playbook_valid]
+    )
 
     # Case 2
     playbook_invalid_taskid = create_invalid_playbook("taskid")
-    results_invalid_taskid = IsValidTaskIdValidator().is_valid(
+    results_invalid_taskid = IsValidTaskIdValidator().obtain_invalid_content_items(
         [playbook_invalid_taskid]
     )
 
     # Case 3
     playbook_invalid_id = create_invalid_playbook("id")
-    results_invalid_id = IsValidTaskIdValidator().is_valid([playbook_invalid_id])
+    results_invalid_id = IsValidTaskIdValidator().obtain_invalid_content_items(
+        [playbook_invalid_id]
+    )
 
     assert not results_valid
     assert results_invalid_taskid
@@ -687,7 +720,7 @@ def test_PlaybookDeleteContextAllValidator():
     -
 
     When:
-    - calling PlaybookDeleteContextAllValidator.is_valid.
+    - calling PlaybookDeleteContextAllValidator.obtain_invalid_content_items.
 
     Then:
     - The results should be as expected:
@@ -695,7 +728,9 @@ def test_PlaybookDeleteContextAllValidator():
         Case 2: The playbook is invalid.
     """
     playbook = create_playbook_object()
-    assert not PlaybookDeleteContextAllValidator().is_valid([playbook])
+    assert not PlaybookDeleteContextAllValidator().obtain_invalid_content_items(
+        [playbook]
+    )
     playbook.tasks = {
         "0": TaskConfig(
             **{
@@ -721,7 +756,9 @@ def test_PlaybookDeleteContextAllValidator():
     )
 
     assert (
-        PlaybookDeleteContextAllValidator().is_valid([playbook])[0].message
+        PlaybookDeleteContextAllValidator()
+        .obtain_invalid_content_items([playbook])[0]
+        .message
         == expected_result
     )
 
@@ -756,7 +793,9 @@ def test_does_playbook_have_unconnected_tasks():
             },
         ],
     )
-    validation_results = DoesPlaybookHaveUnconnectedTasks().is_valid([playbook])
+    validation_results = (
+        DoesPlaybookHaveUnconnectedTasks().obtain_invalid_content_items([playbook])
+    )
     assert len(validation_results) == 0  # No validation results should be returned
 
 
@@ -807,7 +846,9 @@ def test_does_playbook_have_unconnected_tasks_not_valid():
         ],
     )
     orphan_tasks = ["3", "4"]
-    validation_result = DoesPlaybookHaveUnconnectedTasks().is_valid([playbook])
+    validation_result = DoesPlaybookHaveUnconnectedTasks().obtain_invalid_content_items(
+        [playbook]
+    )
     assert validation_result
     assert validation_result[0].message == ERROR_MSG.format(orphan_tasks=orphan_tasks)
 
@@ -825,7 +866,9 @@ def test_IsDefaultNotOnlyConditionValidator():
         Case c: The validation fails (result list of invalid items contains the invalid playbook)
     """
     playbook = create_playbook_object()
-    assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+    assert not IsDefaultNotOnlyConditionValidator().obtain_invalid_content_items(
+        [playbook]
+    )
     playbook.tasks = {
         "0": TaskConfig(
             **{
@@ -837,7 +880,9 @@ def test_IsDefaultNotOnlyConditionValidator():
             }
         )
     }
-    assert not IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+    assert not IsDefaultNotOnlyConditionValidator().obtain_invalid_content_items(
+        [playbook]
+    )
     playbook.tasks = {
         "0": TaskConfig(
             **{
@@ -849,7 +894,7 @@ def test_IsDefaultNotOnlyConditionValidator():
             }
         )
     }
-    assert IsDefaultNotOnlyConditionValidator().is_valid([playbook])
+    assert IsDefaultNotOnlyConditionValidator().obtain_invalid_content_items([playbook])
 
 
 def test_IsTaskidDifferentFromidValidator():
@@ -868,7 +913,9 @@ def test_IsTaskidDifferentFromidValidator():
         Case 2: a list in length 1 because there is one error
     """
     playbook = create_playbook_object()
-    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    results = IsTaskidDifferentFromidValidator().obtain_invalid_content_items(
+        [playbook]
+    )
     assert len(results) == 0
     playbook.tasks = {
         "0": TaskConfig(
@@ -882,7 +929,9 @@ def test_IsTaskidDifferentFromidValidator():
             }
         )
     }
-    results = IsTaskidDifferentFromidValidator().is_valid([playbook])
+    results = IsTaskidDifferentFromidValidator().obtain_invalid_content_items(
+        [playbook]
+    )
     assert len(results) == 1
     assert (
         results[0].message
@@ -890,14 +939,14 @@ def test_IsTaskidDifferentFromidValidator():
     )
 
 
-def test_IsPlayBookUsingAnInstanceValidator_is_valid():
+def test_IsPlayBookUsingAnInstanceValidator_obtain_invalid_content_items():
     """
     Given:
     - A playbook
         Case 1: The playbook is valid.
         Case 2: The playbook isn't valid, it has using field.
     When:
-    - calling IsPlayBookUsingAnInstanceValidator.is_valid.
+    - calling IsPlayBookUsingAnInstanceValidator.obtain_invalid_content_items.
     Then:
     - The results should be as expected:
         Case 1: The playbook is valid
@@ -905,13 +954,17 @@ def test_IsPlayBookUsingAnInstanceValidator_is_valid():
     """
     # Case 1
     valid_playbook = create_playbook_object()
-    valid_result = IsPlayBookUsingAnInstanceValidator().is_valid([valid_playbook])
+    valid_result = IsPlayBookUsingAnInstanceValidator().obtain_invalid_content_items(
+        [valid_playbook]
+    )
 
     # Case 2
     invalid_playbook = create_playbook_object()
     for _, task in invalid_playbook.tasks.items():
         task.scriptarguments = {"using": "instance_name"}
-    results_invalid = IsPlayBookUsingAnInstanceValidator().is_valid([invalid_playbook])
+    results_invalid = IsPlayBookUsingAnInstanceValidator().obtain_invalid_content_items(
+        [invalid_playbook]
+    )
 
     assert valid_result == []
     assert results_invalid != []
@@ -953,6 +1006,94 @@ def test_IsPlayBookUsingAnInstanceValidator_fix():
     for tasks in fixed_content_item.tasks.values():
         scriptargs = tasks.scriptarguments
         assert scriptargs == {"some_key": "value"}
+
+
+def test_IsPlaybookContainUnhandledScriptConditionBranchesValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - A playbook
+        Case 1: A valid playbook with 2 conditional tasks:
+        - One script condition with 2 next task branches.
+        - One non script condition with 1 next task branch.
+        Case 2: Two script condition tasks with 1 next task branch each.
+    When:
+    - calling IsPlaybookContainUnhandledScriptConditionBranchesValidator.obtain_invalid_content_items.
+    Then:
+    - The results should be as expected:
+        Case 1: The playbook is valid.
+        Case 2: The playbook is invalid and both tasks should be mentioned as invalid.
+    """
+    validator = IsPlaybookContainUnhandledScriptConditionBranchesValidator()
+    # Case 1
+    valid_playbook = create_playbook_object(
+        ["tasks"],
+        [
+            {
+                "0": {
+                    "id": "test fail task No1",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"], "yes": ["2"]},
+                    "task": {
+                        "id": "27b9c747-b883-4878-8b60-7f352098a63c",
+                        "scriptName": "test",
+                    },
+                    "quietmode": 2,
+                },
+                "1": {
+                    "id": "test fail task No2",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"yes": ["3"]},
+                    "task": {"id": "27b9c747-b883-4878-8b60-7f352098a63c"},
+                    "quietmode": 2,
+                },
+            }
+        ],
+    )
+    valid_result = validator.obtain_invalid_content_items([valid_playbook])
+
+    # Case 2
+    invalid_playbook = create_playbook_object(
+        ["tasks"],
+        [
+            {
+                "0": {
+                    "id": "0",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"no": ["1"]},
+                    "task": {
+                        "id": "27b9c747-b883-4878-8b60-7f352098a63c",
+                        "scriptName": "test",
+                    },
+                    "quietmode": 2,
+                },
+                "1": {
+                    "id": "1",
+                    "taskid": "27b9c747-b883-4878-8b60-7f352098a631",
+                    "type": "condition",
+                    "message": {"replyOptions": ["yes"]},
+                    "nexttasks": {"yes": ["3"]},
+                    "task": {
+                        "id": "27b9c747-b883-4878-8b60-7f352098a63c",
+                        "scriptName": "test",
+                    },
+                    "quietmode": 2,
+                },
+            }
+        ],
+    )
+    results_invalid = validator.obtain_invalid_content_items([invalid_playbook])
+
+    assert valid_result == []
+    assert results_invalid != []
+    assert results_invalid[0].message == (
+        "The following conditional tasks contains unhandled conditions: 0, 1."
+    )
 
 
 @pytest.mark.parametrize(

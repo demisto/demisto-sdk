@@ -35,7 +35,14 @@ def test_modeling_rule_with_valid_suffixes():
             "Example " + MODELING_RULE_NAME_SUFFIX,
         ],
     )
-    assert len(ModelingRuleSuffixNameValidator().is_valid([modeling_rule])) == 0
+    assert (
+        len(
+            ModelingRuleSuffixNameValidator().obtain_invalid_content_items(
+                [modeling_rule]
+            )
+        )
+        == 0
+    )
 
 
 def test_modeling_rule_with_invalid_id_suffix():
@@ -51,7 +58,14 @@ def test_modeling_rule_with_invalid_id_suffix():
         paths=["id", "name"],
         values=["Example_", "Example " + MODELING_RULE_NAME_SUFFIX],
     )
-    assert len(ModelingRuleSuffixNameValidator().is_valid([modeling_rule])) == 1
+    assert (
+        len(
+            ModelingRuleSuffixNameValidator().obtain_invalid_content_items(
+                [modeling_rule]
+            )
+        )
+        == 1
+    )
 
 
 def test_modeling_rule_with_invalid_name_suffix():
@@ -66,26 +80,37 @@ def test_modeling_rule_with_invalid_name_suffix():
     modeling_rule = create_modeling_rule_object(
         paths=["id", "name"], values=["Example_" + MODELING_RULE_ID_SUFFIX, "Example "]
     )
-    assert len(ModelingRuleSuffixNameValidator().is_valid([modeling_rule])) == 1
+    assert (
+        len(
+            ModelingRuleSuffixNameValidator().obtain_invalid_content_items(
+                [modeling_rule]
+            )
+        )
+        == 1
+    )
 
 
-def test_ValidateSchemaFileExistsValidator_is_valid():
+def test_ValidateSchemaFileExistsValidator_obtain_invalid_content_items():
     """
     Given:
         - Modeling Rules content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned when schema file exists.
         - Ensure that the ValidationResult returned when there is no schema file.
     """
     modeling_rule = create_modeling_rule_object()
     # Valid
-    assert not ValidateSchemaFileExistsValidator().is_valid([modeling_rule])
+    assert not ValidateSchemaFileExistsValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
 
     # Schema file does not exist
     modeling_rule.schema_file.exist = False
-    results = ValidateSchemaFileExistsValidator().is_valid([modeling_rule])
+    results = ValidateSchemaFileExistsValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
     assert (
         'The modeling rule "Duo Modeling Rule" is missing a schema file.'
         == results[0].message
@@ -99,7 +124,7 @@ def test_ModelingRuleSchemaTypesValidator_valid():
         - Modeling Rules content items with valid schema types
         - Modeling Rules content items with invalid schema types
     When:
-        - run ModelingRuleSchemaTypesValidator().is_valid method
+        - run ModelingRuleSchemaTypesValidator().obtain_invalid_content_items method
     Then:
 
         - Ensure that no ValidationResult is returned when schema types exist.
@@ -107,11 +132,15 @@ def test_ModelingRuleSchemaTypesValidator_valid():
     """
     modeling_rule = create_modeling_rule_object()
     # Valid
-    assert not ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])
+    assert not ModelingRuleSchemaTypesValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
     modeling_rule.schema_file.file_content = {
         "test": {"test_attribute": {"type": "Dict", "is_array": "false"}}
     }
-    results = ModelingRuleSchemaTypesValidator().is_valid([modeling_rule])
+    results = ModelingRuleSchemaTypesValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
     # invalid
     assert (
         'The following types in the schema file are invalid: "Dict".'
@@ -119,7 +148,7 @@ def test_ModelingRuleSchemaTypesValidator_valid():
     )
 
 
-def test_IsSchemaMatchXIFValidator_is_valid():
+def test_IsSchemaMatchXIFValidator_obtain_invalid_content_items():
     """
     Given:
     - A list of modeling rules items
@@ -130,7 +159,7 @@ def test_IsSchemaMatchXIFValidator_is_valid():
             - A modeling rule object where len(xif_datasets) != len(schema_datasets).
             - A modeling rule object where len(xif_datasets) == len(schema_datasets) but schema_datasets != xif_datasets.
     When:
-    - calling IsPlaybookContainUnhandledScriptConditionBranchesValidator.is_valid.
+    - calling IsPlaybookContainUnhandledScriptConditionBranchesValidator.obtain_invalid_content_items.
     Then:
     - The results should be as expected:
         Case 1: The modeling rule object is valid.
@@ -141,7 +170,7 @@ def test_IsSchemaMatchXIFValidator_is_valid():
         rules='[MODEL: dataset="test_audit_raw", model="Model", version=0.1]'
     )
     # Valid
-    assert not validator.is_valid([modeling_rule])
+    assert not validator.obtain_invalid_content_items([modeling_rule])
 
     # Case where there is a value in schema key
     modeling_rule_without_data_sets = create_modeling_rule_object(rules="test")
@@ -157,7 +186,7 @@ def test_IsSchemaMatchXIFValidator_is_valid():
         modeling_rule_with_unequal_lengths,
         modeling_rule_with_different_datasets,
     ]
-    results = validator.is_valid(invalid_modeling_rules)
+    results = validator.obtain_invalid_content_items(invalid_modeling_rules)
     assert len(results) == 4
     assert (
         results[0].message

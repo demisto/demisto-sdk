@@ -1,4 +1,0 @@
-changes:
-- description: Remove the **validate-file-permissions-changes** pre-commit hook.
-  type: internal
-pr_number: 4436

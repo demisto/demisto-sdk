@@ -25,6 +25,10 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
 
 
+class StrictObjectNotExistException(Exception):
+    pass
+
+
 class NotAContentItemException(Exception):
     pass
 
@@ -111,6 +115,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             self.strict_object(**self.raw_data)
         except pydantic.error_wrappers.ValidationError as e:
             return [StructureError(**error) for error in e.errors()]
+        except StrictObjectNotExistException:
+            logger.debug(
+                "Since it is not a content item, it has no suitable strict object"
+            )
         return []
 
     @staticmethod

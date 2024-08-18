@@ -2149,7 +2149,7 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items(
                 ),
             ],
             1,
-            "The level of depth for context output path for command or script: myScript In the yml should be less or equal to 5 check the following outputs:\ntest.test.1.2.3.4.5.6"
+            "The level of depth for context output path for script: myScript In the yml should be less or equal to 5 check the following outputs:\ntest.test.1.2.3.4.5.6"
         ),
         (
             [
@@ -2180,7 +2180,7 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items(
                 )
             ],
             1,
-            "The level of depth for context output path for command or script: ip In the yml should be less or equal to 5 check the following outputs:\npath_1.2.3.4.5.6"
+            "The level of depth for context output path for command: ip In the yml should be less or equal to 5 check the following outputs:\npath_1.2.3.4.5.6"
         ),
         (
             [

@@ -15,7 +15,6 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
-from demisto_sdk.commands.content_graph.strict_objects.playbook import StrictPlaybook
 
 LIST_COMMANDS = ["Builtin|||setList", "Builtin|||getList"]
 IGNORED_FIELDS = [
@@ -216,7 +215,3 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
             self.handle_script_task(task, is_mandatory)
             self.handle_command_task(task, is_mandatory)
             self.handle_field_mapping(task, is_mandatory)
-
-    @property
-    def strict_object(self):
-        return StrictPlaybook

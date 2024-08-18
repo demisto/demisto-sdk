@@ -7,6 +7,7 @@ from demisto_sdk.commands.content_graph.parsers.base_playbook import BasePlayboo
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     IncorrectParserException,
     NotAContentItemException,
+    StrictObjectNotExistException,
 )
 from demisto_sdk.commands.content_graph.parsers.test_script import TestScriptParser
 
@@ -47,3 +48,7 @@ class TestPlaybookParser(BasePlaybookParser, content_type=ContentType.TEST_PLAYB
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @property
+    def strict_object(self):
+        return StrictObjectNotExistException

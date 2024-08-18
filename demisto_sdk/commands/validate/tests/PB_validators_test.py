@@ -1321,7 +1321,7 @@ def test_MarketplaceKeysHaveDefaultValidator(
     )
     playbook_obj = create_playbook_object(paths=playbook_paths, values=playbook_values)
     marketplace_suffix_validator = MarketplaceKeysHaveDefaultValidator()
-    results = marketplace_suffix_validator.is_valid([playbook_obj])
+    results = marketplace_suffix_validator.obtain_invalid_content_items([playbook_obj])
     assert len(results) == (1 if expected_bad_keys else 0)
     if results:
         assert results[0].message == error_message.format(expected_bad_keys)

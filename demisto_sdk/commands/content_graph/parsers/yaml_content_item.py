@@ -15,7 +15,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
     NotAContentItemException,
-    StrictObjectNotExistException,
 )
 
 
@@ -137,6 +136,3 @@ class YAMLContentItemParser(ContentItemParser):
     @property
     def version(self) -> int:
         return get_value(self.yml_data, self.field_mapping.get("version", ""), 0)
-
-    def strict_object(self):
-        raise StrictObjectNotExistException

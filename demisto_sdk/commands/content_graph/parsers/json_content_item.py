@@ -13,7 +13,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
     NotAContentItemException,
-    StrictObjectNotExistException,
 )
 
 
@@ -112,6 +111,3 @@ class JSONContentItemParser(ContentItemParser):
     @property
     def version(self) -> int:
         return get_value(self.json_data, self.field_mapping.get("version", ""), 0)
-
-    def strict_object(self):
-        return StrictObjectNotExistException

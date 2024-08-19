@@ -109,7 +109,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         content_item: ContentTypes,
         ignorable_errors: list,
         support_level_dict: dict,
-        running_execution_mode: ExecutionMode,
+        running_execution_mode: Optional[ExecutionMode],
     ) -> bool:
         """check whether to run validation on the given content item or not.
 
@@ -344,8 +344,8 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
 
 def should_run_on_execution_mode(
     expected_execution_mode: Optional[list[ExecutionMode]],
-    running_execution_mode: ExecutionMode,
-):
+    running_execution_mode: Optional[ExecutionMode],
+) -> bool:
     """
     Check if the running_execution_mode is in the expected_execution_mode of validation.
     Args:
@@ -354,6 +354,8 @@ def should_run_on_execution_mode(
     Returns:
         bool: True if the given validation should run on the running_execution_mode. Otherwise, return False.
     """
-    if not expected_execution_mode or running_execution_mode in expected_execution_mode:
+    if expected_execution_mode is None:
+        return True
+    if running_execution_mode in expected_execution_mode:
         return True
     return False

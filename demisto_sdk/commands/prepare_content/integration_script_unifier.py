@@ -331,10 +331,11 @@ class IntegrationScriptUnifier(Unifier):
         )
         pack_metadata = get_pack_metadata(file_path=str(package_path))
         pack_version = pack_metadata.get("currentVersion", "")
-        pack_name = pack_metadata["name"]
-        script_code = IntegrationScriptUnifier.insert_pack_version(
-            script_type, script_code, pack_version, pack_name
-        )
+        pack_name = pack_metadata.get("name", "")
+        if pack_name and pack_version:
+            script_code = IntegrationScriptUnifier.insert_pack_version(
+                script_type, script_code, pack_version, pack_name
+            )
 
         if script_type == ".py":
             clean_code = IntegrationScriptUnifier.clean_python_code(script_code)

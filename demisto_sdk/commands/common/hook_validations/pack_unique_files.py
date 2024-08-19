@@ -1060,7 +1060,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def should_pack_be_deprecated(self) -> bool:
         """
         Validates whether a pack should be deprecated
-        if all its content items (playbooks/scripts/integrations) are deprecated.
+        if all its content items (playbooks/scripts/integrations/modeling_rules) are deprecated.
 
         Returns:
             bool: True if pack should be deprecated, False if it shouldn't.

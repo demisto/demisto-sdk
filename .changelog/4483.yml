@@ -1,4 +1,4 @@
 changes:
-- description: Introduces the `marketplaces` new field in the breaking changes release notes ".json" file. This supports choosing on which marketplace the braking changes message will appear.
+- description: Introduces the `marketplaces` new optional field in the breaking changes release notes ".json" file. This supports choosing on which marketplace the braking changes message will appear. The field is a list, when not provided its default value is all marketplaces. It supports aggregated release notes and editing release notes backwards.
   type: feature
 pr_number: 4483

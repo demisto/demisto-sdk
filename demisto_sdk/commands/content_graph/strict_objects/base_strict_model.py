@@ -104,6 +104,12 @@ class StructureError(BaseStrictModel):
     error_type: Optional[str] = Field(None, alias="type")
     ctx: Optional[dict] = None
 
+    def __str__(self):
+        return (
+            f"problematic field: {self.field_name} | error message: {self.error_message} |"
+            f" error type : {self.error_type}"
+        )
+
 
 class _BaseIntegrationScript(BaseStrictModel):
     name: str
@@ -177,7 +183,6 @@ StrictGenericIncidentType = create_model(
         BaseOptionalVersionJson,
     ),
 )
-
 
 OPERATORS = Union["Filter", "Or", "And"]
 

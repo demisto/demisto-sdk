@@ -90,9 +90,7 @@ class SchemaValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message="\n".join(
-                    f"problematic field: {error.field_name} | error message: {error.error_message} |"
-                    f" error type : {error.error_type}"
-                    for error in content_item.structure_errors
+                    str(error) for error in content_item.structure_errors
                 ),
                 content_object=content_item,
             )

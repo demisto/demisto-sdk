@@ -117,7 +117,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             return [StructureError(**error) for error in e.errors()]
         except StrictObjectNotExistException:
             logger.debug(
-                "Since it is not a content item, it has no suitable strict object"
+                f"Since {self.content_type} is not a content item, it has no suitable strict object"
             )
         return []
 

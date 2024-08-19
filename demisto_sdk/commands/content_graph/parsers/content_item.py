@@ -105,6 +105,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def raw_data(self) -> dict:
         pass
 
+    def edit_pydantic_message(self):
+        for error in self.structure_errors:
+            if error.error_type == "value_error.missing":
+                error.error_message = f"The field {error.field_name} is required but missing"
+
     def validate_structure(self) -> List[StructureError]:
         """
         The method uses the parsed data and attempts to build a Pydantic object from it.
@@ -114,7 +119,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         try:
             self.strict_object(**self.raw_data)
         except pydantic.error_wrappers.ValidationError as e:
-            return [StructureError(**error) for error in e.errors()]
+            self.structure_errors = [StructureError(**error) for error in e.errors()]
+            self.edit_pydantic_message()
+            return self.structure_errors
         except StrictObjectNotExistException:
             logger.debug(
                 f"Since {self.content_type} is not a content item, it has no suitable strict object"

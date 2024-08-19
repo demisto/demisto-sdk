@@ -82,10 +82,11 @@ class SchemaValidator(BaseValidator[ContentTypes]):
 
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
-    def is_valid(
+    def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
+        print(content_item.structure_errors for content_item in content_items)
         return [
             ValidationResult(
                 validator=self,

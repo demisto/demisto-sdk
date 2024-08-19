@@ -299,21 +299,33 @@ class DockerBase:
 
         return container
 
-    def push_image(self, image: str, log_prompt: str = ""):
+    def push_image(self, image: str, log_prompt: str = "") -> None:
         """This pushes the test image to dockerhub if the DOCKERHUB env variables are set
-
         Args:
             image (str): The image to push
             log_prompt (str, optional): The log prompt to print. Defaults to "".
+        Raises:
+            requests.exceptions.ConnectionError: If a connection error occurs during the push attempt.
+            urllib3.exceptions.ReadTimeoutError: If a read timeout error occurs during the push attempt.
+            requests.exceptions.ReadTimeout: If a read timeout error occurs during the push attempt.
+
+        Logs:
+            Info: Logs the start of the push attempt, successful push, and detailed push output.
+            Warning: Logs any connection-related errors encountered during the push attempt.
+            Error: Logs if all attempts to push the image fail.
         """
-        for _ in range(2):
+        test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
+
+        logger.info(
+            f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository."
+        )
+        for attempt in range(2):
             try:
-                test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
                 logger.info(
-                    f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository."
+                    f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
                 )
                 logger.debug(
                     f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
@@ -323,9 +335,9 @@ class DockerBase:
                 requests.exceptions.ConnectionError,
                 urllib3.exceptions.ReadTimeoutError,
                 requests.exceptions.ReadTimeout,
-            ):
+            ) as e:
                 logger.warning(
-                    f"{log_prompt} - Unable to push image {image} to repository",
+                    f"{log_prompt} - Attempt {attempt + 1}: Failed to push image {image} to repository due to {type(e).__name__}.",
                     exc_info=True,
                 )
 

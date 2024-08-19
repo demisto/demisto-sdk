@@ -6,6 +6,7 @@ import re
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import List
 
 import pytest
 import requests
@@ -575,10 +576,11 @@ def test_insert_pack_version_and_script_to_yml_js_and_ps1():
      - Ensure unsupported script types do not get the pack version added.
     """
     pack_version = "1.0.3"
+    pack_name = "test"
 
     # Test for JavaScript script
     updated_script_js = IntegrationScriptUnifier.insert_pack_version(
-        ".js", DUMMY_SCRIPT, pack_version
+        ".js", DUMMY_SCRIPT, pack_version, pack_name
     )
 
     assert (
@@ -587,7 +589,7 @@ def test_insert_pack_version_and_script_to_yml_js_and_ps1():
 
     # Test for PowerShell script
     updated_script_ps1 = IntegrationScriptUnifier.insert_pack_version(
-        ".ps1", DUMMY_SCRIPT, pack_version
+        ".ps1", DUMMY_SCRIPT, pack_version, pack_name
     )
     assert (
         updated_script_ps1.count(f"### pack version: {pack_version}") == 1
@@ -595,35 +597,35 @@ def test_insert_pack_version_and_script_to_yml_js_and_ps1():
 
 
 @pytest.mark.parametrize(
-    "dummy_script, pack_version, expected_version_str",
+    "dummy_script, pack_data, expected_version_str",
     [
         pytest.param(
             """
             def main():
             """,
-            "1.0.3",
-            "demisto.debug('pack version = 1.0.3')",
+            ["test pack", "1.0.3"],
+            "demisto.debug('pack name = test pack, pack version = 1.0.3')",
             id="script without version",
         ),
         pytest.param(
             """
-            demisto.debug('pack version = 1.0.3')
+            demisto.debug('pack name = test pack, pack version = 1.0.3')
             def main():
             """,
-            "1.0.4",
-            "demisto.debug('pack version = 1.0.4')",
+            ["test pack", "1.0.4"],
+            "demisto.debug('pack name = test pack, pack version = 1.0.4')",
             id="script with version",
         ),
     ],
 )
 def test_insert_pack_version_and_script_to_yml_python_script(
-    dummy_script: str, pack_version: str, expected_version_str: str
+    dummy_script: str, pack_data: List[str], expected_version_str: str
 ):
     """
     Test that the pack version is correctly inserted into the Python script.
     """
     updated_script = IntegrationScriptUnifier.insert_pack_version(
-        ".py", dummy_script, pack_version
+        ".py", dummy_script, pack_data[1], pack_data[0]
     )
 
     debug_log_with_pack_version_count = updated_script.count(expected_version_str)

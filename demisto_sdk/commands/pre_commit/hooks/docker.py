@@ -44,14 +44,17 @@ IMAGES_BATCH = int(os.getenv("IMAGES_BATCH") or 40)
 
 
 @lru_cache()
-def get_docker_python_path() -> str:
+def get_docker_python_path(drop_site_packages: bool = False) -> str:
     """
     precommit by default mounts the content repo to source.
+    drop_site_packages is used for building MYPYPATH
     This means CommonServerPython's path is /src/Packs/Base/...CSP.py
     Returns: A PYTHONPATH formatted string
     """
     path_to_replace = str(Path(CONTENT_PATH).absolute())
     docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
+    if drop_site_packages:
+        docker_path = [p for p in docker_path if "site-packages" not in p]
     path = ":".join(docker_path)
     logger.debug(f"pythonpath in docker being set to {path}")
     return path
@@ -159,16 +162,19 @@ def devtest_image(
     raise DockerException(errors)
 
 
-def get_environment_flag(env: dict) -> str:
+def compose_docker_environment_variables(env: dict, mypy_path: bool = False) -> str:
     """
-    The env flag needed to run python scripts in docker
+    The env needed to run python scripts in docker
     """
-    env_flag = f'--env "PYTHONPATH={get_docker_python_path()}"'
-    for key, value in env.items():
-        env_flag += f' --env "{key}={value}"'
+    env_vars = {"PYTHONPATH": get_docker_python_path(), **env}
+
+    if mypy_path:
+        env_vars["MYPYPATH"] = get_docker_python_path(drop_site_packages=True)
+
     if os.getenv("GITHUB_ACTIONS"):
-        env_flag += " --env GITHUB_ACTIONS=true"
-    return env_flag
+        env_vars["GITHUB_ACTIONS"] = "true"
+
+    return " ".join(f' --env "{key}={value}"' for key, value in env_vars.items())
 
 
 def _split_by_objects(
@@ -350,6 +356,7 @@ class DockerHook(Hook):
             All the hooks to be appended for this image
         """
         new_hook = deepcopy(self.base_hook)
+
         new_hook["id"] = f"{new_hook.get('id')}-{image}"
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
@@ -361,7 +368,7 @@ class DockerHook(Hook):
             quiet = False
         docker_extra_args = self._get_property("pass_docker_extra_args", "")
         new_hook["entry"] = (
-            f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} {dev_image}'
+            f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {compose_docker_environment_variables(env,mypy_path=new_hook["name"].startswith("mypy-in-docker"))} {"--quiet" if quiet else ""} {dev_image}'
         )
         ret_hooks = []
         for (

@@ -19,11 +19,11 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
     description = "The level of depth for context output path in the yml should be less or equal to 5"
     rationale = " The depth should be less or equal to 5"
     error_message = "The level of depth for context output path for {0}: {1} In the yml should be less or equal to 5 check the following outputs:\n{2}"
-    related_field = ""
+    related_field = "contextPath"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
             if content_item.support_level != XSOAR_SUPPORT:
@@ -76,9 +76,10 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
                 wrong_values_string = '\n'.join(wrong_depth_values)
                 message['command'] = command
                 message['wrong_paths'] = wrong_values_string
-                return message
-            else:
-                return False
+        if message:
+            return message
+        else:
+            return False
 
 
     def is_context_depth_less_or_equal_to_5_script(self, script_paths: list ):

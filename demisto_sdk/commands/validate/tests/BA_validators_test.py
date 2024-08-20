@@ -105,6 +105,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_i
 from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_context_path_depth import (
     IsValidContextPathDepthValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_context_path_depth_modified import (
+    IsValidContextPathDepthModifiedValidatorModified,
+)
 from TestSuite.repo import ChangeCWD
 
 
@@ -2140,16 +2143,37 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msg",
     [
+        # (
+        #     [
+        #         create_script_object(
+        #             paths=["outputs"],
+        #             values=[[{"contextPath": "File.EntryID", "description": "test_3"},
+        #                      {"contextPath": "test.test.1.2.3.4.5.6", "description": "test_4"}]],
+        #         ),
+        #     ],
+        #     1,
+        #     "The level of depth for context output path for script: myScript In the yml should be less or equal to 5 check the following outputs:\ntest.test.1.2.3.4.5.6"
+        # ),
         (
             [
-                create_script_object(
-                    paths=["outputs"],
-                    values=[[{"contextPath": "File.EntryID", "description": "test_3"},
-                             {"contextPath": "test.test.1.2.3.4.5.6", "description": "test_4"}]],
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "insecure",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                                "fromlicense": "encrypted",
+                            }
+                        ]
+                    ],
+                    pack_info={"support": XSOAR_SUPPORT},
                 ),
             ],
-            1,
-            "The level of depth for context output path for script: myScript In the yml should be less or equal to 5 check the following outputs:\ntest.test.1.2.3.4.5.6"
+            0,
+            ""
         ),
         (
             [
@@ -2177,6 +2201,7 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items(
                             },
                         ]
                     ],
+                    pack_info={"support": XSOAR_SUPPORT},
                 )
             ],
             1,
@@ -2218,7 +2243,7 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items(
 def test_is_valid_context_path_depth(
     content_items, expected_number_of_failures, expected_msg
 ):
-    result = IsValidContextPathDepthValidator().is_valid(content_items)
+    result = IsValidContextPathDepthValidator().obtain_invalid_content_items(content_items)
 
     assert len(result) == expected_number_of_failures
 

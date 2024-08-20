@@ -17,9 +17,9 @@ ContentTypes = Union[Integration, Script]
 
 
 class IsValidContextPathDepthModifiedValidatorModified(IsValidContextPathDepthValidator, BaseValidator[ContentTypes]):
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         invalid_paths: str = ""
         for content_item in content_items:
@@ -36,7 +36,7 @@ class IsValidContextPathDepthModifiedValidatorModified(IsValidContextPathDepthVa
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
-                                content_item.name, invalid_paths
+                                'script', content_item.name, invalid_paths
                             ),
                             content_object=content_item,
                         )
@@ -55,7 +55,7 @@ class IsValidContextPathDepthModifiedValidatorModified(IsValidContextPathDepthVa
                             ValidationResult(
                                 validator=self,
                                 message=self.error_message.format(
-                                    command.name, invalid_paths
+                                    'command', invalid_paths['command'], invalid_paths['wrong_paths']
                                 ),
                                 content_object=content_item,
                             )

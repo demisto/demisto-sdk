@@ -86,7 +86,6 @@ class SchemaValidator(BaseValidator[ContentTypes]):
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
-        print(content_item.structure_errors for content_item in content_items)
         return [
             ValidationResult(
                 validator=self,

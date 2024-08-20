@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Type, cast
 
-import pydantic
 from packaging.version import Version
 from pydantic import Field
 
@@ -19,14 +18,6 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
-    StructureError,
-)
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
-
-
-class StrictObjectNotExistException(Exception):
-    pass
 
 
 class NotAContentItemException(Exception):
@@ -97,36 +88,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         super().__init__(path)
         self.relationships: Relationships = Relationships()
         self.git_sha: Optional[str] = git_sha
-        # The validate_structure method is called in the first child(JsonContentItem, YamlContentItem)
-        self.structure_errors: List[StructureError] = Field(default_factory=list)
-
-    @property
-    @abstractmethod
-    def raw_data(self) -> dict:
-        pass
-
-    def edit_pydantic_message(self):
-        for error in self.structure_errors:
-            if error.error_type == "value_error.missing":
-                error.error_message = f"The field {error.field_name} is required but missing"
-
-    def validate_structure(self) -> List[StructureError]:
-        """
-        The method uses the parsed data and attempts to build a Pydantic object from it.
-        Whenever data is invalid by the schema, we store the error in the 'structure_errors' attribute,
-        It will fail validation (ST110).
-        """
-        try:
-            self.strict_object(**self.raw_data)
-        except pydantic.error_wrappers.ValidationError as e:
-            self.structure_errors = [StructureError(**error) for error in e.errors()]
-            self.edit_pydantic_message()
-            return self.structure_errors
-        except StrictObjectNotExistException:
-            logger.debug(
-                f"Since {self.content_type} is not a content item, it has no suitable strict object"
-            )
-        return []
 
     @staticmethod
     def from_path(
@@ -435,7 +396,3 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target_type=ContentType.COMMAND_OR_SCRIPT,
             mandatorily=is_mandatory,
         )
-
-    @property
-    def strict_object(self) -> Type[BaseStrictModel]:
-        raise NotImplementedError

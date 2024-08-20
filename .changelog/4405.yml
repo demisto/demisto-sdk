@@ -1,4 +1,0 @@
-changes:
-- description: Added a new **pre-commit** hook to prevent Python files from disabling `mypy` checks in the file level.
-  type: feature
-pr_number: 4405

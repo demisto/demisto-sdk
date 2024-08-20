@@ -89,7 +89,7 @@ def validate_structure(
     """
     The function uses the parsed data and attempts to build a Pydantic (strict) object from it.
     Whenever the data and schema mismatch, we store the error using the 'structure_errors' attribute,
-    It will fail validation (ST110).
+    which will be read during the ST110 validation run.
     """
     try:
         strict_object(**raw_data)

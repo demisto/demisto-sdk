@@ -97,6 +97,6 @@ def validate_structure(
         return [StructureError(**error) for error in e.errors()]
     except StrictObjectNotExistException:
         logger.debug(
-            f"Since {content_type} is not a content item, it has no suitable strict object"
+            f"Since {content_type} is not a content item, it doesn't have a structure validation."
         )
     return []

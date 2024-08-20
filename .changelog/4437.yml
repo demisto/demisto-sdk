@@ -1,4 +1,0 @@
-changes:
-- description: The ***unify*** and ***prepare-content*** commands now add a `demisto.debug` logging of the pack name and version, in Python files.
-  type: feature
-pr_number: 4437

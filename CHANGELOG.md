@@ -1,14 +1,14 @@
 # Changelog
 ## 1.31.8
 * Added the `--ignore` flag to **validate**. [#4385](https://github.com/demisto/demisto-sdk/pull/4385)
-* Added the GR106 validation to ensure every test playbook is linked to at least one content item. [#4446](https://github.com/demisto/demisto-sdk/pull/4446)
+* Added validation GR106, to ensure every modified test playbook is used by at least one content item. [#4446](https://github.com/demisto/demisto-sdk/pull/4446)
 * Added a new **pre-commit** hook to prevent Python files from disabling `mypy` checks in the file level. [#4405](https://github.com/demisto/demisto-sdk/pull/4405)
-* Introduces the `marketplaces` new optional field in the breaking changes release notes ".json" file. This supports choosing on which marketplace the braking changes message will appear. The field is a list, when not provided its default value is all marketplaces. It supports aggregated release notes and editing release notes backwards. [#4483](https://github.com/demisto/demisto-sdk/pull/4483)
-* Added support for validation PB127 that verifies default keys where marketplace suffix keys exist in playbooks. (For example if "description:xsoar" exists then "description" should also). [#4401](https://github.com/demisto/demisto-sdk/pull/4401)
+* Added a new optional field, `marketplaces`, in the release notes config (e.g. `1_2_3.json`). Use it to choose marketplaces where breaking changes apply. When a list is not provided, the default is all marketplaces. Supports aggregated release notes and retroactive editing. [#4483](https://github.com/demisto/demisto-sdk/pull/4483)
+* Added validation PB127 that verifies default keys exist where marketplace suffix keys exist in playbooks. (e.g. using `description:xsoar` now requires `description`). [#4401](https://github.com/demisto/demisto-sdk/pull/4401)
 * The ***unify*** and ***prepare-content*** commands now add a `demisto.debug` logging of the pack name and version, in Python files. [#4437](https://github.com/demisto/demisto-sdk/pull/4437)
-* Fixed an issue where PA102 failed when there were valid modeling_rules in a pack. [#4497](https://github.com/demisto/demisto-sdk/pull/4497)
-* Fixed an issue where reusing the Content-Graph after a long period of inactivity resulted in a 409 error. [#4495](https://github.com/demisto/demisto-sdk/pull/4495)
-* Added a *support* attribute to all content items using the **content graph**. [#4430](https://github.com/demisto/demisto-sdk/pull/4430)
+* Fixed an issue where PA102 failed when on valid modeling rules. [#4497](https://github.com/demisto/demisto-sdk/pull/4497)
+* Fixed an issue where reusing the **content graph** after a long period of inactivity resulted in a 409 error. [#4495](https://github.com/demisto/demisto-sdk/pull/4495)
+* Added a *support* attribute to all content items in the **content graph**. [#4430](https://github.com/demisto/demisto-sdk/pull/4430)
 * Locked the nltk version to 3.8.1, since 3.8.2 was surprisingly removed from PyPI. No effect on demisto-SDK users. [#4496](https://github.com/demisto/demisto-sdk/pull/4496)
 
 ## 1.31.7

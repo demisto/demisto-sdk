@@ -10,16 +10,11 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     StructureError,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
-
-
-class StrictObjectNotExistException(Exception):
-    pass
 
 
 class BaseContentParser(ABC):
@@ -46,7 +41,7 @@ class BaseContentParser(ABC):
     def validate_structure(self) -> List[StructureError]:
         """
         This method just calls the external function with the correct arguments.
-        Some parsers may implement it differently (e.g. running on a multiple files per parser), see Pack and ModelingRules as examples. 
+        Some parsers may implement it differently (e.g. running on a multiple files per parser), see Pack and ModelingRules as examples.
         """
         return validate_structure(self.strict_object, self.raw_data, self.content_type)
 
@@ -95,8 +90,4 @@ def validate_structure(
         strict_object(**raw_data)
     except pydantic.error_wrappers.ValidationError as e:
         return [StructureError(**error) for error in e.errors()]
-    except StrictObjectNotExistException:
-        logger.debug(
-            f"Since {content_type} is not a content item, it doesn't have a structure validation."
-        )
     return []

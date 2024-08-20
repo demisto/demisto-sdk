@@ -80,8 +80,6 @@ class SchemaValidator(BaseValidator[ContentTypes]):
     description = "Validate that the scheme's structure is valid."
     rationale = "Maintain valid structure for content items."
 
-    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
-
     def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],

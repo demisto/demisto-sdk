@@ -106,15 +106,17 @@ class StructureError(BaseStrictModel):
 
     def __str__(self):
         if self.error_type == "assertion_error":
-            self.error_message = f"The field {self.field_name} is not required, but should not be None if it exists"
+            error_message = f"The field {self.field_name} is not required, but should not be None if it exists"
         elif self.error_type == "value_error.extra":
-            self.error_message = (
+            error_message = (
                 f"The field {self.field_name} is extra and {self.error_message}"
             )
         elif self.error_type == "value_error.missing":
-            self.error_message = f"The field {self.field_name} is required but missing"
+            error_message = f"The field {self.field_name} is required but missing"
+        else:
+            error_message = self.error_message or ""
         return (
-            f"problematic field: {self.field_name} | error message: {self.error_message} |"
+            f"problematic field: {self.field_name} | error message: {error_message} |"
             f" error type : {self.error_type}"
         )
 

@@ -80,7 +80,7 @@ class BaseContentParser(ABC):
 
     @property
     def strict_object(self) -> Type[BaseStrictModel]:
-        raise NotImplementedError
+        raise NotImplementedError  # implemented in inheriting classes
 
 
 def validate_structure(

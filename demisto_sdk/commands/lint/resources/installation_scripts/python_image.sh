@@ -11,8 +11,8 @@ chmod -R 775 /devwork
 . /etc/os-release
 
 INSTALL_SUCCESS=0
-pip install --no-cache-dir --progress-bar off -r /test-requirements.txt || INSTALL_SUCCESS=1
-
+# Remove mypy cache
+rm -rf .mypy_cache
 # if installation fails, we need to install gcc to compile
 if [ "$INSTALL_SUCCESS" -eq 1 ]
 then

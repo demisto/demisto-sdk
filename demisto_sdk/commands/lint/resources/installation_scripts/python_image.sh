@@ -12,7 +12,8 @@ chmod -R 775 /devwork
 
 INSTALL_SUCCESS=0
 # Remove mypy cache
-rm -rf .mypy_cache
+# rm -rf .mypy_cache
+# mkdir .mypy_cache
 # if installation fails, we need to install gcc to compile
 if [ "$INSTALL_SUCCESS" -eq 1 ]
 then

@@ -16,4 +16,3 @@ pytest-pretty==1.2.0
 pytest-github-actions-annotate-failures==0.2.0
 pytest
 mypy==1.0.0
-types-all

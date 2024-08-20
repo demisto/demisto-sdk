@@ -88,7 +88,7 @@ def validate_structure(
 ) -> List[StructureError]:
     """
     The function uses the parsed data and attempts to build a Pydantic (strict) object from it.
-    Whenever data is invalid by the schema, we store the error in the 'structure_errors' attribute,
+    Whenever the data and schema mismatch, we store the error using the 'structure_errors' attribute,
     It will fail validation (ST110).
     """
     try:

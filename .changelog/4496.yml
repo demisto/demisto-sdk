@@ -1,4 +1,0 @@
-changes:
-- description: Locked the nltk version to 3.8.1, since 3.8.2 was surprisingly removed from PyPI. No effect on demisto-SDK users.
-  type: internal
-pr_number: 4496

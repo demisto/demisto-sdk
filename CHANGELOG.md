@@ -5,7 +5,7 @@
 * Added a new **pre-commit** hook to prevent Python files from disabling `mypy` checks in the file level. [#4405](https://github.com/demisto/demisto-sdk/pull/4405)
 * Added a new optional field, `marketplaces`, in the release notes config (e.g. `1_2_3.json`). Use it to choose marketplaces where breaking changes apply. When a list is not provided, the default is all marketplaces. Supports aggregated release notes and retroactive editing. [#4483](https://github.com/demisto/demisto-sdk/pull/4483)
 * Added validation PB127 that verifies default keys exist where marketplace suffix keys exist in playbooks. (e.g. using `description:xsoar` now requires `description`). [#4401](https://github.com/demisto/demisto-sdk/pull/4401)
-* The ***unify*** and ***prepare-content*** commands now add a `demisto.debug` logging of the pack name and version, in Python files. [#4437](https://github.com/demisto/demisto-sdk/pull/4437)
+* Modified the ***unify*** and ***prepare-content*** commands to add a `demisto.debug` logging of the pack name and version, in Python files. [#4437](https://github.com/demisto/demisto-sdk/pull/4437)
 * Fixed an issue where PA102 failed when on valid modeling rules. [#4497](https://github.com/demisto/demisto-sdk/pull/4497)
 * Fixed an issue where reusing the **content graph** after a long period of inactivity resulted in a 409 error. [#4495](https://github.com/demisto/demisto-sdk/pull/4495)
 * Added a *support* attribute to all content items in the **content graph**. [#4430](https://github.com/demisto/demisto-sdk/pull/4430)

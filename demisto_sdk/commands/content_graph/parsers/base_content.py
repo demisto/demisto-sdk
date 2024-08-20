@@ -46,7 +46,7 @@ class BaseContentParser(ABC):
     def validate_structure(self) -> List[StructureError]:
         """
         This method just calls the external function with the correct arguments.
-        PackParser implements it differently, so we use an external function.
+        Some parsers may implement it differently (e.g. running on a multiple files per parser), see Pack and ModelingRules as examples. 
         """
         return validate_structure(self.strict_object, self.raw_data, self.content_type)
 

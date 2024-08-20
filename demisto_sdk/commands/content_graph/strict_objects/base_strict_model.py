@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
@@ -99,6 +100,7 @@ class ScriptType(StrEnum):
 class StructureError(BaseStrictModel):
     """Used for wrapping Pydantic errors, not part of content."""
 
+    path: Path
     field_name: Optional[tuple] = Field(None, alias="loc")
     error_message: Optional[str] = Field(None, alias="msg")
     error_type: Optional[str] = Field(None, alias="type")
@@ -115,10 +117,7 @@ class StructureError(BaseStrictModel):
             error_message = f"The field {self.field_name} is required but missing"
         else:
             error_message = self.error_message or ""
-        return (
-            f"problematic field: {self.field_name} | error message: {error_message} |"
-            f" error type : {self.error_type}"
-        )
+        return f"Structure error ({self.error_type}) in field {self.field_name} of {self.path.name}: {error_message}"
 
 
 class _BaseIntegrationScript(BaseStrictModel):

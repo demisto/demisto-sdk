@@ -43,7 +43,7 @@ class BaseContentParser(ABC):
         This method just calls the external function with the correct arguments.
         Some parsers may implement it differently (e.g. running on a multiple files per parser), see Pack and ModelingRules as examples.
         """
-        return validate_structure(self.strict_object, self.raw_data, self.content_type)
+        return validate_structure(self.strict_object, self.raw_data, self.path)
 
     @cached_property
     def field_mapping(self):
@@ -79,7 +79,7 @@ class BaseContentParser(ABC):
 
 
 def validate_structure(
-    strict_object: Type[BaseStrictModel], raw_data: dict, content_type: ContentType
+    strict_object: Type[BaseStrictModel], raw_data: dict, path: Path
 ) -> List[StructureError]:
     """
     The function uses the parsed data and attempts to build a Pydantic (strict) object from it.
@@ -89,5 +89,5 @@ def validate_structure(
     try:
         strict_object(**raw_data)
     except pydantic.error_wrappers.ValidationError as e:
-        return [StructureError(**error) for error in e.errors()]
+        return [StructureError(path=path, **error) for error in e.errors()]
     return []

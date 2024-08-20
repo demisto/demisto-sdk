@@ -50,9 +50,9 @@ def test_SchemaValidator_None_as_value(pack: Pack):
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
     assert (
-        results[0].message == "problematic field: ('name',) |"
-        " error message: The field ('name',) is not required, but should not be None if it exists |"
-        " error type : assertion_error"
+        results[0].message
+        == "Structure error (assertion_error) in field ('name',) of integration_0.yml:"
+        " The field ('name',) is not required, but should not be None if it exists"
     )
 
 
@@ -72,9 +72,9 @@ def test_SchemaValidator_missing_mandatory_field(pack: Pack):
     results = SchemaValidator().obtain_invalid_content_items([script_parser])
     assert len(results) == 1
     assert (
-        results[0].message == "problematic field: ('name',) |"
-        " error message: The field ('name',) is required but missing |"
-        " error type : value_error.missing"
+        results[0].message
+        == "Structure error (value_error.missing) in field ('name',) of script0.yml:"
+        " The field ('name',) is required but missing"
     )
 
 
@@ -96,7 +96,7 @@ def test_SchemaValidator_extra_field(pack: Pack):
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
     assert (
-        results[0].message == "problematic field: ('EXTRA_FIELD',) |"
-        " error message: The field ('EXTRA_FIELD',) is extra and extra fields not permitted |"
-        " error type : value_error.extra"
+        results[0].message
+        == "Structure error (value_error.extra) in field ('EXTRA_FIELD',) of integration_0.yml:"
+        " The field ('EXTRA_FIELD',) is extra and extra fields not permitted"
     )

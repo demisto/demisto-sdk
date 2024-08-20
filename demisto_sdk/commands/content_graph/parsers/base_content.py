@@ -41,7 +41,7 @@ class BaseContentParser(ABC):
     @property
     @abstractmethod
     def raw_data(self) -> dict:
-        raise NotImplementedError
+        raise NotImplementedError  # to be implemented in inheriting classes
 
     def validate_structure(self) -> List[StructureError]:
         """

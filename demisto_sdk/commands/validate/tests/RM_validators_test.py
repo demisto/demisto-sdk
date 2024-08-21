@@ -1,9 +1,9 @@
-from pathlib import Path
-
 import pytest
 
+from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_doc_file_object,
     create_integration_object,
     create_pack_object,
     create_playbook_object,
@@ -256,10 +256,14 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
                     pack_info={"name": "test2"},
                 ),
                 create_integration_object(
+                    readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.jpg)",
+                    pack_info={"name": "test2"},
+                ),
+                create_integration_object(
                     readme_content="", pack_info={"name": "test2"}
                 ),
             ],
-            True,
+            [None, "example.png", None, None, "example.png", "example.jpg", None],
             0,
             [],
         ),
@@ -273,26 +277,37 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
                     readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png)",
                     pack_info={"name": "test2"},
                 ),
+                create_playbook_object(
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png ), ",
+                    pack_info={"name": "test3"},
+                ),
+                create_integration_object(
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image]( ../doc_files/example.png)",
+                    pack_info={"name": "test4"},
+                ),
             ],
-            False,
-            2,
+            [None, None, "example.png", "example.png"],
+            4,
             [
                 "The following images do not exist: Packs/test1/doc_files/example.png",
                 "The following images do not exist: Packs/test2/doc_files/example.png",
+                "The following images do not exist: Packs/test3/doc_files/example.png",
+                "The following images do not exist: Packs/test4/doc_files/example.png",
             ],
         ),
     ],
 )
 def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
-    mocker,
     content_items,
     is_file_exist,
     expected_number_of_failures,
     expected_msgs,
 ):
-    mocker.patch.object(Path, "is_file", return_value=is_file_exist)
-
     with ChangeCWD(REPO.path):
+        for content_item, file_name in zip(content_items, is_file_exist):
+            if file_name:
+                create_doc_file_object(find_pack_folder(content_item.path), file_name)
+
         results = IsImageExistsInReadmeValidator().obtain_invalid_content_items(
             content_items
         )

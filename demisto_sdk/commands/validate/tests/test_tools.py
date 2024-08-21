@@ -50,6 +50,7 @@ from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
 )
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
+from demisto_sdk.commands.content_graph.parsers.related_files import ImageRelatedFile
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.file import File
 from TestSuite.repo import Repo
@@ -177,6 +178,22 @@ def create_playbook_object(
     playbook.yml.update(yml_content)
     parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
     return Playbook.from_orm(parser)
+
+
+def create_doc_file_object(pack_path, image_name="example.png") -> ImageRelatedFile:
+    """Creating a doc file object.
+
+    Args:
+        pack_path: The path to the pack the doc file should be created in.
+        image_name: The image name to create.
+    Returns:
+        The doc file object.
+    """
+    doc_path = pack_path / "doc_files" / image_name
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(doc_path, "wb") as f:
+        f.write(b"")
+    return ImageRelatedFile(doc_path)
 
 
 def create_modeling_rule_object(

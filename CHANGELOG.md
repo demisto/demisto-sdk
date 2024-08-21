@@ -26,7 +26,7 @@
 * Moved PR100 and XD100 validations to run the `validate-content-path` **pre-commit** hook. These validations ensure the ParsingRule and XSIAM Dashboard filenames are valid. [#4476](https://github.com/demisto/demisto-sdk/pull/4476)
 * Started supporting only a dict value for the "cloud_servers_api_keys" file provided. [#4480](https://github.com/demisto/demisto-sdk/pull/4480)
 * Removed the deprecated `types-pkg-resources` package dependency. demisto-sdk will use the `types-setuptools` package instead. [#4474](https://github.com/demisto/demisto-sdk/pull/4474)
-* Updated paramiko to v3.4.1, removing the warning that would occasionally show. [#4470](https://github.com/demisto/demisto-sdk/pull/4470)
+* Updated paramiko to v3.4.1, removing the warning that would occasionally show. [#4482](https://github.com/demisto/demisto-sdk/pull/#4482)
 
 ## 1.31.6
 * Added **Classifier**, **Layout** and **LayoutRule** to the ST110 validation. [#4447](https://github.com/demisto/demisto-sdk/pull/4447)

@@ -69,6 +69,15 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
         invalid_image_paths = []
         for image_path in image_paths:
             try:
+                # ignore cases of image paths that are URLs, should be removed after RM108 failures are fixed
+                invalid_image_prefixes = (
+                    "https://github.com/demisto/content/",
+                    "https://raw.githubusercontent.com/demisto/content/",
+                )
+                if image_path.startswith(invalid_image_prefixes):
+                    continue
+                # remove until here
+
                 if "Packs" not in image_path:
                     image_path = f"Packs/{pack_name}/{image_path.replace('../', '')}"
                 path_validate.convert(image_path, None, None)

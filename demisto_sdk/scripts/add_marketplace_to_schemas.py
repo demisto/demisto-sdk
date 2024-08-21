@@ -36,7 +36,6 @@ def add_key(mapping):
                 if f"{key}:{marketplace.value}:" in k
             )
         if value.get("type") != "map":
-
             if key in NON_SUPPORTED_KEYS or (key not in SUPPORTED_KEYS):
                 continue
             value = deepcopy(value)

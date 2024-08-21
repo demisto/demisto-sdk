@@ -18,7 +18,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
         structure_validator=True,
         ignored_errors=False,
         json_file_path=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             structure_validator, ignored_errors, json_file_path=json_file_path, **kwargs

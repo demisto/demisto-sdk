@@ -36,7 +36,11 @@ class YAMLObject(DictionaryBasedObject):
         path = Path(path)  # type: ignore
         if path.is_dir():
             try:
-                path = next(path.glob(patterns=r"@(*.yml|*yaml|!*unified*)", flags=EXTGLOB | NEGATE))  # type: ignore
+                path = next(
+                    path.glob(
+                        patterns=r"@(*.yml|*yaml|!*unified*)", flags=EXTGLOB | NEGATE
+                    )
+                )  # type: ignore
             except StopIteration:
                 raise exc.ContentInitializeError(
                     path,

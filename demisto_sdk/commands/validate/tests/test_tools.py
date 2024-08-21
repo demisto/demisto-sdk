@@ -32,6 +32,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
+from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
@@ -64,6 +65,7 @@ def create_integration_object(
     description_content: Optional[str] = None,
     name: Optional[str] = None,
     code: Optional[str] = None,
+    unit_test_name: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -91,6 +93,9 @@ def create_integration_object(
 
     if name is not None:
         additional_params["name"] = name
+
+    if unit_test_name:
+        additional_params["unit_test_name"] = unit_test_name
 
     integration = pack.create_integration(yml=yml_content, **additional_params)
     code = code or "from MicrosoftApiModule import *"
@@ -177,6 +182,8 @@ def create_playbook_object(
 def create_modeling_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
+    rules: Optional[str] = None,
+    schema: Optional[dict] = None,
 ) -> ModelingRule:
     """Creating an modeling_rule object with altered fields from a default modeling_rule yml structure.
 
@@ -190,7 +197,7 @@ def create_modeling_rule_object(
     yml_content = load_yaml("modeling_rule.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
-    pack.create_modeling_rule(yml=yml_content)
+    pack.create_modeling_rule(yml=yml_content, rules=rules, schema=schema)
     return cast(ModelingRule, BaseContent.from_path(Path(pack.modeling_rules[0].path)))
 
 
@@ -416,7 +423,9 @@ def create_incident_type_object(
 
 
 def create_incident_field_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
 ) -> IncidentField:
     """Creating an incident_field object with altered fields from a default incident_field json structure.
 
@@ -430,6 +439,8 @@ def create_incident_field_object(
     json_content = load_json("incident_field.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
     pack.create_incident_field(name="incident_field", content=json_content)
     return cast(
         IncidentField, BaseContent.from_path(Path(pack.incident_fields[0].path))
@@ -730,7 +741,7 @@ def create_generic_module_object(
 
 def create_incoming_mapper_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> Mapper:
     """Creating an incoming_mapper object with altered fields from a default incoming_mapper json structure.
 
     Args:
@@ -744,7 +755,7 @@ def create_incoming_mapper_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_mapper(name="incoming_mapper", content=json_content)
-    return BaseContent.from_path(Path(pack.mappers[0].path))
+    return cast(Mapper, BaseContent.from_path(Path(pack.mappers[0].path)))
 
 
 def create_outgoing_mapper_object(

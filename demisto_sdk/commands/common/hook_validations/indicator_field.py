@@ -1,6 +1,7 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
+
 from typing import Optional
 
 from packaging.version import Version

@@ -7,6 +7,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.incident_type import (
+    StrictIncidentType,
+)
 
 
 class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDENT_TYPE):
@@ -58,3 +61,7 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
     @property
     def extract_settings(self) -> dict:
         return self.json_data.get("extractSettings", {})
+
+    @property
+    def strict_object(self):
+        return StrictIncidentType

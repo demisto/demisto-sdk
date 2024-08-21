@@ -49,12 +49,13 @@ class GitUtil:
 
     def __init__(
         self,
-        path: Optional[Union[str, Path]] = None,
+        path: Optional[Union[str, Path, Repo]] = None,
         search_parent_directories: bool = True,
     ):
-
         if isinstance(path, str):
             repo_path = Path(path)
+        elif isinstance(path, self.REPO_CLS):
+            repo_path = path.working_dir  # type: ignore
         else:
             repo_path = path or Path.cwd()
 
@@ -74,7 +75,6 @@ class GitUtil:
         return cls(path)
 
     def path_from_git_root(self, path: Union[Path, str]) -> Path:
-
         """
         Given an absolute path, return the path to the file/directory from the
         repo/git root. For example, `/<some_local_path>/Packs/HelloWorld/pack_metadata.json`
@@ -203,7 +203,6 @@ class GitUtil:
     def is_file_exist_in_commit_or_branch(
         self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
     ) -> bool:
-
         try:
             commit = self.get_commit(commit_or_branch, from_remote=from_remote)
         except CommitOrBranchNotFoundError:
@@ -216,6 +215,47 @@ class GitUtil:
             return commit.tree[path].path == path
         except KeyError:
             return False
+
+    def list_files_in_dir(
+        self,
+        target_dir: Union[Path, str],
+        git_sha: str,
+    ) -> List[str]:
+        """Retrieve the list of files under a given target_dir in a given commit.
+
+        Args:
+            target_dir (Union[Path, str]): The target dir to retrieve from.
+            git_sha (str): The git_sha to retrieve from.
+
+        Returns:
+            list: The list of files under the given target_dir in the given git_sha.
+        """
+        try:
+            files = []
+            commit = self.repo.commit(git_sha)
+
+            target_dir = self.path_from_git_root(target_dir)
+            target_dir = str(target_dir)
+            tree = commit.tree / target_dir
+
+            def traverse_tree(tree, base_path=""):
+                for item in tree:
+                    item_path = f"{base_path}/{item.name}" if base_path else item.name
+                    if item.type == "blob":  # File
+                        files.append(item_path)
+                    elif item.type == "tree":  # Directory
+                        traverse_tree(item, item_path)
+
+            traverse_tree(tree)
+            return files
+        except CommitOrBranchNotFoundError:
+            logger.exception(f"Could not get commit {git_sha}")
+        except Exception as e:
+            logger.exception(
+                f"Could not get files from {target_dir=} with {git_sha=}, reason: {e}"
+            )
+        finally:
+            return files
 
     @lru_cache
     def get_all_files(self) -> Set[Path]:
@@ -252,7 +292,10 @@ class GitUtil:
 
         # get all renamed files - some of these can be identified as modified by git,
         # but we want to identify them as renamed - so will remove them from the returned files.
-        renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}  # type: ignore[index]
+        renamed = {
+            item[0]  # type: ignore[index]
+            for item in self.renamed_files(prev_ver, committed_only, staged_only)
+        }
 
         # handle a case where a file is wrongly recognized as renamed (not 100% score) and
         # is actually of modified status
@@ -308,14 +351,10 @@ class GitUtil:
             untracked = self._get_untracked_files("M")
 
         # get all the files that are staged on the branch and identified as modified.
-        staged = (
-            {
-                Path(os.path.join(item.a_path))
-                for item in self.repo.head.commit.diff().iter_change_type("M")
-            }
-            .union(untracked)
-            .union(untrue_rename_staged)
-        )
+        staged = {
+            Path(os.path.join(item.a_path))
+            for item in self.repo.head.commit.diff().iter_change_type("M")
+        }.union(untracked).union(untrue_rename_staged)
 
         # If a file is Added in regards to prev_ver
         # and is then modified locally after being committed - it is identified as modified
@@ -1062,7 +1101,7 @@ class GitUtil:
 
     def fetch(self):
         try:
-            self.repo.remote(DEMISTO_GIT_UPSTREAM).fetch()
+            self.repo.remote(DEMISTO_GIT_UPSTREAM).fetch(verbose=False)
         except Exception as e:
             logger.warning(
                 f"Failed to fetch branch '{self.get_current_working_branch()}' "
@@ -1077,3 +1116,73 @@ class GitUtil:
     def commit_files(self, commit_message: str, files: Union[List, str] = "."):
         self.repo.git.add(files)
         self.repo.index.commit(commit_message)
+
+    def has_file_permissions_changed(
+        self, file_path: str, ci: bool = False
+    ) -> Tuple[bool, Optional[str], Optional[str]]:
+        """
+        Check whether the supplied file permissions have changed.
+        If we're in a CI environment, we check for changes against
+        the remote base branch. If not, we assume we're running in a local
+        environment the commit was made.
+
+        Args:
+        - `file_path` (``str``): The path to the file to check for
+        permission changes.
+        - `ci` (``bool``): Whether we're running in a CI environment.
+
+        Returns:
+        - `bool` indicating whether the file permissions have changed.
+        - `str` with the old permissions.
+        - `str` with the new permissions.
+        """
+
+        # If we're in a CI environment, we need to get the
+        # remote (e.g. origin), base branch and current branch since
+        # the local branches are unavailable
+        if ci:
+            branch = os.getenv("BRANCH_NAME", self.get_current_git_branch_or_hash())
+            base_branch = (
+                self.find_primary_branch(self.repo)
+                if self.find_primary_branch(self.repo)
+                else DEMISTO_GIT_PRIMARY_BRANCH
+            )
+            upstream = (
+                self.repo.remote().name if self.repo.remote() else DEMISTO_GIT_UPSTREAM
+            )
+            summary_output = self.repo.git.diff(
+                "--summary",
+                f"{upstream}/{base_branch}...{upstream}/{branch}",
+                file_path,
+            )
+        else:
+            summary_output = self.repo.git.diff("--summary", "--staged", file_path)
+
+        pattern = r"mode change (\d{6}) => (\d{6}) (.+)"
+
+        match = re.search(pattern, summary_output)
+
+        if match:
+            old_permissions = match.group(1)
+            new_permissions = match.group(2)
+
+            return True, old_permissions, new_permissions
+        else:
+            return False, None, None
+
+    def stage_file(self, file_path: Union[Path, str]):
+        """
+        Stage a file.
+
+        Args:
+        - `file_path` (``Path | str``): The file path to add.
+        """
+
+        if isinstance(file_path, str):
+            file_path = Path(file_path)
+
+        if file_path.exists():
+            self.repo.git.add(str(file_path))
+            logger.debug(f"Staged file '{file_path}'")
+        else:
+            logger.error(f"File '{file_path}' doesn't exist. Not adding.")

@@ -188,7 +188,6 @@ class IntegrationDocUpdateManager:
 
         can_update = False
         try:
-
             if not self.integration_diff:
                 msg = "Unable to update docs because the integration YAML doesn't exist in remote."
                 logger.error(msg)
@@ -226,9 +225,9 @@ class IntegrationDocUpdateManager:
                 CONFIGURATION_SECTION_STEPS.STEP_4.value
             )
 
-            doc_text_lines[
-                old_config_start_line : old_config_end_line + 1
-            ] = new_configuration_section
+            doc_text_lines[old_config_start_line : old_config_end_line + 1] = (
+                new_configuration_section
+            )
 
             self.output_doc = "\n".join(doc_text_lines)
         except ValueError as e:
@@ -248,7 +247,6 @@ class IntegrationDocUpdateManager:
 
         for modified_command in self.integration_diff.get_modified_commands():
             try:
-
                 start_line, end_line = command_sections[modified_command]
 
                 (
@@ -287,7 +285,6 @@ class IntegrationDocUpdateManager:
                 self.update_errors.append(error)
 
     def _get_sections_to_update(self) -> Tuple[bool, List[str], List[str]]:
-
         return (
             self.integration_diff.is_configuration_different(),
             self.integration_diff.get_modified_commands(),
@@ -345,7 +342,6 @@ class IntegrationDocUpdateManager:
             renamed_commands = self.integration_diff.get_renamed_commands()
 
             for cmd in added_commands:
-
                 skip = False
                 # We don't want to add renamed commands
                 if renamed_commands:
@@ -374,7 +370,7 @@ class IntegrationDocUpdateManager:
 
                 if generate_command_section_errors:
                     logger.error(
-                        f"\t\u26A0 Generating section for command '{cmd}' resulted in {len(generate_command_section_errors)} error(s)"
+                        f"\t\u26a0 Generating section for command '{cmd}' resulted in {len(generate_command_section_errors)} error(s)"
                     )
                     self.update_errors.extend(generate_command_section_errors)
 
@@ -386,7 +382,7 @@ class IntegrationDocUpdateManager:
 
                 if append_cmd_errs:
                     logger.error(
-                        f"\t\u26A0 Appending section for command '{cmd}' to README.md resulted in {len(append_cmd_errs)} error(s)"
+                        f"\t\u26a0 Appending section for command '{cmd}' to README.md resulted in {len(append_cmd_errs)} error(s)"
                     )
                     self.update_errors.extend(append_cmd_errs)
                 else:
@@ -630,7 +626,6 @@ with (Path(__file__).parent / "default_additional_information.json").open() as f
 
 
 def generate_setup_section(yaml_data: dict) -> List[str]:
-
     """
     Generate the configuration section of the README.
     This section includes:
@@ -1032,7 +1027,6 @@ def generate_versions_differences_section(
             differences_section = []
 
     else:
-
         differences_section.extend(
             [
                 "### Commands",

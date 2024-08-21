@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where *pre-commit* and *validate* commands collected invalid untracked files when running on contribution PR.
-  type: fix
-pr_number: 4394

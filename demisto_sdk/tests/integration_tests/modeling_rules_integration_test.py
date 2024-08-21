@@ -1114,10 +1114,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             # Assert
             assert result.exit_code == 1
             # make sure the schema validation was skipped.
-            assert (
-                "The following validation names {'blabla'} are invalid"
-                in result.exception.errors()[0]["msg"]
-            )
+            assert "Failed to parse test data file" in result.output
 
     def test_the_test_modeling_rule_command_results_do_not_match_expectations(
         self, pack, monkeypatch, mocker, requests_mocker

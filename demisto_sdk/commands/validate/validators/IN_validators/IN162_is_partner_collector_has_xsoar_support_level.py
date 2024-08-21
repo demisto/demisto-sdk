@@ -32,7 +32,9 @@ class IsPartnerCollectorHasXsoarSupportLevelValidator(BaseValidator[ContentTypes
     is_auto_fixable = True
     fix_message = f"Changed the integration's should {SUPPORT_LEVEL_HEADER} key to {XSOAR_SUPPORT}."
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -47,7 +49,7 @@ class IsPartnerCollectorHasXsoarSupportLevelValidator(BaseValidator[ContentTypes
                 ]
             )
             and (
-                content_item.support_level == PARTNER_SUPPORT
+                content_item.support == PARTNER_SUPPORT
                 and content_item.data.get(SUPPORT_LEVEL_HEADER) != XSOAR_SUPPORT
             )
         ]

@@ -2,12 +2,13 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import Set
+from typing import Dict, List, Optional, Set
 from unittest.mock import patch
 
 import pytest
 import toml
 from more_itertools import map_reduce
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
@@ -63,7 +64,7 @@ INTEGRATION.path = Path(
 
 def get_validate_manager(mocker):
     validation_results = ResultWriter()
-    config_reader = ConfigReader(category_to_run="test")
+    config_reader = ConfigReader(category="test")
     initializer = Initializer()
     mocker.patch.object(Initializer, "gather_objects_to_run_on", return_value=({}, {}))
     return ValidateManager(
@@ -114,7 +115,9 @@ def get_validate_manager(mocker):
         ),
     ],
 )
-def test_filter_validators(mocker, validations_to_run, sub_classes, expected_results):
+def test_filter_validators(
+    mocker: MockerFixture, validations_to_run, sub_classes, expected_results
+):
     """
     Given
     a list of validation_to_run (config file select section mock), and a list of sub_classes (a mock for the BaseValidator sub classes)
@@ -131,24 +134,31 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
         - Case 4: Make sure the retrieved list contains only the validation with the error_code that actually co-op with the validation_to_run.
     """
     validate_manager = get_validate_manager(mocker)
-    validate_manager.configured_validations.validations_to_run = validations_to_run
+    mocker.patch.object(ConfiguredValidations, "select", validations_to_run)
     with patch.object(BaseValidator, "__subclasses__", return_value=sub_classes):
         results = validate_manager.filter_validators()
         assert results == expected_results
 
 
 @pytest.mark.parametrize(
-    "category_to_run, execution_mode, config_file_content, expected_results, ignore_support_level, specific_validations",
+    "category_to_run, execution_mode, config_file_content, expected_results, ignore_support_level, specific_validations, codes_to_ignore",
     [
-        (
+        pytest.param(
             None,
             ExecutionMode.USE_GIT,
-            {"use_git": {"select": ["BA101", "BC100", "PA108"]}},
-            ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
+            {
+                "use_git": {"select": ["BA101", "BC100", "PA108"]},
+                "ignorable_errors": ["E002", "W001"],
+            },
+            ConfiguredValidations(
+                ["BA101", "BC100", "PA108"], [], ["E002", "W001"], {}
+            ),
             False,
             [],
+            ["E002", "W001"],
+            id="Case 1",
         ),
-        (
+        pytest.param(
             "custom_category",
             ExecutionMode.USE_GIT,
             {
@@ -156,21 +166,25 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
                 "custom_category": {
                     "select": ["BA101", "BC100", "PA108"],
                 },
-                "use_git": {"select": ["TE105", "TE106", "TE107"]},
+                "use_git": {"select": ["TE105", "TE106", "TE107", "BA101"]},
             },
-            ConfiguredValidations(["BA101", "BC100", "PA108"], [], ["BA101"], {}),
+            ConfiguredValidations(["BC100", "PA108"], [], ["BA101"], {}),
             False,
             [],
+            ["BA101"],
+            id="Case 2",
         ),
-        (
+        pytest.param(
             None,
             ExecutionMode.SPECIFIC_FILES,
             {"path_based_validations": {"select": ["BA101", "BC100", "PA108"]}},
             ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
             False,
             [],
+            [],
+            id="Case 3",
         ),
-        (
+        pytest.param(
             None,
             ExecutionMode.USE_GIT,
             {
@@ -185,8 +199,10 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
             ),
             False,
             [],
+            [],
+            id="Case 4",
         ),
-        (
+        pytest.param(
             None,
             ExecutionMode.USE_GIT,
             {
@@ -196,25 +212,30 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
             ConfiguredValidations(["TE105", "TE106", "TE107"], [], [], {}),
             True,
             [],
+            [],
+            id="Case 5",
         ),
-        (
+        pytest.param(
             None,
             True,
             {"use_git": {"select": ["BA101", "BC100", "PA108"]}},
             ConfiguredValidations(["TE100", "TE101"], [], [], {}),
             False,
             ["TE100", "TE101"],
+            [],
+            id="Case 6",
         ),
     ],
 )
 def test_gather_validations_from_conf(
-    mocker,
-    category_to_run,
-    execution_mode,
-    config_file_content,
-    expected_results,
-    ignore_support_level,
-    specific_validations,
+    mocker: MockerFixture,
+    category_to_run: Optional[str],
+    execution_mode: ExecutionMode,
+    config_file_content: Dict,
+    expected_results: ConfiguredValidations,
+    ignore_support_level: bool,
+    specific_validations: List[str],
+    codes_to_ignore: List[str],
 ):
     """
     Given
@@ -238,14 +259,16 @@ def test_gather_validations_from_conf(
     """
     mocker.patch.object(toml, "load", return_value=config_file_content)
     config_reader = ConfigReader(
-        category_to_run=category_to_run, specific_validations=specific_validations
+        category=category_to_run, explicitly_selected=specific_validations
     )
-    results: ConfiguredValidations = config_reader.gather_validations_from_conf(
-        execution_mode=execution_mode, ignore_support_level=ignore_support_level
+    results: ConfiguredValidations = config_reader.read(
+        mode=execution_mode,
+        ignore_support_level=ignore_support_level,
+        codes_to_ignore=codes_to_ignore,
     )
-    assert results.validations_to_run == expected_results.validations_to_run
+    assert results.select == expected_results.select
     assert results.ignorable_errors == expected_results.ignorable_errors
-    assert results.only_throw_warnings == expected_results.only_throw_warnings
+    assert results.warning == expected_results.warning
     assert results.support_level_dict == expected_results.support_level_dict
 
 
@@ -653,9 +676,7 @@ def test_all_error_codes_configured():
         [validator.error_code for validator in BaseValidator.__subclasses__()]
     )
     non_configured_existing_error_codes = existing_error_codes - configured_errors_set
-    assert (
-        not non_configured_existing_error_codes
-    ), f"The following error codes are not configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_existing_error_codes}."
+    assert not non_configured_existing_error_codes, f"The following error codes are not configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_existing_error_codes}."
 
 
 def test_validation_prefix():
@@ -694,12 +715,13 @@ def test_description():
 
 
 @pytest.mark.parametrize(
-    "untracked_files, modified_files, untracked_files_in_content ,expected_output",
+    "untracked_files, modified_files, untracked_files_in_content, list_of_file_paths ,expected_output",
     [
         (
             ["Packs/untracked.txt"],
             set([Path("Packs/modified.txt")]),
             set([Path("Packs/untracked.txt")]),
+            ["Packs/modified.txt", "Packs/untracked.txt"],
             set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
         ),
         (
@@ -716,6 +738,7 @@ def test_description():
                     Path("Packs/untracked_2.txt"),
                 ]
             ),
+            ["Packs/modified.txt", "Packs/untracked_1.txt", "Packs/untracked_2.txt"],
             set(
                 [
                     Path("Packs/modified.txt"),
@@ -738,6 +761,7 @@ def test_description():
                     Path("Packs/untracked_2.txt"),
                 ]
             ),
+            ["Packs/untracked_1.txt", "Packs/untracked_2.txt"],
             set(
                 [
                     Path("Packs/untracked_1.txt"),
@@ -757,11 +781,14 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
     untracked_files,
     modified_files,
     untracked_files_in_content,
+    list_of_file_paths,
     expected_output,
 ):
     """
     This UT verifies changes made to validate command to support collection of
     untracked files when running the build on an external contribution PR.
+    The UT mocks reading form the contribution_files_relative_paths.txt created
+    in Utils/update_contribution_pack_in_base_branch.py (Infra) as part of this flow.
 
     Given:
         - A content build is running on external contribution PR, meaning:
@@ -785,13 +812,33 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
     mocker.patch(
         "git.repo.base.Repo._get_untracked_files", return_value=untracked_files
     )
-    mocker.patch.object(
-        initializer,
-        "get_untracked_files_in_content",
-        return_value=untracked_files_in_content,
-    )
+
+    with open("contribution_files_relative_paths.txt", "w") as file:
+        temp_file = Path("contribution_files_relative_paths.txt")
+        for line in list_of_file_paths:
+            file.write(f"{line}\n")
+
     output = initializer.get_unfiltered_changed_files_from_git()
-    assert output[0] == expected_output
+    assert output[1] == expected_output
+
+    if Path.exists(temp_file):
+        Path.unlink(temp_file)
+
+
+def test_ignoring_not_ignorable(mocker):
+    """
+    Given an unignorable code
+    When reading a toml
+    Then make sure we exit(1)
+    """
+    mocker.patch.object(
+        toml,
+        "load",
+        return_value={"ignorable_errors": [], "use_git": {"select": ["E001"]}},
+    )
+    with pytest.raises(SystemExit) as e:
+        ConfigReader().read(mode=ExecutionMode.USE_GIT, codes_to_ignore=["E001"])
+    assert e.value.args == (1,)
 
 
 def test_check_metadata_version_bump_on_content_changes(mocker, repo):

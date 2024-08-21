@@ -2,6 +2,7 @@
 
 Module contains validation of schemas, ids and paths.
 """
+
 import logging
 import os
 import re
@@ -176,7 +177,11 @@ class StructureValidator(BaseValidator):
             if self.pykwalify_logs:
                 # reactivating pykwalify ERROR level logs
                 logging.disable(logging.ERROR)
-            scheme_file_name = "integration" if self.scheme_name.value == "betaintegration" else self.scheme_name.value  # type: ignore
+            scheme_file_name = (
+                "integration"
+                if self.scheme_name.value == "betaintegration"  # type: ignore[union-attr]
+                else self.scheme_name.value  # type: ignore[union-attr]
+            )
             path = os.path.normpath(
                 os.path.join(
                     __file__, "..", "..", self.SCHEMAS_PATH, f"{scheme_file_name}.yml"

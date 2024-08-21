@@ -127,7 +127,6 @@ class Pack:
                 FileType.TEST_PLAYBOOK.value,
                 FileType.TEST_SCRIPT.value,
             ]:
-
                 object_id = content_object.get_id()
                 if is_object_in_id_set(
                     object_id, content_object.type().value, self._pack_info_from_id_set
@@ -342,6 +341,10 @@ class Pack:
         )
 
     @property
+    def modeling_rules_count(self) -> int:
+        return len(tuple(self.modeling_rules))
+
+    @property
     def correlation_rules(self) -> Iterator[CorrelationRule]:
         return self._content_files_list_generator_factory(
             dir_name=CORRELATION_RULES_DIR, suffix="yml"
@@ -489,20 +492,26 @@ class Pack:
 
     def _are_integrations_or_scripts_or_playbooks_exist(self) -> int:
         """
-        Checks whether an integration/script/playbook exist in the pack.
+        Checks whether an integration/script/playbook/modeling_rules exist in the pack.
 
         Returns:
             int: number > 0 if there is at least one integration/script/playbook in the pack, 0 if not.
         """
-        return self.integrations_count or self.scripts_count or self.playbooks_count
+        return (
+            self.integrations_count
+            or self.scripts_count
+            or self.playbooks_count
+            or self.modeling_rules_count
+        )
 
     def is_deprecated(self) -> bool:
         """
         Returns whether a pack is deprecated.
         """
         pack_metadata = self.pack_metadata_as_dict()
-        pack_name, pack_desc = pack_metadata.get("name", ""), pack_metadata.get(
-            "description", ""
+        pack_name, pack_desc = (
+            pack_metadata.get("name", ""),
+            pack_metadata.get("description", ""),
         )
 
         return regex.match(PACK_NAME_DEPRECATED_REGEX, pack_name) and (
@@ -539,6 +548,10 @@ class Pack:
                 and (
                     self.scripts_count
                     == _get_deprecated_content_entities_count(self.scripts)
+                )
+                and (
+                    self.modeling_rules_count
+                    == _get_deprecated_content_entities_count(self.modeling_rules)
                 )
             )
         # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be deprecated.

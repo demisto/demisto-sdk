@@ -1,6 +1,7 @@
 """
 This module is designed to validate the correctness of generic definition entities in content.
 """
+
 import os
 import re
 from pathlib import Path

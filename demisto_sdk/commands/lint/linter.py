@@ -408,7 +408,8 @@ class Linter:
                 self._facts["test"] = (
                     True
                     if next(
-                        self._pack_abs_dir.glob([r"test_*.py", r"*_test.py"]), None  # type: ignore
+                        self._pack_abs_dir.glob([r"test_*.py", r"*_test.py"]),
+                        None,  # type: ignore
                     )
                     else False
                 )
@@ -468,10 +469,14 @@ class Linter:
         if "commonserver" in self._pack_abs_dir.name.lower():
             # Powershell
             if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
-                self._facts["lint_files"] = [Path(self._pack_abs_dir / "CommonServerPowerShell.ps1")]  # type: ignore
+                self._facts["lint_files"] = [
+                    Path(self._pack_abs_dir, "CommonServerPowerShell.ps1")  # type: ignore[arg-type]
+                ]
             # Python
             elif self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
-                self._facts["lint_files"] = [Path(self._pack_abs_dir / "CommonServerPython.py")]  # type: ignore
+                self._facts["lint_files"] = [
+                    Path(self._pack_abs_dir / "CommonServerPython.py")  # type: ignore[arg-type]
+                ]
         else:
             test_modules = {
                 self._pack_abs_dir / module.name for module in modules.keys()
@@ -731,7 +736,9 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         with add_typing_module(lint_files=lint_files, python_version=py_num):  # type: ignore
             mypy_command = build_mypy_command(
-                files=lint_files, version=py_num, content_repo=self._content_repo  # type: ignore
+                files=lint_files,  # type: ignore[arg-type]
+                version=py_num,
+                content_repo=self._content_repo,
             )
             stdout, stderr, exit_code = run_command_os(
                 command=mypy_command, cwd=self._pack_abs_dir

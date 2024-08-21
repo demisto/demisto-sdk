@@ -12,6 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
+
 # This validation is similar to BC111, but specifically for integrations.
 class NewRequiredArgumentIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "BC110"
@@ -23,7 +24,9 @@ class NewRequiredArgumentIntegrationValidator(BaseValidator[ContentTypes]):
     related_field = "script.commands.arguments"
     expected_git_statuses = [GitStatuses.MODIFIED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         custom_message = ""
         for content_item in content_items:
@@ -33,7 +36,8 @@ class NewRequiredArgumentIntegrationValidator(BaseValidator[ContentTypes]):
                 current_command_name = new_command.name
 
                 old_corresponding_command = find_command(
-                    old_content_item.commands, current_command_name  # type: ignore
+                    old_content_item.commands,  # type: ignore[union-attr]
+                    current_command_name,
                 )
                 # If the command is new, there is no need to check for its arguments
                 if old_corresponding_command:

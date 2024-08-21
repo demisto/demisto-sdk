@@ -23,7 +23,9 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
     related_field = "Python code file, Python test code file."
     related_file_type = [RelatedFileType.CODE_FILE, RelatedFileType.TEST_CODE_FILE]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

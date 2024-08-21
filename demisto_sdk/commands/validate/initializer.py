@@ -27,7 +27,6 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -60,7 +59,7 @@ class Initializer:
         committed_only=None,
         prev_ver=None,
         file_path=None,
-        execution_mode=None,
+        execution_mode: Optional[ExecutionMode] = None,
     ):
         self.staged = staged
         self.file_path = file_path
@@ -258,40 +257,27 @@ class Initializer:
             If this command runs on a build triggered by an external contribution PR,
             the relevant modified files would have an "untracked" status in git.
             The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
-            and adds them to `modified_files`. See CIAC-10490 for more info.
+            See CIAC-10968 for more info.
             """
             logger.info(
-                "\n[cyan]CONTRIB_BRANCH variable found, trying to collected changed untracked files from external contribution PR[/cyan]"
+                "\n[cyan]CONTRIB_BRANCH environment variable found, running validate in contribution flow "
+                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
             )
-            valid_untracked_files_paths = self.get_untracked_files_in_content()
-            modified_files = modified_files.union(valid_untracked_files_paths)
+            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
+            relative_untracked_files_paths: Set[Path] = set()
+            with open(
+                "contribution_files_relative_paths.txt", "r"
+            ) as contribution_file:
+                for single_line in contribution_file:
+                    clean_line: str = single_line.rstrip("\n")
+                    relative_untracked_files_paths.add(Path(clean_line))
+            logger.info(
+                f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
+            )
+            # modified_files = modified_files.union(relative_untracked_files_paths)
+            added_files = set(added_files).union(relative_untracked_files_paths)
 
         return modified_files, added_files, renamed_files
-
-    def get_untracked_files_in_content(self) -> Set[Path]:
-        """
-        Filter out a string list of untracked files with a path thats inside the build machine's content repository.
-        The file paths in the build machine are relative so we use absolute path (resolve) to make sure the files are in content.
-        """
-        untracked_files_paths = {
-            Path(f)
-            for f in self.git_util.repo.untracked_files
-            if self.is_relative_to(path=Path(f).resolve(), base=CONTENT_PATH)
-        }
-        logger.info(f"\n######## - Modified untracked:\n{untracked_files_paths}")
-        return untracked_files_paths
-
-    def is_relative_to(self, path: Path, base: Path) -> bool:
-        """
-        The Path class in Python's pathlib module got the native is_relative_to method starting
-        from Python 3.9, so it fails on python 3.8.
-        This is a custom implementation for the is_relative_to method.
-        """
-        try:
-            path.relative_to(base)
-            return True
-        except ValueError:
-            return False
 
     def specify_files_by_status(
         self,
@@ -382,9 +368,9 @@ class Initializer:
             ) = self.get_files_using_git()
 
         if self.execution_mode != ExecutionMode.USE_GIT:
-            content_objects_to_run_with_packs: Set[
-                BaseContent
-            ] = self.get_items_from_packs(content_objects_to_run)
+            content_objects_to_run_with_packs: Set[BaseContent] = (
+                self.get_items_from_packs(content_objects_to_run)
+            )
         else:
             content_objects_to_run_with_packs = content_objects_to_run
 
@@ -454,9 +440,9 @@ class Initializer:
         ] = {}
         for path, status in statuses_dict.items():
             if status == GitStatuses.RENAMED:
-                statuses_dict_with_renamed_files_tuple[
-                    (path, renamed_files[path])
-                ] = status
+                statuses_dict_with_renamed_files_tuple[(path, renamed_files[path])] = (
+                    status
+                )
             else:
                 statuses_dict_with_renamed_files_tuple[path] = status
         # Parsing the files.

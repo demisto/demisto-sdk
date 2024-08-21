@@ -24,7 +24,7 @@ from demisto_sdk.commands.validate.validators.CL_validators.CL100_is_valid_class
         ),
     ],
 )
-def test_IsValidClassifierTypeValidator_is_valid(
+def test_IsValidClassifierTypeValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -38,7 +38,9 @@ def test_IsValidClassifierTypeValidator_is_valid(
     Then
         - Make sure the right amount of failures return and that the right message is returned.
     """
-    results = IsValidClassifierTypeValidator().is_valid(content_items)
+    results = IsValidClassifierTypeValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [

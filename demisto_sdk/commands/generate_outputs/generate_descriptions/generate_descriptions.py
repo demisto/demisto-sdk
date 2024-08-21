@@ -159,9 +159,9 @@ def build_description_with_probabilities(data):
 def write_desc(c_index, final_output, o_index, output_path, yml_data):
     """Write a description to disk"""
     logger.debug(f"Writing: {final_output}\n---")
-    yml_data["script"]["commands"][c_index]["outputs"][o_index][
-        "description"
-    ] = final_output
+    yml_data["script"]["commands"][c_index]["outputs"][o_index]["description"] = (
+        final_output
+    )
     write_dict(output_path, yml_data)
 
 

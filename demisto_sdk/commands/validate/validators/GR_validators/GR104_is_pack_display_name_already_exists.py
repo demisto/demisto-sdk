@@ -28,10 +28,9 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.JSON]
 
-    def is_valid_using_graph(
+    def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-
         file_paths_to_objects = {
             str(content_item.path.relative_to(CONTENT_PATH)): content_item
             for content_item in content_items

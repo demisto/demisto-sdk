@@ -23,7 +23,9 @@ class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
     error_message = "The following {0}: {1} shouldn't contain the word '{2}'."
     related_field = "name, display"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -36,7 +38,8 @@ class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                invalid_fields := validate_content_item_type_not_in_name_or_display_fields(
+                invalid_fields
+                := validate_content_item_type_not_in_name_or_display_fields(
                     content_item
                 )
             )

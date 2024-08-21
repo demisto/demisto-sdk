@@ -36,7 +36,7 @@ class PackMetadata(BaseModel):
     created: Optional[str]
     updated: Optional[str] = Field("")
     legacy: Optional[bool]
-    support: Optional[str]
+    support: str = Field("")
     url: Optional[str]
     email: Optional[str]
     eulaLink: Optional[str]
@@ -188,7 +188,6 @@ class PackMetadata(BaseModel):
         collected_content_items: dict = {}
         content_displays: dict = {}
         for content_item in content_items:
-
             if content_item.is_test:
                 logger.debug(
                     f"Skip loading the {content_item.name} test playbook/script into metadata.json"
@@ -201,9 +200,9 @@ class PackMetadata(BaseModel):
                 marketplace=marketplace,
             )
 
-            content_displays[
-                content_item.content_type.metadata_name
-            ] = content_item.content_type.metadata_display_name
+            content_displays[content_item.content_type.metadata_name] = (
+                content_item.content_type.metadata_display_name
+            )
 
         content_displays = {
             content_type: content_type_display
@@ -247,14 +246,17 @@ class PackMetadata(BaseModel):
                 "mandatory": r.mandatorily,
                 "minVersion": r.content_item_to.current_version,  # type:ignore[attr-defined]
                 "author": self._get_author(
-                    r.content_item_to.author, marketplace  # type:ignore[attr-defined]
+                    r.content_item_to.author,  # type:ignore[attr-defined]
+                    marketplace,
                 ),
                 "name": r.content_item_to.name,  # type:ignore[attr-defined]
                 "certification": r.content_item_to.certification  # type:ignore[attr-defined]
                 or "",
             }
             for r in dependencies
-            if r.is_direct and r.content_item_to.object_id not in self.excluded_dependencies and not r.content_item_to.hidden  # type: ignore
+            if r.is_direct
+            and r.content_item_to.object_id not in self.excluded_dependencies
+            and not r.content_item_to.hidden  # type: ignore
         }
 
     def _get_pack_tags(

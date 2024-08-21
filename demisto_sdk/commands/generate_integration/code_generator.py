@@ -461,7 +461,6 @@ class IntegrationGeneratorConfig:
             auth_method = self.auth["type"]
 
             if auth_method in ("apikey", "apiKey"):
-
                 api_key_in = ""
                 api_key_name = ""
                 api_key_format = ""

@@ -25,7 +25,9 @@ class IsMissingReputationOutputValidator(BaseValidator[ContentTypes]):
     error_message = "The integration contains invalid reputation command(s):\n\t{0}"
     related_field = "script.commands"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

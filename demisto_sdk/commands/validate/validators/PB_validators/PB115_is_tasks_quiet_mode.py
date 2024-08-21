@@ -42,7 +42,9 @@ class IsTasksQuietModeValidator(BaseValidator[ContentTypes]):
         self.invalid_tasks_in_playbooks[content_item.name] = invalid_task_ids
         return invalid_task_ids
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         """
         Validates that tasks in content_items(playbook) are in quiet mode if they contain an input query for "indicators".
 

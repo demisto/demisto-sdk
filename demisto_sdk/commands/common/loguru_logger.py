@@ -74,12 +74,30 @@ def calculate_log_dir(
         return LOGS_DIR
 
 
+def setup_logger_colors():
+    logger.info("Setting up loguru colors")  # TODO remove
+
+    logger.level("DEBUG", color="<fg #D3D3D3>")
+    logger.level("INFO", color="<fg #D3D3D3>")
+    logger.level("WARNING", color="<yellow>")
+    logger.level("ERROR", color="<red>")
+    logger.level("CRITICAL", color="<red><bold>")
+    logger.level("SUCCESS", color="<green>")
+
+
 def logging_setup(
     console_log_threshold: str = "INFO",
     file_log_threshold: str = "DEBUG",
     log_file_path: Optional[Union[Path, str]] = None,
     **kwargs,  # TODO remove skip_log_file_creation
 ) -> None:
+    setup_logger_colors()
+    logger.warning("logging_setup called")  # TODO remove
+
+    if string_to_bool(os.getenv("DEMISTO_SDK_LOGGING_SET"), False):
+        logger.warning("Skipping logging setup as it has already been performed")
+        return
+
     logger.remove()  # Removes all handlers
     logger.add(
         sys.stdout,
@@ -103,3 +121,5 @@ def logging_setup(
     logger.debug(f"Platform: {platform.system()}")
     logger.debug(f"Python version: {sys.version}")
     logger.debug(f"Working directory: {Path.cwd()}")
+    os.environ["DEMISTO_SDK_LOGGING_SET"] = "true"
+    logger.success("logging_setup finished")  # TODO remove

@@ -87,7 +87,6 @@ class ConfigReader:
                 return sorted(codes)
 
         if codes_to_ignore:
-            check_ignored_are_ignorable(codes_to_ignore, ignorable)
             select = _ignore_errors(select, "select", codes_to_ignore)
             warning = _ignore_errors(warning, "warning", codes_to_ignore)
             explicitly_selected = _ignore_errors(
@@ -100,16 +99,3 @@ class ConfigReader:
             ignorable_errors=ignorable,
             support_level_dict=support_level_dict,
         )
-
-
-def check_ignored_are_ignorable(
-    codes_to_ignore: Optional[List[str]], ignorable: List[str]
-) -> None:
-    if not codes_to_ignore:  # nothing to check
-        return
-
-    if cannot_be_ignored := set(codes_to_ignore).difference(ignorable):
-        logger.error(
-            f"{','.join(sorted(cannot_be_ignored))} are not under `ignorable_errors` in the config file, cannot be ignored."
-        )
-        exit(1)

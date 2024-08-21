@@ -6,6 +6,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.generic_type import (
+    StrictGenericType,
+)
 
 
 class GenericTypeParser(JSONContentItemParser, content_type=ContentType.GENERIC_TYPE):
@@ -32,3 +35,7 @@ class GenericTypeParser(JSONContentItemParser, content_type=ContentType.GENERIC_
         """Collects the layouts used in the generic type as mandatory dependencies."""
         if layout := self.json_data.get("layout"):
             self.add_dependency_by_id(layout, ContentType.LAYOUT)
+
+    @property
+    def strict_object(self):
+        return StrictGenericType

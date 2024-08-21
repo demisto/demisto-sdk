@@ -149,6 +149,16 @@ def devtest_image(
     )
     if not errors:
         if not should_pull:
+            docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
+            docker_pass = os.getenv(
+                "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
+            )
+            login_command = [
+                "docker", "login",
+                "-u", docker_user,
+                "-p", docker_pass
+            ]
+            subprocess.run(login_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # pull images in background
             logger.info(f"docker pull from docker hub {image=} ---")
             subprocess.Popen(

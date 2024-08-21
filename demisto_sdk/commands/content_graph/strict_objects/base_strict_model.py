@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import more_itertools
 from pydantic import BaseModel, Field
@@ -102,9 +102,9 @@ class StructureError(BaseStrictModel):
     """Used for wrapping Pydantic errors, not part of content."""
 
     path: Path
-    field_name: Optional[tuple] = Field(None, alias="loc")
-    error_message: Optional[str] = Field(None, alias="msg")
-    error_type: Optional[str] = Field(None, alias="type")
+    field_name: Tuple[str, ...] = Field(alias="loc")
+    error_message: str = Field(alias="msg")
+    error_type: Tuple[str, ...] = Field(alias="type")
     ctx: Optional[dict] = None
 
     def __str__(self):

@@ -221,7 +221,7 @@ select = [
   "MR107",
   "RN114",
   "MR108",
-  "ST110" # TODO - remove it before merging - just for testing
+  "ST110"
 ]
 warning = [
   "IN101",

@@ -439,7 +439,9 @@ class DockerBase:
         if not should_pull and self.is_image_available(test_docker_image):
             return test_docker_image, errors
         base_image = self.get_image_registry(base_image)
+        logger.info(f"{base_image=}")
         test_docker_image = self.get_image_registry(test_docker_image)
+        logger.info(f"{test_docker_image=}")
 
         try:
             logger.info(

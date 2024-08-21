@@ -51,8 +51,8 @@ def test_SchemaValidator_None_as_value(pack: Pack):
     assert len(results) == 1
     assert (
         results[0].message
-        == "Structure error (assertion_error) in field ('name',) of integration_0.yml:"
-        " The field ('name',) is not required, but should not be None if it exists"
+        == "Structure error (assertion_error) in field name of integration_0.yml:"
+        " The field name is not required, but should not be None if it exists"
     )
 
 
@@ -73,8 +73,8 @@ def test_SchemaValidator_missing_mandatory_field(pack: Pack):
     assert len(results) == 1
     assert (
         results[0].message
-        == "Structure error (value_error.missing) in field ('name',) of script0.yml:"
-        " The field ('name',) is required but missing"
+        == "Structure error (value_error.missing) in field name of script0.yml:"
+        " The field name is required but missing"
     )
 
 
@@ -97,6 +97,6 @@ def test_SchemaValidator_extra_field(pack: Pack):
     assert len(results) == 1
     assert (
         results[0].message
-        == "Structure error (value_error.extra) in field ('EXTRA_FIELD',) of integration_0.yml:"
-        " The field ('EXTRA_FIELD',) is extra and extra fields not permitted"
+        == "Structure error (value_error.extra) in field EXTRA_FIELD of integration_0.yml:"
+        " The field EXTRA_FIELD is extra and extra fields not permitted"
     )

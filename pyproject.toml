@@ -117,6 +117,7 @@ ruff = "^0.5.2"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
 pygithub = "^2.2.0"
+pytest-loguru = "^0.4.0"
 
 [tool.poetry.group.types.dependencies]
 types-requests = "^2.31.0.20240311"
@@ -180,7 +181,7 @@ select = [
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "distutils.version".msg = "Use packaging.version.Version instead"
 "git.Repo".msg = "Use GitUtil instead"
-# "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
+# "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger." TODO
 "json".msg = "use JSON_Handler instead"
 "json5".msg = "use JSON_Handler instead"
 "orjson".msg = "use JSON_Handler instead"

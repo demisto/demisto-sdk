@@ -9,6 +9,8 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from loguru import logger
+
 # NOTE: Do not add internal imports here, as it may cause circular imports.
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOG_FILE_COUNT,
@@ -20,8 +22,6 @@ from demisto_sdk.commands.common.constants import (
     LOGS_DIR,
     STRING_TO_BOOL_MAP,
 )
-
-logger: logging.Logger = logging.getLogger("demisto-sdk")
 
 
 def environment_variable_to_bool(
@@ -139,22 +139,10 @@ DEMISTO_LOG_ALLOWED_ESCAPES = [  # The order of the list is by priority.
     ("cyan", 36),
     ("blue", 34),
     ("orange", 33),
-    ("pink", 95),
     ("purple", 35),
-    ("black", 30),
-    ("invisible", 8),
     ("bold", 1),
-    ("disable", 2),
-    ("reverse", 7),
-    ("strikethrough", 9),
     ("underline", 4),
-    ("darkgrey", 90),
-    ("darkred", 31),
     ("lightblue", 94),
-    ("lightcyan", 96),
-    ("lightgreen", 92),
-    ("lightgrey", 37),
-    ("lightred", 91),
 ]
 
 DEMISTO_LOG_LOOKUP = dict(  # Convert the list of tuples to a dict

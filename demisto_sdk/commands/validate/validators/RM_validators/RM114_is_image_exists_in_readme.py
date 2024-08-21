@@ -71,8 +71,8 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
             try:
                 # ignore cases of image paths that are URLs, should be removed after RM108 failures are fixed
                 invalid_image_prefixes = (
-                    "https://github.com/demisto/content/",
-                    "https://raw.githubusercontent.com/demisto/content/",
+                    "doc_imgs",
+                    "doc_images"
                 )
                 if image_path.startswith(invalid_image_prefixes):
                     continue

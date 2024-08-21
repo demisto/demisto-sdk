@@ -8,6 +8,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.modeling_rule import (
+    StrictModelingRule,
+)
 
 
 class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELING_RULE):
@@ -37,3 +40,7 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {MarketplaceVersions.MarketplaceV2}
+
+    @property
+    def strict_object(self):
+        return StrictModelingRule

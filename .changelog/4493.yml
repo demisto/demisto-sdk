@@ -1,0 +1,4 @@
+changes:
+- description: Improved implementation of ST110 validation.
+  type: feature
+pr_number: 4493

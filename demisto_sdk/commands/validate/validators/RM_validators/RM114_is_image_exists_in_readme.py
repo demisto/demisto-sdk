@@ -4,7 +4,7 @@ from typing import Iterable, List, Union
 
 import click
 
-from demisto_sdk.commands.common.constants import MD_IMAGE_REGEX
+from demisto_sdk.commands.common.constants import DOC_FILE_EXTENDED_IMAGE_REGEX
 from demisto_sdk.commands.common.tools import (
     extract_image_paths_from_str,
     get_pack_name,
@@ -23,7 +23,7 @@ ContentTypes = Union[Integration, Script, Playbook]
 
 class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     error_code = "RM114"
-    description = "Validate README images used in README exist."
+    description = "Validate that images placed under doc_files folder and used in README exist."
     error_message = "The following images do not exist: {0}"
     rationale = "Missing images are not shown in rendered markdown"
     related_field = ""
@@ -46,7 +46,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                         get_pack_name(content_item.path),
                         extract_image_paths_from_str(
                             text=content_item.readme.file_content,
-                            regex_str=MD_IMAGE_REGEX,
+                            regex_str=DOC_FILE_EXTENDED_IMAGE_REGEX,
                         ),
                     )
                 )
@@ -69,14 +69,6 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
         invalid_image_paths = []
         for image_path in image_paths:
             try:
-                # ignore cases of image paths that are URLs, should be removed after RM108 failures are fixed
-                invalid_image_prefixes = (
-                    "doc_imgs",
-                    "doc_images"
-                )
-                if image_path.startswith(invalid_image_prefixes):
-                    continue
-                # remove until here
 
                 if "Packs" not in image_path:
                     image_path = f"Packs/{pack_name}/{image_path.replace('../', '')}"

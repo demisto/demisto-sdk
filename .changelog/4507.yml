@@ -1,4 +1,4 @@
 changes:
-- description: Updated paramiko to v3.4.1, removing the warning that would occasionally show.
+- description: Updated Paramiko to v3.4.1 to fix an issue where redundant Paramiko logs were still being displayed, following the change in SDK v1.31.8.
   type: fix
 pr_number: 4507

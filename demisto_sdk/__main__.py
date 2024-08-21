@@ -43,8 +43,8 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
-    logging_setup,
 )
+from demisto_sdk.commands.common.loguru_logger import logging_setup
 from demisto_sdk.commands.common.tools import (
     convert_path_to_str,
     find_type,
@@ -160,19 +160,19 @@ def logging_setup_decorator(func, *args, **kwargs):
     @click.option(
         "--console-log-threshold",
         help="Minimum logging threshold for the console logger."
-        " Possible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
     )
     @click.option(
         "--file-log-threshold",
         help="Minimum logging threshold for the file logger."
-        " Possible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
     )
     @click.option("--log-file-path", help="Path to save log files onto.")
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
-            console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-            file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+            console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
+            file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
             log_file_path=kwargs.get("log_file_path"),
         )
 

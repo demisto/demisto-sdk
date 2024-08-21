@@ -97,6 +97,7 @@ lxml = "^5.0.0"
 uv = "^0.1.5"
 toml = "^0.10.2"
 werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
+loguru = "^0.7.2"
 
 [tool.poetry.extras]
 build = ["gsutil"]

@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.validate.tests.test_tools import REPO
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD,
     GENERIC_MODULE,
@@ -291,7 +292,7 @@ class TestIntegrationScriptUnifier:
 
 
 class TestLayoutUnifer:
-    def test_layout_unify(self, repo, mocker, monkeypatch):
+    def test_layout_unify(self, mocker, monkeypatch):
         """
         Given:
             - layout that has 'fromVersion' field and 'toVersion' filed.
@@ -313,7 +314,7 @@ class TestLayoutUnifer:
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
-        pack = repo.create_pack("test")
+        pack = REPO.create_pack("test")
         layout = pack.create_layoutcontainer(
             name="test",
             content=json.load(
@@ -325,7 +326,7 @@ class TestLayoutUnifer:
 
         output = "test.json"
 
-        with ChangeCWD(pack.repo_path):
+        with ChangeCWD(REPO.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]

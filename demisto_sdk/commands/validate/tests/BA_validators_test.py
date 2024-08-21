@@ -2086,52 +2086,66 @@ def test_IsFolderNameHasSeparatorsValidator_obtain_invalid_content_items(
         assert result[0].message == expected_msg
 
 
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(
-                    name="MyIntegration0",
-                    unit_test_name="MyIntegration0",
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-                create_integration_object(
-                    name="MyIntegration0",
-                    unit_test_name="MyIntegration0",
-                    pack_info={"support": PARTNER_SUPPORT},
-                ),
-                # unit test's filename is in lowercase
-                create_integration_object(
-                    name="MyIntegration0",
-                    unit_test_name="myintegration0",
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-            ],
-            1,
-            [
-                "The given Integration is missing a unit test file, please make sure to add one with the following name MyIntegration0_test.py."
-            ],
-        ),
-    ],
-)
-def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items(
-    content_items, expected_number_of_failures, expected_msgs
-):
+def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items__all_valid():
     """
     Given
-    content_items list.
-        - Case 1: Three content items, where the last one has an invalid unit test file name.
+    - Two valid integrations:
+        - One Xsoar supported integration with a valid unit test file name.
+        - One Partner supported integration with a valid unit test file name.
     When
     - Calling the IsHaveUnitTestFileValidator obtain_invalid_content_items function.
     Then
-        - Make sure the right amount of failures return and that the error msg is correct.
+    - Make sure no failures are returned.
     """
     with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                name="MyIntegration0",
+                unit_test_name="MyIntegration0",
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+            create_integration_object(
+                name="MyIntegration0",
+                unit_test_name="MyIntegration0",
+                pack_info={"support": PARTNER_SUPPORT},
+            ),
+        ]
+
         results = IsHaveUnitTestFileValidator().obtain_invalid_content_items(
             content_items
         )
-    assert len(results) == expected_number_of_failures
+
+    assert len(results) == 0
+
+
+def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items__invalid_item():
+    """
+    Given
+    - One invalid integration:
+        - One Xsoar supported integration with an invalid unit test file name.
+    When
+    - Calling the IsHaveUnitTestFileValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message is correct.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                name="MyIntegration0",
+                unit_test_name="myintegration0",
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
+        results = IsHaveUnitTestFileValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+    expected_msgs = [
+        "The given Integration is missing a unit test file, please make sure to add one with the following name MyIntegration0_test.py."
+    ]
+
+    assert len(results) == 1
     assert all(
         [
             result.message == expected_msg

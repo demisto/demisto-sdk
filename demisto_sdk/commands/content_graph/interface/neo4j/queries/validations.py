@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
 
+from more_itertools import first
 from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import (
@@ -308,3 +309,27 @@ def validate_duplicate_ids(
         (item.get("content_item"), item.get("duplicate_content_items"))
         for item in run_query(tx, query)
     ]
+
+
+def validate_test_playbook_in_use(
+    tx: Transaction, test_playbook_ids: List[str], tests_skipped: List[str]
+) -> List[graph.Node]:
+    query = """
+MATCH (tp:TestPlaybook) WHERE
+"""
+    if test_playbook_ids:
+        query += f" tp.object_id IN {test_playbook_ids} AND"
+    query += f"""
+ NOT EXISTS {{ MATCH ()-[:TESTED_BY]->(tp) }}
+AND tp.deprecated = false
+AND NOT (tp.object_id IN {tests_skipped})
+MATCH (tp)-[:IN_PACK]->(p:Pack)
+WHERE p.support = "xsoar"
+AND p.deprecated = false
+RETURN collect(tp) AS content_items
+"""
+    # when there a test playbooks that not in use, the query return a list with one item
+    return first(
+        filter(None, (item.get("content_items") for item in run_query(tx, query))),
+        default=[],
+    )

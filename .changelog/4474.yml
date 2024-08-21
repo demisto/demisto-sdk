@@ -1,4 +1,0 @@
-changes:
-- description: Removed the deprecated `types-pkg-resources` package dependency. demisto-sdk will use the `types-setuptools` package instead.
-  type: internal
-pr_number: 4474

@@ -1,4 +1,0 @@
-changes:
-- description: Started supporting only a dict value for the "cloud_servers_api_keys" file provided.
-  type: internal
-pr_number: 4480

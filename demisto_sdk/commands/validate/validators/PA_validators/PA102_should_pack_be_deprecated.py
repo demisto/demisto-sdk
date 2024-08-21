@@ -18,10 +18,21 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
     description = "Validate that the pack is deprecated if it needs to."
     rationale = (
         "This ensures clarity for users and prevents potential confusion of deprecated content. "
-        "For more about deprecation see: https://xsoar.pan.dev/docs/reference/articles/deprecation-process-and-hidden-packs"
+        "For more about deprecation see: "
+        "https://xsoar.pan.dev/docs/reference/articles/deprecation-process-and-hidden-packs"
     )
-    error_message = "The Pack {0} should be deprecated, as all its integrations, playbooks and scripts are deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated).\nThe description of the pack in the pack_metadata.json should be one of the following formats:\n1. 'Deprecated. Use <PACK_NAME> instead.'\n2. 'Deprecated. <REASON> No available replacement.'"
-    fix_message = "Deprecated the pack {0}.\nPlease make sure to edit the description of the pack in the pack_metadata.json file if there's an existing pack to use instead or add the deprecation reason."
+    error_message = (
+        "The Pack {0} should be deprecated, as all its content items are deprecated.\n"
+        "The name of the pack in the pack_metadata.json should end with (Deprecated).\n"
+        "The description of the pack in the pack_metadata.json should be one of the following formats:\n"
+        "1. 'Deprecated. Use <PACK_NAME> instead.'\n"
+        "2. 'Deprecated. <REASON> No available replacement.'"
+    )
+    fix_message = (
+        "Deprecated the pack {0}.\n"
+        "Please make sure to edit the description of the pack in the pack_metadata.json file "
+        "if there's an existing pack to use instead or add the deprecation reason."
+    )
     related_field = "deprecated"
     is_auto_fixable = True
     expected_git_statuses = [GitStatuses.MODIFIED]
@@ -46,6 +57,7 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
                 content_item.content_items.integration,
                 content_item.content_items.script,
                 content_item.content_items.playbook,
+                content_item.content_items.modeling_rule,
             ]
         ):
             for integration in content_item.content_items.integration:
@@ -56,6 +68,9 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
                     return False
             for playbook in content_item.content_items.playbook:
                 if not playbook.deprecated:
+                    return False
+            for rule in content_item.content_items.modeling_rule:
+                if not rule.deprecated:
                     return False
             return True
         return False

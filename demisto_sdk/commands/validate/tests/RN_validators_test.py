@@ -3,11 +3,15 @@ import pytest
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_incoming_mapper_object,
     create_integration_object,
+    create_old_file_pointers,
     create_pack_object,
     create_trigger_object,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
     IsReleaseNotesFilledOutValidator,
+)
+from demisto_sdk.commands.validate.validators.RN_validators.RN105_multiple_rns_added import (
+    MultipleRNsAddedValidator,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN108_is_rn_added_to_new_pack import (
     IsRNAddedToNewPackValidator,
@@ -211,4 +215,42 @@ def test_release_note_header_validator_invalid():
     results = ReleaseNoteHeaderValidator().obtain_invalid_content_items(
         content_items=[pack]
     )
+    assert expected_error == results[0].message
+
+
+def test_MultipleRNsAddedValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - content_items.
+        - Case 1: A pack with 1 new RN.
+        - Case 2: A Pack with 1 new RN with BC json file.
+        - Case 3: A pack with 2 new RNs.
+
+    When:
+    - Calling the MultipleRNsAddedValidator is_valid function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail anything.
+        - Case 2: Shouldn't fail anything.
+        - Case 3: Should fail.
+    """
+    expected_error = "The pack contains more than one new release note, please make sure the pack contains at most one release note."
+    pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="The new RN",
+    )
+    old_pack = create_pack_object(
+        paths=["version"],
+        values=["2.0.4"],
+        release_note_content="The old RN",
+    )
+    create_old_file_pointers([pack], [old_pack])
+    validator = MultipleRNsAddedValidator()
+    assert not validator.obtain_invalid_content_items(content_items=[pack])
+    pack.release_note.all_rns.append("2.0.5.json")
+    assert not validator.obtain_invalid_content_items(content_items=[pack])
+    pack.release_note.all_rns.append("2.0.6.md")
+    results = validator.obtain_invalid_content_items(content_items=[pack])
     assert expected_error == results[0].message

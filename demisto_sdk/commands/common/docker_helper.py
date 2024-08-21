@@ -89,8 +89,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 def is_custom_registry():
     return (
-        not os.getenv("CONTENT_GITLAB_CI")
-        and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
+        DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
     )
 
 

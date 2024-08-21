@@ -128,8 +128,8 @@ def docker_login(docker_client) -> bool:
                     f"Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}"
                 )
                 return ping
-        except docker.errors.APIError:
-            logger.info(f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
+        except docker.errors.APIError as e:
+            logger.info(f"Did not successfully log in to {DOCKER_REGISTRY_URL} ------ {e=}")
             return False
 
     logger.info(f"Did not log in to {DOCKER_REGISTRY_URL}")

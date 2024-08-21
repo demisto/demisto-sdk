@@ -104,7 +104,7 @@ class StructureError(BaseStrictModel):
     path: Path
     field_name: Tuple[str, ...] = Field(alias="loc")
     error_message: str = Field(alias="msg")
-    error_type: Tuple[str, ...] = Field(alias="type")
+    error_type: str = Field(alias="type")
     ctx: Optional[dict] = None
 
     def __str__(self):

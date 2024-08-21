@@ -150,6 +150,7 @@ def devtest_image(
     if not errors:
         if not should_pull:
             # pull images in background
+            logger.info(f"docker pull from docker hub {image=} ---")
             subprocess.Popen(
                 ["docker", "pull", image],
                 stdout=subprocess.DEVNULL,

@@ -14,7 +14,7 @@ exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.31.6"
+version = "1.31.8"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -55,7 +55,7 @@ inflection = "^0.5.1"
 jsonschema = "^4.4.0"
 mergedeep = "^1.3.4"
 networkx = "^2.7.1"
-nltk = "^3.7"
+nltk = "==3.8.1"
 prettytable = "^3.2.0"
 pykwalify = "^1.8.0"
 pyspellchecker = "^0.6.3"
@@ -139,6 +139,7 @@ validate-conf-json = "demisto_sdk.scripts.validate_conf_json:main"
 init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission_changes:main"
+prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
 
 [tool.ruff]
 exclude = [

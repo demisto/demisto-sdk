@@ -1,4 +1,33 @@
 # Changelog
+## 1.31.8
+* Added the `--ignore` flag to **validate**. [#4385](https://github.com/demisto/demisto-sdk/pull/4385)
+* Added validation GR106, to ensure every modified test playbook is used by at least one content item. [#4446](https://github.com/demisto/demisto-sdk/pull/4446)
+* Added a new **pre-commit** hook to prevent Python files from disabling `mypy` checks in the file level. [#4405](https://github.com/demisto/demisto-sdk/pull/4405)
+* Added a new optional field, `marketplaces`, in the release notes config (e.g. `1_2_3.json`). Use it to choose marketplaces where breaking changes apply. When a list is not provided, the default is all marketplaces. Supports aggregated release notes and retroactive editing. [#4483](https://github.com/demisto/demisto-sdk/pull/4483)
+* Added validation PB127 that verifies default keys exist where marketplace suffix keys exist in playbooks. (e.g. using `description:xsoar` now requires `description`). [#4401](https://github.com/demisto/demisto-sdk/pull/4401)
+* Modified the ***unify*** and ***prepare-content*** commands to add a `demisto.debug` logging of the pack name and version, in Python files. [#4437](https://github.com/demisto/demisto-sdk/pull/4437)
+* Fixed an issue where PA102 failed when on valid modeling rules. [#4497](https://github.com/demisto/demisto-sdk/pull/4497)
+* Fixed an issue where reusing the **content graph** after a long period of inactivity resulted in a 409 error. [#4495](https://github.com/demisto/demisto-sdk/pull/4495)
+* Added a *support* attribute to all content items in the **content graph**. [#4430](https://github.com/demisto/demisto-sdk/pull/4430)
+* Locked the nltk version to 3.8.1, since 3.8.2 was surprisingly removed from PyPI. No effect on demisto-SDK users. [#4496](https://github.com/demisto/demisto-sdk/pull/4496)
+
+## 1.31.7
+* Added 'CaseLayoutRule' to the `ST110` validation. [#4491](https://github.com/demisto/demisto-sdk/pull/4491)
+* Added 'GenericField', 'GenericModule', 'Job', 'List', 'Mapper', 'ModelingRule', 'ParsingRule' and 'PreProcessRule' to the `ST110` validation. [#4470](https://github.com/demisto/demisto-sdk/pull/4470)
+* Added 'CaseLayout' to the `ST110` validation. [#4489](https://github.com/demisto/demisto-sdk/pull/4489)
+* Added the `native_nightly_packs` attribute to the conf.json schema. [#4479](https://github.com/demisto/demisto-sdk/pull/4479)
+* Added 'AssetsModelingRule' to the `ST110` validation. [#4486](https://github.com/demisto/demisto-sdk/pull/4486)
+* Added 'XSIAMReport' to the `ST110` validation. [#4484](https://github.com/demisto/demisto-sdk/pull/4484)
+* Modified the testing of modeling rules on XSIAM by splitting the process to multiple machines [#4441](https://github.com/demisto/demisto-sdk/pull/4441)
+* Added 'IndicatorType' to the `ST110` validation. [#4485](https://github.com/demisto/demisto-sdk/pull/4485)
+* Added 'CaseField' to the `ST110` validation. [#4488](https://github.com/demisto/demisto-sdk/pull/4488)
+* Added 'Report', 'Trigger', 'Widget', 'Wizard', 'XDRCTemplate' and 'XSIAMDashboard' to the `ST110` validation. [#4478](https://github.com/demisto/demisto-sdk/pull/4478)
+* Fixed an issue with the parallel logger not showing the thread id. [#4487](https://github.com/demisto/demisto-sdk/pull/4487)
+* Moved PR100 and XD100 validations to run the `validate-content-path` **pre-commit** hook. These validations ensure the ParsingRule and XSIAM Dashboard filenames are valid. [#4476](https://github.com/demisto/demisto-sdk/pull/4476)
+* Started supporting only a dict value for the "cloud_servers_api_keys" file provided. [#4480](https://github.com/demisto/demisto-sdk/pull/4480)
+* Removed the deprecated `types-pkg-resources` package dependency. demisto-sdk will use the `types-setuptools` package instead. [#4474](https://github.com/demisto/demisto-sdk/pull/4474)
+* Updated paramiko to v3.4.1, removing the warning that would occasionally show. [#4482](https://github.com/demisto/demisto-sdk/pull/#4482)
+
 ## 1.31.6
 * Added **Classifier**, **Layout** and **LayoutRule** to the ST110 validation. [#4447](https://github.com/demisto/demisto-sdk/pull/4447)
 * Added **Playbook** to the ST110 validation. [#4461](https://github.com/demisto/demisto-sdk/pull/4461)

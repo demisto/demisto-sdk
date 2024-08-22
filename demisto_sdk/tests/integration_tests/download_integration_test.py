@@ -57,7 +57,7 @@ def test_integration_download_no_force(demisto_client, tmp_path, mocker):
     - Ensure no download has been made.
     - Ensure skipped msg is printed.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)
@@ -83,7 +83,7 @@ def test_integration_download_with_force(demisto_client, tmp_path, mocker):
     Then
     - Ensure download has been made successfully.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)
@@ -118,7 +118,7 @@ def test_integration_download_list_files(demisto_client, mocker):
     Then
     - Ensure list files has been made successfully.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ["download", "-lf"])
 
@@ -154,7 +154,7 @@ def test_integration_download_fail(demisto_client, tmp_path, mocker):
     Then
     - Ensure that the exit code is 1, since the playbook was not downloaded.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)

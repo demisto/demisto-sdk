@@ -1,4 +1,3 @@
-import logging
 from os.path import join
 from pathlib import Path
 
@@ -53,7 +52,6 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     expected_rn = (
         "\n"
@@ -125,7 +123,6 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     expected_rn = (
         "\n" + "#### Integrations\n\n" + "##### Azure Feed\n\n" + "- %%UPDATE_RN%%\n"
@@ -199,7 +196,6 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     expected_rn = (
         "\n" + "#### Incident Fields\n\n" + "##### City\n\n" + "- %%UPDATE_RN%%\n"
@@ -265,7 +261,6 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     expected_rn = (
         "\n" + "#### Integrations\n\n" + "##### VMware\n\n" + "- %%UPDATE_RN%%\n"
@@ -324,7 +319,6 @@ def test_update_release_notes_non_content_path(demisto_client, mocker):
     Then
     - Ensure an error is raised
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     runner = CliRunner(mix_stderr=False)
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
@@ -369,7 +363,6 @@ def test_update_release_notes_existing(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     expected_rn = (
         "\n"
@@ -451,7 +444,6 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     - Ensure release notes file created with no errors for APIModule and related pack FeedTAXII.
     - Ensure message is printed when update release notes process finished.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     # Set up packs and paths
     repo.setup_one_pack("ApiModules")
@@ -547,7 +539,6 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     Then
     - Ensure not find changes which would belong in release notes .
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack = repo.create_pack("FeedAzureValid")
     pack.pack_metadata.write_json(
@@ -620,7 +611,6 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, re
     - Ensure release notes file created with no errors
     - Ensure the new version is taken from master and not from local metadata file.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     modified_files = {
         join(AZURE_FEED_PACK_PATH, "IncidentFields", "incidentfield-city.json")
@@ -674,7 +664,6 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
     - Ensure release notes file created with no errors
     - Ensure the new version is taken from local metadata file.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     modified_files = {
         join(
@@ -732,7 +721,6 @@ def test_force_update_release_no_pack_given(demisto_client, repo, mocker):
     Then
     - Ensure that an error is printed.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     runner = CliRunner(mix_stderr=True)
     runner.invoke(main, [UPDATE_RN_COMMAND, "--force"])
@@ -774,7 +762,6 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
     - Ensure release notes file created with no errors
     - Ensure the new version is taken from local metadata file.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     modified_files = {
         join(
@@ -836,7 +823,6 @@ def test_force_update_release(demisto_client, mocker, repo):
     Then
     - Ensure that RN were updated.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     rn_path = join(THINKCANARY_RN_FOLDER, "1_0_1.md")
     Path(rn_path).unlink(missing_ok=True)
@@ -904,8 +890,6 @@ def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
         return_value=("1.2.3", {"currentVersion": "1.2.3"}),
     )
 
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
     runner = CliRunner(mix_stderr=True)
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
     assert result.exit_code == 0
@@ -929,7 +913,7 @@ def test_update_release_on_matadata_change_that_require_rn(
     Then
     - Ensure release notes file created with no errors
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     runner = CliRunner(mix_stderr=True)
 
     pack_metadata_path = "demisto_sdk/tests/test_files/1.pack_metadata.json"

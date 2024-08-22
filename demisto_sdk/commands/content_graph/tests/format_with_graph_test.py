@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List
 
@@ -29,7 +28,7 @@ from demisto_sdk.commands.content_graph.tests.update_content_graph_test import (
     _get_pack_by_id,
 )
 from TestSuite.repo import Repo
-from TestSuite.test_tools import ChangeCWD, str_in_caplog
+from TestSuite.test_tools import ChangeCWD
 
 FORMAT_CMD = "format"
 
@@ -305,7 +304,7 @@ def repository(mocker, repo) -> ContentDTO:
 
 
 def test_format_mapper_with_graph_remove_unknown_content(
-    mocker, monkeypatch, repository, repo
+    mocker, caplog, repository, repo
 ):
     """
     Given
@@ -318,8 +317,6 @@ def test_format_mapper_with_graph_remove_unknown_content(
 
     with ContentGraphInterface() as interface:
         create_content_graph(interface)
-
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_graph_object = _get_pack_by_id(repository, "SamplePack")
     mapper_graph_object = pack_graph_object.content_items.mapper[0]
@@ -344,7 +341,7 @@ def test_format_mapper_with_graph_remove_unknown_content(
     )
     assert result.exit_code == 0
     assert not result.exception
-    assert str_in_caplog(logger_info.call_args_list, message)
+    assert message in caplog.text
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
@@ -356,7 +353,7 @@ def test_format_mapper_with_graph_remove_unknown_content(
 
 
 def test_format_layout_with_graph_remove_unknown_content(
-    mocker, monkeypatch, repository, repo
+    mocker, caplog, repository, repo
 ):
     """
     Given
@@ -369,8 +366,6 @@ def test_format_layout_with_graph_remove_unknown_content(
 
     with ContentGraphInterface() as interface:
         create_content_graph(interface)
-
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_graph_object = _get_pack_by_id(repository, "SamplePack")
     layout_graph_object = pack_graph_object.content_items.layout[0]
@@ -395,7 +390,7 @@ def test_format_layout_with_graph_remove_unknown_content(
     )
     assert result.exit_code == 0
     assert not result.exception
-    assert str_in_caplog(logger_info.call_args_list, message)
+    assert message in caplog.text
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.

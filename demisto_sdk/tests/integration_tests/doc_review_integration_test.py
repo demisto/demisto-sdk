@@ -1,5 +1,3 @@
-import logging
-
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
@@ -23,7 +21,6 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
     - Ensure spell check runs on yml and md files only.
     - Ensure no misspelled words are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack = repo.create_pack("my_pack")
     integration = pack.create_integration("myint")
@@ -62,7 +59,6 @@ def test_spell_integration_invalid(repo, mocker, monkeypatch):
     Then
     - Ensure misspelled words are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack = repo.create_pack("my_pack")
     integration = pack.create_integration("myint")
@@ -103,7 +99,6 @@ def test_spell_script_invalid(repo, mocker, monkeypatch):
     Then
     - Ensure misspelled words are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack = repo.create_pack("my_pack")
     script = pack.create_script("myscr")
@@ -145,7 +140,6 @@ def test_spell_playbook_invalid(repo, mocker, monkeypatch):
     Then
     - Ensure misspelled words are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack = repo.create_pack("my_pack")
     playbook = pack.create_playbook("myplaybook")
@@ -191,7 +185,6 @@ def test_spell_readme_invalid(repo, mocker, monkeypatch):
     - Ensure misspelled words are found.
     - Ensure legal camelCase words are not marked.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack = repo.create_pack("my_pack")
     integration = pack.create_integration("myint")
@@ -246,7 +239,6 @@ def test_review_release_notes_valid(repo, mocker, monkeypatch):
     Then
     - Ensure no errors are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack = repo.create_pack("my_pack")
     valid_rn = (
@@ -287,7 +279,6 @@ def test_review_release_notes_invalid(repo, mocker, monkeypatch):
     - Ensure misspelled words are found and correct fix is suggested.
     - Ensure all errors are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack = repo.create_pack("my_pack")
     valid_rn = (
@@ -329,7 +320,6 @@ def test_templates_print(repo, mocker, monkeypatch):
     - Ensure templates are printed.
     - Ensure no additional checks run.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)

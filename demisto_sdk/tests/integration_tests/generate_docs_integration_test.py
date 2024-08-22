@@ -32,11 +32,10 @@ class TestPlaybooks:
         - Ensure README.md has an inputs section.
         - Ensure README.md has an outputs section.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         logger_warning = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "warning"
         )
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         valid_playbook_with_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/playbook-Test_playbook.yml"
@@ -80,11 +79,10 @@ class TestPlaybooks:
         - Ensure README.md does not have an inputs section.
         - Ensure README.md does not have an outputs section.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         logger_warning = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "warning"
         )
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         valid_playbook_no_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/Playbooks.playbook-test.yml"
@@ -125,11 +123,10 @@ class TestPlaybooks:
         - Ensure integration dependencies exists.
         - Ensure Builtin not in dependencies.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         logger_warning = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "warning"
         )
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         valid_playbook_with_dependencies = join(
             DEMISTO_SDK_PATH,
@@ -178,11 +175,10 @@ class TestPlaybooks:
         - Ensure integration dependencies exists.
         - Ensure Builtin not in dependencies.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         logger_warning = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "warning"
         )
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         valid_playbook_with_dependencies = join(
             DEMISTO_SDK_PATH,
@@ -235,11 +231,10 @@ class TestPlaybooks:
         - Ensure the first README.md has an outputs section.
         - Ensure the second README.md does not have an outputs section.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         logger_warning = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "warning"
         )
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         valid_playbook_dir = join(DEMISTO_SDK_PATH, "tests/test_files/Playbooks")
         runner = CliRunner(mix_stderr=False)

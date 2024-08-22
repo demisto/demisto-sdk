@@ -442,7 +442,7 @@ def test_post_results(
         - Case 2: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'BA101' and the warning logger wasn't called.
         - Case 3: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'BA101' and the warning logger was called once with 'BC100'
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     validation_results = ResultWriter()
     validation_results.validation_results = results

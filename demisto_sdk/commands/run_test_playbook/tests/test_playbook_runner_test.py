@@ -1,5 +1,3 @@
-import logging
-
 import click
 import demisto_client
 import pytest
@@ -72,7 +70,6 @@ class TestTestPlaybookRunner:
             - validate the results is aas expected
             - validate the num of tpb is as expected (4 tpb in Azure Pack)
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
@@ -107,7 +104,6 @@ class TestTestPlaybookRunner:
             - validate the results is aas expected
             - validate the num of tpb is as expected (7 tpb in CONTENT_REPO_EXAMPLE_ROOT)
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
             mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
@@ -184,7 +180,6 @@ class TestTestPlaybookRunner:
             - validate the error code is as expected.
             - validate the Error message when the argument is missing
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(
@@ -225,7 +220,6 @@ class TestTestPlaybookRunner:
             - validate the error code is as expected.
             - validate all the message is as expected.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
@@ -281,7 +275,6 @@ class TestTestPlaybookRunner:
             - validate the error code is as expected.
             - validate the all the messages is as expected.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")

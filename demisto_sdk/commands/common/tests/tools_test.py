@@ -1,5 +1,4 @@
 import glob
-import logging
 import os
 import shutil
 from configparser import ConfigParser
@@ -156,7 +155,7 @@ from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
-from TestSuite.test_tools import ChangeCWD, str_in_caplog
+from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
 
@@ -3216,7 +3215,7 @@ def test_get_content_path(input_path, expected_output):
     assert tools.get_content_path(input_path) == expected_output
 
 
-def test_get_content_path_no_remote(mocker):
+def test_get_content_path_no_remote(mocker, caplog):
     """
     Given:
         - A path to a file or directory in the content repo, with no remote
@@ -3234,12 +3233,8 @@ def test_get_content_path_no_remote(mocker):
     mocker.patch(
         "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
     )
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     tools.get_content_path(Path("/User/username/test"))
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "<yellow>Please run demisto-sdk in content repository!</yellow>",
-    )
+    assert "Please run demisto-sdk in content repository!" in caplog.text
 
 
 @pytest.mark.parametrize(

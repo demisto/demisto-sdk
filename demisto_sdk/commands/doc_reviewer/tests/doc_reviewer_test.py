@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 from enum import Enum
@@ -24,10 +23,7 @@ from demisto_sdk.tests.integration_tests.validate_integration_test import (
 )
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
-from TestSuite.test_tools import (
-    ChangeCWD,
-    str_in_caplog,
-)
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestDocReviewFilesAreFound:
@@ -523,7 +519,7 @@ class TestDocReviewPrinting:
 
         doc_reviewer.print_file_report()
 
-    def test_printing_of_valid_spelled_files(self, mocker, monkeypatch):
+    def test_printing_of_valid_spelled_files(self, mocker, caplog):
         """
         Given -
             Files reported as valid spelled files.
@@ -534,13 +530,12 @@ class TestDocReviewPrinting:
         Then -
             Ensure only the files without misspells are printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         self.get_file_report_mocker(files_type=self.SpelledFileType.VALID)
 
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in caplog.text
                 for current_str in [
                     "Files Without Misspells",
                     "file1\nfile2",
@@ -548,9 +543,9 @@ class TestDocReviewPrinting:
             ]
         )
 
-        assert not str_in_caplog(logger_info.call_args_list, "Files With Misspells")
+        assert not "Files With Misspells" not in caplog.text
 
-    def test_printing_invalid_spelled_files(self, mocker, monkeypatch):
+    def test_printing_invalid_spelled_files(self, caplog):
         """
         Given -
             Files reported as invalid spelled files.
@@ -561,13 +556,12 @@ class TestDocReviewPrinting:
         Then -
             Ensure only the files with misspells are printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         self.get_file_report_mocker(files_type=self.SpelledFileType.INVALID)
 
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in caplog.text
                 for current_str in [
                     "Files With Misspells",
                     "file1\nfile2",
@@ -575,9 +569,9 @@ class TestDocReviewPrinting:
             ]
         )
 
-        assert not str_in_caplog(logger_info.call_args_list, "Files Without Misspells")
+        assert not "Files Without Misspells" not in caplog.text
 
-    def test_printing_malformed_release_notes(self, mocker, monkeypatch):
+    def test_printing_malformed_release_notes(self, caplog):
         """
         Given -
             Malformed release-note.
@@ -588,7 +582,6 @@ class TestDocReviewPrinting:
         Then -
             Ensure 'Malformed Release Notes' is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         self.get_file_report_mocker(
             files_type=self.SpelledFileType.INVALID_RELEASE_NOTES
@@ -596,7 +589,7 @@ class TestDocReviewPrinting:
 
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in caplog.text
                 for current_str in [
                     "Malformed Release Notes",
                     "file1\nfile2",
@@ -615,7 +608,6 @@ class TestDocReviewPrinting:
         Then -
             Ensure both files misspelled and correctly spelled files are printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         self.get_file_report_mocker(
             files_type=self.SpelledFileType.BOTH_INVALID_AND_VALID
@@ -623,7 +615,7 @@ class TestDocReviewPrinting:
 
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in caplog.text
                 for current_str in [
                     "Files Without Misspells",
                     "file1\nfile2",

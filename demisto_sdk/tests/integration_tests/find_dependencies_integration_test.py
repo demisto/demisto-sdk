@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 
@@ -55,8 +54,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure no error occurs.
         - Ensure debug file is created.
         """
-
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         mock_is_external_repo(mocker, False)
         # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
@@ -127,7 +124,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure find-dependencies passes.
         - Ensure no error occurs.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mock_is_external_repo(mocker, False)
         pack = repo.create_pack("FindDependencyPack")
         integration = pack.create_integration("integration")
@@ -232,7 +229,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure find-dependencies passes.
         - Ensure dependency is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mock_is_external_repo(mocker, False)
         pack1 = repo.create_pack("FindDependencyPack1")
         integration = pack1.create_integration("integration1")
@@ -299,7 +296,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert result.exit_code == 0
 
     def test_wrong_path(self, pack, mocker):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             pack.create_integration()

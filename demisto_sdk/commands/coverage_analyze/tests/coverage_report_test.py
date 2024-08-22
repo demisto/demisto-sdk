@@ -50,8 +50,6 @@ class TestCoverageReport:
             assert str(e) == "The coverage file does not exist."
 
     def test_with_print_report(self, tmpdir, monkeypatch, mocker):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
         monkeypatch.chdir(tmpdir)
 
         coverage_path = os.path.join(
@@ -74,7 +72,6 @@ class TestCoverageReport:
         )
 
     def test_with_export_report_function(self, tmpdir, monkeypatch, mocker):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         monkeypatch.chdir(tmpdir)
         coverage_path = os.path.join(
             COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations"

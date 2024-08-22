@@ -209,7 +209,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the pack is not on the tenant.
             - The command returns with a non-zero exit code.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -276,7 +275,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the push of the test data failed.
             - The command returns with a non-zero exit code.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -353,7 +351,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the dataset was not found.
             - The command returns with a non-zero exit code.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -435,7 +432,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying XQL query failed.
             - The command returns with a non-zero exit code.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -530,7 +526,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying XQL query failed.
             - The command returns with a non-zero exit code.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -631,7 +626,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the results match the expectations.
             - The command returns with a zero exit code.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -767,7 +761,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the results match the expectations.
             - The command returns with a zero exit code.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -908,7 +901,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - The command returns with a zero exit code.
             - make sure that the schema/testdata mappings validation is skipped.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -1127,8 +1119,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the results do not match the expectations.
             - The command returns with a non-zero exit code.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -1264,7 +1254,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the results do not match the expectations.
             - The command returns with a non-zero exit code.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -1385,8 +1374,6 @@ class TestTheTestModelingRuleCommandMultipleRules:
             - Verify we get a message that the second modeling test passed.
             - The command returns with a non-zero exit code.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -1552,7 +1539,6 @@ class TestTheTestModelingRuleCommandInteractive:
         logger_warning = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "warning"
         )
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -1643,7 +1629,6 @@ class TestDeleteExistingDataset:
             - Verify we get a message saying the dataset was deleted.
 
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,

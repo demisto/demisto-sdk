@@ -1,5 +1,3 @@
-import logging
-
 import pytest
 from click.testing import CliRunner
 
@@ -29,7 +27,7 @@ def test_integration_secrets_incident_field_positive(mocker, repo):
     - Ensure secrets validation passes.
     - Ensure success secrets validation message is printed.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     # Mocking the git functionality (Else it'll raise an error)
     pack = repo.create_pack("pack")
     integration = pack.create_integration("integration")
@@ -68,7 +66,7 @@ def test_integration_secrets_integration_negative(mocker, repo):
     - Ensure secrets validation fails.
     - Ensure secret strings are in failure message.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     # Mocking the git functionality (Else it'll raise an error)
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("sample")
@@ -111,7 +109,7 @@ def test_integration_secrets_integration_positive(mocker, repo):
     Then
     - Ensure secrets validation succeed.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     # Change working dir to repo
@@ -151,7 +149,7 @@ def test_integration_secrets_integration_global_whitelist_positive_using_git(
     Then
     - Ensure secrets validation succeed.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     # Mocking the git functionality (Else it'll raise an error)
     pack = repo.create_pack("pack")
     integration = pack.create_integration("integration")
@@ -186,7 +184,7 @@ def test_integration_secrets_integration_with_regex_expression(mocker, pack):
     - Ensure secrets that the secret isn't in the output.
     - Ensure no error raised
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     pack.secrets.write_secrets("***.url\n")
@@ -226,7 +224,7 @@ def test_integration_secrets_integration_positive_with_input_option(mocker, repo
     - Ensure secrets that the secret isn't in the output.
     - Ensure no error raised
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     # Create a pack
@@ -256,7 +254,7 @@ def test_integration_secrets_integration_negative_with_input_option(mocker, repo
     Then
     - Ensure secrets found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     pack = repo.create_pack("sample_pack")
@@ -287,7 +285,7 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
     Then
     - Ensure secrets found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     pack = repo.create_pack("pack")
@@ -313,7 +311,6 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
 
 
 def test_secrets_for_file_name_with_space_in_it(mocker, repo):
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     pack = repo.create_pack("pack")

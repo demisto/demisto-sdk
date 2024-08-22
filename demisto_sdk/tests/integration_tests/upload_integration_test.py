@@ -1,4 +1,3 @@
-import logging
 import os
 from io import BytesIO
 from os.path import join
@@ -60,7 +59,6 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     """
     import demisto_sdk.commands.content_graph.objects.content_item as content_item
 
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     pack_path = Path(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
     )
@@ -118,7 +116,6 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
     """
     import demisto_sdk.commands.content_graph.objects.content_item as content_item
 
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     pack_path = Path(
         DEMISTO_SDK_PATH,
         "tests/test_files/content_repo_example/Packs/ExamplePack/Integrations",
@@ -224,7 +221,7 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     - Ensure success upload message is printed.
     - ensure yml / json content items inside the pack are getting unified.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     mocker.patch.object(
         API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
     )
@@ -383,7 +380,6 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
     Then
     - Ensure pack is not uploaded and correct error message is printed.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
@@ -471,8 +467,6 @@ def test_upload_single_indicator_field(mocker, pack):
             "fromVersion": "5.5.0",
         },
     )
-
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     mocker.patch(
         "demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object"

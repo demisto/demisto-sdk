@@ -31,7 +31,6 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
     mock_test_playbook,
 )
-from TestSuite.test_tools import str_in_caplog
 
 GIT_PATH = Path(git_path())
 
@@ -536,7 +535,9 @@ def test_are_toversion_relationships_paths_valid(repository: ContentDTO):
     assert not is_valid
 
 
-def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocker):
+def test_are_fromversion_relationships_paths_valid(
+    repository: ContentDTO, mocker, caplog
+):
     """
     Given
     - A content repo
@@ -545,16 +546,15 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
     Then
     - Validate the existance of invalid from_version relationships
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_fromversion_fields()
 
     assert not is_valid
-    assert str_in_caplog(
-        logger_error.call_args_list,
+    assert (
         "Content item 'SamplePlaybook' whose from_version is '6.5.0' uses the content"
-        " items: 'SamplePlaybook2' whose from_version is higher",
+        " items: 'SamplePlaybook2' whose from_version is higher" in caplog.text
     )
 
 
@@ -578,6 +578,7 @@ def test_is_file_using_unknown_content(
     repository: ContentDTO,
     include_optional: bool,
     is_valid: bool,
+    caplog,
 ):
     """
     Given
@@ -588,7 +589,7 @@ def test_is_file_using_unknown_content(
     Then
     - Check whether the graph is valid or not, based on whether optional content dependencies were included.
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     with GraphValidator(
         update_graph=False, git_files=[], include_optional_deps=include_optional
@@ -598,14 +599,13 @@ def test_is_file_using_unknown_content(
 
     logger_to_search = logger_warning if is_valid else logger_error
 
-    assert str_in_caplog(
-        logger_to_search.call_args_list,
-        "Content item 'SampleIntegration' using content items: 'SampleClassifier' which"
-        " cannot be found in the repository",
-    )
+    assert (
+        "Content item 'SampleIntegration' using content items: 'SampleClassifier'"
+        " which cannot be found in the repository"
+    ) in caplog.text
 
 
-def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
+def test_is_file_display_name_already_exists(repository: ContentDTO, mocker, caplog):
     """
     Given
     - A content repo
@@ -614,20 +614,19 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
     Then
     - Validate the existance of duplicate display names
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.is_file_display_name_already_exists()
 
     assert not is_valid
     for i in range(1, 4):
-        assert str_in_caplog(
-            logger_error.call_args_list,
-            f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name",
+        assert (
+            f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name"
+            in caplog.text
         )
 
 
-def test_validate_unique_script_name(repository: ContentDTO, mocker):
+def test_validate_unique_script_name(repository: ContentDTO, mocker, caplog):
     """
     Given
         - A content repo
@@ -636,36 +635,31 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker):
     Then
         - Validate the existance of duplicate script names
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_unique_script_name()
 
     assert not is_valid
 
-    assert str_in_caplog(
-        logger_error.call_args_list,
+    assert (
         "Cannot create a script with the name setAlert, "
         "because a script with the name setIncident already exists.\n",
-    )
+    ) in caplog.text
 
-    assert not str_in_caplog(
-        logger_error.call_args_list,
+    assert (
         "Cannot create a script with the name getAlert, "
         "because a script with the name getIncident already exists.\n",
-    )
+    ) not in caplog.text
 
     # Ensure that the script-name-incident-to-alert ignore is working
-    assert not str_in_caplog(
-        logger_error.call_args_list,
+    assert (
         "Cannot create a script with the name getAlerts, "
         "because a script with the name getIncidents already exists.\n",
-    )
+    ) not in caplog.text
 
 
-def test_are_marketplaces_relationships_paths_valid(
-    repository: ContentDTO, caplog, mocker
-):
+def test_are_marketplaces_relationships_paths_valid(repository: ContentDTO, caplog):
     """
     Given
     - A content repo
@@ -674,18 +668,17 @@ def test_are_marketplaces_relationships_paths_valid(
     Then
     - Validate the existence invalid marketplaces uses
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_marketplaces_fields()
 
     assert not is_valid
-    assert str_in_caplog(
-        logger_error.call_args_list,
+    assert (
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
         ", however it uses content items: 'SamplePlaybook2' which are not supported in"
         " all of the marketplaces of 'SamplePlaybook'",
-    )
+    ) in caplog.text
 
 
 def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
@@ -697,7 +690,7 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
     Then
     - Validate the existance invalid core pack dependency
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     mocker.patch(
         "demisto_sdk.commands.common.hook_validations.graph_validator.get_marketplace_to_core_packs",
         return_value={MarketplaceVersions.XSOAR: {"SamplePack"}},
@@ -707,13 +700,10 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
         is_valid = graph_validator.validate_dependencies()
 
     assert not is_valid
-    assert str_in_caplog(
-        logger_error.call_args_list,
-        "The core pack SamplePack cannot depend on non-core packs: ",
-    )
+    assert "The core pack SamplePack cannot depend on non-core packs: " in caplog.text
 
 
-def test_validate_duplicate_id(repository: ContentDTO, mocker):
+def test_validate_duplicate_id(repository: ContentDTO, caplog):
     """
     Given
     - A content repo with duplicate ids "SamplePlaybook" (configured on repository fixture)
@@ -722,17 +712,13 @@ def test_validate_duplicate_id(repository: ContentDTO, mocker):
     Then
     - Validate the existence of duplicate ids
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_duplicate_ids()
 
     assert not is_valid
-    assert str_in_caplog(
-        logger_error.call_args_list,
-        "[GR105] - The ID 'SamplePlaybook' already exists in",
-    )
+    assert ("[GR105] - The ID 'SamplePlaybook' already exists in",) in caplog.text
 
 
 def test_pack_ids_collection():
@@ -745,7 +731,7 @@ def test_pack_ids_collection():
         assert graph_validator.pack_ids == expected_pack_ids
 
 
-def test_deprecated_usage__existing_content(repository: ContentDTO, mocker):
+def test_deprecated_usage__existing_content(repository: ContentDTO, caplog):
     """
     Given
     - A content repo with item using deprecated commands in existing content.
@@ -755,20 +741,17 @@ def test_deprecated_usage__existing_content(repository: ContentDTO, mocker):
     - validate warning is display but it's considered as valid
     """
 
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     with GraphValidator(update_graph=False) as validator:
         create_content_graph(validator.graph)
         is_valid = validator.validate_deprecated_items_usage()
 
     assert is_valid
-    assert str_in_caplog(
-        logger_info.call_args_list,
+    assert (
         "[GR107] - The Command 'deprecated-command' is deprecated but used in the following content item:",
-    )
-    assert str_in_caplog(
-        logger_info.call_args_list,
+    ) in caplog.text
+    assert (
         "[GR107] - The Integration 'DeprecatedIntegration' is deprecated but used in the following content item:",
-    )
+    ) in caplog.text
 
 
 def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
@@ -792,7 +775,7 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
     "changed_pack", ["Packs/SamplePack", "Packs/SamplePack2", None]
 )
 def test_validate_hidden_pack_is_not_mandatory_dependency(
-    repository: ContentDTO, mocker, changed_pack: Optional[str]
+    repository: ContentDTO, caplog, changed_pack: Optional[str]
 ):
     """
     Given
@@ -807,7 +790,6 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
     Then
     - validate that an error occurs with a message stating that SamplePack2 is hidden and has mandatory dependencies
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     git_files = [Path(changed_pack)] if changed_pack else changed_pack
 
@@ -818,7 +800,6 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
         )
 
     assert not is_valid
-    assert str_in_caplog(
-        logger_error.call_args_list,
+    assert (
         "[GR108] - SamplePack pack(s) cannot have a mandatory dependency on the hidden pack SamplePack2",
-    )
+    ) in caplog.text

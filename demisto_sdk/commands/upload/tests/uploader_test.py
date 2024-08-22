@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 import zipfile
@@ -496,7 +495,6 @@ def test_upload_packs_from_configfile(demisto_client_configure, mocker):
 
 
 def test_upload_invalid_path(mocker):
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     mocker.patch.object(demisto_client, "configure", return_value="object")
 
     path = Path(
@@ -618,7 +616,7 @@ class TestPrintSummary:
             "CONTENT_PATH",
             Path(f"{git_path()}/demisto_sdk/tests/test_files"),
         )
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mock_api_client(mocker)
 
         uploader = Uploader(None)
@@ -651,7 +649,7 @@ class TestPrintSummary:
         Then
             - Ensure uploaded failure message is printed as expected
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mock_api_client(mocker)
 
         uploader = Uploader(None)
@@ -687,7 +685,7 @@ class TestPrintSummary:
         Then
             - Ensure uploaded unuploaded message is printed as expected
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mock_api_client(mocker)
 
         pack = repo.create_pack()
@@ -768,7 +766,7 @@ class TestZippedPackUpload:
             if path
             else "No input provided for uploading"
         )
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mock_api_client(mocker)
 
         # run
@@ -1010,8 +1008,6 @@ class TestZippedPackUpload:
 
 class TestItemDetacher:
     def test_detach_item(self, mocker):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
         mock_api_client(mocker)
         mocker.patch.object(
             API_CLIENT,

@@ -1,4 +1,3 @@
-import logging
 from os import listdir
 from pathlib import Path
 
@@ -23,7 +22,6 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
     - Ensure pack metadata is created successfully.
     - Ensure integration directory contain all files.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_name = "SuperPack"
     fill_pack_metadata = "Y"
@@ -134,7 +132,6 @@ def test_integration_init_integration_positive_no_inline_pack_name(
     - Ensure pack metadata is created successfully.
     - Ensure integration directory contain all files.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_name = "SuperPack"
     fill_pack_metadata = "Y"

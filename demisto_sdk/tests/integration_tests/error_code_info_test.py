@@ -1,5 +1,3 @@
-import logging
-
 import pytest
 from click.testing import CliRunner
 
@@ -19,7 +17,7 @@ def test_error_code_info_end_to_end(mocker, error_code):
     Then
      - make sure the command does not fail and exits gracefully.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ["error-code", "-i", error_code])
     assert result.exit_code == 0
@@ -28,8 +26,6 @@ def test_error_code_info_end_to_end(mocker, error_code):
 
 
 def test_error_code_info_sanity(mocker, monkeypatch):
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ["error-code", "-i", "BA100"])
 
@@ -46,8 +42,6 @@ def test_error_code_info_refactored_validate(mocker, monkeypatch):
     from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
         DockerImageTagIsNotOutdated,
     )
-
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ["error-code", "-i", "DO106"])
@@ -66,8 +60,6 @@ def test_error_code_info_refactored_validate(mocker, monkeypatch):
 
 
 def test_error_code_info_failure(mocker, monkeypatch):
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ["error-code", "-i", "KELLER"])
 

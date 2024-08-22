@@ -1,4 +1,3 @@
-import logging
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
@@ -214,7 +213,6 @@ class TestXSOARConfigFileUpdater:
             - validate the Error massage when the argument us missing
             - validate the xsoar_config file output is as expected
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with temp_dir() as tmp_output_dir:
             click.Context(command=xsoar_config_file_update).invoke(
@@ -270,7 +268,6 @@ class TestXSOARConfigFileUpdater:
             - validate the Error massage when the argument us missing
             - validate the xsoar_config file output is as expected
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with temp_dir() as tmp_output_dir:
             click.Context(command=xsoar_config_file_update).invoke(
@@ -325,7 +322,7 @@ class TestXSOARConfigFileUpdater:
             - validate the error code is as expected.
             - validate the Error massage when the argument us missing
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         self.add_custom_pack = add_custom_pack
         self.pack_id = pack_id
         self.pack_data = pack_data

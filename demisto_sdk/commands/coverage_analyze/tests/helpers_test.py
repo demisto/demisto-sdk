@@ -9,6 +9,7 @@ import coverage
 import pytest
 import requests
 from freezegun import freeze_time
+from more_itertools import one
 
 from demisto_sdk.commands.common.constants import TEST_COVERAGE_DEFAULT_URL
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -23,7 +24,6 @@ from demisto_sdk.commands.coverage_analyze.helpers import (
     parse_report_type,
     percent_to_float,
 )
-from TestSuite.test_tools import str_in_caplog
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 JSON_MIN_DATA_FILE = os.path.join(TEST_DATA_DIR, "coverage-min.json")
@@ -140,28 +140,22 @@ class TestExportReport:
     def foo_raises(self):
         raise coverage.misc.CoverageException("coverage.misc.CoverageException")
 
-    def test_export_report(self, mocker, monkeypatch):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
+    def test_export_report(self, mocker, caplog):
         foo_mock = mocker.patch.object(self, "foo")
         export_report(self.foo, "the_format", "the_path")
         foo_mock.assert_called_once()
-        assert len(logger_info.call_args_list) == 1
-        assert str_in_caplog(
-            logger_info.call_args_list,
+        assert one(caplog.records).message == (
             "exporting the_format coverage report to the_path",
         )
 
-    def test_export_report_with_error(self, mocker, monkeypatch):
+    def test_export_report_with_error(self, mocker, caplog):
         logger_warning = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "warning"
         )
 
         export_report(self.foo_raises, "the_format", "the_path")
         assert len(logger_warning.call_args_list) == 1
-        assert str_in_caplog(
-            logger_warning.call_args_list, "coverage.misc.CoverageException"
-        )
+        assert "coverage.misc.CoverageException" in caplog.text
 
 
 class TestCoverageSummary:
@@ -344,7 +338,7 @@ class TestFixFilePath:
     data_test_with_two_files = [["HealthCheckAnalyzeLargeInvestigations", "Vertica"]]
 
     @pytest.mark.parametrize("cov_file_names", data_test_with_two_files)
-    def test_with_two_files(self, mocker, monkeypatch, tmpdir, cov_file_names):
+    def test_with_two_files(self, mocker, caplog, tmpdir, cov_file_names):
         logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
         cov_files_paths = []
@@ -364,7 +358,7 @@ class TestFixFilePath:
         assert len(logger_debug.call_args_list) == 2
         assert all(
             [
-                str_in_caplog(logger_debug.call_args_list, current_str)
+                current_str in caplog.text
                 for current_str in [
                     "unexpected file list in coverage report",
                     "removing coverage report for some_path",

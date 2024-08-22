@@ -5,7 +5,7 @@ from contextlib import nullcontext as does_not_raise
 from importlib import util
 from importlib.machinery import SourceFileLoader
 from types import ModuleType
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Iterator, Optional
 
 import pytest
 
@@ -1876,7 +1876,7 @@ class TestYMLGeneration:
         yml_generator.generate()
         assert self.FULL_INTEGRATION_DICT == yml_generator.get_metadata_dict()
 
-    def test_no_metadata_collector_defined(self, tmp_path, repo, mocker, monkeypatch):
+    def test_no_metadata_collector_defined(self, tmp_path, repo, mocker, caplog):
         """
         Given
         - full integration code without YMLMetadataCollector
@@ -1887,11 +1887,6 @@ class TestYMLGeneration:
         Then
         - Ensure the right message is displayed and the file is marked as non generatable.
         """
-        logger_exception = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "exception"
-        )
-
-
         integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
@@ -1904,14 +1899,14 @@ class TestYMLGeneration:
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
 
-        assert str_in_caplog(
-            logger_exception.call_args_list, "No metadata collector found in"
+        assert (
+             "No metadata collector found in" in caplog.text
         )
         assert not yml_generator.is_generatable_file
         assert not yml_generator.metadata_collector
         assert not yml_generator.get_metadata_dict()
 
-    def test_file_importing_failure(self, tmp_path, repo, mocker, monkeypatch):
+    def test_file_importing_failure(self, tmp_path, repo, caplog: Iterator[LogCaptureFixture]):
         """
         Given
         - Integration code raising an exception.
@@ -1922,9 +1917,6 @@ class TestYMLGeneration:
         Then
         - Ensure the exception is printed in the stdout.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-
-
         integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
@@ -1934,9 +1926,7 @@ class TestYMLGeneration:
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
 
-        assert str_in_caplog(
-            logger_error.call_args_list, "UniqueIntegrationException"
-        )
+        assert "UniqueIntegrationException" in caplog.text
         assert not yml_generator.is_generatable_file
         assert not yml_generator.metadata_collector
         assert not yml_generator.get_metadata_dict()
@@ -1954,7 +1944,7 @@ class TestYMLGeneration:
         - Ensure relevant message is printed.
         - Ensure that the no YML dict is generated.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
 
 
         integration = Integration(tmp_path, "integration_name", repo)
@@ -1970,7 +1960,7 @@ class TestYMLGeneration:
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
 
-        assert str_in_caplog(logger_error.call_args_list, "Problem importing")
+        assert  "Problem importing" in caplog.text
         assert not yml_generator.is_generatable_file
         assert not yml_generator.metadata_collector
         assert not yml_generator.get_metadata_dict()

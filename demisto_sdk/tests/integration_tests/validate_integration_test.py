@@ -1,5 +1,4 @@
 import copy
-import logging
 from copy import deepcopy
 from os.path import join
 from time import sleep
@@ -144,7 +143,7 @@ class TestGenericFieldValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_generic_field("generic-field", GENERIC_FIELD)
@@ -184,7 +183,7 @@ class TestGenericFieldValidation:
         Then
         - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_field_copy = GENERIC_FIELD.copy()
@@ -237,7 +236,7 @@ class TestGenericFieldValidation:
         Then
         - Ensure validation fails with the right error code.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_field_copy = GENERIC_FIELD.copy()
@@ -284,7 +283,7 @@ class TestGenericTypeValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_generic_type("generic-type", GENERIC_TYPE)
@@ -324,7 +323,7 @@ class TestGenericTypeValidation:
         Then
         - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_type_copy = GENERIC_TYPE.copy()
@@ -369,7 +368,7 @@ class TestGenericTypeValidation:
         Then
         - Ensure validation fails on BA106 - no minimal fromversion in file.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_type_copy = GENERIC_TYPE.copy()
@@ -415,7 +414,7 @@ class TestGenericModuleValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_generic_module("generic-module", GENERIC_MODULE)
@@ -455,7 +454,7 @@ class TestGenericModuleValidation:
         Then
         - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_module_copy = GENERIC_MODULE.copy()
@@ -498,7 +497,7 @@ class TestGenericModuleValidation:
         Then
         - Ensure validation fails on BA106 - no minimal fromversion in file.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_module_copy = GENERIC_MODULE.copy()
@@ -544,7 +543,7 @@ class TestGenericDefinitionValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_def_copy = GENERIC_DEFINITION.copy()
@@ -586,7 +585,7 @@ class TestGenericDefinitionValidation:
         Then
         - Ensure validation fails.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_def_copy = GENERIC_DEFINITION.copy()
@@ -630,7 +629,7 @@ class TestGenericDefinitionValidation:
         Then
         - Ensure validation fails on BA106 - no minimal fromversion in file.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_def_copy = GENERIC_DEFINITION.copy()
@@ -677,7 +676,7 @@ class TestIncidentFieldValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_incident_field("incident-field", INCIDENT_FIELD)
@@ -717,8 +716,7 @@ class TestIncidentFieldValidation:
         Then
         - Ensure validation fails on IF102 - wrong system field value.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_field_copy = INCIDENT_FIELD.copy()
@@ -764,7 +762,7 @@ class TestIncidentFieldValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_field_copy = INCIDENT_FIELD.copy()
@@ -835,8 +833,7 @@ class TestIncidentFieldValidation:
         Then
         - Ensure validation fails on IF114 - incident field with non existent script id
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_field_copy = INCIDENT_FIELD.copy()
@@ -903,7 +900,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -954,7 +951,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation fails on - invalid_deprecated_integration.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -997,7 +994,7 @@ class TestDeprecatedIntegration:
         Then
                 Ensure validation fails
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -1044,7 +1041,7 @@ class TestDeprecatedIntegration:
         Then
                 Ensure validation fails
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -1084,8 +1081,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation fails on - invalid_deprecated_integration.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -1134,7 +1130,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -1187,7 +1183,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(
@@ -1261,7 +1257,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -1310,7 +1306,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
@@ -1382,7 +1378,7 @@ class TestIntegrationValidation:
         Then
         - Ensure validate passes and identifies the file as an integration.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack_integration_path = join(
@@ -1430,7 +1426,7 @@ class TestIntegrationValidation:
         Then
         - Ensure validate fails on wrong required value
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -1507,8 +1503,7 @@ class TestIntegrationValidation:
         Then
         - Ensure validate fails on IN119 - wrong fromversion in feed integration.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(
@@ -1561,7 +1556,7 @@ class TestIntegrationValidation:
         - Ensure validation fails.
         - Ensure failure message on non-latest docker image.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         pack_integration_path = join(
             AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"
         )
@@ -1607,7 +1602,7 @@ class TestIntegrationValidation:
         - Ensure validation fails.
         - Ensure failure message on hidden params.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(
             IntegrationValidator,
             "has_no_fromlicense_key_in_contributions_integration",
@@ -1653,7 +1648,7 @@ class TestIntegrationValidation:
         Then
         - Ensure validation succeeds.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         integration_path = join(
             TEST_FILES_PATH, "integration-valid-no-unallowed-hidden-params.yml"
         )
@@ -1694,8 +1689,7 @@ class TestIntegrationValidation:
         - Ensure validate fails on IN113 - Duplicate argument in a command in the integration.
         - Ensure validate fails on IN114 - Duplicate parameter in integration.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(
@@ -1760,7 +1754,7 @@ class TestIntegrationValidation:
         Then
         - Ensure validate fails on ST107 - pykwalify_missing_parameter.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -1800,7 +1794,6 @@ class TestIntegrationValidation:
     def test_empty_default_descriptions(
         self, mocker, repo, field: str, description: str, should_pass: bool
     ):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(
             IntegrationValidator, "is_valid_category", return_value=True
         )
@@ -1854,7 +1847,7 @@ class TestPackValidation:
         Then
         - See that the validation succeed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(
             ContentEntityValidator, "_load_conf_file", return_value=CONF_JSON_MOCK
         )
@@ -1925,8 +1918,7 @@ class TestPackValidation:
         - Ensure validation fails.
         - Ensure error message regarding unhandled conditional task in playbook.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(
             ContentEntityValidator, "_load_conf_file", return_value=CONF_JSON_MOCK
         )
@@ -2010,7 +2002,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate passes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         classifier = pack.create_classifier("new_classifier", NEW_CLASSIFIER)
@@ -2049,8 +2041,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         new_classifier_copy = NEW_CLASSIFIER.copy()
@@ -2095,8 +2086,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         new_classifier_copy = NEW_CLASSIFIER.copy()
@@ -2135,8 +2125,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         new_classifier_copy = NEW_CLASSIFIER.copy()
@@ -2176,8 +2165,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         new_classifier_copy = NEW_CLASSIFIER.copy()
@@ -2220,8 +2208,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         new_classifier_copy = NEW_CLASSIFIER.copy()
@@ -2264,7 +2251,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         new_classifier_copy = NEW_CLASSIFIER.copy()
@@ -2300,7 +2287,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate passes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             ClassifierValidator, "is_incident_field_exist", return_value=True
@@ -2342,8 +2329,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         old_classifier_copy = OLD_CLASSIFIER.copy()
@@ -2386,7 +2372,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         old_classifier_copy = OLD_CLASSIFIER.copy()
@@ -2427,8 +2413,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         old_classifier_copy = OLD_CLASSIFIER.copy()
@@ -2471,8 +2456,7 @@ class TestClassifierValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         old_classifier_copy = OLD_CLASSIFIER.copy()
@@ -2517,7 +2501,7 @@ class TestMapperValidation:
         Then
         - Ensure validate passes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             MapperValidator, "is_incident_field_exist", return_value=True
@@ -2559,8 +2543,7 @@ class TestMapperValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         mapper_copy = MAPPER.copy()
@@ -2604,8 +2587,7 @@ class TestMapperValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         mapper_copy = MAPPER.copy()
@@ -2644,8 +2626,7 @@ class TestMapperValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         mapper_copy = MAPPER.copy()
@@ -2688,8 +2669,7 @@ class TestMapperValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         mapper_copy = MAPPER.copy()
@@ -2729,7 +2709,7 @@ class TestMapperValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         mapper_copy = MAPPER.copy()
@@ -2767,7 +2747,7 @@ class TestDashboardValidation:
         Then
         - Ensure validate passes and identifies the file as a dashboard.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         dashboard = pack.create_dashboard("dashboard", DASHBOARD)
@@ -2806,8 +2786,7 @@ class TestDashboardValidation:
         Then
         - Ensure validate fails on - BA100 wrong version error.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         dashboard_copy = DASHBOARD.copy()
@@ -2854,7 +2833,7 @@ class TestConnectionValidation:
         Then
         - Ensure validate passes and identifies the file as a connection.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         connection = pack._create_json_based(
@@ -2895,8 +2874,7 @@ class TestConnectionValidation:
         Then
         - Ensure validate fails on missing contextKey1.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         connection_copy = CONNECTION.copy()
@@ -2943,7 +2921,7 @@ class TestIndicatorFieldValidation:
         Then
         - Ensure validate passes and identifies the file as an indicator field.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_indicator_field("indicator-field", INDICATOR_FIELD)
@@ -2983,8 +2961,7 @@ class TestIndicatorFieldValidation:
         Then
         - Ensure validate fails on IF101 wrong content key value error.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         indicator_field_copy = INDICATOR_FIELD.copy()
@@ -3031,7 +3008,7 @@ class TestIncidentTypeValidation:
         Then
         - Ensure validate passes and identifies the file as an incident type.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_type = pack.create_incident_type("incident_type", INCIDENT_TYPE)
@@ -3070,8 +3047,7 @@ class TestIncidentTypeValidation:
         Then
         - Ensure validate fails on IT100 wrong integer value in field.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_type_copy = INCIDENT_TYPE.copy()
@@ -3116,7 +3092,7 @@ class TestIncidentTypeValidation:
         Then
         - Ensure validate passes and identifies the file as an incident type.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_type_data = INCIDENT_TYPE.copy()
@@ -3185,8 +3161,7 @@ class TestIncidentTypeValidation:
         - Ensure all wrongly formatted extraction incident fields are listed in the output.
         - Ensure all valid extraction fields are not listed
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_type_data = INCIDENT_TYPE.copy()
@@ -3259,8 +3234,7 @@ class TestIncidentTypeValidation:
         Then
         - Ensure validate fails on IT103.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_type_data = INCIDENT_TYPE.copy()
@@ -3387,7 +3361,7 @@ class TestLayoutValidation:
         Then
         - Ensure validate passes and identifies the file as a layout.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout = pack._create_json_based(name="layout-name", prefix="", content=LAYOUT)
@@ -3426,8 +3400,7 @@ class TestLayoutValidation:
         Then
         - Ensure validate fails on - BA100 wrong version error.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
@@ -3474,8 +3447,7 @@ class TestLayoutValidation:
         Then
         - Ensure validate fails on - BA100 wrong version error.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
@@ -3521,7 +3493,7 @@ class TestLayoutValidation:
         Then
         - Ensure validate passes and identifies the file as a layout.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout = pack._create_json_based(
@@ -3562,8 +3534,7 @@ class TestLayoutValidation:
         Then
         - Ensure validate fails on - BA100 wrong version error.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUTS_CONTAINER.copy()
@@ -3610,8 +3581,7 @@ class TestLayoutValidation:
         Then
         - Ensure validate fails on - LO103 wrong file path.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout = pack._create_json_based(
@@ -3655,8 +3625,7 @@ class TestLayoutValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layoutscontainer_copy = LAYOUTS_CONTAINER.copy()
@@ -3700,8 +3669,7 @@ class TestLayoutValidation:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
@@ -3747,7 +3715,7 @@ class TestLayoutValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layoutscontainer_copy = LAYOUTS_CONTAINER.copy()
@@ -3818,8 +3786,7 @@ class TestLayoutValidation:
         Then
         - Ensure validation fails on LO105 - layouts container non existent script id
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layoutscontainer_copy = LAYOUTS_CONTAINER.copy()
@@ -3892,7 +3859,7 @@ class TestLayoutValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
@@ -3958,8 +3925,7 @@ class TestLayoutValidation:
         Then
         - Ensure validation fails on LO106 - layout non existent script id
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
@@ -4026,7 +3992,7 @@ class TestPlaybookValidation:
         Then
         - Ensure validate passes and identifies the file as a playbook.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
         mocker.patch.object(
@@ -4068,8 +4034,7 @@ class TestPlaybookValidation:
         Then
         - Ensure validate fails on PB103 - unconnected tasks error.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         with ChangeCWD(TEST_FILES_PATH):
             runner = CliRunner(mix_stderr=False)
@@ -4113,7 +4078,7 @@ class TestPlaybookValidateDeprecated:
         Then
         - Ensure validate passes and identifies the file as a playbook deprecated.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
         runner = CliRunner(mix_stderr=False)
@@ -4152,8 +4117,7 @@ class TestPlaybookValidateDeprecated:
         Then
         - Ensure validate fails on PB104 - deprecated tasks error.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         with ChangeCWD(TEST_FILES_PATH):
             runner = CliRunner(mix_stderr=False)
@@ -4191,7 +4155,7 @@ class TestPlaybookValidateDeprecated:
         Then
         - Ensure validate passes and identifies the file as a playbook deprecated.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
         pack = repo.create_pack("PackName")
@@ -4235,7 +4199,7 @@ class TestPlaybookValidateDeprecated:
         Then
         - Ensure validate passes and identifies the file as a playbook deprecated.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
@@ -4300,7 +4264,7 @@ class TestPlaybookValidateDeprecated:
         Then
         - Ensure validate passes and identifies the file as a playbook deprecated.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
         pack = repo.create_pack("PackName")
@@ -4345,7 +4309,7 @@ class TestPlaybookValidateDeprecated:
         Then
         - Ensure validate passes and identifies the file as a playbook deprecated.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
@@ -4411,7 +4375,7 @@ class TestReportValidation:
         Then
         - Ensure validate passes and identifies the file as a report.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         report = pack._create_json_based(name="report", prefix="", content=REPORT)
@@ -4450,8 +4414,7 @@ class TestReportValidation:
         Then
         - Ensure validate fails on wrong orientation value.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         report_copy = REPORT.copy()
@@ -4491,7 +4454,7 @@ class TestReputationValidation:
         Then
         - Ensure validate passes and identifies the file as a reputation.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         reputation = pack._create_json_based(
@@ -4532,8 +4495,7 @@ class TestReputationValidation:
         Then
         - Ensure validate fails on RP101 - wrong value in expiration field.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         reputation_copy = REPUTATION.copy()
@@ -4579,7 +4541,7 @@ class TestScriptValidation:
         Then
         - Ensure validate passes and identifies the file as a script.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
@@ -4620,8 +4582,7 @@ class TestScriptValidation:
         Then
         - Ensure validate fails on SC100 wrong v2 format in name.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -4667,7 +4628,7 @@ class TestScriptDeprecatedValidation:
         Then
         - Ensure validate passes and identifies the file as a deprecated script.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
@@ -4712,8 +4673,7 @@ class TestScriptDeprecatedValidation:
         Then
         - Ensure validate fails on SC101 wrong deprecated script.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -4755,7 +4715,7 @@ class TestScriptDeprecatedValidation:
         Then
         - Ensure validate passes and identifies the file as a deprecated script.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
@@ -4802,7 +4762,7 @@ class TestScriptDeprecatedValidation:
         Then
         - Ensure validate passes and identifies the file as a deprecated script.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(
@@ -4872,7 +4832,7 @@ class TestScriptDeprecatedValidation:
         Then
         - Ensure validate passes and identifies the file as a script.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
@@ -4916,7 +4876,7 @@ class TestScriptDeprecatedValidation:
         Then
         - Ensure validate passes and identifies the file as a script.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(
@@ -4983,7 +4943,7 @@ class TestWidgetValidation:
         Then
         - Ensure validate passes and identifies the file as a widget.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         widget = pack._create_json_based(name="widget", prefix="", content=WIDGET)
@@ -5022,8 +4982,7 @@ class TestWidgetValidation:
         Then
         - Ensure validate fails on - BA100 wrong version error.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         widget_copy = WIDGET.copy()
@@ -5070,7 +5029,7 @@ class TestImageValidation:
         Then
         - Ensure validate passes and identifies the file as an image.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         integration = pack.create_integration()
@@ -5110,8 +5069,7 @@ class TestImageValidation:
         Then
         - Ensure validate fails on error IM106 - default image error.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -5160,7 +5118,7 @@ class TestImageValidation:
         Then
         - Ensure validate does not validates it as an image.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -5194,8 +5152,7 @@ class TestImageValidation:
         Then
         - Ensure validate fails on dimensions error and asks to change the image.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         pack = repo.create_pack("PackName")
         with open(
             f"{git_path()}/demisto_sdk/tests/integration_tests/Tests/invalid_integration_image.png",
@@ -5246,7 +5203,7 @@ class TestAuthorImageValidation:
         Then
         - Ensure validate passes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(
@@ -5302,7 +5259,7 @@ class TestAuthorImageValidation:
         Then
         - Ensure validate fails on error IM108 - empty author image error.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(ImageValidator, "load_image", return_value="")
         pack = repo.create_pack("PackName")
@@ -5362,7 +5319,7 @@ class TestAllFilesValidator:
         Then
         - Ensure validate passes on all files.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -5439,8 +5396,7 @@ class TestAllFilesValidator:
         Then
         - Ensure validate fails.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -5525,7 +5481,7 @@ class TestValidationUsingGit:
         Then
         - Ensure validate passes on all files.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -5627,8 +5583,7 @@ class TestValidationUsingGit:
         Then
         - Ensure validate fails.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -5726,7 +5681,7 @@ class TestValidationUsingGit:
         - Ensure validate fails.
         - Ensure pack dependencies check doesnt happen.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration(
             name="FeedAzure",
@@ -5802,7 +5757,7 @@ class TestValidationUsingGit:
         - Ensure validate fails.
         - Ensure pack dependencies check happens.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration(
             name="FeedAzure",
@@ -5902,7 +5857,7 @@ class TestValidationUsingGit:
         Then
         - Ensure an error is raised on the non found file
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         mocker.patch.object(PackDependencies, "find_dependencies", return_value={})
@@ -5956,7 +5911,7 @@ class TestValidationUsingGit:
         - Ensure the integration is validated.
         - Ensure the script is not validated.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration()
         integration.create_default_integration()
@@ -6031,7 +5986,7 @@ class TestValidationUsingGit:
         - Ensure the integration is validated.
         - Ensure the script is not validated.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration()
         integration.create_default_integration()
@@ -6109,7 +6064,7 @@ class TestValidationUsingGit:
         - Ensure the entities in pack 1 are validated
         - Ensure the entities in pack 2 are not validated.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         pack_1 = repo.create_pack("Pack1")
         integration = pack_1.create_integration()
         integration.create_default_integration()
@@ -6157,7 +6112,7 @@ class TestValidationUsingGit:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            runner.invoke(
+            result = runner.invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -6173,20 +6128,18 @@ class TestValidationUsingGit:
                 catch_exceptions=False,
             )
 
-        assert all(
-            [
-                str_in_caplog(logger_info.call_args_list, current_str)
-                for current_str in [
-                    "Running on committed and staged files",
-                    f"Validating {integration.yml.rel_path}",
-                    f"Validating {script.yml.rel_path}",
+            assert all(
+                [
+                    current_str in result.output
+                    for current_str in [
+                        "Running on committed and staged files",
+                        f"Validating {integration.yml.rel_path}",
+                        f"Validating {script.yml.rel_path}",
+                    ]
                 ]
-            ]
-        )
-        str_in_caplog(
-            logger_info.call_args_list, f"Validating {integration_2.yml.rel_path}"
-        )
-        str_in_caplog(logger_info.call_args_list, f"Validating {script_2.yml.rel_path}")
+            )
+            assert f"Validating {integration_2.yml.rel_path}" in result.output
+            assert f"Validating {script_2.yml.rel_path}" in result.output
 
 
 class TestSpecificValidations:
@@ -6202,7 +6155,7 @@ class TestSpecificValidations:
         - Ensure validate doesn't fail on RP101 - wrong value in expiration field
         due to the flag.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         reputation_copy = REPUTATION.copy()
@@ -6236,7 +6189,7 @@ class TestSpecificValidations:
         )
         assert result.exit_code == 0
 
-    def test_validate_with_flag_specific_validation(self, mocker, repo):
+    def test_validate_with_flag_specific_validation(self, caplog, mocker, repo):
         """
         Given
         - an invalid Reputation - negative integer in expiration field and a 'details' that does not match its id.
@@ -6247,8 +6200,6 @@ class TestSpecificValidations:
         Then
         - Ensure validate fails on RP101 - wrong value in expiration field and not on RP102 - id and details fields are not equal.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         reputation_copy = REPUTATION.copy()
@@ -6272,13 +6223,11 @@ class TestSpecificValidations:
                 ],
                 catch_exceptions=False,
             )
-        str_in_caplog(
-            logger_info.call_args_list, f"Validating {reputation.path} as reputation"
-        )
         assert all(
             [
-                str_in_caplog(logger_error.call_args_list, current_str)
+                current_str in caplog.text
                 for current_str in [
+                    f"Validating {reputation.path} as reputation",
                     "RP101",
                     "Expiration field should have a positive numeric value.",
                 ]
@@ -6287,7 +6236,7 @@ class TestSpecificValidations:
         assert result.exit_code == 1
 
     def test_validate_with_flag_specific_validation_entire_code_section(
-        self, mocker, repo
+        self, mocker, repo, caplog
     ):
         """
         Given
@@ -6299,8 +6248,7 @@ class TestSpecificValidations:
         Then
         - Ensure validate fails on RP101 - wrong value in expiration field and on RP102 - id and details fields are not equal.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         reputation_copy = REPUTATION.copy()
@@ -6324,23 +6272,19 @@ class TestSpecificValidations:
                 ],
                 catch_exceptions=False,
             )
-        str_in_caplog(
-            logger_info.call_args_list, f"Validating {reputation.path} as reputation"
-        )
-        assert all(
-            str_in_caplog(logger_error.call_args_list, current_str)
-            for current_str in [
-                "RP101",
-                "Expiration field should have a positive numeric value.",
-                "RP102",
-                "id and details fields are not equal.",
-            ]
-        )
-        assert result.exit_code == 1
+            assert f"Validating {reputation.path} as reputation" in result.output
+            assert "RP101" in result.output
+            assert (
+                "Expiration field should have a positive numeric value."
+                in result.output
+            )
+            assert "RP102" in result.output
+            assert "id and details fields are not equal." in result.output
+            assert result.exit_code == 1
 
 
 class TestBasicValidation:
-    def test_modified_pack_files_with_ignored_validations(self, mocker, repo):
+    def test_modified_pack_files_with_ignored_validations(self, mocker, repo, caplog):
         """
         Given
         - .pack-ignore which ignores IN122 and RM110
@@ -6353,7 +6297,7 @@ class TestBasicValidation:
         Then
         - make sure the files are valid and that the errors can be ignored successfully.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(
@@ -6406,7 +6350,7 @@ class TestBasicValidation:
                     "--no-conf-json",
                 ],
             )
-        assert str_in_caplog(logger_info.call_args_list, "The files are valid")
+        assert "The files are valid" in caplog.text
         assert result.exit_code == 0
 
 

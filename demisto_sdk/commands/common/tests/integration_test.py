@@ -1,4 +1,3 @@
-import logging
 import os
 from copy import deepcopy
 from pathlib import Path
@@ -27,7 +26,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration
-from TestSuite.test_tools import ChangeCWD, str_in_caplog
+from TestSuite.test_tools import ChangeCWD
 
 default_additional_info = load_default_additional_info_dict()
 
@@ -320,16 +319,16 @@ class TestIntegrationValidator:
         "current, old, answer, changed_command_names", IS_CHANGED_CONTEXT_INPUTS
     )
     def test_no_change_to_context_path(
-        self, current, old, answer, changed_command_names, mocker
+        self, current, old, answer, changed_command_names, mocker, caplog
     ):
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        caplog.set_level("ERROR")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
-            assert str_in_caplog(logger_error.call_args_list, changed_command_name)
+            assert changed_command_name in caplog
         structure.quiet_bc = True
         assert (
             validator.no_change_to_context_path() is True
@@ -503,11 +502,9 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("args, answer, expecting_warning", DEFAULT_INFO_INPUTS)
     def test_default_params_default_info(
-        self, mocker, args: List[Dict], answer: str, expecting_warning: bool
+        self, mocker, args: List[Dict], answer: str, expecting_warning: bool, caplog
     ):
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
+        caplog.set_level("WARNING")
         validator = IntegrationValidator(mock_structure("", {"configuration": args}))
         assert validator.default_params_have_default_additional_info() is answer
 
@@ -518,7 +515,7 @@ class TestIntegrationValidator:
                 ["API key"]
             )
             expected_message = f"[{warning_code}] - {warning_message}"
-            assert str_in_caplog(logger_warning.call_args_list, expected_message)
+            assert expected_message in caplog.text
 
     NO_INCIDENT_INPUT = [
         (
@@ -1991,8 +1988,6 @@ class TestIsFetchParamsExist:
         ), "is_valid_fetch() returns True instead False"
 
     def test_missing_max_fetch_text(self, mocker, caplog, capsys):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         # missing param in configuration
         self.validator.current_file["configuration"] = [
             t
@@ -2000,10 +1995,10 @@ class TestIsFetchParamsExist:
             if t["name"] != "incidentType"
         ]
         assert self.validator.is_valid_fetch() is False
-        assert not str_in_caplog(logger_info.call_args_list, "display: Incident type")
-        assert str_in_caplog(
-            logger_error.call_args_list,
-            """A required parameter "incidentType" is missing from the YAML file.""",
+        assert "display: Incident type" not in caplog.text
+        assert (
+            'A required parameter "incidentType" is missing from the YAML file.'
+            in caplog.text
         )
 
     def test_missing_field(self):
@@ -2016,9 +2011,9 @@ class TestIsFetchParamsExist:
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
 
-    def test_malformed_field(self, mocker):
+    def test_malformed_field(self, mocker, caplog):
         # incorrect param
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        caplog.set_level("ERROR")
         config = self.validator.current_file["configuration"]
         self.validator.current_file["configuration"] = []
         for t in config:
@@ -2029,12 +2024,8 @@ class TestIsFetchParamsExist:
         assert (
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
-        assert all(
-            [
-                str_in_caplog(logger_error.call_args_list, "display: Incident type"),
-                str_in_caplog(logger_error.call_args_list, "name: incidentType"),
-            ]
-        )
+        assert "display: Incident type" in caplog.text
+        assert "name: incidentType" in caplog.text
 
     def test_specific_for_marketplace(self):
         """

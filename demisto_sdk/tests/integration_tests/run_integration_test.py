@@ -52,7 +52,6 @@ def test_integration_run_non_existing_command(
     Then
     - Ensure output is the appropriate error.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     mocker.patch.object(DefaultApi, "investigation_add_entries_sync", return_value=None)
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
@@ -86,9 +85,8 @@ def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
     Then
     - Ensure the json_to_outputs command is running correctly
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
@@ -124,7 +122,6 @@ def test_json_to_outputs_flag_fail_no_prefix(
     Then
     - Ensure the json_to_outputs command is failing due to no prefix argument provided.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")

@@ -1,4 +1,0 @@
-changes:
-- description: Added authentication for pulling images in the ***pre-commit*** command when running in GitLab CI.
-  type: internal
-pr_number: 4515

@@ -86,40 +86,46 @@ def logging_setup(
     console_log_threshold: str = "INFO",
     file_log_threshold: str = "DEBUG",
     log_file_path: Optional[Union[Path, str]] = None,
+    initial: bool = False,
     **kwargs,  # TODO remove skip_log_file_creation
 ) -> None:
+    """
+    The initial set up is required since we have code (e.g. get_content_path) that runs in __main__ before the typer/click commands set up the logger.
+    In the initial set up there is NO file logging (only console)
+    """
+    global logger  # otherwise, the assignment with `opt` will make it unbound
     setup_logger_colors()
-    logger.warning("logging_setup called")  # TODO remove
+    logger.warning("logging_setup called", color="blue")  # TODO remove
+    logger.remove()  # Removes all pre-existing handlers
 
-    if string_to_bool(os.getenv(DEMISTO_SDK_LOGGING_SET), False):
-        logger.warning("Skipping logging setup as it has already been performed")
-        return
-
-    logger.remove()  # Removes all handlers
+    colorize = string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), True)
     logger.add(
         sys.stdout,
-        colorize=string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), True),
+        colorize=colorize,
         backtrace=True,  # TODO
         level=console_log_threshold,
     )
+    if os.getenv(DEMISTO_SDK_LOGGING_SET):
+        logger.warning("This isn't the first time logging_setup has been called")
 
-    log_path = calculate_log_dir(log_file_path) / LOG_FILE_NAME
-    logger.add(  # file handler
-        log_path,
-        rotation=calculate_log_size(),
-        retention=calculate_rentation(),
-        colorize=False,
-        # backtrace=True,  # TODO
-        level=file_log_threshold,
-    )
-    if string_to_bool(os.getenv(DEMISTO_SDK_LOG_NOTIFY_PATH), True):
-        logger.info(f"<yellow>Log file location: {log_path}</yellow>")
+    if not initial:
+        log_path = calculate_log_dir(log_file_path) / LOG_FILE_NAME
+        logger.add(  # file handler
+            log_path,
+            rotation=calculate_log_size(),
+            retention=calculate_rentation(),
+            colorize=False,
+            # backtrace=True,  # TODO
+            level=file_log_threshold,
+        )
+        if string_to_bool(os.getenv(DEMISTO_SDK_LOG_NOTIFY_PATH), True):
+            logger.info(f"<yellow>Log file location: {log_path}</yellow>")
 
-    logger.debug(f"Platform: {platform.system()}")
-    logger.debug(f"Python version: {sys.version}")
-    logger.debug(f"Working directory: {Path.cwd()}")
-    os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
-    logger.success("logging_setup finished")  # TODO remove
+        logger.debug(f"Platform: {platform.system()}")
+        logger.debug(f"Python version: {sys.version}")
+        logger.debug(f"Working directory: {Path.cwd()}")
+        os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
+        logger.success("logging_setup finished")  # TODO remove
 
 
 DEPRECATED_PARAMETERS = {

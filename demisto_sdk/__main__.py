@@ -81,6 +81,7 @@ SDK_OFFLINE_ERROR_MESSAGE = (
     "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.</red>"
 )
 
+logging_setup(initial=True)
 
 # Third party packages
 
@@ -233,7 +234,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "CI"
             ):  # Check only when not running in CI (e.g running locally).
                 last_release = get_last_remote_release_version()
-            logger.info(f"<yellow>You are using demisto-sdk {__version__}.</yellow>")
+            logger.info(f"You are using demisto-sdk {__version__}")
             if last_release and __version__ != last_release:
                 logger.warning(
                     f"A newer version ({last_release}) is available. "

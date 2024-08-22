@@ -74,8 +74,6 @@ def calculate_log_dir(
 
 
 def setup_logger_colors():
-    logger.info("Setting up loguru colors")  # TODO remove
-
     logger.level("DEBUG", color="<fg #D3D3D3>")
     logger.level("INFO", color="<fg #D3D3D3>")
     logger.level("WARNING", color="<yellow>")

@@ -207,13 +207,6 @@ def logging_setup_decorator(func, *args, **kwargs):
 @pass_config
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
-        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
-        log_file_path=kwargs.get("log_file_path"),
-        skip_log_file_creation=True,  # Log file creation is handled in the logger setup of the sub-command
-    )
-    handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
     import dotenv

@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, Set
 
 from demisto_sdk.commands.common.constants import GitStatuses,XSOAR_SUPPORT
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
@@ -16,8 +16,8 @@ ContentTypes = Union[Integration, Script]
 
 class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
     error_code = "BA127"
-    description = "The level of depth for context output path in the yml should be less or equal to 5"
-    rationale = " The depth should be less or equal to 5"
+    description = "Validate that the level of depth of the context output path in the yml is lower or equal to 5."
+    rationale = "We wish to avoid over nested context to ease on data extraction."
     error_message = "The level of depth for context output path for {0}: {1} In the yml should be less or equal to 5 check the following outputs:\n{2}"
     related_field = "contextPath"
     is_auto_fixable = False
@@ -26,11 +26,11 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
-            if content_item.support_level != XSOAR_SUPPORT:
+            if content_item.support != XSOAR_SUPPORT:
                 continue
             if isinstance(content_item, Script):
-                script_paths = self.create_script_outputs_list(content_item)
-                invalid_paths = self.is_context_depth_less_or_equal_to_5_script(script_paths)
+                script_paths = self.create_outputs_set(content_item)
+                invalid_paths = self.is_context_depth_larger_than_five(script_paths)
                 if invalid_paths:
                     results.append(
                         ValidationResult(
@@ -43,7 +43,7 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
                     )
             else:
                 command_paths = self.create_command_outputs_dict(content_item)
-                invalid_paths = self.is_context_depth_less_or_equal_to_5_command(command_paths)
+                invalid_paths = self.is_context_depth_larger_than_five_integration_commands(command_paths)
                 if invalid_paths:
                     results.append(
                         ValidationResult(
@@ -56,7 +56,7 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
                 )
         return results
 
-    def is_context_depth_less_or_equal_to_5_command(self, command_paths: dict):
+    def is_context_depth_larger_than_five_integration_commands(self, command_paths: dict) -> dict:
         """Validate that all outputs entry has contextPath key for a given command.
 
         Args:
@@ -65,24 +65,15 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         Returns:
            List of bad context paths if the contextPath depths is bigger then 5. Otherwise, return False.
         """
-        wrong_depth_values = []
         message = {}
-        for command in command_paths.keys():
-            for path in command_paths[command]:
-                output_depth = len(path.split('.'))
-                if output_depth > 5:
-                    wrong_depth_values.append(path)
-            if wrong_depth_values:
-                wrong_values_string = '\n'.join(wrong_depth_values)
-                message['command'] = command
+        for command_name, command_outputs in command_paths.items():
+            if wrong_values_string := self.is_context_depth_larger_than_five(command_outputs):
+                message['command'] = command_name
                 message['wrong_paths'] = wrong_values_string
-        if message:
-            return message
-        else:
-            return False
+        return message
 
 
-    def is_context_depth_less_or_equal_to_5_script(self, script_paths: list ):
+    def is_context_depth_larger_than_five(self, outputs: Set[str]) -> str:
         """Validate that all outputs entry has contextPath key for a given command.
 
         Args:
@@ -91,30 +82,19 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         Returns:
              List of bad context paths if the contextPath depths is bigger then 5. Otherwise, return False.
         """
-        wrong_depth_values = []
-        message = {}
-        for output in script_paths:
-            output_depth = len(output.split('.'))
-            if output_depth > 5:
-                wrong_depth_values.append(output)
+        wrong_values_string = ""
+        wrong_depth_values = [output for output in outputs if len(output.split('.')) > 5]
         if wrong_depth_values:
             wrong_values_string = '\n'.join(wrong_depth_values)
-            return wrong_values_string
-        else:
-            return False
+        return wrong_values_string
 
 
-    def create_script_outputs_list(self, content_item) -> list:
-        script_paths = list()
-        for output in content_item.outputs:
-            script_paths.append(output.contextPath)
-        return script_paths
+    def create_outputs_set(self, command_or_script: Command | Script) -> Set[str]:
+        return set([output.contextPath for output in command_or_script.outputs])
 
 
     def create_command_outputs_dict(self, content_item) -> dict:
         command_paths = dict()
         for command in content_item.commands:
-            command_paths[command.name] = []
-            for output in command.outputs:
-                command_paths[command.name].append(output.contextPath)
+            command_paths[command.name] = self. create_outputs_set(command)
         return command_paths

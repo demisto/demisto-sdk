@@ -23,14 +23,14 @@ class IsValidContextPathDepthModifiedValidatorModified(IsValidContextPathDepthVa
         results: List[ValidationResult] = []
         invalid_paths: str = ""
         for content_item in content_items:
-            if content_item.support_level != XSOAR_SUPPORT:
+            if content_item.support != XSOAR_SUPPORT:
                 continue
             old_content_item = content_item.old_base_content_object
             if isinstance(content_item, Script):
-                old_script_paths = self.create_script_outputs_list(old_content_item)
-                new_script_paths = self.create_script_outputs_list(content_item)
-                changed_paths = list(set(new_script_paths).difference(old_script_paths))
-                invalid_paths = self.is_context_depth_less_or_equal_to_5_script(changed_paths)
+                old_script_paths = self.create_outputs_set(old_content_item)
+                new_script_paths = self.create_outputs_set(content_item)
+                changed_paths = set(new_script_paths).difference(old_script_paths)
+                invalid_paths = self.is_context_depth_larger_than_five(changed_paths)
                 if invalid_paths:
                     results.append(
                         ValidationResult(
@@ -48,8 +48,8 @@ class IsValidContextPathDepthModifiedValidatorModified(IsValidContextPathDepthVa
                     command_paths = self.create_command_outputs_dict(content_item)
                     for k in command_paths.keys():
                         if k in old_command_paths:
-                            changed_paths[k] = list(set(command_paths[k]).difference(old_command_paths[k]))
-                    invalid_paths = self.is_context_depth_less_or_equal_to_5_command(changed_paths)
+                            changed_paths[k] = set(command_paths[k]).difference(old_command_paths[k])
+                    invalid_paths = self.is_context_depth_larger_than_five_integration_commands(changed_paths)
                     if invalid_paths:
                         results.append(
                             ValidationResult(

@@ -234,7 +234,7 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
 
 
 @pytest.mark.parametrize(
-    "content_items, is_file_exist, expected_number_of_failures, expected_msgs",
+    "content_items, doc_files_name, expected_number_of_failures, expected_msgs",
     [
         (
             [
@@ -303,12 +303,12 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
 )
 def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
     content_items,
-    is_file_exist,
+    doc_files_name,
     expected_number_of_failures,
     expected_msgs,
 ):
     with ChangeCWD(REPO.path):
-        for content_item, file_name in zip(content_items, is_file_exist):
+        for content_item, file_name in zip(content_items, doc_files_name):
             if file_name:
                 create_doc_file_object(find_pack_folder(content_item.path), file_name)
 

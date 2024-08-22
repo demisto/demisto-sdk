@@ -60,12 +60,11 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     def get_invalid_image_paths(pack_name: str, image_paths: List[str]) -> List[str]:
         """
             Args:
-                pack_name (str): Pack name to add to path
-                image_paths (List[Path]): List of images with a local path. For example: ![<title>](../doc_files/<image name>.png)
-        )
+                pack_name (str): Pack name to add to path.
+                image_paths (List[Path]): List of images with a local path under the doc_files folder. For example: ![<title>](../doc_files/<image name>.png)
 
             Returns:
-                List[Path]: A list of paths with the full path.
+                List[Path]: A list of invalid image files full paths.
         """
         path_validate = click.Path(exists=True, dir_okay=False)
 

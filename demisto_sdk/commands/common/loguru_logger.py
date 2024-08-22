@@ -2,7 +2,7 @@ import os
 import platform
 import sys
 from pathlib import Path
-from typing import Optional, Union
+from typing import Iterable, Optional, Union
 
 from loguru import logger
 
@@ -11,6 +11,8 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOG_FILE_SIZE,
     DEMISTO_SDK_LOG_NO_COLORS,
     DEMISTO_SDK_LOG_NOTIFY_PATH,
+    DEMISTO_SDK_LOGGING_SET,
+    LOG_FILE_NAME,
     LOGS_DIR,
 )
 from demisto_sdk.commands.common.tools import string_to_bool
@@ -45,9 +47,6 @@ def calculate_rentation() -> int:
                 f"Invalid value for DEMISTO_SDK_LOG_FILE_COUNT environment variable: {env_var}. Using default value of '10'."
             )
     return 10
-
-
-LOG_FILE_NAME = "demisto_sdk_debug.log"
 
 
 def calculate_log_dir(
@@ -94,7 +93,7 @@ def logging_setup(
     setup_logger_colors()
     logger.warning("logging_setup called")  # TODO remove
 
-    if string_to_bool(os.getenv("DEMISTO_SDK_LOGGING_SET"), False):
+    if string_to_bool(os.getenv(DEMISTO_SDK_LOGGING_SET), False):
         logger.warning("Skipping logging setup as it has already been performed")
         return
 
@@ -121,5 +120,30 @@ def logging_setup(
     logger.debug(f"Platform: {platform.system()}")
     logger.debug(f"Python version: {sys.version}")
     logger.debug(f"Working directory: {Path.cwd()}")
-    os.environ["DEMISTO_SDK_LOGGING_SET"] = "true"
+    os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
     logger.success("logging_setup finished")  # TODO remove
+
+
+DEPRECATED_PARAMETERS = {
+    "-v": "--console-log-threshold or --file-log-threshold",
+    "-vv": "--console-log-threshold or --file-log-threshold",
+    "-vvv": "--console-log-threshold or --file-log-threshold",
+    "--verbose": "--console-log-threshold or --file-log-threshold",
+    "-q": "--console-log-threshold or --file-log-threshold",
+    "--quiet": "--console-log-threshold or --file-log-threshold",
+    "--console_log_threshold": "--console-log-threshold",
+    "--file_log_threshold": "--file-log-threshold",
+    "-ln": "--log-file-path",
+    "--log-name": "--log-file-path",
+    "--log_file_path": "--log-file-path",
+    "no_logging": "--console-log-threshold or --file-log-threshold",
+}
+
+
+def handle_deprecated_args(input_args: Iterable[str]):
+    for current_arg in sorted(
+        set(input_args).intersection(DEPRECATED_PARAMETERS.keys())
+    ):
+        logger.error(
+            f"[red]Argument {current_arg} is deprecated. Please use {DEPRECATED_PARAMETERS[current_arg]} instead.[/red]"
+        )

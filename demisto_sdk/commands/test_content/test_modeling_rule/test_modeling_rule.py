@@ -224,7 +224,7 @@ def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying
     retry_attempts = parse_int_or_default(retry_attempts, XSIAM_CLIENT_RETRY_ATTEMPTS)
     retry_params: Dict[str, Any] = {
         "reraise": True,
-        "before_sleep": before_sleep_log(logger, logging.DEBUG),
+        "before_sleep": before_sleep_log(logging.getLogger(), logging.DEBUG),
         "retry": retry_if_exception_type(requests.exceptions.RequestException),
         "stop": stop_after_attempt(retry_attempts),
         "wait": wait_fixed(sleep_interval),

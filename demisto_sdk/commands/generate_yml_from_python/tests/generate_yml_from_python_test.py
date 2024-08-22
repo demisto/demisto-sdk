@@ -1906,7 +1906,7 @@ class TestYMLGeneration:
         assert not yml_generator.metadata_collector
         assert not yml_generator.get_metadata_dict()
 
-    def test_file_importing_failure(self, tmp_path, repo, caplog: Iterator[LogCaptureFixture]):
+    def test_file_importing_failure(self, tmp_path, repo, caplog):
         """
         Given
         - Integration code raising an exception.
@@ -1931,7 +1931,7 @@ class TestYMLGeneration:
         assert not yml_generator.metadata_collector
         assert not yml_generator.get_metadata_dict()
 
-    def test_undefined_spec_failure(self, tmp_path, repo, mocker, monkeypatch):
+    def test_undefined_spec_failure(self, tmp_path, repo, mocker, caplog):
         """
         Given
         - Integration code without metadata_collector.

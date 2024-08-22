@@ -259,14 +259,16 @@ def test_report_warning_lint_checks_not_packages_tests(mocker, caplog):
         all_packs=False,
     )
     assert all(
-        string in caplog.text
-        for string in [
-            "Maltiverse.py:511:0: W9010: try and except statements were not found in main function. Please add them (",
-            "try-except-main-doesnt-exists)",
-            "Maltiverse.py:511:0: W9012: return_error should be used in main function. Please add it. (",
-            "return-error-does-not-exist-in-main)",
-            "Xsoar_linter warnings",
-        ],
+        tuple(
+            string in caplog.text
+            for string in (
+                "Maltiverse.py:511:0: W9010: try and except statements were not found in main function. Please add them (",
+                "try-except-main-doesnt-exists)",
+                "Maltiverse.py:511:0: W9012: return_error should be used in main function. Please add it. (",
+                "return-error-does-not-exist-in-main)",
+                "Xsoar_linter warnings",
+            )
+        )
     )
 
 

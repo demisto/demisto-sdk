@@ -22,7 +22,6 @@ from pathlib import Path
 from typing import IO, Any, Dict, List, Optional
 
 import typer
-from loguru import logger
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration

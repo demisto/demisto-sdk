@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
-from TestSuite.test_tools import ChangeCWD, str_in_caplog
+from TestSuite.test_tools import ChangeCWD
 
 
 def test_conf_file_custom(mocker, caplog: LogCaptureFixture, repo):

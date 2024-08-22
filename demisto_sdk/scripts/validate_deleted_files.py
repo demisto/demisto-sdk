@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Set  # type: ignore[attr-defined]
 
 import typer
-from loguru import logger, logging_setup
+from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.files.errors import FileReadError
 from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.loguru_logger import logging_setup
 from demisto_sdk.commands.common.tools import find_type
 
 

@@ -15,6 +15,7 @@ import typer
 from google.cloud import storage  # type: ignore[attr-defined]
 from junitparser import Error, JUnitXml, TestCase, TestSuite
 from junitparser.junitparser import Failure, Result, Skipped
+from loguru import logger
 from packaging.version import Version
 from tabulate import tabulate
 from tenacity import (
@@ -36,9 +37,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import (
+from demisto_sdk.commands.common.loguru_logger import (
     handle_deprecated_args,
-    logger,
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import (

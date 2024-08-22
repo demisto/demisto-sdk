@@ -6,6 +6,7 @@ from typing import Callable, List, Optional, Set, Tuple
 
 import pebble
 from git import GitCommandError, InvalidGitRepositoryError
+from loguru import logger
 from packaging import version
 
 from demisto_sdk.commands.common import tools
@@ -21,6 +22,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
     LISTS_DIR,
+    LOG_FILE_NAME,
     OLDEST_SUPPORTED_VERSION,
     PACK_METADATA_REQUIRE_RN_FIELDS,
     PACKS_DIR,
@@ -145,7 +147,6 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
-from demisto_sdk.commands.common.logger import LOG_FILE_PATH, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     detect_file_level,
@@ -743,10 +744,8 @@ class OldValidateManager:
             bool. true if file is in SKIPPED_FILES list, false otherwise.
         """
         path = Path(file_path)
-        if LOG_FILE_PATH and LOG_FILE_PATH == path:
-            return True
         return (
-            path.name in SKIPPED_FILES
+            path.name in SKIPPED_FILES + [LOG_FILE_NAME]
             or (
                 path.name == "CommonServerPython.py"
                 and path.parent.parent.name != "Base"

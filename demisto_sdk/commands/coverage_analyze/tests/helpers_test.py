@@ -12,7 +12,7 @@ from freezegun import freeze_time
 
 from demisto_sdk.commands.common.constants import TEST_COVERAGE_DEFAULT_URL
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logging_setup
+from demisto_sdk.commands.common.loguru_logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.helpers import (
     CoverageSummary,
     InvalidReportType,

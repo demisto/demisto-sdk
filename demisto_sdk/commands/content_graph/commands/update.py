@@ -3,13 +3,11 @@ from pathlib import Path
 from typing import List, Optional
 
 import typer
+from loguru import logger
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.logger import (
-    logger,
-    logging_setup,
-)
+from demisto_sdk.commands.common.loguru_logger import logging_setup
 from demisto_sdk.commands.common.tools import (
     get_all_repo_pack_ids,
     is_external_repository,

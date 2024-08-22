@@ -2,14 +2,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import typer
+from loguru import logger
 from tabulate import tabulate
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import (
-    logger,
-    logging_setup,
-)
+from demisto_sdk.commands.common.loguru_logger import logging_setup
 from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.commands.get_relationships import Direction
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import typer
+from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -13,9 +14,8 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.logger import (
+from demisto_sdk.commands.common.loguru_logger import (
     handle_deprecated_args,
-    logger,
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import get_max_version
@@ -117,7 +117,6 @@ def generate_modeling_rules(
         log_file_path=log_file_path,
     )
     handle_deprecated_args(ctx.args)
-    errors = False
     try:
         path_prefix = snake_to_camel_case(vendor)
         outputfile_schema = Path(output_path, (f"{path_prefix}ModelingRules.json"))
@@ -150,8 +149,6 @@ def generate_modeling_rules(
         with StringIO() as sio:
             traceback.print_exc(file=sio)
             logger.error(f"[red]{sio.getvalue()}[/red]", extra={"markup": True})
-        errors = True
-    if errors:
         raise typer.Exit(1)
 
 

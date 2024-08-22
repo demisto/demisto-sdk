@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import IO, Any, Dict, List, Optional
 
 import typer
+from loguru import logger
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
@@ -40,11 +41,10 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import (
+from demisto_sdk.commands.common.loguru_logger import (
     handle_deprecated_args,
-    logger,
+    logging_setup,
 )
-from demisto_sdk.commands.common.loguru_logger import logging_setup
 from demisto_sdk.commands.common.tools import (
     convert_path_to_str,
     find_type,

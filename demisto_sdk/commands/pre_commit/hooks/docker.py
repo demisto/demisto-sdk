@@ -152,14 +152,19 @@ def devtest_image(
             # pull images in background
             if os.getenv("CONTENT_GITLAB_CI"):
                 # When running from Gitlab CI
-                docker_user = os.getenv("DOCKERHUB_USER")
-                docker_pass = os.getenv("DOCKERHUB_PASSWORD")
+                docker_user = os.getenv("DOCKERHUB_USER", "")
+                docker_pass = os.getenv("DOCKERHUB_PASSWORD", "")
                 login_command = [
-                    "docker", "login",
-                    "-u", docker_user,
-                    "-p", docker_pass
+                    "docker",
+                    "login",
+                    "-u",
+                    docker_user,
+                    "-p",
+                    docker_pass,
                 ]
-                subprocess.run(login_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                subprocess.run(
+                    login_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
             subprocess.Popen(
                 ["docker", "pull", image],
                 stdout=subprocess.DEVNULL,

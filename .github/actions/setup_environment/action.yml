@@ -18,10 +18,12 @@ inputs:
     default: "-E generate-unit-tests"
     description: "the arguments for the poetry install command"
 
+env:
+  DEMISTO_SDK_LOG_FILE_SIZE: 10000000
+
 runs:
   using: 'composite'
   steps:
-    - echo "DEMISTO_SDK_LOG_FILE_SIZE=10000000" >> $GITHUB_ENV
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v9
 

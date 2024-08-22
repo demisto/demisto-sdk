@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.tools import (
     extract_image_paths_from_str,
     get_pack_name,
 )
+from demisto_sdk.commands.content_graph.objects import Pack
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -18,13 +19,15 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Script, Playbook]
+ContentTypes = Union[Integration, Script, Playbook, Pack]
 
 
 class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     error_code = "RM114"
-    description = "Validate that images placed under doc_files folder and used in README exist."
-    error_message = "The following images do not exist: {0}"
+    description = (
+        "Validate that images placed under doc_files folder and used in README exist."
+    )
+    error_message = "The following images do not exist or have additional characters present in their declaration within the README: {0}"
     rationale = "Missing images are not shown in rendered markdown"
     related_field = ""
     is_auto_fixable = False
@@ -69,7 +72,6 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
         invalid_image_paths = []
         for image_path in image_paths:
             try:
-
                 if "Packs" not in image_path:
                     image_path = f"Packs/{pack_name}/{image_path.replace('../', '')}"
                 path_validate.convert(image_path, None, None)

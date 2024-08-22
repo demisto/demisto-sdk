@@ -151,11 +151,9 @@ def devtest_image(
         if not should_pull:
             # pull images in background
             if os.getenv("CONTENT_GITLAB_CI"):
-                # When running from Gi CI
-                docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
-                docker_pass = os.getenv(
-                    "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
-                )
+                # When running from Gitlab CI
+                docker_user = os.getenv("DOCKERHUB_USER")
+                docker_pass = os.getenv("DOCKERHUB_PASSWORD")
                 login_command = [
                     "docker", "login",
                     "-u", docker_user,

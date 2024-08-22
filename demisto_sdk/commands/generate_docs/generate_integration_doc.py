@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from git import InvalidGitRepositoryError
+from loguru import logger
 from requests.structures import CaseInsensitiveDict
 
 from demisto_sdk.commands.common import git_util
@@ -22,7 +23,6 @@ from demisto_sdk.commands.common.default_additional_info_loader import (
 from demisto_sdk.commands.common.files.errors import GitFileReadError
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_content_path,
     get_pack_metadata,
@@ -1274,9 +1274,11 @@ def add_access_data_of_type_credentials(
     access_data.append(
         {
             "Parameter": credentials_conf.get("displaypassword", "Password"),
-            "Description": ""
-            if display_name
-            else string_escape_md(credentials_conf.get("additionalinfo", "")),
+            "Description": (
+                ""
+                if display_name
+                else string_escape_md(credentials_conf.get("additionalinfo", ""))
+            ),
             "Required": credentials_conf.get("required", ""),
         }
     )

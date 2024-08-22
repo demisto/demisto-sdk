@@ -1,7 +1,8 @@
 import tempfile
 from pathlib import Path
 
-from demisto_sdk.commands.common.logger import logger
+from loguru import logger
+
 from demisto_sdk.commands.common.timers import (
     MEASURE_TYPE_TO_HEADERS,
     MeasureType,

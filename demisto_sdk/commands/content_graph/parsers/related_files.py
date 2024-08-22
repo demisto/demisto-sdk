@@ -6,6 +6,8 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, ClassVar, Dict, List, Optional, Set, Union
 
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     PACKS_PACK_IGNORE_FILE_NAME,
@@ -17,7 +19,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_child_files
 
 

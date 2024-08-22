@@ -1,9 +1,9 @@
 from typing import Any, Dict, Iterable, List, Optional
 
+from loguru import logger
 from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     CONTENT_PRIVATE_ITEMS,
     ContentType,

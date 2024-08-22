@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 
 import requests
 from demisto_client.demisto_api.api.default_api import DefaultApi
+from loguru import logger
 from packaging.version import Version
 from requests import Response, Session
 from requests.exceptions import RequestException
@@ -17,7 +18,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 

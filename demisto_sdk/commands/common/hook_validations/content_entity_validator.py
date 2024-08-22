@@ -4,6 +4,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Optional
 
+from loguru import logger
 from packaging import version
 from packaging.version import Version
 
@@ -41,7 +42,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,

@@ -2,10 +2,11 @@
 This module is designed to validate the correctness of generic definition entities in content.
 """
 
+from loguru import logger
+
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.logger import logger
 
 
 class TriggersValidator(ContentEntityValidator):

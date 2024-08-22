@@ -8,13 +8,13 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
 import requests
+from loguru import logger
 from packaging.version import Version
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 from requests.exceptions import ConnectionError, Timeout
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 json = JSON_Handler()
@@ -239,9 +239,11 @@ class XsiamApiClient(XsiamApiInterface):
             endpoint = urljoin(self.base_url, "logs/v1/event")
             additional_headers = {
                 "authorization": self.collector_token,
-                "content-type": "application/json"
-                if data_format.casefold == "json"
-                else "text/plain",
+                "content-type": (
+                    "application/json"
+                    if data_format.casefold == "json"
+                    else "text/plain"
+                ),
                 "content-encoding": "gzip",
             }
             token_type = "collector_token"

@@ -47,6 +47,7 @@ import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
 from google.cloud import secretmanager
+from loguru import logger
 from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
@@ -139,7 +140,6 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
-from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -4020,9 +4020,11 @@ def strip_description(description):
     return (
         description.strip('"')
         if description.startswith('"') and description.endswith('"')
-        else description.strip("'")
-        if description.startswith("'") and description.endswith("'")
-        else description
+        else (
+            description.strip("'")
+            if description.startswith("'") and description.endswith("'")
+            else description
+        )
     )
 
 
@@ -4487,9 +4489,11 @@ def get_full_image_paths_from_relative(
     """
 
     return [
-        Path(f"Packs/{pack_name}/{image_path.replace('../', '')}")
-        if "Packs" not in image_path
-        else Path(image_path)
+        (
+            Path(f"Packs/{pack_name}/{image_path.replace('../', '')}")
+            if "Packs" not in image_path
+            else Path(image_path)
+        )
         for image_path in image_paths
     ]
 

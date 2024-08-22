@@ -1,8 +1,9 @@
 import os
 from typing import List, Optional, Set
 
+from loguru import logger
+
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.validators.base_validator import (
     FixResult,

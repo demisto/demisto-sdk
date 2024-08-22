@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 import requests
 from demisto_client.demisto_api.rest import ApiException
+from loguru import logger
 
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import ServerType
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
@@ -12,7 +13,6 @@ from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import
 )
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
-from demisto_sdk.commands.common.logger import logger
 
 json = DEFAULT_JSON_HANDLER
 
@@ -86,9 +86,11 @@ class XsiamClient(XsoarSaasClient):
             endpoint = urljoin(self.server_config.base_api_url, "logs/v1/event")
             additional_headers = {
                 "authorization": self.server_config.collector_token,
-                "content-type": "application/json"
-                if data_format.casefold == "json"
-                else "text/plain",
+                "content-type": (
+                    "application/json"
+                    if data_format.casefold == "json"
+                    else "text/plain"
+                ),
                 "content-encoding": "gzip",
             }
             token_type = "collector_token"

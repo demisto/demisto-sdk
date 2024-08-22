@@ -1,6 +1,7 @@
 import ast as ast_mod
 
-from demisto_sdk.commands.common.logger import logger
+from loguru import logger
+
 from demisto_sdk.commands.generate_unit_tests.common import ast_name
 
 

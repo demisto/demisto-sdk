@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Type, cast
 
+from loguru import logger
 from packaging.version import Version
 from pydantic import Field
 
@@ -10,7 +11,6 @@ from demisto_sdk.commands.common.constants import (
     PACK_DEFAULT_MARKETPLACES,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     UNIFIED_FILES_SUFFIXES,
     ContentType,

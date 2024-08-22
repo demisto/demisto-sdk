@@ -17,6 +17,7 @@ from typing import (
 )
 
 import demisto_client
+from loguru import logger
 from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
@@ -30,7 +31,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import set_value, write_dict
 from demisto_sdk.commands.content_graph.common import (
     ContentType,

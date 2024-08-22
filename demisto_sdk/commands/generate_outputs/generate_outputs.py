@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from demisto_sdk.commands.common.logger import logger
+from loguru import logger
+
 from demisto_sdk.commands.common.tools import FileType, find_type
 from demisto_sdk.commands.generate_outputs.generate_context.generate_integration_context import (
     generate_integration_context,

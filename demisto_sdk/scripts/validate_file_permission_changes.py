@@ -3,8 +3,7 @@ import stat
 from typing import Dict, List
 
 import typer
-
-from demisto_sdk.commands.common.logger import logger, logging_setup
+from loguru import logger, logging_setup
 
 main = typer.Typer()
 

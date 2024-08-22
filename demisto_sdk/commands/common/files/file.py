@@ -11,6 +11,7 @@ from typing import Any, Optional, Type, Union
 import requests
 from bs4.dammit import UnicodeDammit
 from git import InvalidGitRepositoryError
+from loguru import logger
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.constants import (
@@ -34,7 +35,6 @@ from demisto_sdk.commands.common.git_content_config import (
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     NoInternetConnectionException,
     is_sdk_defined_working_offline,
@@ -356,9 +356,9 @@ class File(ABC):
                 url,
                 headers=frozenset(
                     {
-                        "Authorization": f"Bearer {github_token}"
-                        if github_token
-                        else "",
+                        "Authorization": (
+                            f"Bearer {github_token}" if github_token else ""
+                        ),
                         "Accept": "application/vnd.github.VERSION.raw",
                     }.items()
                 ),

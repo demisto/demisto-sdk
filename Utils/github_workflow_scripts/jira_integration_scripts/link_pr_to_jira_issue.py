@@ -4,8 +4,7 @@ import sys
 
 import requests
 import urllib3
-
-from demisto_sdk.commands.common.logger import logger
+from loguru import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -109,9 +108,9 @@ def trigger_generic_webhook(options):
         "name": f"{GENERIC_WEBHOOK_NAME} - #{pr_num}",
         "raw_json": {
             "PullRequestNum": pr_num,
-            "closeIssue": "true"
-            if is_merged
-            else "false",  # whether to close the fixed issue in Jira
+            "closeIssue": (
+                "true" if is_merged else "false"
+            ),  # whether to close the fixed issue in Jira
             "PullRequestLink": pr_link,  # will be used to add to jira issue's fields
             "PullRequestTitle": f"[{pr_title}|{pr_link}]",  # will be used in comment of attaching jira issue.
             "JiraIssues": issues_in_pr,

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Set, Union
 
 import dictdiffer
+from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -13,7 +14,6 @@ from demisto_sdk.commands.common.constants import (
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_dict_from_file,
@@ -74,9 +74,11 @@ class BaseUpdate:
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
         self.prev_ver = prev_ver
         self.old_file = self.is_old_file(
-            self.relative_content_path
-            if self.relative_content_path
-            else self.output_file,
+            (
+                self.relative_content_path
+                if self.relative_content_path
+                else self.output_file
+            ),
             self.prev_ver,
         )
         self.schema_path = path

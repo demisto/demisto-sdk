@@ -95,7 +95,7 @@ class TestTextFile(FileTesting):
         Then:
          - make sure reading the text file from local file system is successful even when UnicodeDecodeError is raised
         """
-        from demisto_sdk.commands.common.logger import logger
+        from loguru import logger
 
         _path = Path(repo.path) / "file"
         debug_logger_mocker = mocker.patch.object(logger, "debug")
@@ -118,7 +118,7 @@ class TestTextFile(FileTesting):
         Then:
          - make sure reading the text file from memory is successful even when UnicodeDecodeError is raised
         """
-        from demisto_sdk.commands.common.logger import logger
+        from loguru import logger
 
         _path = Path(repo.path) / "file"
         debug_logger_mocker = mocker.patch.object(logger, "debug")

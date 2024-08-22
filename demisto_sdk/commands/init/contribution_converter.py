@@ -13,6 +13,7 @@ from string import punctuation
 from typing import Any, Dict, List, Optional, Tuple
 from zipfile import ZipFile
 
+from loguru import logger
 from packaging.version import Version
 
 from demisto_sdk.commands.common.configuration import Configuration
@@ -37,7 +38,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
     find_type,
@@ -556,7 +556,7 @@ class ContributionConverter:
                         generated_readmes.append(relative_path_from_content)
 
                     except IndexError:
-                        logger.warn(
+                        logger.warning(
                             f"Failed to construct relative path of the generated README '{generated_readme}'. Skipping addition of README to list of generated READMEs..."
                         )
                         continue
@@ -936,14 +936,14 @@ class ContributionConverter:
         else:
             path_as_string = str(src_integration_yml_path)
             if not exists:
-                logger.warn(
+                logger.warning(
                     f'"{path_as_string}" was not found to exist in the local file system.'
                 )
             elif not is_file:
-                logger.warn(f'"{path_as_string}" was not found to be a file.')
+                logger.warning(f'"{path_as_string}" was not found to be a file.')
             else:
-                logger.warn(f'"{path_as_string}" was not found to be a yaml file.')
-            logger.warn(
+                logger.warning(f'"{path_as_string}" was not found to be a yaml file.')
+            logger.warning(
                 'Therefore skipping fetching the "display" field from the source integration.'
             )
             return None

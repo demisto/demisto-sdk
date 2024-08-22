@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
+from loguru import logger
 from ruamel.yaml.scalarstring import (  # noqa: TID251
     PlainScalarString,
     SingleQuotedScalarString,
@@ -20,7 +21,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     TYPE_TO_EXTENSION,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
     get_yaml,

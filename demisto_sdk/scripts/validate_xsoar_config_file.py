@@ -1,10 +1,10 @@
 from pathlib import Path
 
 import typer
+from loguru import logger, logging_setup
 from pydantic import ValidationError
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
-from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.objects.xsoar_conf_file import (
     XSOAR_Configuration,

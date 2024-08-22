@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Union
 
 import typer
-
-from demisto_sdk.commands.common.logger import logger, logging_setup
+from loguru import logger, logging_setup
 
 MYPY_GLOBAL_IGNORE_PATTERN = re.compile(r"^#\s*type\s*:\s*ignore.*")
 MYPY_DISABLE_ERROR_CODE_PATTERN = re.compile(r"^#\s*mypy:\s*disable-error-code.*")

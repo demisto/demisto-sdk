@@ -2,9 +2,10 @@ import copy
 from pathlib import Path
 from typing import Dict, Optional
 
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import LISTS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.files.text_file import TextFile
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
 LIST_DATA_SUFFIXES = (".txt", ".json", ".html", ".css", ".csv", ".md")

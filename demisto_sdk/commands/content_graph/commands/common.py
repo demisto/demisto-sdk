@@ -1,5 +1,6 @@
 import os
 
+from loguru import logger
 from neo4j.exceptions import (
     ClientError,
     DatabaseError,
@@ -8,7 +9,6 @@ from neo4j.exceptions import (
 )
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.common.logger import logger
 
 
 def recover_if_fails(func):

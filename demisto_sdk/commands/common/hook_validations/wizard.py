@@ -1,5 +1,7 @@
 from typing import Optional
 
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     WIZARD,
@@ -10,7 +12,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_pack_name
 
 

@@ -12,7 +12,8 @@ from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 from unittest import mock
 
-from demisto_sdk.commands.common.logger import logger
+from loguru import logger
+
 from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     CommandMetadata,
@@ -245,9 +246,11 @@ class MetadataToDict:
             "description": self.mc.description,
             "commonfields": {"id": self.mc.integration_name, "version": -1},
             "name": self.mc.integration_name,
-            "display": self.mc.display
-            if self.mc.display
-            else self.mc.integration_name.replace("_", " "),
+            "display": (
+                self.mc.display
+                if self.mc.display
+                else self.mc.integration_name.replace("_", " ")
+            ),
             "configuration": config_keys,
             "script": {
                 "commands": commands,
@@ -382,9 +385,9 @@ class MetadataToDict:
                 MetadataToDict.add_arg_metadata(
                     arg_name=argument.name,
                     description=argument.description if argument.description else "",
-                    default_value=argument.default_value
-                    if argument.default_value
-                    else None,
+                    default_value=(
+                        argument.default_value if argument.default_value else None
+                    ),
                     is_array=argument.is_array,
                     secret=argument.secret,
                     options=options,

@@ -5,6 +5,7 @@ from shutil import rmtree
 from typing import Tuple
 
 import pytest
+from loguru import logger
 
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content import Pack
@@ -31,7 +32,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     SecretIgnore,
     Widget,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import src_root
 from TestSuite.test_tools import str_in_call_args_list
 

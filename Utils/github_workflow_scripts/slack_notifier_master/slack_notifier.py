@@ -4,9 +4,9 @@ from typing import Collection, Dict, List, Optional, Set, Tuple
 import typer
 from github import Github
 from github.WorkflowRun import WorkflowRun
+from loguru import logger
 from slack_sdk import WebClient
 
-from demisto_sdk.commands.common.logger import logger
 from Utils.pytest_junit_parser import JunitParser, TestResult
 
 DEFAULT_SLACK_CHANNEL = "dmst-build-test"

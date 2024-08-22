@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import List, Tuple
 from urllib.parse import urlparse
 
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import (
     DOC_FILE_IMAGE_REGEX,
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
@@ -16,7 +18,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersionToMarketplaceName,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
     run_sync,

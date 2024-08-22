@@ -2,6 +2,8 @@
 This module is designed to validate the correctness of generic definition entities in content.
 """
 
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,
@@ -11,7 +13,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.logger import logger
 
 
 class CorrelationRuleValidator(ContentEntityValidator):

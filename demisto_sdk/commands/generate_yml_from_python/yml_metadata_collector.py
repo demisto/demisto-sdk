@@ -5,8 +5,9 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable, List, Optional
 
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import ParameterType
-from demisto_sdk.commands.common.logger import logger
 
 # This is done so the dependencies will not clash or be mocked.
 ParameterTypes = ParameterType

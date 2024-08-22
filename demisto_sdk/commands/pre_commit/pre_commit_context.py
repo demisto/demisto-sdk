@@ -7,9 +7,10 @@ from functools import cached_property
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import CACHE_DIR
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_remote_file,

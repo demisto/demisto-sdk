@@ -5,6 +5,7 @@ from pathlib import Path
 from shutil import rmtree
 
 import pytest
+from loguru import logger
 from packaging.version import parse
 from pytest import MonkeyPatch
 
@@ -20,7 +21,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import PackMetaDat
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.content_graph.common import (
     ContentType,

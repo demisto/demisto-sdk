@@ -9,6 +9,7 @@ from typing import Dict, Tuple
 
 from dateutil import parser
 from git import GitCommandError
+from loguru import logger
 from packaging.version import Version, parse
 
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
@@ -53,7 +54,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     check_timestamp_format,
     extract_error_codes_from_file,

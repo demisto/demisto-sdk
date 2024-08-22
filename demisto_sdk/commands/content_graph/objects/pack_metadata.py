@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Union
 
+from loguru import logger
 from packaging.version import Version, parse
 from pydantic import BaseModel, Field
 
@@ -13,7 +14,6 @@ from demisto_sdk.commands.common.content_constant_paths import (
     LANDING_PAGE_SECTIONS_PATH,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
 from demisto_sdk.commands.content_graph.common import ContentType, PackTags
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -205,12 +205,14 @@ class PackMetadata(BaseModel):
             )
 
         content_displays = {
-            content_type: content_type_display
-            if (
-                collected_content_items[content_type]
-                and len(collected_content_items[content_type]) == 1
+            content_type: (
+                content_type_display
+                if (
+                    collected_content_items[content_type]
+                    and len(collected_content_items[content_type]) == 1
+                )
+                else f"{content_type_display}s"
             )
-            else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
         if (
@@ -430,14 +432,16 @@ class PackMetadata(BaseModel):
         When a support level is provided, the returned display names are without the contribution suffix.
         """
         return [
-            {
-                "name": IntegrationScriptUnifier.remove_support_from_display_name(
-                    integration.display_name, support_level
-                ),
-                "id": integration.object_id,  # same as integration.name
-            }
-            if include_name
-            else integration.object_id
+            (
+                {
+                    "name": IntegrationScriptUnifier.remove_support_from_display_name(
+                        integration.display_name, support_level
+                    ),
+                    "id": integration.object_id,  # same as integration.name
+                }
+                if include_name
+                else integration.object_id
+            )
             for integration in content_items.integration
             if integration.is_data_source()
         ]

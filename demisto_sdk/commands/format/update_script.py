@@ -1,5 +1,7 @@
 from typing import Optional, Tuple
 
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     TYPE_JS,
@@ -7,7 +9,6 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_iron_bank_pack, server_version_compare
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,

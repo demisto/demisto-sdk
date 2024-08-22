@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.logger import logger
+from loguru import logger
+
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
 )

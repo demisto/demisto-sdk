@@ -10,6 +10,7 @@ import string
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from loguru import logger
 from pykwalify.core import Core
 
 from demisto_sdk.commands.common.configuration import Configuration
@@ -29,7 +30,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_remote_file, is_file_path_in_pack
 
 

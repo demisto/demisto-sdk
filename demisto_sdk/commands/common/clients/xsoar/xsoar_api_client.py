@@ -14,6 +14,7 @@ import requests
 from demisto_client.demisto_api.api.default_api import DefaultApi
 from demisto_client.demisto_api.models.entry import Entry
 from demisto_client.demisto_api.rest import ApiException, RESTResponse
+from loguru import logger
 from packaging.version import Version
 from pydantic import BaseModel, Field
 from requests.auth import HTTPBasicAuth
@@ -34,7 +35,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
 
@@ -1300,7 +1300,9 @@ class XsoarClient:
             f"is {playbook_state}",
             expected_states=expected_states,
             timeout=timeout,
-            reason=f"{self.get_incident_playbook_failure(incident_id)}"
-            if playbook_state == InvestigationPlaybookState.FAILED
-            else None,
+            reason=(
+                f"{self.get_incident_playbook_failure(incident_id)}"
+                if playbook_state == InvestigationPlaybookState.FAILED
+                else None
+            ),
         )

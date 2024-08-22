@@ -16,6 +16,7 @@ import docker
 import docker.errors
 import requests
 from docker.models.containers import Container
+from loguru import logger
 from packaging.version import parse
 
 # Local packages
@@ -25,7 +26,6 @@ from demisto_sdk.commands.common.constants import (
     DemistoException,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
 from demisto_sdk.commands.common.tools import get_remote_file, is_external_repository

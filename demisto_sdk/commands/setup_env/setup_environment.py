@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import dotenv
 from demisto_client.demisto_api.rest import ApiException
+from loguru import logger
 from lxml import etree
 from requests.exceptions import ConnectionError, Timeout
 
@@ -30,7 +31,6 @@ from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.files import FileReadError, TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     SecretManagerException,
     get_integration_params,
@@ -373,9 +373,11 @@ def configure_vscode_launch(
                         "name": "PowerShell: Debug Integration",
                         "type": "PowerShell",
                         "request": "launch",
-                        "script": f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
-                        if devcontainer
-                        else str(integration_script.path.with_suffix(".ps1")),
+                        "script": (
+                            f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
+                            if devcontainer
+                            else str(integration_script.path.with_suffix(".ps1"))
+                        ),
                         "cwd": "${workspaceFolder}",
                     }
                 ],
@@ -420,9 +422,11 @@ def configure_vscode_launch(
                         "name": "Python: Debug Integration locally",
                         "type": "debugpy",
                         "request": "launch",
-                        "program": f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
-                        if devcontainer
-                        else str(integration_script.path.with_suffix(".py")),
+                        "program": (
+                            f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
+                            if devcontainer
+                            else str(integration_script.path.with_suffix(".py"))
+                        ),
                         "console": "integratedTerminal",
                         "cwd": "${workspaceFolder}",
                         "justMyCode": False,

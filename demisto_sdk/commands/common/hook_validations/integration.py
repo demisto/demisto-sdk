@@ -3,6 +3,8 @@ import re
 from pathlib import Path
 from typing import Dict, Optional
 
+from loguru import logger
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
@@ -54,7 +56,6 @@ from demisto_sdk.commands.common.hook_validations.description import (
 )
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     compare_context_path_in_yml_and_readme,
@@ -1628,9 +1629,11 @@ class IntegrationValidator(ContentEntityValidator):
 
         invalid_display_names = []
         for parameter in parameters_display_name:
-            invalid_display_names.append(parameter) if parameter and not parameter[
-                0
-            ].isupper() or "_" in parameter else None
+            (
+                invalid_display_names.append(parameter)
+                if parameter and not parameter[0].isupper() or "_" in parameter
+                else None
+            )
 
         if invalid_display_names:
             (

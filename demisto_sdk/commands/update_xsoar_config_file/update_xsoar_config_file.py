@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Dict, List
 
 import demisto_client
+from loguru import logger
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 
 XSOAR_CONFIG_FILE_JSON = "xsoar_config.json"
 MARKETPLACE_PACKS_SECTION = "marketplace_packs"

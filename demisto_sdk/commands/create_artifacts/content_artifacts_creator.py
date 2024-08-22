@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from shutil import make_archive, rmtree
 from typing import Callable, Dict, List, Optional, Union
 
+from loguru import logger
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
@@ -67,7 +68,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     YAMLContentObject,
     YAMLContentUnifiedObject,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file
 
 from .artifacts_report import ArtifactsReport, ObjectReport

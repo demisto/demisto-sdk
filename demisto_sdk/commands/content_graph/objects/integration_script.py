@@ -2,6 +2,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from loguru import logger
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
@@ -13,7 +14,6 @@ from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,

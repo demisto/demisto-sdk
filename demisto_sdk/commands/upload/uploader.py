@@ -8,6 +8,7 @@ from typing import Iterable, List, Optional, Tuple, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
+from loguru import logger
 from packaging.version import Version
 from tabulate import tabulate
 
@@ -20,7 +21,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_demisto_version,
@@ -596,9 +596,11 @@ class ItemDetacher:
                 self.detach_item(file.get("file_id"), file_path=file.get("file_path"))
                 if upload_file:
                     Uploader(
-                        input=Path(raw_file_path)
-                        if (raw_file_path := file.get("file_path")) is not None
-                        else None,
+                        input=(
+                            Path(raw_file_path)
+                            if (raw_file_path := file.get("file_path")) is not None
+                            else None
+                        ),
                         marketplace=self.marketplace,
                     ).upload()
 

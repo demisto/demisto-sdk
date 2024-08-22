@@ -7,9 +7,9 @@ import time
 from typing import Dict
 
 import requests
+from loguru import logger
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml, write_dict
 
 CREDENTIALS = 9
@@ -97,7 +97,7 @@ def generate_desc_with_spinner(command_output_path, insecure, output):
 
 
 def generate_desc(input_ctx, prob_check=False, insecure=False):
-    # from demisto_sdk.commands.common.logger import logger
+    # from loguru import logger
     # logger.setLevel(logging.ERROR)
 
     prompt = get_current_prompt()

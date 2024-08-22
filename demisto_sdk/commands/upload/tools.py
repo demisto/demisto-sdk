@@ -3,9 +3,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from demisto_client.demisto_api.rest import ApiException
+from loguru import logger
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.exceptions import FailedUploadException
 
 if TYPE_CHECKING:

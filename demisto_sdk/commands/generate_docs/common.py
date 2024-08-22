@@ -4,8 +4,9 @@ import re
 from enum import Enum
 from typing import Dict, List, Tuple
 
+from loguru import logger
+
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.run_cmd.runner import Runner
 
@@ -144,8 +145,10 @@ def generate_table_section(
             section = [""]
         return section
 
-    section.extend([text, "    |", "    |"]) if numbered_section else section.extend(
-        [text, "|", "|"]
+    (
+        section.extend([text, "    |", "    |"])
+        if numbered_section
+        else section.extend([text, "|", "|"])
     )
     header_index = len(section) - 2
     for key in data[0]:

@@ -12,6 +12,7 @@ import giturlparse
 
 # dirs
 import requests
+from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_CI_SERVER_HOST,
@@ -20,7 +21,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
 
 
 class GitProvider(enum.Enum):
@@ -279,9 +279,11 @@ class GitContentConfig:
             r = requests.get(
                 f"https://api.{api_host}/repos/{repo_name}",
                 headers={
-                    "Authorization": f"Bearer {GitContentConfig.CREDENTIALS.github_token}"
-                    if GitContentConfig.CREDENTIALS.github_token
-                    else "",
+                    "Authorization": (
+                        f"Bearer {GitContentConfig.CREDENTIALS.github_token}"
+                        if GitContentConfig.CREDENTIALS.github_token
+                        else ""
+                    ),
                     "Accept": "application/vnd.github.VERSION.raw",
                 },
                 verify=False,

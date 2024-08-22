@@ -3,10 +3,11 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
     sha1_dir,
@@ -71,9 +72,9 @@ class ContentGraphInterface(ABC):
     def dump_metadata(self, override_commit: bool = True) -> None:
         """Adds metadata to the graph."""
         metadata = {
-            "commit": GitUtil().get_current_commit_hash()
-            if override_commit
-            else self.commit,
+            "commit": (
+                GitUtil().get_current_commit_hash() if override_commit else self.commit
+            ),
             "content_parser_latest_hash": self._get_latest_content_parser_hash(),
             "schema": self.get_schema(),
         }

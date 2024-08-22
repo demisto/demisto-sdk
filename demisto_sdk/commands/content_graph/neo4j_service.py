@@ -5,6 +5,7 @@ from pathlib import Path
 
 import docker
 import requests
+from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_NEO4J_VERSION,
@@ -12,7 +13,6 @@ from demisto_sdk.commands.common.constants import (
     NEO4J_DIR,
 )
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_PASSWORD,

@@ -1,5 +1,6 @@
+from loguru import logger
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import (
     create_wrapper_script,
     prepare_script_access_fields,

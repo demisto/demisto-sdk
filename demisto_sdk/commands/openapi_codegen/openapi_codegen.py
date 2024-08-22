@@ -6,11 +6,11 @@ from distutils.util import strtobool
 from typing import Any, List, Optional, Union
 
 import autopep8
+from loguru import logger
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import camel_to_snake
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT,
@@ -936,9 +936,12 @@ class OpenAPIIntegration:
                             new_ref_arg = {
                                 "name": k,
                                 "in": arg.get("in"),
-                                "required": True
-                                if k in self.reference.get(ref, {}).get("required", [])
-                                else False,
+                                "required": (
+                                    True
+                                    if k
+                                    in self.reference.get(ref, {}).get("required", [])
+                                    else False
+                                ),
                             }
                             if "$ref" in ref_arg[k]:
                                 new_ref_arg["properties"] = {}

@@ -180,7 +180,9 @@ def create_playbook_object(
     return Playbook.from_orm(parser)
 
 
-def create_doc_file_object(pack_path, image_name="example.png") -> ImageRelatedFile:
+def create_doc_file_object(
+    pack_path: Path, image_name: Optional[str] = "example.png"
+) -> ImageRelatedFile:
     """Creating a doc file object.
 
     Args:

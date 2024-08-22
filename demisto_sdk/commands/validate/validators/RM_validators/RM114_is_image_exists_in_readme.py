@@ -4,7 +4,7 @@ from typing import Iterable, List, Union
 
 import click
 
-from demisto_sdk.commands.common.constants import DOC_FILE_EXTENDED_IMAGE_REGEX
+from demisto_sdk.commands.common.constants import DOC_FILE_FULL_IMAGE_REGEX
 from demisto_sdk.commands.common.tools import (
     extract_image_paths_from_str,
     get_pack_name,
@@ -49,7 +49,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                         get_pack_name(content_item.path),
                         extract_image_paths_from_str(
                             text=content_item.readme.file_content,
-                            regex_str=DOC_FILE_EXTENDED_IMAGE_REGEX,
+                            regex_str=DOC_FILE_FULL_IMAGE_REGEX,
                         ),
                     )
                 )
@@ -73,7 +73,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
             try:
                 if "Packs" not in image_path:
                     image_path = f"Packs/{pack_name}/{image_path.replace('../', '')}"
-                path_validate.convert(image_path, None, None)
+                path_validate.convert(image_path, param=None, ctx=None)
 
             except click.exceptions.BadParameter:
                 invalid_image_paths.append(image_path)

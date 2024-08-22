@@ -167,13 +167,11 @@ class PacksManager(ArtifactsManager):
 
 
 class QuietModeController:
-    """Control a quiet mode for loggers and stdout."""
-
     def __enter__(self):
-        logger.disable(None)
+        logger.disable("packs_zipper")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        logger.enable(None)
+        logger.enable("packs_zipper")
 
 
 def zip_uploadable_packs(artifact_manager: ArtifactsManager):

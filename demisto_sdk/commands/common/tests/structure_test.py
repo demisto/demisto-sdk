@@ -86,7 +86,7 @@ from demisto_sdk.tests.constants_test import (
 )
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_caplog
 
 
 class TestStructureValidator:
@@ -379,7 +379,6 @@ class TestStructureValidator:
                 Ensure the structure validator raises a suitable error
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         pack = repo.create_pack()
         job = pack.create_job(is_feed=is_feed, name="job_name")
@@ -388,7 +387,7 @@ class TestStructureValidator:
         validator = StructureValidator(job.path, is_new_file=True)
         with ChangeCWD(repo.path):
             assert not validator.is_valid_file()
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_error.call_args_list,
             f'Missing the field "{missing_field}" in root',
         )
@@ -406,7 +405,6 @@ class TestStructureValidator:
                 Ensure the structure validator raises a suitable error
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         pack = repo.create_pack()
         wizard = pack.create_wizard(name="wizard_name")
@@ -415,7 +413,7 @@ class TestStructureValidator:
         validator = StructureValidator(wizard.path, is_new_file=True)
         with ChangeCWD(repo.path):
             assert not validator.is_valid_file()
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_error.call_args_list,
             f'Missing the field "{missing_field}" in root',
         )

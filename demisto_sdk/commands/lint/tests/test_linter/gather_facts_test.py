@@ -10,7 +10,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.lint import linter
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_caplog
 
 
 def initiate_linter(
@@ -636,13 +636,13 @@ class TestDockerImagesCollection:
 
         # Verify docker images:
         assert runner._facts["images"] == []
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             log.call_args_list,
             f"Skipping checks on docker for '{docker_image_flag}' - The requested native image:"
             f" '{docker_image_flag}' is not supported. For supported native image versions please see:"
             f" 'Tests/docker_native_image_config.json'",
         )
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             log.call_args_list,
             f"{integration_name} - Facts - No docker images to run on - "
             f"Skipping run lint in host as well.",

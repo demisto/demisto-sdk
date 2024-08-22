@@ -4,6 +4,10 @@ from typing import Any, Generator, Iterable, List, Tuple, Union
 CallArgs = Iterable[Union[Tuple[Any], Tuple[Any, dict]]]
 
 
+def str_in_caplog(*args, **kwargs):
+    raise DeprecationWarning("This isn't used anymore, use caplog instead")
+
+
 def get_test_suite_path():
     """Gets root of Demisto-SDK Test Suite folder (For assets management)
     Returns root of TestSuite
@@ -60,25 +64,6 @@ def iter_flatten_call_args(
 
 def flatten_call_args(call_args: CallArgs) -> Tuple[Any, ...]:
     return tuple(iter_flatten_call_args(call_args))
-
-
-def str_in_call_args_list(
-    call_args_list: List[Tuple[Tuple[str], Tuple[str], Tuple[str]]], required_str: str
-):
-    """
-    Checks whether required_str is in any of the call_args in call_args_list
-    Args:
-        call_args_list: From a mocker
-        required_str: String to search in any of the call_args_list
-    :return: True is required_str was found, False otherwise
-    """
-    ret_value = any(
-        isinstance(current_call[0], tuple) and required_str in str(current_call[0][0])
-        for current_call in filter(None, call_args_list)
-    )
-    if not ret_value:
-        print(f"Could not find {required_str=}")  # noqa: T201
-    return ret_value
 
 
 def count_str_in_call_args_list(

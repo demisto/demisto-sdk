@@ -47,7 +47,7 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
 )
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 INTEGRATION = create_integration_object()
 INTEGRATION.path = Path(
@@ -451,13 +451,11 @@ def test_post_results(
     assert logger_warning.call_count == expected_warnings_call_count
     assert logger_error.call_count == expected_error_call_count
     for expected_error_code_in_warning in expected_error_code_in_warnings:
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_warning.call_args_list, expected_error_code_in_warning
         )
     for expected_error_code_in_error in expected_error_code_in_errors:
-        assert str_in_call_args_list(
-            logger_error.call_args_list, expected_error_code_in_error
-        )
+        assert str_in_caplog(logger_error.call_args_list, expected_error_code_in_error)
 
 
 @pytest.mark.parametrize(

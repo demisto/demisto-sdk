@@ -69,7 +69,7 @@ from demisto_sdk.tests.constants_test import (
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_caplog
 
 INTEGRATION_TEST_ARGS = (
     SOURCE_FORMAT_INTEGRATION_COPY,
@@ -1263,7 +1263,6 @@ class TestFormatting:
             - Ensure a warning about the missing sub-schema is printed
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         schema = {
             "mapping": {
@@ -1947,7 +1946,7 @@ def test_yml_run_format_exception_handling(format_object, mocker):
     )
 
     formatter.run_format()
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_info.call_args_list,
         "Failed to update file my_file_path. Error: MY ERROR",
     )

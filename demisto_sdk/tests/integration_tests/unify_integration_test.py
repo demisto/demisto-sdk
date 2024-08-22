@@ -312,7 +312,6 @@ class TestLayoutUnifer:
             logging.getLogger("demisto-sdk"), "warning"
         )
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         pack = REPO.create_pack("test")
         layout = pack.create_layoutcontainer(

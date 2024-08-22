@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_caplog
 
 default_additional_info = load_default_additional_info_dict()
 
@@ -329,9 +329,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
-            assert str_in_call_args_list(
-                logger_error.call_args_list, changed_command_name
-            )
+            assert str_in_caplog(logger_error.call_args_list, changed_command_name)
         structure.quiet_bc = True
         assert (
             validator.no_change_to_context_path() is True
@@ -406,7 +404,7 @@ class TestIntegrationValidator:
         "current, old, expected_error_msg", CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS
     )
     def test_no_changed_command_name_or_arg_msg(
-        self, current, old, expected_error_msg, mocker
+        self, current, old, expected_error_msg, mocker, caplog
     ):
         """
         Given
@@ -424,13 +422,13 @@ class TestIntegrationValidator:
         Ensure that the error massage was created correctly.
         - Case 1: Should include both command_test_name_1 and command_test_name_2 in the commands list in the error as they both have BC break changes.
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        caplog.set_level("ERROR")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         validator.no_changed_command_name_or_arg()
-        assert str_in_call_args_list(logger_error.call_args_list, expected_error_msg)
+        assert expected_error_msg in caplog.text
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [(WITHOUT_DUP, True)]
@@ -520,9 +518,7 @@ class TestIntegrationValidator:
                 ["API key"]
             )
             expected_message = f"[{warning_code}] - {warning_message}"
-            assert str_in_call_args_list(
-                logger_warning.call_args_list, expected_message
-            )
+            assert str_in_caplog(logger_warning.call_args_list, expected_message)
 
     NO_INCIDENT_INPUT = [
         (
@@ -2004,10 +2000,8 @@ class TestIsFetchParamsExist:
             if t["name"] != "incidentType"
         ]
         assert self.validator.is_valid_fetch() is False
-        assert not str_in_call_args_list(
-            logger_info.call_args_list, "display: Incident type"
-        )
-        assert str_in_call_args_list(
+        assert not str_in_caplog(logger_info.call_args_list, "display: Incident type")
+        assert str_in_caplog(
             logger_error.call_args_list,
             """A required parameter "incidentType" is missing from the YAML file.""",
         )
@@ -2037,12 +2031,8 @@ class TestIsFetchParamsExist:
         ), "is_valid_fetch() returns True instead False"
         assert all(
             [
-                str_in_call_args_list(
-                    logger_error.call_args_list, "display: Incident type"
-                ),
-                str_in_call_args_list(
-                    logger_error.call_args_list, "name: incidentType"
-                ),
+                str_in_caplog(logger_error.call_args_list, "display: Incident type"),
+                str_in_caplog(logger_error.call_args_list, "name: incidentType"),
             ]
         )
 

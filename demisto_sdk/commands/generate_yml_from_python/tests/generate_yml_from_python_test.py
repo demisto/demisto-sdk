@@ -17,7 +17,7 @@ from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import
     OutputArgument,
     YMLMetadataCollector,
 )
-from TestSuite.test_tools import str_in_call_args_list
+
 from TestSuite.integration import Integration
 
 
@@ -1890,7 +1890,7 @@ class TestYMLGeneration:
         logger_exception = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "exception"
         )
-        monkeypatch.setenv("COLUMNS", "1000")
+
 
         integration = Integration(tmp_path, "integration_name", repo)
 
@@ -1904,7 +1904,7 @@ class TestYMLGeneration:
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_exception.call_args_list, "No metadata collector found in"
         )
         assert not yml_generator.is_generatable_file
@@ -1923,7 +1923,7 @@ class TestYMLGeneration:
         - Ensure the exception is printed in the stdout.
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
+
 
         integration = Integration(tmp_path, "integration_name", repo)
 
@@ -1934,7 +1934,7 @@ class TestYMLGeneration:
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_error.call_args_list, "UniqueIntegrationException"
         )
         assert not yml_generator.is_generatable_file
@@ -1955,7 +1955,7 @@ class TestYMLGeneration:
         - Ensure that the no YML dict is generated.
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
+
 
         integration = Integration(tmp_path, "integration_name", repo)
 
@@ -1970,7 +1970,7 @@ class TestYMLGeneration:
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
 
-        assert str_in_call_args_list(logger_error.call_args_list, "Problem importing")
+        assert str_in_caplog(logger_error.call_args_list, "Problem importing")
         assert not yml_generator.is_generatable_file
         assert not yml_generator.metadata_collector
         assert not yml_generator.get_metadata_dict()

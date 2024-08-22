@@ -61,7 +61,7 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader,
     parse_error_response,
 )
-from TestSuite.test_tools import flatten_call_args, str_in_call_args_list
+from TestSuite.test_tools import flatten_call_args, str_in_caplog
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -1026,7 +1026,7 @@ class TestItemDetacher:
         )
 
         assert logger_info.call_count == 1
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list,
             "File: file was detached",
         )

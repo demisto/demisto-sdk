@@ -8,7 +8,7 @@ import requests_mock
 import demisto_sdk
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_caplog
 
 VALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-valid.md"
 INVALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-invalid.md"
@@ -168,19 +168,19 @@ def test_is_image_path_valid(mocker):
     assert not result
     assert all(
         [
-            str_in_call_args_list(logger_error.call_args_list, current_str)
+            str_in_caplog(logger_error.call_args_list, current_str)
             for current_str in blob_images_paths
         ]
         + [
-            str_in_call_args_list(logger_error.call_args_list, current_str)
+            str_in_caplog(logger_error.call_args_list, current_str)
             for current_str in raw_images_paths
         ]
         + [
-            not str_in_call_args_list(logger_error.call_args_list, current_str)
+            not str_in_caplog(logger_error.call_args_list, current_str)
             for current_str in assets_images_paths
         ]
     )
-    assert not str_in_call_args_list(logger_error.call_args_list, raw_image_path)
+    assert not str_in_caplog(logger_error.call_args_list, raw_image_path)
 
 
 @pytest.mark.parametrize(
@@ -219,7 +219,7 @@ def test_unvalid_verify_no_empty_sections(
         )
 
         assert not result
-        assert str_in_call_args_list(logger_error.call_args_list, section_error)
+        assert str_in_caplog(logger_error.call_args_list, section_error)
 
 
 @pytest.mark.parametrize(
@@ -252,7 +252,7 @@ def test_combined_unvalid_verify_no_empty_sections(integration, mocker, file_inp
         )
 
         assert not result
-        assert str_in_call_args_list(logger_error.call_args_list, error)
+        assert str_in_caplog(logger_error.call_args_list, error)
 
 
 @pytest.mark.parametrize(
@@ -364,7 +364,7 @@ def test_verify_no_default_sections_left(integration, mocker, file_input, sectio
 
         section_error = f'Replace "{section}" with a suitable info.'
         assert not result
-        assert str_in_call_args_list(logger_error.call_args_list, section_error)
+        assert str_in_caplog(logger_error.call_args_list, section_error)
 
 
 ERROR_FOUND_CASES = [
@@ -520,7 +520,7 @@ def test_invalid_short_file(mocker):
         "Pack README files are expected to include a few sentences about the pack and/or images."
     )
     assert not result
-    assert str_in_call_args_list(logger_error.call_args_list, short_readme_error)
+    assert str_in_caplog(logger_error.call_args_list, short_readme_error)
 
 
 def test_demisto_in_integration_readme(repo):

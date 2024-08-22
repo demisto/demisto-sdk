@@ -26,7 +26,7 @@ from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.test_tools import (
     ChangeCWD,
-    str_in_call_args_list,
+    str_in_caplog,
 )
 
 
@@ -535,13 +535,12 @@ class TestDocReviewPrinting:
             Ensure only the files without misspells are printed.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         self.get_file_report_mocker(files_type=self.SpelledFileType.VALID)
 
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                str_in_caplog(logger_info.call_args_list, current_str)
                 for current_str in [
                     "Files Without Misspells",
                     "file1\nfile2",
@@ -549,9 +548,7 @@ class TestDocReviewPrinting:
             ]
         )
 
-        assert not str_in_call_args_list(
-            logger_info.call_args_list, "Files With Misspells"
-        )
+        assert not str_in_caplog(logger_info.call_args_list, "Files With Misspells")
 
     def test_printing_invalid_spelled_files(self, mocker, monkeypatch):
         """
@@ -565,13 +562,12 @@ class TestDocReviewPrinting:
             Ensure only the files with misspells are printed.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         self.get_file_report_mocker(files_type=self.SpelledFileType.INVALID)
 
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                str_in_caplog(logger_info.call_args_list, current_str)
                 for current_str in [
                     "Files With Misspells",
                     "file1\nfile2",
@@ -579,9 +575,7 @@ class TestDocReviewPrinting:
             ]
         )
 
-        assert not str_in_call_args_list(
-            logger_info.call_args_list, "Files Without Misspells"
-        )
+        assert not str_in_caplog(logger_info.call_args_list, "Files Without Misspells")
 
     def test_printing_malformed_release_notes(self, mocker, monkeypatch):
         """
@@ -595,7 +589,6 @@ class TestDocReviewPrinting:
             Ensure 'Malformed Release Notes' is printed.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         self.get_file_report_mocker(
             files_type=self.SpelledFileType.INVALID_RELEASE_NOTES
@@ -603,7 +596,7 @@ class TestDocReviewPrinting:
 
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                str_in_caplog(logger_info.call_args_list, current_str)
                 for current_str in [
                     "Malformed Release Notes",
                     "file1\nfile2",
@@ -623,7 +616,6 @@ class TestDocReviewPrinting:
             Ensure both files misspelled and correctly spelled files are printed.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         self.get_file_report_mocker(
             files_type=self.SpelledFileType.BOTH_INVALID_AND_VALID
@@ -631,7 +623,7 @@ class TestDocReviewPrinting:
 
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                str_in_caplog(logger_info.call_args_list, current_str)
                 for current_str in [
                     "Files Without Misspells",
                     "file1\nfile2",

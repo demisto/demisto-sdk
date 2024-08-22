@@ -5,7 +5,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_caplog
 
 FIND_DEPENDENCIES_CMD = "find-dependencies"
 
@@ -55,7 +55,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure no error occurs.
         - Ensure debug file is created.
         """
-        monkeypatch.setenv("COLUMNS", "1000")
 
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
@@ -90,7 +89,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             )
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                str_in_caplog(logger_info.call_args_list, current_str)
                 for current_str in [
                     "# Pack ID: FindDependencyPack",
                     "### Scripts",
@@ -163,7 +162,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
 
             assert all(
                 [
-                    str_in_call_args_list(logger_info.call_args_list, current_str)
+                    str_in_caplog(logger_info.call_args_list, current_str)
                     for current_str in [
                         "Found dependencies result for FindDependencyPack pack:",
                         "{}",
@@ -267,7 +266,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         )
 
         repo.id_set.write_json(id_set)
-        monkeypatch.setenv("COLUMNS", "1000")
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
@@ -286,18 +284,16 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
             )
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, "# Pack ID: FindDependencyPack2"
         )
 
-        assert str_in_call_args_list(
-            logger_info.call_args_list, "All level dependencies are:"
-        )
-        assert str_in_call_args_list(
+        assert str_in_caplog(logger_info.call_args_list, "All level dependencies are:")
+        assert str_in_caplog(
             logger_info.call_args_list,
             "Found dependencies result for FindDependencyPack2 pack:",
         )
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, '"display_name": "FindDependencyPack1"'
         )
         assert result.exit_code == 0
@@ -310,7 +306,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             path = os.path.join("Packs", Path(pack.path).name, "Integrations")
             result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, "-i", path])
             assert result.exit_code == 1
-            assert str_in_call_args_list(
+            assert str_in_caplog(
                 logger_info.call_args_list,
                 "must be formatted as 'Packs/<some pack name>",
             )

@@ -9,7 +9,7 @@ from urllib3.response import HTTPResponse
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.download.tests.downloader_test import Environment
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 TEST_FILE_DIR = Path(__file__).parent.parent / "test_files" / "download_command"
@@ -65,10 +65,10 @@ def test_integration_download_no_force(demisto_client, tmp_path, mocker):
         main,
         ["download", "-o", pack_path, "-i", "TestScript", "-i", "DummyPlaybook"],
     )
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_info.call_args_list, "Filtering process completed, 2/13 items remain."
     )
-    assert str_in_call_args_list(logger_info.call_args_list, "Skipped downloads: 2")
+    assert str_in_caplog(logger_info.call_args_list, "Skipped downloads: 2")
     assert result.exit_code == 0
 
 
@@ -100,10 +100,10 @@ def test_integration_download_with_force(demisto_client, tmp_path, mocker):
             "-f",
         ],
     )
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_info.call_args_list, "Filtering process completed, 2/13 items remain."
     )
-    assert str_in_call_args_list(logger_info.call_args_list, "Successful downloads: 2")
+    assert str_in_caplog(logger_info.call_args_list, "Successful downloads: 2")
     assert result.exit_code == 0
 
 
@@ -138,7 +138,7 @@ MSGraph_DeviceManagement_Test         playbook
 Protectwise-Test                      playbook
 guy                                   playbook"""
 
-    assert str_in_call_args_list(logger_info.call_args_list, expected_table_str)
+    assert str_in_caplog(logger_info.call_args_list, expected_table_str)
     assert result.exit_code == 0
 
 
@@ -172,12 +172,12 @@ def test_integration_download_fail(demisto_client, tmp_path, mocker):
             "-f",
         ],
     )
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_info.call_args_list, "Filtering process completed, 1/13 items remain."
     )
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_warning.call_args_list,
         "Custom content item 'DummyPlaybook1' provided as an input could not be found / parsed.",
     )
-    assert str_in_call_args_list(logger_info.call_args_list, "Successful downloads: 1")
+    assert str_in_caplog(logger_info.call_args_list, "Successful downloads: 1")
     assert result.exit_code == 1

@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_caplog
 
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
@@ -179,7 +179,6 @@ class TestPackUniqueFilesValidator:
         - Ensure validate found errors.
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
         mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
@@ -221,7 +220,7 @@ class TestPackUniqueFilesValidator:
                 ],
                 catch_exceptions=False,
             )
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_error.call_args_list,
             "Contributed packs must include email or url",
         )
@@ -248,7 +247,6 @@ class TestPackUniqueFilesValidator:
         - Ensure validate finds errors accordingly.
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
         pack_metadata_changed_url["url"] = url
@@ -294,9 +292,9 @@ class TestPackUniqueFilesValidator:
             "The metadata URL leads to a GitHub repo instead of a support page."
         )
         if is_valid:
-            assert not str_in_call_args_list(logger_error.call_args_list, error_text)
+            assert not str_in_caplog(logger_error.call_args_list, error_text)
         else:
-            assert str_in_call_args_list(logger_error.call_args_list, error_text)
+            assert str_in_caplog(logger_error.call_args_list, error_text)
 
     def test_validate_partner_contribute_pack_metadata_price_change(
         self, mocker, monkeypatch, repo
@@ -312,7 +310,6 @@ class TestPackUniqueFilesValidator:
         - Ensure validate found errors.
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_price_changed = PACK_METADATA_PARTNER.copy()
         pack_metadata_price_changed["price"] = 3
@@ -353,7 +350,7 @@ class TestPackUniqueFilesValidator:
                 ],
                 catch_exceptions=False,
             )
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_error.call_args_list,
             "The pack price was changed from 2 to 3 - revert the change",
         )
@@ -431,7 +428,6 @@ class TestPackUniqueFilesValidator:
         - Ensure that the validation passes and that the skipping message is printed.
         """
         logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         self.restart_validator()
         self.validator.skip_id_set_creation = True
@@ -440,7 +436,7 @@ class TestPackUniqueFilesValidator:
             False  # reverting to default for next tests
         )
         assert res
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_debug.call_args_list, "No first level dependencies found"
         )
 
@@ -765,7 +761,6 @@ class TestPackUniqueFilesValidator:
             - Ensure result is None and the appropriate skipping message is printed.
         """
         logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         self.restart_validator()
         pack_name = "PackName"
@@ -783,7 +778,7 @@ class TestPackUniqueFilesValidator:
             str(pack.pack_metadata.path)
         )
         assert not res
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_debug.call_args_list,
             "Running on master branch - skipping price change validation",
         )
@@ -803,7 +798,6 @@ class TestPackUniqueFilesValidator:
             - Ensure result is None and the appropriate skipping message is printed.
         """
         logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         self.restart_validator()
         pack_name = "PackName"
@@ -839,7 +833,7 @@ class TestPackUniqueFilesValidator:
                 str(pack.pack_metadata.path)
             )
             assert not res
-            assert str_in_call_args_list(
+            assert str_in_caplog(
                 logger_debug.call_args_list,
                 "Got an error while trying to connect to git",
             )
@@ -859,7 +853,6 @@ class TestPackUniqueFilesValidator:
             - Ensure result is None and the appropriate skipping message is printed.
         """
         logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         self.restart_validator()
         pack_name = "PackName"
@@ -894,7 +887,7 @@ class TestPackUniqueFilesValidator:
         )
         with ChangeCWD(repo.path):
             assert not res
-            assert str_in_call_args_list(
+            assert str_in_caplog(
                 logger_debug.call_args_list,
                 "Unable to find previous pack_metadata.json file - skipping price change validation",
             )
@@ -1123,7 +1116,6 @@ class TestPackUniqueFilesValidator:
         logger_warning = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "warning"
         )
-        monkeypatch.setenv("COLUMNS", "1000")
 
         pack_description = (
             "This is will fail cause the description here is too long."
@@ -1133,7 +1125,7 @@ class TestPackUniqueFilesValidator:
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
 
         error_desc = "The description field of the pack_metadata.json file is longer than 130 characters."
-        assert str_in_call_args_list(logger_warning.call_args_list, error_desc)
+        assert str_in_caplog(logger_warning.call_args_list, error_desc)
 
     def test_validate_author_image_exists_valid(self, repo):
         """

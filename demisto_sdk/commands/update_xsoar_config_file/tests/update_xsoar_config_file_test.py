@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
     XSOARConfigFileUpdater,
 )
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 UNIT_TEST_DATA = src_root() / "commands" / "update_xsoar_config_file" / "tests" / "data"
 
@@ -227,7 +227,7 @@ class TestXSOARConfigFileUpdater:
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
             if err:
-                assert str_in_call_args_list(logger_info.call_args_list, err)
+                assert str_in_caplog(logger_info.call_args_list, err)
 
             try:
                 with open(f"{tmp_output_dir}/{expected_path}") as config_file:
@@ -283,7 +283,7 @@ class TestXSOARConfigFileUpdater:
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
             if err:
-                assert str_in_call_args_list(logger_info.call_args_list, err)
+                assert str_in_caplog(logger_info.call_args_list, err)
 
             try:
                 with open(f"{tmp_output_dir}/{expected_path}") as config_file:
@@ -336,7 +336,7 @@ class TestXSOARConfigFileUpdater:
         assert error_code == exit_code
 
         if err:
-            assert str_in_call_args_list(logger_info.call_args_list, err)
+            assert str_in_caplog(logger_info.call_args_list, err)
 
     @pytest.mark.parametrize(
         argnames="add_custom_pack, add_market_place_pack, pack_id, pack_data, exit_code",

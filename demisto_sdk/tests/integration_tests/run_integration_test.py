@@ -7,7 +7,7 @@ from demisto_client.demisto_api import DefaultApi
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.run_cmd.runner import Runner
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 DEBUG_FILE_PATH = (
     f"{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.txt"
@@ -53,7 +53,7 @@ def test_integration_run_non_existing_command(
     - Ensure output is the appropriate error.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     mocker.patch.object(DefaultApi, "investigation_add_entries_sync", return_value=None)
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
     result = CliRunner(
@@ -69,7 +69,7 @@ def test_integration_run_non_existing_command(
     )
     assert 0 == result.exit_code
     assert not result.exception
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_info.call_args_list,
         "Command did not run, make sure it was written correctly.",
     )
@@ -89,7 +89,6 @@ def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
@@ -107,7 +106,7 @@ def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
     assert not run_result.stderr
     assert not run_result.exception
 
-    assert str_in_call_args_list(logger_info.call_args_list, YAML_OUTPUT)
+    assert str_in_caplog(logger_info.call_args_list, YAML_OUTPUT)
     assert logger_warning.call_count == 0
     assert logger_error.call_count == 0
 
@@ -126,7 +125,7 @@ def test_json_to_outputs_flag_fail_no_prefix(
     - Ensure the json_to_outputs command is failing due to no prefix argument provided.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
     mocker.patch.object(Runner, "_run_query", return_value=["123"])
@@ -139,13 +138,18 @@ def test_json_to_outputs_flag_fail_no_prefix(
         mix_stderr=False,
     ).invoke(main, ["run", "-q", command, "--json-to-outputs"])
     assert 1 == run_result.exit_code
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_info.call_args_list,
         "A prefix for the outputs is needed for this command. Please provide one",
     )
 
 
-def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variables):
+def test_incident_id_passed_to_run(
+    caplog,
+    mocker,
+    monkeypatch,
+    set_environment_variables,
+):
     """
     Given
     - kl-get-components command and --incident-id argument.
@@ -156,11 +160,6 @@ def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variable
     Then
     - Ensure the investigation-id is set from the incident-id.
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
-
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_run_query", return_value=["123"])
     # mock to get test log file
@@ -173,8 +172,5 @@ def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variable
     ).invoke(main, ["run", "-q", command, "--incident-id", "pg_id"])
 
     assert run_result.exit_code == 0
-    assert str_in_call_args_list(
-        logger_debug.call_args_list, "running command in investigation_id='pg_id'"
-    )
-    assert logger_warning.call_count == 0
-    assert logger_error.call_count == 0
+    assert "running command in investigation_id='pg_id'" in caplog.text
+    assert len(caplog.records) == 3.1

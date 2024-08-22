@@ -62,7 +62,7 @@ from demisto_sdk.commands.common.update_id_set import (
     re_create_id_set,
     should_skip_item_by_mp,
 )
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f"{git_path()}/demisto_sdk/tests"
@@ -173,7 +173,7 @@ class TestPacksMetadata:
             - Verify output to logs.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(uis, "get_pack_name", return_value="Pack1")
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
@@ -203,7 +203,7 @@ class TestPacksMetadata:
         assert res["Pack1"]["marketplaces"] == ["xsoar", "marketplacev2"]
 
         assert (
-            str_in_call_args_list(
+            str_in_caplog(
                 logger_info.call_args_list, f"adding {pack_metadata_path} to id_set"
             )
             == print_logs
@@ -224,7 +224,7 @@ class TestPacksMetadata:
         with pytest.raises(FileNotFoundError):
             get_pack_metadata_data("Pack_Path", True)
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, "Failed to process Pack_Path, Error:"
         )
 
@@ -3331,7 +3331,7 @@ class TestJob:
             - Verify output to logs.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         pack = repo.create_pack()
         job_details = "job details"
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
@@ -3358,9 +3358,7 @@ class TestJob:
         assert datum["selectedFeeds"] == []
 
         assert (
-            str_in_call_args_list(
-                logger_info.call_args_list, f"adding {job.path} to id_set"
-            )
+            str_in_caplog(logger_info.call_args_list, f"adding {job.path} to id_set")
             == print_logs
         )
 
@@ -3418,7 +3416,7 @@ class TestJob:
                 MarketplaceVersions.XSOAR.value,
                 print_logs,
             )
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, f"failed to process job {job_json_path}"
         )
 
@@ -3442,7 +3440,7 @@ class TestWizard:
             - Verify output to logs.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         pack = repo.create_pack()
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         wizard = pack.create_wizard("wizard")
@@ -3471,9 +3469,7 @@ class TestWizard:
         assert datum["pack"] == pack.name
 
         assert (
-            str_in_call_args_list(
-                logger_info.call_args_list, f"adding {wizard.path} to id_set"
-            )
+            str_in_caplog(logger_info.call_args_list, f"adding {wizard.path} to id_set")
             == print_logs
         )
 
@@ -3490,7 +3486,7 @@ class TestParsingRules:
             - Verify result as expeted.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         parsing_rule = pack.create_parsing_rule("parsing_rule_name")
         res = process_general_items(
@@ -3514,7 +3510,7 @@ class TestParsingRules:
         assert parsing_rule_result["file_path"] == parsing_rule.yml.path
         assert parsing_rule_result["pack"] == pack.name
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, f"adding {parsing_rule.yml.path} to id_set"
         )
 
@@ -3531,7 +3527,7 @@ class TestModelingRules:
             - Verify result as expeted.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         modeling_rule = pack.create_modeling_rule("modeling_rule_name")
         res = process_general_items(
@@ -3555,7 +3551,7 @@ class TestModelingRules:
         assert modeling_rule_result["file_path"] == modeling_rule.yml.path
         assert modeling_rule_result["pack"] == pack.name
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, f"adding {modeling_rule.yml.path} to id_set"
         )
 
@@ -3572,7 +3568,7 @@ class TestCorrelationRules:
             - Verify result as expeted.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         correlation_rule = pack.create_correlation_rule(
             "correlation_rule_name",
@@ -3606,7 +3602,7 @@ class TestCorrelationRules:
         assert correlation_rule_result["file_path"] == correlation_rule.path
         assert correlation_rule_result["pack"] == pack.name
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, f"adding {correlation_rule._tmp_path} to id_set"
         )
 
@@ -3623,7 +3619,7 @@ class TestXSIAMDashboards:
             - Verify result as expeted.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         xsiam_dashboard = pack.create_xsiam_dashboard(
             "xsiam_dashboard_name",
@@ -3657,7 +3653,7 @@ class TestXSIAMDashboards:
         assert xsiam_dashboard_result["file_path"] == xsiam_dashboard.path
         assert xsiam_dashboard_result["pack"] == pack.name
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, f"adding {xsiam_dashboard._file_path} to id_set"
         )
 
@@ -3674,7 +3670,7 @@ class TestXSIAMReports:
             - Verify result as expeted.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         xsiam_report = pack.create_xsiam_report(
             "xsiam_report_name",
@@ -3708,7 +3704,7 @@ class TestXSIAMReports:
         assert xsiam_report_result["file_path"] == xsiam_report.path
         assert xsiam_report_result["pack"] == pack.name
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, f"adding {xsiam_report._file_path} to id_set"
         )
 
@@ -3725,7 +3721,7 @@ class TestTriggers:
             - Verify result as expeted.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         trigger = pack.create_trigger(
             "trigger_name", {"trigger_id": "trigger_id", "trigger_name": "trigger_name"}
@@ -3751,7 +3747,7 @@ class TestTriggers:
         assert trigger_result["file_path"] == trigger.path
         assert trigger_result["pack"] == pack.name
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, f"adding {trigger._file_path} to id_set"
         )
 
@@ -3768,7 +3764,7 @@ class TestXDRCTemplates:
             - Verify result as expeted.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         xdrc_template = pack.create_xdrc_template(
             "xdrc_template_name",
@@ -3805,7 +3801,7 @@ class TestXDRCTemplates:
         assert xdrc_template_result["file_path"] == xdrc_template.path
         assert xdrc_template_result["pack"] == pack.name
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, f"adding {xdrc_template._file_path} to id_set"
         )
 
@@ -3822,7 +3818,7 @@ class TestLayoutRules:
             - Verify result as expeted.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         layout_rule = pack.create_layout_rule(
             "rule_name", {"rule_id": "rule_id", "rule_name": "rule_name"}
@@ -3851,7 +3847,7 @@ class TestLayoutRules:
         assert layout_rule_result["file_path"] == layout_rule.path
         assert layout_rule_result["pack"] == pack.name
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, f"adding {layout_rule._file_path} to id_set"
         )
 

@@ -156,7 +156,7 @@ from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_caplog
 
 GIT_ROOT = git_path()
 
@@ -3236,7 +3236,7 @@ def test_get_content_path_no_remote(mocker):
     )
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     tools.get_content_path(Path("/User/username/test"))
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_info.call_args_list,
         "[yellow]Please run demisto-sdk in content repository![/yellow]",
     )

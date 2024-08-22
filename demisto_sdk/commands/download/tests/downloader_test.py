@@ -26,7 +26,6 @@ from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.common.tools import get_child_files
 from demisto_sdk.commands.download.downloader import *
 from TestSuite.playbook import Playbook
-from TestSuite.test_tools import str_in_call_args_list
 
 TESTS_DATA_FOLDER = Path(__file__).parent / "tests_data"
 TESTS_ENV_FOLDER = Path(__file__).parent / "tests_env"
@@ -384,7 +383,7 @@ class TestFlags:
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         assert downloader.download() == 1
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_error.call_args_list,
             "Error: Missing required parameter '-o' / '--output'.",
         )
@@ -400,7 +399,7 @@ class TestFlags:
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         assert downloader.download() == 1
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list,
             "Error: Missing required parameter for downloading system items: '-i' / '--input'.",
         )
@@ -422,7 +421,7 @@ class TestFlags:
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         assert downloader.download() == 1
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list,
             "Error: No input parameter has been provided ('-i' / '--input', '-r' / '--regex', '-a' / '--all).",
         )
@@ -440,7 +439,7 @@ class TestFlags:
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         assert downloader.download() == 1
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list,
             "Error: Missing required parameter for downloading system items: '-it' / '--item-type'.",
         )
@@ -1419,11 +1418,11 @@ def test_get_system_playbooks_api_failure(mocker):
     results = downloader.get_system_playbooks(content_items=["Test"])
 
     assert get_playbook_id_by_playbook_name_spy.call_count == 1
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         call_args_list=logger_error.call_args_list,
         required_str="Failed to fetch system playbook 'Test': (403)\nReason: Test Error Message\n",
     )
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         call_args_list=logger_info.call_args_list,
         required_str="No system playbooks were downloaded.",
     )
@@ -1528,7 +1527,7 @@ def test_invalid_regex_error(mocker):
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     assert downloader.download() == 1
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_error.call_args_list,
         "Error: Invalid regex pattern provided: '*invalid-regex*'.",
     )

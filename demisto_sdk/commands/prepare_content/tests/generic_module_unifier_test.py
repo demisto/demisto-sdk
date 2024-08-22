@@ -15,7 +15,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
 )
 from TestSuite.test_tools import (
     ChangeCWD,
-    str_in_call_args_list,
+    str_in_caplog,
 )
 
 
@@ -107,7 +107,6 @@ def test_merge_generic_module_with_its_dashboards_negative(repo, mocker, monkeyp
     - Ensure a suitable error message was printed.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
     pack.create_generic_module("generic-module", GENERIC_MODULE)
@@ -123,7 +122,7 @@ def test_merge_generic_module_with_its_dashboards_negative(repo, mocker, monkeyp
         unifier = GenericModuleUnifier(input=generic_module_path)
         non_unified_generic_module = unifier.merge_generic_module_with_its_dashboards()
         assert non_unified_generic_module == GENERIC_MODULE
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list,
             f"Dashboard {generic_module_dash_id} was not found in pack: PackName and therefore was not unified",
         )

@@ -9,7 +9,7 @@ from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
 from TestSuite.pack import Pack
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 DEMISTO_SDK_PATH = os.path.join(git_path(), "demisto_sdk")
 TEST_FILES = os.path.join(DEMISTO_SDK_PATH, "commands", "integration_diff", "tests")
@@ -586,7 +586,6 @@ class TestIntegrationDiffDetector:
             - Verify there are no items to print and that the printed output as excepted.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         old_integration = pack.create_integration(
             "oldIntegration", yml=self.OLD_INTEGRATION_YAML
@@ -601,7 +600,7 @@ class TestIntegrationDiffDetector:
 
         assert not integration_detector.print_items()
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, "The integrations are backwards compatible"
         )
 
@@ -642,7 +641,6 @@ class TestIntegrationDiffDetector:
             - Verify that all the items are printed.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         old_integration = pack.create_integration(
             "oldIntegration", yml=self.OLD_INTEGRATION_YAML
@@ -681,7 +679,7 @@ class TestIntegrationDiffDetector:
 
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                str_in_caplog(logger_info.call_args_list, current_str)
                 for current_str in excepted_output
             ]
         )
@@ -696,7 +694,6 @@ class TestIntegrationDiffDetector:
             - Verify that all the items are printed in docs format.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         old_integration = pack.create_integration(
             "oldIntegration", yml=self.OLD_INTEGRATION_YAML
@@ -730,7 +727,7 @@ class TestIntegrationDiffDetector:
         ]
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                str_in_caplog(logger_info.call_args_list, current_str)
                 for current_str in excepted_output
             ]
         )

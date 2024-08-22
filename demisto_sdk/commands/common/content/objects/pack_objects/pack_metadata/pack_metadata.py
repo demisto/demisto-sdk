@@ -530,16 +530,13 @@ class PackMetaData(JSONObject):
 
         return [new_metadata_path]
 
-    def load_user_metadata(
-        self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger
-    ) -> None:
+    def load_user_metadata(self, pack_id: str, pack_name: str, pack_path: Path) -> None:
         """Loads user defined metadata and stores part of it's data in defined properties fields.
 
         Args:
             pack_id (str): The pack's id.
             pack_name (str): The pack's name.
             pack_path (Path): The pack's path.
-            logger (logging.Logger): System logger already initialized.
 
         """
         user_metadata_path = os.path.join(

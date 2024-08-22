@@ -12,7 +12,6 @@ from freezegun import freeze_time
 
 from demisto_sdk.commands.common.constants import TEST_COVERAGE_DEFAULT_URL
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.loguru_logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.helpers import (
     CoverageSummary,
     InvalidReportType,
@@ -24,7 +23,7 @@ from demisto_sdk.commands.coverage_analyze.helpers import (
     parse_report_type,
     percent_to_float,
 )
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 JSON_MIN_DATA_FILE = os.path.join(TEST_DATA_DIR, "coverage-min.json")
@@ -143,13 +142,12 @@ class TestExportReport:
 
     def test_export_report(self, mocker, monkeypatch):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         foo_mock = mocker.patch.object(self, "foo")
         export_report(self.foo, "the_format", "the_path")
         foo_mock.assert_called_once()
         assert len(logger_info.call_args_list) == 1
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list,
             "exporting the_format coverage report to the_path",
         )
@@ -158,11 +156,10 @@ class TestExportReport:
         logger_warning = mocker.patch.object(
             logging.getLogger("demisto-sdk"), "warning"
         )
-        monkeypatch.setenv("COLUMNS", "1000")
 
         export_report(self.foo_raises, "the_format", "the_path")
         assert len(logger_warning.call_args_list) == 1
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_warning.call_args_list, "coverage.misc.CoverageException"
         )
 
@@ -349,7 +346,6 @@ class TestFixFilePath:
     @pytest.mark.parametrize("cov_file_names", data_test_with_two_files)
     def test_with_two_files(self, mocker, monkeypatch, tmpdir, cov_file_names):
         logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         cov_files_paths = []
         for cov_file_name in cov_file_names:
@@ -368,7 +364,7 @@ class TestFixFilePath:
         assert len(logger_debug.call_args_list) == 2
         assert all(
             [
-                str_in_call_args_list(logger_debug.call_args_list, current_str)
+                str_in_caplog(logger_debug.call_args_list, current_str)
                 for current_str in [
                     "unexpected file list in coverage report",
                     "removing coverage report for some_path",
@@ -438,46 +434,3 @@ class TestGetCoverageObj:
             2,
             "/Users/username/dev/demisto/content/Packs/VirusTotal/Integrations/VirusTotalV3/VirusTotalV3.py",
         )
-
-
-LOGGING_LEVELS = [
-    (logging.DEBUG, 10),
-    (logging.INFO, 20),
-    (logging.WARNING, 30),
-    (logging.ERROR, 40),
-    (logging.CRITICAL, 50),
-    ("DEBUG", 10),
-    ("INFO", 20),
-    ("WARNING", 30),
-    ("ERROR", 40),
-    ("CRITICAL", 50),
-]
-
-
-@pytest.mark.parametrize(
-    "console_log_threshold, threshold_value",
-    LOGGING_LEVELS,
-)
-def test_console_log_threshold(console_log_threshold: int, threshold_value: int):
-    logger = logging_setup(console_log_threshold=console_log_threshold)
-    console_handler = _get_logger_handler(logger, "console-handler")
-    assert console_handler
-    assert console_handler.level == threshold_value
-
-
-@pytest.mark.parametrize(
-    "file_log_threshold, threshold_value",
-    LOGGING_LEVELS,
-)
-def test_file_log_threshold(file_log_threshold: int, threshold_value: int):
-    logger = logging_setup(file_log_threshold=file_log_threshold)
-    file_handler = _get_logger_handler(logger, "file-handler")
-    assert file_handler
-    assert file_handler.level == threshold_value
-
-
-def _get_logger_handler(logger, handler_name):
-    for current_handler in logger.handlers:
-        if current_handler.name == handler_name:
-            return current_handler
-    return None

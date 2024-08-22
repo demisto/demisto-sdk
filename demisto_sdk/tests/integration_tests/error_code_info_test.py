@@ -4,7 +4,7 @@ import pytest
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 
 @pytest.mark.parametrize("error_code", ["BA102"])
@@ -29,14 +29,13 @@ def test_error_code_info_end_to_end(mocker, error_code):
 
 def test_error_code_info_sanity(mocker, monkeypatch):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ["error-code", "-i", "BA100"])
 
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, current_str)
+            str_in_caplog(logger_info.call_args_list, current_str)
             for current_str in ["BA100", "should always be -1"]
         ]
     )
@@ -49,14 +48,13 @@ def test_error_code_info_refactored_validate(mocker, monkeypatch):
     )
 
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ["error-code", "-i", "DO106"])
 
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, current_str)
+            str_in_caplog(logger_info.call_args_list, current_str)
             for current_str in [
                 f"Error Code\t{DockerImageTagIsNotOutdated.error_code}",
                 f"Description\t{DockerImageTagIsNotOutdated.description}",
@@ -69,10 +67,9 @@ def test_error_code_info_refactored_validate(mocker, monkeypatch):
 
 def test_error_code_info_failure(mocker, monkeypatch):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ["error-code", "-i", "KELLER"])
 
-    assert str_in_call_args_list(logger_info.call_args_list, "No such error")
+    assert str_in_caplog(logger_info.call_args_list, "No such error")
     assert result.exit_code == 1

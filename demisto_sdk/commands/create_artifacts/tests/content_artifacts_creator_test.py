@@ -371,7 +371,6 @@ def test_sign_packs_failure(repo, mocker, key, tool, monkeypatch):
 
     logger = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     cca.logger = logger
-    monkeypatch.setenv("COLUMNS", "1000")
 
     with ChangeCWD(repo.path):
         with temp_dir() as temp:

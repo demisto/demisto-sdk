@@ -17,7 +17,7 @@ from demisto_sdk.tests.constants_test import (
 from TestSuite.test_tools import (
     ChangeCWD,
     count_str_in_call_args_list,
-    str_in_call_args_list,
+    str_in_caplog,
 )
 
 WAITING_MESSAGE = "Waiting for the test playbook to finish running.."
@@ -73,7 +73,7 @@ class TestTestPlaybookRunner:
             - validate the num of tpb is as expected (4 tpb in Azure Pack)
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
         mocker.patch.object(
@@ -185,7 +185,6 @@ class TestTestPlaybookRunner:
             - validate the Error message when the argument is missing
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(
@@ -205,7 +204,7 @@ class TestTestPlaybookRunner:
         assert error_code == exit_code
 
         if err:
-            assert str_in_call_args_list(
+            assert str_in_caplog(
                 logger_info.call_args_list,
                 err,
             )
@@ -227,7 +226,6 @@ class TestTestPlaybookRunner:
             - validate all the message is as expected.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
@@ -252,15 +250,15 @@ class TestTestPlaybookRunner:
 
         assert all(
             [
-                str_in_call_args_list(
+                str_in_caplog(
                     logger_info.call_args_list,
                     WAITING_MESSAGE,
                 ),
-                str_in_call_args_list(
+                str_in_caplog(
                     logger_info.call_args_list,
                     LINK_MESSAGE,
                 ),
-                str_in_call_args_list(
+                str_in_caplog(
                     logger_info.call_args_list,
                     SUCCESS_MESSAGE,
                 ),
@@ -284,7 +282,6 @@ class TestTestPlaybookRunner:
             - validate the all the messages is as expected.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
@@ -309,15 +306,15 @@ class TestTestPlaybookRunner:
 
         assert all(
             [
-                str_in_call_args_list(
+                str_in_caplog(
                     logger_info.call_args_list,
                     WAITING_MESSAGE,
                 ),
-                str_in_call_args_list(
+                str_in_caplog(
                     logger_info.call_args_list,
                     LINK_MESSAGE,
                 ),
-                str_in_call_args_list(
+                str_in_caplog(
                     logger_info.call_args_list,
                     FAILED_MESSAGE,
                 ),

@@ -1283,7 +1283,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     global logger
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
-    pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
+    pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path)
     pack.filter_items_by_id_set = artifact_manager.filter_by_id_set
     pack.pack_info_from_id_set = artifact_manager.packs_section_from_id_set
     content_items_handler = ContentItemsHandler(
@@ -1794,7 +1794,6 @@ def sign_packs(artifact_manager: ArtifactsManager):
                         pool.schedule(
                             pack.sign_pack,
                             args=(
-                                logger,
                                 dumped_pack_dir,
                                 artifact_manager.signDirectory,
                             ),
@@ -1811,7 +1810,6 @@ def sign_packs(artifact_manager: ArtifactsManager):
                             pool.schedule(
                                 pack.sign_pack,
                                 args=(
-                                    logger,
                                     dumped_pack_dir,
                                     artifact_manager.signDirectory,
                                 ),

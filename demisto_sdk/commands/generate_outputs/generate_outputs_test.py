@@ -4,7 +4,7 @@ import pytest
 from click.testing import CliRunner
 
 import demisto_sdk.__main__ as main
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 
 @pytest.mark.parametrize(
@@ -16,7 +16,7 @@ from TestSuite.test_tools import str_in_call_args_list
     ],
 )
 def test_generate_outputs_json_to_outputs_flow(
-    mocker, monkeypatch, args, expected_stdout
+    mocker, monkeypatch, args, expected_stdout, caplog
 ):
     """
     Given
@@ -28,8 +28,7 @@ def test_generate_outputs_json_to_outputs_flow(
     Then
         - Ensure that the outputs are valid
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
+    caplog.set_level("ERROR")
 
     import demisto_sdk.commands.generate_outputs.generate_outputs as go
 
@@ -38,9 +37,9 @@ def test_generate_outputs_json_to_outputs_flow(
     runner = CliRunner()
     runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
     if expected_stdout:
-        assert str_in_call_args_list(logger_error.call_args_list, expected_stdout)
+        assert expected_stdout in caplog.text
     else:
-        assert len(logger_error.call_args_list) == 0
+        assert not caplog.records
 
 
 @pytest.mark.parametrize(
@@ -65,7 +64,6 @@ def test_generate_outputs_generate_integration_context_flow(
         - Ensure that the outputs are valid
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     import demisto_sdk.commands.generate_outputs.generate_outputs as go
 
@@ -75,4 +73,4 @@ def test_generate_outputs_generate_integration_context_flow(
     result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
     assert result.exit_code == expected_exit_code
     if expected_exit_code == 0:
-        assert str_in_call_args_list(logger_info.call_args_list, expected_stdout)
+        assert str_in_caplog(logger_info.call_args_list, expected_stdout)

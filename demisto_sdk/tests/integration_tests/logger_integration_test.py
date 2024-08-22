@@ -6,7 +6,7 @@ from tempfile import mkdtemp
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 TEMP_DIRS_PREFIX = "demisto-sdk-test-"
 
@@ -111,7 +111,7 @@ def test_custom_logs_dir_does_not_exist(mocker):
     runner = CliRunner(mix_stderr=False)
     runner.invoke(main, ["validate", "-a", "--log-file-path", str(custom_logs_dir)])
 
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_warning.call_args_list,
         f"Log file path '{custom_logs_dir}' does not exist and will be created.",
     )
@@ -149,7 +149,7 @@ def test_logs_dir_not_a_dir(mocker):
 
     custom_logs_dir_parent = custom_logs_dir.parent
 
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_warning.call_args_list,
         f"Log file path '{custom_logs_dir}' is a file and not a directory. Log file will be created in "
         f"parent directory '{custom_logs_dir_parent}'.",

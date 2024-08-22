@@ -28,7 +28,7 @@ from demisto_sdk.commands.upload.tests.uploader_test import (
 from demisto_sdk.commands.upload.uploader import (
     SUCCESS_RETURN_CODE,
 )
-from TestSuite.test_tools import ChangeCWD, flatten_call_args, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, flatten_call_args, str_in_caplog
 
 UPLOAD_CMD = "upload"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -398,7 +398,7 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 1
-    assert str_in_call_args_list(
+    assert str_in_caplog(
         logger_info.call_args_list,
         "Could not connect to the server. Try checking your connection configurations.",
     )
@@ -493,4 +493,4 @@ def test_upload_single_indicator_field(mocker, pack):
             [UPLOAD_CMD, "-i", indicator_field.path],
         )
     assert result.exit_code == SUCCESS_RETURN_CODE
-    assert str_in_call_args_list(logger_info.call_args_list, "SUCCESSFUL UPLOADS")
+    assert str_in_caplog(logger_info.call_args_list, "SUCCESSFUL UPLOADS")

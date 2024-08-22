@@ -208,8 +208,8 @@ def logging_setup_decorator(func, *args, **kwargs):
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
         log_file_path=kwargs.get("log_file_path"),
         skip_log_file_creation=True,  # Log file creation is handled in the logger setup of the sub-command
     )
@@ -2992,11 +2992,7 @@ def openapi_codegen(ctx, **kwargs):
                 command_to_run = command_to_run + f' -u "{unique_keys}"'
             if root_objects:
                 command_to_run = command_to_run + f' -r "{root_objects}"'
-            if (
-                kwargs.get("console_log_threshold")
-                and int(kwargs.get("console_log_threshold", logging.INFO))
-                >= logging.DEBUG
-            ):
+            if kwargs.get("console_log_threshold"):
                 command_to_run = command_to_run + " -v"
             if fix_code:
                 command_to_run = command_to_run + " -f"

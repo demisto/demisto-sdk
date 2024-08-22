@@ -7,7 +7,7 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_caplog
 
 GENERATE_DOCS_CMD = "generate-docs"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -37,7 +37,6 @@ class TestPlaybooks:
             logging.getLogger("demisto-sdk"), "warning"
         )
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         valid_playbook_with_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/playbook-Test_playbook.yml"
@@ -49,7 +48,7 @@ class TestPlaybooks:
 
         assert result.exit_code == 0
         assert not result.exception
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, "Generating playbook documentation"
         )
         assert logger_warning.call_count == 0
@@ -86,7 +85,6 @@ class TestPlaybooks:
             logging.getLogger("demisto-sdk"), "warning"
         )
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         valid_playbook_no_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/Playbooks.playbook-test.yml"
@@ -100,7 +98,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, "Generating playbook documentation"
         )
         assert logger_warning.call_count == 0
@@ -132,7 +130,6 @@ class TestPlaybooks:
             logging.getLogger("demisto-sdk"), "warning"
         )
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         valid_playbook_with_dependencies = join(
             DEMISTO_SDK_PATH,
@@ -153,7 +150,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, "Generating playbook documentation"
         )
         assert logger_warning.call_count == 0
@@ -186,7 +183,6 @@ class TestPlaybooks:
             logging.getLogger("demisto-sdk"), "warning"
         )
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         valid_playbook_with_dependencies = join(
             DEMISTO_SDK_PATH,
@@ -207,7 +203,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, "Generating playbook documentation"
         )
         assert logger_warning.call_count == 0
@@ -244,7 +240,6 @@ class TestPlaybooks:
             logging.getLogger("demisto-sdk"), "warning"
         )
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         valid_playbook_dir = join(DEMISTO_SDK_PATH, "tests/test_files/Playbooks")
         runner = CliRunner(mix_stderr=False)
@@ -257,7 +252,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
 
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_info.call_args_list, "Generating playbook documentation"
         )
         assert logger_warning.call_count == 0

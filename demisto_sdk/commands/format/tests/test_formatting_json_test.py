@@ -99,7 +99,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_caplog
 
 
 @pytest.fixture()
@@ -350,7 +350,6 @@ class TestFormattingIncidentTypes:
         - If the user selected 'Specific', the mode will be changed.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mock_dict = {
             "extractSettings": {
@@ -377,7 +376,7 @@ class TestFormattingIncidentTypes:
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "All":
-            assert str_in_call_args_list(
+            assert str_in_caplog(
                 logger_info.call_args_list,
                 'Cannot set mode to "All" since there are specific types',
             )
@@ -403,7 +402,6 @@ class TestFormattingIncidentTypes:
         - If the user selected 'All', the mode will be changed.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mock_dict = {
             "extractSettings": {"mode": None, "fieldCliNameToExtractSettings": {}}
@@ -422,7 +420,7 @@ class TestFormattingIncidentTypes:
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "Specific":
-            assert str_in_call_args_list(
+            assert str_in_caplog(
                 logger_info.call_args_list,
                 'Please notice that mode was set to "Specific" but there are no specific types',
             )
@@ -1536,7 +1534,6 @@ class TestFormattingReport:
             - Ensure the error is printed.
         """
         logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         formatter = format_object(input="my_file_path")
         mocker.patch.object(
@@ -1553,7 +1550,7 @@ class TestFormattingReport:
         )
 
         formatter.run_format()
-        assert str_in_call_args_list(
+        assert str_in_caplog(
             logger_debug.call_args_list,
             "Failed to update file my_file_path. Error: MY ERROR",
         )

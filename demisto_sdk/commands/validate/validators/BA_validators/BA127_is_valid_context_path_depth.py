@@ -101,7 +101,13 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         return wrong_values_string
 
     def create_outputs_set(self, command_or_script: Command | Script) -> Set[str]:
-        return set([output.contextPath for output in command_or_script.outputs])
+        return set(
+            [
+                output.contextPath
+                for output in command_or_script.outputs
+                if output.contextPath
+            ]
+        )
 
     def create_command_outputs_dict(self, content_item) -> dict:
         command_paths = dict()

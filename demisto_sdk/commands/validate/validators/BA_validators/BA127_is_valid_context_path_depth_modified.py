@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import Iterable, List, Union
+from typing import Dict, Iterable, List, Set, Union
 
 from demisto_sdk.commands.common.constants import XSOAR_SUPPORT, GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -46,17 +45,17 @@ class IsValidContextPathDepthModifiedValidatorModified(
                         )
                     )
             else:
-                changed_paths = defaultdict(set)
+                changed_paths_dict: Dict[str, Set[str]] = {}
                 old_command_paths = self.create_command_outputs_dict(old_content_item)
                 command_paths = self.create_command_outputs_dict(content_item)
-                for k in command_paths.keys():
-                    if k in old_command_paths:
-                        changed_paths[k] = set(command_paths[k]).difference(
-                            old_command_paths[k]
+                for command_name, command_outputs in command_paths.items():
+                    if old_command_outputs := old_command_paths.get(command_name):
+                        changed_paths_dict[command_name] = command_outputs.difference(
+                            old_command_outputs
                         )
                 invalid_paths = (
                     self.is_context_depth_larger_than_five_integration_commands(
-                        changed_paths
+                        changed_paths_dict
                     )
                 )
                 if invalid_paths:

@@ -150,6 +150,18 @@ def devtest_image(
     if not errors:
         if not should_pull:
             # pull images in background
+            if os.getenv("CONTENT_GITLAB_CI"):
+                # When running from Gi CI
+                docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
+                docker_pass = os.getenv(
+                    "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
+                )
+                login_command = [
+                    "docker", "login",
+                    "-u", docker_user,
+                    "-p", docker_pass
+                ]
+                subprocess.run(login_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             subprocess.Popen(
                 ["docker", "pull", image],
                 stdout=subprocess.DEVNULL,

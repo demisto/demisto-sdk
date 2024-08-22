@@ -197,7 +197,7 @@ def extract_errors(error: str, file_name: Path) -> str:
     """
     error_msg = error.split("\n", 1)
     header_error_msg = f"{error_msg[0][:-len('LogFileObject')] + f'{file_name} file'}"
-    return f"[red]{header_error_msg}\n{error_msg[1]}[/red]"
+    return f"<red>{header_error_msg}\n{error_msg[1]}</red>"
 
 
 def is_changelog_modified() -> bool:

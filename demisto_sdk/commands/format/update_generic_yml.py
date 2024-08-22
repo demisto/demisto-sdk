@@ -287,7 +287,7 @@ class BaseUpdateYML(BaseUpdate):
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
             logger.debug(
-                f"[yellow]Unable to find {CONF_PATH} - skipping update.[/yellow]"
+                f"<yellow>Unable to find {CONF_PATH} - skipping update.</yellow>"
             )
             return
         conf_json_test_configuration = conf_json_content["tests"]
@@ -319,7 +319,7 @@ class BaseUpdateYML(BaseUpdate):
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
             logger.debug(
-                f"[yellow]Unable to find {CONF_PATH} - skipping update.[/yellow]"
+                f"<yellow>Unable to find {CONF_PATH} - skipping update.</yellow>"
             )
             return
         conf_json_test_configuration = conf_json_content["tests"]
@@ -471,6 +471,6 @@ class BaseUpdateYML(BaseUpdate):
                 )
             )
             logger.debug(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE

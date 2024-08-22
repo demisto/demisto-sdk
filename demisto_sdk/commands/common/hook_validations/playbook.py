@@ -50,7 +50,7 @@ class PlaybookValidator(ContentEntityValidator):
         """
         if "TestPlaybooks" in self.file_path:
             logger.info(
-                f"[yellow]Skipping validation for Test Playbook {self.file_path}[/yellow]"
+                f"<yellow>Skipping validation for Test Playbook {self.file_path}</yellow>"
             )
             return True
         playbook_checks = [
@@ -562,7 +562,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         if not id_set_file:
             logger.info(
-                "[yellow]Skipping playbook script id validation. Could not read id_set.json.[/yellow]"
+                "<yellow>Skipping playbook script id validation. Could not read id_set.json.</yellow>"
             )
             return True
 

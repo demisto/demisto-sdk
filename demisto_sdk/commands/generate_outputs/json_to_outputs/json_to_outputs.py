@@ -177,7 +177,7 @@ def parse_json(
     try:
         data = json.loads(data)
     except ValueError as ex:
-        logger.exception(f"[red]{ex}[/red]")
+        logger.exception(f"<red>{ex}</red>")
         raise ValueError("Invalid input JSON")
 
     # If data is a list of dictionaries [{'a': 'b', 'c': 'd'}, {'e': 'f'}] -> {'a': 'b', 'c': 'd', 'e': 'f'}.
@@ -258,13 +258,13 @@ def json_to_outputs(
             with open(output, "w") as yf:
                 yf.write(yaml_output)
 
-                logger.info(f"[green]Outputs file was saved to :\n{output}[/green]")
+                logger.info(f"<green>Outputs file was saved to :\n{output}</green>")
         else:
-            logger.info("[green]YAML Outputs[/green]\n\n")
+            logger.info("<green>YAML Outputs</green>\n\n")
             logger.info(yaml_output)
 
     except Exception as ex:
-        logger.info(f"[red]Error: {str(ex)}[/red]")
+        logger.info(f"<red>Error: {str(ex)}</red>")
         sys.exit(1)
 
 

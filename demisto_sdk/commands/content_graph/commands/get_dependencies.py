@@ -214,7 +214,7 @@ def get_dependencies_by_pack_path(
             include_tests,
         )
 
-    logger.info("[cyan]====== SUMMARY ======[/cyan]")
+    logger.info("<cyan>====== SUMMARY ======</cyan>")
     if retrieve_sources:
         logger.info(
             f"Sources Dependents:\n{to_tabulate(source_dependents, show_reasons)}\n"

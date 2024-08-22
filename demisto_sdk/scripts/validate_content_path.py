@@ -436,7 +436,7 @@ def validate(
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
     try:
         _validate(path)
-        logger.debug(f"[green]{path} is valid[/green]")
+        logger.debug(f"<green>{path} is valid</green>")
         return True
 
     except InvalidPathException as e:
@@ -543,7 +543,7 @@ def validate_all(
         ]
     )
     valid = (total := len(paths)) - invalid
-    logger.info(f"{total=},[green]{valid=}[/green],[red]{invalid=}[/red]")
+    logger.info(f"{total=},<green>{valid=}</green>,<red>{invalid=}</red>")
     if invalid:
         raise typer.Exit(1)
 

@@ -88,18 +88,18 @@ class YMLGenerator:
                         )
                         return True
                 else:
-                    logger.error(f"[red]Problem importing {self.filename}[/red]")
+                    logger.error(f"<red>Problem importing {self.filename}</red>")
                     return False
             except Exception as err:
                 logger.exception(
-                    f"[red]No metadata collector found in {self.filename}[/red]"
+                    f"<red>No metadata collector found in {self.filename}</red>"
                 )
                 if (
                     not str(err)
                     == "module 'metadata_collector' has no attribute 'metadata_collector'"
                 ):
                     logger.error(traceback.format_exc())
-                    logger.error(f"[red]{err}[/red]")
+                    logger.error(f"<red>{err}</red>")
                 return False
 
     def generate(self):
@@ -107,7 +107,7 @@ class YMLGenerator:
         logger.info("Starting yml generation..")
         if not self.is_generatable_file:
             logger.error(
-                f"[red]Not running file {self.filename} without metadata collector.[/red]"
+                f"<red>Not running file {self.filename} without metadata collector.</red>"
             )
             return
         # Collect the wrapped functions with the details.
@@ -177,10 +177,10 @@ class YMLGenerator:
                 function()
             except Exception as err:
                 logger.exception(
-                    f"[red]Failed running and collecting data for function: {function.__name__}[/red]"
+                    f"<red>Failed running and collecting data for function: {function.__name__}</red>"
                 )
                 logger.error(traceback.format_exc())
-                logger.error(f"[red]{err}[/red]")
+                logger.error(f"<red>{err}</red>")
                 logger.error("Continuing..")
 
     def get_yml_filename(self) -> str:
@@ -205,12 +205,12 @@ class YMLGenerator:
 
         if Path(yml_filename).exists() and not self.force:
             logger.warning(
-                f"[red]File {yml_filename} already exists, not writing. To override add --force.[/red]"
+                f"<red>File {yml_filename} already exists, not writing. To override add --force.</red>"
             )
         else:
             if self.force:
                 logger.info(
-                    f"[yellow]Force flag is used. Overriding {yml_filename} if it exists.[/yellow]"
+                    f"<yellow>Force flag is used. Overriding {yml_filename} if it exists.</yellow>"
                 )
             if self.metadata:
                 self.metadata.save_dict_as_yaml_integration_file(yml_filename)
@@ -683,8 +683,8 @@ class MetadataToDict:
                     input_type = eval(input_type_str)
             except Exception as err:
                 logger.debug(
-                    f"[yellow]Problems parsing input type {input_type_str}, setting isArray=False."
-                    f"Error was: {err}[/yellow]"
+                    f"<yellow>Problems parsing input type {input_type_str}, setting isArray=False."
+                    f"Error was: {err}</yellow>"
                 )
                 input_type = None
 
@@ -707,7 +707,7 @@ class MetadataToDict:
             out_type = eval(output_type_str.lower())
         except Exception:
             logger.debug(
-                f"[yellow]Problems parsing output type {output_type_str}, setting as Unknown.[/yellow]"
+                f"<yellow>Problems parsing output type {output_type_str}, setting as Unknown.</yellow>"
             )
             out_type = dict
 
@@ -732,4 +732,4 @@ class MetadataToDict:
         logger.debug(f"Writing collected metadata to {output_file}.")
 
         write_dict(output_file, self.metadata_dict)
-        logger.info("[green]Finished successfully.[/green]")
+        logger.info("<green>Finished successfully.</green>")

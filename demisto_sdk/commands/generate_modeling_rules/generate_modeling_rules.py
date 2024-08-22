@@ -148,7 +148,7 @@ def generate_modeling_rules(
     except Exception:
         with StringIO() as sio:
             traceback.print_exc(file=sio)
-            logger.error(f"[red]{sio.getvalue()}[/red]", extra={"markup": True})
+            logger.error(f"<red>{sio.getvalue()}</red>", extra={"markup": True})
         raise typer.Exit(1)
 
 

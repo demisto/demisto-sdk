@@ -104,7 +104,7 @@ class PacksManager(ArtifactsManager):
 
             if not Path(path).exists():
                 logger.info(
-                    f"[red]Error: Given input path: {path} does not exist, ignored[/red]"
+                    f"<red>Error: Given input path: {path} does not exist, ignored</red>"
                 )
                 continue
 

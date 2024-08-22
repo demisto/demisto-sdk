@@ -64,9 +64,9 @@ class PythonFileFormat(BaseUpdate):
             )
         except FileNotFoundError:
             logger.info(
-                "[yellow]autopep8 skipped! It doesn't seem you have autopep8 installed.\n "
+                "<yellow>autopep8 skipped! It doesn't seem you have autopep8 installed.\n "
                 "Make sure to install it with: pip install autopep8.\n "
-                "Then run: autopep8 -i {}[/yellow]".format(py_file_path)
+                "Then run: autopep8 -i {}</yellow>".format(py_file_path)
             )
             return False
         return True
@@ -77,7 +77,7 @@ class PythonFileFormat(BaseUpdate):
 
     def run_format(self) -> int:
         logger.info(
-            f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+            f"\n<blue>================= Updating file {self.source_file} =================</blue>"
         )
         py_file_path = self.source_file
         if self.output_file != self.source_file:

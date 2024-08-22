@@ -77,8 +77,8 @@ from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 SDK_OFFLINE_ERROR_MESSAGE = (
-    "[red]An internet connection is required for this command. If connected to the "
-    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
+    "<red>An internet connection is required for this command. If connected to the "
+    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.</red>"
 )
 
 
@@ -207,7 +207,6 @@ def logging_setup_decorator(func, *args, **kwargs):
 @pass_config
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
-
     config.configuration = Configuration()
     import dotenv
 
@@ -226,7 +225,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         except DistributionNotFound:
             __version__ = "dev"
             logger.info(
-                "[yellow]Could not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
+                "<yellow>Could not find the version of the demisto-sdk. This usually happens when running in a development environment.</yellow>"
             )
         else:
             last_release = ""
@@ -234,7 +233,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "CI"
             ):  # Check only when not running in CI (e.g running locally).
                 last_release = get_last_remote_release_version()
-            logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
+            logger.info(f"<yellow>You are using demisto-sdk {__version__}.</yellow>")
             if last_release and __version__ != last_release:
                 logger.warning(
                     f"A newer version ({last_release}) is available. "
@@ -245,7 +244,7 @@ def main(ctx, config, version, release_notes, **kwargs):
 
                 if not rn_entries:
                     logger.warning(
-                        "\n[yellow]Could not get the release notes for this version.[/yellow]"
+                        "\n<yellow>Could not get the release notes for this version.</yellow>"
                     )
                 else:
                     logger.info(
@@ -316,7 +315,7 @@ def split(ctx, config, **kwargs):
         FileType.ASSETS_MODELING_RULE,
     ]:
         logger.info(
-            "[red]File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.[/red]"
+            "<red>File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.</red>"
         )
         return 1
 
@@ -373,7 +372,7 @@ def extract_code(ctx, config, **kwargs):
     update_command_args_from_config_file("extract-code", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        logger.info("[red]File is not an Integration or Script.[/red]")
+        logger.info("<red>File is not an Integration or Script.</red>")
         return 1
     extractor = YmlSplitter(
         configuration=config.configuration, file_type=file_type.value, **kwargs
@@ -816,7 +815,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
 
     if kwargs["post_commit"] and kwargs["staged"]:
         logger.info(
-            "[red]Could not supply the staged flag with the post-commit flag[/red]"
+            "<red>Could not supply the staged flag with the post-commit flag</red>"
         )
         sys.exit(1)
     try:
@@ -941,10 +940,10 @@ def validate(ctx, config, file_paths: str, **kwargs):
             exit_code += validator_v2.run_validations()
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
-        logger.info(f"[red]{e}[/red]")
-        logger.info(
-            "\n[red]You may not be running `demisto-sdk validate` command in the content directory.\n"
-            "Please run the command from content directory[red]"
+        logger.error(f"{e}")
+        logger.error(
+            "\nYou may not be running `demisto-sdk validate` command in the content directory.\n"
+            "Please run the command from content directory"
         )
         sys.exit(1)
 
@@ -2071,8 +2070,8 @@ def generate_test_playbook(ctx, **kwargs):
     update_command_args_from_config_file("generate-test-playbook", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        logger.info(
-            "[red]Generating test playbook is possible only for an Integration or a Script.[/red]"
+        logger.error(
+            "Generating test playbook is possible only for an Integration or a Script."
         )
         return 1
 
@@ -2082,7 +2081,7 @@ def generate_test_playbook(ctx, **kwargs):
             sys.exit(0)
         sys.exit(1)
     except PlaybookTestsGenerator.InvalidOutputPathError as e:
-        logger.info(f"[red]{e}[/red]")
+        logger.info(f"<red>{e}</red>")
         return 1
 
 
@@ -2261,17 +2260,17 @@ def generate_docs(ctx, **kwargs):
         update_command_args_from_config_file("generate-docs", kwargs)
         input_path_str: str = kwargs.get("input", "")
         if not (input_path := Path(input_path_str)).exists():
-            raise Exception(f"[red]input {input_path_str} does not exist[/red]")
+            raise Exception(f"<red>input {input_path_str} does not exist</red>")
 
         if (output_path := kwargs.get("output")) and not Path(output_path).is_dir():
             raise Exception(
-                f"[red]Output directory {output_path} is not a directory.[/red]"
+                f"<red>Output directory {output_path} is not a directory.</red>"
             )
 
         if input_path.is_file():
             if input_path.suffix.lower() not in {".yml", ".md"}:
                 raise Exception(
-                    f"[red]input {input_path} is not a valid yml or readme file.[/red]"
+                    f"<red>input {input_path} is not a valid yml or readme file.</red>"
                 )
 
             _generate_docs_for_file(kwargs)
@@ -2285,7 +2284,7 @@ def generate_docs(ctx, **kwargs):
 
         else:
             raise Exception(
-                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file.[/red]"
+                f"<red>Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file.</red>"
             )
 
         return 0
@@ -2340,7 +2339,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 )
             ):
                 raise Exception(
-                    f"[red]The `command` argument must be presented with existing `{INTEGRATIONS_README_FILE_NAME}` docs."
+                    f"<red>The `command` argument must be presented with existing `{INTEGRATIONS_README_FILE_NAME}` docs."
                 )
 
         file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
@@ -2351,17 +2350,17 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             FileType.README,
         }:
             raise Exception(
-                "[red]File is not an Integration, Script, Playbook or a README.[/red]"
+                "<red>File is not an Integration, Script, Playbook or a README.</red>"
             )
 
         if old_version and not Path(old_version).is_file():
             raise Exception(
-                f"[red]Input old version file {old_version} was not found.[/red]"
+                f"<red>Input old version file {old_version} was not found.</red>"
             )
 
         if old_version and not old_version.lower().endswith(".yml"):
             raise Exception(
-                f"[red]Input old version {old_version} is not a valid yml file.[/red]"
+                f"<red>Input old version {old_version} is not a valid yml file.</red>"
             )
 
         if file_type == FileType.INTEGRATION:
@@ -2410,7 +2409,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             )
 
         else:
-            raise Exception(f"[red]File type {file_type.value} is not supported.[/red]")
+            raise Exception(f"<red>File type {file_type.value} is not supported.</red>")
 
     except Exception:
         logger.exception(f"Failed generating docs for {input_path}")
@@ -2502,7 +2501,7 @@ def merge_id_sets(ctx, **kwargs):
     )
     if duplicates:
         logger.info(
-            f"[red]Failed to merge ID sets: {first} with {second}, "
+            f"<red>Failed to merge ID sets: {first} with {second}, "
             f"there are entities with ID: {duplicates} that exist in both ID sets"
         )
         if fail_duplicates:
@@ -2582,7 +2581,7 @@ def update_release_notes(ctx, **kwargs):
     update_command_args_from_config_file("update-release-notes", kwargs)
     if kwargs.get("force") and not kwargs.get("input"):
         logger.info(
-            "[red]Please add a specific pack in order to force a release notes update."
+            "<red>Please add a specific pack in order to force a release notes update."
         )
         sys.exit(0)
 
@@ -2609,7 +2608,7 @@ def update_release_notes(ctx, **kwargs):
         sys.exit(0)
     except Exception as e:
         logger.info(
-            f"[red]An error occurred while updating the release notes: {str(e)}[/red]"
+            f"<red>An error occurred while updating the release notes: {str(e)}</red>"
         )
         sys.exit(1)
 
@@ -2709,7 +2708,7 @@ def find_dependencies(ctx, **kwargs):
         )
 
     except ValueError as exp:
-        logger.info(f"[red]{exp}[/red]")
+        logger.info(f"<red>{exp}</red>")
 
 
 # ====================== postman-codegen ====================== #
@@ -2801,11 +2800,11 @@ def postman_codegen(
             )
             yml_splitter.extract_to_package_format()
             logger.info(
-                f"[green]Package generated at {str(Path(output).absolute())} successfully[/green]"
+                f"<green>Package generated at {str(Path(output).absolute())} successfully</green>"
             )
         else:
             logger.info(
-                f"[green]Integration generated at {str(yml_path.absolute())} successfully[/green]"
+                f"<green>Integration generated at {str(yml_path.absolute())} successfully</green>"
             )
 
 
@@ -2922,10 +2921,10 @@ def openapi_codegen(ctx, **kwargs):
         try:
             os.mkdir(output_dir)
         except Exception as err:
-            logger.info(f"[red]Error creating directory {output_dir} - {err}[/red]")
+            logger.info(f"<red>Error creating directory {output_dir} - {err}</red>")
             sys.exit(1)
     if not os.path.isdir(output_dir):
-        logger.info(f'[red]The directory provided "{output_dir}" is not a directory')
+        logger.info(f'<red>The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
 
     input_file = kwargs["input_file"]
@@ -2957,7 +2956,7 @@ def openapi_codegen(ctx, **kwargs):
             with open(kwargs["config_file"]) as config_file:
                 configuration = json.load(config_file)
         except Exception as e:
-            logger.info(f"[red]Failed to load configuration file: {e}[/red]")
+            logger.info(f"<red>Failed to load configuration file: {e}</red>")
 
     logger.info("Processing swagger file...")
     integration = OpenAPIIntegration(
@@ -2974,7 +2973,7 @@ def openapi_codegen(ctx, **kwargs):
     integration.load_file()
     if not kwargs.get("config_file"):
         integration.save_config(integration.configuration, output_dir)
-        logger.info(f"[green]Created configuration file in {output_dir}[/green]")
+        logger.info(f"<green>Created configuration file in {output_dir}</green>")
         if not kwargs.get("use_default", False):
             config_path = os.path.join(output_dir, f"{base_name}_config.json")
             command_to_run = (
@@ -3002,7 +3001,7 @@ def openapi_codegen(ctx, **kwargs):
         )
     else:
         logger.info(
-            f"[red]There was an error creating the package in {output_dir}[/red]"
+            f"<red>There was an error creating the package in {output_dir}</red>"
         )
         sys.exit(1)
 

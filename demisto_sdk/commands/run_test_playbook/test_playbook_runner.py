@@ -93,13 +93,13 @@ class TestPlaybookRunner:
         if not self.all_test_playbooks:
             if not self.test_playbook_path:
                 logger.info(
-                    "[red]Error: Missing option '-tpb' / '--test-playbook-path'.[/red]"
+                    "<red>Error: Missing option '-tpb' / '--test-playbook-path'.</red>"
                 )
                 is_path_valid = False
 
             elif not Path(self.test_playbook_path).exists():
                 logger.info(
-                    f"[red]Error: Given input path: {self.test_playbook_path} does not exist[/red]"
+                    f"<red>Error: Given input path: {self.test_playbook_path} does not exist</red>"
                 )
                 is_path_valid = False
 
@@ -148,7 +148,7 @@ class TestPlaybookRunner:
                 test_playbook_id=test_playbook_id,
             )
         except ApiException as a:
-            logger.info(f"[red]{a}[/red]")
+            logger.info(f"<red>{a}</red>")
             status_code = ERROR_RETURN_CODE
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
@@ -165,8 +165,8 @@ class TestPlaybookRunner:
     def run_and_check_tpb_status(self, test_playbook_id, work_plan_link, incident_id):
         status_code = SUCCESS_RETURN_CODE
         logger.info(
-            f"[green]Waiting for the test playbook to finish running.. \n"
-            f"To see the test playbook run in real-time please go to : {work_plan_link}[/green]"
+            f"<green>Waiting for the test playbook to finish running.. \n"
+            f"To see the test playbook run in real-time please go to : {work_plan_link}</green>"
         )
 
         elapsed_time = 0
@@ -183,19 +183,19 @@ class TestPlaybookRunner:
         # Ended the loop because of timeout
         if elapsed_time >= self.timeout:
             logger.info(
-                f"[red]The command had timed out while the playbook is in progress.\n"
-                f"To keep tracking the test playbook please go to : {work_plan_link}[/red]"
+                f"<red>The command had timed out while the playbook is in progress.\n"
+                f"To keep tracking the test playbook please go to : {work_plan_link}</red>"
             )
         else:
             if test_playbook_result["state"] == "failed":
                 self.print_tpb_error_details(test_playbook_result, test_playbook_id)
                 logger.info(
-                    "[red]The test playbook finished running with status: FAILED[/red]"
+                    "<red>The test playbook finished running with status: FAILED</red>"
                 )
                 status_code = ERROR_RETURN_CODE
             else:
                 logger.info(
-                    "[green]The test playbook has completed its run successfully[/green]"
+                    "<green>The test playbook has completed its run successfully</green>"
                 )
 
         return status_code
@@ -227,16 +227,16 @@ class TestPlaybookRunner:
             )
         except ApiException as e:
             logger.info(
-                f'[red]Failed to create incident with playbook id : "{test_playbook_id}", '
+                f'<red>Failed to create incident with playbook id : "{test_playbook_id}", '
                 "possible reasons are:\n"
                 "1. This playbook name does not exist \n"
                 "2. Schema problems in the playbook \n"
-                "3. Unauthorized api key[/red]"
+                "3. Unauthorized api key</red>"
             )
             raise e
 
         logger.info(
-            f"[green]The test playbook: {self.test_playbook_path} was triggered successfully.[/green]"
+            f"<green>The test playbook: {self.test_playbook_path} was triggered successfully.</green>"
         )
         return response.id
 
@@ -249,18 +249,18 @@ class TestPlaybookRunner:
     def print_tpb_error_details(self, tpb_res, tpb_id):
         entries = tpb_res.get("entries")
         if entries:
-            logger.info(f"[red]Test Playbook {tpb_id} has failed:[/red]")
+            logger.info(f"<red>Test Playbook {tpb_id} has failed:</red>")
             for entry in entries:
                 if entry["type"] == ENTRY_TYPE_ERROR and entry["parentContent"]:
-                    logger.info(f'[red]- Task ID: {entry["taskId"]}[/red]')
+                    logger.info(f'<red>- Task ID: {entry["taskId"]}</red>')
                     # Checks for passwords and replaces them with "******"
                     parent_content = re.sub(
                         r' (P|p)assword="[^";]*"',
                         " password=******",
                         entry["parentContent"],
                     )
-                    logger.info(f"[red]  Command: {parent_content}[/red]")
-                    logger.info(f'[red]  Body:\n{entry["contents"]}[/red]')
+                    logger.info(f"<red>  Command: {parent_content}</red>")
+                    logger.info(f'<red>  Body:\n{entry["contents"]}</red>')
 
     def get_base_link_to_workplan(self):
         """Create a base link to the workplan in the specified xsoar instance

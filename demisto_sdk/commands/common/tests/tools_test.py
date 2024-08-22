@@ -3238,7 +3238,7 @@ def test_get_content_path_no_remote(mocker):
     tools.get_content_path(Path("/User/username/test"))
     assert str_in_caplog(
         logger_info.call_args_list,
-        "[yellow]Please run demisto-sdk in content repository![/yellow]",
+        "<yellow>Please run demisto-sdk in content repository!</yellow>",
     )
 
 

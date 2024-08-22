@@ -93,5 +93,5 @@ class PrepareUploadManager:
             ),
         )
 
-        logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
+        logger.info(f"<green>Output saved in: {str(output.absolute())}</green>")
         return output

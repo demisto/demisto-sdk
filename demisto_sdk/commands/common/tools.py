@@ -385,7 +385,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     if err:
         if exit_on_error:
             logger.info(
-                f"[red]Failed to run command {command}\nerror details:\n{err}[/red]"
+                f"<red>Failed to run command {command}\nerror details:\n{err}</red>"
             )
             sys.exit(1)
         else:
@@ -535,18 +535,18 @@ def get_remote_file_from_api(
         err_msg = err_msg.replace(gitlab_token, "XXX") if gitlab_token else err_msg
         if is_external_repository():
             logger.debug(
-                f'[yellow]You are working in a private repository: "{git_content_config.current_repository}".\n'
+                f'<yellow>You are working in a private repository: "{git_content_config.current_repository}".\n'
                 f"The github/gitlab token in your environment is undefined.\n"
                 f"Getting file from local repository instead. \n"
                 f"If you wish to get the file from the remote repository, \n"
                 f"Please define your github or gitlab token in your environment.\n"
                 f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n"
-                f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>[/yellow]"
+                f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN></yellow>"
             )
         logger.debug(
-            f'[yellow]Could not find the old entity file under "{git_path}".\n'
+            f'<yellow>Could not find the old entity file under "{git_path}".\n'
             "please make sure that you did not break backward compatibility.\n"
-            f"Reason: {err_msg}[/yellow]"
+            f"Reason: {err_msg}</yellow>"
         )
         return {}
 
@@ -1152,21 +1152,21 @@ def get_release_notes_file_path(file_path):
     :return: file_path: str - Validated release notes path.
     """
     if file_path is None:
-        logger.info("[yellow]Release notes were not found.[/yellow]")
+        logger.info("<yellow>Release notes were not found.</yellow>")
         return None
     else:
         if bool(re.search(r"\d{1,2}_\d{1,2}_\d{1,2}\.md", file_path)):
             return file_path
         else:
             logger.info(
-                f"[yellow]Unsupported file type found in ReleaseNotes directory - {file_path}[/yellow]"
+                f"<yellow>Unsupported file type found in ReleaseNotes directory - {file_path}</yellow>"
             )
             return None
 
 
 def get_latest_release_notes_text(rn_path):
     if rn_path is None:
-        logger.info("[yellow]Path to release notes not found.[/yellow]")
+        logger.info("<yellow>Path to release notes not found.</yellow>")
         rn = None
     else:
         try:
@@ -1175,7 +1175,7 @@ def get_latest_release_notes_text(rn_path):
 
             if not rn:
                 logger.info(
-                    f"[red]Release Notes may not be empty. Please fill out correctly. - {rn_path}[/red]"
+                    f"<red>Release Notes may not be empty. Please fill out correctly. - {rn_path}</red>"
                 )
                 return ""
         except OSError:
@@ -1487,7 +1487,7 @@ def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
             )
             return None
     logger.warning(
-        f"[red]Could not find pack-ignore file at path {_pack_ignore_file_path} for pack {pack_name}[/red]"
+        f"<red>Could not find pack-ignore file at path {_pack_ignore_file_path} for pack {pack_name}</red>"
     )
     return None
 
@@ -2152,7 +2152,7 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
             logger.info(
-                "[yellow]Please run demisto-sdk in content repository![/yellow]"
+                "<yellow>Please run demisto-sdk in content repository!</yellow>"
             )
     return Path(".")
 
@@ -2616,7 +2616,7 @@ def open_id_set_file(id_set_path):
         with open(id_set_path) as id_set_file:
             id_set = json.load(id_set_file)
     except OSError:
-        logger.info("[yellow]Could not open id_set file[/yellow]")
+        logger.info("<yellow>Could not open id_set file</yellow>")
         raise
     finally:
         return id_set
@@ -3127,8 +3127,8 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
         approved_tags_json, _ = get_dict_from_file("Config/approved_tags.json")
         if isinstance(approved_tags_json.get("approved_list"), list):
             logger.info(
-                "[yellow]You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
-                " to update it.[/yellow]"
+                "<yellow>You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
+                " to update it.</yellow>"
             )
             return {
                 "common": approved_tags_json.get("approved_list", []),
@@ -3279,7 +3279,7 @@ def get_current_repo() -> Tuple[str, str, str]:
             host = host.split("@")[1]
         return host, parsed_git.owner, parsed_git.repo
     except git.InvalidGitRepositoryError:
-        logger.info("[yellow]git repo is not found[/yellow]")
+        logger.info("<yellow>git repo is not found</yellow>")
         return "Unknown source", "", ""
 
 
@@ -3385,7 +3385,7 @@ def ProcessPoolHandler() -> ProcessPool:
         try:
             yield pool
         except Exception:
-            logger.info("[red]Gracefully release all resources due to Error...[/red]")
+            logger.info("<red>Gracefully release all resources due to Error...</red>")
             raise
         finally:
             pool.close()
@@ -3406,7 +3406,7 @@ def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
             result = future.result()
             done_fn(result)
         except Exception as e:
-            logger.info(f"[red]{e}[/red]")
+            logger.info(f"<red>{e}</red>")
             raise
 
 
@@ -3893,7 +3893,7 @@ def get_api_module_dependencies_from_graph(
 
         if dependent_items:
             logger.info(
-                f"Found [cyan]{len(dependent_items)}[/cyan] content items that import the following modified API modules: {changed_api_modules}. "
+                f"Found <cyan>{len(dependent_items)}</cyan> content items that import the following modified API modules: {changed_api_modules}. "
             )
         return dependent_items
 

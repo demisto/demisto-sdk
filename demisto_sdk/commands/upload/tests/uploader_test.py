@@ -516,7 +516,7 @@ def test_upload_invalid_path(mocker):
         )
     )
     assert flatten_call_args(logger_error.call_args_list) == (
-        f"[red]input path: {path.resolve()} does not exist[/red]",
+        f"<red>input path: {path.resolve()} does not exist</red>",
     )
 
 
@@ -630,13 +630,13 @@ class TestPrintSummary:
         assert logged[0] == "UPLOAD SUMMARY:\n"
         assert logged[-1] == "\n".join(
             (
-                "[green]SUCCESSFUL UPLOADS:",
+                "<green>SUCCESSFUL UPLOADS:",
                 "╒═════════════════╤════════╤═════════════╤════════════════╕",
                 "│ NAME            │ TYPE   │ PACK NAME   │ PACK VERSION   │",
                 "╞═════════════════╪════════╪═════════════╪════════════════╡",
                 "│ DummyScript.yml │ Script │ DummyPack   │ 1.0.0          │",
                 "╘═════════════════╧════════╧═════════════╧════════════════╛",
-                "[/green]",
+                "</green>",
             )
         )
 
@@ -664,13 +664,13 @@ class TestPrintSummary:
         assert logged[0] == "UPLOAD SUMMARY:\n"
         assert logged[1] == "\n".join(
             (
-                "[red]FAILED UPLOADS:",
+                "<red>FAILED UPLOADS:",
                 "╒═════════════════╤════════╤════════════╕",
                 "│ NAME            │ TYPE   │ ERROR      │",
                 "╞═════════════════╪════════╪════════════╡",
                 "│ DummyScript.yml │ Script │ Some Error │",
                 "╘═════════════════╧════════╧════════════╛",
-                "[/red]",
+                "</red>",
             )
         )
 
@@ -709,13 +709,13 @@ class TestPrintSummary:
         assert logged[2] == (
             "\n".join(
                 (
-                    "[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:",
+                    "<yellow>NOT UPLOADED DUE TO VERSION MISMATCH:",
                     "╒═════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕",
                     "│ NAME        │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │",
                     "╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡",
                     "│ script0.yml │ Script │ 6.6.0           │ 0.0.0               │ 1.2.3             │",
                     "╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛",
-                    "[/yellow]",
+                    "</yellow>",
                 )
             )
         )

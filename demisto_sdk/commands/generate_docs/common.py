@@ -41,7 +41,7 @@ def save_output(path, file_name, content):
     with open(output, mode="w", encoding="utf8") as doc_file:
         doc_file.write(content)
     add_file_to_git(output)
-    logger.info(f"[green]Output file was saved to '{output}'[/green]")
+    logger.info(f"<green>Output file was saved to '{output}'</green>")
 
 
 def generate_section(title, data=""):
@@ -387,5 +387,5 @@ def add_file_to_git(file_path: str):
         run_command(f"git add {file_path}", exit_on_error=False)
     except RuntimeError:
         logger.info(
-            f"[yellow]Could not add the following file to git: {file_path}[/yellow]"
+            f"<yellow>Could not add the following file to git: {file_path}</yellow>"
         )

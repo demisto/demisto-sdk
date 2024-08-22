@@ -26,7 +26,7 @@ def _validate(path: Path = Path(FILE_NAME)) -> None:
 def validate(path: Path) -> None:
     try:
         _validate(path)
-        logger.info(f"[green]{path} is valid [/green]")
+        logger.info(f"<green>{path} is valid </green>")
 
     except FileNotFoundError:
         logger.error(f"File {path} does not exist")

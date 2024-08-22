@@ -87,7 +87,7 @@ def init_test_data(
             if test_data_file:
                 operation_mode = "update"
                 logger.info(
-                    f"[cyan]Updating test data file: {test_data_file}[/cyan]",
+                    f"<cyan>Updating test data file: {test_data_file}</cyan>",
                     extra={"markup": True},
                 )
                 test_data = TestData.parse_file(test_data_file)
@@ -114,7 +114,7 @@ def init_test_data(
                     ).copy()
                     if not new_mapping:
                         logger.error(
-                            f"[red]Ignoring update the event log {event_log.test_data_event_id} as no dataset is provided for it[/red]",
+                            f"<red>Ignoring update the event log {event_log.test_data_event_id} as no dataset is provided for it</red>",
                             extra={"markup": True},
                         )
                         continue
@@ -153,7 +153,7 @@ def init_test_data(
                         )
             else:
                 logger.info(
-                    f"[cyan]Creating test data file for: {mr_entity.path.parent}[/cyan]",
+                    f"<cyan>Creating test data file for: {mr_entity.path.parent}</cyan>",
                     extra={"markup": True},
                 )
                 data: List[TestData] = []
@@ -176,13 +176,13 @@ def init_test_data(
                 )
             test_data_file.write_text(test_data.json(indent=4))
             logger.info(
-                f"[green]Successfully {operation_mode}d {test_data_file}[/green]",
+                f"<green>Successfully {operation_mode}d {test_data_file}</green>",
                 extra={"markup": True},
             )
         except Exception:
             with StringIO() as sio:
                 traceback.print_exc(file=sio)
-                logger.error(f"[red]{sio.getvalue()}[/red]", extra={"markup": True})
+                logger.error(f"<red>{sio.getvalue()}</red>", extra={"markup": True})
             errors = True
     if errors:
         raise typer.Exit(1)

@@ -41,7 +41,7 @@ def upload_content_entity(**kwargs):
     if config_file_path := kwargs.pop("input_config_file", None):
         logger.info("Uploading files from config file")
         if input_ := kwargs.get("input"):
-            logger.warning(f"[orange]The input ({input_}) will NOT be used[/orange]")
+            logger.warning(f"<orange>The input ({input_}) will NOT be used</orange>")
 
         paths = ConfigFileParser(Path(config_file_path)).custom_packs_paths
 
@@ -62,7 +62,7 @@ def upload_content_entity(**kwargs):
     update_command_args_from_config_file("upload", kwargs)
 
     if not inputs:
-        logger.error("[red]No input provided for uploading[/red]")
+        logger.error("<red>No input provided for uploading</red>")
         return ERROR_RETURN_CODE
 
     kwargs.pop("input")
@@ -97,7 +97,7 @@ def zip_multiple_packs(
 
     for path in paths:
         if not path.exists():
-            logger.error(f"[red]{path} does not exist, skipping[/red]")
+            logger.error(f"<red>{path} does not exist, skipping</red>")
             continue
 
         if path.is_file() and path.suffix == ".zip":
@@ -108,7 +108,7 @@ def zip_multiple_packs(
         with suppress(Exception):
             pack = BaseContent.from_path(path)
         if (pack is None) or (not isinstance(pack, Pack)):
-            logger.error(f"[red]could not parse pack from {path}, skipping[/red]")
+            logger.error(f"<red>could not parse pack from {path}, skipping</red>")
             continue
         packs.append(pack)
 

@@ -45,7 +45,7 @@ class GenericModuleUnifier:
 
         if output:
             if not os.path.isdir(output):
-                logger.error("[red]You have failed to provide a legal dir path[/red]")
+                logger.error("<red>You have failed to provide a legal dir path</red>")
                 sys.exit(1)
 
             self.dest_dir = output
@@ -100,8 +100,8 @@ class GenericModuleUnifier:
 
                     else:
                         logger.info(
-                            f"[red]Dashboard {dashboard_id} was not found in pack: {self.pack_name} "
-                            f"and therefore was not unified[/red]"
+                            f"<red>Dashboard {dashboard_id} was not found in pack: {self.pack_name} "
+                            f"and therefore was not unified</red>"
                         )
 
         self.save_unified_generic_module(generic_module)

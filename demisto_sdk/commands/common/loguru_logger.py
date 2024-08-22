@@ -113,7 +113,7 @@ def logging_setup(
         level=file_log_threshold,
     )
     if string_to_bool(os.getenv(DEMISTO_SDK_LOG_NOTIFY_PATH), True):
-        logger.info(f"[yellow]Log file location: {log_path}[/yellow]")
+        logger.info(f"<yellow>Log file location: {log_path}</yellow>")
 
     logger.debug(f"Platform: {platform.system()}")
     logger.debug(f"Python version: {sys.version}")
@@ -143,5 +143,5 @@ def handle_deprecated_args(input_args: Iterable[str]):
         set(input_args).intersection(DEPRECATED_PARAMETERS.keys())
     ):
         logger.error(
-            f"[red]Argument {current_arg} is deprecated. Please use {DEPRECATED_PARAMETERS[current_arg]} instead.[/red]"
+            f"<red>Argument {current_arg} is deprecated. Please use {DEPRECATED_PARAMETERS[current_arg]} instead.</red>"
         )

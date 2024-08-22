@@ -67,7 +67,7 @@ class WizardValidator(ContentEntityValidator):
     def are_dependency_packs_valid(self, id_set_file: Optional[dict]):
         if not id_set_file:
             logger.info(
-                "[yellow]Skipping wizard dependency pack validation. Could not read id_set.json.[/yellow]"
+                "<yellow>Skipping wizard dependency pack validation. Could not read id_set.json.</yellow>"
             )
             return True
 
@@ -88,7 +88,7 @@ class WizardValidator(ContentEntityValidator):
     def are_integrations_in_dependency_packs(self, id_set_file: Optional[dict]):
         if not id_set_file:
             logger.info(
-                "[yellow]Skipping wizard integrations validation. Could not read id_set.json.[/yellow]"
+                "<yellow>Skipping wizard integrations validation. Could not read id_set.json.</yellow>"
             )
             return True
 
@@ -137,7 +137,7 @@ class WizardValidator(ContentEntityValidator):
     def are_playbooks_in_dependency_packs(self, id_set_file: Optional[dict]):
         if not id_set_file:
             logger.info(
-                "[yellow]Skipping wizard playbooks validation. Could not read id_set.json.[/yellow]"
+                "<yellow>Skipping wizard playbooks validation. Could not read id_set.json.</yellow>"
             )
             return True
 

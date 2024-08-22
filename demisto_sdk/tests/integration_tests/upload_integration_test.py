@@ -88,7 +88,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     assert len(logged) == 1
     assert logged[0] == "\n".join(
         (
-            "[green]SUCCESSFUL UPLOADS:",
+            "<green>SUCCESSFUL UPLOADS:",
             "╒═════════════════════════╤═══════════════╤═══════════════╤════════════════╕",
             "│ NAME                    │ TYPE          │ PACK NAME     │ PACK VERSION   │",
             "╞═════════════════════════╪═══════════════╪═══════════════╪════════════════╡",
@@ -98,7 +98,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
             "├─────────────────────────┼───────────────┼───────────────┼────────────────┤",
             "│ FeedAzure_test.yml      │ Playbook      │ AzureSentinel │ 1.0.0          │",
             "╘═════════════════════════╧═══════════════╧═══════════════╧════════════════╛",
-            "[/green]",
+            "</green>",
         )
     )
 
@@ -146,24 +146,24 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
     logged = flatten_call_args(logger_info.call_args_list)
     assert logged[-1] == "\n".join(
         (
-            "[yellow]SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:",
+            "<yellow>SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:",
             "╒════════════════════════════════════════╤═════════════╤═══════════════╤═════════════════════╕",
             "│ NAME                                   │ TYPE        │ MARKETPLACE   │ FILE_MARKETPLACES   │",
             "╞════════════════════════════════════════╪═════════════╪═══════════════╪═════════════════════╡",
             "│ integration-sample_event_collector.yml │ Integration │ xsoar         │ ['marketplacev2']   │",
             "╘════════════════════════════════════════╧═════════════╧═══════════════╧═════════════════════╛",
-            "[/yellow]",
+            "</yellow>",
         )
     )
     assert logged[-2] == "\n".join(
         (
-            "[green]SUCCESSFUL UPLOADS:",
+            "<green>SUCCESSFUL UPLOADS:",
             "╒══════════════════════════════╤═════════════╤═════════════╤════════════════╕",
             "│ NAME                         │ TYPE        │ PACK NAME   │ PACK VERSION   │",
             "╞══════════════════════════════╪═════════════╪═════════════╪════════════════╡",
             "│ integration-sample_packs.yml │ Integration │ ExamplePack │ 3.0.0          │",
             "╘══════════════════════════════╧═════════════╧═════════════╧════════════════╛",
-            "[/green]",
+            "</green>",
         )
     )
 
@@ -336,13 +336,13 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     )
     assert logged[-1] == "\n".join(
         (
-            "[green]SUCCESSFUL UPLOADS:",
+            "<green>SUCCESSFUL UPLOADS:",
             "╒═══════════╤════════╤═════════════╤════════════════╕",
             "│ NAME      │ TYPE   │ PACK NAME   │ PACK VERSION   │",
             "╞═══════════╪════════╪═════════════╪════════════════╡",
             "│ test-pack │ Pack   │ test-pack   │ 1.0.0          │",
             "╘═══════════╧════════╧═════════════╧════════════════╛",
-            "[/green]",
+            "</green>",
         )
     )
 

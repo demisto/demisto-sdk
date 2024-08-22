@@ -217,7 +217,7 @@ class ReadMeValidator(BaseValidator):
             ):
                 return False
             logger.info(
-                "[yellow]Validation of MDX file failed due to unable to start the mdx server, skipping.[/yellow]"
+                "<yellow>Validation of MDX file failed due to unable to start the mdx server, skipping.</yellow>"
             )
             return True
         for _ in range(RETRIES_VERIFY_MDX):
@@ -487,7 +487,7 @@ class ReadMeValidator(BaseValidator):
         current_pack_name = self.pack_path.name
         if ignore_packs and current_pack_name in ignore_packs:
             logger.info(
-                f"[yellow]Default sentences check - Pack {current_pack_name} is ignored.[/yellow]"
+                f"<yellow>Default sentences check - Pack {current_pack_name} is ignored.</yellow>"
             )
             return errors  # returns empty string
 

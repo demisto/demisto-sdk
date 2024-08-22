@@ -30,26 +30,26 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
                 continue
             if isinstance(content_item, Script):
                 script_paths = self.create_outputs_set(content_item)
-                invalid_paths = self.is_context_depth_larger_than_five(script_paths)
-                if invalid_paths:
+                invalid_paths_str = self.is_context_depth_larger_than_five(script_paths)
+                if invalid_paths_str:
                     results.append(
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
-                                'script', content_item.name, invalid_paths
+                                'script', content_item.name, invalid_paths_str
                             ),
                             content_object=content_item,
                         )
                     )
             else:
                 command_paths = self.create_command_outputs_dict(content_item)
-                invalid_paths = self.is_context_depth_larger_than_five_integration_commands(command_paths)
-                if invalid_paths:
+                invalid_paths_dict = self.is_context_depth_larger_than_five_integration_commands(command_paths)
+                if invalid_paths_dict:
                     results.append(
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
-                                'command', invalid_paths['command'], invalid_paths['wrong_paths']
+                                'command', invalid_paths_dict['command'], invalid_paths_dict['wrong_paths']
                             ),
                             content_object=content_item,
                         )

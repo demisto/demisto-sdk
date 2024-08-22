@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from typing import Iterable, Optional, Union
 
-import loguru
+from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOG_FILE_PATH,
@@ -88,12 +88,11 @@ def logging_setup(
     log_file_path: Optional[Union[Path, str]] = None,
     initial: bool = False,
     **kwargs,  # TODO remove skip_log_file_creation
-) -> loguru.Logger:
+):
     """
     The initial set up is required since we have code (e.g. get_content_path) that runs in __main__ before the typer/click commands set up the logger.
     In the initial set up there is NO file logging (only console)
     """
-    from loguru import logger
 
     setup_logger_colors(logger)
     logger.warning("logging_setup called", color="blue")  # TODO remove
@@ -127,7 +126,6 @@ def logging_setup(
         logger.debug(f"Working directory: {Path.cwd()}")
         os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
         logger.success("logging_setup finished")  # TODO remove
-    return logger
 
 
 default_logger = logging_setup(initial=True)

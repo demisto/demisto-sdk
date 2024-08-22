@@ -21,7 +21,7 @@ inputs:
 runs:
   using: 'composite'
   steps:
-
+    - echo "DEMISTO_SDK_LOG_FILE_SIZE=10000000" >> $GITHUB_ENV
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v9
 

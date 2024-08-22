@@ -1,7 +1,7 @@
 # Changelog
 ## 1.31.9
-* Improved implementation of ST110 validation. [#4493](https://github.com/demisto/demisto-sdk/pull/4493)
-* Updated Paramiko to v3.4.1 to fix an issue where redundant Paramiko logs were still being displayed, following the change in SDK v1.31.8. [#4507](https://github.com/demisto/demisto-sdk/pull/4507)
+* Modified ST110 validation. Improved validation logic and made structure_errors non-optional (return an empty list instead). [#4493](https://github.com/demisto/demisto-sdk/pull/4493)
+* Fixed an issue where redundant Paramiko logs were still being displayed, following the change in SDK v1.31.8 by locking the Paramiko package dependency in v3.4.1.  [#4507](https://github.com/demisto/demisto-sdk/pull/4507)
 * Moved RN115 validation to the new validate format. The validation ensures there're not more than one new release note file per pack. [#4501](https://github.com/demisto/demisto-sdk/pull/4501)
 * Added authentication for pulling images in the ***pre-commit*** command when running in GitLab CI. [#4515](https://github.com/demisto/demisto-sdk/pull/4515)
 

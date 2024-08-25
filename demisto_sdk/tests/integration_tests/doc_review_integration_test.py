@@ -42,10 +42,10 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
             ]
         )
         assert "Words that might be misspelled were found in" not in result.output
-        assert integration.code.pathnot in result.output
+        assert integration.code.path not in result.output
 
 
-def test_spell_integration_invalid(repo, mocker, monkeypatch):
+def test_spell_integration_invalid(repo):
     """
     Given
     - a integration file path with misspelled words.

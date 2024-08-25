@@ -312,7 +312,6 @@ def verify_results(
         )
         logger.info(
             f"<cyan>{msg}</cyan>",
-            extra={"markup": True},
         )
         result_test_case = TestCase(
             msg,
@@ -393,7 +392,6 @@ def verify_results_against_test_data(
                         logger.error(
                             f'<red><bold>{expected_key}</bold> --- "{received_value_sanitized}" != "{expected_value}" '
                             f"Types match:{received_value_type_sanitized}</red>",
-                            extra={"markup": True},
                         )
                     else:
                         # Types don't match, so values are not matching either,
@@ -407,7 +405,6 @@ def verify_results_against_test_data(
                             f'<red><bold>{expected_key}</bold><red> --- "{received_value_sanitized}" != "{expected_value}"\n'
                             f' <bold>{expected_key}</bold><red> --- Received value type: "{received_value_type_sanitized}" '
                             f'!= Expected value type: "{expected_value_type}"</red>',
-                            extra={"markup": True},
                         )
                     result_test_case_system_err.append(err)
                     result_test_case_results.append(Failure(err))
@@ -479,7 +476,6 @@ def validate_expected_values(
         except requests.exceptions.RequestException:
             logger.error(
                 f"<red>{XQL_QUERY_ERROR_EXPLANATION}</red>",
-                extra={"markup": True},
             )
             validate_expected_values_test_case.system_err = XQL_QUERY_ERROR_EXPLANATION
             validate_expected_values_test_case.result += [
@@ -603,7 +599,6 @@ def validate_schema_aligned_with_test_data(
         else:
             logger.info(
                 f"<green>Schema type mappings = Testdata type mappings for dataset {dataset}</green>",
-                extra={"markup": True},
             )
     return not errors_occurred, results
 
@@ -641,7 +636,6 @@ def check_dataset_exists(
     dataset_exist = False
     logger.info(
         f'<cyan>Checking if dataset "{dataset}" exists on the tenant...</cyan>',
-        extra={"markup": True},
     )
     query = f"config timeframe = 10y | dataset = {dataset}"
     try:
@@ -651,7 +645,6 @@ def check_dataset_exists(
         if results:
             logger.info(
                 f"<green>Dataset {dataset} exists</green>",
-                extra={"markup": True},
             )
             results_exist = True
     except requests.exceptions.RequestException:
@@ -721,7 +714,6 @@ def push_test_data_to_tenant(
         ]
         logger.info(
             f"<cyan>Pushing test data for {rule.dataset} to tenant...</cyan>",
-            extra={"markup": True},
         )
         try:
             retrying_caller(xsiam_push_to_dataset, xsiam_client, events_test_data, rule)
@@ -735,7 +727,6 @@ def push_test_data_to_tenant(
     if system_errors:
         logger.error(
             f"<red>{FAILURE_TO_PUSH_EXPLANATION}</red>",
-            extra={"markup": True},
         )
         push_test_data_test_case.system_err = "\n".join(system_errors)
         push_test_data_test_case.result += [Failure(FAILURE_TO_PUSH_EXPLANATION)]
@@ -779,7 +770,6 @@ def verify_pack_exists_on_tenant(
     else:
         logger.error(
             f"<red>Pack {containing_pack_id} was not found on tenant</red>",
-            extra={"markup": True},
         )
 
         upload_result = 0
@@ -789,7 +779,6 @@ def verify_pack_exists_on_tenant(
             ):
                 logger.info(
                     f'<cyan><underline>Upload "{containing_pack_id}"</underline></cyan>',
-                    extra={"markup": True},
                 )
                 upload_kwargs = {
                     "zip": True,
@@ -805,7 +794,6 @@ def verify_pack_exists_on_tenant(
                 if upload_result != 0:
                     logger.error(
                         f"<red>Failed to upload pack {containing_pack_id} to tenant</red>",
-                        extra={"markup": True},
                     )
                 # wait for pack to finish installing
                 sleep(1)
@@ -814,7 +802,6 @@ def verify_pack_exists_on_tenant(
         if not interactive or upload_result != 0:
             logger.error(
                 "<red>Pack does not exist on the tenant. Please install or upload the pack and try again</red>",
-                extra={"markup": True},
             )
             logger.info(
                 f"\ndemisto-sdk upload -z -x -i {containing_pack.path}\ndemisto-sdk modeling-rules test {mr.path.parent}"
@@ -862,7 +849,6 @@ def verify_event_id_does_not_exist_on_tenant(
     """
     logger.info(
         "<cyan>Verifying that the event IDs does not exist on the tenant</cyan>",
-        extra={"markup": True},
     )
     success_msg = "<green>The event IDs does not exists on the tenant</green>"
     error_msg = "The event id already exists in the tenant"
@@ -887,18 +873,15 @@ def verify_event_id_does_not_exist_on_tenant(
         except requests.exceptions.HTTPError:
             logger.info(
                 success_msg,
-                extra={"markup": True},
             )
         else:
             if not result:
                 logger.info(
                     success_msg,
-                    extra={"markup": True},
                 )
             else:
                 logger.error(
                     error_msg,
-                    extra={"markup": True},
                 )
                 validate_event_id_does_not_exist_on_tenant_test_case.result += [
                     Error(error_msg)
@@ -916,12 +899,10 @@ def delete_dataset(
 ):
     logger.info(
         f"<cyan>Deleting existing {dataset_name} dataset</cyan>",
-        extra={"markup": True},
     )
     xsiam_client.delete_dataset(dataset_name)
     logger.info(
         f"<green>Dataset {dataset_name} deleted successfully</green>",
-        extra={"markup": True},
     )
 
 
@@ -1040,7 +1021,6 @@ def validate_modeling_rule(
         logger.info(
             f"<cyan>Test data file found at {get_relative_path_to_content(modeling_rule.testdata_path)}\n"
             f"Checking that event data was added to the test data file</cyan>",
-            extra={"markup": True},
         )
         try:
             test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
@@ -1048,7 +1028,6 @@ def validate_modeling_rule(
             err = f"Failed to parse test data file {get_relative_path_to_content(modeling_rule.testdata_path)} as JSON"
             logger.error(
                 f"<red>{err}</red>",
-                extra={"markup": True},
             )
             test_case = TestCase(
                 "Failed to parse test data file as JSON",
@@ -1082,7 +1061,6 @@ def validate_modeling_rule(
         ):
             logger.info(
                 "<green>test data config is not ignored starting the test data validation...</green>",
-                extra={"markup": True},
             )
             missing_event_data, _ = is_test_data_exists_on_server(
                 modeling_rule.testdata_path
@@ -1111,7 +1089,6 @@ def validate_modeling_rule(
                     err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
                     logger.error(
                         f"<red>{err}</red>",
-                        extra={"markup": True},
                     )
                     schema_test_case.system_err = str(ex)
                     return add_result_to_test_case(
@@ -1129,7 +1106,6 @@ def validate_modeling_rule(
                 logger.info(
                     f"<green>Validating that the schema {get_relative_path_to_content(schema_path)} "
                     "is aligned with TestData file.</green>",
-                    extra={"markup": True},
                 )
 
                 success, results = validate_schema_aligned_with_test_data(
@@ -1179,7 +1155,6 @@ def validate_modeling_rule(
             else:
                 logger.info(
                     '<cyan>The command flag "--no-push" was passed - skipping pushing of test data</cyan>',
-                    extra={"markup": True},
                 )
             logger.info(
                 "<cyan>Validating expected_values...</cyan>", extra={"markup": True}
@@ -1194,20 +1169,17 @@ def validate_modeling_rule(
             ):
                 logger.info(
                     "<green>All mappings validated successfully</green>",
-                    extra={"markup": True},
                 )
                 return True, modeling_rule_test_suite
             return False, modeling_rule_test_suite
         else:
             logger.info(
                 "<green>test data config is ignored skipping the test data validation</green>",
-                extra={"markup": True},
             )
             return True, modeling_rule_test_suite
     else:
         logger.warning(
             f"<yellow>No test data file found for {get_relative_path_to_content(modeling_rule_directory)}</yellow>",
-            extra={"markup": True},
         )
         if interactive:
             if typer.confirm(
@@ -1215,7 +1187,6 @@ def validate_modeling_rule(
             ):
                 logger.info(
                     "<cyan><underline>Generate Test Data File</underline></cyan>",
-                    extra={"markup": True},
                 )
                 events_count = typer.prompt(
                     "For how many events would you like to generate templates?",
@@ -1257,24 +1228,20 @@ def validate_modeling_rule(
                         f"{get_relative_path_to_content(modeling_rule_directory)}"
                         f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "
                         f"with test event(s) data and expected outputs and then run:\n<bold>{executed_command}</bold></green>",
-                        extra={"markup": True},
                     )
                     return True, None
                 logger.error(
                     f"<red>Failed to generate test data file for "
                     f"{get_relative_path_to_content(modeling_rule_directory)}</red>",
-                    extra={"markup": True},
                 )
             else:
                 logger.warning(
                     f"<yellow>Skipping test data file generation for "
                     f"{get_relative_path_to_content(modeling_rule_directory)}</yellow>",
-                    extra={"markup": True},
                 )
                 logger.error(
                     f"<red>Please create a test data file for "
                     f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}</red>",
-                    extra={"markup": True},
                 )
         else:
             if is_nightly:
@@ -1282,7 +1249,6 @@ def validate_modeling_rule(
                 err = f"No test data file for {get_relative_path_to_content(modeling_rule_directory)} found. "
                 logger.warning(
                     f"<red>{err}</red>",
-                    extra={"markup": True},
                 )
                 test_data_test_case = TestCase(
                     "Test data file does not exist",
@@ -1299,7 +1265,6 @@ def validate_modeling_rule(
             )
             logger.error(
                 f"<red>{err}</red>",
-                extra={"markup": True},
             )
             test_data_test_case = TestCase(
                 "Test data file does not exist",
@@ -1352,12 +1317,10 @@ def handle_missing_event_data_in_modeling_rule(
     system_errors = [prefix]
     logger.warning(
         f"<yellow>{prefix}</yellow>",
-        extra={"markup": True},
     )
     for test_data_event_id in missing_event_data:
         logger.warning(
             f"<yellow> - {test_data_event_id}</yellow>",
-            extra={"markup": True},
         )
         system_errors.append(str(test_data_event_id))
     suffix = (
@@ -1366,7 +1329,6 @@ def handle_missing_event_data_in_modeling_rule(
     )
     logger.warning(
         f"<yellow>{suffix}</yellow>\n<bold><yellow>{executed_command}</yellow></bold>",
-        extra={"markup": True},
     )
     system_errors.extend([suffix, executed_command])
     missing_event_data_test_case.system_err = "\n".join(system_errors)
@@ -1380,7 +1342,6 @@ def log_error_to_test_case(
 ) -> Tuple[bool, TestSuite]:
     logger.error(
         f"<red>{err}</red>",
-        extra={"markup": True},
     )
     schema_test_case.system_err = err
     return add_result_to_test_case(err, schema_test_case, modeling_rule_test_suite)
@@ -1657,7 +1618,6 @@ class CloudServerContext:
             for i, modeling_rule_directory in enumerate(self.tests, start=1):
                 logger.info(
                     f"<cyan>[{i}/{len(self.tests)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}</cyan>",
-                    extra={"markup": True},
                 )
                 success, modeling_rule_test_suite = validate_modeling_rule(
                     modeling_rule_directory,
@@ -1675,13 +1635,11 @@ class CloudServerContext:
                 if success:
                     logger.info(
                         f"<green>Test Modeling rule {get_relative_path_to_content(modeling_rule_directory)} passed</green>",
-                        extra={"markup": True},
                     )
                 else:
                     self.build_context.tests_data_keeper.errors = True
                     logger.error(
                         f"<red>Test Modeling Rule {get_relative_path_to_content(modeling_rule_directory)} failed</red>",
-                        extra={"markup": True},
                     )
                 if modeling_rule_test_suite:
                     modeling_rule_test_suite.add_property(
@@ -1966,7 +1924,6 @@ def test_modeling_rule(
     if output_junit_file:
         logger.info(
             f"<cyan>Writing JUnit XML to {get_relative_path_to_content(output_junit_file)}</cyan>",
-            extra={"markup": True},
         )
         build_context.tests_data_keeper.test_results_xml_file.write(
             output_junit_file.as_posix(), pretty=True
@@ -1982,25 +1939,21 @@ def test_modeling_rule(
             else:
                 logger.warning(
                     "<yellow>Service account or artifacts bucket not provided, skipping uploading JUnit XML to bucket</yellow>",
-                    extra={"markup": True},
                 )
     else:
         logger.info(
             "<cyan>No JUnit XML file path was passed - skipping writing JUnit XML</cyan>",
-            extra={"markup": True},
         )
 
     duration = duration_since_start_time(start_time)
     if build_context.tests_data_keeper.errors:
         logger.info(
             f"<red>Test Modeling Rules: Failed, took:{duration} seconds</red>",
-            extra={"markup": True},
         )
         raise typer.Exit(1)
 
     logger.info(
         f"<green>Test Modeling Rules: Passed, took:{duration} seconds</green>",
-        extra={"markup": True},
     )
 
 

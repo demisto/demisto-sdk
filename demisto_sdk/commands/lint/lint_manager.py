@@ -408,8 +408,8 @@ class LintManager:
                 content_repo.repo.remote().refs[base_branch].commit.parents[0]
             )
             logger.info(
-                f"Comparing <cyan>master</cyan> to its <cyan>previous commit: "
-                f"{last_common_commit}"
+                f"Comparing <cyan>master</cyan> to its previous commit "
+                f"<cyan>{last_common_commit}</cyan>"
             )
 
         else:
@@ -970,7 +970,7 @@ class LintManager:
                     ):
                         # Log unit-tests
                         sentence = " Unit Tests "
-                        logger.debug(f"\n<cyan>{'#' * len(sentence)}")
+                        logger.debug(f"\n<cyan>{'#' * len(sentence)}</cyan>")
                         logger.debug(f"{sentence}")
                         logger.debug(f"{'#' * len(sentence)}")
                         headline_printed = True
@@ -1004,7 +1004,7 @@ class LintManager:
             if not headline_printed:
                 # Log unit-tests
                 sentence = " Unit Tests "
-                logger.info(f"\n<cyan>{'#' * len(sentence)}")
+                logger.info(f"\n<cyan>{'#' * len(sentence)}</cyan>")
                 logger.info(f"{sentence}")
                 logger.info(f"{'#' * len(sentence)}")
             logger.info("\n<red>Failed Unit-tests:</red>")
@@ -1150,7 +1150,7 @@ class LintManager:
             )
         # Log unit-tests summary
         sentence = " Summary "
-        logger.info(f"\n<cyan>{'#' * len(sentence)}")
+        logger.info(f"\n<cyan>{'#' * len(sentence)}</cyan>")
         logger.info(f"{sentence}")
         logger.info(f"{'#' * len(sentence)}")
         logger.info(f"Packages: {len(pkg)}")

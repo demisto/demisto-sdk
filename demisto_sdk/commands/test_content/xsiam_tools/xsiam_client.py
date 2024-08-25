@@ -142,7 +142,6 @@ class XsiamApiClient(XsiamApiInterface):
             raise RuntimeError("Could not get the tenant's demisto version")
         logger.info(
             f"<green>Demisto version of XSIAM tenant is {demisto_version}</green>",
-            extra={"markup": True},
         )
         return Version(demisto_version)
 

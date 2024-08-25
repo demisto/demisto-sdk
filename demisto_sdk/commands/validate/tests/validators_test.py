@@ -816,19 +816,3 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
 
     if Path.exists(temp_file):
         Path.unlink(temp_file)
-
-
-def test_ignoring_not_ignorable(mocker):
-    """
-    Given an unignorable code
-    When reading a toml
-    Then make sure we exit(1)
-    """
-    mocker.patch.object(
-        toml,
-        "load",
-        return_value={"ignorable_errors": [], "use_git": {"select": ["E001"]}},
-    )
-    with pytest.raises(SystemExit) as e:
-        ConfigReader().read(mode=ExecutionMode.USE_GIT, codes_to_ignore=["E001"])
-    assert e.value.args == (1,)

@@ -797,7 +797,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "--ignore",
     default=None,
     multiple=True,
-    help="An error code to not run. Must be listed under `ignorable_errors`. To ignore more than one error, repeate this option (e.g. `--ignore AA123 --ignore BC321`)",
+    help="An error code to not run. To ignore more than one error, repeat this option (e.g. `--ignore AA123 --ignore BC321`)",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config

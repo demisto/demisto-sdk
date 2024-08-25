@@ -261,6 +261,7 @@ def test_comment_unmodified_changelog(
     YmlFile.write(data=LOG_FILE_1, output_path=changelog_path)
 
     git_util = git_repo.git_util
+    assert git_util is not None  # for mypy mostly
     git_util.commit_files("Commit changelog file")
 
     # modify the changelog

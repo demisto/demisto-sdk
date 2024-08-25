@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where DS107 validation (validate that description doesn't contain demisto word) failed on Demisto Bot word.
+- description: Fixed an issue where DS107 validation (descriptions shouldn't contain the phrase `demisto`) failed when the `Demisto Bot` was mentioned.
   type: fix
 pr_number: 4517

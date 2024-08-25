@@ -1516,7 +1516,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, caplog, repo):
     assert "URL" not in PARTNER_UNIFY_NO_URL["detaileddescription"]
 
 
-def test_unify_not_partner_contributed_pack(mocker, caplog, repo):
+def test_unify_not_partner_contributed_pack(mocker, repo):
     """
     Given
         - XSOAR supported - not a partner contribution

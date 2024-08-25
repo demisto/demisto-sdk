@@ -234,7 +234,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "CI"
             ):  # Check only when not running in CI (e.g running locally).
                 last_release = get_last_remote_release_version()
-            logger.info(f"You are using demisto-sdk {__version__}")
+            logger.info(f"<yellow>You are using demisto-sdk {__version__}</yellow>")
             if last_release and __version__ != last_release:
                 logger.warning(
                     f"A newer version ({last_release}) is available. "

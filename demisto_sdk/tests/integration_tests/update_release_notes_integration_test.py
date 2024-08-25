@@ -13,7 +13,7 @@ from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
-from TestSuite.test_tools import ChangeCWD, str_in_caplog
+from TestSuite.test_tools import ChangeCWD
 
 UPDATE_RN_COMMAND = "update-release-notes"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -97,7 +97,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     assert not result.exception
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Changes were detected. Bumping FeedAzureValid to version: 1.0.1",
                 "Finished updating release notes for FeedAzureValid.",
@@ -169,7 +169,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     assert not result.exception
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Changes were detected. Bumping FeedAzureValid to version: 1.0.1",
                 "Finished updating release notes for FeedAzureValid.",
@@ -235,7 +235,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     assert not result.exception
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Changes were detected. Bumping FeedAzureValid to version: 1.0.1",
                 "Finished updating release notes for FeedAzureValid.",
@@ -294,7 +294,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     assert not result.exception
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Changes were detected. Bumping VMware to version: 1.0.1",
                 "Finished updating release notes for VMware.",
@@ -344,10 +344,7 @@ def test_update_release_notes_non_content_path(demisto_client, mocker):
 
     assert result.exit_code == 1
     assert result.exception
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "You are not running",
-    )
+    assert "You are not running" in result.output
 
 
 def test_update_release_notes_existing(demisto_client, mocker):
@@ -420,10 +417,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
     assert result.exit_code == 0
     assert Path(rn_path).exists()
     assert not result.exception
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "Finished updating release notes for FeedAzureValid.",
-    )
+    assert "Finished updating release notes for FeedAzureValid." in result.output
 
     with open(rn_path) as f:
         rn = f.read()
@@ -519,7 +513,7 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     assert not result.exception
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Release notes are not required for the ApiModules pack since this pack is not versioned.",
                 "Changes were detected. Bumping FeedTAXII to version: 1.0.1",
@@ -590,7 +584,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     assert result.exit_code == 0
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "No changes that require release notes were detected. If such changes were made, "
                 "please commit the changes and rerun the command",
@@ -643,7 +637,7 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, re
 
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Changes were detected. Bumping FeedAzureValid to version: 2.0.1",
                 "Finished updating release notes for FeedAzureValid.",
@@ -701,7 +695,7 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
     assert not result.exception
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Changes were detected. Bumping FeedAzureValid to version: 1.1.1",
                 "Finished updating release notes for FeedAzureValid.",
@@ -723,11 +717,8 @@ def test_force_update_release_no_pack_given(demisto_client, repo, mocker):
     """
 
     runner = CliRunner(mix_stderr=True)
-    runner.invoke(main, [UPDATE_RN_COMMAND, "--force"])
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "Please add a specific pack in order to force",
-    )
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "--force"])
+    assert "Please add a specific pack in order to force" in result.output
 
 
 def test_update_release_notes_specific_version_invalid(demisto_client, repo):
@@ -798,12 +789,9 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
         )
     assert result.exit_code == 0
     assert not result.exception
-    for current_call in logger_info.call_args_list:
-        if isinstance(current_call[0], tuple):
-            print(f"*** INFO *** {current_call[0][0]=}")  # noqa: T201
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Changes were detected. Bumping FeedAzureValid to version: 4.0.0",
                 "Finished updating release notes for FeedAzureValid.",
@@ -849,12 +837,12 @@ def test_force_update_release(demisto_client, mocker, repo):
     )
 
     runner = CliRunner(mix_stderr=True)
-    runner.invoke(
+    result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "ThinkCanary"), "--force"]
     )
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Bumping ThinkCanary to version: 1.0.1",
                 "Finished updating release notes for ThinkCanary.",
@@ -894,9 +882,9 @@ def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
     assert result.exit_code == 0
     assert not result.exception
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "No changes that require release notes were detected. If such changes were made, please commit the changes and rerun the command",
+    assert (
+        "No changes that require release notes were detected. If such changes were made, please commit the changes and rerun the command"
+        in result.output
     )
 
 
@@ -973,7 +961,7 @@ def test_update_release_on_matadata_change_that_require_rn(
     assert not result.exception
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Changes were detected. Bumping FeedAzureValid to version: 1.0.1",
                 "Finished updating release notes for FeedAzureValid.",

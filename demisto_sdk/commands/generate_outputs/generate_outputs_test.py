@@ -32,11 +32,11 @@ def test_generate_outputs_json_to_outputs_flow(
     mocker.patch.object(go, "json_to_outputs", return_value="None")
 
     runner = CliRunner()
-    runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
+    result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
     if expected_stdout:
-        assert expected_stdout in caplog.text
+        assert expected_stdout in result.output
     else:
-        assert not caplog.records
+        assert not result.output
 
 
 @pytest.mark.parametrize(

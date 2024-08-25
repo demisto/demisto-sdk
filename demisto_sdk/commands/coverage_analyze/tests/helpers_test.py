@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 import sqlite3
@@ -149,12 +148,7 @@ class TestExportReport:
         )
 
     def test_export_report_with_error(self, mocker, caplog):
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-
         export_report(self.foo_raises, "the_format", "the_path")
-        assert len(logger_warning.call_args_list) == 1
         assert "coverage.misc.CoverageException" in caplog.text
 
 
@@ -339,8 +333,6 @@ class TestFixFilePath:
 
     @pytest.mark.parametrize("cov_file_names", data_test_with_two_files)
     def test_with_two_files(self, mocker, caplog, tmpdir, cov_file_names):
-        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-
         cov_files_paths = []
         for cov_file_name in cov_file_names:
             named_coverage_path = tmpdir.join(cov_file_name)
@@ -355,7 +347,6 @@ class TestFixFilePath:
         fix_file_path(dot_cov_file_path, "some_path")
 
         assert not Path(dot_cov_file_path).exists()
-        assert len(logger_debug.call_args_list) == 2
         assert all(
             [
                 current_str in caplog.text

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import builtins
-import logging
 import os
 import shutil
 from io import TextIOWrapper
@@ -430,7 +429,6 @@ class TestFlags:
             output="Output", input=("My Playbook",), system=True, item_type=None
         )
         mocker.patch.object(Downloader, "verify_output_path", return_value=True)
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         assert downloader.download() == 1
         assert (
@@ -1200,7 +1198,7 @@ def test_uuids_replacement_in_content_items(mocker):
 
 @pytest.mark.parametrize("content_item_name", ("Test: Test", "[Test] Test"))
 def test_uuids_replacement_in_content_items_with_special_character_names(
-    repo, mocker, content_item_name: str
+    repo, content_item_name: str, caplog
 ):
     """
     Given: A YAML-based content item name that contains special YAML characters
@@ -1208,14 +1206,13 @@ def test_uuids_replacement_in_content_items_with_special_character_names(
     When: Calling 'self.replace_uuid_ids' method.
     Then: Ensure that the UUIDs are replaced properly and that the update YAML file is valid.
     """
+    caplog.set_level("WARNING")
     repo = repo.create_pack()
     playbook_data = {
         "name": content_item_name,
         "id": "d470522f-0a68-43c7-a62f-224f04b2e0c9",
     }
     playbook: Playbook = repo.create_playbook(yml=playbook_data)
-
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
 
     downloader = Downloader(
         all_custom_content=True,
@@ -1237,20 +1234,21 @@ def test_uuids_replacement_in_content_items_with_special_character_names(
         custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping
     )
     # Assert no warnings logged (error raised by 'get_file_details' in 'replace_uuid_ids_for_item' if YAML is invalid)
-    assert logger_warning.call_count == 0
+    assert not caplog.records
     # Assert ID value is always in quotes
     assert f"id: '{file_object['name']}'" in file_object["file"].getvalue()
 
 
 @pytest.mark.parametrize("quote_type", ("'", '"'))
 def test_uuids_replacement_in_content_items_with_quoted_id_field(
-    repo, mocker, quote_type: str
+    repo, mocker, quote_type: str, caplog
 ):
     """
     Given: A YAML-based content item, with the ID surrounded in quotes on the file
     When: Calling 'self.replace_uuid_ids' method.
     Then: Ensure that the replaced ID is properly surrounded by quotes and doesn't have duplicate quotes.
     """
+    caplog.set_level("WARNING")
     repo = repo.create_pack()
     playbook_data = {"id": "d470522f-0a68-43c7-a62f-224f04b2e0c9", "name": "Test"}
     playbook: Playbook = repo.create_playbook(yml=playbook_data)
@@ -1260,8 +1258,6 @@ def test_uuids_replacement_in_content_items_with_quoted_id_field(
             f"id: {quote_type}{playbook_data['id']}{quote_type}\nname: {playbook_data['name']}"
         )
 
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-
     downloader = Downloader(
         all_custom_content=True,
         auto_replace_uuids=True,
@@ -1282,7 +1278,7 @@ def test_uuids_replacement_in_content_items_with_quoted_id_field(
         custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping
     )
     # Assert no warnings logged (error raised by 'get_file_details' in 'replace_uuid_ids_for_item' if YAML is invalid)
-    assert logger_warning.call_count == 0
+    assert not caplog.records
     # Assert ID value is always in quotes
     assert (
         file_object["file"].getvalue().splitlines()[0] == f"id: '{file_object['name']}'"

@@ -205,8 +205,7 @@ class TestPackUniqueFilesValidator:
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
-            runner.invoke(
+            result = CliRunner(mix_stderr=False).invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -217,7 +216,7 @@ class TestPackUniqueFilesValidator:
                 ],
                 catch_exceptions=False,
             )
-        assert "Contributed packs must include email or url" in caplog.text
+        assert "Contributed packs must include email or url" in result.output
 
     @pytest.mark.parametrize(
         "url, is_valid",
@@ -269,7 +268,7 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_changed_url)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            runner.invoke(
+            result = runner.invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -284,7 +283,7 @@ class TestPackUniqueFilesValidator:
         error_text = (
             "The metadata URL leads to a GitHub repo instead of a support page."
         )
-        assert error_text in caplog.text != is_valid
+        assert (error_text in result.output) != is_valid
 
     def test_validate_partner_contribute_pack_metadata_price_change(
         self, mocker, monkeypatch, repo, caplog
@@ -328,7 +327,7 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            runner.invoke(
+            result = runner.invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -340,7 +339,8 @@ class TestPackUniqueFilesValidator:
                 catch_exceptions=False,
             )
         assert (
-            "The pack price was changed from 2 to 3 - revert the change" in caplog.text
+            "The pack price was changed from 2 to 3 - revert the change"
+            in result.output
         )
 
     def test_validate_pack_dependencies_invalid_id_set(self, mocker, repo):

@@ -60,7 +60,6 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader,
     parse_error_response,
 )
-from TestSuite.test_tools import flatten_call_args, str_in_caplog
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -494,7 +493,7 @@ def test_upload_packs_from_configfile(demisto_client_configure, mocker):
     assert upload_mock.call_count == 2
 
 
-def test_upload_invalid_path(mocker):
+def test_upload_invalid_path(mocker, caplog):
     mocker.patch.object(demisto_client, "configure", return_value="object")
 
     path = Path(
@@ -513,9 +512,7 @@ def test_upload_invalid_path(mocker):
             uploader._failed_upload_version_mismatch,
         )
     )
-    assert flatten_call_args(logger_error.call_args_list) == (
-        f"<red>input path: {path.resolve()} does not exist</red>",
-    )
+    assert f"<red>input path: {path.resolve()} does not exist</red>" in caplog.text
 
 
 def test_upload_single_unsupported_file(mocker):
@@ -598,6 +595,7 @@ class TestPrintSummary:
         self,
         demisto_client_configure,
         mocker,
+        caplog,
     ):
         """
         Given
@@ -623,22 +621,23 @@ class TestPrintSummary:
         uploader._successfully_uploaded_content_items = [DUMMY_SCRIPT_OBJECT]
         uploader.print_summary()
 
-        logged = flatten_call_args(logger_info.call_args_list)
-
-        assert logged[0] == "UPLOAD SUMMARY:\n"
-        assert logged[-1] == "\n".join(
-            (
-                "<green>SUCCESSFUL UPLOADS:",
-                "╒═════════════════╤════════╤═════════════╤════════════════╕",
-                "│ NAME            │ TYPE   │ PACK NAME   │ PACK VERSION   │",
-                "╞═════════════════╪════════╪═════════════╪════════════════╡",
-                "│ DummyScript.yml │ Script │ DummyPack   │ 1.0.0          │",
-                "╘═════════════════╧════════╧═════════════╧════════════════╛",
-                "</green>",
+        assert "UPLOAD SUMMARY:\n" in caplog.text
+        assert (
+            "\n".join(
+                (
+                    "<green>SUCCESSFUL UPLOADS:",
+                    "╒═════════════════╤════════╤═════════════╤════════════════╕",
+                    "│ NAME            │ TYPE   │ PACK NAME   │ PACK VERSION   │",
+                    "╞═════════════════╪════════╪═════════════╪════════════════╡",
+                    "│ DummyScript.yml │ Script │ DummyPack   │ 1.0.0          │",
+                    "╘═════════════════╧════════╧═════════════╧════════════════╛",
+                    "</green>",
+                )
             )
+            in caplog.text
         )
 
-    def test_print_summary_failed_uploaded(self, demisto_client_configure, mocker):
+    def test_print_summary_failed_uploaded(self, caplog, mocker):
         """
         Given
             - A uploaded script named SomeScriptName which failed to upload
@@ -656,8 +655,8 @@ class TestPrintSummary:
         uploader._failed_upload_content_items = [(DUMMY_SCRIPT_OBJECT, "Some Error")]
         uploader.print_summary()
 
-        assert logger_info.call_count == 2
-        logged = flatten_call_args(logger_info.call_args_list)
+        assert len(caplog.records) == 2
+        logged = [record.message for record in caplog.records]
 
         assert logged[0] == "UPLOAD SUMMARY:\n"
         assert logged[1] == "\n".join(
@@ -673,7 +672,7 @@ class TestPrintSummary:
         )
 
     def test_print_summary_version_mismatch(
-        self, demisto_client_configure, mocker, repo
+        self, demisto_client_configure, mocker, repo, caplog
     ):
         """
         Given
@@ -698,7 +697,8 @@ class TestPrintSummary:
         assert uploader.upload() == ERROR_RETURN_CODE
         assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
-        logged = flatten_call_args(logger_info.call_args_list)
+        logged = [record.message for record in caplog.records]
+
         assert len(logged) == 3
         assert logged[0] == (
             f"Uploading {path.absolute()} to {uploader.client.api_client.configuration.host}..."
@@ -770,14 +770,11 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
 
         # run
-        status = click.Context(command=upload).invoke(upload, input=path)
+        result = CliRunner.invoke(upload, ["-i", path])
 
         # validate
-        assert status == ERROR_RETURN_CODE
-
-        logged = flatten_call_args(logger_error.call_args_list)
-        assert len(logged) == 1
-        assert expected_err in logged[0]
+        assert result.exit_code == ERROR_RETURN_CODE
+        assert expected_err in result.output
 
     @pytest.mark.parametrize(
         argnames="user_answer, exp_call_count", argvalues=[("y", 1), ("n", 0)]
@@ -1007,7 +1004,7 @@ class TestZippedPackUpload:
 
 
 class TestItemDetacher:
-    def test_detach_item(self, mocker):
+    def test_detach_item(self, mocker, caplog):
         mock_api_client(mocker)
         mocker.patch.object(
             API_CLIENT,
@@ -1021,11 +1018,8 @@ class TestItemDetacher:
             file_path="Scripts/file_path",
         )
 
-        assert logger_info.call_count == 1
-        assert str_in_caplog(
-            logger_info.call_args_list,
-            "File: file was detached",
-        )
+        assert len(caplog.records) == 1
+        assert "File: file was detached" in caplog.text
 
     def test_extract_items_from_dir(self, mocker, repo):
         repo = repo.setup_one_pack(name="Pack")

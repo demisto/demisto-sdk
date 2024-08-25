@@ -1,6 +1,6 @@
-import click
 import demisto_client
 import pytest
+from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 
 from demisto_sdk.__main__ import run_test_playbook
@@ -12,11 +12,7 @@ from demisto_sdk.tests.constants_test import (
     TEST_PLAYBOOK,
     VALID_PACK,
 )
-from TestSuite.test_tools import (
-    ChangeCWD,
-    count_str_in_call_args_list,
-    str_in_caplog,
-)
+from TestSuite.test_tools import ChangeCWD
 
 WAITING_MESSAGE = "Waiting for the test playbook to finish running.."
 LINK_MESSAGE = "To see the test playbook run in real-time please go to :"
@@ -49,10 +45,10 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        result = click.Context(command=run_test_playbook).invoke(
-            run_test_playbook, test_playbook_path=TEST_PLAYBOOK
+        result = CliRunner(mix_stderr=False).invoke(
+            run_test_playbook, ["-tbp", TEST_PLAYBOOK]
         )
-        assert result == res
+        assert result.exit_code == res
 
     @pytest.mark.parametrize(
         argnames="tpb_result, res, message",
@@ -83,12 +79,11 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        result = click.Context(command=run_test_playbook).invoke(
-            run_test_playbook, test_playbook_path=VALID_PACK
+        result = CliRunner(mix_stderr=False).invoke(
+            run_test_playbook, ["-tbp", VALID_PACK]
         )
-        assert result == res
-
-        assert count_str_in_call_args_list(logger_info.call_args_list, message) == 2
+        assert result.exit_code == res
+        assert result.output.count(message) == 2
 
     @pytest.mark.parametrize(
         argnames="tpb_result, res, message",
@@ -118,12 +113,11 @@ class TestTestPlaybookRunner:
                 "get_test_playbook_results_dict",
                 return_value={"state": tpb_result},
             )
-            result = click.Context(command=run_test_playbook).invoke(
-                run_test_playbook, all=True, test_playbook_path=""
+            result = CliRunner(mix_stderr=False).invoke(
+                run_test_playbook, ["--all", "-tbp", ""]
             )
-            assert result == res
-
-            assert count_str_in_call_args_list(logger_info.call_args_list, message) == 6
+            assert result.exit_code == res
+            assert result.output.count(message) == 6
 
     @pytest.mark.parametrize(
         argnames="input_tpb, exit_code, err",
@@ -169,7 +163,7 @@ class TestTestPlaybookRunner:
         ],
     )
     def test_failed_run_test_playbook_manager(
-        self, mocker, input_tpb, exit_code, err, monkeypatch
+        self, mocker, input_tpb, exit_code, err, caplog
     ):
         """
         Given:
@@ -199,17 +193,14 @@ class TestTestPlaybookRunner:
         assert error_code == exit_code
 
         if err:
-            assert str_in_caplog(
-                logger_info.call_args_list,
-                err,
-            )
+            assert err in caplog.text
 
     @pytest.mark.parametrize(
         argnames="playbook_id, tpb_results, exit_code",
         argvalues=[(VALID_PACK, "success", 0), (TEST_PLAYBOOK, "success", 0)],
     )
     def test_run_test_playbook_by_id(
-        self, mocker, playbook_id, tpb_results, exit_code, monkeypatch
+        self, mocker, playbook_id, tpb_results, exit_code, caplog
     ):
         """
         Given:
@@ -241,30 +232,16 @@ class TestTestPlaybookRunner:
         res = test_playbook_runner.run_test_playbook_by_id(playbook_id)
 
         assert res == exit_code
-
-        assert all(
-            [
-                str_in_caplog(
-                    logger_info.call_args_list,
-                    WAITING_MESSAGE,
-                ),
-                str_in_caplog(
-                    logger_info.call_args_list,
-                    LINK_MESSAGE,
-                ),
-                str_in_caplog(
-                    logger_info.call_args_list,
-                    SUCCESS_MESSAGE,
-                ),
-            ],
-        )
+        assert WAITING_MESSAGE in caplog.text
+        assert LINK_MESSAGE in caplog.text
+        assert SUCCESS_MESSAGE in caplog.text
 
     @pytest.mark.parametrize(
         argnames="playbook_id, tpb_results, exit_code",
         argvalues=[("VALID_PACK", "failed", 1), ("TEST_PLAYBOOK", "failed", 1)],
     )
     def test_failed_run_test_playbook_by_id(
-        self, mocker, playbook_id, tpb_results, exit_code, monkeypatch
+        self, mocker, playbook_id, tpb_results, exit_code, caplog
     ):
         """
         Given:
@@ -297,19 +274,6 @@ class TestTestPlaybookRunner:
 
         assert res == exit_code
 
-        assert all(
-            [
-                str_in_caplog(
-                    logger_info.call_args_list,
-                    WAITING_MESSAGE,
-                ),
-                str_in_caplog(
-                    logger_info.call_args_list,
-                    LINK_MESSAGE,
-                ),
-                str_in_caplog(
-                    logger_info.call_args_list,
-                    FAILED_MESSAGE,
-                ),
-            ],
-        )
+        assert WAITING_MESSAGE in caplog.text
+        assert LINK_MESSAGE in caplog.text
+        assert SUCCESS_MESSAGE in caplog.text

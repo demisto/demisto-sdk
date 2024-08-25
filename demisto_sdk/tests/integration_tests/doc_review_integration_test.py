@@ -3,7 +3,6 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import (
     ChangeCWD,
-    str_in_caplog,
 )
 
 DOC_REVIEW = "doc-review"
@@ -28,12 +27,12 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main, [DOC_REVIEW, "-i", integration.path], catch_exceptions=False
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "No misspelled words found ",
                     integration.yml.path,
@@ -42,10 +41,8 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
                 ]
             ]
         )
-        assert not str_in_caplog(
-            logger_info.call_args_list, "Words that might be misspelled were found in"
-        )
-        assert not str_in_caplog(logger_info.call_args_list, integration.code.path)
+        assert "Words that might be misspelled were found in" not in result.output
+        assert integration.code.pathnot in result.output
 
 
 def test_spell_integration_invalid(repo, mocker, monkeypatch):
@@ -70,15 +67,13 @@ def test_spell_integration_invalid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main, [DOC_REVIEW, "-i", integration.yml.path], catch_exceptions=False
         )
-        assert not str_in_caplog(
-            logger_info.call_args_list, "No misspelled words found "
-        )
+        assert "No misspelled words found " not in result.output
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Words that might be misspelled were found in",
                     "kfawh",
@@ -113,13 +108,13 @@ def test_spell_script_invalid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, [DOC_REVIEW, "-i", script.yml.path], catch_exceptions=False)
-        assert not str_in_caplog(
-            logger_info.call_args_list, "No misspelled words found "
+        result = runner.invoke(
+            main, [DOC_REVIEW, "-i", script.yml.path], catch_exceptions=False
         )
+        assert "No misspelled words found " not in result.output
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Words that might be misspelled were found in",
                     "kfawh",
@@ -155,15 +150,13 @@ def test_spell_playbook_invalid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main, [DOC_REVIEW, "-i", playbook.yml.path], catch_exceptions=False
         )
-        assert not str_in_caplog(
-            logger_info.call_args_list, "No misspelled words found "
-        )
+        assert not "No misspelled words found " not in result.output
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Words that might be misspelled were found in",
                     "kfawh",
@@ -197,12 +190,12 @@ def test_spell_readme_invalid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main, [DOC_REVIEW, "-i", integration.readme.path], catch_exceptions=False
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Words that might be misspelled were found in",
                     "readme",
@@ -213,7 +206,7 @@ def test_spell_readme_invalid(repo, mocker, monkeypatch):
         )
         assert all(
             [
-                not str_in_caplog(logger_info.call_args_list, current_str)
+                current_str not in result.output
                 for current_str in [
                     "No misspelled words found ",
                     "GoodCase",
@@ -250,10 +243,12 @@ def test_review_release_notes_valid(repo, mocker, monkeypatch):
     rn = pack.create_release_notes(version="1.1.0", content=valid_rn)
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
+        result = runner.invoke(
+            main, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False
+        )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "No misspelled words found",
                     f" - Release notes {rn.path} match a known template.",
@@ -290,11 +285,13 @@ def test_review_release_notes_invalid(repo, mocker, monkeypatch):
     rn = pack.create_release_notes(version="1.1.0", content=valid_rn)
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
+        result = runner.invoke(
+            main, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False
+        )
 
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     'Notes for the line: "fixed a bug where the ***ip*** commanda '
                     'failed when unknown categories were returned"',
@@ -323,8 +320,8 @@ def test_templates_print(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, [DOC_REVIEW, "--templates"], catch_exceptions=False)
-        assert str_in_caplog(
-            logger_info.call_args_list, "General Pointers About Release Notes:"
+        result = runner.invoke(
+            main, [DOC_REVIEW, "--templates"], catch_exceptions=False
         )
-        assert not str_in_caplog(logger_info.call_args_list, "Checking spelling on")
+        assert "General Pointers About Release Notes:" in result.output
+        assert "Checking spelling on" in result.output

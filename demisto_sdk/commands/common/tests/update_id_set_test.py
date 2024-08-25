@@ -3580,7 +3580,7 @@ class TestCorrelationRules:
 
 class TestXSIAMDashboards:
     @staticmethod
-    def test_process_xsiam_dashboards(mocker, monkeypatch, pack):
+    def test_process_xsiam_dashboards(mocker, caplog, pack):
         """
         Given
             - A repo with a XSIAM dashboard object.
@@ -3628,7 +3628,7 @@ class TestXSIAMDashboards:
 
 class TestXSIAMReports:
     @staticmethod
-    def test_process_xsiam_reports(mocker, monkeypatch, pack):
+    def test_process_xsiam_reports(mocker, caplog, pack):
         """
         Given
             - A repo with a XSIAM report object.

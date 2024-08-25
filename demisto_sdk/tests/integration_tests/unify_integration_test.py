@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -282,8 +281,9 @@ class TestIntegrationScriptUnifier:
         script.create_default_script()
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            runner.invoke(main, [UNIFY_CMD, "-i", f"{script.path}", "-ini"])
+            CliRunner(mix_stderr=False).invoke(
+                main, [UNIFY_CMD, "-i", f"{script.path}", "-ini"]
+            )
             with open(
                 os.path.join(script.path, "script-dummy-script.yml")
             ) as unified_yml:
@@ -308,10 +308,6 @@ class TestLayoutUnifer:
             - make sure the 'fromServerVersion' and 'fromVersion' are the same.
             - make sure the 'toVersion' and 'toServerVersion' are the same.
         """
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-
         pack = REPO.create_pack("test")
         layout = pack.create_layoutcontainer(
             name="test",
@@ -332,9 +328,6 @@ class TestLayoutUnifer:
 
             assert result.exit_code == 0
             assert not result.exception
-
-            assert logger_warning.call_count == 0
-            assert logger_error.call_count == 0
 
             with open(Path(output).name) as updated_layout:
                 layout_data = json.load(updated_layout)

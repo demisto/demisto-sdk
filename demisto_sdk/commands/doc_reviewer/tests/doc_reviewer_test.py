@@ -597,7 +597,7 @@ class TestDocReviewPrinting:
             ]
         )
 
-    def test_printing_mixed_report(self, mocker, monkeypatch):
+    def test_printing_mixed_report(self, caplog):
         """
         Given -
             Files reported as both valid/invalid spelled files.

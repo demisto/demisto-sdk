@@ -116,7 +116,7 @@ def generate_modeling_rules(
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
     )
-    handle_deprecated_args(ctx.args)
+    handle_deprecated_args(ctx.args, logger)
     try:
         path_prefix = snake_to_camel_case(vendor)
         outputfile_schema = Path(output_path, (f"{path_prefix}ModelingRules.json"))

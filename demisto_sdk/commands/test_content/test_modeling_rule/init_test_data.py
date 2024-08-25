@@ -74,7 +74,7 @@ def init_test_data(
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
     )
-    handle_deprecated_args(ctx.args)
+    handle_deprecated_args(ctx.args, logger)
 
     errors = False
     for fp in input:

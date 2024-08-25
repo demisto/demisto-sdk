@@ -4,7 +4,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from TestSuite.test_tools import ChangeCWD, str_in_caplog
+from TestSuite.test_tools import ChangeCWD
 
 FIND_DEPENDENCIES_CMD = "find-dependencies"
 
@@ -86,7 +86,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "# Pack ID: FindDependencyPack",
                     "### Scripts",
@@ -159,7 +159,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
 
             assert all(
                 [
-                    str_in_caplog(logger_info.call_args_list, current_str)
+                    current_str in result.output
                     for current_str in [
                         "Found dependencies result for FindDependencyPack pack:",
                         "{}",
@@ -281,18 +281,12 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
             )
 
-        assert str_in_caplog(
-            logger_info.call_args_list, "# Pack ID: FindDependencyPack2"
+        assert "# Pack ID: FindDependencyPack2" in result.output
+        assert "All level dependencies are:" in result.output
+        assert (
+            "Found dependencies result for FindDependencyPack2 pack:" in result.output
         )
-
-        assert str_in_caplog(logger_info.call_args_list, "All level dependencies are:")
-        assert str_in_caplog(
-            logger_info.call_args_list,
-            "Found dependencies result for FindDependencyPack2 pack:",
-        )
-        assert str_in_caplog(
-            logger_info.call_args_list, '"display_name": "FindDependencyPack1"'
-        )
+        assert ('"display_name": "FindDependencyPack1"') in result.output
         assert result.exit_code == 0
 
     def test_wrong_path(self, pack, mocker):
@@ -302,7 +296,4 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             path = os.path.join("Packs", Path(pack.path).name, "Integrations")
             result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, "-i", path])
             assert result.exit_code == 1
-            assert str_in_caplog(
-                logger_info.call_args_list,
-                "must be formatted as 'Packs/<some pack name>",
-            )
+            assert "must be formatted as 'Packs/<some pack name>" in result.output

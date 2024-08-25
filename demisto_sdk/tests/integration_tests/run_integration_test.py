@@ -1,5 +1,3 @@
-import logging
-
 import pytest
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
@@ -7,7 +5,6 @@ from demisto_client.demisto_api import DefaultApi
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.run_cmd.runner import Runner
-from TestSuite.test_tools import str_in_caplog
 
 DEBUG_FILE_PATH = (
     f"{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.txt"
@@ -68,13 +65,10 @@ def test_integration_run_non_existing_command(
     )
     assert 0 == result.exit_code
     assert not result.exception
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "Command did not run, make sure it was written correctly.",
-    )
+    assert "Command did not run, make sure it was written correctly." in result.output
 
 
-def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
+def test_json_to_outputs_flag(mocker, set_environment_variables):
     """
     Given
     - kl-get-components command
@@ -85,8 +79,6 @@ def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
     Then
     - Ensure the json_to_outputs command is running correctly
     """
-
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
 
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
@@ -103,10 +95,8 @@ def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
     assert run_result.exit_code == 0
     assert not run_result.stderr
     assert not run_result.exception
-
-    assert str_in_caplog(logger_info.call_args_list, YAML_OUTPUT)
-    assert logger_warning.call_count == 0
-    assert logger_error.call_count == 0
+    assert YAML_OUTPUT in run_result.output
+    assert not run_result.stderr
 
 
 def test_json_to_outputs_flag_fail_no_prefix(
@@ -134,11 +124,10 @@ def test_json_to_outputs_flag_fail_no_prefix(
     run_result = CliRunner(
         mix_stderr=False,
     ).invoke(main, ["run", "-q", command, "--json-to-outputs"])
-    assert 1 == run_result.exit_code
-    assert str_in_caplog(
-        logger_info.call_args_list,
+    assert run_result.exit_code == 1
+    assert (
         "A prefix for the outputs is needed for this command. Please provide one",
-    )
+    ) in run_result.output
 
 
 def test_incident_id_passed_to_run(

@@ -335,7 +335,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_ALL_CONFLICT)
     def test_format_autoextract_all_mode_conflict(
-        self, mocker, user_answer, expected, monkeypatch
+        self, mocker, user_answer, expected, caplog
     ):
         """
         Given

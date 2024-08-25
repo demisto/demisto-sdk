@@ -1252,7 +1252,7 @@ class TestFormatting:
         # Asserting some non related keys are not being deleted
         assert "some-other-key" in modified_schema
 
-    def test_recursive_extend_schema_prints_warning(self, mocker, monkeypatch):
+    def test_recursive_extend_schema_prints_warning(self, caplog):
         """
         Given
             - A dict that represents a schema with sub-schema reference that has no actual sub-schema
@@ -1268,11 +1268,8 @@ class TestFormatting:
             },
         }
         BaseUpdate.recursive_extend_schema(schema, schema)
-        assert logger_info.call_count == 1
-        assert (
-            "Could not find sub-schema for input_schema"
-            in logger_info.call_args_list[0][0][0]
-        )
+        assert len(caplog.records) == 1
+        assert caplog.records[0].message == "Could not find sub-schema for input_schema"
 
     @staticmethod
     def exception_raise(default_from_version: str = "", file_type: str = ""):

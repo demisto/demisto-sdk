@@ -1894,7 +1894,7 @@ def test_modeling_rule(
         file_log_threshold=file_log_threshold,  # type: ignore[arg-type]
         log_file_path=log_file_path,
     )
-    handle_deprecated_args(ctx.args)
+    handle_deprecated_args(ctx.args, logger)
 
     logging_module = ParallelLoggingManager(
         "test_modeling_rules.log", real_time_logs_only=not nightly

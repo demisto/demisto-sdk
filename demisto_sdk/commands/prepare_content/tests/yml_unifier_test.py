@@ -1501,8 +1501,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, caplog, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        CliRunner(mix_stderr=False).invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
@@ -1547,14 +1546,13 @@ def test_unify_not_partner_contributed_pack(mocker, caplog, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Created unified yml:" in caplog.text
+    assert "Created unified yml:" in result.output
 
     # Verifying the unified file data
     assert "Partner" not in XSOAR_UNIFY["display"]
@@ -1596,8 +1594,7 @@ def test_unify_community_contributed(mocker, caplog, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        CliRunner(mix_stderr=False).invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,

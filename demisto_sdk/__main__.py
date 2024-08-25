@@ -177,7 +177,7 @@ def logging_setup_decorator(func, *args, **kwargs):
             log_file_path=kwargs.get("log_file_path"),
         )
 
-        handle_deprecated_args(get_context_arg(args).args)
+        handle_deprecated_args(get_context_arg(args).args, logger)
         return func(*args, **kwargs)
 
     return wrapper

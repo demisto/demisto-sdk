@@ -3,7 +3,7 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
-from TestSuite.test_tools import ChangeCWD, str_in_caplog
+from TestSuite.test_tools import ChangeCWD
 
 SECRETS_CMD = "secrets"
 
@@ -43,7 +43,7 @@ def test_integration_secrets_incident_field_positive(mocker, repo):
         result = runner.invoke(main, [SECRETS_CMD, "-wl", repo.secrets.path])
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Starting secrets detection",
                 "Finished validating secrets, no secrets were found.",
@@ -84,7 +84,7 @@ def test_integration_secrets_integration_negative(mocker, repo):
         result = runner.invoke(main, [SECRETS_CMD, "-wl", repo.secrets.path])
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Starting secrets detection",
                 "Secrets were found in the following files:",
@@ -129,10 +129,7 @@ def test_integration_secrets_integration_positive(mocker, repo):
             main, [SECRETS_CMD, "-wl", repo.secrets.path], catch_exceptions=False
         )
     assert 0 == result.exit_code
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "no secrets were found",
-    )
+    assert ("no secrets were found",) in result.output
 
 
 def test_integration_secrets_integration_global_whitelist_positive_using_git(
@@ -165,10 +162,7 @@ def test_integration_secrets_integration_global_whitelist_positive_using_git(
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
     assert result.exit_code == 0
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "no secrets were found",
-    )
+    assert "no secrets were found" in result.output
 
 
 def test_integration_secrets_integration_with_regex_expression(mocker, pack):
@@ -205,10 +199,7 @@ def test_integration_secrets_integration_with_regex_expression(mocker, pack):
             catch_exceptions=False,
         )
     assert result.exit_code == 0
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "no secrets were found",
-    )
+    assert ("no secrets were found") in result.output
 
 
 def test_integration_secrets_integration_positive_with_input_option(mocker, repo):
@@ -233,13 +224,10 @@ def test_integration_secrets_integration_positive_with_input_option(mocker, repo
     integration.code.write("text that should not get caught")
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
-        CliRunner(mix_stderr=False).invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             main, [SECRETS_CMD, "--input", integration.code.rel_path]
         )
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "Finished validating secrets, no secrets were found",
-    )
+    assert ("Finished validating secrets, no secrets were found") in result.output
 
 
 def test_integration_secrets_integration_negative_with_input_option(mocker, repo):
@@ -262,13 +250,10 @@ def test_integration_secrets_integration_negative_with_input_option(mocker, repo
     integration.code.write("email@not.whitlisted\n")
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
-        CliRunner(mix_stderr=False).invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             main, [SECRETS_CMD, "--input", integration.code.rel_path]
         )
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "Secrets were found in the following files",
-    )
+    assert "Secrets were found in the following files" in result.output
 
 
 def test_integration_secrets_integration_negative_with_input_option_and_whitelist(
@@ -304,10 +289,7 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
             ],
         )
     assert 1 == result.exit_code
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "Secrets were found in the following files",
-    )
+    assert "Secrets were found in the following files" in result.output
 
 
 def test_secrets_for_file_name_with_space_in_it(mocker, repo):
@@ -329,7 +311,4 @@ def test_secrets_for_file_name_with_space_in_it(mocker, repo):
             ],
         )
     assert 1 == result.exit_code
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "Secrets were found in the following files",
-    )
+    assert "Secrets were found in the following files" in result.output

@@ -1,4 +1,3 @@
-import logging
 import os
 import tempfile
 from pathlib import Path
@@ -47,7 +46,6 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
 )
-from TestSuite.test_tools import str_in_caplog
 
 INTEGRATION = create_integration_object()
 INTEGRATION.path = Path(
@@ -427,6 +425,7 @@ def test_post_results(
     expected_error_call_count,
     expected_error_code_in_warnings,
     expected_error_code_in_errors,
+    caplog,
 ):
     """
     Given
@@ -442,20 +441,21 @@ def test_post_results(
         - Case 2: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'BA101' and the warning logger wasn't called.
         - Case 3: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'BA101' and the warning logger was called once with 'BC100'
     """
-
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     validation_results = ResultWriter()
     validation_results.validation_results = results
     exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
     assert exit_code == expected_exit_code
-    assert logger_warning.call_count == expected_warnings_call_count
-    assert logger_error.call_count == expected_error_call_count
-    for expected_error_code_in_warning in expected_error_code_in_warnings:
-        assert str_in_caplog(
-            logger_warning.call_args_list, expected_error_code_in_warning
-        )
-    for expected_error_code_in_error in expected_error_code_in_errors:
-        assert str_in_caplog(logger_error.call_args_list, expected_error_code_in_error)
+
+    log_by_level = map_reduce(caplog.records, lambda log: log.levelno)
+    warnings = log_by_level.get(30, ())
+    assert len(warnings) == expected_warnings_call_count
+    for code in expected_error_code_in_warnings:
+        assert code in " ".join({log.message for log in warnings})
+
+    errors = log_by_level.get(40, ())
+    assert len(errors) == expected_error_call_count
+    for code in expected_error_code_in_errors:
+        assert code in " ".join({log.message for log in errors})
 
 
 @pytest.mark.parametrize(

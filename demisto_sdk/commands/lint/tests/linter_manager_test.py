@@ -35,14 +35,14 @@ def mock_lint_manager(mocker):
     argvalues=[(0b0, 0b0, [TYPE_PWSH, TYPE_PYTHON])],
 )
 def test_report_pass_lint_checks(
-    mocker, return_exit_code: int, skipped_code: int, pkgs_type: list
+    mocker, return_exit_code: int, skipped_code: int, pkgs_type: list, caplog
 ):
     from demisto_sdk.commands.lint import lint_manager
 
     lint_manager.LintManager.report_pass_lint_checks(
         return_exit_code, skipped_code, pkgs_type
     )
-    assert logger_info.call_count == 9
+    assert len(caplog.records) == 9
 
 
 def test_report_failed_image_creation():

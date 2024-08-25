@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -589,15 +588,12 @@ def test_is_file_using_unknown_content(
     Then
     - Check whether the graph is valid or not, based on whether optional content dependencies were included.
     """
-
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    caplog.set_level("WARNING" if is_valid else "ERROR")
     with GraphValidator(
         update_graph=False, git_files=[], include_optional_deps=include_optional
     ) as graph_validator:
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
-
-    logger_to_search = logger_warning if is_valid else logger_error
 
     assert (
         "Content item 'SampleIntegration' using content items: 'SampleClassifier'"

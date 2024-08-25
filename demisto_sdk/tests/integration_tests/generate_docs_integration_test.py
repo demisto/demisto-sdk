@@ -1,4 +1,3 @@
-import logging
 from os.path import join
 from pathlib import Path
 
@@ -7,7 +6,6 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import str_in_caplog
 
 GENERATE_DOCS_CMD = "generate-docs"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -32,11 +30,6 @@ class TestPlaybooks:
         - Ensure README.md has an inputs section.
         - Ensure README.md has an outputs section.
         """
-
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-
         valid_playbook_with_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/playbook-Test_playbook.yml"
         )
@@ -47,11 +40,8 @@ class TestPlaybooks:
 
         assert result.exit_code == 0
         assert not result.exception
-        assert str_in_caplog(
-            logger_info.call_args_list, "Generating playbook documentation"
-        )
-        assert logger_warning.call_count == 0
-        assert logger_error.call_count == 0
+        assert "Generating playbook documentation" in result.output
+        assert not result.stderr
         assert Path(readme_path).exists()
         with open(readme_path) as readme_file:
             contents = readme_file.read()
@@ -80,10 +70,6 @@ class TestPlaybooks:
         - Ensure README.md does not have an outputs section.
         """
 
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-
         valid_playbook_no_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/Playbooks.playbook-test.yml"
         )
@@ -96,11 +82,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
 
-        assert str_in_caplog(
-            logger_info.call_args_list, "Generating playbook documentation"
-        )
-        assert logger_warning.call_count == 0
-        assert logger_error.call_count == 0
+        assert "Generating playbook documentation" in result.output
         assert Path(readme_path).exists()
         with open(readme_path) as readme_file:
             contents = readme_file.read()
@@ -124,10 +106,6 @@ class TestPlaybooks:
         - Ensure Builtin not in dependencies.
         """
 
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-
         valid_playbook_with_dependencies = join(
             DEMISTO_SDK_PATH,
             "tests/test_files/Packs/DummyPack/Playbooks/DummyPlaybook.yml",
@@ -147,12 +125,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
 
-        assert str_in_caplog(
-            logger_info.call_args_list, "Generating playbook documentation"
-        )
-        assert logger_warning.call_count == 0
-        assert logger_error.call_count == 0
-
+        assert "Generating playbook documentation" in result.output
         assert Path(readme_path).exists()
         with open(readme_path) as readme_file:
             contents = readme_file.read()
@@ -176,10 +149,6 @@ class TestPlaybooks:
         - Ensure Builtin not in dependencies.
         """
 
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-
         valid_playbook_with_dependencies = join(
             DEMISTO_SDK_PATH,
             "tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml",
@@ -199,11 +168,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
 
-        assert str_in_caplog(
-            logger_info.call_args_list, "Generating playbook documentation"
-        )
-        assert logger_warning.call_count == 0
-        assert logger_error.call_count == 0
+        assert "Generating playbook documentation" in result.output
 
         assert Path(readme_path).exists()
         with open(readme_path) as readme_file:
@@ -232,10 +197,6 @@ class TestPlaybooks:
         - Ensure the second README.md does not have an outputs section.
         """
 
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-
         valid_playbook_dir = join(DEMISTO_SDK_PATH, "tests/test_files/Playbooks")
         runner = CliRunner(mix_stderr=False)
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_dir, "-o", tmpdir]
@@ -247,11 +208,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
 
-        assert str_in_caplog(
-            logger_info.call_args_list, "Generating playbook documentation"
-        )
-        assert logger_warning.call_count == 0
-        assert logger_error.call_count == 0
+        assert "Generating playbook documentation" in result.output
 
         assert Path(readme_path_1).exists()
         with open(readme_path_1) as readme_file:

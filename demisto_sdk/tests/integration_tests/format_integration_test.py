@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path, PosixPath
 from typing import List
 
@@ -44,7 +43,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_MODULE,
     GENERIC_TYPE,
 )
-from TestSuite.test_tools import ChangeCWD, str_in_caplog
+from TestSuite.test_tools import ChangeCWD
 
 with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
     SOURCE_FORMAT_INTEGRATION_YML = (
@@ -144,17 +143,14 @@ def test_integration_format_yml_with_no_test_positive(
     output_yml = get_dict_from_file(output_path)
     assert output_yml[0].get("tests") == ["No tests (auto formatted)"]
     message = f'Formatting {output_file} with "No tests"'
-    assert str_in_caplog(logger_info.call_args_list, message)
+    assert message in result.output
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
     result = runner.invoke(
         main, [FORMAT_CMD, "-i", output_path, "-y", "-ngr"], input="Y"
     )
     assert not result.exception
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        message,
-    )
+    assert message in result.output
 
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)
@@ -174,7 +170,6 @@ def test_integration_format_yml_with_no_test_negative(
     -  Ensure no exception is raised
     -  Ensure 'No tests' is not added
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     source_file, output_file = tmp_path / "source.yml", tmp_path / "output.yml"
     source_path, output_path = str(source_file), str(output_file)
@@ -189,10 +184,7 @@ def test_integration_format_yml_with_no_test_negative(
             input="N",
         )
     assert not result.exception
-    assert str_in_caplog(
-        logger_debug.call_args_list,
-        f'Not formatting {source_path} with "No tests"',
-    )
+    assert f'Not formatting {source_path} with "No tests"' in result.output
     yml_content = get_dict_from_file(output_path)
     assert not yml_content[0].get("tests")
 
@@ -307,7 +299,6 @@ def test_integration_format_configuring_conf_json_positive(
         added to conf.json for each test playbook configured in the yml under 'tests' key
     -  Ensure message is not prompt in the second time
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
@@ -329,13 +320,8 @@ def test_integration_format_configuring_conf_json_positive(
             input="Y",
         )
     assert not result.exception
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "Added test playbooks to conf.json successfully",
-    )
-    assert not str_in_caplog(
-        logger_debug.call_args_list, "No unconfigured test playbooks"
-    )
+    assert "Added test playbooks to conf.json successfully" in result.output
+    assert "No unconfigured test playbooks" not in result.output
     if file_type == "playbook":
         _verify_conf_json_modified(test_playbooks, "", conf_json_path)
     else:
@@ -343,7 +329,7 @@ def test_integration_format_configuring_conf_json_positive(
     # Running format for the second time should raise no exception and should raise no prompt to the user
     result = runner.invoke(main, [FORMAT_CMD, "-i", saved_file_path, "-ngr"], input="Y")
     assert not result.exception
-    assert str_in_caplog(logger_debug.call_args_list, "No unconfigured test playbooks")
+    assert "No unconfigured test playbooks" in result.output
 
 
 @pytest.mark.parametrize(
@@ -389,10 +375,7 @@ def test_integration_format_configuring_conf_json_negative(
         main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-ngr"], input="N"
     )
     assert not result.exception
-    assert str_in_caplog(
-        logger_info.call_args_list,
-        "Skipping test playbooks configuration",
-    )
+    assert "Skipping test playbooks configuration" in result.output
     with open(conf_json_path) as data_file:
         conf_json_content = json.load(data_file)
         assert conf_json_content == CONF_JSON_ORIGINAL_CONTENT
@@ -437,7 +420,6 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     Then
     - Ensure 'sourceplaybookid' was deleted from the yml file.
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     source_playbook_path = SOURCE_FORMAT_PLAYBOOK_COPY
     playbook_path = str(tmp_path / "format_new_playbook_copy.yml")
@@ -461,16 +443,13 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     # prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "======= Updating file ",
                 f"Format Status   on file: {source_playbook_path} - Success",
+                f'Not formatting {source_playbook_path} with "No tests"',
             ]
         ]
-    )
-    assert str_in_caplog(
-        logger_debug.call_args_list,
-        f'Not formatting {source_playbook_path} with "No tests"',
     )
     with open(playbook_path) as f:
         yaml_content = yaml.load(f)
@@ -490,7 +469,6 @@ def test_format_on_valid_py(mocker, repo):
     Then
     - Ensure format passes.
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -502,7 +480,7 @@ def test_format_on_valid_py(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -516,16 +494,13 @@ def test_format_on_valid_py(mocker, repo):
             catch_exceptions=True,
         )
 
-    assert str_in_caplog(
-        logger_debug.call_args_list,
-        "Running autopep8 on file",
-    )
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "======= Updating file",
                 "Success",
+                "Running autopep8 on file",
             ]
         ]
     )
@@ -543,7 +518,6 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     Then
     - Ensure format passes.
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -554,7 +528,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -570,16 +544,13 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
 
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "======= Updating file",
                 "Success",
+                "Running autopep8 on file",
             ]
         ]
-    )
-    assert str_in_caplog(
-        logger_debug.call_args_list,
-        "Running autopep8 on file",
     )
     assert invalid_py != integration.code.read()
 
@@ -595,7 +566,6 @@ def test_format_on_invalid_py_dict(mocker, repo):
     Then
     - Ensure format passes.
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -606,7 +576,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -622,16 +592,13 @@ def test_format_on_invalid_py_dict(mocker, repo):
 
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "======= Updating file",
                 "Success",
+                "Running autopep8 on file",
             ]
         ]
-    )
-    assert str_in_caplog(
-        logger_debug.call_args_list,
-        "Running autopep8 on file",
     )
     assert invalid_py != integration.code.read()
 
@@ -647,7 +614,6 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
     Then
     - Ensure format passes.
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -661,7 +627,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -677,21 +643,18 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
 
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in caplog.text
             for current_str in [
                 "======= Updating file",
                 "Success",
             ]
         ]
     )
-    assert str_in_caplog(
-        logger_debug.call_args_list,
-        "Running autopep8 on file",
-    )
+    assert "Running autopep8 on file" in result.output
     assert invalid_py != integration.code.read()
 
 
-def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
+def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
     """
     (This is the same test as the previous one only without verbose output)
     Given
@@ -703,8 +666,6 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
     Then
     - Ensure format passes and that the verbose is off
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -717,7 +678,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -725,7 +686,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
                 "-i",
                 integration.code.path,
                 "--console-log-threshold",
-                "INFO",
+                "DEBUG",
                 "-ngr",
             ],
             catch_exceptions=False,
@@ -733,16 +694,13 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
 
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "======= Updating file",
                 "Success",
+                "Running autopep8 on file",
             ]
         ]
-    )
-    assert str_in_caplog(
-        logger_debug.call_args_list,
-        "Running autopep8 on file",
     )
     assert invalid_py != integration.code.read()
 
@@ -781,14 +739,14 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     monkeypatch.setattr("builtins.input", lambda _: "N")
     with ChangeCWD(Path(playbook.path).parent):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main,
             [FORMAT_CMD, "-i", "playbook.yml", "-y", "-ngr"],
             catch_exceptions=False,
         )
 
         with ChangeCWD(repo.path):
-            runner.invoke(
+            result = runner.invoke(
                 main,
                 [
                     "validate",
@@ -805,7 +763,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
 
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "======= Updating file",
                 f"Format Status   on file: {playbook.path} - Success",
@@ -835,13 +793,13 @@ def test_format_integration_skipped_files(repo, mocker, monkeypatch):
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(
+    result = runner.invoke(
         main, [FORMAT_CMD, "-i", str(pack.path), "-ngr"], catch_exceptions=False
     )
 
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "======= Updating file",
                 "Success",
@@ -849,10 +807,10 @@ def test_format_integration_skipped_files(repo, mocker, monkeypatch):
         ]
     )
     for excluded_file in excluded_files:
-        assert not str_in_caplog(logger_info.call_args_list, excluded_file)
+        assert excluded_file not in result.output
 
 
-def test_format_commonserver_skipped_files(repo, mocker, monkeypatch):
+def test_format_commonserver_skipped_files(repo, mocker):
     """
     Given:
         - Base content pack with CommonServerPython script
@@ -870,7 +828,7 @@ def test_format_commonserver_skipped_files(repo, mocker, monkeypatch):
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(
+    result = runner.invoke(
         main,
         [FORMAT_CMD, "-i", str(pack.path), "-ngr"],
         catch_exceptions=False,
@@ -878,7 +836,7 @@ def test_format_commonserver_skipped_files(repo, mocker, monkeypatch):
 
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "Success",
                 "CommonServerPython.py",
@@ -889,7 +847,7 @@ def test_format_commonserver_skipped_files(repo, mocker, monkeypatch):
     commonserver_excluded_files = excluded_files[:]
     commonserver_excluded_files.remove("CommonServerPython.py")
     for excluded_file in commonserver_excluded_files:
-        assert not str_in_caplog(logger_info.call_args_list, excluded_file)
+        assert excluded_file not in result.output
 
 
 def test_format_playbook_without_fromversion_no_preset_flag(repo, mocker, monkeypatch):
@@ -916,11 +874,11 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo, mocker, monkey
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(
+    result = runner.invoke(
         main,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "--assume-yes", "-ngr"],
     )
-    assert str_in_caplog(logger_info.call_args_list, "Success")
+    assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
 
 
@@ -950,7 +908,7 @@ def test_format_playbook_without_fromversion_with_preset_flag(
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(
+    result = runner.invoke(
         main,
         [
             FORMAT_CMD,
@@ -962,7 +920,7 @@ def test_format_playbook_without_fromversion_with_preset_flag(
             "-ngr",
         ],
     )
-    assert str_in_caplog(logger_info.call_args_list, "Success")
+    assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == "6.0.0"
 
 
@@ -992,12 +950,12 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(
+    result = runner.invoke(
         main,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "--from-version", "6.0.0", "-ngr"],
         input="y",
     )
-    assert str_in_caplog(logger_info.call_args_list, "Success")
+    assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == "6.0.0"
 
 
@@ -1026,12 +984,12 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(
+    result = runner.invoke(
         main,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "-ngr"],
         input="y",
     )
-    assert str_in_caplog(logger_info.call_args_list, "Success")
+    assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
 
 
@@ -1059,12 +1017,12 @@ def test_format_playbook_copy_removed_from_name_and_id(repo, mocker, monkeypatch
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(
+    result = runner.invoke(
         main,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "-ngr"],
         input="y\n5.5.0",
     )
-    assert str_in_caplog(logger_info.call_args_list, "Success")
+    assert "Success" in result.output
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
 
@@ -1099,17 +1057,17 @@ def test_format_playbook_no_input_specified(mocker, repo, monkeypatch):
         return_value=[str(playbook.yml.path)],
     )
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(
+    result = runner.invoke(
         main,
         [FORMAT_CMD, "-ngr"],
         input="y\n5.5.0",
     )
-    assert str_in_caplog(logger_info.call_args_list, "Success")
+    assert "Success" in result.output
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
 
 
-def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
+def test_format_incident_type_layout_id(repo, mocker, caplog):
     """
     Given:
         - Content pack with incident type and layout
@@ -1166,7 +1124,7 @@ def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
     assert format_result.exit_code == 0
     assert all(
         [
-            str_in_caplog(logger_info.call_args_list, current_str)
+            current_str in caplog.text
             for current_str in [
                 "Success",
                 f"======= Updating file {pack.path}",
@@ -1235,7 +1193,7 @@ def test_format_generic_field_wrong_values(
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Setting fromVersion field",
                     f"======= Updating file {generic_field_path}",
@@ -1286,7 +1244,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Success",
                     f"======= Updating file {generic_field_path}",
@@ -1336,7 +1294,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Success",
                     f"======= Updating file {generic_type_path}",
@@ -1386,7 +1344,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Success",
                     f"======= Updating file {generic_type_path}",
@@ -1435,7 +1393,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Setting fromVersion field",
                     "Success",
@@ -1486,7 +1444,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Success",
                     f"======= Updating file {generic_module_path}",
@@ -1535,7 +1493,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Success",
                     f"======= Updating file {generic_definition_path}",
@@ -1588,7 +1546,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
         )
         assert all(
             [
-                str_in_caplog(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Success",
                     f"======= Updating file {generic_definition_path}",
@@ -1619,7 +1577,6 @@ class TestFormatWithoutAddTestsFlag:
         -  Ensure no exception is raised.
         -  Ensure message asking to add tests is prompt.
         """
-        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
         runner = CliRunner()
         integration = pack.create_integration()
@@ -1638,13 +1595,13 @@ class TestFormatWithoutAddTestsFlag:
         assert not result.exception
         assert all(
             [
-                str_in_caplog(logger_debug.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     f'Not formatting {integration_path} with "No tests"',
                 ]
             ]
         )
-        assert not str_in_caplog(logger_info.call_args_list, message)
+        assert message not in result.output
 
     def test_format_integrations_folder(self, mocker, pack):
         """
@@ -1677,11 +1634,8 @@ class TestFormatWithoutAddTestsFlag:
         )
         message = f'Formatting {integration_path} with "No tests"'
         assert not result.exception
-        assert not str_in_caplog(logger_info.call_args_list, prompt)
-        assert str_in_caplog(
-            logger_info.call_args_list,
-            message,
-        )
+        assert prompt not in result.output
+        assert message in result.output
 
     def test_format_script_without_test_flag(self, mocker, monkeypatch, pack):
         """
@@ -1708,10 +1662,7 @@ class TestFormatWithoutAddTestsFlag:
         result = runner.invoke(main, [FORMAT_CMD, "-i", script_path, "-ngr"])
         message = f'Formatting {script_path} with "No tests"'
         assert not result.exception
-        assert str_in_caplog(
-            logger_info.call_args_list,
-            message,
-        )
+        assert message in result.output
 
     def test_format_playbooks_folder(self, mocker, monkeypatch, pack):
         """
@@ -1739,10 +1690,7 @@ class TestFormatWithoutAddTestsFlag:
         )
         message = f'Formatting {playbooks_path} with "No tests"'
         assert not result.exception
-        assert str_in_caplog(
-            logger_info.call_args_list,
-            message,
-        )
+        assert message in result.output
 
         assert playbook.yml.read_dict().get("tests")[0] == "No tests (auto formatted)"
 
@@ -1847,11 +1795,8 @@ class TestFormatWithoutAddTestsFlag:
         message1 = f"Format Status   on file: {layouts_path} - Success"
 
         assert not result.exception
-        assert not str_in_caplog(logger_info.call_args_list, message)
-        assert str_in_caplog(
-            logger_info.call_args_list,
-            message1,
-        )
+        assert message not in result.output
+        assert message1 in result.output
 
     def test_format_layouts_folder_with_add_tests_flag(self, mocker, monkeypatch, repo):
         """
@@ -1882,14 +1827,9 @@ class TestFormatWithoutAddTestsFlag:
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", layouts_path, "-at", "-y", "-ngr"]
         )
-        message = f'Formatting {layouts_path} with "No tests"'
-        message1 = f"Format Status   on file: {layouts_path} - Success"
         assert not result.exception
-        assert not str_in_caplog(logger_info.call_args_list, message)
-        assert str_in_caplog(
-            logger_info.call_args_list,
-            message1,
-        )
+        assert f'Formatting {layouts_path} with "No tests"' not in result.output
+        assert f"Format Status   on file: {layouts_path} - Success" in result.output
 
 
 def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
@@ -2065,7 +2005,7 @@ def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):
     )
     assert result.exit_code == 0
     assert not result.exception
-    assert str_in_caplog(logger_info.call_args_list, message)
+    assert message in result.output
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
@@ -2110,7 +2050,7 @@ def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
     message = f"Skipping formatting of non-existent-fields for {mapper.path} as the no-graph argument was given."
     assert result.exit_code == 0
     assert not result.exception
-    assert str_in_caplog(logger_info.call_args_list, message)
+    assert message in result.output
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
@@ -2192,7 +2132,7 @@ def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
     message = f"Skipping formatting of non-existent-fields for {layout.path} as the no-graph argument was given."
     assert result.exit_code == 0
     assert not result.exception
-    assert str_in_caplog(logger_info.call_args_list, message)
+    assert message in result.output
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.

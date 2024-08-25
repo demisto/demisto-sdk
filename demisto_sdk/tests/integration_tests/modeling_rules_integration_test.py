@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 
@@ -9,7 +8,6 @@ from typer.testing import CliRunner
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
-from TestSuite.test_tools import str_in_caplog
 
 ONE_MODEL_RULE_TEXT = """
 [MODEL: dataset=fake_fakerson_raw]
@@ -134,10 +132,6 @@ class TestSkippingInvalidModelingRule:
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-
         runner = CliRunner()
         mocker.patch(
             "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
@@ -185,9 +179,9 @@ class TestSkippingInvalidModelingRule:
                     )
                     # Assert
                     assert result.exit_code == 0
-                    assert str_in_caplog(
-                        logger_warning.call_args_list,
-                        "XSIAM Tenant's Demisto version doesn't match Modeling Rule",
+                    assert (
+                        "XSIAM Tenant's Demisto version doesn't match Modeling Rule"
+                        in result.output
                     )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
@@ -253,9 +247,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 1
-                assert str_in_caplog(
-                    logger_error.call_args_list, f"Pack {pack.name} was not found"
-                )
+                assert f"Pack {pack.name} was not found" in result.output
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -328,9 +320,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 1
-                assert str_in_caplog(
-                    logger_error.call_args_list, "Failed pushing test data"
-                )
+                assert "Failed pushing test data" in result.output
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -407,9 +397,9 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 1
-                assert str_in_caplog(
-                    logger_error.call_args_list,
-                    f"Dataset {fake_test_data.data[0].dataset} does not exist",
+                assert (
+                    f"Dataset {fake_test_data.data[0].dataset} does not exist"
+                    in result.output
                 )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
@@ -501,9 +491,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 1
-                assert str_in_caplog(
-                    logger_error.call_args_list, "Error executing XQL query"
-                )
+                assert "Error executing XQL query" in result.output
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -601,9 +589,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 1
-                assert str_in_caplog(
-                    logger_error.call_args_list, "Error executing XQL query"
-                )
+                assert "Error executing XQL query" in result.output
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -734,10 +720,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 0
-                assert str_in_caplog(
-                    logger_info.call_args_list,
-                    "All mappings validated successfully",
-                )
+                assert "All mappings validated successfully" in result.output
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -873,10 +856,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 0
-                assert str_in_caplog(
-                    logger_info.call_args_list,
-                    "All mappings validated successfully",
-                )
+                assert "All mappings validated successfully" in result.output
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -1015,15 +995,12 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 0
-                assert str_in_caplog(
-                    logger_info.call_args_list,
-                    "All mappings validated successfully",
-                )
+                assert "All mappings validated successfully" in result.output
                 # make sure the schema validation was skipped.
                 schema_path = pack.modeling_rules[0].schema.path
-                assert str_in_caplog(
-                    logger_info.call_args_list,
-                    f"Skipping the validation to check that the schema {schema_path} is aligned with TestData file",
+                assert (
+                    f"Skipping the validation to check that the schema {schema_path} is aligned with TestData file"
+                    in result.output
                 )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
@@ -1225,12 +1202,8 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 1
-                assert str_in_caplog(
-                    logger_info.call_args_list, "xdm.event.outcome_reason"
-                )
-                assert str_in_caplog(
-                    logger_error.call_args_list, '"DisAllowed" != "Allowed"'
-                )
+                assert "xdm.event.outcome_reason" in result.output
+                assert '"DisAllowed" != "Allowed"' in result.output
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -1349,9 +1322,9 @@ class TestTheTestModelingRuleCommandSingleRule:
                 )
                 # Assert
                 assert result.exit_code == 0
-                assert str_in_caplog(
-                    logger_info.call_args_list,
-                    "test data config is ignored skipping the test data validation",
+                assert (
+                    "test data config is ignored skipping the test data validation"
+                    in result.output
                 )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
@@ -1509,19 +1482,18 @@ class TestTheTestModelingRuleCommandMultipleRules:
                 )
                 # Assert
                 assert result.exit_code == 1
-                assert str_in_caplog(
-                    logger_error.call_args_list, f"Pack {pack_1.name} was not found"
-                )
-                assert str_in_caplog(
-                    logger_info.call_args_list,
-                    "All mappings validated successfully",
-                )
+                assert f"Pack {pack_1.name} was not found" in result.output
+                assert "All mappings validated successfully" in result.output
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
 
 class TestTheTestModelingRuleCommandInteractive:
-    def test_no_testdata_file_exists(self, repo, monkeypatch, mocker, requests_mocker):
+    def test_no_testdata_file_exists(
+        self,
+        repo,
+        mocker,
+    ):
         """
         Given:
             - A modeling rule with no test data file.
@@ -1536,10 +1508,6 @@ class TestTheTestModelingRuleCommandInteractive:
             - Ensure the test data file was created.
             - Ensure that the log output from creating the testdata file is not duplicated.
         """
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
@@ -1598,17 +1566,8 @@ class TestTheTestModelingRuleCommandInteractive:
                 expected_log_count = 1
                 assert result.exit_code == 0
                 assert test_data_file.exists()
-                assert str_in_caplog(
-                    logger_warning.call_args_list, "No test data file found for"
-                )
-                call_counter = sum(
-                    bool(
-                        current_call
-                        and isinstance(current_call[0], tuple)
-                        and "Creating test data file for: " in current_call[0][0]
-                    )
-                    for current_call in logger_info.call_args_list
-                )
+                assert "No test data file found for" in result.output
+                call_counter = result.output.count("Creating test data file for: ")
                 assert call_counter == expected_log_count
 
         except typer.Exit:
@@ -1751,13 +1710,7 @@ class TestDeleteExistingDataset:
                 )
                 # Assert
                 assert result.exit_code == 0
-                assert str_in_caplog(
-                    logger_info.call_args_list,
-                    "Deleting existing fake_fakerson_raw dataset",
-                )
-                assert str_in_caplog(
-                    logger_info.call_args_list,
-                    "Dataset fake_fakerson_raw deleted successfully",
-                )
+                assert "Deleting existing fake_fakerson_raw dataset" in result.output
+                assert "Dataset fake_fakerson_raw deleted successfully" in result.output
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."

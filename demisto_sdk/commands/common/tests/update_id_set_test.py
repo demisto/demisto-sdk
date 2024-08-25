@@ -200,7 +200,7 @@ class TestPacksMetadata:
         assert res["Pack1"]["certification"] == "certified"
         assert res["Pack1"]["marketplaces"] == ["xsoar", "marketplacev2"]
 
-        assert "adding {pack_metadata_path} to id_set" in caplog.text == print_logs
+        assert (f"adding {pack_metadata_path} to id_set" in caplog.text) == print_logs
 
     @staticmethod
     def test_process_packs_exception_thrown(mocker, caplog):

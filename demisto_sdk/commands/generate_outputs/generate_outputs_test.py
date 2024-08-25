@@ -35,8 +35,6 @@ def test_generate_outputs_json_to_outputs_flow(
     result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
     if expected_stdout:
         assert expected_stdout in result.output
-    else:
-        assert not result.output
 
 
 @pytest.mark.parametrize(

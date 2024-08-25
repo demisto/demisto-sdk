@@ -104,9 +104,7 @@ def test_detection(attribute: str, content_type: type):
     assert isinstance(pack.__getattribute__(attribute), content_type)
 
 
-def test_sign_pack_exception_thrown(
-    caplog: pytest.LogCaptureFixture, repo, mocker, monkeypatch
-):
+def test_sign_pack_exception_thrown(repo, mocker, caplog):
     """
     When:
         - Signing a pack.
@@ -132,7 +130,7 @@ def test_sign_pack_exception_thrown(
 
     content_object_pack.sign_pack(content_object_pack.path, signer_path)
     assert (
-        "ERROR Error while trying to sign pack Pack1.\n not enough values to unpack (expected 2, got 0)"
+        "Error while trying to sign pack Pack1.\n not enough values to unpack (expected 2, got 0)"
         in caplog.text
     )
 

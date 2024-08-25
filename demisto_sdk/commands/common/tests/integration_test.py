@@ -328,7 +328,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
-            assert changed_command_name in caplog
+            assert changed_command_name in caplog.text
         structure.quiet_bc = True
         assert (
             validator.no_change_to_context_path() is True
@@ -2041,8 +2041,8 @@ class TestIsFetchParamsExist:
         self.validator.current_file["configuration"][-1]["defaultValue:xsoar"] = "test"
         assert self.validator.is_valid_fetch()
 
-    def test_not_fetch(self, mocker):
-        self.test_malformed_field(mocker)
+    def test_not_fetch(self, mocker, caplog):
+        self.test_malformed_field(mocker, caplog)
         self.validator.is_valid = True
         self.validator.current_file["script"]["isfetch"] = False
         assert (

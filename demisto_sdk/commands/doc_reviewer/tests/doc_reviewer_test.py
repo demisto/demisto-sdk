@@ -543,7 +543,7 @@ class TestDocReviewPrinting:
             ]
         )
 
-        assert not "Files With Misspells" not in caplog.text
+        assert "Files With Misspells" not in caplog.text
 
     def test_printing_invalid_spelled_files(self, caplog):
         """
@@ -569,7 +569,7 @@ class TestDocReviewPrinting:
             ]
         )
 
-        assert not "Files Without Misspells" not in caplog.text
+        assert "Files Without Misspells" not in caplog.text
 
     def test_printing_malformed_release_notes(self, caplog):
         """

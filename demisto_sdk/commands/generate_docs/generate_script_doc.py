@@ -62,7 +62,7 @@ def generate_script_doc(
         else:
             errors.append(
                 "Note: Script example was not provided. For a more complete documentation,run with the -e "
-                'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".'
+                'option with an example command. For example: -e "!ConvertFile entry_id=\\<entry_id>".'
             )
 
         script = get_yaml(input_path)

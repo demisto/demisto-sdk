@@ -607,9 +607,9 @@ def generate_integration_doc(
         save_output(output, INTEGRATIONS_README_FILE_NAME, doc_text)
 
         if errors:
-            logger.info(f"<yellow>Found {len(errors)} possible errors:</yellow>")
+            logger.info(f"Found {len(errors)} possible errors:")
             for error in errors:
-                logger.info(f"\t- {error}")
+                logger.error(f"\t- {error}")
 
     except Exception as ex:
         logger.info(f"<red>Error: {str(ex)}</red>")

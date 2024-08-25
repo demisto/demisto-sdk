@@ -828,7 +828,6 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
-        caplog.set_level("ERROR")
         self.restart_validator()
         pack_name = "PackName"
         pack = repo.create_pack(pack_name)
@@ -857,15 +856,15 @@ class TestPackUniqueFilesValidator:
             "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo(),
         )
-        res = self.validator.get_master_private_repo_meta_file(
-            str(pack.pack_metadata.path)
-        )
         with ChangeCWD(repo.path):
-            assert not res
-            assert (
-                "Unable to find previous pack_metadata.json file - skipping price change validation"
-                in caplog.text
+            res = self.validator.get_master_private_repo_meta_file(
+                str(pack.pack_metadata.path)
             )
+        assert not res
+        assert (
+            "Unable to find previous pack_metadata.json file - skipping price change validation"
+            in caplog.text
+        )
 
     def test_get_master_private_repo_meta_file_relative_path(self, mocker, repo):
         """

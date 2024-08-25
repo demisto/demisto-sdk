@@ -2049,12 +2049,9 @@ def is_external_repository() -> bool:
     """
     try:
         git_repo = GitUtil().repo
-        private_settings_path = os.path.join(
-            git_repo.working_dir, ".private-repo-settings"
-        )  # type: ignore
-        return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
         return True
+    return Path(git_repo.working_dir, ".private-repo-settings").exists()
 
 
 def is_external_repo() -> bool:

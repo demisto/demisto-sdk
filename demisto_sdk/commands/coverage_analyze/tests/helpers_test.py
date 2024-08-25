@@ -143,8 +143,9 @@ class TestExportReport:
         foo_mock = mocker.patch.object(self, "foo")
         export_report(self.foo, "the_format", "the_path")
         foo_mock.assert_called_once()
-        assert one(caplog.records).message == (
-            "exporting the_format coverage report to the_path",
+        assert (
+            one(caplog.records).message
+            == "exporting the_format coverage report to the_path"
         )
 
     def test_export_report_with_error(self, mocker, caplog):

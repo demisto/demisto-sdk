@@ -2,9 +2,9 @@ import os
 import platform
 import sys
 from pathlib import Path
-from typing import Iterable, Optional, Union
+from typing import Any, Iterable, Optional, Union
 
-from loguru import logger
+import loguru  # noqa: TID251 # This is the only place where we allow it
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOG_FILE_PATH,
@@ -14,8 +14,30 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOGGING_SET,
     LOG_FILE_NAME,
     LOGS_DIR,
+    STRING_TO_BOOL_MAP,
 )
-from demisto_sdk.commands.common.tools import string_to_bool
+
+
+def string_to_bool(
+    input_: Any,
+    default_when_empty: Optional[bool] = None,
+) -> bool:
+    """Implemented here although duplicates the one under `tools`, to avoid circular imports
+    Other (rejected) options to solve this were
+        1) import logger in many `tools` methods (redundant logging)
+        2) move string_to_bool out of tools (inconsistent)
+    """
+    try:
+        return STRING_TO_BOOL_MAP[str(input_).lower()]
+    except (KeyError, TypeError):
+        if input_ in ("", None) and default_when_empty is not None:
+            return default_when_empty
+
+    raise ValueError(f"cannot convert {input_} to bool")
+
+
+global logger
+logger = loguru.logger  # all SDK modules should import from this file, not from loguru
 
 
 def setup_neo4j_logger():
@@ -50,7 +72,7 @@ def calculate_rentation() -> int:
 
 
 def calculate_log_dir(
-    path_input: Optional[Union[Path, str]],
+    path_input: Optional[Union[Path, str]], logger: "loguru.Logger"
 ) -> Path:  # TODO use file name?
     if raw_path := path_input or os.getenv(DEMISTO_SDK_LOG_FILE_PATH):
         path = Path(raw_path).resolve()
@@ -73,7 +95,7 @@ def calculate_log_dir(
         return LOGS_DIR
 
 
-def setup_logger_colors(logger: loguru.Logger):
+def setup_logger_colors(logger: "loguru.Logger"):
     logger.level("DEBUG", color="<fg #D3D3D3>")
     logger.level("INFO", color="<fg #D3D3D3>")
     logger.level("WARNING", color="<yellow>")
@@ -93,12 +115,15 @@ def logging_setup(
     The initial set up is required since we have code (e.g. get_content_path) that runs in __main__ before the typer/click commands set up the logger.
     In the initial set up there is NO file logging (only console)
     """
+    global logger
 
+    logger = loguru.logger
     setup_logger_colors(logger)
     logger.warning("logging_setup called", color="blue")  # TODO remove
     logger.remove()  # Removes all pre-existing handlers
 
     colorize = string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), True)
+    logger = logger.opt(colors=colorize)  # allows using color tags in all logs
     logger.add(
         sys.stdout,
         colorize=colorize,
@@ -107,9 +132,8 @@ def logging_setup(
     )
     if os.getenv(DEMISTO_SDK_LOGGING_SET):
         logger.warning("This isn't the first time logging_setup has been called")
-
     if not initial:
-        log_path = calculate_log_dir(log_file_path) / LOG_FILE_NAME
+        log_path = calculate_log_dir(log_file_path, logger) / LOG_FILE_NAME
         logger.add(  # file handler
             log_path,
             rotation=calculate_log_size(),
@@ -128,8 +152,6 @@ def logging_setup(
         logger.success("logging_setup finished")  # TODO remove
 
 
-default_logger = logging_setup(initial=True)
-
 DEPRECATED_PARAMETERS = {
     "-v": "--console-log-threshold or --file-log-threshold",
     "-vv": "--console-log-threshold or --file-log-threshold",
@@ -146,7 +168,7 @@ DEPRECATED_PARAMETERS = {
 }
 
 
-def handle_deprecated_args(input_args: Iterable[str]):
+def handle_deprecated_args(input_args: Iterable[str], logger: "loguru.Logger"):
     for current_arg in sorted(
         set(input_args).intersection(DEPRECATED_PARAMETERS.keys())
     ):

@@ -6,7 +6,6 @@ from typing import Dict, List
 import typer
 from git import Repo  # noqa: TID251
 from github import Github
-from loguru import logger
 from more_itertools import bucket
 from pydantic import ValidationError
 
@@ -17,7 +16,7 @@ from demisto_sdk.commands.common.handlers import (
     DEFAULT_YAML_HANDLER,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.loguru_logger import logging_setup
+from demisto_sdk.commands.common.loguru_logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.scripts.changelog.changelog_obj import (
     INITIAL_LOG,

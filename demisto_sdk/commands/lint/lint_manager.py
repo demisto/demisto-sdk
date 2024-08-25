@@ -12,7 +12,6 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from loguru import logger
 from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
@@ -29,6 +28,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
     find_file,

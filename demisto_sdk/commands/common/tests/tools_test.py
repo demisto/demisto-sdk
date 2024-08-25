@@ -63,6 +63,9 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.loguru_logger import (
+    string_to_bool as string_to_bool_logger,
+)
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     TagParser,
@@ -2670,25 +2673,47 @@ def test_get_display_name(data, answer, tmpdir):
     assert get_display_name(file.path) == answer
 
 
-@pytest.mark.parametrize("value", ("true", "True", 1, "1", "yes", "y"))
-def test_string_to_bool_true(value: str):
-    assert string_to_bool(value)
+@pytest.mark.parametrize(
+    "value,expected_result",
+    (
+        ("true", True),
+        ("True", True),
+        (1, True),
+        ("1", True),
+        ("yes", True),
+        ("y", True),
+        ("Yes", True),
+        ("Y", True),
+        ("false", False),
+        ("False", False),
+        ("F", False),
+        ("f", False),
+        (0, False),
+        ("0", False),
+        ("n", False),
+        ("N", False),
+        ("no", False),
+        ("No", False),
+        ("NO", False),
+    ),
+)
+def test_string_to_bool_true(value: Tuple[str, ...], expected_result: bool):
+    assert string_to_bool(value) is expected_result
+    assert string_to_bool_logger(value) is expected_result
 
 
 @pytest.mark.parametrize("value", ("", None))
 def test_string_to_bool_default_true(value: str):
     assert string_to_bool(value, True)
-
-
-@pytest.mark.parametrize("value", ("false", "False", 0, "0", "n", "no"))
-def test_string_to_bool_false(value: str):
-    assert not string_to_bool(value)
+    assert string_to_bool_logger(value, True)
 
 
 @pytest.mark.parametrize("value", ("", " ", "כן", None, "None"))
 def test_string_to_bool_error(value: str):
     with pytest.raises(ValueError):
         string_to_bool(value)
+    with pytest.raises(ValueError):
+        string_to_bool_logger(value)
 
 
 @pytest.mark.parametrize(

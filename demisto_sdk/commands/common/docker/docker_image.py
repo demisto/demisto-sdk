@@ -2,13 +2,13 @@ import re
 from datetime import datetime
 from typing import Optional
 
-from loguru import logger
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_DOCKER_NAME,
 )
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
+from demisto_sdk.commands.common.loguru_logger import logger
 
 
 class DockerImage(str):

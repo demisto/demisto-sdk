@@ -2,13 +2,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import dictdiffer
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     ARGUMENT_FIELDS_TO_CHECK,
     INTEGRATION_ARGUMENT_TYPES,
     PARAM_FIELDS_TO_CHECK,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 
 

@@ -9,11 +9,11 @@ from functools import wraps
 from pathlib import Path
 from typing import Dict, Optional, Sequence
 
-# Local packages
-from loguru import logger
-
 # Third party packages
 from tabulate import tabulate
+
+# Local packages
+from demisto_sdk.commands.common.loguru_logger import logger
 
 StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
 

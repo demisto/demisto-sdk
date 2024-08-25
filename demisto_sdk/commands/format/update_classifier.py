@@ -1,9 +1,8 @@
 from abc import ABC
 from typing import Tuple
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,

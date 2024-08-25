@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import Tuple
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
     BANG_COMMAND_NAMES,
@@ -16,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     ParameterType,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_item_marketplaces, get_json
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,

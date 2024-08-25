@@ -10,9 +10,9 @@ For a new checker, add the invalid statement in the relevant file and add it to 
 """
 
 import pytest
-from loguru import logger
 from wcmatch.pathlib import Path
 
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     xsoar_linter_manager,
 )

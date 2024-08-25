@@ -8,7 +8,6 @@ from typing import DefaultDict
 
 import PyPDF2
 from bs4 import BeautifulSoup
-from loguru import logger
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -20,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     re,
 )
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_file,

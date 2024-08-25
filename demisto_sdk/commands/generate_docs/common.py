@@ -4,9 +4,8 @@ import re
 from enum import Enum
 from typing import Dict, List, Tuple
 
-from loguru import logger
-
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.run_cmd.runner import Runner
 

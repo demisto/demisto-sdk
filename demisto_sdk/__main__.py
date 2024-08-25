@@ -42,6 +42,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.loguru_logger import (
     handle_deprecated_args,
+    logger,
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import (

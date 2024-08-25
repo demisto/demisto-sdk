@@ -2,14 +2,13 @@ import os
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import (
     JOB,
     TESTS_AND_DOC_DIRECTORIES,
     FileType,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (

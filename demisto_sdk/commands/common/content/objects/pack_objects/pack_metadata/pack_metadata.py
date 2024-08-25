@@ -3,7 +3,6 @@ import os
 from datetime import datetime
 from typing import Dict, List, Union
 
-from loguru import logger
 from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
@@ -17,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     write_dict,

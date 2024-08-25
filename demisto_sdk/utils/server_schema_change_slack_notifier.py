@@ -7,8 +7,9 @@ import os
 from pprint import pformat
 from typing import Any, Dict, List, Tuple
 
-from loguru import logger
 from slack_sdk import WebClient
+
+from demisto_sdk.commands.common.loguru_logger import logger
 
 SCHEMA_UPDATE_CHANNEL = "dmst-schema-change"
 GITHUB_BASE_URL = "https://github.com/demisto/server/commit/"

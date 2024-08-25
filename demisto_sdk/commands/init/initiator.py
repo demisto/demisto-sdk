@@ -6,7 +6,6 @@ from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from loguru import logger
 from packaging.version import Version
 
 from demisto_sdk.commands.common import tools
@@ -58,6 +57,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     find_pack_folder,
     get_common_server_path,

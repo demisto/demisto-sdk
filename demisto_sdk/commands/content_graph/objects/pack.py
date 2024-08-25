@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, List, Optional, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
-from loguru import logger
 from packaging.version import Version, parse
 from pydantic import DirectoryPath, Field, validator
 
@@ -21,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     get_file,

@@ -1,12 +1,11 @@
 from typing import Optional, Tuple
 
-from loguru import logger
-
 from demisto_sdk.commands.common.hook_validations.readme import (
     ReadmeUrl,
     get_relative_urls,
     mdx_server_is_up,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,

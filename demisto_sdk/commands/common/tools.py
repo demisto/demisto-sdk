@@ -47,7 +47,6 @@ import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
 from google.cloud import secretmanager
-from loguru import logger
 from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
@@ -140,6 +139,7 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -3742,6 +3742,8 @@ def string_to_bool(
     input_: Any,
     default_when_empty: Optional[bool] = None,
 ) -> bool:
+    # This method is duplicated in loguru_logger (reason explained there).
+    # When changing this one, change the other as well.
     try:
         return STRING_TO_BOOL_MAP[str(input_).lower()]
     except (KeyError, TypeError):

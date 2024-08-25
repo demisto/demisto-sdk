@@ -8,7 +8,6 @@ from typing import Iterable, List, Optional, Tuple, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
-from loguru import logger
 from packaging.version import Version
 from tabulate import tabulate
 
@@ -21,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_demisto_version,

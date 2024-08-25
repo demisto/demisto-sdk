@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from inflection import dasherize, underscore
-from loguru import logger
 from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
     FoldedScalarString,
 )
@@ -28,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,

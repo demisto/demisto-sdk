@@ -5,7 +5,6 @@ from typing import Any, Dict, Iterator, List, Optional, Set
 
 import regex
 from git import InvalidGitRepositoryError
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -16,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
     get_json,

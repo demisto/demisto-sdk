@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Set
 from zipfile import ZipFile
 
-from loguru import logger
-
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.singleton import SingletonMeta
 from demisto_sdk.commands.content_graph.neo4j_service import get_neo4j_import_path
 

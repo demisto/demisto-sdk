@@ -7,10 +7,10 @@ from typing import Dict, Iterable, List, Optional
 
 import coverage
 import requests
-from loguru import logger
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.loguru_logger import logger
 
 EXCLUDED_LINES = [
     "pragma: no cover",

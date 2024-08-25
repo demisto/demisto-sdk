@@ -4,7 +4,6 @@ from shutil import rmtree
 from typing import Tuple
 
 import pytest
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content import Pack
@@ -31,6 +30,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     SecretIgnore,
     Widget,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"

@@ -3,11 +3,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
     sha1_dir,

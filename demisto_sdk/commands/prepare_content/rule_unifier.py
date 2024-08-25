@@ -2,13 +2,13 @@ import os
 from collections import defaultdict
 from pathlib import Path
 
-from loguru import logger
 from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
     FoldedScalarString,
 )
 
 from demisto_sdk.commands.common.constants import SAMPLES_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 

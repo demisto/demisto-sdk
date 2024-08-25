@@ -7,11 +7,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
-from loguru import logger
 from packaging.version import Version
 
 from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.content_graph.objects import Integration, Script
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (

@@ -3,11 +3,11 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 
 import coverage
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.coverage_analyze.helpers import (
     CoverageSummary,
     export_report,

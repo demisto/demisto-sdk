@@ -10,7 +10,6 @@ from typing import Callable, List, Optional, Set
 
 import docker
 import requests
-from loguru import logger
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
@@ -31,6 +30,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.MDXServer import (
     start_docker_MDX_server,

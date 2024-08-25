@@ -1,9 +1,9 @@
 from pathlib import Path
 
 from demisto_client.demisto_api.rest import ApiException
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs import generate_playbook_doc

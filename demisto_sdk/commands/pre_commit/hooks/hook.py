@@ -5,10 +5,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Set
 
-from loguru import logger
 from packaging.version import Version
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.pre_commit.hooks.utils import get_property
 from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
 

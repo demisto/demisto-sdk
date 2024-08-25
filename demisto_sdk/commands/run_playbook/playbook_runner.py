@@ -1,13 +1,13 @@
 import os
 
 from demisto_client.demisto_api.rest import ApiException
-from loguru import logger
 
 from demisto_sdk.commands.common.clients import get_client_from_server_type
 from demisto_sdk.commands.common.constants import (
     DEMISTO_BASE_URL,
     InvestigationPlaybookState,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 
 
 class PlaybookRunner:

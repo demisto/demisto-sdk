@@ -14,7 +14,6 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
-from loguru import logger
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
@@ -59,6 +58,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_current_repo,

@@ -14,13 +14,13 @@ from git.diff import Lit_change_type
 from git.exc import GitError
 from git.objects import Blob, Commit
 from git.remote import Remote
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
     PACKS_FOLDER,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 
 
 class CommitOrBranchNotFoundError(GitError):

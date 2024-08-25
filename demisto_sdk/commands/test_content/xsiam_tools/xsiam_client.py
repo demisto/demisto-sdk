@@ -8,13 +8,13 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
 import requests
-from loguru import logger
 from packaging.version import Version
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 from requests.exceptions import ConnectionError, Timeout
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 json = JSON_Handler()

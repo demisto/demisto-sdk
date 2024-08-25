@@ -6,7 +6,6 @@ from typing import Callable, Optional
 import docker
 import docker.errors
 import docker.models.containers
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import MDX_SERVER_DOCKER_IMAGE
 from demisto_sdk.commands.common.docker_helper import (
@@ -14,6 +13,7 @@ from demisto_sdk.commands.common.docker_helper import (
     init_global_docker_client,
 )
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.loguru_logger import logger
 
 EXPECTED_SUCCESS_MESSAGE = "MDX server is listening on port"
 

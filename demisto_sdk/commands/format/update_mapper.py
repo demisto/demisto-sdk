@@ -1,8 +1,7 @@
 from pathlib import Path
 from typing import List, Tuple
 
-from loguru import logger
-
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.content_graph.objects import Mapper
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem

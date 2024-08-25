@@ -3,7 +3,6 @@ import re
 from collections import OrderedDict
 from typing import Dict, Optional, Tuple
 
-from loguru import logger
 from packaging.version import Version
 
 import demisto_sdk.commands.common.constants as constants
@@ -14,6 +13,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     get_script_or_sub_playbook_tasks_from_playbook,
     get_yaml,

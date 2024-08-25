@@ -5,10 +5,9 @@ from pathlib import Path
 
 import coverage
 from junitparser import JUnitXml
-from loguru import logger
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.loguru_logger import logging_setup
+from demisto_sdk.commands.common.loguru_logger import logger, logging_setup
 
 PRECOMMIT_FOLDER = CONTENT_PATH / ".pre-commit"
 

@@ -12,7 +12,6 @@ import giturlparse
 
 # dirs
 import requests
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_CI_SERVER_HOST,
@@ -21,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.loguru_logger import logger
 
 
 class GitProvider(enum.Enum):

@@ -1,8 +1,6 @@
 import pprint
 from typing import List
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import (
     XPANSE_INLINE_PREFIX_TAG,
     XPANSE_INLINE_SUFFIX_TAG,
@@ -21,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SAAS_SUFFIX_TAG,
     XSOAR_SUFFIX_TAG,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 
 
 def print_template_examples():

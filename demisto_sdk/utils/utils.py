@@ -2,8 +2,6 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import Union
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import DEMISTO_SDK_CONFIG_FILE
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,
@@ -15,6 +13,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentUnifiedObject,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
 
 ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]

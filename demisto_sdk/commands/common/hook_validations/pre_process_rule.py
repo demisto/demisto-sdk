@@ -1,6 +1,5 @@
 from typing import List
 
-from loguru import logger
 from packaging.version import Version
 
 from demisto_sdk.commands.common.errors import Errors
@@ -8,6 +7,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 
 FROM_VERSION_PRE_PROCESS_RULES = "6.5.0"
 

@@ -1,8 +1,7 @@
 from typing import Any
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.loguru_logger import logger
 
 SEPARATOR = ":"
 

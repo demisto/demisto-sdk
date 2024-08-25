@@ -4,7 +4,8 @@ import sys
 
 import requests
 import urllib3
-from loguru import logger
+
+from demisto_sdk.commands.common.loguru_logger import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

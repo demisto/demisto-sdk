@@ -3,7 +3,6 @@ import uuid
 from typing import Tuple, Union
 
 from git import InvalidGitRepositoryError
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -11,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_yaml,

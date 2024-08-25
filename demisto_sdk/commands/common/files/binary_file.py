@@ -1,10 +1,9 @@
 from pathlib import Path
 from typing import Any, Union
 
-from loguru import logger
-
 from demisto_sdk.commands.common.files.errors import FileWriteError
 from demisto_sdk.commands.common.files.file import File
+from demisto_sdk.commands.common.loguru_logger import logger
 
 
 class BinaryFile(File):

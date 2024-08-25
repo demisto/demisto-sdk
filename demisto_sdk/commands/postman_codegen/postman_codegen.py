@@ -2,12 +2,11 @@ import re
 from collections import defaultdict
 from typing import Any, Dict, List, Union
 
-from loguru import logger
-
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import DemistoException
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorArg,
     IntegrationGeneratorCommand,

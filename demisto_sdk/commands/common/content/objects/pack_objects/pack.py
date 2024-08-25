@@ -2,7 +2,6 @@ import subprocess
 from typing import Any, Dict, Iterator, Optional, Union
 
 import regex
-from loguru import logger
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
@@ -88,6 +87,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     XSIAMReport,
 )
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import is_object_in_id_set
 
 

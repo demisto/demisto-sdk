@@ -2,12 +2,12 @@ import functools
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from loguru import logger
 from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_DOCKER_NAME
 from demisto_sdk.commands.common.content_constant_paths import NATIVE_IMAGE_PATH
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.singleton import PydanticSingleton
 from demisto_sdk.commands.common.tools import extract_docker_image_from_text
 

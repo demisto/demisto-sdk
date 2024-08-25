@@ -2,14 +2,13 @@ import shutil
 from pathlib import Path
 from typing import Optional, Union
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import (
     DEFAULT_JSON_INDENT,
     DEFAULT_YAML_INDENT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     write_dict,
 )

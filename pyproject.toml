@@ -184,6 +184,7 @@ select = [
 # "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger." TODO
 "json".msg = "use JSON_Handler instead"
 "json5".msg = "use JSON_Handler instead"
+"loguru".msg = "Use demisto_sdk.commands.common.loguru_logger"
 "orjson".msg = "use JSON_Handler instead"
 "packaging.version.LooseVersion".msg = "Use packaging.version.Version instead"
 "ruamel.yaml".msg = "use YAML_Handler instead"

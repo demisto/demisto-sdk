@@ -177,7 +177,7 @@ def test_comment_newly_added_changelog(
     Then:
         - Ensure that the log is commented out to the PR.
     """
-    from loguru import logger
+    from demisto_sdk.commands.common.loguru_logger import logger
 
     changelog_folder = Path(f"{git_repo.path}/.changelog")
     changelog_folder.mkdir()
@@ -214,7 +214,7 @@ def test_comment_modified_changelog(mocker, git_repo: Repo, changelog_mock: Chan
     Then:
         - Ensure that the log is commented out to the PR.
     """
-    from loguru import logger
+    from demisto_sdk.commands.common.loguru_logger import logger
 
     changelog_folder = Path(f"{git_repo.path}/.changelog")
     changelog_folder.mkdir()
@@ -257,7 +257,7 @@ def test_comment_unmodified_changelog(
     Then:
         - Ensure that the log is NOT commented out to the PR.
     """
-    from loguru import logger
+    from demisto_sdk.commands.common.loguru_logger import logger
 
     changelog_folder = Path(f"{git_repo.path}/.changelog")
     changelog_folder.mkdir()

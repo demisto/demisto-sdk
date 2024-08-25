@@ -6,7 +6,6 @@ from shutil import copyfile, copytree, rmtree
 from typing import List
 
 import pytest
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
@@ -15,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,

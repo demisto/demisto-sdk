@@ -12,7 +12,6 @@ import docker
 import requests
 import urllib3
 from docker.types import Mount
-from loguru import logger
 from packaging.version import InvalidVersion, Version
 from requests import JSONDecodeError
 from requests.exceptions import RequestException
@@ -29,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON3,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 DOCKER_CLIENT = None

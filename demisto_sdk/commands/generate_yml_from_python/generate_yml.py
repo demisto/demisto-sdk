@@ -12,8 +12,7 @@ from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 from unittest import mock
 
-from loguru import logger
-
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     CommandMetadata,

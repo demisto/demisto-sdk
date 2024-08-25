@@ -4,8 +4,6 @@ import re
 from pathlib import Path
 from typing import Callable, List
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
@@ -16,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     filter_packagify_changes,
     find_type,

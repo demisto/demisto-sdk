@@ -6,7 +6,6 @@ from typing import Callable, List, Optional, Set, Tuple
 
 import pebble
 from git import GitCommandError, InvalidGitRepositoryError
-from loguru import logger
 from packaging import version
 
 from demisto_sdk.commands.common import tools
@@ -147,6 +146,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     detect_file_level,

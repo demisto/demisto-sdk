@@ -16,7 +16,6 @@ import mergedeep
 from demisto_client.demisto_api.rest import ApiException
 from dictor import dictor
 from flatten_dict import unflatten
-from loguru import logger
 from tabulate import tabulate
 from urllib3 import HTTPResponse
 from urllib3.exceptions import MaxRetryError
@@ -35,6 +34,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_code_lang,

@@ -5,8 +5,8 @@ from subprocess import STDOUT, CalledProcessError, check_output
 from typing import Dict, Optional, Set
 
 import demisto_client
-from loguru import logger
 
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
 

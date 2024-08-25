@@ -5,12 +5,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import autopep8
-from loguru import logger
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import ParameterType
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT,
     BASE_BASIC_AUTH,

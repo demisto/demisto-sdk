@@ -3,8 +3,6 @@ import re
 from pathlib import Path
 from typing import Dict, Optional
 
-from loguru import logger
-
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
@@ -56,6 +54,7 @@ from demisto_sdk.commands.common.hook_validations.description import (
 )
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     compare_context_path_in_yml_and_readme,

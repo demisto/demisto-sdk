@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Union
 
-from loguru import logger
 from packaging.version import Version, parse
 from pydantic import BaseModel, Field
 
@@ -14,6 +13,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     LANDING_PAGE_SECTIONS_PATH,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
 from demisto_sdk.commands.content_graph.common import ContentType, PackTags
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem

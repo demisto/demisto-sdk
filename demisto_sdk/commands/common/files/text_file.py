@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, List, Optional, Union
 
 from bs4.dammit import UnicodeDammit
-from loguru import logger
 
 from demisto_sdk.commands.common.constants import PACKS_WHITELIST_FILE_NAME
 from demisto_sdk.commands.common.files.errors import (
@@ -11,6 +10,7 @@ from demisto_sdk.commands.common.files.errors import (
     FileWriteError,
 )
 from demisto_sdk.commands.common.files.file import File
+from demisto_sdk.commands.common.loguru_logger import logger
 
 
 class TextFile(File):

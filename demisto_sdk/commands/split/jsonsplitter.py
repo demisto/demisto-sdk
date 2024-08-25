@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
 
-from loguru import logger
-
 from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR,
     DEFAULT_JSON_INDENT,
@@ -15,6 +13,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_pack_name,

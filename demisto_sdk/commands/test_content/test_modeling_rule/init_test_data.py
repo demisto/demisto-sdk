@@ -4,13 +4,13 @@ from pathlib import Path
 from typing import List, Optional
 
 import typer
-from loguru import logger
 
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
 )
 from demisto_sdk.commands.common.loguru_logger import (
     handle_deprecated_args,
+    logger,
     logging_setup,
 )
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData

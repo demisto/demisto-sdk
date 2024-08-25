@@ -2,7 +2,6 @@ import os
 from functools import lru_cache
 from typing import Optional
 
-from loguru import logger
 from urllib3.exceptions import MaxRetryError
 
 from demisto_sdk.commands.common.clients.configs import (
@@ -30,6 +29,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_VERIFY_SSL,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.loguru_logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
 
 

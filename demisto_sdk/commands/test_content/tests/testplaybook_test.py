@@ -70,6 +70,8 @@ def test_set_prev_server_keys(mocker, tmp_path):
         }
     )
 
+    assert integration.configuration.raw_dict.get("params", {})["isFetch"] is False
+
     integration._set_server_keys(mocked_demisto_client)
     test_playbook.integrations = [integration]
 

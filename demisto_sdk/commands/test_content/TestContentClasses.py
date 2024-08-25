@@ -1563,6 +1563,7 @@ class IntegrationConfiguration:
             "has_integration", True
         )
         self.params: dict = integration_configuration.get("params", {})
+        self.params.update({"isFetch": False})
 
     def __str__(self):
         return json.dumps(self.raw_dict)

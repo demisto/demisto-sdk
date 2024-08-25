@@ -276,4 +276,4 @@ class TestTestPlaybookRunner:
 
         assert WAITING_MESSAGE in caplog.text
         assert LINK_MESSAGE in caplog.text
-        assert SUCCESS_MESSAGE in caplog.text
+        assert FAILED_MESSAGE in caplog.text

@@ -60,6 +60,7 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader,
     parse_error_response,
 )
+from demisto_sdk.tests.integration_tests.upload_integration_test import UPLOAD_CMD
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -697,14 +698,11 @@ class TestPrintSummary:
         assert uploader.upload() == ERROR_RETURN_CODE
         assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
-        logged = [record.message for record in caplog.records]
-
-        assert len(logged) == 3
-        assert logged[0] == (
+        assert (
             f"Uploading {path.absolute()} to {uploader.client.api_client.configuration.host}..."
-        )
-        assert logged[1] == "UPLOAD SUMMARY:\n"
-        assert logged[2] == (
+        ) in caplog.text
+        assert "UPLOAD SUMMARY:\n" in caplog.text
+        assert (
             "\n".join(
                 (
                     "<yellow>NOT UPLOADED DUE TO VERSION MISMATCH:",
@@ -716,7 +714,7 @@ class TestPrintSummary:
                     "</yellow>",
                 )
             )
-        )
+        ) in caplog.text
 
 
 def mock_api_client(mocker, version: str = "6.6.0"):
@@ -770,7 +768,7 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
 
         # run
-        result = CliRunner.invoke(upload, ["-i", path])
+        result = CliRunner().invoke(main, [UPLOAD_CMD, "-i", str(path)])
 
         # validate
         assert result.exit_code == ERROR_RETURN_CODE

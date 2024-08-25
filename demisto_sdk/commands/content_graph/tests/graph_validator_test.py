@@ -640,7 +640,7 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker, caplog):
 
     assert (
         "Cannot create a script with the name setAlert, "
-        "because a script with the name setIncident already exists.\n",
+        "because a script with the name setIncident already exists.\n"
     ) in caplog.text
 
     assert (
@@ -673,7 +673,7 @@ def test_are_marketplaces_relationships_paths_valid(repository: ContentDTO, capl
     assert (
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
         ", however it uses content items: 'SamplePlaybook2' which are not supported in"
-        " all of the marketplaces of 'SamplePlaybook'",
+        " all of the marketplaces of 'SamplePlaybook'"
     ) in caplog.text
 
 
@@ -743,10 +743,10 @@ def test_deprecated_usage__existing_content(repository: ContentDTO, caplog):
 
     assert is_valid
     assert (
-        "[GR107] - The Command 'deprecated-command' is deprecated but used in the following content item:",
+        "[GR107] - The Command 'deprecated-command' is deprecated but used in the following content item:"
     ) in caplog.text
     assert (
-        "[GR107] - The Integration 'DeprecatedIntegration' is deprecated but used in the following content item:",
+        "[GR107] - The Integration 'DeprecatedIntegration' is deprecated but used in the following content item:"
     ) in caplog.text
 
 
@@ -797,5 +797,5 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
 
     assert not is_valid
     assert (
-        "[GR108] - SamplePack pack(s) cannot have a mandatory dependency on the hidden pack SamplePack2",
+        "[GR108] - SamplePack pack(s) cannot have a mandatory dependency on the hidden pack SamplePack2"
     ) in caplog.text

@@ -2457,7 +2457,7 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker, caplog):
     ) == ("", "", False)
 
     assert (
-        "[BA102] - File Packs/type_missing_filename is not supported in the validate command",
+        "[BA102] - File Packs/type_missing_filename is not supported in the validate command"
     ) in caplog.text
 
 
@@ -2659,7 +2659,7 @@ def test_job_from_version(repo, mocker, caplog, is_feed: bool, version: Optional
             pack_error_ignore_list=list(),
         )
     assert (
-        f"fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})",
+        f"fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})"
     ) in caplog.text
 
 
@@ -2685,7 +2685,7 @@ def test_job_non_feed_with_selected_feeds(repo, caplog):
             pack_error_ignore_list=list(),
         )
     assert (
-        "Job objects cannot have non-empty selectedFeeds when isFeed is set to false",
+        "Job objects cannot have non-empty selectedFeeds when isFeed is set to false"
     ) in caplog.text
 
 
@@ -2712,7 +2712,7 @@ def test_job_both_selected_and_all_feeds_in_job(repo, caplog):
             pack_error_ignore_list=list(),
         )
     assert (
-        "Job cannot have non-empty selectedFeeds values when isAllFields is set to true",
+        "Job cannot have non-empty selectedFeeds values when isAllFields is set to true"
     ) in caplog.text
 
 
@@ -2806,7 +2806,7 @@ def test_job_unexpected_field_values_in_non_feed_job(
             pack_error_ignore_list=list(),
         )
     assert (
-        "Job must either have non-empty selectedFeeds OR have isAllFields set to true when isFeed is set to true",
+        "Job must either have non-empty selectedFeeds OR have isAllFields set to true when isFeed is set to true"
     ) in caplog.text
 
 

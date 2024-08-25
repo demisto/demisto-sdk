@@ -244,7 +244,7 @@ class DocReviewer:
                 logger.info(f"<red>  - {word}{correction_text}</red>")
         logger.info(
             "<yellow>If these are not misspelled consider adding them to a known_words file:\n"
-            "  Pack related words: content/Packs/<PackName>/.pack-ignore under the [known_words] section.\n"
+            "  Pack related words: content/Packs/\\<PackName>/.pack-ignore under the [known_words] section.\n"
             "  Not pack specific words: content/Tests/known_words.txt\n"
             "To test locally add --use-packs-known-words or --known-words flags.</yellow>"
         )

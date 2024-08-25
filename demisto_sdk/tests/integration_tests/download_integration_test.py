@@ -43,7 +43,7 @@ def demisto_client(mocker):
     )
 
 
-def test_integration_download_no_force(demisto_client, tmp_path, caplog):
+def test_integration_download_no_force(demisto_client, tmp_path):
     """
     Given
     - playbook & script exist in the output pack path.
@@ -63,8 +63,8 @@ def test_integration_download_no_force(demisto_client, tmp_path, caplog):
         main,
         ["download", "-o", pack_path, "-i", "TestScript", "-i", "DummyPlaybook"],
     )
-    assert "Filtering process completed, 2/13 items remain." in caplog.text
-    assert "Skipped downloads: 2" in caplog.text
+    assert "Filtering process completed, 2/13 items remain." in result.output
+    assert "Skipped downloads: 2" in result.output
     assert result.exit_code == 0
 
 

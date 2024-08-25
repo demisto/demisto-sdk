@@ -603,7 +603,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     assert invalid_py != integration.code.read()
 
 
-def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
+def test_format_on_invalid_py_long_dict(mocker, repo, monkeypatch):
     """
     Given
     - Invalid python file - long dict.
@@ -626,8 +626,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
     )
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             main,
             [
                 FORMAT_CMD,
@@ -643,7 +642,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
 
     assert all(
         [
-            current_str in caplog.text
+            current_str in result.output
             for current_str in [
                 "======= Updating file",
                 "Success",
@@ -1067,7 +1066,7 @@ def test_format_playbook_no_input_specified(mocker, repo, monkeypatch):
     assert playbook.yml.read_dict().get("name") == playbook_name
 
 
-def test_format_incident_type_layout_id(repo, mocker, caplog):
+def test_format_incident_type_layout_id(repo, mocker):
     """
     Given:
         - Content pack with incident type and layout
@@ -1124,7 +1123,7 @@ def test_format_incident_type_layout_id(repo, mocker, caplog):
     assert format_result.exit_code == 0
     assert all(
         [
-            current_str in caplog.text
+            current_str in format_result.output
             for current_str in [
                 "Success",
                 f"======= Updating file {pack.path}",

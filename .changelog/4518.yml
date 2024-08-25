@@ -1,0 +1,4 @@
+changes:
+- description: Test Play books will now be configured with isFetch False as default.
+  type: internal
+pr_number: 4518

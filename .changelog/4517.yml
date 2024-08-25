@@ -1,4 +1,4 @@
 changes:
-- description: enter description about this PR
-  type: <breaking|feature|fix|internal>
+- description: Fixed an issue where DS107 validation (validate that description doesn't contain demisto word) failed on Demisto Bot word.
+  type: fix
 pr_number: 4517

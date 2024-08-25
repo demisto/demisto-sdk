@@ -1351,13 +1351,13 @@ def test_unify_partner_contributed_pack(mocker, caplog, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Created unified yml:" in caplog.text
+    assert "Created unified yml:" in result.output
 
     # Verifying the unified file data
     assert PARTNER_UNIFY["display"] == PARTNER_DISPLAY_NAME
@@ -1401,13 +1401,13 @@ def test_unify_partner_contributed_pack_no_email(mocker, caplog, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
+        result = runner.invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Created unified yml:" in caplog.text
+    assert "Created unified yml:" in result.output
 
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
@@ -1501,13 +1501,13 @@ def test_unify_partner_contributed_pack_no_url(mocker, caplog, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        CliRunner(mix_stderr=False).invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Created unified yml:" in caplog.text
+    assert "Created unified yml:" in result.output
 
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
@@ -1594,13 +1594,13 @@ def test_unify_community_contributed(mocker, caplog, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        CliRunner(mix_stderr=False).invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Created unified yml:" in caplog.text
+    assert "Created unified yml:" in result.output
 
     # Verifying the unified file data
     assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME

@@ -44,9 +44,9 @@ class IsDescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
                     ignore_case=True,
                     text=content_item.description_file.file_content,
                     exceptionally_allowed_substrings=[
-                        "/demisto/",
+                        "/demisto/",  # in URL
                         "Demisto Bot",
-                    ],  # in URL
+                    ],  
                 )
             )
         ]

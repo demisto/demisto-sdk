@@ -119,6 +119,7 @@ def logging_setup(
 
     logger = loguru.logger
     setup_logger_colors(logger)
+    logger.info(f'{console_log_threshold=},{file_log_threshold=},{log_file_path=},{initial=}') # TODO remove
     logger.warning("logging_setup called", color="blue")  # TODO remove
     logger.remove()  # Removes all pre-existing handlers
 

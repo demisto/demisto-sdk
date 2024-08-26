@@ -50,22 +50,25 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes]):
     error_code = "GR103"
     description = "Validates that there is no usage of unknown content items"
     rationale = "Content items should only use other content items that exist in the repository."
-    error_message = "Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
+    error_message = "Content item '{0}' using content items: '{1}' which cannot be found in the repository."
     related_field = ""
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
 
     def obtain_invalid_content_items_using_graph(self, content_items: Iterable[ContentTypes], validate_all_files: bool) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message,
-                content_object=content_item,
-            )
-            for content_item in content_items
-            if (
-                # Add your validation right here
-            )
-        ]
+        results: List[ValidationResult] = []
+        for content_item in content_items:
+            file_path_to_validate =[content_item.path] if not validate_all_files else []
+            uses_unknown_content = self.graph.get_unknown_content_uses(file_path = file_path_to_validate,raises_error=True, include_optional=True)
+        if uses_unknown_content:
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(content_item.name, ", ".join(uses_unknown_content)),
+                        content_object=content_item,
+                    )
+                )
+
+        return results
 

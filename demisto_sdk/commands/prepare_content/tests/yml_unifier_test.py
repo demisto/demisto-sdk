@@ -1315,7 +1315,7 @@ PARTNER_DETAILEDDESCRIPTION_NO_URL = (
 )
 
 
-def test_unify_partner_contributed_pack(mocker, caplog, repo):
+def test_unify_partner_contributed_pack(mocker, repo):
     """
     Given
         - Partner contributed pack with email and url in the support details.
@@ -1372,7 +1372,7 @@ def test_unify_partner_contributed_pack(mocker, caplog, repo):
     assert "URL" in PARTNER_UNIFY["detaileddescription"]
 
 
-def test_unify_partner_contributed_pack_no_email(mocker, caplog, repo):
+def test_unify_partner_contributed_pack_no_email(mocker, repo):
     """
     Given
         - Partner contributed pack with url and without email in the support details.
@@ -1479,7 +1479,7 @@ def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
     )
 
 
-def test_unify_partner_contributed_pack_no_url(mocker, caplog, repo):
+def test_unify_partner_contributed_pack_no_url(mocker, repo):
     """
     Given
         - Partner contributed pack with email and without url in the support details
@@ -1588,7 +1588,7 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
     assert "partner" not in XSOAR_UNIFY["detaileddescription"]
 
 
-def test_unify_community_contributed(mocker, caplog, repo):
+def test_unify_community_contributed(mocker, repo):
     """
     Given
         - Community contribution.

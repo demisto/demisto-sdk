@@ -46,7 +46,7 @@ class TestTestPlaybookRunner:
             return_value={"state": tpb_result},
         )
         result = CliRunner(mix_stderr=False).invoke(
-            run_test_playbook, ["-tbp", TEST_PLAYBOOK]
+            run_test_playbook, ["-tpb", TEST_PLAYBOOK, "-t", "90"]
         )
         assert result.exit_code == res
 
@@ -80,7 +80,7 @@ class TestTestPlaybookRunner:
             return_value={"state": tpb_result},
         )
         result = CliRunner(mix_stderr=False).invoke(
-            run_test_playbook, ["-tbp", VALID_PACK]
+            run_test_playbook, ["-tpb", VALID_PACK, "-t", "90"]
         )
         assert result.exit_code == res
         assert result.output.count(message) == 2
@@ -114,7 +114,7 @@ class TestTestPlaybookRunner:
                 return_value={"state": tpb_result},
             )
             result = CliRunner(mix_stderr=False).invoke(
-                run_test_playbook, ["--all", "-tbp", ""]
+                run_test_playbook, ["--all", "-tpb", "", "-t", "90"]
             )
             assert result.exit_code == res
             assert result.output.count(message) == 6

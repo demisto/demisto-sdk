@@ -99,7 +99,9 @@ def test_specific_pack_creation(mocker, repo, tmp_path):
         with TemporaryDirectory() as dir:
             mocker.patch.object(os, "getenv", return_value=dir)
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [ARTIFACTS_CMD, "-a", str(tmp_path), "-p", "Pack1"])
+            result = runner.invoke(
+                main, [ARTIFACTS_CMD, "-a", str(tmp_path), "-p", "Pack1"]
+            )
 
             assert result.exit_code == 0, result.stderr
             assert Path.exists(tmp_path / "uploadable_packs" / "Pack1.zip")

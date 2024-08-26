@@ -446,15 +446,9 @@ def test_report_summary_with_warnings(caplog):
     lint_manager.LintManager.report_summary(
         pkg=pkg, pkgs_status=pkgs_status, lint_status=lint_status
     )
-    assert all(
-        [
-            s in caplog.text
-            for s in (
-                "Packages PASS: " "Packages WARNING (can either PASS or FAIL): ",
-                "Packages FAIL: ",
-            )
-        ],
-    )
+    assert "Packages PASS: " in caplog.text
+    assert "Packages WARNING (can either PASS or FAIL): " in caplog.text
+    assert "Packages FAIL: " in caplog.text
 
 
 def test_report_summary_no_warnings(caplog):

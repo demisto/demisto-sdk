@@ -60,7 +60,6 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader,
     parse_error_response,
 )
-from demisto_sdk.tests.integration_tests.upload_integration_test import UPLOAD_CMD
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -768,7 +767,7 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
 
         # run
-        result = CliRunner().invoke(main, [UPLOAD_CMD, "-i", str(path)])
+        result = CliRunner().invoke(main, ["upload", "-i", str(path)])
 
         # validate
         assert result.exit_code == ERROR_RETURN_CODE

@@ -227,7 +227,7 @@ class TestPackUniqueFilesValidator:
         ],
     )
     def test_validate_partner_pack_metadata_url(
-        self, mocker, monkeypatch, repo, url, is_valid, caplog
+        self, mocker, monkeypatch, repo, url, is_valid
     ):
         """
         Given
@@ -239,7 +239,6 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate finds errors accordingly.
         """
-        caplog.set_level("ERROR")
         pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
         pack_metadata_changed_url["url"] = url
         mocker.patch.object(tools, "is_external_repository", return_value=True)

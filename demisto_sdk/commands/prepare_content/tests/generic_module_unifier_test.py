@@ -120,7 +120,7 @@ def test_merge_generic_module_with_its_dashboards_negative(repo, caplog):
         non_unified_generic_module = unifier.merge_generic_module_with_its_dashboards()
         assert non_unified_generic_module == GENERIC_MODULE
         assert (
-            f"Dashboard {generic_module_dash_id} was not found in pack: PackName and therefore was not unified",
+            f"Dashboard {generic_module_dash_id} was not found in pack: PackName and therefore was not unified"
         ) in caplog.text
 
 

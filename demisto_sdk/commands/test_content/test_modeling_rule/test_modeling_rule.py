@@ -1,4 +1,4 @@
-import logging
+import logging  # noqa: TID251 # specific case, passed as argument to 3rd party
 import os
 from datetime import datetime
 from pathlib import Path

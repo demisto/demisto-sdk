@@ -21,6 +21,7 @@ inputs:
 runs:
   using: 'composite'
   steps:
+
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v9
 

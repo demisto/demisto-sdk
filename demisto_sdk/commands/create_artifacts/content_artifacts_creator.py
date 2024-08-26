@@ -1230,7 +1230,7 @@ def handle_metadata(
         if artifact_manager.id_set_path and not artifact_manager.filter_by_id_set:
             # Dependencies can only be done when id_set file is given.
             pack.metadata.handle_dependencies(
-                pack.path.name, artifact_manager.id_set_path, logger
+                pack.path.name, artifact_manager.id_set_path
             )
         else:
             logger.warning(

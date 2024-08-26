@@ -108,7 +108,6 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
-    STRING_TO_BOOL_MAP,
     TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
@@ -140,6 +139,11 @@ from demisto_sdk.commands.common.handlers import (
     YAML_Handler,
 )
 from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.string_to_bool import (
+    # all files, except for the logger setup, import from tools, so we import it here (makes more sense than having all other files import from string_to_bool.py)
+    # See the comment in string_to_bool's implementation
+    string_to_bool,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -3733,21 +3737,6 @@ def normalize_field_name(field: str) -> str:
         field (str): the incident/indicator field.
     """
     return field.replace("incident_", "").replace("indicator_", "")
-
-
-def string_to_bool(
-    input_: Any,
-    default_when_empty: Optional[bool] = None,
-) -> bool:
-    # This method is duplicated in loguru_logger (reason explained there).
-    # When changing this one, change the other as well.
-    try:
-        return STRING_TO_BOOL_MAP[str(input_).lower()]
-    except (KeyError, TypeError):
-        if input_ in ("", None) and default_when_empty is not None:
-            return default_when_empty
-
-    raise ValueError(f"cannot convert {input_} to bool")
 
 
 def field_to_cli_name(field_name: str) -> str:

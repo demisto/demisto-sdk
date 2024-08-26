@@ -2,7 +2,7 @@ import os
 import platform
 import sys
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+from typing import Iterable, Optional, Union
 
 import loguru  # noqa: TID251 # This is the only place where we allow it
 
@@ -14,35 +14,18 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOGGING_SET,
     LOG_FILE_NAME,
     LOGS_DIR,
-    STRING_TO_BOOL_MAP,
 )
-
-
-def string_to_bool(
-    input_: Any,
-    default_when_empty: Optional[bool] = None,
-) -> bool:
-    """Implemented here although duplicates the one under `tools`, to avoid circular imports
-    Other (rejected) options to solve this were
-        1) import logger in many `tools` methods (redundant logging)
-        2) move string_to_bool out of tools (inconsistent)
-    """
-    try:
-        return STRING_TO_BOOL_MAP[str(input_).lower()]
-    except (KeyError, TypeError):
-        if input_ in ("", None) and default_when_empty is not None:
-            return default_when_empty
-
-    raise ValueError(f"cannot convert {input_} to bool")
-
+from demisto_sdk.commands.common.string_to_bool import (
+    # See the comment in string_to_bool's implementation
+    string_to_bool,
+)
 
 global logger
 logger = loguru.logger  # all SDK modules should import from this file, not from loguru
 
 
 def setup_neo4j_logger():
-    # TODO use
-    import logging
+    import logging  # noqa: TID251 # special case, to control the neo4j logging
 
     neo4j_log = logging.getLogger("neo4j")
     neo4j_log.setLevel(logging.CRITICAL)
@@ -71,9 +54,7 @@ def calculate_rentation() -> int:
     return 10
 
 
-def calculate_log_dir(
-    path_input: Optional[Union[Path, str]], logger: "loguru.Logger"
-) -> Path:  # TODO use file name?
+def calculate_log_dir(path_input: Optional[Union[Path, str]], logger: "loguru.Logger"):
     if raw_path := path_input or os.getenv(DEMISTO_SDK_LOG_FILE_PATH):
         path = Path(raw_path).resolve()
         if path.exists():
@@ -115,8 +96,9 @@ def logging_setup(
     The initial set up is required since we have code (e.g. get_content_path) that runs in __main__ before the typer/click commands set up the logger.
     In the initial set up there is NO file logging (only console)
     """
-    global logger
+    setup_neo4j_logger()
 
+    global logger
     logger = loguru.logger
     setup_logger_colors(logger)
     logger.info(
@@ -175,6 +157,4 @@ def handle_deprecated_args(input_args: Iterable[str], logger: "loguru.Logger"):
     for current_arg in sorted(
         set(input_args).intersection(DEPRECATED_PARAMETERS.keys())
     ):
-        logger.error(
-            f"<red>Argument {current_arg} is deprecated. Please use {DEPRECATED_PARAMETERS[current_arg]} instead.</red>"
-        )
+        logger.error()

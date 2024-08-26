@@ -1,4 +1,3 @@
-import logging
 import os
 from datetime import datetime
 from typing import Dict, List, Union
@@ -590,15 +589,12 @@ class PackMetaData(JSONObject):
         except Exception:
             logger.error(f"Failed loading {pack_name} user metadata.")
 
-    def handle_dependencies(
-        self, pack_name: str, id_set_path: str, logger: logging.Logger
-    ) -> None:
+    def handle_dependencies(self, pack_name: str, id_set_path: str) -> None:
         """Updates pack's dependencies using the find_dependencies command.
 
         Args:
             pack_name (str): The pack's name.
             id_set_path (str): the id_set file path.
-            logger (logging.Logger): System logger already initialized.
         """
         calculated_dependencies = PackDependencies.find_dependencies(
             pack_name,

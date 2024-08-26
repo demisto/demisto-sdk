@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 import tempfile
@@ -3863,8 +3862,6 @@ def test_merged_id_sets_with_duplicates(caplog):
     - ensure duplicate ScriptFoo found
 
     """
-    caplog.set_level(logging.DEBUG)
-
     first_id_set = {
         "playbooks": [
             {
@@ -3926,8 +3923,6 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
     - ensure duplicate playbook_foo1 found
 
     """
-    caplog.set_level(logging.DEBUG)
-
     first_id_set = {
         "playbooks": [
             {

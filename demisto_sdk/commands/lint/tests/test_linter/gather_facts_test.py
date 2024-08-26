@@ -632,11 +632,11 @@ class TestDockerImagesCollection:
         assert (
             f"Skipping checks on docker for '{docker_image_flag}' - The requested native image:"
             f" '{docker_image_flag}' is not supported. For supported native image versions please see:"
-            f" 'Tests/docker_native_image_config.json'",
+            f" 'Tests/docker_native_image_config.json'"
         ) in caplog.text
         assert (
             f"{integration_name} - Facts - No docker images to run on - "
-            f"Skipping run lint in host as well.",
+            f"Skipping run lint in host as well."
         ) in caplog.text
 
 

@@ -41,7 +41,9 @@ def upload_content_entity(**kwargs):
     if config_file_path := kwargs.pop("input_config_file", None):
         logger.info("Uploading files from config file")
         if input_ := kwargs.get("input"):
-            logger.warning(f"<orange>The input ({input_}) will NOT be used</orange>")
+            logger.warning(
+                f"<fg ##FFA500>The input ({input_}) will NOT be used</fg ##FFA500>"
+            )
 
         paths = ConfigFileParser(Path(config_file_path)).custom_packs_paths
 

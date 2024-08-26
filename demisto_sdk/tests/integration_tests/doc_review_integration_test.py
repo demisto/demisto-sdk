@@ -324,4 +324,4 @@ def test_templates_print(repo, mocker, monkeypatch):
             main, [DOC_REVIEW, "--templates"], catch_exceptions=False
         )
         assert "General Pointers About Release Notes:" in result.output
-        assert "Checking spelling on" in result.output
+        assert "Checking spelling on" not in result.output

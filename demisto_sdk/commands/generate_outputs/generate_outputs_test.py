@@ -13,7 +13,7 @@ import demisto_sdk.__main__ as main
     ],
 )
 def test_generate_outputs_json_to_outputs_flow(
-    mocker, monkeypatch, args, expected_stdout, caplog
+    mocker, monkeypatch, args, expected_stdout
 ):
     """
     Given
@@ -25,8 +25,6 @@ def test_generate_outputs_json_to_outputs_flow(
     Then
         - Ensure that the outputs are valid
     """
-    caplog.set_level("ERROR")
-
     import demisto_sdk.commands.generate_outputs.generate_outputs as go
 
     mocker.patch.object(go, "json_to_outputs", return_value="None")
@@ -46,7 +44,7 @@ def test_generate_outputs_json_to_outputs_flow(
     ],
 )
 def test_generate_outputs_generate_integration_context_flow(
-    mocker, caplog, args, expected_stdout, expected_exit_code
+    mocker, args, expected_stdout, expected_exit_code
 ):
     """
     Given
@@ -67,4 +65,4 @@ def test_generate_outputs_generate_integration_context_flow(
     result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
     assert result.exit_code == expected_exit_code
     if expected_exit_code == 0:
-        assert expected_stdout in caplog.text
+        assert expected_stdout in result.output

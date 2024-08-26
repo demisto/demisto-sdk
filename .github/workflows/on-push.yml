@@ -93,6 +93,8 @@ jobs:
           artifacts-dir: unit-tests
 
       - name: Run Unit Tests
+        env:
+          DEMISTO_SDK_LOG_NO_COLORS: "true"
         timeout-minutes: 60
         run: |
           source "$(poetry env info --path)/bin/activate"
@@ -138,6 +140,8 @@ jobs:
           artifacts-dir: integration-tests
 
       - name: Run Integration Tests
+        env:
+          DEMISTO_SDK_LOG_NO_COLORS: "true"
         timeout-minutes: 60
         run: |
           source "$(poetry env info --path)/bin/activate"
@@ -177,6 +181,8 @@ jobs:
           artifacts-dir: graph-tests
 
       - name: Run Graph Tests
+        env:
+          DEMISTO_SDK_LOG_NO_COLORS: "true"
         timeout-minutes: 60
         run: |
           source "$(poetry env info --path)/bin/activate"
@@ -300,6 +306,8 @@ jobs:
   test-validate-content-path:
     runs-on: ubuntu-latest
     name: Test validate-content-path
+    env:
+      DEMISTO_SDK_LOG_NO_COLORS: "true"
     steps:
       - name: Checkout SDK
         uses: actions/checkout@v4
@@ -354,6 +362,8 @@ jobs:
           path: content
 
       - name: Run Graph
+        env:
+          DEMISTO_SDK_LOG_NO_COLORS: "true"
         timeout-minutes: 60
         run: |
           source $(poetry env info --path)/bin/activate
@@ -382,6 +392,8 @@ jobs:
     timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
+      DEMISTO_SDK_LOG_NO_COLORS: "true"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -399,6 +411,8 @@ jobs:
     timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
+      DEMISTO_SDK_LOG_NO_COLORS: "true"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

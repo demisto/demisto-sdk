@@ -352,9 +352,7 @@ def test_format_mapper_with_graph_remove_unknown_content(
     )
 
 
-def test_format_layout_with_graph_remove_unknown_content(
-    mocker, caplog, repository, repo
-):
+def test_format_layout_with_graph_remove_unknown_content(mocker, repository, repo):
     """
     Given
     - A layout.
@@ -383,14 +381,13 @@ def test_format_layout_with_graph_remove_unknown_content(
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"]
         )
-    message = (
+    assert result.exit_code == 0
+    assert not result.exception
+    assert (
         "Removing the fields {'Unknown Incident Field'}"
         + f" from the layout {layout_path} "
         f"because they aren't in the content repo."
-    )
-    assert result.exit_code == 0
-    assert not result.exception
-    assert message in caplog.text
+    ) in result.output
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.

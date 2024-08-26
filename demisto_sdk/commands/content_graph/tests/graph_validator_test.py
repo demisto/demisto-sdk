@@ -645,13 +645,13 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker, caplog):
 
     assert (
         "Cannot create a script with the name getAlert, "
-        "because a script with the name getIncident already exists.\n",
+        "because a script with the name getIncident already exists.\n"
     ) not in caplog.text
 
     # Ensure that the script-name-incident-to-alert ignore is working
     assert (
         "Cannot create a script with the name getAlerts, "
-        "because a script with the name getIncidents already exists.\n",
+        "because a script with the name getIncidents already exists.\n"
     ) not in caplog.text
 
 
@@ -714,7 +714,7 @@ def test_validate_duplicate_id(repository: ContentDTO, caplog):
         is_valid = graph_validator.validate_duplicate_ids()
 
     assert not is_valid
-    assert ("[GR105] - The ID 'SamplePlaybook' already exists in",) in caplog.text
+    assert "[GR105] - The ID 'SamplePlaybook' already exists in" in caplog.text
 
 
 def test_pack_ids_collection():

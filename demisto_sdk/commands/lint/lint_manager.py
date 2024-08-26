@@ -892,12 +892,12 @@ class LintManager:
             for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
                 if EXIT_CODES[check] & return_warning_code:
                     sentence = f" {check.capitalize()} warnings "
-                    logger.info(f"\n<fg ##FFA500>{'#' * len(sentence)}</fg ##FFA500>")
-                    logger.info(f"<fg ##FFA500>{sentence}</fg ##FFA500>")
-                    logger.info(f"<fg ##FFA500>{'#' * len(sentence)}</fg ##FFA500>\n")
+                    logger.info(f"\n<fg #FFA500>{'#' * len(sentence)}</fg #FFA500>")
+                    logger.info(f"<fg #FFA500>{sentence}</fg #FFA500>")
+                    logger.info(f"<fg #FFA500>{'#' * len(sentence)}</fg #FFA500>\n")
                     for fail_pack in lint_status[f"warning_packs_{check}"]:
                         logger.info(
-                            f"<fg ##FFA500>{pkgs_status[fail_pack]['pkg']}</fg ##FFA500>"
+                            f"<fg #FFA500>{pkgs_status[fail_pack]['pkg']}</fg #FFA500>"
                         )
                         logger.info(pkgs_status[fail_pack][f"{check}_warnings"])
                         self.linters_error_list.append(
@@ -1159,7 +1159,7 @@ class LintManager:
         logger.info(f"Packages PASS: <green>{num_passed}</green>")
         logger.info(f"Packages FAIL: <red>{len(failed)}</red>")
         logger.info(
-            f"Packages WARNING (can either PASS or FAIL): <fg ##FFA500>{len(warnings)}</fg ##FFA500>\n"
+            f"Packages WARNING (can either PASS or FAIL): <fg #FFA500>{len(warnings)}</fg #FFA500>\n"
         )
 
         if not all_packs:
@@ -1167,7 +1167,7 @@ class LintManager:
                 logger.info("Warning packages:")
             for warning in warnings:
                 logger.info(
-                    f"<fg ##FFA500>{wrapper_fail_pack.fill(warning)}</fg ##FFA500>"
+                    f"<fg #FFA500>{wrapper_fail_pack.fill(warning)}</fg #FFA500>"
                 )
 
         if failed:

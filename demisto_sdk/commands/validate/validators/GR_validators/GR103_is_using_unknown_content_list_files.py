@@ -33,9 +33,9 @@ from demisto_sdk.commands.content_graph.objects.generic_module import GenericMod
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.content_graph.objects.case_field
-from demisto_sdk.commands.content_graph.objects.case_layout
-from demisto_sdk.commands.content_graph.objects.case_layout_rule
+from demisto_sdk.commands.content_graph.objects.case_field import CaseField
+from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
+from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 
 from demisto_sdk.commands.validate.validators.base_validator import (
         BaseValidator,
@@ -52,4 +52,3 @@ class IsUsingUnknownContentValidatorListFiles(IsUsingUnknownContentValidator, Ba
 
     def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return self.obtain_invalid_content_items_using_graph(content_items, False)
-        

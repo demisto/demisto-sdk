@@ -273,7 +273,6 @@ class TestTheTestModelingRuleCommandSingleRule:
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
-        runner = CliRunner()
         mocker.patch(
             "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
             return_value=None,
@@ -307,7 +306,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                     status_code=500,
                 )
                 # Act
-                result = runner.invoke(
+                result = CliRunner().invoke(
                     test_modeling_rule_cmd,
                     [
                         modeling_rule_directory.as_posix(),

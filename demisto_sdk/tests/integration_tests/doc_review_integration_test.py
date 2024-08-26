@@ -153,7 +153,7 @@ def test_spell_playbook_invalid(repo, mocker, monkeypatch):
         result = runner.invoke(
             main, [DOC_REVIEW, "-i", playbook.yml.path], catch_exceptions=False
         )
-        assert not "No misspelled words found " not in result.output
+        assert "No misspelled words found " not in result.output
         assert all(
             [
                 current_str in result.output

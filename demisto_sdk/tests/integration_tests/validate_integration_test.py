@@ -5204,7 +5204,7 @@ class TestAuthorImageValidation:
 
 
 class TestAllFilesValidator:
-    def test_all_files_valid(self, mocker, repo, caplog):
+    def test_all_files_valid(self, mocker, repo):
         """
         Given
         - A valid repo.
@@ -5265,7 +5265,7 @@ class TestAllFilesValidator:
 
         assert all(
             [
-                current_str in caplog.text
+                current_str in result.output
                 for current_str in [
                     "Validating all files",
                     "Validating Packs/PackName1 unique pack files",
@@ -5366,7 +5366,7 @@ class TestAllFilesValidator:
 
 
 class TestValidationUsingGit:
-    def test_passing_validation_using_git(self, mocker, repo, caplog):
+    def test_passing_validation_using_git(self, mocker, repo):
         """
         Given
         - A valid repo.
@@ -5449,7 +5449,7 @@ class TestValidationUsingGit:
             )
         assert all(
             [
-                current_str in caplog.text
+                current_str in result.output
                 for current_str in [
                     "Running validation on branch",
                     "Running validation on modified files",

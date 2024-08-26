@@ -124,12 +124,11 @@ def test_integration_secrets_integration_positive(mocker, repo):
         return_value=[integration.code.rel_path],
     )
     with ChangeCWD(integration.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             main, [SECRETS_CMD, "-wl", repo.secrets.path], catch_exceptions=False
         )
-    assert 0 == result.exit_code
-    assert ("no secrets were found",) in result.output
+    assert result.exit_code == 0
+    assert "no secrets were found" in result.output
 
 
 def test_integration_secrets_integration_global_whitelist_positive_using_git(

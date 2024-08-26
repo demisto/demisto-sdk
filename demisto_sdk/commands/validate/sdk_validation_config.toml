@@ -219,8 +219,8 @@ select = [
   "MR101",
   "MR106",
   "MR107",
-  "RN114",
-  "MR108"
+  "MR108",
+  "ST110"
 ]
 warning = [
   "IN101",
@@ -452,6 +452,9 @@ select = [
   "MR107",
   "MR108",
   "ST110",
-  "RN108"
+  "RN103",
+  "RN105",
+  "RN108",
+  "RN114"
 ]
-warning = ["RN103"]
+warning = []

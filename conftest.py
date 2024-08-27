@@ -10,8 +10,8 @@ import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
-from demisto_sdk.commands.common.constants import DEMISTO_SDK_LOG_NO_COLORS
 import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.common.constants import DEMISTO_SDK_LOG_NO_COLORS
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased

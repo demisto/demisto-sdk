@@ -1269,7 +1269,10 @@ class TestFormatting:
         }
         BaseUpdate.recursive_extend_schema(schema, schema)
         assert len(caplog.records) == 1
-        assert caplog.records[0].message == "Could not find sub-schema for input_schema"
+        assert (
+            caplog.records[0].message
+            == "<yellow>Could not find sub-schema for input_schema</yellow>"
+        )
 
     @staticmethod
     def exception_raise(default_from_version: str = "", file_type: str = ""):

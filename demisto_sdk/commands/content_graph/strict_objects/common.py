@@ -67,6 +67,7 @@ class BaseStrictModel(BaseModel, ABC):
             "manual_mapping",  # indicator_type
             "file_hashes_priority",  # indicator_type
             "legacy_names",  # indicator_type
+            "default_template_id", # xsiam-report
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"

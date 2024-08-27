@@ -23,9 +23,10 @@ FAILED_MESSAGE = "The test playbook finished running with status: FAILED"
 
 class TestTestPlaybookRunner:
     @pytest.mark.parametrize(
-        argnames="tpb_result, expected_result", argvalues=[("failed", 1), ("success", 0)]
+        argnames="tpb_result, expected_result",
+        argvalues=[("failed", 1), ("success", 0)],
     )
-    def test_run_specific_test_playbook(self, mocker, tpb_result, expected_result:int):
+    def test_run_specific_test_playbook(self, mocker, tpb_result, expected_result: int):
         """
         Given:
             - run specific test playbook with result as True or False
@@ -46,9 +47,12 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        assert click.Context(command=run_test_playbook).invoke(
-            run_test_playbook, test_playbook_path=TEST_PLAYBOOK
-        )==  expected_result
+        assert (
+            click.Context(command=run_test_playbook).invoke(
+                run_test_playbook, test_playbook_path=TEST_PLAYBOOK
+            )
+            == expected_result
+        )
 
     @pytest.mark.parametrize(
         argnames="tpb_result, res, message",

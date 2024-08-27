@@ -54,7 +54,7 @@ def calculate_rentation() -> int:
     return 10
 
 
-def calculate_log_dir(path_input: Optional[Union[Path, str]], logger: "loguru.Logger"):
+def calculate_log_dir(path_input: Optional[Union[Path, str]]) -> Path:
     if raw_path := path_input or os.getenv(DEMISTO_SDK_LOG_FILE_PATH):
         path = Path(raw_path).resolve()
         if path.exists():
@@ -63,7 +63,7 @@ def calculate_log_dir(path_input: Optional[Union[Path, str]], logger: "loguru.Lo
 
             if path.is_file():
                 logger.warning(
-                    f"Log file path '{path}' is a file.\n Logs will be saved in its containing folder"
+                    f"Log file path '{path}' is a file. Logs will be saved in its containing folder ({path.parent.name})"
                 )
                 return path.parent
             raise ValueError(
@@ -76,7 +76,7 @@ def calculate_log_dir(path_input: Optional[Union[Path, str]], logger: "loguru.Lo
         return LOGS_DIR
 
 
-def setup_logger_colors(logger: "loguru.Logger"):
+def setup_logger_colors():
     logger.level("DEBUG", color="<fg #D3D3D3>")
     logger.level("INFO", color="<fg #D3D3D3>")
     logger.level("WARNING", color="<yellow>")
@@ -90,17 +90,15 @@ def logging_setup(
     file_log_threshold: str = "DEBUG",
     log_file_path: Optional[Union[Path, str]] = None,
     initial: bool = False,
-    **kwargs,  # TODO remove skip_log_file_creation
 ):
     """
     The initial set up is required since we have code (e.g. get_content_path) that runs in __main__ before the typer/click commands set up the logger.
     In the initial set up there is NO file logging (only console)
     """
-    setup_neo4j_logger()
-
     global logger
-    logger = loguru.logger
-    setup_logger_colors(logger)
+
+    setup_neo4j_logger()
+    setup_logger_colors()
     logger.info(
         f"{console_log_threshold=},{file_log_threshold=},{log_file_path=},{initial=}"
     )  # TODO remove
@@ -118,7 +116,7 @@ def logging_setup(
     if os.getenv(DEMISTO_SDK_LOGGING_SET):
         logger.warning("This isn't the first time logging_setup has been called")
     if not initial:
-        log_path = calculate_log_dir(log_file_path, logger) / LOG_FILE_NAME
+        log_path = calculate_log_dir(log_file_path) / LOG_FILE_NAME
         logger.add(  # file handler
             log_path,
             rotation=calculate_log_size(),
@@ -134,7 +132,6 @@ def logging_setup(
         logger.debug(f"Python version: {sys.version}")
         logger.debug(f"Working directory: {Path.cwd()}")
         os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
-        logger.success("logging_setup finished")  # TODO remove
 
 
 DEPRECATED_PARAMETERS = {

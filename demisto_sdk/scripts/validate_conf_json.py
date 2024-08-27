@@ -65,7 +65,7 @@ class ConfJsonValidator:
 
 
 def main():
-    logging_setup()
+    logging_setup(calling_function=Path(__file__).stem)
     if not ConfJsonValidator().validate():
         logger.error("conf.json is not valid")
         exit(1)

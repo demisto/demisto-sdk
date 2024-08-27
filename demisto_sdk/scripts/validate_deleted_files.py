@@ -90,7 +90,7 @@ def validate_forbidden_deleted_files(
 ):
     if not protected_dirs:
         raise ValueError("Provide at least one protected dir")
-    logging_setup()
+    logging_setup(calling_function=__name__)
     try:
         forbidden_deleted_files = get_forbidden_deleted_files(set(protected_dirs))
     except Exception as error:

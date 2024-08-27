@@ -548,7 +548,7 @@ def validate_all(
 
 
 def main():
-    logging_setup()
+    logging_setup(calling_function=Path(__file__).stem)
     app()
 
 

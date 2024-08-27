@@ -256,6 +256,7 @@ def update(
         console_log_threshold=console_log_threshold,
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
+        calling_function="graph update",
     )
     with ContentGraphInterface() as content_graph_interface:
         update_content_graph(

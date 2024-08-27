@@ -1,5 +1,6 @@
 import os
 import stat
+from pathlib import Path
 from typing import Dict, List
 
 import typer
@@ -56,7 +57,7 @@ def validate_changed_files_permissions(
 
     exit_code = 0
 
-    logging_setup()
+    logging_setup(calling_function=Path(__file__).stem)
 
     if changed_files:
         logger.debug(

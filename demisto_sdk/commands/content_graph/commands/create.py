@@ -111,6 +111,7 @@ def create(
         console_log_threshold=console_log_threshold,
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
+        calling_function="graph create",
     )
     with ContentGraphInterface() as content_graph_interface:
         create_content_graph(

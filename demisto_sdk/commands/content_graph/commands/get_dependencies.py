@@ -136,6 +136,7 @@ def get_dependencies(
         console_log_threshold=console_log_threshold,
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
+        calling_function=__name__,
     )
     with ContentGraphInterface() as graph:
         if not no_update_graph:

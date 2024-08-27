@@ -174,6 +174,7 @@ def logging_setup_decorator(func, *args, **kwargs):
             console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
             file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
             log_file_path=kwargs.get("log_file_path"),
+            calling_function=func.__name__,
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -233,7 +234,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "CI"
             ):  # Check only when not running in CI (e.g running locally).
                 last_release = get_last_remote_release_version()
-            logger.info(f"<yellow>You are using demisto-sdk {__version__}</yellow>")
+            logger.debug(f"demisto-sdk {__version__}")
             if last_release and __version__ != last_release:
                 logger.warning(
                     f"A newer version ({last_release}) is available. "

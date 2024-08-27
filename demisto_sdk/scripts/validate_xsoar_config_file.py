@@ -45,5 +45,5 @@ def validate(path: Path) -> None:
 
 
 if __name__ == "__main__":
-    logging_setup()
+    logging_setup(calling_function=Path(__file__).stem)
     typer.run(validate)

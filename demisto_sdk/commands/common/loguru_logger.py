@@ -86,6 +86,7 @@ def setup_logger_colors():
 
 
 def logging_setup(
+    calling_function: str,
     console_log_threshold: str = "INFO",
     file_log_threshold: str = "DEBUG",
     log_file_path: Optional[Union[Path, str]] = None,
@@ -100,7 +101,7 @@ def logging_setup(
     setup_neo4j_logger()
     setup_logger_colors()
     logger.info(
-        f"{console_log_threshold=},{file_log_threshold=},{log_file_path=},{initial=}"
+        f"{calling_function=},{console_log_threshold=},{file_log_threshold=},{log_file_path=},{initial=}"
     )  # TODO remove
     logger.warning("logging_setup called", color="blue")  # TODO remove
     logger.remove()  # Removes all pre-existing handlers

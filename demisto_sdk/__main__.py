@@ -205,8 +205,8 @@ def logging_setup_decorator(func, *args, **kwargs):
     show_default=True,
 )
 @pass_config
-@logging_setup_decorator
 @click.pass_context
+@logging_setup_decorator
 def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv

@@ -52,8 +52,10 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
                 if invalid_paths_dict:
                     final_error = ""
                     for command, outputs in invalid_paths_dict.items():
-                        final_error += self.error_message.format(
-                                "command", command, outputs) + '\n'
+                        final_error += (
+                            self.error_message.format("command", command, outputs)
+                            + "\n"
+                        )
                     results.append(
                         ValidationResult(
                             validator=self,
@@ -97,13 +99,13 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         return "\n".join(wrong_depth_values)
 
     def create_outputs_set(self, command_or_script: Command | Script) -> Set[str]:
-        """ Creates a set of context paths from command or a script.
+        """Creates a set of context paths from command or a script.
 
-           Args:
-               command_or_script (Command | Script): The command or script to run on
+        Args:
+            command_or_script (Command | Script): The command or script to run on
 
-           Returns:
-              Set of invalid context paths
+        Returns:
+           Set of invalid context paths
         """
         return set(
             [
@@ -114,14 +116,17 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         )
 
     def create_command_outputs_dict(self, integration) -> dict:
-        """ Creates a dict of
-            key: command name
-            value: context paths from command.
+        """Creates a dict of
+         key: command name
+         value: context paths from command.
 
-           Args:
-              integration: the integration to review
+        Args:
+           integration: the integration to review
 
-           Returns:
-              dict of key values pairs
+        Returns:
+           dict of key values pairs
         """
-        return {command.name: self.create_outputs_set(command) for command in content_item.commands}
+        return {
+            command.name: self.create_outputs_set(command)
+            for command in integration.commands
+        }

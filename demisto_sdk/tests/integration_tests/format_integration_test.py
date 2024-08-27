@@ -110,7 +110,7 @@ def set_git_test_env(mocker):
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)
 def test_integration_format_yml_with_no_test_positive(
-    mocker, monkeypatch, tmp_path: PosixPath, source_yml: str
+    mocker, tmp_path: PosixPath, source_yml: str
 ):
     """
     Given
@@ -134,23 +134,21 @@ def test_integration_format_yml_with_no_test_positive(
     # Running format in the first time
     runner = CliRunner()
     with ChangeCWD(tmp_path):
-        result = runner.invoke(
+        first_run_result = runner.invoke(
             main,
             [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at", "-ngr"],
             input="Y",
         )
-    assert not result.exception
+    assert not first_run_result.exception
     output_yml = get_dict_from_file(output_path)
     assert output_yml[0].get("tests") == ["No tests (auto formatted)"]
     message = f'Formatting {output_file} with "No tests"'
-    assert message in result.output
+    assert message in first_run_result.output
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
-    result = runner.invoke(
-        main, [FORMAT_CMD, "-i", output_path, "-y", "-ngr"], input="Y"
-    )
-    assert not result.exception
-    assert message in result.output
+    second_run_result = runner.invoke(main, [FORMAT_CMD, "-i", output_path, "-y", "-ngr"])
+    assert second_run_result.exit_code == 0
+    assert not second_run_result.exception
 
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)

@@ -1,6 +1,5 @@
 """Configuring tests for the content suite"""
 
-import os
 import shutil
 from pathlib import Path
 from typing import Generator

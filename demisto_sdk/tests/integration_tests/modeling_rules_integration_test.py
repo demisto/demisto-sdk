@@ -324,7 +324,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_fail_to_check_dataset_exists(
-        self, pack, monkeypatch, mocker, requests_mocker
+        self, pack, mocker, requests_mocker
     ):
         """
         Given:

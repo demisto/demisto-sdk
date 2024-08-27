@@ -134,21 +134,23 @@ def logging_setup(
         os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
 
 
+DEPRECATED_PARAMETERS = {
+    "-v": "--console-log-threshold or --file-log-threshold",
+    "-vv": "--console-log-threshold or --file-log-threshold",
+    "-vvv": "--console-log-threshold or --file-log-threshold",
+    "--verbose": "--console-log-threshold or --file-log-threshold",
+    "-q": "--console-log-threshold or --file-log-threshold",
+    "--quiet": "--console-log-threshold or --file-log-threshold",
+    "--console_log_threshold": "--console-log-threshold",
+    "--file_log_threshold": "--file-log-threshold",
+    "-ln": "--log-file-path",
+    "--log-name": "--log-file-path",
+    "--log_file_path": "--log-file-path",
+    "no_logging": "--console-log-threshold or --file-log-threshold",
+}
+
+
 def handle_deprecated_args(input_args: Iterable[str]):
-    DEPRECATED_PARAMETERS = {
-        "-v": "--console-log-threshold or --file-log-threshold",
-        "-vv": "--console-log-threshold or --file-log-threshold",
-        "-vvv": "--console-log-threshold or --file-log-threshold",
-        "--verbose": "--console-log-threshold or --file-log-threshold",
-        "-q": "--console-log-threshold or --file-log-threshold",
-        "--quiet": "--console-log-threshold or --file-log-threshold",
-        "--console_log_threshold": "--console-log-threshold",
-        "--file_log_threshold": "--file-log-threshold",
-        "-ln": "--log-file-path",
-        "--log-name": "--log-file-path",
-        "--log_file_path": "--log-file-path",
-        "no_logging": "--console-log-threshold or --file-log-threshold",
-    }
     for argument in sorted(set(input_args).intersection(DEPRECATED_PARAMETERS.keys())):
         logger.error(
             f"Argument {argument} is deprecated,"

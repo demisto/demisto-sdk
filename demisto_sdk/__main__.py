@@ -205,13 +205,13 @@ def logging_setup_decorator(func, *args, **kwargs):
     show_default=True,
 )
 @pass_config
+@logging_setup_decorator
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
-
     if platform.system() == "Windows":
         logger.warning(
             "Using Demisto-SDK on Windows is not supported. Use WSL2 or run in a container."

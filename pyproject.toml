@@ -1,6 +1,7 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 
 [tool.mypy]
 check_untyped_defs = true
@@ -12,11 +13,10 @@ pretty = true
 allow_redefinition = true
 exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
-[tool.poetry]
+[project]
 name = "demisto-sdk"
-version = "1.31.9"
+version = "1.31.9" # TODO check the autoupdate script still works
 description = "\"A Python library for the Demisto SDK\""
-authors = ["Demisto"]
 license = "MIT"
 readme = "README.md"
 classifiers = [
@@ -27,83 +27,98 @@ classifiers = [
   'Programming Language :: Python :: 3.9',
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
-  'Programming Language :: Python :: Implementation :: CPython'
+  'Programming Language :: Python :: Implementation :: CPython',
 ]
-exclude = ["TestSuite/**", "tests_end_to_end/**", "demisto_sdk/tests/**", "demisto_sdk/**/tests/**", "demisto_sdk/**/test_data/**", "demisto_sdk/**/test_files/**"]
+exclude = [
+  "TestSuite/**",
+  "tests_end_to_end/**",
+  "demisto_sdk/tests/**",
+  "demisto_sdk/**/tests/**",
+  "demisto_sdk/**/test_data/**",
+  "demisto_sdk/**/test_files/**",
+]
+requires-python = ">=3.8,<3.12"
+dependencies = [
+  "autopep8>=2.0.4,<3",
+  "bandit>=1.7.4,<2",
+  "mypy>=0.982,<1",
+  "pylint>=2.17.0,<2.18",
+  "vulture>=2.3,<3",
+  "beautifulsoup4>=4.11.1,<5",
+  "chardet>=4,<6",
+  "click>=8,<9",
+  "coloredlogs>=15.0.1,<16",
+  "configparser>=5.2.0,<6",
+  "coverage>=7.2.1,<7.4",
+  # in 7.4 we get empty results
+  "decorator>=5.1.1,<6",
+  "demisto-py>=3.2.10,<4",
+  "dictor>=0.1.9,<0.2",
+  "docker>=7.1.0,<8",
+  "flatten-dict>=0.4.2,<0.5",
+  "gitdb>=4.0.9,<5",
+  "google-cloud-storage>=2.13.0,<3",
+  "inflection>=0.5.1,<0.6",
+  "jsonschema>=4.4.0,<5",
+  "mergedeep>=1.3.4,<2",
+  "networkx>=2.7.1,<3",
+  "nltk==3.8.1",
+  "prettytable>=3.2.0,<4",
+  "pykwalify>=1.8.0,<2",
+  "pyspellchecker>=0.6.3,<0.7",
+  "requests>=2.27.1,<3",
+  "ruamel.yaml>=0.17.21,<0.18",
+  "slack-sdk>=3.17.0,<4",
+  "tenacity>=8.4.1,<9",
+  "tabulate>=0.8.9,<0.10.0",
+  "ujson>=5.1.0,<6",
+  "urllib3>=1.26,<3",
+  "wcmatch>=8.3,<9",
+  "yamlordereddictloader>=0.4.0,<0.5",
+  "GitPython>=3.1.37,<4",
+  "Pebble>=4.6.3,<6.0.0",
+  "PyPDF2>=1.28.6,<2",
+  "giturlparse>=0.10.0,<0.11",
+  "pytest-freezegun>=0.4.2,<0.5",
+  "python-dotenv>=0.20.0,<0.21",
+  "importlib-resources>=5.6.0,<6",
+  "dictdiffer>=0.9.0,<0.10",
+  "imagesize>=1.3.0,<2",
+  "dateparser>=1.1.1,<2",
+  "ordered-set>=4.1.0,<5",
+  "paramiko>=3.4.1,<4.0",
+  "neo4j>=5.14.0,<6",
+  "pydantic>=1.10,<2",
+  "typer>=0.12.5,<0.13",
+  "packaging>=24.0,<25",
+  "orjson>=3.8.3,<4",
+  "more-itertools>=10.0.0,<11",
+  "junitparser>=3.1.0,<4",
+  "google-cloud-secret-manager>=2.18.3,<3",
+  "json5>=0.9.14,<0.10",
+]
+
+[project.optional-dependencies]
+extras = [
+    "gsutil==5.17",
+    "klara>=0.6.3",
+]
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.12"
-autopep8 = "^2.0.4"
-bandit = "^1.7.4"
-mypy = "^0.982"
-pylint = "^2.17.0,<2.18"
-vulture = "^2.3"
-beautifulsoup4 = "^4.11.1"
-chardet = ">=4,<6"
-click = "^8.0.0"
-coloredlogs = "^15.0.1"
-configparser = "^5.2.0"
-coverage = "^7.2.1,<7.4" # in 7.4 we get empty results
-decorator = "^5.1.1"
-demisto-py = "^3.2.10"
-dictor = "^0.1.9"
-docker = "^7.1.0"
-flatten-dict = "^0.4.2"
-gitdb = "^4.0.9"
-google-cloud-storage = "^2.13.0"
-inflection = "^0.5.1"
-jsonschema = "^4.4.0"
-mergedeep = "^1.3.4"
-networkx = "^2.7.1"
-nltk = "==3.8.1"
-prettytable = "^3.2.0"
-pykwalify = "^1.8.0"
-pyspellchecker = "^0.6.3"
-requests = "^2.27.1"
-"ruamel.yaml" = "^0.17.21"
-slack-sdk = "^3.17.0"
-tenacity = "^8.4.1"
-tabulate = ">=0.8.9,<0.10.0"
-ujson = "^5.1.0"
-urllib3 = ">=1.26,<3"
-wcmatch = "^8.3"
-yamlordereddictloader = "^0.4.0"
-GitPython = "^3.1.37"
-Pebble = ">=4.6.3,<6.0.0"
-PyPDF2 = "^1.28.6"
-giturlparse = "^0.10.0"
-pytest-freezegun = "^0.4.2"
-python-dotenv = "^0.20.0"
-importlib-resources = "^5.6.0"
-dictdiffer = "^0.9.0"
-imagesize = "^1.3.0"
-dateparser = "^1.1.1"
-gsutil = {version = "5.17", optional = true}
-ordered-set = "^4.1.0"
-paramiko = ">=3.4.1,<4.0"
-neo4j = "^5.14.0"
-pydantic = "^1.10"
-typer = {extras = ["all"], version = "^0.9.0"}
-packaging = "^24.0"
-orjson = "^3.8.3"
-more-itertools = "^10.0.0"
-junitparser = "^3.1.0"
-google-cloud-secret-manager = "^2.18.3"
-json5 = "^0.9.14"
-klara = {version = "^0.6.3", optional = true}
-typing-extensions = "^4.1.1" # not a mypy types- dependency
+klara = { version = "^0.6.3", optional = true }
+typing-extensions = "^4.1.1"                    # not a mypy types- dependency
 pre-commit = "^3.5.0"
 lxml = "^5.0.0"
 uv = "^0.1.5"
 toml = "^0.10.2"
-werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
+werkzeug = "^2.2.0"                             # Added as mitmproxy8 -> flask<2.1
 
 [tool.poetry.extras]
 build = ["gsutil"]
 generate-unit-tests = ["klara"]
 
 [tool.poetry.group.dev.dependencies]
-mitmproxy = "^8.0.0" # if installing zstandard fails, make sure you have python3.x-dev installed.
+mitmproxy = "^8.0.0"                               # if installing zstandard fails, make sure you have python3.x-dev installed.
 mock = "^4.0.3"
 pytest = "^7.1.1"
 pytest-cov = "^4.0.0"
@@ -147,16 +162,12 @@ exclude = [
   "demisto_sdk/commands/init/tests/test_files",
   "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
   "demisto_sdk/commands/init/templates",
-  "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
+  "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py",
 ]
 target-version = "py38"
 
 [tool.ruff.lint]
-ignore = [
-  "F403",
-  "F405",
-  "E501"
-]
+ignore = ["F403", "F405", "E501"]
 select = [
   "C9",
   "E",
@@ -171,7 +182,7 @@ select = [
   "PTH107",
   "PTH113",
   "PTH110",
-  "PTH119"
+  "PTH119",
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
@@ -196,3 +207,8 @@ exclude = ["*/tests/*"]
 min_confidence = 80
 paths = ["demisto_sdk", "TestSuite"]
 sort_by_size = true
+
+[tool.uv]
+dev-dependencies = [
+    "mitmproxy>=0.14.0",
+]

@@ -3767,6 +3767,7 @@ def pre_commit(
         console_log_threshold=console_log_threshold,
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
+        calling_function="pre-commit",
     )
 
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager

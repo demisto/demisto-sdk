@@ -56,7 +56,7 @@ def prevent_mypy_global_ignore(
 
     exit_code = 0
 
-    logging_setup(calling_function=Path(__file__).stem)
+    logging_setup(calling_function=__name__)
 
     if changed_files:
         result: Dict[str, Union[int, None]] = {}

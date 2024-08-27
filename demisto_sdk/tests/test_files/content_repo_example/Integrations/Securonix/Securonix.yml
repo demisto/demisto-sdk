@@ -1003,7 +1003,6 @@ script:
     - contextPath: Securonix.Incidents.IsWhitelisted
       description: Whether the incident is whitelisted.
       type: Boolean
-  dockerimage45: demisto/python3:3.7.4.4328
   dockerimage: demisto/python3:3.7.5.4328
   feed: false
   isfetch: true

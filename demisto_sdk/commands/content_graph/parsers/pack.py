@@ -38,6 +38,9 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
     ContentItemsList,
 )
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    StructureError,
+)
 
 
 class PackContentItems:
@@ -246,6 +249,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         if path.name == PACK_METADATA_FILENAME:
             path = path.parent
         BaseContentParser.__init__(self, path)
+        self.structure_errors: List[StructureError] = self.validate_structure()
 
         try:
             metadata = get_json(path / PACK_METADATA_FILENAME, git_sha=git_sha)
@@ -383,3 +387,13 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "content_commit_hash": "contentCommitHash",
             "default_data_source_id": "defaultDataSource",
         }
+
+    # TODO - implementing all those 3 methods
+    def validate_structure(self) -> List[StructureError]:
+        return []
+
+    def raw_data(self) -> dict:
+        raise NotImplementedError
+
+    def strict_object(self):
+        raise NotImplementedError

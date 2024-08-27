@@ -282,10 +282,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             nodes (List[graph.Node]): list of nodes to add
         """
-        nodes = filter(lambda node: node.element_id not in self._id_to_obj, nodes)
-        from more_itertools import seekable
-
-        if not seekable(nodes).peek(None):
+        nodes = tuple(
+            filter(lambda node: node.element_id not in self._id_to_obj, nodes)
+        )
+        if not nodes:
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
             )

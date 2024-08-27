@@ -39,8 +39,6 @@ runs:
 
       - name: Run Validate All
         run: |
-          source $(poetry env info --path)/bin/activate
-          cp demisto_sdk/commands/validate/sdk_validation_config.toml content/
           cd content
           git status
           mkdir -p ${{ inputs.artifacts-path-dir }}

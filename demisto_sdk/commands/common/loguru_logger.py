@@ -105,7 +105,7 @@ def logging_setup(
     logger.warning("logging_setup called", color="blue")  # TODO remove
     logger.remove()  # Removes all pre-existing handlers
 
-    colorize = string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), True)
+    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), False)
     logger = logger.opt(colors=colorize)  # allows using color tags in all logs
     logger.add(
         sys.stdout,

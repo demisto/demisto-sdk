@@ -32,7 +32,7 @@ class IsValidContextPathDepthModifiedValidatorModified(
             if isinstance(content_item, Script):
                 old_script_paths = self.create_outputs_set(old_content_item)
                 new_script_paths = self.create_outputs_set(content_item)
-                changed_paths = set(new_script_paths).difference(old_script_paths)
+                changed_paths = new_script_paths.difference(old_script_paths)
                 invalid_paths = self.is_context_depth_larger_than_five(changed_paths)
                 if invalid_paths:
                     results.append(
@@ -53,6 +53,8 @@ class IsValidContextPathDepthModifiedValidatorModified(
                         changed_paths_dict[command_name] = command_outputs.difference(
                             old_command_outputs
                         )
+                    else:
+                        changed_paths_dict[command_name] = command_outputs
                 invalid_paths = (
                     self.is_context_depth_larger_than_five_integration_commands(
                         changed_paths_dict

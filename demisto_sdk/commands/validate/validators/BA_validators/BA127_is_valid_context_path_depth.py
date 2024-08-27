@@ -50,14 +50,14 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
                     )
                 )
                 if invalid_paths_dict:
+                    final_error = ""
+                    for command, outputs in invalid_paths_dict.items():
+                        final_error += self.error_message.format(
+                                "command", command, outputs) + '\n'
                     results.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format(
-                                "command",
-                                invalid_paths_dict["command"],
-                                invalid_paths_dict["wrong_paths"],
-                            ),
+                            message=final_error,
                             content_object=content_item,
                         )
                     )
@@ -79,8 +79,7 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
             if wrong_values_string := self.is_context_depth_larger_than_five(
                 command_outputs
             ):
-                message["command"] = command_name
-                message["wrong_paths"] = wrong_values_string
+                message[command_name] = wrong_values_string
         return message
 
     def is_context_depth_larger_than_five(self, outputs: Set[str]) -> str:
@@ -92,15 +91,20 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         Returns:
              List of bad context paths if the contextPath depths is bigger then 5. Otherwise, return False.
         """
-        wrong_values_string = ""
         wrong_depth_values = [
             output for output in outputs if len(output.split(".")) > 5
         ]
-        if wrong_depth_values:
-            wrong_values_string = "\n".join(wrong_depth_values)
-        return wrong_values_string
+        return "\n".join(wrong_depth_values)
 
     def create_outputs_set(self, command_or_script: Command | Script) -> Set[str]:
+        """ Creates a set of context paths from command or a script.
+
+           Args:
+               command_or_script (Command | Script): The command or script to run on
+
+           Returns:
+              Set of invalid context paths
+        """
         return set(
             [
                 output.contextPath
@@ -109,8 +113,15 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
             ]
         )
 
-    def create_command_outputs_dict(self, content_item) -> dict:
-        command_paths = dict()
-        for command in content_item.commands:
-            command_paths[command.name] = self.create_outputs_set(command)
-        return command_paths
+    def create_command_outputs_dict(self, integration) -> dict:
+        """ Creates a dict of
+            key: command name
+            value: context paths from command.
+
+           Args:
+              integration: the integration to review
+
+           Returns:
+              dict of key values pairs
+        """
+        return {command.name: self.create_outputs_set(command) for command in content_item.commands}

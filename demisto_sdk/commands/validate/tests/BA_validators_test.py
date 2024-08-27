@@ -2151,6 +2151,15 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items__invalid_item(
 
 
 def test_is_valid_context_path_depth_command():
+    """
+    Given
+    - One invalid integration with one command:
+        - One output has depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message is correct.
+    """
     with ChangeCWD(REPO.path):
         content_items = [
             create_integration_object(
@@ -2191,6 +2200,15 @@ def test_is_valid_context_path_depth_command():
 
 
 def test_is_valid_context_path_depth_script():
+    """
+    Given
+    - One invalid script :
+        - One output has depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message is correct.
+    """
     with ChangeCWD(REPO.path):
         content_items = [
             create_script_object(
@@ -2218,6 +2236,15 @@ def test_is_valid_context_path_depth_script():
 
 
 def test_is_valid_context_path_depth_command_multiple_invalid_outputs():
+    """
+    Given
+    - One invalid integration with one command:
+        - multiple outputs have depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the paths exist in the error message that is returned
+    """
     with ChangeCWD(REPO.path):
         content_items = [
             create_integration_object(
@@ -2266,6 +2293,15 @@ def test_is_valid_context_path_depth_command_multiple_invalid_outputs():
 
 
 def test_is_valid_context_path_depth_command_multiple_commands_with_invalid_outputs():
+    """
+    Given
+    - One invalid integration with two commands each has several outputs:
+        - two outputs for each command have depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the paths exist in the error message that is returned
+    """
     with ChangeCWD(REPO.path):
         content_items = [
             create_integration_object(

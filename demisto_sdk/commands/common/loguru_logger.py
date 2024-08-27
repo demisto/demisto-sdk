@@ -153,8 +153,9 @@ DEPRECATED_PARAMETERS = {
 }
 
 
-def handle_deprecated_args(input_args: Iterable[str], logger: "loguru.Logger"):
-    for current_arg in sorted(
-        set(input_args).intersection(DEPRECATED_PARAMETERS.keys())
-    ):
-        logger.error()  # TODO
+def handle_deprecated_args(input_args: Iterable[str]):
+    for argument in sorted(set(input_args).intersection(DEPRECATED_PARAMETERS.keys())):
+        logger.error(
+            f"Argument {argument} is deprecated,"
+            f"Use {DEPRECATED_PARAMETERS[argument]} instead."
+        )

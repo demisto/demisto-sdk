@@ -330,12 +330,23 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
     with ChangeCWD(repo.path):
         runner = CliRunner()
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", mapper_path, "-at", "-y", "-nv"]
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                mapper_path,
+                "-at",
+                "-y",
+                "-nv",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
         )
     assert result.exit_code == 0
     assert not result.exception
+    fields = {"Unknown Incident Field"}
     assert (
-        f"Removing the fields {'Unknown Incident Field'} from the mapper {mapper_path} because they aren't in the content repo."
+        f"Removing the fields {fields} from the mapper {mapper_path} because they aren't in the content repo."
     ) in result.output
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,

@@ -178,6 +178,7 @@ select = [
   "PTH110",
   "PTH119"
 ]
+logger-objects = ["demisto_sdk.commands.common.loguru_logger.logger"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 

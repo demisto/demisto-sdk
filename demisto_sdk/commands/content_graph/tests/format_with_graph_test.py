@@ -303,9 +303,7 @@ def repository(mocker, repo) -> ContentDTO:
     return repository
 
 
-def test_format_mapper_with_graph_remove_unknown_content(
-    mocker, caplog, repository, repo
-):
+def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, repo):
     """
     Given
     - A mapper.
@@ -334,14 +332,11 @@ def test_format_mapper_with_graph_remove_unknown_content(
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", mapper_path, "-at", "-y", "-nv"]
         )
-    message = (
-        "Removing the fields {'Unknown Incident Field'}"
-        + f" from the mapper {mapper_path} "
-        f"because they aren't in the content repo."
-    )
     assert result.exit_code == 0
     assert not result.exception
-    assert message in caplog.text
+    assert (
+        f"Removing the fields {'Unknown Incident Field'} from the mapper {mapper_path} because they aren't in the content repo."
+    ) in result.output
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.

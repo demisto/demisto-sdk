@@ -146,7 +146,9 @@ def test_integration_format_yml_with_no_test_positive(
     assert message in first_run_result.output
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
-    second_run_result = runner.invoke(main, [FORMAT_CMD, "-i", output_path, "-y", "-ngr"])
+    second_run_result = runner.invoke(
+        main, [FORMAT_CMD, "-i", output_path, "-y", "-ngr"]
+    )
     assert second_run_result.exit_code == 0
     assert not second_run_result.exception
 

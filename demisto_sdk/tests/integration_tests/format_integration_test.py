@@ -180,7 +180,17 @@ def test_integration_format_yml_with_no_test_negative(
     with ChangeCWD(tmp_path):
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at", "-ngr"],
+            [
+                FORMAT_CMD,
+                "-i",
+                source_path,
+                "-o",
+                output_path,
+                "-at",
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
             input="N",
         )
     assert not result.exception
@@ -316,7 +326,14 @@ def test_integration_format_configuring_conf_json_positive(
     with ChangeCWD(tmp_path):
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-ngr"],
+            [
+                FORMAT_CMD,
+                "-i",
+                source_path,
+                "-o",
+                saved_file_path,
+                "-ngr",
+            ],
             input="Y",
         )
     assert not result.exception
@@ -327,7 +344,18 @@ def test_integration_format_configuring_conf_json_positive(
     else:
         _verify_conf_json_modified(test_playbooks, yml_title, conf_json_path)
     # Running format for the second time should raise no exception and should raise no prompt to the user
-    result = runner.invoke(main, [FORMAT_CMD, "-i", saved_file_path, "-ngr"], input="Y")
+    result = runner.invoke(
+        main,
+        [
+            FORMAT_CMD,
+            "-i",
+            saved_file_path,
+            "-ngr",
+            "--console-log-threshold",
+            "DEBUG",
+        ],
+        input="Y",
+    )
     assert not result.exception
     assert "No unconfigured test playbooks" in result.output
 
@@ -437,6 +465,8 @@ def test_integration_format_remove_playbook_sourceplaybookid(
                 playbook_path,
                 "-at",
                 "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
             ],
             input="N",
         )
@@ -743,6 +773,8 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
             [FORMAT_CMD, "-i", "playbook.yml", "-y", "-ngr"],
             catch_exceptions=False,
         )
+        assert "======= Updating file" in result.output
+        assert f"Format Status   on file: {playbook.path} - Success" in result.output
 
         with ChangeCWD(repo.path):
             result = runner.invoke(
@@ -759,17 +791,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                 ],
                 catch_exceptions=False,
             )
-
-    assert all(
-        [
-            current_str in result.output
-            for current_str in [
-                "======= Updating file",
-                f"Format Status   on file: {playbook.path} - Success",
-                "The files are valid",
-            ]
-        ]
-    )
+            assert "The files are valid" in result.output
 
 
 def test_format_integration_skipped_files(repo, mocker, monkeypatch):
@@ -1588,19 +1610,20 @@ class TestFormatWithoutAddTestsFlag:
         )
 
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", integration_path, "-at", "-ngr"]
-        )
-        message = f'Formatting {integration_path} with "No tests"'
-        assert not result.exception
-        assert all(
+            main,
             [
-                current_str in result.output
-                for current_str in [
-                    f'Not formatting {integration_path} with "No tests"',
-                ]
-            ]
+                FORMAT_CMD,
+                "-i",
+                integration_path,
+                "-at",
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
         )
-        assert message not in result.output
+        assert f'Not formatting {integration_path} with "No tests"' in result.output
+        assert f'Formatting {integration_path} with "No tests"' not in result.output
+        assert not result.exception
 
     def test_format_integrations_folder(self, mocker, pack):
         """
@@ -1625,7 +1648,16 @@ class TestFormatWithoutAddTestsFlag:
             IntegrationValidator, "is_valid_category", return_value=True
         )
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", integration_path, "-ngr"], input="Y"
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                integration_path,
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
+            input="Y",
         )
         prompt = (
             f"The file {integration_path} has no test playbooks configured."
@@ -1658,7 +1690,17 @@ class TestFormatWithoutAddTestsFlag:
         script_path = script.yml.path
         mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
 
-        result = runner.invoke(main, [FORMAT_CMD, "-i", script_path, "-ngr"])
+        result = runner.invoke(
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                script_path,
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
+        )
         message = f'Formatting {script_path} with "No tests"'
         assert not result.exception
         assert message in result.output
@@ -1685,7 +1727,16 @@ class TestFormatWithoutAddTestsFlag:
         playbooks_path = playbook.yml.path
         playbook.yml.delete_key("tests")
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", playbooks_path, "-ngr"], input="N"
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                playbooks_path,
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
+            input="N",
         )
         message = f'Formatting {playbooks_path} with "No tests"'
         assert not result.exception
@@ -1714,7 +1765,16 @@ class TestFormatWithoutAddTestsFlag:
         test_playbooks_path = test_playbook.yml.path
         test_playbook.yml.delete_key("tests")
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", test_playbooks_path, "-ngr"], input="N"
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                test_playbooks_path,
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
+            input="N",
         )
         prompt = (
             f"The file {test_playbooks_path} has no test playbooks configured."
@@ -1748,7 +1808,17 @@ class TestFormatWithoutAddTestsFlag:
         test_playbooks_path = test_playbook.yml.path
         test_playbook.yml.delete_key("tests")
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", test_playbooks_path, "-at", "-ngr"], input="N"
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                test_playbooks_path,
+                "-at",
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
+            input="N",
         )
         prompt = (
             f"The file {test_playbooks_path} has no test playbooks configured."
@@ -1789,7 +1859,18 @@ class TestFormatWithoutAddTestsFlag:
             },
         )
         layouts_path = layout.path
-        result = runner.invoke(main, [FORMAT_CMD, "-i", layouts_path, "-y", "-ngr"])
+        result = runner.invoke(
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                layouts_path,
+                "-y",
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
+        )
         message = f'Formatting {layouts_path} with "No tests"'
         message1 = f"Format Status   on file: {layouts_path} - Success"
 
@@ -1824,7 +1905,17 @@ class TestFormatWithoutAddTestsFlag:
         )
         layouts_path = layout.path
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", layouts_path, "-at", "-y", "-ngr"]
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                layouts_path,
+                "-at",
+                "-y",
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
         )
         assert not result.exception
         assert f'Formatting {layouts_path} with "No tests"' not in result.output
@@ -1880,7 +1971,17 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     with ChangeCWD(repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", f"{pack_path}", "-d", "-ngr"], input="\n"
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                f"{pack_path}",
+                "-d",
+                "-ngr",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
+            input="\n",
         )
 
     # Asserts

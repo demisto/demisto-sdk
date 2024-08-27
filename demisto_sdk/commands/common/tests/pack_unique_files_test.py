@@ -284,9 +284,7 @@ class TestPackUniqueFilesValidator:
         )
         assert (error_text in result.output) != is_valid
 
-    def test_validate_partner_contribute_pack_metadata_price_change(
-        self, mocker, monkeypatch, repo, caplog
-    ):
+    def test_validate_partner_contribute_pack_metadata_price_change(self, mocker, repo):
         """
         Given
         - Partner contributed pack where price has changed.
@@ -297,7 +295,6 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
-        caplog.set_level("ERROR")
         pack_metadata_price_changed = PACK_METADATA_PARTNER.copy()
         pack_metadata_price_changed["price"] = 3
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -325,8 +322,7 @@ class TestPackUniqueFilesValidator:
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            result = CliRunner(mix_stderr=False).invoke(
                 main,
                 [
                     VALIDATE_CMD,

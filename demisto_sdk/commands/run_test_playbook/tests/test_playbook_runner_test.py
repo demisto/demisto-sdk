@@ -1,3 +1,4 @@
+import click
 import demisto_client
 import pytest
 from click.testing import CliRunner
@@ -22,16 +23,16 @@ FAILED_MESSAGE = "The test playbook finished running with status: FAILED"
 
 class TestTestPlaybookRunner:
     @pytest.mark.parametrize(
-        argnames="tpb_result, res", argvalues=[("failed", 1), ("success", 0)]
+        argnames="tpb_result, expected_result", argvalues=[("failed", 1), ("success", 0)]
     )
-    def test_run_specific_test_playbook(self, mocker, tpb_result, res):
+    def test_run_specific_test_playbook(self, mocker, tpb_result, expected_result:int):
         """
         Given:
             - run specific test playbook with result as True or False
         When:
             - run the run_test_playbook command
         Then:
-            - validate the results is aas expected
+            - validate the results is as expected
         """
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
@@ -45,10 +46,9 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        result = CliRunner(mix_stderr=False).invoke(
-            run_test_playbook, ["-tpb", TEST_PLAYBOOK, "-t", "90"]
-        )
-        assert result.exit_code == res
+        assert click.Context(command=run_test_playbook).invoke(
+            run_test_playbook, test_playbook_path=TEST_PLAYBOOK
+        )==  expected_result
 
     @pytest.mark.parametrize(
         argnames="tpb_result, res, message",

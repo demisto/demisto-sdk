@@ -2180,7 +2180,7 @@ def test_is_valid_context_path_depth_command():
                 pack_info={"support": XSOAR_SUPPORT},
             ),
         ]
-        expected_msg = "The level of depth for context output path for command: ip In the yml should be less or equal to 5 check the following outputs:\npath_1.2.3.4.5.6"
+        expected_msg = "The level of depth for context output path for command: ip In the yml should be less or equal to 5 check the following outputs:\npath_1.2.3.4.5.6\n"
         result = IsValidContextPathDepthValidator().obtain_invalid_content_items(
             content_items
         )

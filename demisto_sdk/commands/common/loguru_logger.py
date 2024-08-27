@@ -85,10 +85,14 @@ def setup_logger_colors():
     logger.level("SUCCESS", color="<green>")
 
 
+DEFAULT_FILE_THRESHOLD = "DEBUG"
+DEFAULT_CONSOLE_THRESHOLD = "INFO"
+
+
 def logging_setup(
     calling_function: str,
-    console_log_threshold: str = "INFO",
-    file_log_threshold: str = "DEBUG",
+    console_log_threshold: str = DEFAULT_CONSOLE_THRESHOLD,
+    file_log_threshold: str = DEFAULT_FILE_THRESHOLD,
     log_file_path: Optional[Union[Path, str]] = None,
     initial: bool = False,
 ):
@@ -112,7 +116,10 @@ def logging_setup(
         sys.stdout,
         colorize=colorize,
         backtrace=True,  # TODO
-        level=console_log_threshold,
+        level=(
+            console_log_threshold
+            or DEFAULT_CONSOLE_THRESHOLD  # in case None is provided
+        ),
     )
     if os.getenv(DEMISTO_SDK_LOGGING_SET):
         logger.warning("This isn't the first time logging_setup has been called")
@@ -124,7 +131,9 @@ def logging_setup(
             retention=calculate_rentation(),
             colorize=False,
             # backtrace=True,  # TODO
-            level=file_log_threshold,
+            level=(
+                file_log_threshold or DEFAULT_FILE_THRESHOLD  # in case None is provided
+            ),
         )
         if string_to_bool(os.getenv(DEMISTO_SDK_LOG_NOTIFY_PATH), True):
             logger.info(f"<yellow>Log file location: {log_path}</yellow>")

@@ -96,7 +96,7 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         wrong_depth_values = [
             output for output in outputs if len(output.split(".")) > 5
         ]
-        return "\n".join(wrong_depth_values)
+        return ", ".join(wrong_depth_values)
 
     def create_outputs_set(self, command_or_script: Command | Script) -> Set[str]:
         """Creates a set of context paths from command or a script.

@@ -80,7 +80,7 @@ SDK_OFFLINE_ERROR_MESSAGE = (
     "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.</red>"
 )
 
-logging_setup(initial=True)
+logging_setup(initial=True, calling_function="__main__ (initial)")
 
 # Third party packages
 

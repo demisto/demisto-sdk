@@ -300,8 +300,6 @@ jobs:
   test-validate-content-path:
     runs-on: ubuntu-latest
     name: Test validate-content-path
-    env:
-      DEMISTO_SDK_LOG_NO_COLORS: "true"
     steps:
       - name: Checkout SDK
         uses: actions/checkout@v4
@@ -383,7 +381,6 @@ jobs:
     timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
-      DEMISTO_SDK_LOG_NO_COLORS: "true"
 
     steps:
       - name: Checkout
@@ -402,7 +399,6 @@ jobs:
     timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
-      DEMISTO_SDK_LOG_NO_COLORS: "true"
 
     steps:
       - name: Checkout

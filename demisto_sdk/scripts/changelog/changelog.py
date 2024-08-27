@@ -334,7 +334,7 @@ main = typer.Typer(
     pretty_exceptions_enable=False,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
-logging_setup(skip_log_file_creation=True)
+logging_setup()
 
 release = typer.Option(False, "--release", help="releasing", is_flag=True)
 init = typer.Option(

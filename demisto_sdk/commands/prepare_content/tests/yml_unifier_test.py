@@ -841,7 +841,7 @@ class TestMergeScriptPackageToYMLIntegration:
         ),
     )
     def test_unify_integration__hidden_param(
-        self, marketplace: MarketplaceVersions, mocker
+        self, marketplace: MarketplaceVersions, mocker, monkeypatch
     ):
         """
         Given   an integration file with params that have different valid values for the `hidden` attribute
@@ -862,7 +862,7 @@ class TestMergeScriptPackageToYMLIntegration:
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         with TemporaryDirectory() as artifact_dir:
-            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
             unified_yml = PrepareUploadManager.prepare_for_upload(
                 input=Path(self.export_dir_path),
                 output=Path(self.test_dir_path),
@@ -933,7 +933,7 @@ class TestMergeScriptPackageToYMLIntegration:
         "marketplace", (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2)
     )
     def test_unify_integration__hidden_param_type9(
-        self, marketplace: MarketplaceVersions, mocker
+        self, marketplace: MarketplaceVersions, mocker, monkeypatch
     ):
         """
         Given   an integration file with params that have credentials param of type 9 with valid values
@@ -956,7 +956,7 @@ class TestMergeScriptPackageToYMLIntegration:
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         with TemporaryDirectory() as artifact_dir:
-            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
             unified_yml = PrepareUploadManager.prepare_for_upload(
                 input=Path(self.export_dir_path),
                 output=Path(self.test_dir_path),
@@ -974,7 +974,9 @@ class TestMergeScriptPackageToYMLIntegration:
                     marketplace == MarketplaceVersions.XSOAR
                 )
 
-    def test_unify_integration__detailed_description_with_special_char(self, mocker):
+    def test_unify_integration__detailed_description_with_special_char(
+        self, mocker, monkeypatch
+    ):
         """
         -
         """
@@ -998,7 +1000,7 @@ class TestMergeScriptPackageToYMLIntegration:
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         with TemporaryDirectory() as artifact_dir:
-            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
             export_yml_path = PrepareUploadManager.prepare_for_upload(
                 Path(self.export_dir_path), output=Path(self.test_dir_path)
             )
@@ -1014,7 +1016,9 @@ class TestMergeScriptPackageToYMLIntegration:
         assert expected_yml == actual_yml
         assert actual_yml["detaileddescription"] == description
 
-    def test_unify_integration__detailed_description_with_yml_structure(self, mocker):
+    def test_unify_integration__detailed_description_with_yml_structure(
+        self, mocker, monkeypatch
+    ):
         """
         -
         """
@@ -1043,7 +1047,7 @@ final test: hi
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         with TemporaryDirectory() as artifact_dir:
-            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
             export_yml_path = PrepareUploadManager.prepare_for_upload(
                 Path(self.export_dir_path), output=Path(self.test_dir_path)
             )
@@ -1059,7 +1063,7 @@ final test: hi
         assert expected_yml == actual_yml
         assert actual_yml["detaileddescription"] == description
 
-    def test_unify_default_output_integration(self, mocker):
+    def test_unify_default_output_integration(self, mocker, monkeypatch):
         """
         Given
         - UploadTest integration.
@@ -1078,7 +1082,7 @@ final test: hi
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         with TemporaryDirectory() as artifact_dir:
-            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
             export_yml_path = PrepareUploadManager.prepare_for_upload(
                 Path(input_path_integration)
             )

@@ -1,4 +1,3 @@
-import os
 from io import BytesIO
 from os.path import join
 from pathlib import Path
@@ -214,7 +213,9 @@ METADATA_NAMES = [
 ]
 
 
-def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
+def test_zipped_pack_upload_positive(
+    repo, mocker, tmpdir, demisto_client_mock, monkeypatch
+):
     """
     Given
     - content pack name
@@ -241,7 +242,7 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     runner = CliRunner(mix_stderr=False)
     with ChangeCWD(pack.repo_path):
         with TemporaryDirectory() as artifact_dir:
-            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
             result = runner.invoke(
                 main,
                 [

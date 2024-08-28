@@ -255,7 +255,7 @@ class TestIntegrationScriptUnifier:
                 assert unified_yml_data.get("name") == "sample_scriptTest"
                 assert unified_yml_data.get("nativeimage") == ["8.1", "8.2"]
 
-    def test_ignore_native_image_integration(self, mocker, repo):
+    def test_ignore_native_image_integration(self, monkeypatch, repo):
         """
         Given:
             - integration that can use native-images
@@ -272,7 +272,7 @@ class TestIntegrationScriptUnifier:
 
         with ChangeCWD(pack.repo_path):
             with TemporaryDirectory() as artifact_dir:
-                mocker.patch.object(os, "getenv", return_value=artifact_dir)
+                monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
                 runner = CliRunner(mix_stderr=False)
                 runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}", "-ini"])
 

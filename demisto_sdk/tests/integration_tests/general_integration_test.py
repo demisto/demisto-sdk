@@ -17,7 +17,7 @@ from demisto_sdk.commands.validate.old_validate_manager import OldValidateManage
 from TestSuite.test_tools import ChangeCWD
 
 
-def test_conf_file_custom(mocker, caplog: LogCaptureFixture, repo):
+def test_conf_file_custom(mocker: LogCaptureFixture, repo):
     """
     Given
     - a content repo with a pack and integration.

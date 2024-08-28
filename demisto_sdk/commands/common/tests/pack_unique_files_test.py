@@ -165,7 +165,7 @@ class TestPackUniqueFilesValidator:
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(
-        self, mocker, monkeypatch, repo, caplog
+        self, mocker, monkeypatch, repo
     ):
         """
         Given

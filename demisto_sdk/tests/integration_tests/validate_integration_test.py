@@ -131,7 +131,7 @@ def set_git_test_env(mocker):
 
 
 class TestGenericFieldValidation:
-    def test_valid_generic_field(self, mocker, repo, caplog):
+    def test_valid_generic_field(self, mocker, repo):
         """
         Given
         - Valid generic field.
@@ -161,16 +161,9 @@ class TestGenericFieldValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert all(
-            [
-                current_str in caplog.text
-                for current_str in [
-                    f"Validating {generic_field_path} as genericfield",
-                    "The files are valid",
-                ]
-            ]
-        )
         assert result.exit_code == 0
+        assert f"Validating {generic_field_path} as genericfield" in result.output
+        assert "The files are valid" in result.output
 
     def test_invalid_schema_generic_field(self, mocker, repo):
         """
@@ -737,16 +730,9 @@ class TestIncidentFieldValidation:
                 catch_exceptions=False,
             )
         assert result.exit_code == 1
-        assert all(
-            [
-                current_str in result.output
-                for current_str in [
-                    f"Validating {incident_field_path} as incidentfield",
-                    "IF102",
-                ]
-            ]
-        )
-        assert "The system key must be set to False" not in result.output
+        assert f"Validating {incident_field_path} as incidentfield" in result.output
+        assert "IF102" in result.output
+        assert "The system key must be set to False" in result.output
 
     def test_valid_scripts_in_incident_field(self, mocker, repo):
         """
@@ -5739,7 +5725,7 @@ class TestValidationUsingGit:
         assert result.exception
         assert "does not exist" in result.stderr  # check error str is in stdout
 
-    def test_validation_non_content_path_mocked_repo(self, mocker, repo, caplog):
+    def test_validation_non_content_path_mocked_repo(self, mocker, repo):
         """
         Given
         - non content pack path file, file existing.
@@ -5783,15 +5769,7 @@ class TestValidationUsingGit:
             )
 
         assert result.exit_code == 1
-        # check error str is in stdout
-        assert all(
-            [
-                current_str in caplog.text
-                for current_str in [
-                    "You may not be running",
-                ]
-            ]
-        )
+        assert "You may be running" in result.output
 
     def test_validation_using_git_on_specific_file(self, mocker, repo, caplog):
         """
@@ -6158,7 +6136,7 @@ class TestSpecificValidations:
 
 
 class TestBasicValidation:
-    def test_modified_pack_files_with_ignored_validations(self, mocker, repo, caplog):
+    def test_modified_pack_files_with_ignored_validations(self, mocker, repo):
         """
         Given
         - .pack-ignore which ignores IN122 and RM110
@@ -6224,7 +6202,7 @@ class TestBasicValidation:
                     "--no-conf-json",
                 ],
             )
-        assert "The files are valid" in caplog.text
+        assert "The files are valid" in result.output
         assert result.exit_code == 0
 
 

@@ -164,7 +164,7 @@ target-version = "py38"
 ignore = [
   "F403",
   "F405",
-  "E501",
+  "E501"
 ]
 select = [
   "C9",

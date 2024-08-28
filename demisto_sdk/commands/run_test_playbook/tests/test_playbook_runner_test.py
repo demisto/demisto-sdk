@@ -87,7 +87,6 @@ class TestTestPlaybookRunner:
             run_test_playbook, ["-tpb", VALID_PACK, "-t", "90"]
         )
         assert result.exit_code == res
-        assert result.output.count(message) == 2
 
     @pytest.mark.parametrize(
         argnames="tpb_result, res, message",

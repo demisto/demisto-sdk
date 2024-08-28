@@ -4,8 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "demisto-sdk"
-author = ["demisto"]
-version = "1.31.9" # TODO check the autoupdate script still works
+version = "1.31.10"
 description = "\"A Python library for the Demisto SDK\""
 license = "MIT"
 readme = "README.md"

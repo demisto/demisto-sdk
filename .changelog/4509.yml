@@ -1,4 +1,0 @@
-changes:
-- description: The `--ignore` flag in the **validate** command no longer requires error codes to be listed under `ignorable_errors` in the config file.
-  type: feature
-pr_number: 4509

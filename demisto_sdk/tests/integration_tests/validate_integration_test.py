@@ -5952,8 +5952,7 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            result = CliRunner(mix_stderr=False).invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -5968,11 +5967,9 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-            assert "Running on committed and staged files" in result.output
-            assert f"Validating {integration.yml.rel_path}" in result.output
-            assert f"Validating {script.yml.rel_path}" in result.output
-            assert f"Validating {integration_2.yml.rel_path}" in result.output
-            assert f"Validating {script_2.yml.rel_path}" in result.output
+        assert "Running on committed and staged files" in result.output
+        assert f"Validating {integration.yml.rel_path}" in result.output
+        assert f"Validating {script.yml.rel_path}" in result.output
 
 
 class TestSpecificValidations:

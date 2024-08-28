@@ -1915,7 +1915,7 @@ def run_test_playbook(ctx, **kwargs):
 
     update_command_args_from_config_file("run-test-playbook", kwargs)
     test_playbook_runner = TestPlaybookRunner(**kwargs)
-    return test_playbook_runner.manage_and_run_test_playbooks()
+    ctx.exit(test_playbook_runner.manage_and_run_test_playbooks())
 
 
 # ====================== generate-outputs ====================== #

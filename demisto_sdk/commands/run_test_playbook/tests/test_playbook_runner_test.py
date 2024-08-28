@@ -91,10 +91,15 @@ class TestTestPlaybookRunner:
         )
 
     @pytest.mark.parametrize(
-        argnames="tpb_result, res, message",
-        argvalues=[("failed", 1, FAILED_MESSAGE), ("success", 0, SUCCESS_MESSAGE)],
+        argnames="tpb_result, expected_exit_code, message",
+        argvalues=[
+            ("failed", 1, FAILED_MESSAGE),
+            ("success", 0, SUCCESS_MESSAGE),
+        ],
     )
-    def test_run_repo_test_playbooks(self, mocker, tpb_result, res, message, capsys):
+    def test_run_repo_test_playbooks(
+        self, mocker, tpb_result: str, expected_exit_code: int, message: str
+    ):
         """
         Given:
             - run all repo test playbook with result as True or False
@@ -108,6 +113,7 @@ class TestTestPlaybookRunner:
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
             mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
             mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
+            mocker.patch.object(TestPlaybookRunner, "upload_tpb")
             mocker.patch.object(
                 TestPlaybookRunner,
                 "create_incident_with_test_playbook",
@@ -119,9 +125,9 @@ class TestTestPlaybookRunner:
                 return_value={"state": tpb_result},
             )
             result = CliRunner(mix_stderr=False).invoke(
-                run_test_playbook, ["--all", "-tpb", "", "-t", "90"]
+                run_test_playbook, ["--all", "-tpb", "", "-t", "5"]
             )
-            assert result.exit_code == res
+            assert result.exit_code == expected_exit_code
             assert result.output.count(message) == 6
 
     @pytest.mark.parametrize(

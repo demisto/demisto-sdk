@@ -51,20 +51,21 @@ class TestPlaybookRunner:
         Manages all ru-test-playbook command flows
         return The exit code of each flow
         """
-        status_code = SUCCESS_RETURN_CODE
         test_playbooks: list = []
 
         if not self.validate_tpb_path():
-            status_code = ERROR_RETURN_CODE
+            return ERROR_RETURN_CODE
 
         test_playbooks.extend(self.collect_all_tpb_files_paths())
+        return_code = SUCCESS_RETURN_CODE
 
         for tpb in test_playbooks:
             self.upload_tpb(tpb_file=tpb)
             test_playbook_id = self.get_test_playbook_id(tpb)
-            status_code = self.run_test_playbook_by_id(test_playbook_id)
+            if self.run_test_playbook_by_id(test_playbook_id) == ERROR_RETURN_CODE:
+                return_code = ERROR_RETURN_CODE
 
-        return status_code
+        return return_code
 
     def collect_all_tpb_files_paths(self):
         test_playbooks: list = []
@@ -89,21 +90,18 @@ class TestPlaybookRunner:
         Verifies that the input path configuration given by the user is correct
         :return: The verification result
         """
-        is_path_valid = True
         if not self.all_test_playbooks:
             if not self.test_playbook_path:
-                logger.info(
-                    "<red>Error: Missing option '-tpb' / '--test-playbook-path'.</red>"
-                )
-                is_path_valid = False
+                logger.error("<Missing option '-tpb' / '--test-playbook-path'.")
+                return False
 
             elif not Path(self.test_playbook_path).exists():
-                logger.info(
-                    f"<red>Error: Given input path: {self.test_playbook_path} does not exist</red>"
+                logger.error(
+                    f"Given input path: {self.test_playbook_path} does not exist"
                 )
-                is_path_valid = False
+                return False
 
-        return is_path_valid
+        return True
 
     def get_test_playbook_id(self, file_path):
         """

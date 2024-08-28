@@ -20,7 +20,8 @@ runs:
     uses: eifinger/setup-uv@v1
     with:
       enable-cache: true
-      github-token: ${{ secrets.GITHUB_TOKEN }}
+      # github-token: ${{ secrets.GITHUB_TOKEN }} # TODO consider using
+
 
   - run: uv install --python ${{ inputs.python-version }} -r pyproject.toml --all-extras
     shell: bash

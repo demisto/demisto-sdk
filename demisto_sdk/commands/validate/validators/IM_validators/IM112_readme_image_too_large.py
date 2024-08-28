@@ -14,21 +14,13 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Pack
 
 
-def is_image_size_valid(content_item: Path) -> bool:
-    doc_files_path: str = f"{content_item}/doc_files"
-    for image_name in os.listdir(doc_files_path):
-        image_path = Path(f"{doc_files_path}/{image_name}")
-        if os.path.isfile(image_path):
-            if os.path.getsize(image_path) > 2 * 1024 * 1024:
-                return False
-    return True
 
 
 class InvalidImageDimensionsValidator(BaseValidator[ContentTypes]):
     error_code = "IM112"
-    description = "Ensures that the image file is not larger than 2 MB."
-    rationale = "In order to avoid large packages."
-    error_message = "Image size is over 2 MB. Please reduce it or store it in demisto/content-assets repository."
+    description = "Ensures that the image file is not larger than 2 MB"
+    rationale = "Keep packs lightweight"
+    error_message = "Image: {} size is over 2 MB. Large files may be stored at the `demisto/content-assets` repository."
     related_field = "image"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.IMAGE]
@@ -43,5 +35,15 @@ class InvalidImageDimensionsValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not is_image_size_valid(content_item.path)
+            if not self.is_image_size_valid(content_item.path)
         ]
+
+    def is_image_size_valid(self, content_item: Path) -> bool:
+        doc_files_path: str = f"{content_item}/doc_files"
+        for image_path in Path(doc_files_path).iterdir():
+            if image_path.is_file():
+                if image_path.stat().st_size > 2 * 1024 * 1024:
+                    self.error_message.format(image_path)
+                    return False
+        return True
+

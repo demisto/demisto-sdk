@@ -1488,11 +1488,7 @@ class TestTheTestModelingRuleCommandMultipleRules:
 
 
 class TestTheTestModelingRuleCommandInteractive:
-    def test_no_testdata_file_exists(
-        self,
-        repo,
-        mocker,
-    ):
+    def test_no_testdata_file_exists(self, repo, monkeypatch, mocker, requests_mocker):
         """
         Given:
             - A modeling rule with no test data file.
@@ -1517,8 +1513,8 @@ class TestTheTestModelingRuleCommandInteractive:
         test_modeling_rule_cmd.registered_commands[0].name = "test"
 
         # so the logged output when running the command will be printed with a width of 120 characters
+        monkeypatch.setenv("COLUMNS", "1000")
 
-        runner = CliRunner()
         mocker.patch(
             "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
             return_value=None,
@@ -1549,7 +1545,7 @@ class TestTheTestModelingRuleCommandInteractive:
             mock_confirm.return_value = True
             mock_prompt.return_value = 2
             # Act
-            result = runner.invoke(
+            result = CliRunner().invoke(
                 test_modeling_rule_cmd,
                 [
                     modeling_rule_directory.as_posix(),

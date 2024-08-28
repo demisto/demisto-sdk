@@ -23,3 +23,4 @@ runs:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 
   - run: uv install --python ${{ inputs.python-version }} -r pyproject.toml --all-extras
+    shell: bash

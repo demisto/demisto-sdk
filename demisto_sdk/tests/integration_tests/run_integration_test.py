@@ -130,7 +130,7 @@ def test_json_to_outputs_flag_fail_no_prefix(
     ) in run_result.output
 
 
-@pytest.skip("CIAC-11650")
+@pytest.mark.skip("CIAC-11650")
 def test_incident_id_passed_to_run(mocker):
     """
     Given

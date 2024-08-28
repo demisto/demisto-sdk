@@ -3250,6 +3250,7 @@ def test_get_content_path_no_remote(mocker, caplog, monkeypatch):
         Validate that a warning is issued as (resulting from a raised exception).
     """
     from git import Repo  # noqa: TID251 # required for the test
+
     mocker.patch.object(Repo, "remote", side_effect=ValueError())
     mocker.patch(
         "demisto_sdk.commands.common.tools.is_external_repository", return_value=False

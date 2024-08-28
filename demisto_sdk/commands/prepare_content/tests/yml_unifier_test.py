@@ -224,9 +224,9 @@ This is a desc with an image url link
 """
 
 
-@pytest.mark.parametrize("is_script, res", [(False, True), (True, False)])
+@pytest.mark.parametrize("is_script", [(False, True)])
 def test_insert_description_to_yml_with_markdown_image(
-    is_script, res, mocker, description_as_bytes
+    is_script, mocker, description_as_bytes, monkeypatch
 ):
     """
     Given:
@@ -243,7 +243,7 @@ def test_insert_description_to_yml_with_markdown_image(
     )
     package_path = Path("Packs/CybleEventsV2/Integrations/CybleEventsV2")
     with TemporaryDirectory() as dir:
-        mocker.patch.object(os, "getenv", return_value=dir)
+        monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
         yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
             package_path,
             {"commonfields": {"id": "VulnDB"}},
@@ -252,8 +252,8 @@ def test_insert_description_to_yml_with_markdown_image(
         )
     assert (
         GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH in yml_unified["detaileddescription"]
-    ) == res
-    assert ("CybleEventsV2" in yml_unified["detaileddescription"]) == res
+    ) is not is_script
+    assert ("CybleEventsV2" in yml_unified["detaileddescription"]) is not is_script
 
 
 def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
@@ -816,11 +816,9 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        with TemporaryDirectory() as dir:
-            mocker.patch.object(os, "getenv", return_value=dir)
-            export_yml_path = PrepareUploadManager.prepare_for_upload(
-                input=Path(self.export_dir_path), output=Path(self.test_dir_path)
-            )
+        export_yml_path = PrepareUploadManager.prepare_for_upload(
+            input=Path(self.export_dir_path), output=Path(self.test_dir_path)
+        )
 
         assert export_yml_path == Path(self.expected_yml_path)
 

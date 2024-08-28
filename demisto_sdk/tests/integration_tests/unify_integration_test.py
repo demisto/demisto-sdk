@@ -189,17 +189,34 @@ class TestIntegrationScriptUnifier:
 
         with ChangeCWD(pack.repo_path):
             with TemporaryDirectory() as artifact_dir:
-                mocker.patch.object(os, "getenv", return_value=artifact_dir)
                 runner = CliRunner(mix_stderr=False)
                 if flag:
                     runner.invoke(
-                        main, [UNIFY_CMD, "-i", f"{integration.path}", "-c", "Test"]
+                        main,
+                        [
+                            UNIFY_CMD,
+                            "-i",
+                            f"{integration.path}",
+                            "-c",
+                            "Test",
+                            "-o",
+                            str(artifact_dir),
+                        ],
                     )
                 else:
-                    runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}"])
+                    runner.invoke(
+                        main,
+                        [
+                            UNIFY_CMD,
+                            "-i",
+                            f"{integration.path}",
+                            "-o",
+                            str(artifact_dir),
+                        ],
+                    )
 
                 with open(
-                    os.path.join(integration.path, "integration-dummy-integration.yml")
+                    os.path.join(artifact_dir, "integration-dummy-integration.yml")
                 ) as unified_yml:
                     unified_yml_data = yaml.load(unified_yml)
                     if flag:

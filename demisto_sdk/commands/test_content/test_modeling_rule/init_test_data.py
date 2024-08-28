@@ -179,7 +179,9 @@ def init_test_data(
         except Exception:
             with StringIO() as sio:
                 traceback.print_exc(file=sio)
-                logger.error(f"<red>{sio.getvalue()}</red>", extra={"markup": True})
+                logger.error(
+                    f"<red>{sio.getvalue()}</red>",
+                )
             errors = True
     if errors:
         raise typer.Exit(1)

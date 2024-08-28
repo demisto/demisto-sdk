@@ -276,7 +276,7 @@ def verify_results(
 
     if not results:
         logger.error(
-            f"<red>{SYNTAX_ERROR_IN_MODELING_RULE}</red>", extra={"markup": True}
+            f"<red>{SYNTAX_ERROR_IN_MODELING_RULE}</red>",
         )
         test_case = TestCase(
             f"Modeling rule - {modeling_rule.normalize_file_name()}",
@@ -300,7 +300,9 @@ def verify_results(
             classname="Modeling Rule Results",
         )
         test_case.result += [Failure(err)]
-        logger.error(f"<red>{err}</red>", extra={"markup": True})
+        logger.error(
+            f"<red>{err}</red>",
+        )
         return [test_case]
 
     test_cases = []
@@ -374,7 +376,9 @@ def verify_results_against_test_data(
                     f"before sanitization - received value:{received_value} received type: "
                     f"{get_type_pretty_name(received_value)}"
                 )
-                logger.debug(f"<cyan>{out}</cyan>", extra={"markup": True})
+                logger.debug(
+                    f"<cyan>{out}</cyan>",
+                )
                 result_test_case_system_out.append(out)
                 if (
                     received_value_sanitized == expected_value
@@ -412,10 +416,14 @@ def verify_results_against_test_data(
                 err = f"No mapping for key {expected_key} - skipping checking match"
                 result_test_case_system_out.append(err)
                 result_test_case_results.append(Skipped(err))  # type:ignore[arg-type]
-                logger.debug(f"<cyan>{err}</cyan>", extra={"markup": True})
+                logger.debug(
+                    f"<cyan>{err}</cyan>",
+                )
     else:
         err = f"No matching expected_values found for test_data_event_id={td_event_id} in test_data {test_data}"
-        logger.error(f"<red>{err}</red>", extra={"markup": True})
+        logger.error(
+            f"<red>{err}</red>",
+        )
         result_test_case_results.append(Failure(err))
     result_test_case.system_err = "\n".join(result_test_case_system_err)
     result_test_case.system_out = "\n".join(result_test_case_system_out)
@@ -532,7 +540,9 @@ def validate_schema_aligned_with_test_data(
                     event_val is None
                 ):  # if event_val is None, warn and continue looping.
                     info = f"{event_key=} is null on {event_log.test_data_event_id} event for {dataset=}, ignoring {event_key=}"
-                    logger.warning(f"<yellow>{info}</yellow>", extra={"markup": True})
+                    logger.warning(
+                        f"<yellow>{info}</yellow>",
+                    )
                     results.append(Skipped(info))
                     # add the event key to the mapping to validate there isn't another key with a different type
                     test_data_mappings[event_key] = None
@@ -590,12 +600,16 @@ def validate_schema_aligned_with_test_data(
                 f"The following fields {missing_test_data_keys} are in schema for dataset {dataset}, but not "
                 "in test-data, make sure to remove them from the schema or add them to test-data if necessary"
             )
-            logger.warning(f"<yellow>{skipped}</yellow>", extra={"markup": True})
+            logger.warning(
+                f"<yellow>{skipped}</yellow>",
+            )
             results.append(Skipped(skipped))
 
         if error_logs:
             for _log in error_logs:
-                logger.error(_log, extra={"markup": True})
+                logger.error(
+                    _log,
+                )
         else:
             logger.info(
                 f"<green>Schema type mappings = Testdata type mappings for dataset {dataset}</green>",
@@ -660,12 +674,16 @@ def check_dataset_exists(
         )
         test_case_results.append(Error(err))
         if print_errors:
-            logger.error(f"<red>{err}</red>", extra={"markup": True})
+            logger.error(
+                f"<red>{err}</red>",
+            )
     if not dataset_exist:
         err = f"<red>Dataset {dataset} does not exist</red>"
         test_case_results.append(Error(err))
         if print_errors:
-            logger.error(f"<red>{err}</red>", extra={"markup": True})
+            logger.error(
+                f"<red>{err}</red>",
+            )
 
     duration = duration_since_start_time(start_time)
     logger.info(f"Processing Dataset {dataset} finished after {duration:.2f} seconds")
@@ -722,7 +740,9 @@ def push_test_data_to_tenant(
                 f"Failed pushing test data to tenant for dataset {rule.dataset}"
             )
             system_errors.append(system_err)
-            logger.error(f"<red>{system_err}</red>", extra={"markup": True})
+            logger.error(
+                f"<red>{system_err}</red>",
+            )
 
     if system_errors:
         logger.error(
@@ -733,7 +753,9 @@ def push_test_data_to_tenant(
     else:
         system_out = f"Test data pushed successfully for Modeling rule:{get_relative_path_to_content(mr.path)}"
         push_test_data_test_case.system_out = system_out
-        logger.info(f"<green>{system_out}</green>", extra={"markup": True})
+        logger.info(
+            f"<green>{system_out}</green>",
+        )
     push_test_data_test_case.time = duration_since_start_time(
         push_test_data_test_case_start_time
     )
@@ -755,7 +777,7 @@ def verify_pack_exists_on_tenant(
         interactive (bool): Whether command is being run in interactive mode.
     """
     logger.info(
-        "<cyan>Verifying pack installed on tenant</cyan>", extra={"markup": True}
+        "<cyan>Verifying pack installed on tenant</cyan>",
     )
     containing_pack = get_containing_pack(mr)
     containing_pack_id = containing_pack.id
@@ -764,13 +786,9 @@ def verify_pack_exists_on_tenant(
         (pack for pack in installed_packs if containing_pack_id == pack.get("id")),
         None,
     ):
-        logger.debug(
-            f"<cyan>Found pack on tenant:\n{found_pack}</cyan>", extra={"markup": True}
-        )
+        logger.debug(f"<cyan>Found pack on tenant:\n{found_pack}</cyan>")
     else:
-        logger.error(
-            f"<red>Pack {containing_pack_id} was not found on tenant</red>",
-        )
+        logger.error(f"<red>Pack {containing_pack_id} was not found on tenant</red>")
 
         upload_result = 0
         if interactive:
@@ -778,7 +796,7 @@ def verify_pack_exists_on_tenant(
                 f"Would you like to upload {containing_pack_id} to the tenant?"
             ):
                 logger.info(
-                    f'<cyan><underline>Upload "{containing_pack_id}"</underline></cyan>',
+                    f'<cyan><underline>Upload "{containing_pack_id}"</underline></cyan>'
                 )
                 upload_kwargs = {
                     "zip": True,
@@ -793,7 +811,7 @@ def verify_pack_exists_on_tenant(
                 upload_result = upload_cmd(**upload_kwargs)
                 if upload_result != 0:
                     logger.error(
-                        f"<red>Failed to upload pack {containing_pack_id} to tenant</red>",
+                        f"Failed to upload pack {containing_pack_id} to tenant"
                     )
                 # wait for pack to finish installing
                 sleep(1)
@@ -801,7 +819,7 @@ def verify_pack_exists_on_tenant(
                 upload_result = 1
         if not interactive or upload_result != 0:
             logger.error(
-                "<red>Pack does not exist on the tenant. Please install or upload the pack and try again</red>",
+                "Pack does not exist on the tenant. Please install or upload the pack and try again"
             )
             logger.info(
                 f"\ndemisto-sdk upload -z -x -i {containing_pack.path}\ndemisto-sdk modeling-rules test {mr.path.parent}"
@@ -1046,7 +1064,9 @@ def validate_modeling_rule(
         if not modeling_rule_is_compatible:
             # Modeling rule version is not compatible with the demisto version of the tenant, skipping
             skipped = f"XSIAM Tenant's Demisto version doesn't match Modeling Rule {modeling_rule} version, skipping"
-            logger.warning(f"<yellow>{skipped}</yellow>", extra={"markup": True})
+            logger.warning(
+                f"<yellow>{skipped}</yellow>",
+            )
             test_case = TestCase(
                 "Modeling Rule not compatible with XSIAM tenant's demisto version",
                 classname=f"Modeling Rule {modeling_rule_file_name}",
@@ -1087,9 +1107,7 @@ def validate_modeling_rule(
                     schema = get_file(schema_path)
                 except json.JSONDecodeError as ex:
                     err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
-                    logger.error(
-                        f"<red>{err}</red>",
-                    )
+                    logger.error(err)
                     schema_test_case.system_err = str(ex)
                     return add_result_to_test_case(
                         err, schema_test_case, modeling_rule_test_suite
@@ -1126,7 +1144,9 @@ def validate_modeling_rule(
                     f"Skipping the validation to check that the schema {get_relative_path_to_content(schema_path)} "
                     "is aligned with TestData file."
                 )
-                logger.info(f"<green>{skipped}</green>", extra={"markup": True})
+                logger.info(
+                    f"<green>{skipped}</green>",
+                )
                 schema_test_case.result += [Skipped(skipped)]  # type:ignore[arg-type]
                 modeling_rule_test_suite.add_testcase(schema_test_case)
 
@@ -1157,7 +1177,7 @@ def validate_modeling_rule(
                     '<cyan>The command flag "--no-push" was passed - skipping pushing of test data</cyan>',
                 )
             logger.info(
-                "<cyan>Validating expected_values...</cyan>", extra={"markup": True}
+                "<cyan>Validating expected_values...</cyan>",
             )
             validate_expected_values_test_cases = validate_expected_values(
                 xsiam_client, retrying_caller, modeling_rule, test_data
@@ -1204,7 +1224,9 @@ def validate_modeling_rule(
                         '<red>Failed to load the "init-test-data" typer application to interactively create a '
                         "testdata file.</red>"
                     )
-                    logger.error(err, extra={"markup": True})
+                    logger.error(
+                        err,
+                    )
                     return False, None
 
                 # the init-test-data typer application should only have the one command
@@ -1948,13 +1970,13 @@ def test_modeling_rule(
 
     duration = duration_since_start_time(start_time)
     if build_context.tests_data_keeper.errors:
-        logger.info(
-            f"<red>Test Modeling Rules: Failed, took:{duration} seconds</red>",
+        logger.error(
+            f"Test Modeling Rules: Failed, took:{duration} seconds",
         )
         raise typer.Exit(1)
 
-    logger.info(
-        f"<green>Test Modeling Rules: Passed, took:{duration} seconds</green>",
+    logger.success(
+        f"Test Modeling Rules: Passed, took:{duration} seconds",
     )
 
 

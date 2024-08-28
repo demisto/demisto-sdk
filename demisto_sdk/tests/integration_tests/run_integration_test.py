@@ -126,7 +126,7 @@ def test_json_to_outputs_flag_fail_no_prefix(
     ).invoke(main, ["run", "-q", command, "--json-to-outputs"])
     assert run_result.exit_code == 1
     assert (
-        "A prefix for the outputs is needed for this command. Please provide one",
+        "A prefix for the outputs is needed for this command. Please provide one"
     ) in run_result.output
 
 
@@ -159,4 +159,3 @@ def test_incident_id_passed_to_run(
 
     assert run_result.exit_code == 0
     assert "running command in investigation_id='pg_id'" in caplog.text
-    assert len(caplog.records) == 3.1

@@ -1,4 +1,3 @@
-import os
 import shutil
 import zipfile
 from builtins import len
@@ -952,6 +951,7 @@ class TestZippedPackUpload:
         mocker,
         marketplace: MarketplaceVersions,
         expected_files: Set[str],
+        monkeypatch,
     ):
         """
         Given:
@@ -971,7 +971,7 @@ class TestZippedPackUpload:
         mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with TemporaryDirectory() as dir:
-            mocker.patch.object(os, "getenv", return_value=dir)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
             click.Context(command=upload).invoke(
                 upload,
                 marketplace=marketplace,
@@ -1119,7 +1119,7 @@ class TestItemDetacher:
         # Tests that the function successfully zips and dumps multiple valid pack paths.
 
 
-def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
+def test_zip_multiple_packs(tmp_path: Path, integration, mocker, monkeypatch):
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 
@@ -1146,7 +1146,7 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
     with TemporaryDirectory() as dir:
-        mocker.patch.object(os, "getenv", return_value=dir)
+        monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
         zip_multiple_packs(
             [pack0.path, pack1.path, zipped_pack_path],
             MarketplaceVersions.XSOAR,

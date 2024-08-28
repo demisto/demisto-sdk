@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.tools import get_all_content_objects_paths_in_dir
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -81,7 +82,7 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR103"
     description = "Validates that there is no usage of unknown content items"
     rationale = "Content items should only use other content items that exist in the repository."
-    error_message = "Content item '{0}' is using content items: '{1}' which cannot be found in the repository."
+    error_message = "Content item {0} is using content items: {1} which cannot be found in the repository."
     is_auto_fixable = False
 
     def obtain_invalid_content_items_using_graph(
@@ -89,7 +90,9 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
     ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         file_path_to_validate = (
-            [content_item.path for content_item in content_items]
+            get_all_content_objects_paths_in_dir(
+            content_item.path._str for content_item in content_items
+        )
             if not validate_all_files
             else []
         )
@@ -107,10 +110,9 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
                     validator=self,
                     message=self.error_message.format(
                         content_item.name,
-                        ", ".join(f'"{name}"' for name in names_of_unknown_items),
+                        ", ".join(f"'{name}'" for name in names_of_unknown_items),
                     ),
                     content_object=content_item,
                 )
             )
-        print("Yheaaaaa.....")
         return results

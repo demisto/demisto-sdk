@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List, Union
@@ -27,7 +26,9 @@ from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
-from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
+from demisto_sdk.commands.content_graph.objects.generic_definition import (
+    GenericDefinition,
+)
 from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
@@ -38,17 +39,56 @@ from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
-from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content import IsUsingUnknownContentValidator
+from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content import (
+    IsUsingUnknownContentValidator,
+)
 
-ContentTypes = Union[Integration, Script, Playbook, Pack, Dashboard, Classifier, Job, Layout, Mapper, Wizard, CorrelationRule, IncidentField, IncidentType, IndicatorField, IndicatorType, LayoutRule, Layout, ModelingRule, ParsingRule, Report, TestPlaybook, Trigger, Widget, GenericDefinition, GenericField, GenericModule, GenericType, XSIAMDashboard, XSIAMReport, CaseField, CaseLayout, CaseLayoutRule]
+ContentTypes = Union[
+    Integration,
+    Script,
+    Playbook,
+    Pack,
+    Dashboard,
+    Classifier,
+    Job,
+    Layout,
+    Mapper,
+    Wizard,
+    CorrelationRule,
+    IncidentField,
+    IncidentType,
+    IndicatorField,
+    IndicatorType,
+    LayoutRule,
+    Layout,
+    ModelingRule,
+    ParsingRule,
+    Report,
+    TestPlaybook,
+    Trigger,
+    Widget,
+    GenericDefinition,
+    GenericField,
+    GenericModule,
+    GenericType,
+    XSIAMDashboard,
+    XSIAMReport,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
+]
 
 
-class IsUsingUnknownContentValidatorListFiles(IsUsingUnknownContentValidator, BaseValidator[ContentTypes]):
+class IsUsingUnknownContentValidatorListFiles(
+    IsUsingUnknownContentValidator, BaseValidator[ContentTypes]
+):
     expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
 
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return self.obtain_invalid_content_items_using_graph(content_items, False)

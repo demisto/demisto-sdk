@@ -1,10 +1,8 @@
-
 from __future__ import annotations
 
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -43,32 +41,76 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Script, Playbook, Pack, Dashboard, Classifier, Job, Layout, Mapper, Wizard, CorrelationRule, IncidentField, IncidentType, IndicatorField, IndicatorType, LayoutRule, Layout, ModelingRule, ParsingRule, Report, TestPlaybook, Trigger, Widget, GenericDefinition, GenericField, GenericModule, GenericType, XSIAMDashboard, XSIAMReport, CaseField, CaseLayout, CaseLayoutRule]
+ContentTypes = Union[
+    Integration,
+    Script,
+    Playbook,
+    Pack,
+    Dashboard,
+    Classifier,
+    Job,
+    Layout,
+    Mapper,
+    Wizard,
+    CorrelationRule,
+    IncidentField,
+    IncidentType,
+    IndicatorField,
+    IndicatorType,
+    LayoutRule,
+    Layout,
+    ModelingRule,
+    ParsingRule,
+    Report,
+    TestPlaybook,
+    Trigger,
+    Widget,
+    GenericDefinition,
+    GenericField,
+    GenericModule,
+    GenericType,
+    XSIAMDashboard,
+    XSIAMReport,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
+]
 
 
-class IsUsingUnknownContentValidator(BaseValidator[ContentTypes]):
+class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR103"
     description = "Validates that there is no usage of unknown content items"
     rationale = "Content items should only use other content items that exist in the repository."
     error_message = "Content item '{0}' is using content items: '{1}' which cannot be found in the repository."
-    related_field = ""
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
-
-    def obtain_invalid_content_items_using_graph(self, content_items: Iterable[ContentTypes], validate_all_files: bool) -> List[ValidationResult]:
+    def obtain_invalid_content_items_using_graph(
+        self, content_items: Iterable[ContentTypes], validate_all_files: bool
+    ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
-        for content_item in content_items:
-            file_path_to_validate =[content_item.path] if not validate_all_files else []
-            uses_unknown_content= self.graph.get_unknown_content_uses(file_paths = file_path_to_validate, raises_error=True, include_optional=True)
-            if uses_unknown_content:
-                    results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message.format(content_item.name, ', '.join(unknown_content.name for unknown_content in uses_unknown_content)),
-                            content_object=content_item,
-                        )
-                    )
+        file_path_to_validate = (
+            [content_item.path for content_item in content_items]
+            if not validate_all_files
+            else []
+        )
+        uses_unknown_content = self.graph.get_unknown_content_uses(
+            file_paths=file_path_to_validate, raises_error=True, include_optional=True
+        )
+        for content_item in uses_unknown_content:
+            names_of_unknown_items = [
+                relationship.content_item_to.object_id
+                or relationship.content_item_to.name
+                for relationship in content_item.uses
+            ]
+            results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        content_item.name,
+                        ", ".join(f'"{name}"' for name in names_of_unknown_items),
+                    ),
+                    content_object=content_item,
+                )
+            )
 
         return results
-

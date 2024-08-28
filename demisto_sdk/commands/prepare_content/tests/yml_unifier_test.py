@@ -863,6 +863,7 @@ class TestMergeScriptPackageToYMLIntegration:
         )
         with TemporaryDirectory() as artifact_dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+            monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
             unified_yml = PrepareUploadManager.prepare_for_upload(
                 input=Path(self.export_dir_path),
                 output=Path(self.test_dir_path),
@@ -957,6 +958,7 @@ class TestMergeScriptPackageToYMLIntegration:
         )
         with TemporaryDirectory() as artifact_dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+            monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
             unified_yml = PrepareUploadManager.prepare_for_upload(
                 input=Path(self.export_dir_path),
                 output=Path(self.test_dir_path),
@@ -1001,6 +1003,7 @@ class TestMergeScriptPackageToYMLIntegration:
         )
         with TemporaryDirectory() as artifact_dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+            monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
             export_yml_path = PrepareUploadManager.prepare_for_upload(
                 Path(self.export_dir_path), output=Path(self.test_dir_path)
             )
@@ -1048,6 +1051,7 @@ final test: hi
         )
         with TemporaryDirectory() as artifact_dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+            monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
             export_yml_path = PrepareUploadManager.prepare_for_upload(
                 Path(self.export_dir_path), output=Path(self.test_dir_path)
             )
@@ -1083,6 +1087,7 @@ final test: hi
         )
         with TemporaryDirectory() as artifact_dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+            monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
             export_yml_path = PrepareUploadManager.prepare_for_upload(
                 Path(input_path_integration)
             )

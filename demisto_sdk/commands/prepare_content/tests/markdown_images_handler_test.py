@@ -91,6 +91,7 @@ def test_replace_markdown_urls(mocker, monkeypatch):
     )
     with TemporaryDirectory() as artifact_dir:
         monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+        monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
         assert (
             markdown_images_handler.replace_markdown_urls_and_update_markdown_images(
                 Path("fake_path"),
@@ -194,6 +195,7 @@ def test_dump_same_pack_images_in_desc_and_readme(
     excepted_res[pack_name].update(deepcopy(return_value2[pack_name]))
     with TemporaryDirectory() as artifact_dir:
         monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+        monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
         init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
         update_markdown_images_file_links(
             return_value1, pack_name, ImagesFolderNames.README_IMAGES
@@ -228,6 +230,7 @@ def test_dump_pack_readme(monkeypatch, image_data_one, image_data_two):
     excepted_res.update(deepcopy(return_value2))
     with TemporaryDirectory() as artifact_dir:
         monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+        monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
         init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
         update_markdown_images_file_links(
             return_value1, "PrismaCloudCompute", ImagesFolderNames.README_IMAGES
@@ -264,6 +267,7 @@ def test_dump_more_than_one_description_file_one_empty(monkeypatch, image_data_o
     )
     with TemporaryDirectory() as artifact_dir:
         monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+        monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
         init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
         update_markdown_images_file_links(
             return_value1, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
@@ -276,7 +280,7 @@ def test_dump_more_than_one_description_file_one_empty(monkeypatch, image_data_o
 
 
 def test_dump_more_than_one_description_file(
-    mocker, image_data_one, image_data_two, monkeypatch
+    image_data_one, image_data_two, monkeypatch
 ):
     pack_name = "PrismaCloudCompute"
     return_value1 = {
@@ -304,6 +308,7 @@ def test_dump_more_than_one_description_file(
     )
     with TemporaryDirectory() as artifact_dir:
         monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+        monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
         init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
         update_markdown_images_file_links(
             return_value1, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES

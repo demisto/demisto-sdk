@@ -273,6 +273,7 @@ class TestIntegrationScriptUnifier:
         with ChangeCWD(pack.repo_path):
             with TemporaryDirectory() as artifact_dir:
                 monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+                monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
                 runner = CliRunner(mix_stderr=False)
                 runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}", "-ini"])
 

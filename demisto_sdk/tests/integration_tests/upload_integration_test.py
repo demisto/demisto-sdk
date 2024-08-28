@@ -243,6 +243,7 @@ def test_zipped_pack_upload_positive(
     with ChangeCWD(pack.repo_path):
         with TemporaryDirectory() as artifact_dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+            monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
             result = runner.invoke(
                 main,
                 [

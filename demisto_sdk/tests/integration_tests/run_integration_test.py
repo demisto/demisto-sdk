@@ -130,7 +130,7 @@ def test_json_to_outputs_flag_fail_no_prefix(
     ) in run_result.output
 
 
-def test_incident_id_passed_to_run(mocker):
+def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variables):
     """
     Given
     - kl-get-components command and --incident-id argument.
@@ -150,7 +150,17 @@ def test_incident_id_passed_to_run(mocker):
     command = "!kl-get-records"
     result = CliRunner(
         mix_stderr=False,
-    ).invoke(main, ["run", "-q", command, "--incident-id", "pg_id"])
-
+    ).invoke(
+        main,
+        [
+            "run",
+            "-q",
+            command,
+            "--incident-id",
+            "pg_id",
+            "--console-log-threshold",
+            "DEBUG",
+        ],
+    )
     assert result.exit_code == 0
     assert "running command in investigation_id='pg_id'" in result.output

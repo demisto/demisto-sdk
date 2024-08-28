@@ -3240,7 +3240,7 @@ def test_get_content_path(input_path, expected_output):
     assert tools.get_content_path(input_path) == expected_output
 
 
-def test_get_content_path_no_remote(mocker, caplog):
+def test_get_content_path_no_remote(mocker, caplog, monkeypatch):
     """
     Given:
         - A path to a file or directory in the content repo, with no remote
@@ -3249,17 +3249,14 @@ def test_get_content_path_no_remote(mocker, caplog):
     Then:
         Validate that a warning is issued as (resulting from a raised exception).
     """
-    from git import Repo  # noqa: TID251
-
-    def raise_value_exception(name):
-        raise ValueError()
-
-    mocker.patch.object(Repo, "remote", side_effect=raise_value_exception)
+    from git import Repo  # noqa: TID251 # required for the test
+    mocker.patch.object(Repo, "remote", side_effect=lambda: raise ValueError)
     mocker.patch(
         "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
     )
+    monkeypatch.setenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING", "")
     tools.get_content_path(Path("/User/username/test"))
-    assert "Please run demisto-sdk in content repository!" in caplog.text
+    assert "run demisto-sdk in a content repository" in caplog.text
 
 
 @pytest.mark.parametrize(

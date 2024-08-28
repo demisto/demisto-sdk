@@ -5970,6 +5970,8 @@ class TestValidationUsingGit:
         assert "Running on committed and staged files" in result.output
         assert f"Validating {integration.yml.rel_path}" in result.output
         assert f"Validating {script.yml.rel_path}" in result.output
+        assert f"Validating {integration_2.yml.rel_path}" not in result.output
+        assert f"Validating {script_2.yml.rel_path}" not in result.output
 
 
 class TestSpecificValidations:

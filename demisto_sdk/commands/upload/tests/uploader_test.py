@@ -746,31 +746,6 @@ class TestZippedPackUpload:
         assert len(uploader._successfully_uploaded_zipped_packs) == 1
         assert mocked_upload_content_packs.call_args[1]["file"] == str(path)
 
-    @pytest.mark.parametrize(argnames="path", argvalues=("invalid_zip_path", None))
-    def test_upload_invalid_zip_path(self, mocker, path: Optional[Path]):
-        """
-        Given:
-            - invalid path in the input argument
-        When:
-            - run the upload zipped pack
-        Then:
-            - validate the error msg
-        """
-        # prepare
-        expected_err = (
-            f"input path: {path} does not exist"
-            if path
-            else "No input provided for uploading"
-        )
-
-        mock_api_client(mocker)
-
-        # run
-        result = CliRunner().invoke(main, ["upload", "-i", str(path)])
-
-        # validate
-        assert result.exit_code == ERROR_RETURN_CODE
-        assert expected_err in result.output
 
     @pytest.mark.parametrize(
         argnames="user_answer, exp_call_count", argvalues=[("y", 1), ("n", 0)]

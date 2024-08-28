@@ -2019,8 +2019,7 @@ class TestClassifierValidation:
 
         classifier = pack.create_classifier("new_classifier", new_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            result = CliRunner(mix_stderr=False).invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -2031,18 +2030,16 @@ class TestClassifierValidation:
                 ],
                 catch_exceptions=False,
             )
+        assert result.exit_code == 1
         assert all(
             [
                 current_str in result.output
                 for current_str in [
                     f"Validating {classifier.path} as classifier",
+                    "fromVersion field in new classifiers needs to be higher or equal to 6.0.0",
                 ]
             ]
         )
-        assert (
-            "fromVersion field in new classifiers needs to be higher or equal to 6.0.0",
-        ) in result.output
-        assert result.exit_code == 1
 
     def test_invalid_to_version_in_new_classifiers(self, mocker, repo):
         """
@@ -2740,8 +2737,7 @@ class TestDashboardValidation:
         dashboard_copy["version"] = 1
         dashboard = pack.create_dashboard("dashboard", dashboard_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            result = CliRunner(mix_stderr=False).invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -2752,19 +2748,12 @@ class TestDashboardValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert all(
-            [
-                current_str in result.output
-                for current_str in [
-                    f"Validating {dashboard.path} as dashboard",
-                    "BA100",
-                ]
-            ]
-        )
-        assert (
-            "The version for our files should always be -1, please update the file.",
-        ) in result.output
         assert result.exit_code == 1
+        assert f"Validating {dashboard.path} as dashboard" in result.output
+        assert "BA100" in result.output
+        assert (
+            "The version for our files should always be -1, please update the file."
+        ) in result.output
 
 
 class TestConnectionValidation:
@@ -5130,7 +5119,7 @@ class TestAuthorImageValidation:
         assert f"Validating {pack.author_image.path} as author_image" in result.output
         assert result.exit_code == 0
 
-    def test_author_image_invalid(self, repo, mocker, caplog):
+    def test_author_image_invalid(self, repo, mocker):
         """
         Given
         - An empty author image.
@@ -5267,7 +5256,7 @@ class TestAllFilesValidator:
         )
         assert result.exit_code == 0
 
-    def test_not_all_files_valid(self, mocker, repo, caplog):
+    def test_not_all_files_valid(self, mocker, repo):
         """
         Given
         - An invalid repo.
@@ -5309,8 +5298,7 @@ class TestAllFilesValidator:
         mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            result = CliRunner(mix_stderr=False).invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -5323,9 +5311,9 @@ class TestAllFilesValidator:
                 ],
                 catch_exceptions=False,
             )
-
+        assert result.exit_code == 1
         assert all(
-            current_str in caplog.text
+            current_str in result.output
             for current_str in [
                 "Validating all files",
                 "Validating Packs/PackName1 unique pack files",
@@ -5338,17 +5326,10 @@ class TestAllFilesValidator:
                 "IF101",
                 "SC100",
                 "RM111",
-            ]
-        )
-        assert all(
-            current_str in caplog.text
-            for current_str in [
                 "The content key must be set to True.",
                 "The name of this v2 script is incorrect",
             ]
         )
-
-        assert result.exit_code == 1
 
 
 class TestValidationUsingGit:
@@ -5454,7 +5435,7 @@ class TestValidationUsingGit:
         )
         assert result.exit_code == 0
 
-    def test_failing_validation_using_git(self, mocker, repo, caplog):
+    def test_failing_validation_using_git(self, mocker, repo):
         """
         Given
         - An invalid repo.
@@ -5526,7 +5507,7 @@ class TestValidationUsingGit:
             )
 
         assert all(
-            current_str in caplog.text
+            current_str in result.output
             for current_str in [
                 "Running validation on branch",
                 "Running validation on modified files",
@@ -5543,7 +5524,7 @@ class TestValidationUsingGit:
             ]
         )
         assert all(
-            err_msg in caplog.text
+            err_msg in result.output
             for err_msg in [
                 "The name of this v2 script is incorrect",
                 "The content key must be set to True.",
@@ -5551,7 +5532,7 @@ class TestValidationUsingGit:
         )
         assert result.exit_code == 1
 
-    def test_validation_using_git_without_pack_dependencies(self, mocker, repo, caplog):
+    def test_validation_using_git_without_pack_dependencies(self, mocker, repo):
         """
         Given
         - An invalid repo.
@@ -5612,7 +5593,7 @@ class TestValidationUsingGit:
             )
         assert all(
             [
-                current_str in caplog.text
+                current_str in result.output
                 for current_str in [
                     "Running validation on branch",
                     "Running validation on modified files",
@@ -5622,10 +5603,10 @@ class TestValidationUsingGit:
                 ]
             ]
         )
-        assert "Running pack dependencies validation on" not in caplog.text
+        assert "Running pack dependencies validation on" not in result.output
         assert result.exit_code == 1
 
-    def test_validation_using_git_with_pack_dependencies(self, mocker, repo, caplog):
+    def test_validation_using_git_with_pack_dependencies(self, mocker, repo):
         """
         Given
         - An invalid repo.
@@ -5687,7 +5668,7 @@ class TestValidationUsingGit:
             )
         assert all(
             [
-                current_str in caplog.text
+                current_str in result.output
                 for current_str in [
                     "Running pack dependencies validation on",
                 ]
@@ -5771,7 +5752,7 @@ class TestValidationUsingGit:
         assert result.exit_code == 1
         assert "You may be running" in result.output
 
-    def test_validation_using_git_on_specific_file(self, mocker, repo, caplog):
+    def test_validation_using_git_on_specific_file(self, mocker, repo):
         """
         Given
         - A repo with a pack with a modified integration and script.
@@ -5912,7 +5893,7 @@ class TestValidationUsingGit:
         assert f"Validating {integration.yml.rel_path}" in result.output
         assert f"Validating {script.yml.rel_path}" not in result.output
 
-    def test_validation_using_git_on_specific_pack(self, mocker, repo, caplog):
+    def test_validation_using_git_on_specific_pack(self, mocker, repo):
         """
         Given
         - A repo with two packs.
@@ -5987,15 +5968,15 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-            assert "Running on committed and staged files" in caplog.text
-            assert f"Validating {integration.yml.rel_path}" in caplog.text
-            assert f"Validating {script.yml.rel_path}" in caplog.text
+            assert "Running on committed and staged files" in result.output
+            assert f"Validating {integration.yml.rel_path}" in result.output
+            assert f"Validating {script.yml.rel_path}" in result.output
             assert f"Validating {integration_2.yml.rel_path}" in result.output
             assert f"Validating {script_2.yml.rel_path}" in result.output
 
 
 class TestSpecificValidations:
-    def test_validate_with_different_specific_validation(self, mocker, repo, caplog):
+    def test_validate_with_different_specific_validation(self, mocker, repo):
         """
         Given
         - an invalid Reputation - negative integer in expiration field.
@@ -6032,7 +6013,7 @@ class TestSpecificValidations:
             )
         assert all(
             [
-                current_str in caplog.text
+                current_str in result.output
                 for current_str in [
                     f"Validating {reputation.path} as reputation",
                     "The files are valid",
@@ -6041,7 +6022,7 @@ class TestSpecificValidations:
         )
         assert result.exit_code == 0
 
-    def test_validate_with_flag_specific_validation(self, caplog, mocker, repo):
+    def test_validate_with_flag_specific_validation(self, mocker, repo):
         """
         Given
         - an invalid Reputation - negative integer in expiration field and a 'details' that does not match its id.
@@ -6077,7 +6058,7 @@ class TestSpecificValidations:
             )
         assert all(
             [
-                current_str in caplog.text
+                current_str in result.output
                 for current_str in [
                     f"Validating {reputation.path} as reputation",
                     "RP101",
@@ -6088,7 +6069,7 @@ class TestSpecificValidations:
         assert result.exit_code == 1
 
     def test_validate_with_flag_specific_validation_entire_code_section(
-        self, mocker, repo, caplog
+        self, mocker, repo
     ):
         """
         Given

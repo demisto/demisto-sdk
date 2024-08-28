@@ -83,10 +83,12 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        result = CliRunner(mix_stderr=False).invoke(
-            run_test_playbook, ["-tpb", VALID_PACK, "-t", "90"]
+        assert (
+            click.Context(command=run_test_playbook).invoke(
+                run_test_playbook, test_playbook_path=TEST_PLAYBOOK
+            )
+            == res
         )
-        assert result.exit_code == res
 
     @pytest.mark.parametrize(
         argnames="tpb_result, res, message",

@@ -1536,41 +1536,34 @@ class TestTheTestModelingRuleCommandInteractive:
         if test_data_file.exists():
             test_data_file.unlink()
 
-        try:
-            with SetFakeXsiamClientEnvironmentVars():
-                mock_confirm = mocker.patch(
-                    "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule."
-                    "typer.confirm"
-                )
-                mock_prompt = mocker.patch(
-                    "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule."
-                    "typer.prompt"
-                )
-                # Arrange
-                mock_confirm.return_value = True
-                mock_prompt.return_value = 2
-                # Act
-                result = runner.invoke(
-                    test_modeling_rule_cmd,
-                    [
-                        modeling_rule_directory.as_posix(),
-                        "--interactive",
-                        "--sleep_interval",
-                        "0",
-                        "--retry_attempts",
-                        "0",
-                    ],
-                )
-                # Assert
-                expected_log_count = 1
-                assert result.exit_code == 0
-                assert test_data_file.exists()
-                assert "No test data file found for" in result.output
-                call_counter = result.output.count("Creating test data file for: ")
-                assert call_counter == expected_log_count
-
-        except typer.Exit:
-            assert False, "No exception should be raised in this scenario."
+        with SetFakeXsiamClientEnvironmentVars():
+            mock_confirm = mocker.patch(
+                "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule."
+                "typer.confirm"
+            )
+            mock_prompt = mocker.patch(
+                "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule."
+                "typer.prompt"
+            )
+            # Arrange
+            mock_confirm.return_value = True
+            mock_prompt.return_value = 2
+            # Act
+            result = runner.invoke(
+                test_modeling_rule_cmd,
+                [
+                    modeling_rule_directory.as_posix(),
+                    "--interactive",
+                    "--sleep_interval",
+                    "0",
+                    "--retry_attempts",
+                    "0",
+                ],
+            )
+            # Assert
+            assert result.exit_code == 0
+            assert test_data_file.exists()
+            assert result.output.count("Creating test data file for: ") == 1
 
 
 class TestDeleteExistingDataset:

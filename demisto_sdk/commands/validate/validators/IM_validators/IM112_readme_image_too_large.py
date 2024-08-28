@@ -27,7 +27,7 @@ def is_image_size_valid(content_item: Path) -> bool:
 class InvalidImageDimensionsValidator(BaseValidator[ContentTypes]):
     error_code = "IM112"
     description = "Ensures that the image file is not larger than 2 MB."
-    rationale = "The image must be under 2 MB to avoid a large pack."
+    rationale = "In order to avoid large packages."
     error_message = "Image size is over 2 MB. Please reduce it or store it in demisto/content-assets repository."
     related_field = "image"
     is_auto_fixable = False

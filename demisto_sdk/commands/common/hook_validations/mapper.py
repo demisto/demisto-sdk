@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_all_incident_and_indicator_fields_from_id_set,
     get_invalid_incident_fields_from_mapper,

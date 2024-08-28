@@ -1,4 +1,4 @@
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 import json
 
 

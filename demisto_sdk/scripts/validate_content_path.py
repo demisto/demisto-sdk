@@ -49,7 +49,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
-from demisto_sdk.commands.common.loguru_logger import logger, logging_setup
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.content_graph.common import ContentType
 
 ZERO_DEPTH_FILES = frozenset(

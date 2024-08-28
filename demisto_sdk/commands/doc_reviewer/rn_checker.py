@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SAAS_SUFFIX_TAG,
     XSOAR_SUFFIX_TAG,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 
 
 def print_template_examples():

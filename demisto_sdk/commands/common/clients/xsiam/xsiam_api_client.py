@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import
 )
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 
 json = DEFAULT_JSON_HANDLER
 

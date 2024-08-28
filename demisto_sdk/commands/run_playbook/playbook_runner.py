@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_BASE_URL,
     InvestigationPlaybookState,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 
 
 class PlaybookRunner:

@@ -4,7 +4,7 @@ from pathlib import Path
 from packaging.version import Version
 
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_pack_path
 from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import (
     ClassifierSixConverter,

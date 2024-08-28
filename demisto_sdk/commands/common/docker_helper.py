@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON3,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 DOCKER_CLIENT = None

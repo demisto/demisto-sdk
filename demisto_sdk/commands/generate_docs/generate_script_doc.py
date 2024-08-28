@@ -3,7 +3,7 @@ import random
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_from_version,
     get_relative_path_from_packs_dir,

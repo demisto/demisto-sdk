@@ -9,7 +9,7 @@ from neo4j import Driver, GraphDatabase, Session, graph
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import download_content_graph
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,

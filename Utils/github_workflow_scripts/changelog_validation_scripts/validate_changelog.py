@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.scripts.changelog.changelog import Changelog
 
 

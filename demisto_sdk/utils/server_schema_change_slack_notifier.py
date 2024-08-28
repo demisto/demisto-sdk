@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Tuple
 
 from slack_sdk import WebClient
 
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 
 SCHEMA_UPDATE_CHANNEL = "dmst-schema-change"
 GITHUB_BASE_URL = "https://github.com/demisto/server/commit/"

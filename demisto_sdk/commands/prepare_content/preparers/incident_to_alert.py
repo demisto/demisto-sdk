@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import (
     TABLE_INCIDENT_TO_ALERT,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 NOT_WRAPPED_RE_MAPPING = {

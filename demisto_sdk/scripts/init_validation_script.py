@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from string import Template
 
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import pascal_to_snake
 
 GIT_STATUSES_DICT = {

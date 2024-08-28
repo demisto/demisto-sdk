@@ -7,7 +7,7 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.loguru_logger import logger, logging_setup
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,

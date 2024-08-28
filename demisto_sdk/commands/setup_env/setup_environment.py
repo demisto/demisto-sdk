@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.files import FileReadError, TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     SecretManagerException,
     get_integration_params,

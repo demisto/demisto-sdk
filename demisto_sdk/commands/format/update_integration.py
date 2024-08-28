@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     ParameterType,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_item_marketplaces, get_json
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,

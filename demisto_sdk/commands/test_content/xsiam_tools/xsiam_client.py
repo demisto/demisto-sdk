@@ -14,7 +14,7 @@ from pydantic.fields import ModelField
 from requests.exceptions import ConnectionError, Timeout
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 json = JSON_Handler()

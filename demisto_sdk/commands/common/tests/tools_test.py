@@ -63,7 +63,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.loguru_logger import (
+from demisto_sdk.commands.common.logger import (
     string_to_bool as string_to_bool_logger,
 )
 from demisto_sdk.commands.common.tools import (

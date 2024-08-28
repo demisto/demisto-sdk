@@ -4,7 +4,7 @@ from typing import Dict, Iterable, List, NamedTuple, Optional
 import toml
 
 from demisto_sdk.commands.common.constants import ExecutionMode
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 
 USE_GIT = "use_git"
 PATH_BASED_VALIDATIONS = "path_based_validations"

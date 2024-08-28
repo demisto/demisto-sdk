@@ -4,7 +4,7 @@ from typing import Dict, List
 
 import typer
 
-from demisto_sdk.commands.common.loguru_logger import logger, logging_setup
+from demisto_sdk.commands.common.logger import logger, logging_setup
 
 main = typer.Typer()
 

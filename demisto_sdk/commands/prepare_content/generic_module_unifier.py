@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_file,

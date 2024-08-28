@@ -5,7 +5,7 @@ from pathlib import Path
 import demisto_client
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_demisto_version
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo

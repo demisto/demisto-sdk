@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import ExecutionMode, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_abstract_class
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (

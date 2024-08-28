@@ -36,7 +36,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.loguru_logger import (
+from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
     logging_setup,

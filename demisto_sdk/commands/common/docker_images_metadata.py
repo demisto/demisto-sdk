@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.files.errors import FileReadError
 from demisto_sdk.commands.common.files.json_file import JsonFile
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import PydanticSingleton
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import NoInternetConnectionException

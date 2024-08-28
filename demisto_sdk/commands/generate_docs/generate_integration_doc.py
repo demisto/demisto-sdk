@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.default_additional_info_loader import (
 from demisto_sdk.commands.common.files.errors import GitFileReadError
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_content_path,
     get_pack_metadata,

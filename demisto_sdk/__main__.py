@@ -39,7 +39,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.loguru_logger import (
+from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
     logging_setup,

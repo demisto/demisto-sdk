@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import DEMISTO_SDK_LOG_FILE_PATH, LOGS_DIR
-from demisto_sdk.commands.common.loguru_logger import calculate_log_dir
+from demisto_sdk.commands.common.logger import calculate_log_dir
 
 
 def test_calculate_dir_path_no_input():

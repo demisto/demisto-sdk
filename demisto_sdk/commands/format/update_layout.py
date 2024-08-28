@@ -7,7 +7,7 @@ from typing import List, Set, Tuple
 from demisto_sdk.commands.common.constants import (
     FileType,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
     remove_copy_and_dev_suffixes_from_str,

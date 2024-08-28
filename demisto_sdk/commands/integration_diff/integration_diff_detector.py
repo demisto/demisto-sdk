@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATION_ARGUMENT_TYPES,
     PARAM_FIELDS_TO_CHECK,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 
 

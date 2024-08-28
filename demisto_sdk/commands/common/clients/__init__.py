@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_VERIFY_SSL,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
 
 

@@ -8,7 +8,7 @@ import typer
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
 )
-from demisto_sdk.commands.common.loguru_logger import (
+from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
     logging_setup,

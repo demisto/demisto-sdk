@@ -6,7 +6,7 @@ from typing import Dict, Optional
 import requests
 from requests.auth import HTTPBasicAuth
 
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 
 API_BASE_URL = "https://circleci.com/api"
 PROJECT_SLUG = "github/demisto/demisto-sdk"

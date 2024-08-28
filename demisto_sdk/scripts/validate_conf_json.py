@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Optional, cast
 
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
-from demisto_sdk.commands.common.loguru_logger import logger, logging_setup
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import string_to_bool
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface

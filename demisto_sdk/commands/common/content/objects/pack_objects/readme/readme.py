@@ -5,7 +5,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, FileType
 from demisto_sdk.commands.common.content.objects.abstract_objects import TextObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_mp_tag_parser
 
 json = JSON_Handler()

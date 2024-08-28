@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     SKIP_RELEASE_NOTES_FOR_TYPES,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     filter_files_by_type,
     filter_files_on_pack,

@@ -138,7 +138,7 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.string_to_bool import (
     # all files, except for the logger setup, import from tools, so we import it here (makes more sense than having all other files import from string_to_bool.py)
     # See the comment in string_to_bool's implementation

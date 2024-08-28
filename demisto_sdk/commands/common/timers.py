@@ -13,7 +13,7 @@ from typing import Dict, Optional, Sequence
 from tabulate import tabulate
 
 # Local packages
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 
 StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
 

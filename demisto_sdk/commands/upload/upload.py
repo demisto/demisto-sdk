@@ -10,7 +10,7 @@ from pydantic import DirectoryPath
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     parse_marketplace_kwargs,
     parse_multiple_path_inputs,

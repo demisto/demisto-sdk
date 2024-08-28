@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_DEFAULT_MARKETPLACES,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     UNIFIED_FILES_SUFFIXES,
     ContentType,

@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional, Union, get_args, get_orig
 from more_itertools import map_reduce
 
 from demisto_sdk.commands.common import constants, errors
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.validate.validators.base_validator import get_all_validators
 
 TEMPLATE = """

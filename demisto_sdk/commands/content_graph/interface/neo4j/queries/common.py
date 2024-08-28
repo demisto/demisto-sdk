@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from neo4j import Result, Transaction
 from packaging.version import Version
 
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 
 

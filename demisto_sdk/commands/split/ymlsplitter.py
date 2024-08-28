@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     TYPE_TO_EXTENSION,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
     get_yaml,

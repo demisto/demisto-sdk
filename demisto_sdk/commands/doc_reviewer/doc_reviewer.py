@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import TextObj
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject,
 )
-from demisto_sdk.commands.common.loguru_logger import logger
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     add_default_pack_known_words,
     find_type,

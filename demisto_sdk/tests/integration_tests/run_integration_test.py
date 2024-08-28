@@ -130,7 +130,7 @@ def test_json_to_outputs_flag_fail_no_prefix(
     ) in run_result.output
 
 
-def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variables):
+def test_incident_id_passed_to_run(mocker):
     """
     Given
     - kl-get-components command and --incident-id argument.
@@ -148,9 +148,7 @@ def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variable
     # mock to set prefix instead of getting it from input
 
     command = "!kl-get-records"
-    result = CliRunner(
-        mix_stderr=False,
-    ).invoke(
+    result = CliRunner(mix_stderr=False).invoke(
         main,
         [
             "run",

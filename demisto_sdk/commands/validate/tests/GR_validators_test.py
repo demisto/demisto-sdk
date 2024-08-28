@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
-    GR104_is_pack_display_name_already_exists,
+    GR104_is_pack_display_name_already_exists, GR103_is_using_unknown_content
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
@@ -18,6 +18,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_displa
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_list_files import (
     IsPackDisplayNameAlreadyExistsValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_list_files import (
+    IsUsingUnknownContentValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_all_files import (
+    IsUsingUnknownContentValidatorAllFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_all_files import (
     IsTestPlaybookInUseValidatorAllFiles,
@@ -306,3 +312,9 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
         )
     )
     assert validation_results == []  # the test playbook is deprecated
+
+
+def test_IsUsingUnknownContentValidator__all_files(mocker: MockerFixture, prepared_graph_repo: Repo):
+     results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(prepared_graph_repo.packs)
+     assert len(results) == 3
+

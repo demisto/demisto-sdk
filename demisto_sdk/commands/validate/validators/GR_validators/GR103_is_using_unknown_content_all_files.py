@@ -48,7 +48,7 @@ ContentTypes = Union[Integration, Script, Playbook, Pack, Dashboard, Classifier,
 
 
 class IsUsingUnknownContentValidatorAllFiles(IsUsingUnknownContentValidator, BaseValidator[ContentTypes]):
-    expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
+    expected_execution_mode = [ExecutionMode.ALL_FILES]
 
     def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return self.obtain_invalid_content_items_using_graph(content_items, True)

@@ -5750,7 +5750,7 @@ class TestValidationUsingGit:
             )
 
         assert result.exit_code == 1
-        assert "You may be running" in result.output
+        assert "You may not be running" in result.output
 
     def test_validation_using_git_on_specific_file(self, mocker, repo):
         """

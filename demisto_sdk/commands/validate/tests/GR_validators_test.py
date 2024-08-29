@@ -342,7 +342,9 @@ def test_IsUsingUnknownContentValidator__all_files__fails(prepared_graph_repo: R
     )
 
 
-@pytest.mark.parametrize("pack_index, expected_len_results", [(0, 0), (1, 1), (2, 0), (3, 1)])
+@pytest.mark.parametrize(
+    "pack_index, expected_len_results", [(0, 0), (1, 1), (2, 0), (3, 1)]
+)
 def test_IsUsingUnknownContentValidator__list_files(
     prepared_graph_repo: Repo, pack_index, expected_len_results
 ):
@@ -352,7 +354,7 @@ def test_IsUsingUnknownContentValidator__list_files(
             - Pack 1: Uses only known content.
             - Pack 2: Uses both known and unknown content.
             - Pack 3: Uses only known content.
-            - Pack 4: Uses only unknown content, specifically 'does_not_exist' in the content item 'MyScript'.    
+            - Pack 4: Uses only unknown content, specifically 'does_not_exist' in the content item 'MyScript'.
     When:
         - The GR103 validation is run on a specific pack to identify instances of unknown content usage.
     Then:

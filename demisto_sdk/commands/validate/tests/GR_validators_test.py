@@ -13,17 +13,17 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_list_files import (
     MarketplacesFieldValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_all_files import (
+    IsUsingUnknownContentValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_list_files import (
+    IsUsingUnknownContentValidatorListFiles,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_all_files import (
     IsPackDisplayNameAlreadyExistsValidatorAllFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_list_files import (
     IsPackDisplayNameAlreadyExistsValidatorListFiles,
-)
-from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_list_files import (
-    IsUsingUnknownContentValidatorListFiles,
-)
-from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_all_files import (
-    IsUsingUnknownContentValidatorAllFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_all_files import (
     IsTestPlaybookInUseValidatorAllFiles,

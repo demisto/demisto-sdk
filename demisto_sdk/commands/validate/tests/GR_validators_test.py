@@ -148,7 +148,7 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_2.create_script(
         "TestApiModule", code='demisto.execute_command("SampleScriptTwo", dArgs)'
     ).set_data(marketplaces=MP_XSOAR_AND_V2)
-    # sample_pack_2.create_classifier("SampleClassifier")
+    sample_pack_2.create_classifier("SampleClassifier")
     sample_pack_2.create_test_playbook("SampleTestPlaybook")
     sample_pack_2.create_test_playbook("TestPlaybookNoInUse")
     sample_pack_2.create_test_playbook("TestPlaybookDeprecated").set_data(
@@ -158,6 +158,11 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_3 = graph_repo.create_pack("SamplePack3")
     sample_pack_3.set_data(marketplaces=MP_XSOAR)
     sample_pack_3.create_script("SampleScriptTwo").set_data(marketplaces=MP_XSOAR)
+
+    sample_pack_4 = graph_repo.create_pack("SamplePack4")
+    sample_pack_4.create_script(
+        "MyScript", code='demisto.execute_command("does_not_exist", dArgs)'
+    )
 
     return graph_repo
 
@@ -317,37 +322,45 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
 def test_IsUsingUnknownContentValidator__all_files__fails(prepared_graph_repo: Repo):
     """
     Given:
-        - A content graph interface with a prepared repository data. The first pack contains a content item "SampleIntegration" that references an unknown content item "SampleClassifier".
+        - A content graph interface with prepared repository data:
+            - Pack 1: Uses only known content.
+            - Pack 2: Uses both known and unknown content.
+            - Pack 3: Uses only known content.
+            - Pack 4: Uses only unknown content, specifically 'does_not_exist' in the content item 'MyScript'.
     When:
-        - The GR103 validation is run on the entire repository to identify instances of unknown content usage.
+        - The GR103 validation is run on the entire repository (-a) to identify instances of unknown content usage.
     Then:
-        - The validator should correctly identify the content items that are using unknown content, return appropriate error messages,
-        and only trigger an error for the first pack, as the second and third packs are using known content.
+        - The validator should correctly identify both content items that are using unknown content, return appropriate error messages,
     """
-
     graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
     results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items([])
-    assert len(results) == 1
+    assert len(results) == 2
     assert (
         results[0].message
-        == "Content item 'SampleIntegration' is using content items: 'SampleClassifier' which cannot be found in the repository."
+        == "Content item 'MyScript' is using content items: 'does_not_exist' which cannot be found in the repository."
     )
 
 
-@pytest.mark.parametrize("pack_index, expected_len_results", [(0, 1), (1, 0), (2, 0)])
+@pytest.mark.parametrize("pack_index, expected_len_results", [(0, 0), (1, 1), (2, 0), (3, 1)])
 def test_IsUsingUnknownContentValidator__list_files(
     prepared_graph_repo: Repo, pack_index, expected_len_results
 ):
     """
     Given:
-        - A content graph interface with a prepared repository data. The first pack contains a content item "SampleIntegration" that references an unknown content item "SampleClassifier".
+        - A content graph interface with prepared repository data:
+            - Pack 1: Uses only known content.
+            - Pack 2: Uses both known and unknown content.
+            - Pack 3: Uses only known content.
+            - Pack 4: Uses only unknown content, specifically 'does_not_exist' in the content item 'MyScript'.    
     When:
         - The GR103 validation is run on a specific pack to identify instances of unknown content usage.
     Then:
         - The validator should correctly identify the content items that are using unknown content.
-        case 1: should fail for the first pack, as it contains a content item "SampleIntegration" that references an unknown content item "SampleClassifier".
-        case 2 and 3: should not return any results, as they are using known content.
+            When running on Pack 1 - there should be 0 results.
+            When running on Pack 2 - there should be 1 result.
+            When running on Pack 3 - there should be 0 results.
+            When running on Pack 4 - there should be 1 result, identifying the usage of 'does_not_exist' in the 'MyScript' content item.
     """
     graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface

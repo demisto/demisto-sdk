@@ -91,8 +91,8 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
         results: List[ValidationResult] = []
         file_path_to_validate = (
             get_all_content_objects_paths_in_dir(
-            content_item.path._str for content_item in content_items
-        )
+                content_item.path._str for content_item in content_items
+            )
             if not validate_all_files
             else []
         )

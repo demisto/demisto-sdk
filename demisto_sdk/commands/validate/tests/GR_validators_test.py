@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
-    GR104_is_pack_display_name_already_exists
+    GR104_is_pack_display_name_already_exists,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
@@ -148,7 +148,7 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_2.create_script(
         "TestApiModule", code='demisto.execute_command("SampleScriptTwo", dArgs)'
     ).set_data(marketplaces=MP_XSOAR_AND_V2)
-    #sample_pack_2.create_classifier("SampleClassifier")
+    # sample_pack_2.create_classifier("SampleClassifier")
     sample_pack_2.create_test_playbook("SampleTestPlaybook")
     sample_pack_2.create_test_playbook("TestPlaybookNoInUse")
     sample_pack_2.create_test_playbook("TestPlaybookDeprecated").set_data(
@@ -329,11 +329,16 @@ def test_IsUsingUnknownContentValidator__all_files__fails(prepared_graph_repo: R
     BaseValidator.graph_interface = graph_interface
     results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items([])
     assert len(results) == 1
-    assert results[0].message == "Content item 'SampleIntegration' is using content items: 'SampleClassifier' which cannot be found in the repository."
+    assert (
+        results[0].message
+        == "Content item 'SampleIntegration' is using content items: 'SampleClassifier' which cannot be found in the repository."
+    )
 
 
-@pytest.mark.parametrize("pack_index, expected_len_results",[(0, 1), (1, 0), (2, 0)])
-def test_IsUsingUnknownContentValidator__list_files(prepared_graph_repo: Repo, pack_index, expected_len_results):
+@pytest.mark.parametrize("pack_index, expected_len_results", [(0, 1), (1, 0), (2, 0)])
+def test_IsUsingUnknownContentValidator__list_files(
+    prepared_graph_repo: Repo, pack_index, expected_len_results
+):
     """
     Given:
         - A content graph interface with a prepared repository data. The first pack contains a content item "SampleIntegration" that references an unknown content item "SampleClassifier".
@@ -346,6 +351,7 @@ def test_IsUsingUnknownContentValidator__list_files(prepared_graph_repo: Repo, p
     """
     graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
-    results = IsUsingUnknownContentValidatorListFiles().obtain_invalid_content_items([prepared_graph_repo.packs[pack_index]])
+    results = IsUsingUnknownContentValidatorListFiles().obtain_invalid_content_items(
+        [prepared_graph_repo.packs[pack_index]]
+    )
     assert len(results) == expected_len_results
-

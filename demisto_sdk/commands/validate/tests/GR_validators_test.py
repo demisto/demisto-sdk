@@ -314,9 +314,38 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
     assert validation_results == []  # the test playbook is deprecated
 
 
-def test_IsUsingUnknownContentValidator__all_files(mocker: MockerFixture, prepared_graph_repo: Repo):
+def test_IsUsingUnknownContentValidator__all_files__fails(prepared_graph_repo: Repo):
+    """
+    Given:
+        - A content graph interface with a prepared repository data. The first pack contains a content item "SampleIntegration" that references an unknown content item "SampleClassifier".
+    When:
+        - The GR103 validation is run on the entire repository to identify instances of unknown content usage.
+    Then:
+        - The validator should correctly identify the content items that are using unknown content, return appropriate error messages,
+        and only trigger an error for the first pack, as the second and third packs are using known content.
+    """
+
     graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
     results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items([])
     assert len(results) == 1
+    assert results[0].message == "Content item 'SampleIntegration' is using content items: 'SampleClassifier' which cannot be found in the repository."
+
+
+@pytest.mark.parametrize("pack_index, expected_len_results",[(0, 1), (1, 0), (2, 0)])
+def test_IsUsingUnknownContentValidator__list_files(prepared_graph_repo: Repo, pack_index, expected_len_results):
+    """
+    Given:
+        - A content graph interface with a prepared repository data. The first pack contains a content item "SampleIntegration" that references an unknown content item "SampleClassifier".
+    When:
+        - The GR103 validation is run on a specific pack to identify instances of unknown content usage.
+    Then:
+        - The validator should correctly identify the content items that are using unknown content.
+        case 1: should fail for the first pack, as it contains a content item "SampleIntegration" that references an unknown content item "SampleClassifier".
+        case 2 and 3: should not return any results, as they are using known content.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorListFiles().obtain_invalid_content_items([prepared_graph_repo.packs[pack_index]])
+    assert len(results) == expected_len_results
 

@@ -82,7 +82,7 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR103"
     description = "Validates that there is no usage of unknown content items"
     rationale = "Content items should only use other content items that exist in the repository."
-    error_message = "Content item {0} is using content items: {1} which cannot be found in the repository."
+    error_message = "Content item '{0}' is using content items: {1} which cannot be found in the repository."
     is_auto_fixable = False
 
     def obtain_invalid_content_items_using_graph(

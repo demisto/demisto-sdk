@@ -204,6 +204,7 @@ max-complexity = 30
 
 [tool.ruff.lint.per-file-ignores]
 "demisto_sdk/commands/test_content/timestamp_replacer.py" = ["TID251"] # used outside the SDK
+"demisto_sdk/__main__.py" = ["E402"] # The logger must be set up before everything else
 
 [tool.vulture]
 exclude = ["*/tests/*"]

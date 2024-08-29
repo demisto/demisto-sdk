@@ -4,6 +4,14 @@ import sys
 
 import click
 
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,  # Must remain at the top - sets up the logger
+)
+
+logging_setup("__main__: top", initial=True)
+
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
@@ -39,11 +47,6 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import (
-    handle_deprecated_args,
-    logger,
-    logging_setup,
-)
 from demisto_sdk.commands.common.tools import (
     convert_path_to_str,
     find_type,
@@ -80,7 +83,6 @@ SDK_OFFLINE_ERROR_MESSAGE = (
     "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.</red>"
 )
 
-logging_setup(initial=True, calling_function="__main__ (initial)")
 
 # Third party packages
 
@@ -234,7 +236,9 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "CI"
             ):  # Check only when not running in CI (e.g running locally).
                 last_release = get_last_remote_release_version()
-            logger.debug(f"demisto-sdk {__version__}")
+            logger.opt(colors=True).info(
+                f"<yellow>demisto-sdk {__version__}</yellow>"
+            )  # we only `opt`
             if last_release and __version__ != last_release:
                 logger.warning(
                     f"A newer version ({last_release}) is available. "
@@ -3920,4 +3924,8 @@ def dump_api(
 main.add_command(typer.main.get_command(export_app), "dump-api")
 
 if __name__ == "__main__":
+    logging_setup(
+        initial=True,
+        calling_function="__main__: `main()`",  # TODO
+    )
     main()

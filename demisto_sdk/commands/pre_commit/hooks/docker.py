@@ -60,6 +60,14 @@ def get_docker_python_path(drop_site_packages: bool = False) -> str:
     return path
 
 
+def get_major_and_minor(version_string: str):
+    version = Version(version_string)
+    # Extract the major and minor parts
+    major = version.major
+    minor = version.minor
+    return f"{major}.{minor}"
+
+
 def with_native_tags(
     tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]],
     docker_flags: Set[str],
@@ -392,7 +400,14 @@ class DockerHook(Hook):
         ) in object_to_files_with_objects.items():
             change_working_directory = False
             files = {file for file, _ in files_with_objects}
+            objects_ = [object_ for _, object_ in files_with_objects]
             hook = deepcopy(new_hook)
+            if new_hook["name"].startswith("mypy-in-docker"):
+                for obj in objects_:
+                    python_version = Version(obj.python_version)
+                    hook["args"].append(
+                        f"--python-version={python_version.major}.{python_version.minor}"
+                    )  # mypy expects only the major and minor version (e.g., 3.10)
             if integration_script is not None:
                 change_working_directory = (
                     True  # isolate container, so run in the same directory
@@ -411,6 +426,7 @@ class DockerHook(Hook):
                         ]
                     )
                     hook["args"] = args
+
                 hook["id"] = (
                     f"{hook['id']}-{integration_script.object_id}"  # for uniqueness
                 )

@@ -27,8 +27,12 @@ CONSOLE_FORMAT = "{message}"
 DEFAULT_FILE_THRESHOLD = "DEBUG"
 DEFAULT_CONSOLE_THRESHOLD = "INFO"
 
+DEFAULT_FILE_SIZE = 1 * (1024**2)  # 1 MB
+DEFAULT_FILE_COUNT = 10
+
 global logger
 logger = loguru.logger  # all SDK modules should import from this file, not from loguru
+logger.disable(None)  # enabled at setup_logging()
 
 
 def _setup_neo4j_logger():
@@ -38,16 +42,16 @@ def _setup_neo4j_logger():
     neo4j_log.setLevel(logging.CRITICAL)
 
 
-def calculate_log_size() -> str:
+def calculate_log_size() -> int:
     if env_var := os.getenv(DEMISTO_SDK_LOG_FILE_SIZE):
         try:
-            return f"{int(env_var)} B"
+            return int(env_var)
 
         except (TypeError, ValueError):
             logger.warning(
-                f"Invalid value for DEMISTO_SDK_LOG_FILE_SIZE environment variable: {env_var}. Using default value of '1MB'."
+                f"non-integer log-size value ({env_var}). Defaulting to {DEFAULT_FILE_SIZE}B."
             )
-    return "1 MB"
+    return DEFAULT_FILE_SIZE
 
 
 def calculate_rentation() -> int:
@@ -56,9 +60,9 @@ def calculate_rentation() -> int:
             return int(env_var)
         except (TypeError, ValueError):
             logger.warning(
-                f"Invalid value for DEMISTO_SDK_LOG_FILE_COUNT environment variable: {env_var}. Using default value of '10'."
+                f"non-integer value for the log file count ({env_var}). Defaulting to {DEFAULT_FILE_COUNT}"
             )
-    return 10
+    return DEFAULT_FILE_COUNT
 
 
 def calculate_log_dir(path_input: Optional[Union[Path, str]]) -> Path:
@@ -104,16 +108,18 @@ def logging_setup(
     In the initial set up there is NO file logging (only console)
     """
     global logger
-
     _setup_neo4j_logger()
     _setup_logger_colors()
 
-    logger.remove()  # Removes all pre-existing handlers
+    logger.remove(None)  # Removes all pre-existing handlers
 
     diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", False))
     colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), False)
 
-    logger = logger.opt(colors=colorize)  # allows using color tags in all logs
+    logger = logger.opt(
+        colors=colorize
+    )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
+
     _add_console_logger(
         colorize=colorize, threshold=console_threshold, diagnose=diagnose
     )

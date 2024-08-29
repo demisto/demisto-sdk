@@ -25,6 +25,8 @@ from demisto_sdk.scripts.changelog.changelog_obj import (
     LogType,
 )
 
+logging_setup(calling_function=Path(__file__).stem)
+
 DEMISTO_SDK_REPO = "demisto/demisto-sdk"
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
 CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
@@ -334,7 +336,7 @@ main = typer.Typer(
     pretty_exceptions_enable=False,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
-logging_setup(calling_function=Path(__file__).stem)
+
 
 release = typer.Option(False, "--release", help="releasing", is_flag=True)
 init = typer.Option(

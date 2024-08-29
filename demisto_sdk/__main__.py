@@ -9,9 +9,6 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,  # Must remain at the top - sets up the logger
 )
-
-logging_setup("__main__ head", initial=True)
-
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
@@ -3924,5 +3921,4 @@ def dump_api(
 main.add_command(typer.main.get_command(export_app), "dump-api")
 
 if __name__ == "__main__":
-    logging_setup(initial=True, calling_function="__main__ tail")
     main()

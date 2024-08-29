@@ -1870,9 +1870,9 @@ def test_modeling_rule(
     Test a modeling rule against an XSIAM tenant
     """
     logging_setup(
-        console_log_threshold=console_log_threshold,  # type: ignore[arg-type]
-        file_log_threshold=file_log_threshold,  # type: ignore[arg-type]
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,  # type: ignore[arg-type]
+        file_threshold=file_log_threshold,  # type: ignore[arg-type]
+        path=log_file_path,
         calling_function=__name__,
     )
     handle_deprecated_args(ctx.args)

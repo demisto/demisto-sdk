@@ -133,9 +133,9 @@ def get_dependencies(
     Returns pack's dependencies of a given content pack.
     """
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
         calling_function=__name__,
     )
     with ContentGraphInterface() as graph:

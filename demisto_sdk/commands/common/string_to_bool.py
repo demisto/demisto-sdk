@@ -8,7 +8,7 @@ def string_to_bool(
     default_when_empty: Optional[bool] = None,
 ) -> bool:
     """
-    This function is here (rather than in `tools.py`) to avoid circular imports:
+    This function is its own file (rather than in `tools.py`) to avoid circular imports:
     string_to_bool is used in the logger setup, which imports `tools.py`, where we have functions importing the logger
     """
     try:

@@ -108,9 +108,9 @@ def create(
     a Repository model and uploaded to the graph database.
     """
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
         calling_function="graph create",
     )
     with ContentGraphInterface() as content_graph_interface:

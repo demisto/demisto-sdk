@@ -39,8 +39,8 @@ def validate(path: Path) -> None:
         logger.error(f"Could not parse JSON from {path}")
         raise typer.Exit(1)
 
-    except ValidationError as e:
-        logger.error(f"{path} is not a valid XSOAR configuration file: {e}")
+    except ValidationError:
+        logger.exception(f"{path} is not a valid XSOAR configuration file")
         raise typer.Exit(1)
 
 

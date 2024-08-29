@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.logger import (
     logging_setup,  # Must remain at the top - sets up the logger
 )
 
-logging_setup("__main__: top", initial=True)
+logging_setup("__main__ head", initial=True)
 
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
@@ -173,9 +173,9 @@ def logging_setup_decorator(func, *args, **kwargs):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
-            console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-            file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
-            log_file_path=kwargs.get("log_file_path"),
+            console_threshold=kwargs.get("console_log_threshold") or "INFO",
+            file_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+            path=kwargs.get("log_file_path"),
             calling_function=func.__name__,
         )
 
@@ -3768,9 +3768,9 @@ def pre_commit(
     ),
 ):
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
         calling_function="pre-commit",
     )
 
@@ -3924,8 +3924,5 @@ def dump_api(
 main.add_command(typer.main.get_command(export_app), "dump-api")
 
 if __name__ == "__main__":
-    logging_setup(
-        initial=True,
-        calling_function="__main__: `main()`",  # TODO
-    )
+    logging_setup(initial=True, calling_function="__main__ tail")
     main()

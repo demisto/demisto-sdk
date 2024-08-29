@@ -16,18 +16,22 @@ from demisto_sdk.commands.common.constants import (
     LOGS_DIR,
 )
 from demisto_sdk.commands.common.string_to_bool import (
-    # See the comment in string_to_bool's implementation
-    string_to_bool,
+    string_to_bool,  # See the comment in string_to_bool's implementation
 )
 
-FILE_FORMAT = "{time} | {level} - {name}:{line} - {message}"
+FILE_FORMAT = (
+    "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {message} @ {file}:{function}:{line}"
+)
 CONSOLE_FORMAT = "{message}"
+
+DEFAULT_FILE_THRESHOLD = "DEBUG"
+DEFAULT_CONSOLE_THRESHOLD = "INFO"
 
 global logger
 logger = loguru.logger  # all SDK modules should import from this file, not from loguru
 
 
-def setup_neo4j_logger():
+def _setup_neo4j_logger():
     import logging  # noqa: TID251 # special case, to control the neo4j logging
 
     neo4j_log = logging.getLogger("neo4j")
@@ -88,15 +92,11 @@ def _setup_logger_colors():
     logger.level("SUCCESS", color="<green>")
 
 
-DEFAULT_FILE_THRESHOLD = "DEBUG"
-DEFAULT_CONSOLE_THRESHOLD = "INFO"
-
-
 def logging_setup(
     calling_function: str,
-    console_log_threshold: str = DEFAULT_CONSOLE_THRESHOLD,
-    file_log_threshold: str = DEFAULT_FILE_THRESHOLD,
-    log_file_path: Optional[Union[Path, str]] = None,
+    console_threshold: str = DEFAULT_CONSOLE_THRESHOLD,
+    file_threshold: str = DEFAULT_FILE_THRESHOLD,
+    path: Optional[Union[Path, str]] = None,
     initial: bool = False,
 ):
     """
@@ -105,50 +105,52 @@ def logging_setup(
     """
     global logger
 
-    setup_neo4j_logger()
+    _setup_neo4j_logger()
     _setup_logger_colors()
 
     logger.remove()  # Removes all pre-existing handlers
 
+    diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", False))
     colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), False)
-    logger = logger.opt(colors=colorize)  # allows using color tags in all logs
 
-    _add_console_logger(colorize=colorize, threshold=console_log_threshold)
+    logger = logger.opt(colors=colorize)  # allows using color tags in all logs
+    _add_console_logger(
+        colorize=colorize, threshold=console_threshold, diagnose=diagnose
+    )
 
     if not initial:
         _add_file_logger(
-            log_path=calculate_log_dir(log_file_path) / LOG_FILE_NAME,
-            threshold=file_log_threshold,
+            log_path=calculate_log_dir(path) / LOG_FILE_NAME,
+            threshold=file_threshold,
+            diagnose=diagnose,
         )
         os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
 
     logger.debug(
-        f"logger setup: {calling_function=},{console_log_threshold=},{file_log_threshold=},{log_file_path=},{initial=}"
+        f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
     )
 
 
-def _add_file_logger(log_path: Path, threshold: str | None):
-    logger.add(  # file handler
+def _add_file_logger(log_path: Path, threshold: Optional[str], diagnose: bool):
+    logger.add(
         log_path,
         format=FILE_FORMAT,
         rotation=calculate_log_size(),
         retention=calculate_rentation(),
         colorize=False,
-        # backtrace=True,  # TODO
-        level=(
-            threshold or DEFAULT_FILE_THRESHOLD  # in case None is provided
-        ),
+        diagnose=diagnose,
+        level=(threshold or DEFAULT_FILE_THRESHOLD),
     )
     if string_to_bool(os.getenv(DEMISTO_SDK_LOG_NOTIFY_PATH), True):
         logger.info(f"<yellow>Log file location: {log_path}</yellow>")
 
 
-def _add_console_logger(colorize: bool, threshold: str | None):
+def _add_console_logger(colorize: bool, threshold: Optional[str], diagnose: bool):
     logger.add(
         sys.stdout,
         format=CONSOLE_FORMAT,
         colorize=colorize,
-        backtrace=True,  # TODO
+        diagnose=diagnose,
         level=(threshold or DEFAULT_CONSOLE_THRESHOLD),
     )
 

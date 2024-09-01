@@ -87,15 +87,6 @@ def calculate_log_dir(path_input: Optional[Union[Path, str]]) -> Path:
         return LOGS_DIR
 
 
-def _setup_logger_colors():
-    logger.level("DEBUG", color="<fg #D3D3D3>")
-    logger.level("INFO", color="<fg #D3D3D3>")
-    logger.level("WARNING", color="<yellow>")
-    logger.level("ERROR", color="<red>")
-    logger.level("CRITICAL", color="<red><bold>")
-    logger.level("SUCCESS", color="<green>")
-
-
 def logging_setup(
     calling_function: str,
     console_threshold: str = DEFAULT_CONSOLE_THRESHOLD,
@@ -109,7 +100,6 @@ def logging_setup(
     """
     global logger
     _setup_neo4j_logger()
-    _setup_logger_colors()
 
     logger.remove(None)  # Removes all pre-existing handlers
 
@@ -119,7 +109,6 @@ def logging_setup(
     logger = logger.opt(
         colors=colorize
     )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
-
     _add_console_logger(
         colorize=colorize, threshold=console_threshold, diagnose=diagnose
     )
@@ -148,8 +137,10 @@ def _add_file_logger(log_path: Path, threshold: Optional[str], diagnose: bool):
         level=(threshold or DEFAULT_FILE_THRESHOLD),
         enqueue=True,
     )
-    if string_to_bool(os.getenv(DEMISTO_SDK_LOG_NOTIFY_PATH), True):
-        logger.info(f"<yellow>Log file location: {log_path}</yellow>")
+    if string_to_bool(os.getenv(DEMISTO_SDK_LOG_NOTIFY_PATH), False) and (
+        not os.environ.get(DEMISTO_SDK_LOGGING_SET)
+    ):
+        logger.info(f"<dim>Log file location: {log_path}</dim>")
 
 
 def _add_console_logger(colorize: bool, threshold: Optional[str], diagnose: bool):

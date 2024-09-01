@@ -1,4 +1,0 @@
-changes:
-- description: Moved RN115 validation to the new validate format. The validation ensures there're not more than one new release note file per pack.
-  type: internal
-pr_number: 4501

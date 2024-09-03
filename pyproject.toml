@@ -19,14 +19,15 @@ classifiers = [
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: Implementation :: CPython'
 ]
-exclude = [
-  "TestSuite/**",
-  "tests_end_to_end/**",
-  "demisto_sdk/tests/**",
-  "demisto_sdk/**/tests/**",
-  "demisto_sdk/**/test_data/**",
-  "demisto_sdk/**/test_files/**"
-]
+# exclude = [
+# TODO !!
+# "TestSuite/**",
+# "tests_end_to_end/**",
+# "demisto_sdk/tests/**",
+# "demisto_sdk/**/tests/**",
+# "demisto_sdk/**/test_data/**",
+# "demisto_sdk/**/test_files/**"
+# ]
 requires-python = ">=3.8,<3.12"
 dependencies = [
   "autopep8>=2.0.4,<3",

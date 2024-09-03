@@ -14,9 +14,13 @@ inputs:
     type: string
     default: ${{ github.workspace }}
     description: "On which working directory to run the setup-env, for example it can be done in content"
+
 runs:
   using: 'composite'
   steps:
+    - name: Set up uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
     # - name: Set up Python ${{ inputs.python-version }} 
     #   run: uv python install ${{ inputs.python-version }} 
     #   shell: bash

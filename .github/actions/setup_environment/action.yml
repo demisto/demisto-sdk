@@ -21,9 +21,6 @@ runs:
     - name: Set up uv
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
       shell: bash
-    # - name: Set up Python ${{ inputs.python-version }} 
-    #   run: uv python install ${{ inputs.python-version }} 
-    #   shell: bash
 
     - name: Install the project
       run: uv sync --all-extras --dev --python ${{ inputs.python-version }}

@@ -466,12 +466,12 @@ jobs:
       - name: pip intsall current project
         run: pip install .
 
-      - name: Verify Installation
+      - name: Verify Installation (pip)
         run: demisto-sdk --version
 
       - name: uv pip intsall current project
         run: |
-          pip uninstall demisto-sdk # TODO check
+          pip uninstall demisto-sdk --yes
           uv run pip install .
 
       - name: Verify Installation (uv)

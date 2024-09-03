@@ -23,5 +23,5 @@ runs:
       # github-token: ${{ secrets.GITHUB_TOKEN }} # TODO consider using https://github.com/eifinger/setup-uv?tab=readme-ov-file#api-rate-limit
 
 
-  - run: uv install --python ${{ inputs.python-version }} -r pyproject.toml --all-extras
+  - run: uv pip install --python ${{ inputs.python-version }} -r pyproject.toml --all-extras
     shell: bash

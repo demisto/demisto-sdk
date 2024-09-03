@@ -254,34 +254,6 @@ files = [
 ]
 
 [[package]]
-name = "backports-zoneinfo"
-version = "0.2.1"
-description = "Backport of the standard library zoneinfo module"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:da6013fd84a690242c310d77ddb8441a559e9cb3d3d59ebac9aca1a57b2e18bc"},
-    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:89a48c0d158a3cc3f654da4c2de1ceba85263fafb861b98b59040a5086259722"},
-    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:1c5742112073a563c81f786e77514969acb58649bcdf6cdf0b4ed31a348d4546"},
-    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-win32.whl", hash = "sha256:e8236383a20872c0cdf5a62b554b27538db7fa1bbec52429d8d106effbaeca08"},
-    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-win_amd64.whl", hash = "sha256:8439c030a11780786a2002261569bdf362264f605dfa4d65090b64b05c9f79a7"},
-    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:f04e857b59d9d1ccc39ce2da1021d196e47234873820cbeaad210724b1ee28ac"},
-    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:17746bd546106fa389c51dbea67c8b7c8f0d14b5526a579ca6ccf5ed72c526cf"},
-    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:5c144945a7752ca544b4b78c8c41544cdfaf9786f25fe5ffb10e838e19a27570"},
-    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-win32.whl", hash = "sha256:e55b384612d93be96506932a786bbcde5a2db7a9e6a4bb4bffe8b733f5b9036b"},
-    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-win_amd64.whl", hash = "sha256:a76b38c52400b762e48131494ba26be363491ac4f9a04c1b7e92483d169f6582"},
-    {file = "backports.zoneinfo-0.2.1-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:8961c0f32cd0336fb8e8ead11a1f8cd99ec07145ec2931122faaac1c8f7fd987"},
-    {file = "backports.zoneinfo-0.2.1-cp38-cp38-manylinux1_i686.whl", hash = "sha256:e81b76cace8eda1fca50e345242ba977f9be6ae3945af8d46326d776b4cf78d1"},
-    {file = "backports.zoneinfo-0.2.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:7b0a64cda4145548fed9efc10322770f929b944ce5cee6c0dfe0c87bf4c0c8c9"},
-    {file = "backports.zoneinfo-0.2.1-cp38-cp38-win32.whl", hash = "sha256:1b13e654a55cd45672cb54ed12148cd33628f672548f373963b0bff67b217328"},
-    {file = "backports.zoneinfo-0.2.1-cp38-cp38-win_amd64.whl", hash = "sha256:4a0f800587060bf8880f954dbef70de6c11bbe59c673c3d818921f042f9954a6"},
-    {file = "backports.zoneinfo-0.2.1.tar.gz", hash = "sha256:fadbfe37f74051d024037f223b8e001611eac868b5c5b06144ef4d8b799862f2"},
-]
-
-[package.extras]
-tzdata = ["tzdata"]
-
-[[package]]
 name = "bandit"
 version = "1.7.8"
 description = "Security oriented static analyser for python code."
@@ -2082,9 +2054,7 @@ files = [
 
 [package.dependencies]
 attrs = ">=22.2.0"
-importlib-resources = {version = ">=1.4.0", markers = "python_version < \"3.9\""}
 jsonschema-specifications = ">=2023.03.6"
-pkgutil-resolve-name = {version = ">=1.3.10", markers = "python_version < \"3.9\""}
 referencing = ">=0.28.4"
 rpds-py = ">=0.7.1"
 
@@ -2104,7 +2074,6 @@ files = [
 ]
 
 [package.dependencies]
-importlib-resources = {version = ">=1.4.0", markers = "python_version < \"3.9\""}
 referencing = ">=0.31.0"
 
 [[package]]
@@ -2347,6 +2316,7 @@ files = [
     {file = "lxml-5.2.1-cp37-cp37m-musllinux_1_2_x86_64.whl", hash = "sha256:9e2addd2d1866fe112bc6f80117bcc6bc25191c5ed1bfbcf9f1386a884252ae8"},
     {file = "lxml-5.2.1-cp37-cp37m-win32.whl", hash = "sha256:f51969bac61441fd31f028d7b3b45962f3ecebf691a510495e5d2cd8c8092dbd"},
     {file = "lxml-5.2.1-cp37-cp37m-win_amd64.whl", hash = "sha256:b0b58fbfa1bf7367dde8a557994e3b1637294be6cf2169810375caf8571a085c"},
+    {file = "lxml-5.2.1-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:3e183c6e3298a2ed5af9d7a356ea823bccaab4ec2349dc9ed83999fd289d14d5"},
     {file = "lxml-5.2.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:804f74efe22b6a227306dd890eecc4f8c59ff25ca35f1f14e7482bbce96ef10b"},
     {file = "lxml-5.2.1-cp38-cp38-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:08802f0c56ed150cc6885ae0788a321b73505d2263ee56dad84d200cab11c07a"},
     {file = "lxml-5.2.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0f8c09ed18ecb4ebf23e02b8e7a22a05d6411911e6fabef3a36e4f371f4f2585"},
@@ -3140,17 +3110,6 @@ files = [
 ]
 
 [[package]]
-name = "pkgutil-resolve-name"
-version = "1.3.10"
-description = "Resolve a name to an object."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "pkgutil_resolve_name-1.3.10-py3-none-any.whl", hash = "sha256:ca27cc078d25c5ad71a9de0a7a330146c4e014c2462d9af19c6b828280649c5e"},
-    {file = "pkgutil_resolve_name-1.3.10.tar.gz", hash = "sha256:357d6c9e6a755653cfd78893817c0853af365dd51ec97f3d358a819373bbd174"},
-]
-
-[[package]]
 name = "platformdirs"
 version = "4.2.1"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
@@ -3183,13 +3142,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "pre-commit"
-version = "3.5.0"
+version = "3.8.0"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "pre_commit-3.5.0-py2.py3-none-any.whl", hash = "sha256:841dc9aef25daba9a0238cd27984041fa0467b4199fc4852e27950664919f660"},
-    {file = "pre_commit-3.5.0.tar.gz", hash = "sha256:5804465c675b659b0862f07907f96295d490822a450c4c40e747d0b1c6ebcb32"},
+    {file = "pre_commit-3.8.0-py2.py3-none-any.whl", hash = "sha256:9a90a53bf82fdd8778d58085faf8d83df56e40dfe18f45b19446e26bf1b3a63f"},
+    {file = "pre_commit-3.8.0.tar.gz", hash = "sha256:8bb6494d4a20423842e198980c9ecf9f96607a07ea29549e180eef9ae80fe7af"},
 ]
 
 [package.dependencies]
@@ -3847,7 +3806,6 @@ files = [
 ]
 
 [package.dependencies]
-"backports.zoneinfo" = {version = "*", markers = "python_version >= \"3.6\" and python_version < \"3.9\""}
 tzdata = {version = "*", markers = "python_version >= \"3.6\""}
 
 [[package]]
@@ -4211,7 +4169,6 @@ files = [
 [package.dependencies]
 markdown-it-py = ">=2.2.0"
 pygments = ">=2.13.0,<3.0.0"
-typing-extensions = {version = ">=4.0.0,<5.0", markers = "python_version < \"3.9\""}
 
 [package.extras]
 jupyter = ["ipywidgets (>=7.5.1,<9)"]
@@ -4911,7 +4868,6 @@ files = [
 ]
 
 [package.dependencies]
-"backports.zoneinfo" = {version = "*", markers = "python_version < \"3.9\""}
 pytz-deprecation-shim = "*"
 tzdata = {version = "*", markers = "platform_system == \"Windows\""}
 
@@ -5021,28 +4977,29 @@ files = [
 
 [[package]]
 name = "uv"
-version = "0.1.39"
-description = "An extremely fast Python package installer and resolver, written in Rust."
+version = "0.3.5"
+description = "An extremely fast Python package and project manager, written in Rust."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "uv-0.1.39-py3-none-linux_armv6l.whl", hash = "sha256:2ae930189742536f8178617c4ec05cb10271cb3886f6039abd36ee6ab511b160"},
-    {file = "uv-0.1.39-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:ce911087f56edc97a5792c17f682ed7611fedead0ea117f56bb6f3942eb3e7b3"},
-    {file = "uv-0.1.39-py3-none-macosx_11_0_arm64.whl", hash = "sha256:c20b9023dac12ee518de79c91df313be7abb052440cb78f8ffb20dea81d3289e"},
-    {file = "uv-0.1.39-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:fba96b3049aea5c1394cd360e5900e4af39829df48ed6fc55eba115c00c8195a"},
-    {file = "uv-0.1.39-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:93217578e68a431df235173e390ad7df090499367cd7f5c811520fd4ea3d5047"},
-    {file = "uv-0.1.39-py3-none-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:2bda6686a9bb1370d7f53436d34f8ede0fa1b9877b5e152aedd9b22fc3cb33a9"},
-    {file = "uv-0.1.39-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:7ee426e0c5fa048cc44f3ac78e476121ef4365bb8bc9199d3cbffc372a80e55d"},
-    {file = "uv-0.1.39-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:88f5601ee957f9be2efc7a24d186f9d2641053806e107e0e42c5e522882c89e0"},
-    {file = "uv-0.1.39-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3330bd7ab8a6160d815fdc36f48479edf6db8b58d39d20959555095ea7eb63c5"},
-    {file = "uv-0.1.39-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:c131dba5fe5079d9c5f06846649e35662901a9afd9b31de17714c63e042d91d2"},
-    {file = "uv-0.1.39-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:2333dd52e6734e0da6722bdd7b7257d0f8beeac89623c5cfc3888b4c56bc812e"},
-    {file = "uv-0.1.39-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:cd6d9629ab0e22ab2336b8d6363573ea5a7060ef82ff5d3e6da4b1b30522ef13"},
-    {file = "uv-0.1.39-py3-none-musllinux_1_2_i686.whl", hash = "sha256:6b2acc907f7a1735dd9ffeb20d8c7aeeb86b1e5ba0a999e09433ad7f2789dc78"},
-    {file = "uv-0.1.39-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:7848d703201e6867ae2c70d611e6ffd53d5e5adfc2c9abe89b6d021975e43e81"},
-    {file = "uv-0.1.39-py3-none-win32.whl", hash = "sha256:388018659e5d73fdeb8ce13c1d812391ec981bf446ab86fb9c0e3d227f727da2"},
-    {file = "uv-0.1.39-py3-none-win_amd64.whl", hash = "sha256:4c6ee1148f23aa5d6edf1a1106cc33c4aa57bdbfe8d4c5068c672105415d3b99"},
-    {file = "uv-0.1.39.tar.gz", hash = "sha256:3365e0631a738a482d2379e565a230b135f7c5665394313829ccabf7c76c1362"},
+    {file = "uv-0.3.5-py3-none-linux_armv6l.whl", hash = "sha256:59f10007b4c52ed132e6a87fc39f487dfec90835b46678365f4f3e67caab3c02"},
+    {file = "uv-0.3.5-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:47faf95c3da64c3a819cc3e5b7d660d990c01ec248a588848426c4ab1e40bcb2"},
+    {file = "uv-0.3.5-py3-none-macosx_11_0_arm64.whl", hash = "sha256:89c1515200a838014b1fa6c9cfb2b9a055bcad3178ccf7d31768bf38b43cac65"},
+    {file = "uv-0.3.5-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:cac04fce16fed8d7626dcd32b9e07c0475eb0266f858328f2de398802c1fc9af"},
+    {file = "uv-0.3.5-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:4f379d8748020ed8233a6681dcbb26e79eb8a8a7310d2dbd1e0de04e780c18ba"},
+    {file = "uv-0.3.5-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e7b8f8e35e6f8245dc7831b499dd6b7a71d94b6862b8225f2245fb59ef4f9825"},
+    {file = "uv-0.3.5-py3-none-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:1ef68f64a9232cb71a46f33b506ce14cb31c54d5385d47ee1202f17d300e40df"},
+    {file = "uv-0.3.5-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:7eb2e8bba1301efe43f929c33ba1c49975d314028feba4ec91d3da633629c74e"},
+    {file = "uv-0.3.5-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:e1dac7bd4ca2bd6d11ed4e43523e040ef9ed1cde2cd376eb6b1c61e64f636e95"},
+    {file = "uv-0.3.5-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cdab52c5c1ed97805f2b4d7648615e10a823f8c5497207d5f14f5b6062c4798b"},
+    {file = "uv-0.3.5-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:07bd680a570245c44da0800bed98ef01bfed6549832ae3b364e9c289afa6f76b"},
+    {file = "uv-0.3.5-py3-none-musllinux_1_1_armv7l.whl", hash = "sha256:7fffe2e209c7059522b3221d940356b24dc8036bcde2801de081e7e9c5cc5c4a"},
+    {file = "uv-0.3.5-py3-none-musllinux_1_1_i686.whl", hash = "sha256:585a91a05250e2d800f7614e77c09ba16fa1d3014ec092dac05ec2ea232d489f"},
+    {file = "uv-0.3.5-py3-none-musllinux_1_1_ppc64le.whl", hash = "sha256:9190ac2266076e6c63d3113bca5d047742e90406d763bf9ba5db7bac9ab9e4a5"},
+    {file = "uv-0.3.5-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:8a95ec9d9dcd3aad62c4a64d087ce953c2f733b27c50793c022bcc3cb9b17d92"},
+    {file = "uv-0.3.5-py3-none-win32.whl", hash = "sha256:420cabd5fa42f23e3abd0a4e43e3e84af9790f8c847b4306b7325a882356f94c"},
+    {file = "uv-0.3.5-py3-none-win_amd64.whl", hash = "sha256:4c89dd183389c297393b203172e9d72e7d2f2309eead950c9749240700817e98"},
+    {file = "uv-0.3.5.tar.gz", hash = "sha256:80243b411ce791d1c2656d148d9d2e3553cd71eb9812ed559a3f1c1384afb571"},
 ]
 
 [[package]]
@@ -5347,9 +5304,6 @@ files = [
     {file = "z3_solver-4.13.0.0-py2.py3-none-win_amd64.whl", hash = "sha256:3555436cfe9a5fa2d1b432fb9a5e4460e487649c22e5e68a56f7d81594d043e9"},
 ]
 
-[package.dependencies]
-importlib-resources = {version = "*", markers = "python_version < \"3.9\""}
-
 [[package]]
 name = "zipp"
 version = "3.19.1"
@@ -5430,5 +5384,5 @@ generate-unit-tests = ["klara"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.8,<3.12"
-content-hash = "e1b2272f67c09e7aef30193fdd32166523e843ac4060ffbcf5318935acaa903a"
+python-versions = ">=3.9,<3.12"
+content-hash = "a0b2b274f69b9e16363635a8c00aec61f6fb242871c144072d6646ff2efa24c7"

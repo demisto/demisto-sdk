@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "demisto-sdk"
 version = "1.31.10"
 description = "\"A Python library for the Demisto SDK\""
-license = "MIT"
+license = {file = "LICENSE"}
 readme = "README.md"
 classifiers = [
   'Intended Audience :: Developers',

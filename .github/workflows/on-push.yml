@@ -33,7 +33,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "Validating changelog for PR: $PR_NUMBER with Name: $PR_TITLE"
-          poetry run python ./Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py -n "$PR_NUMBER" -t "$PR_TITLE"
+          uv run python ./Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py -n "$PR_NUMBER" -t "$PR_TITLE"
       - name: Comment Changelog In PR Description
         continue-on-error: true
         env:
@@ -41,7 +41,7 @@ jobs:
           LATEST_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           echo "Commenting changelog for PR: $PR_NUMBER"
-          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_changelog.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght ${{ secrets.GITHUB_TOKEN }}
+          uv run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_changelog.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght ${{ secrets.GITHUB_TOKEN }}
 
   pre-commit-checks:
     runs-on: ubuntu-latest
@@ -59,13 +59,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
-          key: pre-commit-3|3.11|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}
+          key: pre-commit-3|3.11|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('uv.lock') }}
 
       - name: Run pre-commit
-        run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files
+        run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
 
       - name: Run Pytest collection
-        run: poetry run pytest --collect-only .
+        run: uv run pytest --collect-only .
 
   unit-tests:
     name: Unit Tests / Python ${{ matrix.python-version }}
@@ -91,14 +91,12 @@ jobs:
       - name: Run Unit Tests
         timeout-minutes: 60
         run: |
-          source "$(poetry env info --path)/bin/activate"
-
           # Due to race conditions in the tests bringing up and down the node server, have the server available
           # For all the tests.
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
 
-          poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml --force-sugar --durations 25 || pytest_exit_code=$?
+          uv run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml --force-sugar --durations 25 || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid
@@ -136,9 +134,7 @@ jobs:
       - name: Run Integration Tests
         timeout-minutes: 60
         run: |
-          source "$(poetry env info --path)/bin/activate"
-
-          poetry run pytest -v demisto_sdk/tests/integration_tests --cov=demisto_sdk --cov-report=html:integration-tests/coverage --junitxml=integration-tests/junit.xml --force-sugar --durations 25 || pytest_exit_code=$?
+          uv run pytest -v demisto_sdk/tests/integration_tests --cov=demisto_sdk --cov-report=html:integration-tests/coverage --junitxml=integration-tests/junit.xml --force-sugar --durations 25 || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           exit $pytest_exit_code
@@ -175,9 +171,7 @@ jobs:
       - name: Run Graph Tests
         timeout-minutes: 60
         run: |
-          source "$(poetry env info --path)/bin/activate"
-
-          poetry run pytest -v demisto_sdk/commands/content_graph --cov=demisto_sdk --cov-report=html:graph-tests/coverage --junitxml=graph-tests/junit.xml --force-sugar --durations 25 || pytest_exit_code=$?
+          uv run pytest -v demisto_sdk/commands/content_graph --cov=demisto_sdk --cov-report=html:graph-tests/coverage --junitxml=graph-tests/junit.xml --force-sugar --durations 25 || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           exit $pytest_exit_code
@@ -204,7 +198,7 @@ jobs:
         uses: actions/download-artifact@v4
       - name: Run coverage
         run: |
-          pip install coverage
+          uv pip install coverage
           coverage combine **/.coverage
           coverage report
           coverage xml
@@ -217,7 +211,7 @@ jobs:
         continue-on-error: true
         run: |
           if [ -n "$COVERALLS_REPO_TOKEN" ]; then
-            pip install coveralls
+            uv pip install coveralls
             coveralls
           else
             echo "Skipping coveralls"
@@ -258,7 +252,6 @@ jobs:
       - name: run pre-commit on changed files
         timeout-minutes: 60
         run: |
-          source $(poetry env info --path)/bin/activate
           cd content
           mkdir -p test-pre-commit-command
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
@@ -268,23 +261,21 @@ jobs:
 
           echo "# test" >> Tests/collect_tests.py
           git add .
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
+          uv run demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
 
       - name: run pre-commit on input files
         timeout-minutes: 60
         run: |
-          source $(poetry env info --path)/bin/activate
           cd content
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
+          uv run demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
 
       - name: run pre-commit with default pre-commit config shipped with the SDK
         timeout-minutes: 60
         run: |
-          source $(poetry env info --path)/bin/activate
           cd content
           rm -rf .pre-commit-config_template.yaml
           rm -f Tests/docker_native_image_config.json
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
+          uv run demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
 
       - name: Upload artifacts
         if: always()
@@ -327,9 +318,7 @@ jobs:
       - name: Validate content master paths
         if: steps.files-changed.outputs.any_changed == 'true'
         run: |
-          source $(poetry env info --path)/bin/activate
-          validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown --skip-suffix
-
+          uv run validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown --skip-suffix
 
   test-graph-commands:
     runs-on: ubuntu-latest
@@ -352,18 +341,17 @@ jobs:
       - name: Run Graph
         timeout-minutes: 60
         run: |
-          source $(poetry env info --path)/bin/activate
           cd content
           mkdir -p test-graph-commands
           # create content graph from scratch
-          demisto-sdk create-content-graph
+          uv run demisto-sdk create-content-graph
           # clean import folder
           sudo rm -rf /var/lib/neo4j/import
           # Update content graph from the bucket
-          demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
+          uv run demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
 
           # Update content graph from the the previous content graph that was created/built
-          demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
+          uv run demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
 
       - name: Upload artifacts
         if: always()
@@ -434,7 +422,7 @@ jobs:
 
       - name: Notify Failed Jobs
         run: |
-          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
+          uv run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
   generate_validate_docs:
     name: Generate Validate Docs
     runs-on: ubuntu-latest
@@ -449,7 +437,7 @@ jobs:
           python-version: "3.11"
 
       - name: Generate Docs
-        run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
+        run: uv run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -473,10 +461,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip'
+          cache: "pip"
 
       - name: pip intsall current project
         run: pip install .
 
       - name: Verify Installation
         run: demisto-sdk --version
+
+      - name: uv pip intsall current project
+        run: |
+          pip uninstall demisto-sdk # TODO check
+          uv run pip install .
+
+      - name: Verify Installation (uv)
+        run: uv run demisto-sdk --version

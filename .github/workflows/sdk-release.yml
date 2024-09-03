@@ -19,22 +19,16 @@ jobs:
   SDK-Release:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Poetry
-        uses: Gr1N/setup-poetry@v9
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.11"
 
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ inputs.branch_name }}
-
-      - name: Setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: poetry install
 
       - name: Releasing
         env:
@@ -43,4 +37,4 @@ jobs:
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: |
           echo "run releasing for PR: $PR_NUMBER with Name: $PR_TITLE"
-          python ./demisto_sdk/scripts/changelog/changelog.py --release -n "$PR_NUMBER" -t "$PR_TITLE" -bn "$BRANCH_NAME"
+          uv run python ./demisto_sdk/scripts/changelog/changelog.py --release -n "$PR_NUMBER" -t "$PR_TITLE" -bn "$BRANCH_NAME"

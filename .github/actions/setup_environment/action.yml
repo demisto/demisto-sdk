@@ -1,6 +1,8 @@
 name: 'Setup testing environment for demisto-sdk jobs'
 description: 'Setup testing environment for demisto-sdk jobs - that includes adding python/create-artifacts/install dependencies'
 author: 'Demisto-SDK'
+env:
+  UV_CACHE_DIR: /tmp/.uv-cache
 
 inputs:
   python-version:
@@ -12,10 +14,6 @@ inputs:
     type: string
     default: ${{ github.workspace }}
     description: "On which working directory to run the setup-env, for example it can be done in content"
-
-env:
-  UV_CACHE_DIR: /tmp/.uv-cache
-
 runs:
   using: 'composite'
   steps:

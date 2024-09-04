@@ -318,49 +318,53 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
     )
     assert validation_results == []  # the test playbook is deprecated
 
-
-def test_IsUsingUnknownContentValidator__all_files__fails(prepared_graph_repo: Repo):
+def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(prepared_graph_repo: Repo):
     """
     Given:
-        - A content graph interface with prepared repository data:
-            - Pack 1: Uses only known content.
-            - Pack 2: Uses both known and unknown content.
-            - Pack 3: Uses only known content.
-            - Pack 4: Uses only unknown content, specifically 'does_not_exist' in the content item 'MyScript'.
+        - A content graph interface with preloaded repository data:
+            - Pack 1: Exclusively uses known content.
+            - Pack 2: Utilizes a mix of 1 known and 3 unknown content items. The unknown content falls into 2 categories:
+                    - Optional dependencies - ('SampleClassifier' references 'Test type')
+                    - Test dependencies - ('TestPlaybookNoInUse' and 'SampleTestPlaybook' reference 'DeleteContext')
+            - Pack 3: Exclusively uses known content. (This pack is not relevant for this test).
+            - Pack 4: Exclusively uses unknown content.
+                    - Required dependencies - ('MyScript' references 'does_not_exist').
+
     When:
-        - The GR103 validation is run on the entire repository (-a) to identify instances of unknown content usage.
+        - The GR103 validation is executed across the entire repository (-a) to detect instances of unknown content usage.
     Then:
-        - The validator should correctly identify both content items that are using unknown content, return appropriate error messages,
+        - The validator should accurately identify the content items that are referencing unknown content.
     """
     graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
     results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items([])
-    assert len(results) == 2
-    assert (
-        results[0].message
-        == "Content item 'MyScript' is using content items: 'does_not_exist' which cannot be found in the repository."
-    )
+    assert len(results) == 4
 
 
 @pytest.mark.parametrize(
-    "pack_index, expected_len_results", [(0, 0), (1, 1), (2, 0), (3, 1)]
+    "pack_index, expected_len_results", [(0, 0), (1, 3), (2, 0), (3, 1)]
 )
-def test_IsUsingUnknownContentValidator__list_files(
+def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
     prepared_graph_repo: Repo, pack_index, expected_len_results
 ):
     """
     Given:
-        - A content graph interface with prepared repository data:
-            - Pack 1: Uses only known content.
-            - Pack 2: Uses both known and unknown content.
-            - Pack 3: Uses only known content.
-            - Pack 4: Uses only unknown content, specifically 'does_not_exist' in the content item 'MyScript'.
+        Given:
+        - A content graph interface with preloaded repository data:
+            - Pack 1: Exclusively uses known content.
+            - Pack 2: Utilizes a mix of 1 known and 3 unknown content items. The unknown content falls into 2 categories:
+                    - Optional dependencies - ('SampleClassifier' references 'Test type')
+                    - Test dependencies - ('TestPlaybookNoInUse' and 'SampleTestPlaybook' reference 'DeleteContext')
+            - Pack 3: Exclusively uses known content. (This pack is not relevant for this test).
+            - Pack 4: Exclusively uses unknown content.
+                    - Required dependencies - ('MyScript' references 'does_not_exist').
+
     When:
         - The GR103 validation is run on a specific pack to identify instances of unknown content usage.
     Then:
         - The validator should correctly identify the content items that are using unknown content.
             When running on Pack 1 - there should be 0 results.
-            When running on Pack 2 - there should be 1 result.
+            When running on Pack 2 - there should be 3 result.
             When running on Pack 3 - there should be 0 results.
             When running on Pack 4 - there should be 1 result, identifying the usage of 'does_not_exist' in the 'MyScript' content item.
     """

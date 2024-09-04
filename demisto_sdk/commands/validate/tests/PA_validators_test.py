@@ -16,8 +16,10 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_USE_CASES,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.content_graph.objects.base_content import BaseNode
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFile
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
     create_integration_object,
     create_modeling_rule_object,
     create_old_file_pointers,
@@ -97,6 +99,7 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA131_is_default_dat
 from demisto_sdk.commands.validate.validators.PA_validators.PA132_is_valid_default_datasource import (
     IsValidDefaultDataSourceNameValidator,
 )
+from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.mark.parametrize(
@@ -1670,7 +1673,7 @@ def test_PackFilesValidator_fix(file_attribute: str):
     [("1.0.0", "1.0.1", 0), ("1.0.0", "1.0.0", 1), ("1.1.0", "1.0.1", 1)],
 )
 def test_PackMetadataVersionShouldBeRaisedValidator(
-    old_version, current_version, expected_invalid
+    mocker, old_version, current_version, expected_invalid
 ):
     """
     Given: A previous pack version and a current pack version.
@@ -1681,10 +1684,6 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
         2) current version = previous version: 1 validation errors.
         3) current version < previous version: 1 validation errors.
     """
-    pack = create_pack_object(["currentVersion"], [current_version])
-    integration = create_integration_object()
-    pack.content_items.integration.extend(integration)
-
     error_message = (
         "The pack version (currently: {old_version}) needs to be raised - "
         "make sure you are merged from master and "
@@ -1694,16 +1693,67 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
         "(major|minor|revision|documentation)` to "
         "generate them according to the new standard."
     )
-
-    class MockOldMetadata:
-        current_version = old_version
-
-    pack.old_base_content_object = MockOldMetadata()
-    version_bump_validator = PackMetadataVersionShouldBeRaisedValidator()
-    results = version_bump_validator.is_valid([pack])
-    assert len(results) == expected_invalid
-    for result in results:
-        assert (
-            error_message.format(old_version=old_version, pack=pack.name)
-            in result.message
+    with ChangeCWD(REPO.path):
+        integration = create_integration_object(
+            pack_info={"currentVersion": current_version}
         )
+        pack = integration.in_pack
+
+        old_pack = pack.copy(deep=True)
+        old_pack.current_version = old_version
+
+        pack.old_base_content_object = old_pack
+        mocker.patch.object(
+            BaseNode, "to_dict", return_value={"current_version": old_version}
+        )
+        version_bump_validator = PackMetadataVersionShouldBeRaisedValidator()
+        results = version_bump_validator.obtain_invalid_content_items(
+            [pack, integration]
+        )
+        assert len(results) == expected_invalid
+        for result in results:
+            assert (
+                error_message.format(old_version=old_version, pack=pack.name)
+                in result.message
+            )
+
+
+def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
+    """
+    Given: A previous pack version = current pack version with a price change within the pack metadata.
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Assure the validation fails.
+    """
+    error_message = (
+        "The pack version (currently: {old_version}) needs to be raised - "
+        "make sure you are merged from master and "
+        'update the "currentVersion" field in the '
+        "pack_metadata.json or in case release notes are required run:\n"
+        "`demisto-sdk update-release-notes -i Packs/{pack} -u "
+        "(major|minor|revision|documentation)` to "
+        "generate them according to the new standard."
+    )
+    old_version = "1.0.0"
+    current_version = "1.0.0"
+    with ChangeCWD(REPO.path):
+        pack = create_pack_object(["currentVersion", "price"], [current_version, 5])
+        old_pack = pack.copy(deep=True)
+        old_pack.current_version = old_version
+
+        pack.old_base_content_object = old_pack
+        mocker.patch.object(
+            BaseNode,
+            "to_dict",
+            side_effect=[
+                {"current_version": old_version, "price": 3},
+                {"current_version": old_version, "price": 5},
+            ],
+        )
+        version_bump_validator = PackMetadataVersionShouldBeRaisedValidator()
+        results = version_bump_validator.obtain_invalid_content_items([pack])
+        assert len(results) == 1
+        for result in results:
+            assert (
+                error_message.format(old_version=old_version, pack=pack.name)
+                in result.message
+            )

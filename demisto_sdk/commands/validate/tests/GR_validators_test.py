@@ -318,7 +318,10 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
     )
     assert validation_results == []  # the test playbook is deprecated
 
-def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(prepared_graph_repo: Repo):
+
+def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
+    prepared_graph_repo: Repo,
+):
     """
     Given:
         - A content graph interface with preloaded repository data:

@@ -99,7 +99,7 @@ ContentTypes = Union[
 
 class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
     error_code = "PA114"
-    description = "Ensure that the pack metadata is raised on relevant changes."
+    description = "Ensure that the pack metadata version is raised on relevant changes."
     rationale = (
         "When updating a pack, its version needs to be raised to maintain traceability."
     )
@@ -108,11 +108,10 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         "make sure you are merged from master and "
         'update the "currentVersion" field in the '
         "pack_metadata.json or in case release notes are required run:\n"
+        "`demisto-sdk update-release-notes -g` - for automatically generation of release notes and version\n"
         "`demisto-sdk update-release-notes -i Packs/{pack} -u "
-        "(major|minor|revision|documentation)` to "
-        "generate them according to the new standard."
+        "(major|minor|revision|documentation)` for a specific pack and version."
     )
-    related_field = "currentVersion, name"
 
     @staticmethod
     def should_bump_is_metadata(content_item: ContentTypes):

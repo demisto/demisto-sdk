@@ -1689,9 +1689,9 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
         "make sure you are merged from master and "
         'update the "currentVersion" field in the '
         "pack_metadata.json or in case release notes are required run:\n"
+        "`demisto-sdk update-release-notes -g` - for automatically generation of release notes and version\n"
         "`demisto-sdk update-release-notes -i Packs/{pack} -u "
-        "(major|minor|revision|documentation)` to "
-        "generate them according to the new standard."
+        "(major|minor|revision|documentation)` for a specific pack and version."
     )
     with ChangeCWD(REPO.path):
         integration = create_integration_object(
@@ -1729,9 +1729,9 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
         "make sure you are merged from master and "
         'update the "currentVersion" field in the '
         "pack_metadata.json or in case release notes are required run:\n"
+        "`demisto-sdk update-release-notes -g` - for automatically generation of release notes and version\n"
         "`demisto-sdk update-release-notes -i Packs/{pack} -u "
-        "(major|minor|revision|documentation)` to "
-        "generate them according to the new standard."
+        "(major|minor|revision|documentation)` for a specific pack and version."
     )
     old_version = "1.0.0"
     current_version = "1.0.0"

@@ -851,11 +851,11 @@ def test_check_metadata_version_bump_on_content_changes(mocker, repo):
     integration = create_integration_object()
     pack.content_items.integration.extend(integration)
     validation_results = ResultWriter()
-    config_reader = ConfigReader(specific_validations="PA114")
+    config_reader = ConfigReader(explicitly_selected=["PA114"])
     mocker.patch.object(
         Initializer,
         "get_files_using_git",
-        return_value=({BaseContent.from_path(Path(integration.path))}, {}, {}),
+        return_value=({BaseContent.from_path(Path(integration.path)), pack}, {}, {}),
     )
     mocker.patch.object(
         BaseContent,

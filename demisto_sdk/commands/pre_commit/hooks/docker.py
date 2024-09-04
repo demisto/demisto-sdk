@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.docker_helper import (
     DockerBase,
     docker_login,
     get_docker,
+    get_pip_requirements_from_file,
     init_global_docker_client,
 )
 from demisto_sdk.commands.common.native_image import (
@@ -143,12 +144,16 @@ def devtest_image(
 
     """
     docker_base = get_docker()
+    mypy_requirements = get_pip_requirements_from_file(
+        Path(f"{CONTENT_PATH}/mypy-requirements.txt")
+    )
     image, errors = docker_base.get_or_create_test_image(
         base_image=image_tag,
         container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
         push=docker_login(docker_client=init_global_docker_client()),
         should_pull=False,
         log_prompt="DockerHook",
+        additional_requirements=mypy_requirements,
     )
     if not errors:
         if not should_pull:

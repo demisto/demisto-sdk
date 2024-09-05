@@ -237,7 +237,7 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     return int(any(return_codes))
 
 
-def print_errors_github_action(errors_and_warning: list[str]) -> None:
+def print_errors_github_action(errors_and_warning: List[str]) -> None:
     for error_and_warning in errors_and_warning:
         if not (match := ERROR_CODE_PATTERN.match(error_and_warning)):
             logger.debug(f"Failed parsing error {error_and_warning}")

@@ -28,7 +28,9 @@ class IsDescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.DESCRIPTION_File]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -41,7 +43,10 @@ class IsDescriptionContainsDemistoWordValidator(BaseValidator[ContentTypes]):
                     phrases_to_search=["demisto"],
                     ignore_case=True,
                     text=content_item.description_file.file_content,
-                    exceptionally_allowed_substrings=["/demisto/"],  # in URL
+                    exceptionally_allowed_substrings=[
+                        "/demisto/",  # in URL
+                        "Demisto Bot",  # expected pair.
+                    ],
                 )
             )
         ]

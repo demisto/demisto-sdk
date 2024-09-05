@@ -1,8 +1,8 @@
 from unittest.mock import ANY
 
-import demisto_client
 import pytest
 
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS
 from demisto_sdk.commands.test_content.TestContentClasses import (
     Integration,
     IntegrationConfiguration,
@@ -34,19 +34,31 @@ def test_set_prev_server_keys(mocker, tmp_path):
     """
     prev_server_conf = {"prev": "conf"}
     mocked_demisto_client = DemistoClientMock()
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.BuildContext.create_servers",
+        return_value=set(),
+    )
+
     build_context = get_mocked_build_context(mocker, tmp_path)
     server_context = generate_mocked_server_context(
         build_context, mocked_demisto_client, mocker
     )
+    build_context.servers = {server_context}
     update_server_conf_func = mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.update_server_configuration",
         return_value=(None, None, prev_server_conf),
     )
     test_playbook_configuration = TestConfiguration({}, 0)
 
-    test_playbook = TestPlaybook(build_context, test_playbook_configuration)
+    test_playbook = TestPlaybook(
+        build_context, test_playbook_configuration, server_context
+    )
     integration = Integration(
-        build_context, "integration_with_server_keys", ["instance"], test_playbook
+        build_context,
+        "integration_with_server_keys",
+        ["instance"],
+        test_playbook,
+        server_context,
     )
     integration.configuration = IntegrationConfiguration(
         {
@@ -58,10 +70,10 @@ def test_set_prev_server_keys(mocker, tmp_path):
         }
     )
 
-    integration._set_server_keys(mocked_demisto_client, server_context)
+    integration._set_server_keys(mocked_demisto_client)
     test_playbook.integrations = [integration]
 
-    assert test_playbook._set_prev_server_keys(mocked_demisto_client, server_context)
+    assert test_playbook._set_prev_server_keys(mocked_demisto_client)
 
     update_server_conf_func.assert_called_with(
         client=mocked_demisto_client,
@@ -86,11 +98,25 @@ def test_close_incident(mocker, tmp_path, expected_res, client_res):
         - Ensure incident closed if status code is 200
         - incident not closed but there is no exception, when code is 400
     """
-    mocked_demisto_client = DemistoClientMock()
-    build_context = create_xsiam_build(mocker, tmp_path)
-    test_playbook_configuration = TestConfiguration({}, 0)
-    mocker.patch.object(demisto_client, "generic_request_func", return_value=client_res)
 
-    test_playbook = TestPlaybook(build_context, test_playbook_configuration)
+    mocked_demisto_client = DemistoClientMock()
+    machine_assignment_content_xsiam = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "tests": {TEST_PLAYBOOKS: []},
+        }
+    }
+    build_context = create_xsiam_build(
+        mocker, tmp_path, machine_assignment_content=machine_assignment_content_xsiam
+    )
+    test_playbook_configuration = TestConfiguration({}, 0)
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.demisto_client.generic_request_func",
+        return_value=client_res,
+    )
+
+    test_playbook = TestPlaybook(
+        build_context, test_playbook_configuration, next(iter(build_context.servers))
+    )
     res = test_playbook.close_incident(client=mocked_demisto_client, incident_id="1")
     assert res == expected_res

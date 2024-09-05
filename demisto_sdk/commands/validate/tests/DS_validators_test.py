@@ -5,6 +5,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.DS_validators.DS101_is_valid_beta_description import (
+    IsValidBetaDescriptionValidator,
+)
 from demisto_sdk.commands.validate.validators.DS_validators.DS108_description_ends_with_dot import (
     DescriptionEndsWithDotValidator,
 )
@@ -35,7 +38,7 @@ from demisto_sdk.commands.validate.validators.DS_validators.DS108_description_en
         ),
     ],
 )
-def test_DescriptionMissingInBetaIntegrationValidator_is_valid(
+def test_DescriptionMissingInBetaIntegrationValidator_obtain_invalid_content_items(
     is_beta_integration,
     description_file_exist,
     result_len,
@@ -64,16 +67,20 @@ def test_DescriptionMissingInBetaIntegrationValidator_is_valid(
     integration.is_beta = is_beta_integration
     integration.description_file.exist = description_file_exist
 
-    is_valid = DescriptionMissingInBetaIntegrationValidator().is_valid([integration])
-    assert result_len == len(is_valid)
+    invalid_content_items = (
+        DescriptionMissingInBetaIntegrationValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert result_len == len(invalid_content_items)
 
 
-def test_IsDescriptionContainsDemistoWordValidator_is_valid():
+def test_IsDescriptionContainsDemistoWordValidator_obtain_invalid_content_items():
     """
     Given
     - Integration with a valid description.
     When
-    - Calling the IsContainDemistoWordValidator is_valid function.
+    - Calling the IsContainDemistoWordValidator obtain_invalid_content_items function.
     Then
     - Should pass.
 
@@ -84,8 +91,12 @@ def test_IsDescriptionContainsDemistoWordValidator_is_valid():
 
     integration = create_integration_object()
     integration.description_file.file_content_str = "valid description\n"
-    is_valid = IsDescriptionContainsDemistoWordValidator().is_valid([integration])
-    assert len(is_valid) == 0
+    invalid_content_items = (
+        IsDescriptionContainsDemistoWordValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(invalid_content_items) == 0
 
 
 def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
@@ -93,7 +104,7 @@ def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
     Given
     - Integration with invalid description that contains the word 'demisto'.
     When
-    - Calling the IsContainDemistoWordValidator is_valid function.
+    - Calling the IsContainDemistoWordValidator obtain_invalid_content_items function.
     Then
     - Make that the right error message is returned.
     """
@@ -105,9 +116,13 @@ def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
     integration.description_file.file_content_str = (
         " demisto.\n demisto \n valid description\ndemisto"
     )
-    is_valid = IsDescriptionContainsDemistoWordValidator().is_valid([integration])
+    invalid_content_items = (
+        IsDescriptionContainsDemistoWordValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
     assert (
-        is_valid[0].message
+        invalid_content_items[0].message
         == "Invalid keyword 'demisto' was found in lines: 1, 2, 4. For more information about the description file See: https://xsoar.pan.dev/docs/documentation/integration-description."
     )
 
@@ -132,7 +147,7 @@ def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
         ),
     ],
 )
-def test_IsValidBetaDescriptionValidator_is_valid(
+def test_IsValidBetaDescriptionValidator_obtain_invalid_content_items(
     is_beta_integration,
     description_file_content,
     result_len,
@@ -151,16 +166,15 @@ def test_IsValidBetaDescriptionValidator_is_valid(
         - Case 2: Should fail.
         - Case 3: Shouldn't fail.
     """
-    from demisto_sdk.commands.validate.validators.DS_validators.DS101_is_valid_beta_description import (
-        IsValidBetaDescriptionValidator,
-    )
 
     integration = create_integration_object()
     integration.is_beta = is_beta_integration
     integration.description_file.file_content_str = description_file_content
 
-    is_valid = IsValidBetaDescriptionValidator().is_valid([integration])
-    assert result_len == len(is_valid)
+    invalid_content_items = (
+        IsValidBetaDescriptionValidator().obtain_invalid_content_items([integration])
+    )
+    assert result_len == len(invalid_content_items)
 
 
 @pytest.mark.parametrize(
@@ -176,7 +190,7 @@ def test_IsValidBetaDescriptionValidator_is_valid(
         ),
     ],
 )
-def test_IsDescriptionContainsContribDetailsValidator_is_valid(
+def test_IsDescriptionContainsContribDetailsValidator_obtain_invalid_content_items(
     description_file_content,
     result_len,
 ):
@@ -199,8 +213,12 @@ def test_IsDescriptionContainsContribDetailsValidator_is_valid(
     integration = create_integration_object()
     integration.description_file.file_content_str = description_file_content
 
-    is_valid = IsDescriptionContainsContribDetailsValidator().is_valid([integration])
-    assert result_len == len(is_valid)
+    invalid_content_items = (
+        IsDescriptionContainsContribDetailsValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert result_len == len(invalid_content_items)
 
 
 @pytest.mark.parametrize(
@@ -216,7 +234,7 @@ def test_IsDescriptionContainsContribDetailsValidator_is_valid(
         ),
     ],
 )
-def test_IsValidDescriptionNameValidator_is_valid(
+def test_IsValidDescriptionNameValidator_obtain_invalid_content_items(
     is_file_exist,
     result_len,
 ):
@@ -239,8 +257,10 @@ def test_IsValidDescriptionNameValidator_is_valid(
     integration = create_integration_object()
     integration.description_file.exist = is_file_exist
 
-    is_valid = IsValidDescriptionNameValidator().is_valid([integration])
-    assert result_len == len(is_valid)
+    invalid_content_items = (
+        IsValidDescriptionNameValidator().obtain_invalid_content_items([integration])
+    )
+    assert result_len == len(invalid_content_items)
 
 
 @pytest.mark.parametrize(
@@ -369,7 +389,7 @@ def test_IsValidDescriptionNameValidator_is_valid(
         ),
     ],
 )
-def test_DescriptionEndsWithDotValidator_is_valid(
+def test_DescriptionEndsWithDotValidator_obtain_invalid_content_items(
     content_items,
     expected_number_of_failures,
     expected_error_msgs,
@@ -399,7 +419,9 @@ def test_DescriptionEndsWithDotValidator_is_valid(
         - Case 1: One failure, The first integration should fail for it's description, second argument and first context Path.
         - Case 2: The script should fail only for it's comment section.
     """
-    results = DescriptionEndsWithDotValidator().is_valid(content_items)
+    results = DescriptionEndsWithDotValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -506,4 +528,41 @@ def test_DescriptionEndsWithDotValidator_fix(
     validator = DescriptionEndsWithDotValidator()
     validator.lines_without_dots[content_item.name] = lines_without_dots
     assert validator.fix(content_item).message == expected_fix_msg
-    assert not validator.is_valid([content_item])
+    assert not validator.obtain_invalid_content_items([content_item])
+
+
+@pytest.mark.parametrize(
+    "description_file_exist, is_unified, expected_len_errors",
+    [
+        pytest.param(True, False, 0, id="Case 1"),
+        pytest.param(False, True, 0, id="Case 2"),
+        pytest.param(False, False, 1, id="Case 3"),
+    ],
+)
+def test_NoDescriptionFileValidator_obtain_invalid_content_items(
+    description_file_exist, is_unified, expected_len_errors
+):
+    """
+    Given:
+        - Case 1: Description file exists in the integration folder, integration is not unified.
+        - Case 2: Description file doesn't exist in the integration folder, but is unified.
+        - Case 3: Description file doesn't exist in the integration folder, and is not unified.
+    When:
+        - Calling the DescriptionInFolderAndYmlValidator obtain_invalid_content_items function.
+    Then:
+        - Case 1: Should pass.
+        - Case 2: Should pass.
+        - Case 3: Should fail.
+    """
+    from demisto_sdk.commands.validate.validators.DS_validators.DS104_no_description_file import (
+        NoDescriptionFileValidator,
+    )
+
+    integration = create_integration_object()
+
+    integration.description_file.exist = description_file_exist
+    integration.is_unified = is_unified
+    invalid_content_items = NoDescriptionFileValidator().obtain_invalid_content_items(
+        [integration]
+    )
+    assert len(invalid_content_items) == expected_len_errors

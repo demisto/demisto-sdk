@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, NamedTuple, Optional
 
 import toml
 
@@ -13,66 +13,89 @@ PATH = Path(__file__).parents[0].resolve()
 CONFIG_FILE_PATH = f"{PATH}/default_config.toml"
 
 
-class ConfiguredValidations:
-    """
-    class to hold all the sections from the config file as one object
-    """
-
-    def __init__(
-        self,
-        select: List[str] = [],
-        warning: List[str] = [],
-        ignorable_errors: List[str] = [],
-        support_level_dict: Dict[str, str] = {},
-    ):
-        self.validations_to_run = select
-        self.only_throw_warnings = warning
-        self.ignorable_errors = ignorable_errors
-        self.support_level_dict = support_level_dict
+class ConfiguredValidations(NamedTuple):
+    select: List[str] = []
+    warning: List[str] = []
+    ignorable_errors: List[str] = []
+    support_level_dict: Dict[str, Dict[str, List[str]]] = {}
 
 
 class ConfigReader:
     def __init__(
-        self, config_file_path=None, category_to_run=None, specific_validations=[]
+        self,
+        path: Optional[Path] = None,
+        category: Optional[str] = None,
+        explicitly_selected: Optional[List[str]] = None,
     ):
-        self.specific_validations = specific_validations
-        if not config_file_path:
-            config_file_path = CONFIG_FILE_PATH
-        try:
-            self.config_file_content: dict = toml.load(config_file_path)
-            self.category_to_run = category_to_run
-        except FileNotFoundError:
-            logger.error(f"Failed to find config file at path {config_file_path}")
+        self.category_to_run = category
+        self.explicitly_selected = explicitly_selected
+
+        if path is None:
+            path = Path(CONFIG_FILE_PATH)
+        elif isinstance(path, str):
+            path = Path(path)
+
+        if not path.exists():
+            logger.error(f"Config file {path} does not exist.")
             exit(1)
 
-    def gather_validations_from_conf(
+        self.config_file_content: dict = toml.load(path)
+
+    def read(
         self,
-        execution_mode: ExecutionMode,
+        mode: Optional[ExecutionMode],
         ignore_support_level: Optional[bool] = False,
+        codes_to_ignore: Optional[List[str]] = None,
     ) -> ConfiguredValidations:
         """Extract the relevant information from the relevant category in the config file.
 
         Args:
-            execution_mode (executionMode): The execution mode.
-            ignore_support_level Optional[bool]: Whether to ignore_support_level
         Returns:
             Tuple[List, List, List, dict]: the select, warning, and ignorable errors sections from the given category,
             and the support_level dict with errors to ignore.
         """
-        specific_validations = []
-        if self.specific_validations and self.specific_validations[0]:
-            specific_validations = self.specific_validations
         flag = self.category_to_run or (
-            USE_GIT
-            if execution_mode == ExecutionMode.USE_GIT
-            else PATH_BASED_VALIDATIONS
+            USE_GIT if mode == ExecutionMode.USE_GIT else PATH_BASED_VALIDATIONS
         )
         section = self.config_file_content.get(flag, {})
-        return ConfiguredValidations(
-            specific_validations or section.get("select", []),
-            section.get("warning", []),
-            self.config_file_content.get("ignorable_errors", []),
+        explicitly_selected = sorted(filter(None, self.explicitly_selected or ()))
+
+        select = explicitly_selected or sorted(section.get("select", []))
+        warning = sorted(section.get("warning", []))
+        ignorable = sorted(self.config_file_content.get("ignorable_errors", []))
+        support_level_dict = (
             self.config_file_content.get("support_level", {})
             if not ignore_support_level
-            else {},
+            else {}
+        )
+
+        def _ignore_errors(
+            codes: Iterable[str], category: str, codes_to_ignore: Iterable[str]
+        ) -> List[str]:
+            """
+            Removes the error codes we want to ignore, from a given list of error codes
+            This is an internal method, since it's not supposed to be used elsewhere, and has a potentially-confusing name
+            """
+            codes = set(codes)
+            if removed := codes.intersection(codes_to_ignore):
+                logger.warning(
+                    f"{category}: Removed ignored codes {','.join(sorted(removed))}"
+                )
+                return sorted(codes.difference(removed))
+            else:
+                logger.debug(f"{category}: nothing to filter out, using it as is")
+                return sorted(codes)
+
+        if codes_to_ignore:
+            select = _ignore_errors(select, "select", codes_to_ignore)
+            warning = _ignore_errors(warning, "warning", codes_to_ignore)
+            explicitly_selected = _ignore_errors(
+                explicitly_selected, "explicitly_selected", codes_to_ignore
+            )
+
+        return ConfiguredValidations(
+            select=explicitly_selected or select,
+            warning=warning,
+            ignorable_errors=ignorable,
+            support_level_dict=support_level_dict,
         )

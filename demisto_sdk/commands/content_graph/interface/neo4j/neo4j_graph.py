@@ -68,6 +68,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
+    validate_test_playbook_in_use,
     validate_toversion,
     validate_unknown_content,
 )
@@ -507,10 +508,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def find_uses_paths_with_invalid_marketplaces(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
-        """Searches and retrievs content items who use content items with invalid marketplaces.
+        """Searches and retrieves content items who use content items with invalid marketplaces.
 
         Args:
-            file_paths (List[str]): A list of content items' paths to check.
+            pack_ids (List[str]): A list of content items' pack_ids to check.
                 If not given, runs the query over all content items.
 
         Returns:
@@ -565,6 +566,29 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
+
+    def find_unused_test_playbook(
+        self, test_playbook_ids: List[str], skipped_tests_keys: List[str]
+    ) -> List[BaseNode]:
+        """
+        Finds unused test playbooks.
+
+        This method checks which test playbooks from the provided list are not in use,
+        considering the skipped tests keys.
+
+        Args:
+            test_playbook_ids (List[str]): A list of test playbook IDs to check.
+            skipped_tests_keys (List[str]): A list of keys for tests that should be skipped.
+
+        Returns:
+            List[BaseNode]: A list of BaseNode objects representing the unused test playbooks.
+        """
+        with self.driver.session() as session:
+            results = session.execute_read(
+                validate_test_playbook_in_use, test_playbook_ids, skipped_tests_keys
+            )
+            self._add_nodes_to_mapping(results)
+            return [self._id_to_obj[result.element_id] for result in results]
 
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]

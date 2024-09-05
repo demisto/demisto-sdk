@@ -139,9 +139,7 @@ def build_xsoar_linter_command(
             checkers_to_enable.append(checker)
             checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
             if formatting_script and "W9008" in checker_msgs_list:
-                checker_msgs_list = [
-                    msg for msg in checker_msgs_list if msg != "W9008"
-                ]  # type:ignore[assignment]
+                checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]  # type:ignore[assignment]
             errors_to_enable.extend(checker_msgs_list)
 
     command = "pylint"

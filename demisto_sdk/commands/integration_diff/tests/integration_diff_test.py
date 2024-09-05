@@ -16,7 +16,6 @@ TEST_FILES = os.path.join(DEMISTO_SDK_PATH, "commands", "integration_diff", "tes
 
 
 class TestIntegrationDiffDetector:
-
     NEW_INTEGRATION_YAML = {}
     OLD_INTEGRATION_YAML = {}
     DIFFERENCES_REPORT = {}
@@ -366,9 +365,9 @@ class TestIntegrationDiffDetector:
         new_integration_yaml["script"]["commands"].remove(
             new_integration_yaml["script"]["commands"][0]
         )
-        new_integration_yaml["script"]["commands"][0]["arguments"][1][
-            "isArray"
-        ] = "true"
+        new_integration_yaml["script"]["commands"][0]["arguments"][1]["isArray"] = (
+            "true"
+        )
         new_integration_yaml["script"]["commands"][0]["outputs"][1]["type"] = "String"
 
         old_integration = pack.create_integration(
@@ -924,9 +923,9 @@ class TestIntegrationDiffDetector:
 
         changed_command_name = "command_1_1"
 
-        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[0][
-            "name"
-        ] = changed_command_name
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[0]["name"] = (
+            changed_command_name
+        )
 
         old_integration = pack.create_integration(
             "oldIntegration", yml=self.OLD_INTEGRATION_YAML

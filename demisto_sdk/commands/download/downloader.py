@@ -104,6 +104,22 @@ KEEP_EXISTING_YAML_FIELDS = [
 ]
 
 
+def format_playbook_task(content_item_data: dict[str, dict]):
+    """This function checks if there are tasks that run sub-playbooks and converts 'playbookId' to 'playbookName' where applicable.
+       XSUP-39266: replacing playbookId with playbookName in tasks.
+
+    Args:
+        content_item_data (Dict): The content item data containing tasks.
+    """
+    content_data = content_item_data.get("data", {})
+    all_tasks_data = content_data.get("tasks", {})
+    if isinstance(all_tasks_data, dict) and all_tasks_data:
+        for task_id, task_data in all_tasks_data.items():
+            playbook_id_value = task_data.get("task", {}).get("playbookId")
+            if task_data.get("type") == "playbook" and playbook_id_value:
+                task_data["task"]["playbookName"] = task_data["task"].pop("playbookId")
+
+
 class Downloader:
     """
     A class for downloading content from an XSOAR / XSIAM server.
@@ -237,7 +253,9 @@ class Downloader:
                 downloaded_content_objects = self.filter_custom_content(
                     custom_content_objects=all_custom_content_objects
                 )
-
+                for _, value in downloaded_content_objects.items():
+                    if value["type"] == FileType.PLAYBOOK:
+                        format_playbook_task(value)
                 if self.input_files:
                     downloaded_content_item_names = [
                         item["name"] for item in downloaded_content_objects.values()

@@ -26,7 +26,9 @@ class DockerImageExistValidator(BaseValidator[ContentTypes]):
         docker_name = f"demisto/{content_item.subtype if content_item.type == 'python' else 'powershell'}"
         return DockerHubClient().get_latest_docker_image(docker_name)
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

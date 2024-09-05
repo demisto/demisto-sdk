@@ -1,6 +1,7 @@
 """
 This script is used to create a release notes template
 """
+
 import copy
 import errno
 import os
@@ -359,6 +360,7 @@ class UpdateRN:
             f.write(json.dumps(bc_file_data, indent=4))
         logger.info(
             f"[green]Finished creating config file for RN version {new_version}.\n"
+            "If the breaking changes apply only for specific marketplaces, add those values under the `marketplaces` field.\n"
             "If you wish only specific text to be shown as breaking changes, please fill the "
             "`breakingChangesNotes` field with the appropriate breaking changes text.[/green]"
         )

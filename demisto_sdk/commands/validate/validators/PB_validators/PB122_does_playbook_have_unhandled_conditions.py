@@ -22,7 +22,9 @@ class DoesPlaybookHaveUnhandledConditionsValidator(BaseValidator[ContentTypes]):
     related_field = "conditions"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         """Checks whether all conditional task branches are handled properly.
         Args:
             content_items (Iterable[ContentTypes]): The content items to check.

@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.logger import logger
 
 
 class StructuredFile(TextFile, ABC):
-
     default_handler: Type[XSOAR_Handler]
 
     @property

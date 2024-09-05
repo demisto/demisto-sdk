@@ -513,7 +513,6 @@ class ContributionConverter:
 
                     # Construct the path to the README from the content path
                     try:
-
                         # If it's a README for a playbook
                         # e.g. 'Playbooks/playbook-New-PB_README.md'
                         if PLAYBOOKS_DIR in generated_readme:

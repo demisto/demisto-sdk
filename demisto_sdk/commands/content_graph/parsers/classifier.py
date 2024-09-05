@@ -11,6 +11,9 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
 from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
+from demisto_sdk.commands.content_graph.strict_objects.classifier import (
+    StrictClassifier,
+)
 
 
 class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIER):
@@ -86,3 +89,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @property
+    def strict_object(self):
+        return StrictClassifier

@@ -16,14 +16,12 @@ if sys.version_info >= (3, 11):
         """
 
         @overload
-        def __new__(cls, object: object = ...) -> Self:
-            ...
+        def __new__(cls, object: object = ...) -> Self: ...
 
         @overload
         def __new__(
             cls, object: object, encoding: str = ..., errors: str = ...
-        ) -> Self:
-            ...
+        ) -> Self: ...
 
         def __new__(cls, *values):
             return _StrEnum._new_member_(cls, *values)

@@ -44,7 +44,9 @@ class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValid
     is_auto_fixable = True
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         validation_results: List[ValidationResult] = []
 
         for content_item in content_items:
@@ -73,9 +75,9 @@ class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValid
             filter(lambda select_value: select_value != "", select_values)
         )  # First remove all empty values
         new_select_values.append("")  # Add back one empty value.
-        content_item.data[
-            "selectValues"
-        ] = content_item.select_values = new_select_values
+        content_item.data["selectValues"] = content_item.select_values = (
+            new_select_values
+        )
 
         return FixResult(
             validator=self,

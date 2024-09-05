@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where **upload** command failed locally due to missing lock file.
-  type: fix
-pr_number: 4397

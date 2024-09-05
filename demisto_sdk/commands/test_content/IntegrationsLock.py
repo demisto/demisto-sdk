@@ -176,9 +176,9 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
     # See https://cloud.google.com/storage/docs/generations-preconditions for details.
     for integration in integrations:
         if integration in existing_integrations_lock_files:
-            integrations_generation_number[
-                integration
-            ] = existing_integrations_lock_files[integration].generation
+            integrations_generation_number[integration] = (
+                existing_integrations_lock_files[integration].generation
+            )
         else:
             integrations_generation_number[integration] = 0
     return create_lock_files(

@@ -7,6 +7,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.wizard import StrictWizard
 
 json = JSON_Handler()
 
@@ -55,3 +56,7 @@ class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
         for playbook in self.json_data.get("wizard", {}).get("set_playbook", []):
             playbooks.append(playbook.get("name"))
         return playbooks
+
+    @property
+    def strict_object(self):
+        return StrictWizard

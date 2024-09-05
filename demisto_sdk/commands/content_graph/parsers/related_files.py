@@ -1,9 +1,10 @@
 import base64
+import re
 from abc import ABC
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Set, Union
 
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
@@ -17,6 +18,7 @@ from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_child_files
 
 
 class RelatedFileType(Enum):
@@ -111,6 +113,7 @@ class RNRelatedFile(TextFiles):
         self, main_file_path: Path, latest_rn: str, git_sha: Optional[str] = None
     ) -> None:
         self.latest_rn_version = latest_rn
+        self.rns_list: List[str] = []
         super().__init__(main_file_path, git_sha)
 
     def get_optional_paths(self) -> List[Path]:
@@ -119,6 +122,17 @@ class RNRelatedFile(TextFiles):
             / RELEASE_NOTES_DIR
             / f"{self.latest_rn_version.replace('.', '_')}.md"
         ]
+
+    @property
+    def all_rns(self) -> List[str]:
+        if not self.rns_list:
+            if self.git_sha:
+                self.rns_list = GitUtil.from_content_path().list_files_in_dir(
+                    self.main_file_path / RELEASE_NOTES_DIR, self.git_sha
+                )
+            else:
+                self.rns_list = get_child_files(self.main_file_path / RELEASE_NOTES_DIR)
+        return self.rns_list
 
 
 class SecretsIgnoreRelatedFile(RelatedFile):
@@ -135,11 +149,17 @@ class PackIgnoreRelatedFile(RelatedFile):
         return [self.main_file_path / PACKS_PACK_IGNORE_FILE_NAME]
 
 
-class XifRelatedFile(RelatedFile):
+class XifRelatedFile(TextFiles):
     file_type = RelatedFileType.XIF
 
     def get_optional_paths(self) -> List[Path]:
         return [Path(str(self.main_file_path).replace(".yml", ".xif"))]
+
+    def get_dataset_from_xif(self) -> Set[str]:
+        dataset = re.findall('dataset[ ]?=[ ]?(["a-zA-Z_0-9]+)', self.file_content)
+        if dataset:
+            return {dataset_name.strip('"') for dataset_name in dataset}
+        return set()
 
 
 class SchemaRelatedFile(RelatedFile):

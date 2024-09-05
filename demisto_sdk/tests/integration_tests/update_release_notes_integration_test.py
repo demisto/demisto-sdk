@@ -812,7 +812,7 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
     assert result.exit_code == 0
     assert not result.exception
     for current_call in logger_info.call_args_list:
-        if type(current_call[0]) == tuple:
+        if isinstance(current_call[0], tuple):
             print(f"*** INFO *** {current_call[0][0]=}")  # noqa: T201
     assert all(
         [

@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where IN121 in the new validate flow and IN148 in the old validate flow failed when running on content items with XSOAR on prem and XSOAR SAAS Marketplaces.
-  type: fix
-pr_number: 4398

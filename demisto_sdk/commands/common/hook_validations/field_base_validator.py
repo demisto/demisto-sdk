@@ -1,6 +1,7 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
+
 import re
 from enum import IntEnum
 from typing import List, Set
@@ -475,17 +476,13 @@ class FieldBaseValidator(ContentEntityValidator):
                 (
                     error_message,
                     error_code,
-                ) = (
-                    Errors.select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types()
-                )
+                ) = Errors.select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types()
         else:
             if empty_string_count:
                 (
                     error_message,
                     error_code,
-                ) = (
-                    Errors.select_values_cannot_contain_empty_values_in_multi_select_types()
-                )
+                ) = Errors.select_values_cannot_contain_empty_values_in_multi_select_types()
         if error_code and error_message:
             if self.handle_error(
                 error_message,

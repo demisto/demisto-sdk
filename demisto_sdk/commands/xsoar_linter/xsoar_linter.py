@@ -43,7 +43,7 @@ WARNING_CODE_PATTERN = re.compile(
 
 
 def build_xsoar_linter_command(
-    support_level: str = "base", formatting_script: bool = False
+    support_level: Optional[str] = "base", formatting_script: bool = False
 ) -> List[str]:
     """
     Build the xsoar linter command.
@@ -166,7 +166,7 @@ def process_file(file_path: Path) -> ProcessResults:
 
         xsoar_linter_env = build_xsoar_linter_env_var(integration_script)
         env.update(xsoar_linter_env)
-        command = build_xsoar_linter_command(integration_script.support_level)
+        command = build_xsoar_linter_command(integration_script.support)
         command.append(str(file))
 
         try:

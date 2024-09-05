@@ -32,7 +32,9 @@ class IsDeprecatedCorrectlyValidator(BaseValidator[ContentTypes]):
     )
     related_field = "description, comment"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -45,7 +47,8 @@ class IsDeprecatedCorrectlyValidator(BaseValidator[ContentTypes]):
                 (
                     re.search(DEPRECATED_DESC_REGEX, content_item.description),  # type: ignore[arg-type]
                     re.search(
-                        DEPRECATED_NO_REPLACE_DESC_REGEX, content_item.description  # type: ignore[arg-type]
+                        DEPRECATED_NO_REPLACE_DESC_REGEX,
+                        content_item.description,  # type: ignore[arg-type]
                     ),
                 )
             )

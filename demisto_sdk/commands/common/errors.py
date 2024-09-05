@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
 from packaging.version import Version
-from requests import Response
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
@@ -274,10 +273,6 @@ ERROR_CODE: Dict = {
     },
     "docker_not_formatted_correctly": {
         "code": "DO105",
-        "related_field": "dockerimage",
-    },
-    "docker_not_on_the_latest_tag": {
-        "code": "DO106",
         "related_field": "dockerimage",
     },
     "non_existing_docker": {
@@ -669,10 +664,6 @@ ERROR_CODE: Dict = {
     "empty_outputs_common_paths": {
         "code": "IN149",
         "related_field": "contextOutput",
-    },
-    "invalid_siem_integration_name": {
-        "code": "IN150",
-        "related_field": "display",
     },
     "empty_command_arguments": {
         "code": "IN151",
@@ -1116,10 +1107,6 @@ ERROR_CODE: Dict = {
         "code": "RM107",
         "related_field": "readme",
     },
-    "invalid_readme_image_error": {
-        "code": "RM108",
-        "related_field": "readme",
-    },
     "missing_readme_file": {
         "code": "RM109",
         "related_field": "readme",
@@ -1130,10 +1117,6 @@ ERROR_CODE: Dict = {
     },
     "error_uninstall_node": {
         "code": "RM111",
-        "related_field": "readme",
-    },
-    "invalid_readme_relative_url_error": {
-        "code": "RM112",
         "related_field": "readme",
     },
     "copyright_section_in_readme_error": {
@@ -2114,15 +2097,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_siem_integration_name(display_name: str):
-        return (
-            f"The display name of this siem integration is incorrect , "
-            f'should end with "Event Collector".\n'
-            f"e.g: {display_name} Event Collector"
-        )
-
-    @staticmethod
-    @error_code_decorator
     def invalid_siem_marketplaces_entry():
         return (
             "The marketplaces field of this XSIAM integration is incorrect.\n"
@@ -2298,8 +2272,9 @@ class Errors:
     @error_code_decorator
     def breaking_backwards_arg_changed(cls):
         return (
-            "{}, You've changed the name of an arg in "
-            "the file, please undo.".format(cls.BACKWARDS)
+            "{}, You've changed the name of an arg in " "the file, please undo.".format(
+                cls.BACKWARDS
+            )
         )
 
     @classmethod
@@ -2395,18 +2370,6 @@ class Errors:
             f"You can check for the most updated version of {docker_image_name} "
             f"here: {iron_bank_link if is_iron_bank else docker_hub_link} \n"
             f"To update the docker image run:\ndemisto-sdk format -ud -i {file_path}\n"
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def docker_not_on_the_latest_tag(
-        docker_image_tag, docker_image_latest_tag, is_iron_bank=False
-    ) -> str:
-        return (
-            f"The docker image tag is not the latest numeric tag, please update it.\n"
-            f"The docker image tag in the yml file is: {docker_image_tag}\n"
-            f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub"} '
-            f"is: {docker_image_latest_tag}\n"
         )
 
     @staticmethod
@@ -3421,60 +3384,12 @@ class Errors:
         )
 
     @staticmethod
-    def pack_readme_image_relative_path_error(path):
-        return (
-            f"Detected the following image relative path: {path}.\nRelative paths are not supported in pack README files. See "
-            f"https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to "
-            f"add images to pack README files."
-        )
-
-    @staticmethod
-    def invalid_readme_image_relative_path_error(path):
-        return f"The following image relative path is not valid, please recheck it:\n{path}."
-
-    @staticmethod
-    def invalid_readme_image_absolute_path_error(path):
-        return (
-            f"The following image link seems to be broken, please repair it:\n{path}."
-            "If you are changing an image name or location? first, merge the new image to master, "
-            "then make a 2nd PR linking to the new image in master."
-        )
-
-    @staticmethod
-    def branch_name_in_readme_image_absolute_path_error(path):
-        return f"Branch name was found in the URL, please change it to the commit hash:\n{path}"
-
-    @staticmethod
-    def invalid_readme_insert_image_link_error(path):
-        return f"Image link was not found, either insert it or remove it:\n{path}"
-
-    @staticmethod
     @error_code_decorator
     def invalid_readme_relative_url_error(path):
         return (
             f"Relative urls are not supported within README. If this is not a relative url, please add "
             f"an https:// prefix:\n{path}. "
         )
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_readme_image_error(
-        path: str, error_type: str, response: Optional[Response] = None
-    ):
-        error = "Error in readme image: "
-        if response is not None:
-            error += f"got HTTP response code {response.status_code}"
-            error += f", reason = {response.reason}" if response.reason else " "
-
-        error_body = {
-            "pack_readme_relative_error": Errors.pack_readme_image_relative_path_error,
-            "general_readme_relative_error": Errors.invalid_readme_image_relative_path_error,
-            "general_readme_absolute_error": Errors.invalid_readme_image_absolute_path_error,
-            "branch_name_readme_absolute_error": Errors.branch_name_in_readme_image_absolute_path_error,
-            "insert_image_link_error": Errors.invalid_readme_insert_image_link_error,
-        }.get(error_type, lambda x: f"Unexpected error when testing {x}")(path)
-
-        return error + f"\n{error_body}"
 
     @staticmethod
     @error_code_decorator

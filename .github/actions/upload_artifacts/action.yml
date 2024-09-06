@@ -32,6 +32,5 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}
-        include-hidden-files: true
         path: |
           ${{ inputs.artifacts-path-dir }}

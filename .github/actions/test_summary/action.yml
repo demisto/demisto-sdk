@@ -32,12 +32,7 @@ runs:
       if: always()
       run: |
         # move logs files created and .coverage to artifacts folder
-        if [ -f .coverage ]; then
-          echo ".coverage file found"
-        else
-          echo ".coverage file not found"
-        fi
-        mv .coverage ${{ inputs.artifacts-path-dir }}/.coverage
+        mv .coverage ${{ inputs.artifacts-path-dir }}/.coverage || true
         mv demisto_sdk_debug*.log ${{ inputs.artifacts-path-dir }}/logs || true
       shell: bash
     - name: Upload artifacts

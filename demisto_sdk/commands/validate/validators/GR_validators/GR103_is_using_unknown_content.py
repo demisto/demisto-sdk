@@ -89,7 +89,7 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
-        file_path_to_validate = (
+        file_paths_to_validate = (
             get_all_content_objects_paths_in_dir(
                 str(content_item.path) for content_item in content_items
             )
@@ -97,9 +97,13 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
             else []
         )
         uses_unknown_content = self.graph.get_unknown_content_uses(
-            file_paths=file_path_to_validate, new_validate=True
+            file_paths=file_paths_to_validate, new_validate=True
         )
-        for content_item in uses_unknown_content:
+
+        # The graph returns all unknown content items used across all files (when running on all files).
+        # Therefore, we need to filter out the items that are marked as ignored.
+        filtered_uses_unknown_content = list(set(uses_unknown_content).intersection(content_items))
+        for content_item in filtered_uses_unknown_content:
             names_of_unknown_items = [
                 relationship.content_item_to.object_id
                 or relationship.content_item_to.name

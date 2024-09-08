@@ -5,7 +5,6 @@ import re
 import shutil
 import tarfile
 import tempfile
-import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -29,7 +28,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON3,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
-from demisto_sdk.commands.common.logger import logger, logging_setup
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 DOCKER_CLIENT = None
@@ -350,9 +349,6 @@ class DockerBase:
             2. running the installation scripts
             3. committing the docker changes (installed packages) to a new local image
         """
-        logging_setup()
-        start_time = time.time()  # Record the start time
-
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
         )
@@ -374,10 +370,6 @@ class DockerBase:
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
-        end_time = time.time()  # Record the end time
-        duration = end_time - start_time  # Calculate the duration
-        logger.info(f"{log_prompt} - Image creation took {duration:.2f} seconds")
-
         if os.getenv("CONTENT_GITLAB_CI"):
             container.commit(
                 repository=repository.replace(f"{DOCKER_REGISTRY_URL}/", ""),
@@ -386,7 +378,6 @@ class DockerBase:
             )
         if push and os.getenv("CONTENT_GITLAB_CI"):
             self.push_image(image, log_prompt=log_prompt)
-
         return image
 
     @staticmethod

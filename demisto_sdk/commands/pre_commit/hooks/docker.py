@@ -13,6 +13,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 import more_itertools
 from docker.errors import DockerException
 from packaging.version import Version
+from requests import Timeout
 
 from demisto_sdk.commands.common.constants import (
     TYPE_PWSH,
@@ -27,6 +28,8 @@ from demisto_sdk.commands.common.docker_helper import (
     get_pip_requirements_from_file,
     init_global_docker_client,
 )
+from demisto_sdk.commands.common.files.errors import FileReadError
+from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
@@ -39,9 +42,35 @@ from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 
 NO_SPLIT = None
-USER_DEMITSO = "demisto"
 
 IMAGES_BATCH = int(os.getenv("IMAGES_BATCH") or 40)
+
+
+def get_mypy_requirements():
+    """
+    Retrieves the mypy requirements from a local file or from GitHub.
+
+    If the local `mypy-requirements.txt` file exists, it reads the requirements from the file.
+    Otherwise, it attempts to fetch the requirements from GitHub.
+
+    Returns:
+        List[str]: A list of requirements.
+
+    Raises:
+        RuntimeError: If the requirements cannot be read from GitHub.
+    """
+    mypy_requirements_path = Path(f"{CONTENT_PATH}/mypy-requirements.txt")
+    if mypy_requirements_path.exists():
+        return get_pip_requirements_from_file(mypy_requirements_path)
+    else:
+        try:
+            return TextFile.read_from_github_api(
+                "mypy-requirements.txt", verify_ssl=False
+            ).split("\n")
+        except (FileReadError, ConnectionError, Timeout) as e:
+            raise RuntimeError(
+                "Could not read mypy-requirements.txt from Github"
+            ) from e
 
 
 @lru_cache()
@@ -144,16 +173,13 @@ def devtest_image(
 
     """
     docker_base = get_docker()
-    mypy_requirements = get_pip_requirements_from_file(
-        Path(f"{CONTENT_PATH}/mypy-requirements.txt")
-    )
     image, errors = docker_base.get_or_create_test_image(
         base_image=image_tag,
         container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
         push=docker_login(docker_client=init_global_docker_client()),
         should_pull=False,
         log_prompt="DockerHook",
-        additional_requirements=mypy_requirements,
+        additional_requirements=get_mypy_requirements(),
     )
     if not errors:
         if not should_pull:
@@ -216,7 +242,7 @@ def _split_by_objects(
     object_to_files: Dict[
         Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
     ] = defaultdict(set)
-    config_name, config_filename = config_arg if config_arg else ("", "")
+    _, config_filename = config_arg if config_arg else ("", "")
     for file, obj in files_with_objects:
         if run_isolated or (
             config_arg and (obj.path.parent / config_filename).exists()
@@ -246,6 +272,8 @@ class DockerHook(Hook):
             hook.pop("copy_files", None)
             hook.pop("run_isolated", None)
             hook.pop("pass_docker_extra_args", None)
+            hook.pop("pass_docker_extra_args", None)
+            hook.pop("should_add_python_version", None)
 
     def process_image(
         self,
@@ -399,7 +427,7 @@ class DockerHook(Hook):
             files = {file for file, _ in files_with_objects}
             objects_ = [object_ for _, object_ in files_with_objects]
             hook = deepcopy(new_hook)
-            if new_hook["name"].startswith("mypy-in-docker"):
+            if self._get_property("should_add_python_version"):
                 for obj in objects_:
                     python_version = Version(obj.python_version)
                     hook["args"].append(

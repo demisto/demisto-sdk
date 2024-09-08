@@ -681,7 +681,7 @@ def test_get_command_context_path_from_readme_file_missing_from_yml():
         "| -------------------- | -------- | --------------------- |\n"
         "| Test.Path1 | string   | test. |\n"
     )
-    a = [
+    integrations = [
         create_integration_object(
             paths=[
                 "script.commands",
@@ -690,7 +690,9 @@ def test_get_command_context_path_from_readme_file_missing_from_yml():
             readme_content=readme_content,
         ),
     ]
-    results = IsMissingContextOutputValidator().obtain_invalid_content_items(a)
+    results = IsMissingContextOutputValidator().obtain_invalid_content_items(
+        integrations
+    )
     assert (
         results[0].message
         == "Find discrepancy for the following commands:\ntest-command:\nThe following outputs are missing from yml: Test.Path1\n"

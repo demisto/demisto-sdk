@@ -20,6 +20,7 @@ class Discrepancy:
     missing_in_yml: Set[str]
     missing_in_readme: Set[str]
 
+
 class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
     error_code = "RM102"
     description = "Validates that all context outputs defined in the README file are present in the YML file, and vice versa."
@@ -57,7 +58,9 @@ class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
             missing_in_yml = readme_context_paths - yml_context_paths
             missing_in_readme = yml_context_paths - readme_context_paths
             if missing_in_yml or missing_in_readme:
-                discrepancies.append(Discrepancy(command.name, missing_in_yml, missing_in_readme))
+                discrepancies.append(
+                    Discrepancy(command.name, missing_in_yml, missing_in_readme)
+                )
         return discrepancies
 
     def _format_error_message(self, discrepancies: List[Discrepancy]) -> str:
@@ -69,7 +72,9 @@ class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
             if disc.missing_in_readme:
                 msg += f"The following outputs are missing from readme: {', '.join(disc.missing_in_readme)}\n"
             formatted_discrepancies.append(msg)
-        return self.error_message.format(discrepancies="\n".join(formatted_discrepancies))
+        return self.error_message.format(
+            discrepancies="\n".join(formatted_discrepancies)
+        )
 
     def get_command_context_paths_from_yml(self, command: Command) -> Set[str]:
         return {output.contextPath for output in command.outputs if output.contextPath}
@@ -93,7 +98,9 @@ class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
 
         # Gets all context path in the relevant command section from README file
         command_section_pattern = rf" Base Command..`{command_name}`.(.*?)\n### "
-        command_section: List[str] = re.findall(command_section_pattern, readme_content, re.DOTALL)
+        command_section: List[str] = re.findall(
+            command_section_pattern, readme_content, re.DOTALL
+        )
 
         if not command_section:
             return set()

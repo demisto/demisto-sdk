@@ -101,7 +101,9 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
         )
 
         for content_item in uses_unknown_content:
-            if "GR103" not in content_item.ignored_errors:  # filter out content items that have GR103 ignored (the graph returns all usages)
+            if (
+                "GR103" not in content_item.ignored_errors
+            ):  # filter out content items that have GR103 ignored (the graph returns all usages)
                 names_of_unknown_items = [
                     relationship.content_item_to.object_id
                     or relationship.content_item_to.name

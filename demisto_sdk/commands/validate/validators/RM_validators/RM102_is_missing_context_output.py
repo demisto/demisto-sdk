@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
-from typing import Iterable, List, Set
+from typing import Iterable, List, NamedTuple, Set
 
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -14,8 +13,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 
-@dataclass
-class Discrepancy:
+class Discrepancy(NamedTuple):
     command_name: str
     missing_in_yml: Set[str]
     missing_in_readme: Set[str]
@@ -33,18 +31,15 @@ class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        invalid_content_items: List[ValidationResult] = []
-        for content_item in content_items:
-            discrepancies = self._get_discrepancies(content_item)
-            if discrepancies:
-                invalid_content_items.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self._format_error_message(discrepancies),
-                        content_object=content_item,
-                    )
-                )
-        return invalid_content_items
+        return [
+            ValidationResult(
+                validator=self,
+                message=self._format_error_message(discrepancies),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (discrepancies := self._get_discrepancies(content_item))
+        ]
 
     def _get_discrepancies(self, content_item: ContentTypes) -> List[Discrepancy]:
         discrepancies = []

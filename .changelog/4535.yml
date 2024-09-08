@@ -1,0 +1,4 @@
+changes:
+- description:  Moved RM102 and IN136 validation to the new format. Ensures context outputs in README and YML files match.
+  type: feature
+pr_number: 4535

@@ -8,6 +8,7 @@ import requests
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
+from demisto_sdk.commands.common.constants import DOCKER_REGISTRY_URL
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -49,7 +50,7 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-        self.registry_api_url = registry or self.DEFAULT_REGISTRY
+        self.registry_api_url = registry or DOCKER_REGISTRY_URL
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
         self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")

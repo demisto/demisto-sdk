@@ -272,8 +272,6 @@ class DockerHook(Hook):
             hook.pop("copy_files", None)
             hook.pop("run_isolated", None)
             hook.pop("pass_docker_extra_args", None)
-            hook.pop("pass_docker_extra_args", None)
-            hook.pop("should_add_python_version", None)
 
     def process_image(
         self,
@@ -427,7 +425,7 @@ class DockerHook(Hook):
             files = {file for file, _ in files_with_objects}
             objects_ = [object_ for _, object_ in files_with_objects]
             hook = deepcopy(new_hook)
-            if self._get_property("should_add_python_version"):
+            if new_hook["name"].startswith("mypy-in-docker"):
                 for obj in objects_:
                     python_version = Version(obj.python_version)
                     hook["args"].append(

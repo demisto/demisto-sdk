@@ -61,16 +61,22 @@ def get_mypy_requirements():
     """
     mypy_requirements_path = Path(f"{CONTENT_PATH}/mypy-requirements.txt")
     if mypy_requirements_path.exists():
-        return get_pip_requirements_from_file(mypy_requirements_path)
+        requirements = get_pip_requirements_from_file(mypy_requirements_path)
     else:
         try:
-            return TextFile.read_from_github_api(
+            requirements = TextFile.read_from_github_api(
                 "mypy-requirements.txt", verify_ssl=False
             ).split("\n")
         except (FileReadError, ConnectionError, Timeout) as e:
             raise RuntimeError(
                 "Could not read mypy-requirements.txt from Github"
             ) from e
+    # Remove comments and empty lines
+    return [
+        req.strip()
+        for req in requirements
+        if req.strip() and not req.strip().startswith("#")
+    ]
 
 
 @lru_cache()

@@ -100,23 +100,21 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
             file_paths=file_paths_to_validate, new_validate=True
         )
 
-        # The graph returns all unknown content items used across all files (when running on all files).
-        # Therefore, we need to filter out the items that are marked as ignored.
-        filtered_uses_unknown_content = list(set(uses_unknown_content).intersection(content_items))
-        for content_item in filtered_uses_unknown_content:
-            names_of_unknown_items = [
-                relationship.content_item_to.object_id
-                or relationship.content_item_to.name
-                for relationship in content_item.uses
-            ]
-            results.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(
-                        content_item.name,
-                        ", ".join(f"'{name}'" for name in names_of_unknown_items),
-                    ),
-                    content_object=content_item,
+        for content_item in uses_unknown_content:
+            if "GR103" not in content_item.ignored_errors:  # filter out content items that have GR103 ignored (the graph returns all usages)
+                names_of_unknown_items = [
+                    relationship.content_item_to.object_id
+                    or relationship.content_item_to.name
+                    for relationship in content_item.uses
+                ]
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            content_item.name,
+                            ", ".join(f"'{name}'" for name in names_of_unknown_items),
+                        ),
+                        content_object=content_item,
+                    )
                 )
-            )
         return results

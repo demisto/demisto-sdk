@@ -1,7 +1,11 @@
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.parsers import IntegrationParser, ScriptParser
+from demisto_sdk.commands.content_graph.parsers import (
+    IntegrationParser,
+    ModelingRuleParser,
+    ScriptParser,
+)
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
@@ -100,3 +104,79 @@ def test_SchemaValidator_extra_field(pack: Pack):
         == "Structure error (value_error.extra) in field EXTRA_FIELD of integration_0.yml:"
         " The field EXTRA_FIELD is extra and extra fields not permitted"
     )
+
+
+def test_modeling_rule_parser_sanity_check(pack: Pack):
+    """
+    Given:
+        - a modeling rule which contains valid yml and schema (a json file)
+    When:
+        - execute the ModelingRuleParser
+    Then:
+        - Ensure there are no structure errors
+    """
+    modeling_rule = pack.create_modeling_rule(
+        yml={
+            "id": "Tanium_ModelingRule",
+            "name": "Tanium",
+            "fromversion": "8.2.0",
+            "toversion": "6.99.99",
+            "tags": "",
+            "rules": "",
+            "schema": "",
+        },
+        schema={
+            "tanium_integrity_monitor_raw": {
+                "_raw_log": {"type": "string", "is_array": False}
+            }
+        },
+    )
+    modeling_rule_parser = ModelingRuleParser(
+        path=modeling_rule.yml.obj_path, pack_marketplaces=[MarketplaceVersions.XSOAR]
+    )
+    assert modeling_rule_parser.structure_errors == []
+
+
+def test_modeling_rule_parser_errors_check(pack: Pack):
+    """
+    Given:
+        - a modeling rule which contains invalid yml and schema (a json file)
+    When:
+        - execute the ModelingRuleParser
+    Then:
+        - Ensure there are two structure errors of the expected types
+    """
+    modeling_rule = pack.create_modeling_rule(
+        yml={
+            "id": "Tanium_ModelingRule",
+            "name": "Tanium",
+            # no fromversion field in the yml which is a required field
+            "toversion": "6.99.99",
+            "tags": "",
+            "rules": "",
+            "schema": "",
+        },
+        schema={
+            "tanium_integrity_monitor_raw": {
+                "_raw_log": {
+                    "type": "string",
+                    "is_array": "dummy string - not boolean!",  # should be a boolean field
+                }
+            }
+        },
+    )
+
+    modeling_rule_parser = ModelingRuleParser(
+        path=modeling_rule.yml.obj_path, pack_marketplaces=[MarketplaceVersions.XSOAR]
+    )
+
+    assert len(modeling_rule_parser.structure_errors) == 2
+
+    error_messages = {e.error_message for e in modeling_rule_parser.structure_errors}
+    error_types = {e.error_type for e in modeling_rule_parser.structure_errors}
+
+    assert {
+        "field required",
+        "value could not be parsed to a boolean",
+    } == error_messages
+    assert {"value_error.missing", "type_error.bool"} == error_types

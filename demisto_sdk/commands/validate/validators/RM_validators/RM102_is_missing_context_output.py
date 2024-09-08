@@ -5,7 +5,7 @@ from typing import Iterable, List, Set
 
 from ordered_set import OrderedSet
 
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -62,13 +62,8 @@ class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
 
         return invalid_content_items
 
-    def get_command_context_paths_from_yml(self, command) -> Set[str]:
+    def get_command_context_paths_from_yml(self, command: Command) -> Set[str]:
         return {output.contextPath for output in command.outputs if output.contextPath}
-
-    def compare_context_paths(
-        self, yml_paths: Set[str], readme_paths: Set[str]
-    ) -> Set[str]:
-        return readme_paths - yml_paths
 
     def get_command_context_path_from_readme_file(
         self, command_name: str, readme_content: str
@@ -89,13 +84,13 @@ class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
 
         # Gets all context path in the relevant command section from README file
         command_section_pattern = rf" Base Command..`{command_name}`.(.*?)\n### "
-        command_section = re.findall(command_section_pattern, readme_content, re.DOTALL)
+        command_section: List[str] = re.findall(command_section_pattern, readme_content, re.DOTALL)
 
         if not command_section:
             return set()
         if not command_section[0].endswith("###"):
             command_section[0] += (
-                "###"  # mark end of file so last pattern of regex will be recognized.
+                "###"  # mark end of command so last pattern of regex will be recognized.
             )
         # Pattern to get the context output section
         context_section_pattern = r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import Iterable, List, Set
-
-from ordered_set import OrderedSet
 
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -14,6 +13,12 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
+
+@dataclass
+class Discrepancy:
+    command_name: str
+    missing_in_yml: Set[str]
+    missing_in_readme: Set[str]
 
 class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
     error_code = "RM102"
@@ -28,39 +33,43 @@ class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         invalid_content_items: List[ValidationResult] = []
-        count = 0
         for content_item in content_items:
-            discrepancies = []
-            for command in content_item.commands:
-                yml_context_paths = self.get_command_context_paths_from_yml(command)
-                readme_context_paths = self.get_command_context_path_from_readme_file(
-                    command.name, content_item.readme.file_content
-                )
-                if readme_context_paths == set():
-                    continue
-                missing_in_yml = OrderedSet(readme_context_paths - yml_context_paths)
-                missing_in_readme = OrderedSet(yml_context_paths - readme_context_paths)
-
-                if missing_in_yml or missing_in_readme:
-                    count += 1
-                    discrepancy = f"{command.name}:\n"
-                    if missing_in_yml:
-                        discrepancy += f"The following outputs are missing from yml: {', '.join(missing_in_yml)}\n"
-                    if missing_in_readme:
-                        discrepancy += f"The following outputs are missing from readme: {', '.join(missing_in_readme)}\n"
-                    discrepancies.append(discrepancy)
+            discrepancies = self._get_discrepancies(content_item)
             if discrepancies:
                 invalid_content_items.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(
-                            discrepancies="\n".join(discrepancies)
-                        ),
+                        message=self._format_error_message(discrepancies),
                         content_object=content_item,
                     )
                 )
-
         return invalid_content_items
+
+    def _get_discrepancies(self, content_item: ContentTypes) -> List[Discrepancy]:
+        discrepancies = []
+        for command in content_item.commands:
+            yml_context_paths = self.get_command_context_paths_from_yml(command)
+            readme_context_paths = self.get_command_context_path_from_readme_file(
+                command.name, content_item.readme.file_content
+            )
+            if not readme_context_paths:
+                continue
+            missing_in_yml = readme_context_paths - yml_context_paths
+            missing_in_readme = yml_context_paths - readme_context_paths
+            if missing_in_yml or missing_in_readme:
+                discrepancies.append(Discrepancy(command.name, missing_in_yml, missing_in_readme))
+        return discrepancies
+
+    def _format_error_message(self, discrepancies: List[Discrepancy]) -> str:
+        formatted_discrepancies = []
+        for disc in discrepancies:
+            msg = f"{disc.command_name}:\n"
+            if disc.missing_in_yml:
+                msg += f"The following outputs are missing from yml: {', '.join(disc.missing_in_yml)}\n"
+            if disc.missing_in_readme:
+                msg += f"The following outputs are missing from readme: {', '.join(disc.missing_in_readme)}\n"
+            formatted_discrepancies.append(msg)
+        return self.error_message.format(discrepancies="\n".join(formatted_discrepancies))
 
     def get_command_context_paths_from_yml(self, command: Command) -> Set[str]:
         return {output.contextPath for output in command.outputs if output.contextPath}

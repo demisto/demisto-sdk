@@ -71,52 +71,52 @@ class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
             discrepancies="\n".join(formatted_discrepancies)
         )
 
-    def get_command_context_paths_from_yml(self, command: Command) -> Set[str]:
-        return {output.contextPath for output in command.outputs if output.contextPath}
 
-    def get_command_context_path_from_readme_file(
-        self, command_name: str, readme_content: str
-    ) -> Set[str]:
-        """
-        Extracts context paths from the command section in the README content using regex.
+def get_command_context_paths_from_yml(command: Command) -> Set[str]:
+    return {output.contextPath for output in command.outputs if output.contextPath}
 
-        Args:
-            command_name (str): The name of the command to search for.
-            readme_content (str): The content of the README file.
 
-        Returns:
-            Set[str]: A set of context paths found in the command section.
-        """
-        readme_content += (
-            "### "  # mark end of file so last pattern of regex will be recognized.
+def get_command_context_path_from_readme_file(
+    command_name: str, readme_content: str
+) -> Set[str]:
+    """
+    Extracts context paths from the command section in the README content using regex.
+
+    Args:
+        command_name (str): The name of the command to search for.
+        readme_content (str): The content of the README file.
+
+    Returns:
+        Set[str]: A set of context paths found in the command section.
+    """
+    readme_content += (
+        "### "  # mark end of file so last pattern of regex will be recognized.
+    )
+
+    # Gets all context path in the relevant command section from README file
+    command_section_pattern = rf" Base Command..`{command_name}`.(.*?)\n### "
+    command_section: List[str] = re.findall(
+        command_section_pattern, readme_content, re.DOTALL
+    )
+
+    if not command_section:
+        return set()
+    if not command_section[0].endswith("###"):
+        command_section[0] += (
+            "###"  # mark end of command so last pattern of regex will be recognized.
         )
+    # Pattern to get the context output section
+    context_section_pattern = (
+        r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"
+    )
+    context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
 
-        # Gets all context path in the relevant command section from README file
-        command_section_pattern = rf" Base Command..`{command_name}`.(.*?)\n### "
-        command_section: List[str] = re.findall(
-            command_section_pattern, readme_content, re.DOTALL
-        )
+    if not context_section:
+        return set()
 
-        if not command_section:
-            return set()
-        if not command_section[0].endswith("###"):
-            command_section[0] += (
-                "###"  # mark end of command so last pattern of regex will be recognized.
-            )
-        # Pattern to get the context output section
-        context_section_pattern = r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"
-        context_section = re.findall(
-            context_section_pattern, command_section[0], re.DOTALL
-        )
+    # Pattern to get the context paths
+    context_path_pattern = r"\| *(\S.*?\S) *\| *[^\|]* *\| *[^\|]* *\|"
+    context_paths = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
 
-        if not context_section:
-            return set()
-
-        # Pattern to get the context paths
-        context_path_pattern = r"\| *(\S.*?\S) *\| *[^\|]* *\| *[^\|]* *\|"
-        context_paths = set(
-            re.findall(context_path_pattern, context_section[0], re.DOTALL)
-        )
-
-        # Remove the header line if present
-        return {path for path in context_paths if path.replace("-", "")}
+    # Remove the header line if present
+    return {path for path in context_paths if path.replace("-", "")}

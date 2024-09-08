@@ -172,11 +172,8 @@ def test_modeling_rule_parser_errors_check(pack: Pack):
 
     assert len(modeling_rule_parser.structure_errors) == 2
 
-    error_messages, error_types = set(), set()
-
-    for error in modeling_rule_parser.structure_errors:
-        error_messages.add(error.error_message)
-        error_types.add(error.error_type)
+    error_messages = {e.error_message for e in modeling_rule_parser.structure_errors}
+    error_types = {e.error_type for e in modeling_rule_parser.structure_errors}
 
     assert not {"field required", "value could not be parsed to a boolean"}.difference(
         error_messages

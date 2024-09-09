@@ -266,8 +266,8 @@ class DockerHubClient:
             f"################################################# request url: {req_url}"
         )
         if os.getenv("CONTENT_GITLAB_CI"):
-            logger.info("CONTENT_GITLAB_CI found, continue to pull_docker_image_via_docker_sdk")
-            res = self.pull_docker_image_via_docker_sdk(self.registry_api_url,docker_image)
+            logger.info("CONTENT_GITLAB_CI found, continue to pull_image_through_proxy")
+            res = self.pull_image_through_proxy(self.registry_api_url,docker_image)
             logger.info(f"pull_docker_image_via_docker_sdk: {res}")
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
@@ -500,28 +500,26 @@ class DockerHubClient:
             if image_metadata.get("name")
         ]
 
-    def pull_docker_image_via_docker_sdk(self, registry_domain, image_name, tag = None):
+    def pull_image_through_proxy(self, registry_url, image_name, tag='latest'):
         """
-        Pulls a Docker image from the specified registry.
+        Pull an image through a Docker registry proxy using pre-configured authentication.
 
         Args:
-        - registry_domain (str): The domain of the Docker registry.
-        - image_name (str): The name of the image to pull, e.g., 'ubuntu'.
-        - tag (str): The tag of the image, e.g., 'latest'.
+        registry_url (str): The registry URL, typically from an environment variable.
+        image_name (str): Image path on Docker Hub that the proxy will intercept.
+        tag (str): Tag of the Docker image to pull.
 
         Returns:
-        - image object if successful, None otherwise.
+        None
         """
-        logger.info("pull_docker_image_via_docker_sdk start")
+        full_image_path = f'{registry_url}/{image_name}:{tag}'
+        logger.info(f'full_image_path: {full_image_path}')
         client = docker.from_env()
-        logger.info(f"client: {client}")
-        full_image_name = f"{registry_domain}/{image_name}:{tag}" if tag else f"{registry_domain}/{image_name}"
-        logger.info(f"Pulling image {full_image_name}")
-
+        logger.info(f'Attempting to pull image: {full_image_path}')
         try:
-            image = client.images.pull(full_image_name)
-            logger.info(f"Successfully pulled {image.tags}")
-            return image
-        except docker.errors.APIError as e:
-            logger.info(f"Failed to pull image: {e}")
-            return None
+            image = client.images.pull(full_image_path)
+            logger.info(f'Successfully pulled {image.tags}')
+        except docker.errors.APIError as error:
+            logger.info(f'Failed to pull image: {error}')
+        except Exception as e:
+            logger.info(f'An error occurred: {e}')

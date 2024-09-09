@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
+import docker
 
 DOCKERHUB_USER = "DOCKERHUB_USER"
 DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
@@ -52,7 +53,7 @@ class DockerHubClient:
     ):
         self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
-        self.username = username or os.getenv(DOCKERHUB_USER, "")
+        self.username: str = username or os.getenv(DOCKERHUB_USER, "")
         self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")
         self.auth = (
             (self.username, self.password) if self.username and self.password else None
@@ -264,6 +265,9 @@ class DockerHubClient:
         logger.info(
             f"################################################# request url: {req_url}"
         )
+        if os.getenv("CONTENT_GITLAB_CI"):
+            res = self.pull_docker_image_via_docker_sdk(self.registry_api_url,docker_image)
+            logger.info(f"pull_docker_image_via_docker_sdk: {res}")
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
             headers={key: value for key, value in headers}
@@ -494,3 +498,27 @@ class DockerHubClient:
             for image_metadata in self.get_repository_images(repo)
             if image_metadata.get("name")
         ]
+
+    def pull_docker_image_via_docker_sdk(self, registry_domain, image_name, tag = None):
+        """
+        Pulls a Docker image from the specified registry.
+
+        Args:
+        - registry_domain (str): The domain of the Docker registry.
+        - image_name (str): The name of the image to pull, e.g., 'ubuntu'.
+        - tag (str): The tag of the image, e.g., 'latest'.
+
+        Returns:
+        - image object if successful, None otherwise.
+        """
+        client = docker.from_env()
+        full_image_name = f"{registry_domain}/{image_name}:{tag}" if tag else f"{registry_domain}/{image_name}"
+        logger.info(f"Pulling image {full_image_name}")
+
+        try:
+            image = client.images.pull(full_image_name)
+            logger.info(f"Successfully pulled {image.tags}")
+            return image
+        except docker.errors.APIError as e:
+            logger.info(f"Failed to pull image: {e}")
+            return None

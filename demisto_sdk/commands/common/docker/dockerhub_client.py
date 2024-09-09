@@ -353,6 +353,7 @@ class DockerHubClient:
         Args:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
         """
+        logger.info(f"Getting tags for docker image: {docker_image}")
         try:
             response = self.do_registry_get_request(
                 "/tags/list", docker_image=docker_image

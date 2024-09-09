@@ -44,8 +44,8 @@ class IsMissingContextOutputValidator(BaseValidator[ContentTypes]):
     def _get_discrepancies(self, content_item: ContentTypes) -> List[Discrepancy]:
         discrepancies = []
         for command in content_item.commands:
-            yml_context_paths = self.get_command_context_paths_from_yml(command)
-            readme_context_paths = self.get_command_context_path_from_readme_file(
+            yml_context_paths = get_command_context_paths_from_yml(command)
+            readme_context_paths = get_command_context_path_from_readme_file(
                 command.name, content_item.readme.file_content
             )
             if not readme_context_paths:

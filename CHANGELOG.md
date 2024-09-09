@@ -2,7 +2,7 @@
 ## 1.31.11
 * Fixed an issue in RM114 where **validate** would not catch problematic images when their file type was not `png` or when their declaration within the README had additional characters present in it. [#4512](https://github.com/demisto/demisto-sdk/pull/4512)
 * Fixed an issue where the default validations would not run properly. [#4532](https://github.com/demisto/demisto-sdk/pull/4532)
-* Changed the ST110 validation to allow null values in XISAM-Report's `default_template_id` [#4525](https://github.com/demisto/demisto-sdk/pull/4525)
+* Modified the ST110 validation to allow null values in XISAM-Report's `default_template_id`. [#4525](https://github.com/demisto/demisto-sdk/pull/4525)
 * Fixed an issue where the hidden files not uploaded to the artifact in github workflow. [#4534](https://github.com/demisto/demisto-sdk/pull/4534)
 
 ## 1.31.10

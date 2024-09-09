@@ -257,9 +257,13 @@ class DockerHubClient:
         """
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
-        logger.info(f"################################################# self.registry_api_url: {self.registry_api_url}")
+        logger.info(
+            f"################################################# self.registry_api_url: {self.registry_api_url}"
+        )
         req_url = f"{self.registry_api_url}/{docker_image}{url_suffix}"
-        logger.info(f"################################################# request url: {req_url}")
+        logger.info(
+            f"################################################# request url: {req_url}"
+        )
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
             headers={key: value for key, value in headers}

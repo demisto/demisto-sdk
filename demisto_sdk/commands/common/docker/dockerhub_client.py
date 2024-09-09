@@ -511,7 +511,9 @@ class DockerHubClient:
         Returns:
         - image object if successful, None otherwise.
         """
+        logger.info("pull_docker_image_via_docker_sdk start")
         client = docker.from_env()
+        logger.info(f"client: {client}")
         full_image_name = f"{registry_domain}/{image_name}:{tag}" if tag else f"{registry_domain}/{image_name}"
         logger.info(f"Pulling image {full_image_name}")
 

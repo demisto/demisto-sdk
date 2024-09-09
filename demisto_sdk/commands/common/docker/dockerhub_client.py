@@ -271,7 +271,7 @@ class DockerHubClient:
                 "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
             },
             params={key: value for key, value in params} if params else None,
-        )ן
+        )
 
     def get_image_manifests(self, docker_image: str, tag: str) -> Dict[str, Any]:
         """

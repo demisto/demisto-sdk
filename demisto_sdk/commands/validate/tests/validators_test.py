@@ -666,7 +666,7 @@ def test_all_error_codes_configured():
                 set(config_file_content[section][key])
             )
     existing_error_codes: Set[str] = set(
-        [validator.error_code for validator in BaseValidator.__subclasses__()]
+        [validator.error_code for validator in get_all_validators()]
     )
     non_configured_existing_error_codes = existing_error_codes - configured_errors_set
     assert not non_configured_existing_error_codes, f"The following error codes are not configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_existing_error_codes}."

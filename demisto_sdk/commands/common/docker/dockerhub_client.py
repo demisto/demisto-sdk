@@ -14,6 +14,8 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
 import docker
+from google.cloud import artifactregistry_v1
+
 
 DOCKERHUB_USER = "DOCKERHUB_USER"
 DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
@@ -512,6 +514,20 @@ class DockerHubClient:
         Returns:
         None
         """
+        # Create a client
+        client = artifactregistry_v1.ArtifactRegistryClient()
+        logger.info(f'Created ArtifactRegistryClient instance: {client}')
+
+        # Initialize request argument(s)
+        request = artifactregistry_v1.UpdateRepositoryRequest()
+        logger.info(f'request: {request}')
+
+        # Make the request
+        response = client.update_repository(request=request)
+        # Handle the response
+        logger.info(f'response: {response}')
+
+
         full_image_path = f'{registry_url}/{image_name}:{tag}'
         logger.info(f'full_image_path: {full_image_path}')
         client = docker.from_env()

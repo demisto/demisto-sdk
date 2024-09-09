@@ -1,4 +1,4 @@
 changes:
-- description: Changed the ST110 validation to allow null values in XISAM-Report's `default_template_id`.
+- description: Changed the ST110 validation to allow null values in XISAM-Report's `default_template_id`
   type: internal
 pr_number: 4525

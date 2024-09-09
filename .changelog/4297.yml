@@ -1,0 +1,4 @@
+changes:
+- description: To be able to import the DockerImage class from demisto_sdk.commands.common.docker.docker_image
+  type: internal
+pr_number: 4297

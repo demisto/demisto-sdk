@@ -266,6 +266,7 @@ class DockerHubClient:
             f"################################################# request url: {req_url}"
         )
         if os.getenv("CONTENT_GITLAB_CI"):
+            logger.info("CONTENT_GITLAB_CI found, continue to pull_docker_image_via_docker_sdk")
             res = self.pull_docker_image_via_docker_sdk(self.registry_api_url,docker_image)
             logger.info(f"pull_docker_image_via_docker_sdk: {res}")
         return self.get_request(

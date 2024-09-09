@@ -1,38 +1,15 @@
-from typing import List, Optional, Union
+from typing import Optional
 
 from pydantic import Field
 
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    AlertsFilter,
+)
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     BaseStrictModel,
     create_model,
 )
-
-SCHEMAS = Union["Filter", "Or", "And"]
-
-
-class Filter(BaseStrictModel):
-    SEARCH_FIELD: str
-    SEARCH_TYPE: str
-    SEARCH_VALUE: str
-
-
-class And(BaseStrictModel):
-    AND: Optional[List[SCHEMAS]] = None
-
-
-class Or(BaseStrictModel):
-    OR: Optional[List[SCHEMAS]] = None
-
-
-# Forward references to resolve circular dependencies
-Filter.update_forward_refs()
-And.update_forward_refs()
-Or.update_forward_refs()
-
-
-class AlertsFilter(BaseStrictModel):
-    filter: Optional[Union[Or, And]] = None
 
 
 class _StrictLayoutRule(BaseStrictModel):

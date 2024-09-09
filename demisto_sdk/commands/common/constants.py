@@ -173,6 +173,17 @@ DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
+# Server Types
+XSOAR_SERVER_TYPE = "XSOAR"
+XSIAM_SERVER_TYPE = "XSIAM"
+XPANSE_SERVER_TYPE = "XPANSE"
+XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
+
+# Product Types
+XSOAR_PRODUCT_TYPE = "XSOAR"
+XSIAM_PRODUCT_TYPE = "XSIAM"
+XPANSE_PRODUCT_TYPE = "XPANSE"
+
 
 class FileType(StrEnum):
     INTEGRATION = "integration"
@@ -1622,6 +1633,7 @@ GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 FEATURE_BRANCHES = ["v4.5.0"]
 VERSION_REGEX = r"(\d{1,2}\.){2}\d{1,2}$"
 DOC_FILE_IMAGE_REGEX = r"[\.\./]*doc_files/[a-zA-Z0-9_-]+\.png"
+DOC_FILE_FULL_IMAGE_REGEX = r"!\[.*?\]\(((?!http).*?doc_files.*?)\)"
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"
@@ -2224,3 +2236,7 @@ PACK_DEFAULT_MARKETPLACES: List = [
 INVALID_IMAGE_PATH_REGEX = (
     r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")"
 )
+
+# Test types:
+TEST_PLAYBOOKS = "TestPlaybooks"
+TEST_MODELING_RULES = "TestModelingRules"

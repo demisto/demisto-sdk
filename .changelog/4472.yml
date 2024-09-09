@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where `XSIAM Report` objects would fail structure **validate** checks, for having the `metadata` field. It's now added as optional
-  type: fix
-pr_number: 4472

@@ -25,7 +25,7 @@ class BaseStrictModel(BaseModel, ABC):
         There is a difference between an empty and missing field.
         Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
         """
-        # TODO - There is currently an exclusion for all fields which failed this validation on the Content repository
+        # There is currently an exclusion for all fields which failed this validation on the Content repository
         if field.name not in {
             "default_value",
             "defaultvalue",
@@ -59,6 +59,15 @@ class BaseStrictModel(BaseModel, ABC):
             "sort",  # widget
             "params",  # widget
             "cache",  # widget
+            "tags",  # modeling rule
+            "to_value",  # report
+            "from_value",  # report
+            "description",  # xsiam_dashboard
+            "default_mapping",  # indicator_type
+            "manual_mapping",  # indicator_type
+            "file_hashes_priority",  # indicator_type
+            "legacy_names",  # indicator_type
+            "default_template_id",  # xsiam-report
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"
@@ -201,7 +210,6 @@ LeftOrRight = create_model(
     model_name="LeftOrRight",
     base_models=(_LeftOrRight, VALUE_DYNAMIC_MODEL, IS_CONTEXT_DYNAMIC_MODEL),
 )
-
 
 LEFT_DYNAMIC_MODEL = create_dynamic_model(
     field_name="left",

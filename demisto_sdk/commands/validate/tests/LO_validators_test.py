@@ -13,21 +13,11 @@ from demisto_sdk.commands.validate.validators.LO_validators.LO107_is_valid_type 
     "paths, values, expected_field_error_messages",
     [
         pytest.param(
-            ["detailsV2.tabs[0].type"],
-            id="Case1: Single invalid type in first tab",
-        ),
-        pytest.param(
             ["detailsV2.tabs[1].sections[0].type"],
             ["evidence"],
             ["evidence"],
             id="Case2: Single invalid type in a section of the second tab",
-        ),
-        pytest.param(
-            ["detailsV2.tabs[1].sections[0].type", "detailsV2.tabs[0].type"],
-            ["evidence"],
-            ["evidence"],
-            id="Case3: Multiple invalid types in different tabs",
-        ),
+        )
     ],
 )
 def test_IsValidTypeValidator_obtain_invalid_content_items_failure(

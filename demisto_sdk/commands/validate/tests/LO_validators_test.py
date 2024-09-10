@@ -14,8 +14,6 @@ from demisto_sdk.commands.validate.validators.LO_validators.LO107_is_valid_type 
     [
         pytest.param(
             ["detailsV2.tabs[0].type"],
-            ["canvas"],
-            ["canvas"],
             id="Case1: Single invalid type in first tab",
         ),
         pytest.param(
@@ -26,8 +24,8 @@ from demisto_sdk.commands.validate.validators.LO_validators.LO107_is_valid_type 
         ),
         pytest.param(
             ["detailsV2.tabs[1].sections[0].type", "detailsV2.tabs[0].type"],
-            ["evidence", "canvas"],
-            ["canvas", "evidence"],
+            ["evidence"],
+            ["evidence"],
             id="Case3: Multiple invalid types in different tabs",
         ),
     ],

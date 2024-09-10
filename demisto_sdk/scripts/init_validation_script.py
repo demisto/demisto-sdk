@@ -640,17 +640,14 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
 {self.related_files_imports}
-from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
-)
+from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
 
 from demisto_sdk.commands.validate.validators.{self.error_code[:2]}_validators.{self.file_name} import {self.class_name}
 
 {self.supported_content_types}
 
 
-class {self.class_name}{execution_mode}({self.class_name}, BaseValidator[ContentTypes]):
+class {self.class_name}{execution_mode}({self.class_name}):
     expected_execution_mode = {expected_execution_mode}
 
     def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

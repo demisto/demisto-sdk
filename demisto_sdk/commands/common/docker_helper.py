@@ -114,19 +114,7 @@ def docker_login(docker_client) -> bool:
     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
     if docker_user and docker_pass:
         try:
-            if os.getenv("CONTENT_GITLAB_CI"):
-                # use DockerHub user in content CI case
-                logger.info("debug: CONTENT_GITLAB_CI case")
-                docker_client.login(
-                    username=os.getenv("DOCKERHUB_USER"),
-                    password=os.getenv("DOCKERHUB_PASSWORD"),
-                    registry=DOCKER_REGISTRY_URL,
-                )
-                ping = docker_client.ping()
-                logger.info(
-                    f"Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}"
-                )
-            elif not is_custom_registry():
+            if not is_custom_registry():
                 logger.info("debug: not is_custom_registry() case")
                 docker_client.login(
                     username=docker_user,

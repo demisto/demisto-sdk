@@ -19,13 +19,18 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
     ConfiguredValidations,
 )
 from demisto_sdk.commands.validate.initializer import Initializer
-from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_integration_object,
+    create_script_object,
+)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
@@ -43,6 +48,12 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
+)
+from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
+    DockerImageTagIsNotOutdated,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
+    MarketplacesFieldValidatorAllFiles,
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
@@ -488,6 +499,25 @@ def test_should_run(validator, expected_results):
     )
 
 
+def test_should_run_api_module():
+    """
+    Given:
+    A validator.
+        - Case 1: A docker image validator and an APIModule script.
+    When:
+    - Calling the should_run function.
+    Then:
+    Make sure the right result is returned.
+        - Case 1: Should return False.
+    """
+    script = create_script_object()
+    script.path = script.path.parent / "testAPIModule.yml"
+    validator = DockerImageTagIsNotOutdated()
+    assert not validator.should_run(
+        script, [], {}, running_execution_mode=ExecutionMode.USE_GIT
+    )
+
+
 def test_object_collection_with_readme_path(repo):
     """
     Given:
@@ -816,3 +846,44 @@ def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
 
     if Path.exists(temp_file):
         Path.unlink(temp_file)
+
+
+def test_ignored_with_run_all(mocker):
+    """
+    This UT verifies that when running with -a on validators that run on all files,
+    we don't fail content_items that should be ignored although they raised an error.
+
+    Given:
+        A ValidateManager object with one integration and one script, one validator ignored by the integration
+    When:
+        Calling run_validations with -a and throwing an error only for the integration.
+    Then:
+        - Ensure that the error received from the validator didn't fail run_validations.
+    """
+    validate_manager = get_validate_manager(mocker)
+    validate_manager.configured_validations = ConfiguredValidations(
+        select=["GR100"],
+        warning=[],
+        ignorable_errors=["GR100"],
+        support_level_dict={},
+    )
+    validate_manager.initializer.execution_mode = ExecutionMode.ALL_FILES
+    validator = MarketplacesFieldValidatorAllFiles()
+    validate_manager.validators = [validator]
+    mocker.patch.object(Integration, "ignored_errors", ["GR100"])
+    mocker.patch.object(Script, "ignored_errors", [])
+    integration = create_integration_object()
+    script = create_script_object()
+    mocker.patch.object(
+        MarketplacesFieldValidatorAllFiles,
+        "obtain_invalid_content_items",
+        return_value=[
+            ValidationResult(
+                validator=validator,
+                message="error",
+                content_object=integration,
+            )
+        ],
+    )
+    validate_manager.objects_to_run = [integration, script]
+    assert 0 == validate_manager.run_validations()

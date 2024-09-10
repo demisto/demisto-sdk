@@ -18,7 +18,7 @@ class StrictPackMetadata(BaseStrictModel):
     email: Optional[str] = None
     eula_link: Optional[str] = Field(None, alias="eulaLink")
     author: str
-    author_image: str = Field("", alias="authorImage")
+    author_image: Optional[str] = Field(None, alias="authorImage")
     certification: Optional[str] = None
     price: Optional[int] = None
     hidden: Optional[bool] = None

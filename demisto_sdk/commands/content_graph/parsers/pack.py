@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
+    FileType,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -411,18 +412,35 @@ class PackParser(BaseContentParser, PackMetadataParser):
         In Pack, we need to check two files: the metadata and the RNs json files, so we override the
         method for combing all the pydantic errors from the both files.
         """
-        directory_pydantic_error = []
-        for pack_files_or_directories in self.path.iterdir():
-            try:
-                if pack_files_or_directories.name == "ReleaseNotes":
-                    for file in pack_files_or_directories.iterdir():
-                        if file.suffix == ".json":
-                            StrictReleaseNotesConfig.parse_obj(get_file(file))
-                elif pack_files_or_directories.name == PACK_METADATA_FILENAME:
-                    StrictPackMetadata.parse_obj(get_file(pack_files_or_directories))
-            except pydantic.error_wrappers.ValidationError as e:
-                directory_pydantic_error += [
-                    StructureError(path=pack_files_or_directories, **error)
-                    for error in e.errors()
-                ]
-        return directory_pydantic_error
+        pydantic_error_list: List[StructureError] = []
+
+        # validate Rn's files
+        for file in self.path.glob("ReleaseNotes/*.json"):
+            validate_structure(FileType.RELEASE_NOTES_CONFIG, file, pydantic_error_list)
+
+        # validate pack metadata file
+        validate_structure(
+            FileType.METADATA,
+            Path(self.path, PACK_METADATA_FILENAME),
+            pydantic_error_list,
+        )
+
+        return pydantic_error_list
+
+
+def validate_structure(
+    file_type: FileType, file: Path, pydantic_error_list: list
+) -> None:
+    """
+    This function is called by the method validate_structure and build the appropriate strict object.
+    In case of invalid structure file, adds the error to the given list.
+    """
+    try:
+        if file_type == FileType.METADATA:
+            StrictPackMetadata.parse_obj(get_file(file))
+        elif file_type == FileType.RELEASE_NOTES_CONFIG:
+            StrictReleaseNotesConfig.parse_obj(get_file(file))
+    except pydantic.error_wrappers.ValidationError as e:
+        pydantic_error_list += [
+            StructureError(path=file, **error) for error in e.errors()
+        ]

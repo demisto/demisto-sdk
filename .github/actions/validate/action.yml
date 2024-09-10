@@ -43,7 +43,7 @@ runs:
           cd content
           git status
           mkdir -p ${{ inputs.artifacts-path-dir }}
-          uv run demisto-sdk validate ${{inputs.validate-arguments}}
+          uv run --no-project demisto-sdk validate ${{inputs.validate-arguments}}
         shell: bash
 
       - name: Upload artifacts

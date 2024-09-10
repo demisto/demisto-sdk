@@ -261,13 +261,13 @@ jobs:
 
           echo "# test" >> Tests/collect_tests.py
           git add .
-          uv run demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
+          uv run --no-project demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
 
       - name: run pre-commit on input files
         timeout-minutes: 60
         run: |
           cd content
-          uv run demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
+          uv run --no-project demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
 
       - name: run pre-commit with default pre-commit config shipped with the SDK
         timeout-minutes: 60
@@ -275,7 +275,7 @@ jobs:
           cd content
           rm -rf .pre-commit-config_template.yaml
           rm -f Tests/docker_native_image_config.json
-          uv run demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
+          uv run --no-project demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
 
       - name: Upload artifacts
         if: always()
@@ -344,14 +344,14 @@ jobs:
           cd content
           mkdir -p test-graph-commands
           # create content graph from scratch
-          uv run demisto-sdk create-content-graph
+          uv run --no-project demisto-sdk create-content-graph
           # clean import folder
           sudo rm -rf /var/lib/neo4j/import
           # Update content graph from the bucket
-          uv run demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
+          uv run --no-project demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
 
           # Update content graph from the the previous content graph that was created/built
-          uv run demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
+          uv run --no-project demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
 
       - name: Upload artifacts
         if: always()
@@ -422,7 +422,7 @@ jobs:
 
       - name: Notify Failed Jobs
         run: |
-          uv run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
+          uv run --no-project python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
   generate_validate_docs:
     name: Generate Validate Docs
     runs-on: ubuntu-latest
@@ -463,16 +463,17 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: pip intsall current project
+      - name: install using pip
         run: pip install .
 
       - name: Verify Installation (pip)
         run: demisto-sdk --version
 
-      - name: uv pip intsall current project
-        run: |
-          pip uninstall demisto-sdk --yes
-          uv run pip install .
+      - name: Uninstall using pip
+        run: pip uninstall demisto-sdk --yes
+
+      - name: intsall using uv
+        run: uv pip install .
 
       - name: Verify Installation (uv)
-        run: uv run demisto-sdk --version
+        run: uv run --no-project demisto-sdk --version

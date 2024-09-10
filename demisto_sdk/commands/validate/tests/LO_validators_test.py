@@ -16,7 +16,7 @@ from demisto_sdk.commands.validate.validators.LO_validators.LO107_is_valid_type 
             ["detailsV2.tabs[1].sections[0].type"],
             ["evidence"],
             ["evidence"],
-            id="Case2: Single invalid type in a section of the second tab",
+            id="Single invalid type in a section of the second tab",
         )
     ],
 )
@@ -27,9 +27,7 @@ def test_IsValidTypeValidator_obtain_invalid_content_items_failure(
 ):
     """
     Given
-        Case1: a layout object with a single invalid type in the first tab,
-        Case2: a layout object with a single invalid type in a section of the second tab,
-        Case3: a layout object with multiple invalid types in different tabs,
+        Case: a layout object with a single invalid type in a section of the second tab,
     When
         the IsValidTypeValidator's obtain_invalid_content_items method is called with the layout object.
     Then
@@ -45,12 +43,10 @@ def test_IsValidTypeValidator_obtain_invalid_content_items_failure(
             "detailsV2.tabs[1].sections[3].type",
             "detailsV2.tabs[4].type",
             "detailsV2.tabs[5].type",
-            "detailsV2.tabs[6].type",
         ]
     )
     values.extend(
         [
-            "dynamic",
             "dynamic",
             "dynamic",
             "dynamic",

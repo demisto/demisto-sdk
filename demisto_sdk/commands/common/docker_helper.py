@@ -89,10 +89,12 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 def is_custom_registry():
     logger.info("debug: inside is_custom_registry() func")
-    logger.info(os.getenv('CONTENT_GITLAB_CI'), DOCKER_REGISTRY_URL, DEFAULT_DOCKER_REGISTRY_URL, (
+    func_res = (
         not os.getenv("CONTENT_GITLAB_CI")
         and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
-    ))
+    )
+    logger.info(f"f{os.getenv('CONTENT_GITLAB_CI')=}, {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}, {func_res}=")
+
     return (
         not os.getenv("CONTENT_GITLAB_CI")
         and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL

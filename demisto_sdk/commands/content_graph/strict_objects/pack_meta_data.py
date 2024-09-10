@@ -1,12 +1,25 @@
 from typing import List, Optional, Union
 
-from pydantic import Field
+from packaging.version import Version
+from pydantic import Field, validator
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions, PACK_SUPPORT_OPTIONS
+from demisto_sdk.commands.common.constants import (
+    PACK_SUPPORT_OPTIONS,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
 
 
 class StrictPackMetadata(BaseStrictModel):
+    @validator("current_version")
+    def is_valid_current_version(cls, value: str) -> str:
+        """
+        Validator ensures current_version field is valid.
+        In case of invalid version, will raise exception and will be shown as a structure pydantic error
+        """
+        Version(value)
+        return value
+
     name: str
     display_name: Optional[str] = None
     description: Optional[str] = None

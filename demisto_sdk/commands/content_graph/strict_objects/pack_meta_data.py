@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, PACK_SUPPORT_OPTIONS
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
 
 
@@ -13,7 +13,7 @@ class StrictPackMetadata(BaseStrictModel):
     created: Optional[str] = None
     updated: Optional[str] = None
     legacy: Optional[bool] = None
-    support: str
+    support: str = Field(enum=PACK_SUPPORT_OPTIONS)
     url: Optional[str] = None
     email: Optional[str] = None
     eula_link: Optional[str] = Field(None, alias="eulaLink")
@@ -35,8 +35,8 @@ class StrictPackMetadata(BaseStrictModel):
     excluded_dependencies: List[str] = Field(
         default_factory=list, alias="excludedDependencies"
     )
-    videos: Optional[List[str]] = Field(default_factory=list)
-    modules: Optional[List[str]] = Field(default_factory=list)
+    videos: List[str] = Field(default_factory=list)
+    modules: List[str] = Field(default_factory=list)
     integrations: Optional[List[str]] = Field(default_factory=list)
     hybrid: bool = Field(False, alias="hybrid")
     default_data_source_id: Optional[str] = Field(None, alias="defaultDataSource")

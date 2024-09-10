@@ -88,6 +88,11 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 
 def is_custom_registry():
+    logger.info("debug: is_custom_registr())")
+    logger.info(f"debug: {os.getenv('CONTENT_GITLAB_CI')}=", DOCKER_REGISTRY_URL, DEFAULT_DOCKER_REGISTRY_URL, (
+        not os.getenv("CONTENT_GITLAB_CI")
+        and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
+    ))
     return (
         not os.getenv("CONTENT_GITLAB_CI")
         and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
@@ -109,6 +114,7 @@ def docker_login(docker_client) -> bool:
     if docker_user and docker_pass:
         try:
             if not is_custom_registry():
+                logger.info("debug: not is_custom_registry() case")
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
@@ -118,6 +124,7 @@ def docker_login(docker_client) -> bool:
                 logger.info(f"Successfully connected to dockerhub, login {ping=}")
                 return ping
             else:
+                logger.info("debug: is_custom_registry() case")
                 # login to custom docker registry
                 docker_client.login(
                     username=docker_user,

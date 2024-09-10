@@ -81,7 +81,7 @@ def test_IsValidTypeValidator_obtain_invalid_content_items_success():
             "detailsV2.tabs[4].type",
             "detailsV2.tabs[5].type",
         ],
-        values=["dynamic", "dynamic", "dynamic", "dynamic", "dynamic"],
+        values=["dynamic", "dynamic", "dynamic", "dynamic"],
     )
     assert not IsValidTypeValidator().obtain_invalid_content_items(
         [valid_layout_object]

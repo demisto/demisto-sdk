@@ -1,8 +1,6 @@
 name: 'Setup testing environment for demisto-sdk jobs'
 description: 'Setup testing environment for demisto-sdk jobs - that includes adding python/create-artifacts/install dependencies'
 author: 'Demisto-SDK'
-env:
-  UV_CACHE_DIR: /tmp/.uv-cache
 
 inputs:
   python-version:
@@ -19,8 +17,10 @@ runs:
   using: 'composite'
   steps:
     - name: Set up uv
-      run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      shell: bash
+      uses: astral-sh/setup-uv@v2
+      with:
+        enable-cache: true
+        version: "0.4.8"
 
     - name: Install the project
       run: uv sync --all-extras --dev --python ${{ inputs.python-version }}

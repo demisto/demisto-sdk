@@ -202,6 +202,14 @@ def get_all_validators() -> List[BaseValidator]:
 def get_all_validators_specific_validation(
     validation: BaseValidator,
 ) -> List[BaseValidator]:
+    """Recursively return all sub classes of a given validator
+
+    Args:
+        validation (BaseValidator): The validator to retrieve its sub classes.
+
+    Returns:
+        List[BaseValidator]: The list of obtained sub classes.
+    """
     validators = []
     for validator in validation.__subclasses__():  # type: ignore[attr-defined]
         validators.append(validator)

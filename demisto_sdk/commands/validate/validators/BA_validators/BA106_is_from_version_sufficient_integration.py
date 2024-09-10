@@ -21,7 +21,9 @@ INTEGRATION_FROM_VERSION_DICT = {
 }
 
 
-class IsFromVersionSufficientIntegrationValidator(IsFromVersionSufficientValidator):
+class IsFromVersionSufficientIntegrationValidator(
+    IsFromVersionSufficientValidator[ContentTypes]
+):
     error_message = "The integration is a {0} integration and therefore require a fromversion field of at least {1}, current version is: {2}."
 
     def obtain_invalid_content_items(

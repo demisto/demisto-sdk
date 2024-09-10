@@ -107,7 +107,9 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
 }
 
 
-class IsFromVersionSufficientAllItemsValidator(IsFromVersionSufficientValidator):
+class IsFromVersionSufficientAllItemsValidator(
+    IsFromVersionSufficientValidator[ContentTypes]
+):
     """
     This class is for cases where the IsFromVersionSufficientValidator need to run on items that are not dependent on the item's type.
     """

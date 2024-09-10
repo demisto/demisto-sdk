@@ -4,12 +4,10 @@ from abc import ABC
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import ExecutionMode
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    ContentTypes,
 )
-
-ContentTypes = TestPlaybook
 
 
 class DockerValidator(BaseValidator[ContentTypes], ABC):

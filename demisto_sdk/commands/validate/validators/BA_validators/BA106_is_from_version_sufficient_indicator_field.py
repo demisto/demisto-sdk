@@ -22,7 +22,9 @@ INDICATOR_FIELD_MIN_VERSION = "5.0.0"
 ContentTypes = IndicatorField
 
 
-class IsFromVersionSufficientIndicatorFieldValidator(IsFromVersionSufficientValidator):
+class IsFromVersionSufficientIndicatorFieldValidator(
+    IsFromVersionSufficientValidator[ContentTypes]
+):
     error_message = "The fromversion of IndicatorField with type {0} must be at least {1}, current is {2}."
 
     def obtain_invalid_content_items(

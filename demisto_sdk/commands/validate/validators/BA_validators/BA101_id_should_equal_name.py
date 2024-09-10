@@ -6,12 +6,13 @@ from typing import Iterable, List
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    ContentTypes,
     FixResult,
     ValidationResult,
 )
 
 
-class IDNameValidator(BaseValidator, ABC):
+class IDNameValidator(BaseValidator[ContentTypes], ABC):
     error_code = "BA101"
     description = "Validate that the file id and name fields are identical."
     rationale = (

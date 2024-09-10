@@ -1633,6 +1633,7 @@ GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 FEATURE_BRANCHES = ["v4.5.0"]
 VERSION_REGEX = r"(\d{1,2}\.){2}\d{1,2}$"
 DOC_FILE_IMAGE_REGEX = r"[\.\./]*doc_files/[a-zA-Z0-9_-]+\.png"
+DOC_FILE_FULL_IMAGE_REGEX = r"!\[.*?\]\(((?!http).*?doc_files.*?)\)"
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"

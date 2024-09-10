@@ -7,6 +7,6 @@ from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictM
 
 
 class StrictReleaseNotesConfig(BaseStrictModel):
-    breaking_changes: Optional[bool] = Field(None, alias="breakingChanges")
+    breaking_changes: bool = Field(alias="breakingChanges")
     breaking_changes_notes: Optional[str] = Field(None, alias="breakingChangesNotes")
     marketplaces: Optional[List[MarketplaceVersions]] = None

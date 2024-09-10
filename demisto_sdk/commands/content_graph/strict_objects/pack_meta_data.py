@@ -4,10 +4,17 @@ from packaging.version import Version
 from pydantic import Field, validator
 
 from demisto_sdk.commands.common.constants import (
-    PACK_SUPPORT_OPTIONS,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
+
+
+class PackSupportOption(StrEnum):
+    XSOAR_SUPPORT = "xsoar"
+    PARTNER_SUPPORT = "partner"
+    COMMUNITY_SUPPORT = "community"
+    DEVELOPER_SUPPORT = "developer"
 
 
 class StrictPackMetadata(BaseStrictModel):
@@ -26,7 +33,7 @@ class StrictPackMetadata(BaseStrictModel):
     created: Optional[str] = None
     updated: Optional[str] = None
     legacy: Optional[bool] = None
-    support: str = Field(enum=PACK_SUPPORT_OPTIONS)
+    support: PackSupportOption
     url: Optional[str] = None
     email: Optional[str] = None
     eula_link: Optional[str] = Field(None, alias="eulaLink")

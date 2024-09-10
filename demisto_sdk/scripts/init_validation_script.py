@@ -381,7 +381,12 @@ Fill the content types as the numbers they appear as: """
                         f"Please make sure all content types are valid integers between between {self.min_content_type_val} and {self.max_content_type_val}: "
                     )
                 )
-        self.content_types = content_types.split(",")
+        if "all" in content_types:
+            self.content_types = [
+                str(i) for i in range(1, len(supported_content_types) + 1)
+            ]
+        else:
+            self.content_types = content_types.split(",")
 
     def is_valid_content_types_input(self, content_types: str) -> bool:
         """Validate that the content types input is valid (at least one content type, and all inputs are in the content types range.)
@@ -392,14 +397,17 @@ Fill the content types as the numbers they appear as: """
         Returns:
             bool: True if the input is valid, otherwise return False.
         """
-        return bool(content_types) and all(
-            [
-                content_type.isnumeric()
-                and self.min_content_type_val
-                <= int(content_type)
-                <= self.max_content_type_val
-                for content_type in content_types.split(",")
-            ]
+        return bool(content_types) and (
+            "all" in content_types
+            or all(
+                [
+                    content_type.isnumeric()
+                    and self.min_content_type_val
+                    <= int(content_type)
+                    <= self.max_content_type_val
+                    for content_type in content_types.split(",")
+                ]
+            )
         )
 
     def initialize_fix_info(self):

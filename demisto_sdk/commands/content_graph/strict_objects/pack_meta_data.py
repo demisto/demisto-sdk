@@ -52,7 +52,7 @@ class StrictPackMetadata(BaseStrictModel):
     displayed_images: Optional[List[str]] = Field(None, alias="displayedImages")
     item_prefix: Optional[Union[str, List[str]]] = Field(None, alias="itemPrefix")
     from_version: Optional[str] = Field(None, alias="fromVersion")
-    prev_name: Optional[str] = Field(None, alias="prevName")
+    previous_name: Optional[str] = Field(None, alias="prevName")
 
     # For private packs
     premium: Optional[bool] = None

@@ -472,7 +472,7 @@ jobs:
       - name: Uninstall using pip
         run: pip uninstall demisto-sdk --yes
 
-        - name: Set up uv
+      - name: Set up uv
         uses: astral-sh/setup-uv@v2
         with:
           enable-cache: true

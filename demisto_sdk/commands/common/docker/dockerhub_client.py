@@ -268,6 +268,7 @@ class DockerHubClient:
         if os.getenv("CONTENT_GITLAB_CI"):
             logger.info("debug: if os.getenv(CONTENT_GITLAB_CI)")
             resp = self._session.get(f"{self.registry_api_url}/{docker_image}{url_suffix}")
+            logger.info(f"{resp=}")
             return resp
         else:
             return self.get_request(

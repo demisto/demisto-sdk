@@ -80,7 +80,6 @@ def test_IsValidTypeValidator_obtain_invalid_content_items_success():
             "detailsV2.tabs[1].sections[3].type",
             "detailsV2.tabs[4].type",
             "detailsV2.tabs[5].type",
-            "detailsV2.tabs[6].type",
         ],
         values=["dynamic", "dynamic", "dynamic", "dynamic", "dynamic"],
     )

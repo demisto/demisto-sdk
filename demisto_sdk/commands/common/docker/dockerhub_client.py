@@ -267,10 +267,6 @@ class DockerHubClient:
         logger.info(
             f"################################################# request url: {req_url}"
         )
-        if os.getenv("CONTENT_GITLAB_CI"):
-            logger.info("CONTENT_GITLAB_CI found, continue to pull_image_through_proxy")
-            res = self.pull_image_through_proxy(self.registry_api_url,docker_image)
-            logger.info(f"pull_docker_image_via_docker_sdk: {res}")
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
             headers={key: value for key, value in headers}
@@ -502,40 +498,40 @@ class DockerHubClient:
             if image_metadata.get("name")
         ]
 
-    def pull_image_through_proxy(self, registry_url, image_name, tag='latest'):
-        """
-        Pull an image through a Docker registry proxy using pre-configured authentication.
+    # def pull_image_through_proxy(self, registry_url, image_name, tag='latest'):
+    #     """
+    #     Pull an image through a Docker registry proxy using pre-configured authentication.
 
-        Args:
-        registry_url (str): The registry URL, typically from an environment variable.
-        image_name (str): Image path on Docker Hub that the proxy will intercept.
-        tag (str): Tag of the Docker image to pull.
+    #     Args:
+    #     registry_url (str): The registry URL, typically from an environment variable.
+    #     image_name (str): Image path on Docker Hub that the proxy will intercept.
+    #     tag (str): Tag of the Docker image to pull.
 
-        Returns:
-        None
-        """
-        # Create a client
-        client = artifactregistry_v1.ArtifactRegistryClient()
-        logger.info(f'Created ArtifactRegistryClient instance: {client}')
+    #     Returns:
+    #     None
+    #     """
+    #     # Create a client
+    #     client = artifactregistry_v1.ArtifactRegistryClient()
+    #     logger.info(f'Created ArtifactRegistryClient instance: {client}')
 
-        # Initialize request argument(s)
-        request = artifactregistry_v1.UpdateRepositoryRequest()
-        logger.info(f'request: {request}')
+    #     # Initialize request argument(s)
+    #     request = artifactregistry_v1.UpdateRepositoryRequest()
+    #     logger.info(f'request: {request}')
 
-        # Make the request
-        response = client.update_repository(request=request)
-        # Handle the response
-        logger.info(f'response: {response}')
+    #     # Make the request
+    #     response = client.update_repository(request=request)
+    #     # Handle the response
+    #     logger.info(f'response: {response}')
 
 
-        full_image_path = f'{registry_url}/{image_name}:{tag}'
-        logger.info(f'full_image_path: {full_image_path}')
-        client = docker.from_env()
-        logger.info(f'Attempting to pull image: {full_image_path}')
-        try:
-            image = client.images.pull(full_image_path)
-            logger.info(f'Successfully pulled {image.tags}')
-        except docker.errors.APIError as error:
-            logger.info(f'Failed to pull image: {error}')
-        except Exception as e:
-            logger.info(f'An error occurred: {e}')
+    #     full_image_path = f'{registry_url}/{image_name}:{tag}'
+    #     logger.info(f'full_image_path: {full_image_path}')
+    #     client = docker.from_env()
+    #     logger.info(f'Attempting to pull image: {full_image_path}')
+    #     try:
+    #         image = client.images.pull(full_image_path)
+    #         logger.info(f'Successfully pulled {image.tags}')
+    #     except docker.errors.APIError as error:
+    #         logger.info(f'Failed to pull image: {error}')
+    #     except Exception as e:
+    #         logger.info(f'An error occurred: {e}')

@@ -71,16 +71,9 @@ def test_spell_integration_invalid(repo):
             main, [DOC_REVIEW, "-i", integration.yml.path], catch_exceptions=False
         )
         assert "No misspelled words found " not in result.output
-        assert all(
-            [
-                current_str in result.output
-                for current_str in [
-                    "Words that might be misspelled were found in",
-                    "kfawh",
-                    "ggghghgh",
-                ]
-            ]
-        )
+        assert "Words that might be misspelled were found in" in result.output
+        assert "kfawh" in result.output
+        assert "ggghghgh" in result.output
 
 
 def test_spell_script_invalid(repo, mocker, monkeypatch):

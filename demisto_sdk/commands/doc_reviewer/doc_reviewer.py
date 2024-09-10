@@ -318,8 +318,7 @@ class DocReviewer:
 
             if self.unknown_words:
                 logger.info(
-                    f"\n<red> - Words that might be misspelled were found in "
-                    f"{file}:</red>"
+                    f"\n<red> - Words that might be misspelled were found in {file}:</red>"
                 )
                 self.print_unknown_words(unknown_words=self.unknown_words)
                 self.found_misspelled = True

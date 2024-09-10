@@ -19,11 +19,11 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_displa
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_list_files import (
     IsPackDisplayNameAlreadyExistsValidatorListFiles,
 )
-from demisto_sdk.commands.validate.validators.GR_validators.GR105_is_duplicate_ids_all_files import (
-    IsDuplicateIdsValidatorAllFiles,
+from demisto_sdk.commands.validate.validators.GR_validators.GR105_duplicate_content_id_all_files import (
+    DuplicateContentIdValidatorAllFiles,
 )
-from demisto_sdk.commands.validate.validators.GR_validators.GR105_is_duplicate_ids_list_files import (
-    IsDuplicateIdsValidatorListFiles,
+from demisto_sdk.commands.validate.validators.GR_validators.GR105_duplicate_content_id_list_files import (
+    DuplicateContentIdValidatorListFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_all_files import (
     IsTestPlaybookInUseValidatorAllFiles,
@@ -320,9 +320,9 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
     assert validation_results == []  # the test playbook is deprecated
 
 
-def test_IsDuplicateIdsValidatorListFiles_is_valid(prepared_graph_repo: Repo):
+def test_DuplicateContentIdValidatorListFiles_is_valid(prepared_graph_repo: Repo):
     """
-    Test case for the IsDuplicateIdsValidatorListFiles validator.
+    Test case for the DuplicateContentIdValidatorListFiles validator.
 
     This test ensures that the validator correctly identifies when there are no duplicate IDs
     in the content items of the prepared graph repository.
@@ -339,16 +339,18 @@ def test_IsDuplicateIdsValidatorListFiles_is_valid(prepared_graph_repo: Repo):
         pack.get_graph_object(graph_interface) for pack in prepared_graph_repo.packs
     ]
     validation_results = (
-        IsDuplicateIdsValidatorListFiles().obtain_invalid_content_items(pack_objects)
+        DuplicateContentIdValidatorListFiles().obtain_invalid_content_items(
+            pack_objects
+        )
     )
     assert validation_results == []
 
 
-def test_IsDuplicateIdsValidatorListFiles_integration_is_invalid(
+def test_DuplicateContentIdValidatorListFiles_integration_is_invalid(
     prepared_graph_repo: Repo,
 ):
     """
-    Test case for the IsDuplicateIdsValidatorListFiles validator with duplicate integration IDs.
+    Test case for the DuplicateContentIdValidatorListFiles validator with duplicate integration IDs.
 
     This test ensures that the validator correctly identifies duplicate IDs
     in integration content items from different packs in the prepared graph repository.
@@ -368,7 +370,9 @@ def test_IsDuplicateIdsValidatorListFiles_integration_is_invalid(
         prepared_graph_repo.packs[3].integrations[0].get_graph_object(graph_interface),
     ]
     validation_results = (
-        IsDuplicateIdsValidatorListFiles().obtain_invalid_content_items(pack_objects)
+        DuplicateContentIdValidatorListFiles().obtain_invalid_content_items(
+            pack_objects
+        )
     )
     assert (
         validation_results[0].message
@@ -380,9 +384,11 @@ def test_IsDuplicateIdsValidatorListFiles_integration_is_invalid(
     )
 
 
-def test_IsDuplicateIdsValidatorListFiles_widget_is_invalid(prepared_graph_repo: Repo):
+def test_DuplicateContentIdValidatorListFiles_widget_is_invalid(
+    prepared_graph_repo: Repo,
+):
     """
-    Test case for the IsDuplicateIdsValidatorListFiles validator with duplicate widget IDs.
+    Test case for the DuplicateContentIdValidatorListFiles validator with duplicate widget IDs.
 
     This test ensures that the validator correctly identifies duplicate IDs
     in widget content items from different packs in the prepared graph repository.
@@ -402,7 +408,9 @@ def test_IsDuplicateIdsValidatorListFiles_widget_is_invalid(prepared_graph_repo:
         prepared_graph_repo.packs[3].widgets[0].get_graph_object(graph_interface),
     ]
     validation_results = (
-        IsDuplicateIdsValidatorListFiles().obtain_invalid_content_items(pack_objects)
+        DuplicateContentIdValidatorListFiles().obtain_invalid_content_items(
+            pack_objects
+        )
     )
     assert (
         validation_results[0].message
@@ -414,9 +422,9 @@ def test_IsDuplicateIdsValidatorListFiles_widget_is_invalid(prepared_graph_repo:
     )
 
 
-def test_IsDuplicateIdsValidatorAllFiles_is_invalid(prepared_graph_repo: Repo):
+def test_DuplicateContentIdValidatorAllFiles_is_invalid(prepared_graph_repo: Repo):
     """
-    Test case for the IsDuplicateIdsValidatorAllFiles validator with duplicate IDs.
+    Test case for the DuplicateContentIdValidatorAllFiles validator with duplicate IDs.
 
     This test ensures that the validator correctly identifies duplicate IDs
     in content items from different packs in the prepared graph repository.
@@ -431,8 +439,8 @@ def test_IsDuplicateIdsValidatorAllFiles_is_invalid(prepared_graph_repo: Repo):
     """
     graph_interface = prepared_graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
-    validation_results = IsDuplicateIdsValidatorAllFiles().obtain_invalid_content_items(
-        []
+    validation_results = (
+        DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
     )
     assert (
         validation_results[0].message

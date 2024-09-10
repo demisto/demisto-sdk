@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from abc import ABC
-from pathlib import Path
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -38,9 +36,9 @@ from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
-    ValidationResult,
+from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
+from demisto_sdk.commands.validate.validators.GR_validators.GR105_duplicate_content_id import (
+    DuplicateContentIdValidator,
 )
 
 ContentTypes = Union[
@@ -78,40 +76,10 @@ ContentTypes = Union[
 ]
 
 
-class IsDuplicateIdsValidator(BaseValidator[ContentTypes], ABC):
-    error_code = "GR105"
-    description = "Checks for duplicate IDs across content items"
-    rationale = (
-        "Duplicate IDs can cause conflicts and unpredictable behavior in the system"
-    )
-    error_message = "Duplicate ID '{}' found in {}"
-    related_field = "id"
-    is_auto_fixable = False
+class DuplicateContentIdValidatorListFiles(DuplicateContentIdValidator):
+    expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
 
-    def obtain_invalid_content_items_using_graph(
-        self, content_items: Iterable[ContentTypes], validate_all_files: bool
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        validation_resilts = []
-        paths_of_content_items_to_validate = (
-            [
-                str(content_item.path.relative_to(CONTENT_PATH))
-                for content_item in content_items
-            ]
-            if not validate_all_files
-            else []
-        )
-        for content_item, duplicates in self.graph.validate_duplicate_ids(
-            paths_of_content_items_to_validate
-        ):
-            for duplicate in duplicates:
-                validation_resilts.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            content_item.object_id,
-                            Path(duplicate.path).relative_to(CONTENT_PATH),
-                        ),
-                        content_object=content_item,
-                    )
-                )
-        return validation_resilts
+        return self.obtain_invalid_content_items_using_graph(content_items, False)

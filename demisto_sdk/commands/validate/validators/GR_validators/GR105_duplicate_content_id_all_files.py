@@ -37,8 +37,8 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
-from demisto_sdk.commands.validate.validators.GR_validators.GR105_is_duplicate_ids import (
-    IsDuplicateIdsValidator,
+from demisto_sdk.commands.validate.validators.GR_validators.GR105_duplicate_content_id import (
+    DuplicateContentIdValidator,
 )
 
 ContentTypes = Union[
@@ -76,10 +76,10 @@ ContentTypes = Union[
 ]
 
 
-class IsDuplicateIdsValidatorListFiles(IsDuplicateIdsValidator):
-    expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
+class DuplicateContentIdValidatorAllFiles(DuplicateContentIdValidator):
+    expected_execution_mode = [ExecutionMode.ALL_FILES]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        return self.obtain_invalid_content_items_using_graph(content_items, False)
+        return self.obtain_invalid_content_items_using_graph(content_items, True)

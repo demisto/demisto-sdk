@@ -13,9 +13,6 @@ from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
-import docker
-from google.cloud import artifactregistry_v1
-
 
 DOCKERHUB_USER = "DOCKERHUB_USER"
 DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"

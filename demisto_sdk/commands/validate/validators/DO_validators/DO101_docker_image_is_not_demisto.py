@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validators.DO_validators.docker_validator imp
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageIsNotDemistoValidator(DockerValidator):
+class DockerImageIsNotDemistoValidator(DockerValidator[ContentTypes]):
     error_code = "DO101"
     description = "Validate that the given content-item uses demisto docker image"
     rationale = (

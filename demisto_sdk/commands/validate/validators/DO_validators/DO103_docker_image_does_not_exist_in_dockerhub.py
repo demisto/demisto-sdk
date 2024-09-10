@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validators.DO_validators.docker_validator imp
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageDoesNotExistInDockerhubValidator(DockerValidator):
+class DockerImageDoesNotExistInDockerhubValidator(DockerValidator[ContentTypes]):
     error_code = "DO103"
     description = "Validate that the given content item's docker-image actually exists in dockerhub"
     rationale = "Platform supported content must have their images available in dockerhub so they can be widely pulled and used."

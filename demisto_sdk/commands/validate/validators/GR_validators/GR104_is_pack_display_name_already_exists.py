@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Pack
 
 
-class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
+class IsPackDisplayNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR104"
     description = "Validate that there are no duplicate display names in the repo"
     rationale = (

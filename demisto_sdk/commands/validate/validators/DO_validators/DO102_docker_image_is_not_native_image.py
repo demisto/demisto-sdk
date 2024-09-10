@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validators.DO_validators.docker_validator imp
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageIsNotNativeImageValidator(DockerValidator):
+class DockerImageIsNotNativeImageValidator(DockerValidator[ContentTypes]):
     error_code = "DO102"
     description = "Validate that the given content item uses a docker image that is not the native image."
     rationale = "The 'native-image' Docker image is intended for internal development and should not be used for running integrations or scripts."

@@ -15,7 +15,7 @@ from demisto_sdk.commands.validate.validators.DO_validators.docker_validator imp
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageExistValidator(DockerValidator):
+class DockerImageExistValidator(DockerValidator[ContentTypes]):
     error_code = "DO104"
     description = "Validate that the given content item has a docker_image."
     rationale = "Python and Powershell content run in containers."

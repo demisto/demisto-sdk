@@ -25,7 +25,7 @@ from demisto_sdk.commands.validate.validators.DO_validators.docker_validator imp
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageTagIsNotOutdated(DockerValidator):
+class DockerImageTagIsNotOutdated(DockerValidator[ContentTypes]):
     error_code = "DO106"
     description = "Validate that the given content-item's docker image isn't outdated."
     rationale = "Updated Docker images ensure that the code doesn't use outdated dependencies, including bug fixes and fixed vulnerabilities."

@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
-)
 from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_image_path_valid import (
     RelativeImagePathValidator,
 )
@@ -12,9 +9,7 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_image_path_
 ContentTypes = Integration
 
 
-class IntegrationRelativeImagePathValidator(
-    RelativeImagePathValidator, BaseValidator[ContentTypes]
-):
+class IntegrationRelativeImagePathValidator(RelativeImagePathValidator):
     related_file_type = [RelatedFileType.README, RelatedFileType.DESCRIPTION_File]
 
     def validate_content_items(self, content_item: ContentTypes) -> str:

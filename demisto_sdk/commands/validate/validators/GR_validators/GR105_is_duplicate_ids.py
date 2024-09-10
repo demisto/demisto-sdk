@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC
 from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -11,7 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 
-class IsDuplicateIdsValidator(BaseValidator[ContentTypes]):
+class IsDuplicateIdsValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR105"
     description = "Checks for duplicate IDs across content items"
     rationale = (

@@ -13,7 +13,6 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
-    FileType,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -416,11 +415,10 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
         # validate Rn's files
         for file in self.path.glob("ReleaseNotes/*.json"):
-            validate_structure(FileType.RELEASE_NOTES_CONFIG, file, pydantic_error_list)
+            validate_structure(file, pydantic_error_list)
 
         # validate pack metadata file
         validate_structure(
-            FileType.METADATA,
             Path(self.path, PACK_METADATA_FILENAME),
             pydantic_error_list,
         )
@@ -428,17 +426,15 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return pydantic_error_list
 
 
-def validate_structure(
-    file_type: FileType, file: Path, pydantic_error_list: list
-) -> None:
+def validate_structure(file: Path, pydantic_error_list: list) -> None:
     """
     This function is called by the method validate_structure and build the appropriate strict object.
     In case of invalid structure file, adds the error to the given list.
     """
     try:
-        if file_type == FileType.METADATA:
+        if file.stem == "pack_metadata":
             StrictPackMetadata.parse_obj(get_file(file))
-        elif file_type == FileType.RELEASE_NOTES_CONFIG:
+        else:
             StrictReleaseNotesConfig.parse_obj(get_file(file))
     except pydantic.error_wrappers.ValidationError as e:
         pydantic_error_list += [

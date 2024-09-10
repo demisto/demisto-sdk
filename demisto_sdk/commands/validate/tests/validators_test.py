@@ -140,8 +140,9 @@ def test_filter_validators(
     validate_manager = get_validate_manager(mocker)
     mocker.patch.object(ConfiguredValidations, "select", validations_to_run)
     with patch.object(BaseValidator, "__subclasses__", return_value=sub_classes):
-        results = validate_manager.filter_validators()
-        assert results == expected_results
+        with patch("demisto_sdk.commands.validate.validators.base_validator.get_all_validators_specific_validation", return_value=[]):
+            results = validate_manager.filter_validators()
+            assert results == expected_results
 
 
 @pytest.mark.parametrize(

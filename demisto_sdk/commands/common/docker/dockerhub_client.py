@@ -265,18 +265,23 @@ class DockerHubClient:
         logger.info(
             f"################################################# request url: {req_url}"
         )
-        return self.get_request(
-            f"{self.registry_api_url}/{docker_image}{url_suffix}",
-            headers={key: value for key, value in headers}
-            if headers
-            else None
-            or {
-                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                "application/vnd.docker.distribution.manifest.list.v2+json",
-                "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
-            },
-            params={key: value for key, value in params} if params else None,
-        )
+        if os.getenv("CONTENT_GITLAB_CI"):
+            logger.info("debug: if os.getenv("CONTENT_GITLAB_CI")")
+            resp = self._session.get(f"{self.registry_api_url}/{docker_image}{url_suffix}")
+            return resp
+        else:
+            return self.get_request(
+                f"{self.registry_api_url}/{docker_image}{url_suffix}",
+                headers={key: value for key, value in headers}
+                if headers
+                else None
+                or {
+                    "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+                    "application/vnd.docker.distribution.manifest.list.v2+json",
+                    "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+                },
+                params={key: value for key, value in params} if params else None,
+            )
 
     def get_image_manifests(self, docker_image: str, tag: str) -> Dict[str, Any]:
         """

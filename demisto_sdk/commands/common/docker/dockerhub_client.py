@@ -38,8 +38,8 @@ class DockerHubRequestException(Exception):
 
 @lru_cache
 class DockerHubClient:
-    # DEFAULT_REGISTRY = f"https://{DOCKER_REGISTRY_URL}"
-    DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
+    DEFAULT_REGISTRY = f"https://{DOCKER_REGISTRY_URL}"
+    # DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
     DOCKER_HUB_API_BASE_URL = "https://hub.docker.com/v2"
     TOKEN_URL = "https://auth.docker.io/token"
 

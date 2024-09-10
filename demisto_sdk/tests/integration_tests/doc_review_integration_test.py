@@ -104,17 +104,11 @@ def test_spell_script_invalid(repo, mocker, monkeypatch):
         result = runner.invoke(
             main, [DOC_REVIEW, "-i", script.yml.path], catch_exceptions=False
         )
-        assert "No misspelled words found " not in result.output
-        assert all(
-            [
-                current_str in result.output
-                for current_str in [
-                    "Words that might be misspelled were found in",
-                    "kfawh",
-                    "ddddddd",
-                ]
-            ]
-        )
+    assert "No misspelled words found " not in result.output
+    assert "Words that might be misspelled were found in" in result.output
+    assert "kfawh" in result.output
+    assert "ddddddd" in result.output
+    assert "kfawh" in result.output
 
 
 def test_spell_playbook_invalid(repo, mocker, monkeypatch):
@@ -147,16 +141,9 @@ def test_spell_playbook_invalid(repo, mocker, monkeypatch):
             main, [DOC_REVIEW, "-i", playbook.yml.path], catch_exceptions=False
         )
         assert "No misspelled words found " not in result.output
-        assert all(
-            [
-                current_str in result.output
-                for current_str in [
-                    "Words that might be misspelled were found in",
-                    "kfawh",
-                    "ddddddd",
-                ]
-            ]
-        )
+        assert "Words that might be misspelled were found in" in result.output
+        assert "kfawh" in result.output
+        assert "ddddddd" in result.output
 
 
 def test_spell_readme_invalid(repo, mocker, monkeypatch):

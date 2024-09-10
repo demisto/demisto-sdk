@@ -32,12 +32,8 @@ from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker impo
 )
 
 ENV = os.environ
-ERROR_CODE_PATTERN = re.compile(
+ERROR_AND_WARNING_CODE_PATTERN = re.compile(
     r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>(?P<type>[EW])\d+)(?P<error_message> .*)$",
-    re.MULTILINE,
-)
-WARNING_CODE_PATTERN = re.compile(
-    r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>W\d+)(?P<error_message> .*)$",
     re.MULTILINE,
 )
 
@@ -177,7 +173,7 @@ def process_file(file_path: Path) -> ProcessResults:
             results.errors_and_warnings = errors_and_warnings_str
             # catch only error codes from the error and warning string
             for line in errors_and_warnings_str.splitlines():
-                if (error_or_warning := ERROR_CODE_PATTERN.match(line)):
+                if (error_or_warning := ERROR_AND_WARNING_CODE_PATTERN.match(line)):
                     results.errors.append(line) if error_or_warning["type"] == "E" else results.warnings.append(line)
         except subprocess.TimeoutExpired:
             results.errors.append(
@@ -239,7 +235,7 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
 
 def print_errors_github_action(errors_and_warning: List[str]) -> None:
     for error_and_warning in errors_and_warning:
-        if not (match := ERROR_CODE_PATTERN.match(error_and_warning)):
+        if not (match := ERROR_AND_WARNING_CODE_PATTERN.match(error_and_warning)):
             logger.debug(f"Failed parsing error {error_and_warning}")
             continue
 

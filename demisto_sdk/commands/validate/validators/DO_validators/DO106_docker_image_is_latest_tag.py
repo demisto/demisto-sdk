@@ -71,8 +71,11 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
         for content_item in content_items:
             if not content_item.is_javascript:
                 logger.info(f"################################################# {content_item=}")
-                docker_image = content_item.docker_image
-                logger.info(f"################################################# docker_image 1: {docker_image=}")
+                docker_image: DockerImage = content_item.docker_image
+                logger.info(
+                    f"################################################# {docker_image.summary=}")
+                logger.info(
+                    f"################################################# docker_image 1: {type(docker_image)} , {docker_image=}")
                 if not docker_image.is_valid:
                     logger.info("################################################# not docker_image.is_valid")
                     invalid_content_items.append(
@@ -84,7 +87,8 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
                     )
                     continue
                 try:
-                    logger.info(f"################################################# docker_image 2: {docker_image=}")
+                    logger.info(
+                        f"################################################# docker_image 2: {type(docker_image)} , {docker_image=}")
                     logger.info(f"################################################# {docker_image.latest_tag=}")
                     docker_image_latest_tag = docker_image if isinstance(docker_image, str) else str(docker_image.latest_tag)
                     logger.info(f"################################################# {docker_image_latest_tag=}")

@@ -176,9 +176,12 @@ class DockerHubClient:
         )
         logger.info(
             f"################################################# {response=}")
+        logger.info(
+            f"################################################# response.json() 1: {response.json()}")
         response.raise_for_status()
         try:
-            logger.info(f"################################################# {response.json()=}")
+            logger.info(
+                f"################################################# response.json() 2: {response.json()}")
             return response.json()
         except JSONDecodeError as e:
             raise RuntimeError(

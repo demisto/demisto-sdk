@@ -271,6 +271,9 @@ class DockerHubClient:
         #     logger.info(f"################################################# {resp.json()=}")
         #     return resp.json()
         # else:
+
+        headers = {key: value for key, value in headers} if headers else None
+        params = {key: value for key, value in params} if params else None
         response = self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
             headers={key: value for key, value in headers}

@@ -291,13 +291,16 @@ class DockerHubClient:
             # resp = self._session.get(req_url)
             response = self.get_request(
                 url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
-                headers={"Accept": "application/json"},
+                headers={
+                    "Accept": "application/json",
+                    "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}", }
             )
             logger.info(
                 f"################################################# {resp.json()=}")
             return response
 
-        response = self.get_request(
+        else:
+            response = self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
             headers={key: value for key, value in headers}
             if headers

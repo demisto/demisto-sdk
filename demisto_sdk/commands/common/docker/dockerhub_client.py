@@ -394,7 +394,13 @@ class DockerHubClient:
             tag: The tag of the docker image
         """
         try:
-            return self.do_docker_hub_get_request(
+            if os.getenv("CONTENT_GITLAB_CI"):
+                return self.do_registry_get_request(
+                    url_suffix=f"tags/{tag}",
+                    docker_image=docker_image
+                )
+            else:
+                return self.do_docker_hub_get_request(
                 f"/repositories/{docker_image}/tags/{tag}"
             )
         except RequestException as error:

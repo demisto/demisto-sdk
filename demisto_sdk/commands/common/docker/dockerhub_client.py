@@ -81,7 +81,8 @@ class DockerHubClient:
         """
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             logger.info(
-                f"################################################# {token_metadata=}")
+                f"################################################# {token_metadata=}"
+            )
             now = datetime.now()
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
                 # minus 60 seconds to be on the safe side
@@ -164,9 +165,17 @@ class DockerHubClient:
             headers: headers if needed
             params: params if needed
         """
+        logger.info(
+            "################################################# start get_request"
+        )
         auth = None if headers and "Authorization" in headers else self.auth
         logger.info(f"################################################# {auth=}")
-        logger.info(f"################################################# {self.verify_ssl=}")
+        logger.info(
+            f"################################################# {self.verify_ssl=}"
+        )
+        logger.info(f"################################################# {headers=}")
+        logger.info(f"################################################# {params=}")
+
         response = self._session.get(
             url,
             headers=headers,
@@ -174,16 +183,18 @@ class DockerHubClient:
             verify=self.verify_ssl,
             auth=auth,
         )
+        logger.info(f"################################################# {response=}")
         logger.info(
-            f"################################################# {response=}")
+            f"################################################# {response.text=}"
+        )
         logger.info(
-            f"################################################# {response.text=}")
-        logger.info(
-            f"################################################# {response.headers['Content-Type']=}")
+            f"################################################# {response.headers['Content-Type']=}"
+        )
         response.raise_for_status()
         try:
             logger.info(
-                f"################################################# response.json() 2: {response.json()}")
+                f"################################################# response.json() 2: {response.json()}"
+            )
             return response.json()
         except JSONDecodeError as e:
             raise RuntimeError(
@@ -209,6 +220,9 @@ class DockerHubClient:
             params: query parameters
             results_key: the key to retrieve the results in case its a list
         """
+        ogger.info(
+            "################################################# start do_docker_hub_get_request"
+        )
         if url_suffix:
             if not url_suffix.startswith("/"):
                 url_suffix = f"/{url_suffix}"
@@ -227,9 +241,13 @@ class DockerHubClient:
             else {"Accept": "application/json"},
             params=_params,
         )
-        logger.info(f"################################################# {raw_json_response=}")
+        logger.info(
+            f"################################################# {raw_json_response=}"
+        )
         amount_of_objects = raw_json_response.get("count")
-        logger.info(f"################################################# {amount_of_objects=}")
+        logger.info(
+            f"################################################# {amount_of_objects=}"
+        )
         if not amount_of_objects:
             # received only a single record
             return raw_json_response
@@ -269,6 +287,9 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
+        logger.info(
+            "################################################# start do_registry_get_request"
+        )
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
         logger.info(
@@ -278,40 +299,44 @@ class DockerHubClient:
         logger.info(
             f"################################################# request url: {req_url}"
         )
-
-        headers = {key: value for key, value in headers} if headers else None or {
-            "Accept": "application/vnd.docker.distribution.manifest.v2+json,""application/vnd.docker.distribution.manifest.list.v2+json", "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}", }
+        ci_headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+        }
         params = {key: value for key, value in params} if params else None
-        logger.info(f"################################################# {headers=}")
+        logger.info(f"################################################# {ci_headers=}")
         logger.info(f"################################################# {params=}")
 
         if os.getenv("CONTENT_GITLAB_CI"):
             logger.info(
-                "################################################# debug: if os.getenv(CONTENT_GITLAB_CI)")
+                "################################################# debug: if os.getenv(CONTENT_GITLAB_CI)"
+            )
             # resp = self._session.get(req_url)
             response = self.get_request(
                 url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
-                headers={
-                    "Accept": "application/json",
-                    "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}", }
+                headers=ci_headers,
             )
             logger.info(
-                f"################################################# {resp.json()=}")
+                f"################################################# {resp.json()=}"
+            )
             return response
 
         else:
             response = self.get_request(
-            f"{self.registry_api_url}/{docker_image}{url_suffix}",
-            headers={key: value for key, value in headers}
-            if headers
-            else None
-            or {
-                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                "application/vnd.docker.distribution.manifest.list.v2+json",
-                "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
-            },
-            params={key: value for key, value in params} if params else None,)
-        logger.info(msg=f"################################################# {response=}")
+                f"{self.registry_api_url}/{docker_image}{url_suffix}",
+                headers={key: value for key, value in headers}
+                if headers
+                else None
+                or {
+                    "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+                    "application/vnd.docker.distribution.manifest.list.v2+json",
+                    "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+                },
+                params={key: value for key, value in params} if params else None,
+            )
+        logger.info(
+            msg=f"################################################# {response=}"
+        )
         return response
 
     def get_image_manifests(self, docker_image: str, tag: str) -> Dict[str, Any]:
@@ -414,13 +439,12 @@ class DockerHubClient:
         try:
             if os.getenv("CONTENT_GITLAB_CI"):
                 return self.do_registry_get_request(
-                    url_suffix=f"tags/{tag}",
-                    docker_image=docker_image
+                    url_suffix=f"tags/{tag}", docker_image=docker_image
                 )
             else:
                 return self.do_docker_hub_get_request(
-                f"/repositories/{docker_image}/tags/{tag}"
-            )
+                    f"/repositories/{docker_image}/tags/{tag}"
+                )
         except RequestException as error:
             raise DockerHubRequestException(
                 f"Failed to retrieve tag metadata of docker-image {docker_image}:{tag}",
@@ -562,7 +586,6 @@ class DockerHubClient:
     #     response = client.update_repository(request=request)
     #     # Handle the response
     #     logger.info(f'response: {response}')
-
 
     #     full_image_path = f'{registry_url}/{image_name}:{tag}'
     #     logger.info(f'full_image_path: {full_image_path}')

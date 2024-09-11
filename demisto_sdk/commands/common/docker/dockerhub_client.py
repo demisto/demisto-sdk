@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import dateparser
 import requests
+from google.cloud import artifactregistry_v1
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
@@ -170,14 +171,17 @@ class DockerHubClient:
         )
         auth = None if headers and "Authorization" in headers else self.auth
         logger.info(
-            f"################################################# get_request | {auth=}")
+            f"################################################# get_request | {auth=}"
+        )
         logger.info(
             f"################################################# get_request | {self.verify_ssl=}"
         )
         logger.info(
-            f"################################################# get_request | {headers=}")
+            f"################################################# get_request | {headers=}"
+        )
         logger.info(
-            f"################################################# get_request | {params=}")
+            f"################################################# get_request | {params=}"
+        )
 
         response = self._session.get(
             url,
@@ -187,7 +191,8 @@ class DockerHubClient:
             auth=auth,
         )
         logger.info(
-            f"################################################# get_request | {response=}")
+            f"################################################# get_request | {response=}"
+        )
         logger.info(
             f"################################################# get_request | {response.text=}"
         )
@@ -305,27 +310,49 @@ class DockerHubClient:
         )
         ci_headers = {
             "Accept": "application/json",
-            # "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+            "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
         }
         params = {key: value for key, value in params} if params else None
         logger.info(
-            f"################################################# do_registry_get_request | {ci_headers=}")
+            f"################################################# do_registry_get_request | {ci_headers=}"
+        )
         logger.info(
-            f"################################################# do_registry_get_request | {params=}")
+            f"################################################# do_registry_get_request | {params=}"
+        )
 
         if os.getenv("CONTENT_GITLAB_CI"):
             logger.info(
                 "################################################# do_registry_get_request | if os.getenv(CONTENT_GITLAB_CI)"
             )
-            response = self.get_request(
-                url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
-                headers=ci_headers,
-                params=params
+            client = artifactregistry_v1.ArtifactRegistryClient()
+            logger.info(
+                f"################################################# do_registry_get_request | {client=}"
+            )
+            name = "f{DOCKER_REGISTRY_URL}/{docker_image}{url_suffix}"
+            logger.info(
+                f"################################################# do_registry_get_request | {name=}"
+            )
+            docker_image = client.get_docker_image(name=name)
+            # Print details about the image
+            logger.info(
+                f"################################################# do_registry_get_request | Image URI: {docker_image.uri}"
             )
             logger.info(
-                msg=f"################################################# do_registry_get_request | {response=}"
+                f"################################################# do_registry_get_request | Image Digest: {docker_image.image_id}"
             )
-            return response
+            logger.info(
+                f"################################################# do_registry_get_request | Tags: {docker_image.tags}"
+            )
+
+            # response = self.get_request(
+            #     url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
+            #     headers=ci_headers,
+            #     params=params
+            # )
+            # logger.info(
+            #     msg=f"################################################# do_registry_get_request | {response=}"
+            # )
+            # return response
 
         else:
             response = self.get_request(

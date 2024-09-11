@@ -163,7 +163,8 @@ class DockerHubClient:
             params: params if needed
         """
         auth = None if headers and "Authorization" in headers else self.auth
-
+        logger.info(f"################################################# {auth=}")
+        logger.info(f"################################################# {self.verify_ssl=}")
         response = self._session.get(
             url,
             headers=headers,
@@ -173,6 +174,7 @@ class DockerHubClient:
         )
         response.raise_for_status()
         try:
+            logger.info(f"################################################# {response.json()=}")
             return response.json()
         except JSONDecodeError as e:
             raise RuntimeError(
@@ -216,14 +218,16 @@ class DockerHubClient:
             else {"Accept": "application/json"},
             params=_params,
         )
-
+        logger.info(f"################################################# {raw_json_response=}")
         amount_of_objects = raw_json_response.get("count")
+        logger.info(f"################################################# {amount_of_objects=}")
         if not amount_of_objects:
             # received only a single record
             return raw_json_response
 
         logger.info(f'Received {raw_json_response.get("count")} objects from {url=}')
         results = raw_json_response.get(results_key) or []
+        logger.info(f"################################################# {results=}")
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
             results.extend(

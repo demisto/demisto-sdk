@@ -1,0 +1,4 @@
+changes:
+- description: Deprecated the ConnectionJSONFormat object, since it is no longer in use.
+  type: internal
+pr_number: 4547

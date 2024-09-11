@@ -281,7 +281,7 @@ class DockerHubClient:
                 "application/vnd.docker.distribution.manifest.list.v2+json",
                 "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
             },
-            params={key: value for key, value in params} if params else None,
+            params={key: value for key, value in params} if params else None,)
         logger.info(f"################################################# {response=}")
         return response
 

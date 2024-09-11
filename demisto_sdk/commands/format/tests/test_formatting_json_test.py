@@ -7,7 +7,6 @@ from unittest.mock import patch
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.format import (
     update_dashboard,
     update_incidenttype,
@@ -40,7 +39,6 @@ from demisto_sdk.tests.constants_test import (
     CLASSIFIER_5_9_9_SCHEMA_PATH,
     CLASSIFIER_PATH,
     CLASSIFIER_SCHEMA_PATH,
-    CONNECTION_SCHEMA_PATH,
     DASHBOARD_PATH,
     DESTINATION_FORMAT_CLASSIFIER,
     DESTINATION_FORMAT_CLASSIFIER_5_9_9,
@@ -99,7 +97,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list
 
 
 @pytest.fixture()

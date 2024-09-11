@@ -482,4 +482,4 @@ jobs:
         run: uv venv --python 3.11 && uv pip install .
 
       - name: Verify Installation (uv)
-        run: uv run --no-project demisto-sdk --version
+        run: uv run demisto-sdk --version

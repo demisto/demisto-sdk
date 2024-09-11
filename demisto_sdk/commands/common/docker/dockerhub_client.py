@@ -80,6 +80,8 @@ class DockerHubClient:
             scope: the scope needed for the repository
         """
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
+            logger.info(
+                f"################################################# {token_metadata=}")
             now = datetime.now()
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
                 # minus 60 seconds to be on the safe side
@@ -172,6 +174,8 @@ class DockerHubClient:
             verify=self.verify_ssl,
             auth=auth,
         )
+        logger.info(
+            f"################################################# {response=}")
         response.raise_for_status()
         try:
             logger.info(f"################################################# {response.json()=}")
@@ -270,7 +274,8 @@ class DockerHubClient:
             f"################################################# request url: {req_url}"
         )
 
-        headers = {key: value for key, value in headers} if headers else None
+        headers = {key: value for key, value in headers} if headers else None or {
+            "Accept": "application/vnd.docker.distribution.manifest.v2+json,""application/vnd.docker.distribution.manifest.list.v2+json", "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}", }
         params = {key: value for key, value in params} if params else None
         logger.info(f"################################################# {headers=}")
         logger.info(f"################################################# {params=}")

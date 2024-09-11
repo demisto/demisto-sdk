@@ -477,9 +477,6 @@ INTEGRATION_PATH = "Integrations"
 INTEGRATION_SCHEMA_PATH = (
     f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/integration.yml"
 )
-CONNECTION_SCHEMA_PATH = (
-    f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/canvas-context-connections.yml"
-)
 VALID_GENERIC_TYPE_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-type-valid.json"
 )

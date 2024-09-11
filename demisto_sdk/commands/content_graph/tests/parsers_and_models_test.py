@@ -3031,7 +3031,6 @@ def test_convert_content_type_to_rn_header_and_from_release_note_header():
             ContentType.BASE_PLAYBOOK,
             ContentType.COMMAND_OR_SCRIPT,
             ContentType.COMMAND,
-            ContentType.CONNECTION,
         ):
             continue
         assert content_type == ContentType.convert_header_to_content_type(

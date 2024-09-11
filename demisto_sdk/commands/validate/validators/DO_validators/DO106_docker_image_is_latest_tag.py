@@ -72,8 +72,7 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
             if not content_item.is_javascript:
                 logger.info(f"################################################# {content_item=}")
                 docker_image: DockerImage = content_item.docker_image
-                logger.info(
-                    f"################################################# {docker_image.summary=}")
+                logger.info(docker_image.summary)
                 logger.info(
                     f"################################################# docker_image 1: {type(docker_image)} , {docker_image=}")
                 if not docker_image.is_valid:

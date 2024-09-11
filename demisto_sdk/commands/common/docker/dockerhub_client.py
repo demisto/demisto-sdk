@@ -269,18 +269,21 @@ class DockerHubClient:
         logger.info(
             f"################################################# request url: {req_url}"
         )
-        # if os.getenv("CONTENT_GITLAB_CI"):
-        #     logger.info("################################################# debug: if os.getenv(CONTENT_GITLAB_CI)")
-        #     resp = self._session.get(req_url)
-        #     logger.info(f"################################################# {resp.json()=}")
-        #     return resp.json()
-        # else:
 
         headers = {key: value for key, value in headers} if headers else None
         params = {key: value for key, value in params} if params else None
-
         logger.info(f"################################################# {headers=}")
         logger.info(f"################################################# {params=}")
+
+        if os.getenv("CONTENT_GITLAB_CI"):
+            logger.info(
+                "################################################# debug: if os.getenv(CONTENT_GITLAB_CI)")
+            # resp = self._session.get(req_url)
+            response = self.get_request(
+                f"{self.registry_api_url}/{docker_image}{url_suffix}")
+            logger.info(
+                f"################################################# {resp.json()=}")
+            return response
 
         response = self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",

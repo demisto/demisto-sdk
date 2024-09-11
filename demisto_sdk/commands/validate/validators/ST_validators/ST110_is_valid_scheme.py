@@ -21,6 +21,7 @@ from demisto_sdk.commands.content_graph.objects import (
     LayoutRule,
     Mapper,
     ModelingRule,
+    Pack,
     ParsingRule,
     Playbook,
     PreProcessRule,
@@ -72,6 +73,7 @@ ContentTypes = Union[
     CaseField,
     CaseLayout,
     CaseLayoutRule,
+    Pack,
 ]
 
 
@@ -80,9 +82,7 @@ class SchemaValidator(BaseValidator[ContentTypes]):
     description = "Validate that the scheme's structure is valid."
     rationale = "Maintain valid structure for content items."
 
-    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
-
-    def is_valid(
+    def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
@@ -90,11 +90,7 @@ class SchemaValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message="\n".join(
-                    f"problematic field: {error.field_name} | error message: {error.error_message} |"
-                    f" error type : {error.error_type}"
-                    for error in (
-                        content_item.structure_errors or ()
-                    )  # TODO remove the 'or' when done with ST
+                    str(error) for error in content_item.structure_errors
                 ),
                 content_object=content_item,
             )

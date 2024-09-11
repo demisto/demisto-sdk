@@ -793,6 +793,12 @@ def zip_packs(ctx, **kwargs) -> int:
     default=False,
     help="Wether to skip the new validate flow or not. Alteratively, you can configure the SKIP_NEW_VALIDATE env variable.",
 )
+@click.option(
+    "--ignore",
+    default=None,
+    multiple=True,
+    help="An error code to not run. To ignore more than one error, repeat this option (e.g. `--ignore AA123 --ignore BC321`)",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
@@ -917,9 +923,9 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 json_file_path=kwargs.get("json_file"),
             )
             config_reader = ConfigReader(
-                config_file_path=kwargs.get("config_path"),
-                category_to_run=kwargs.get("category_to_run"),
-                specific_validations=(
+                path=kwargs.get("config_path"),
+                category=kwargs.get("category_to_run"),
+                explicitly_selected=(
                     (kwargs.get("run_specific_validations") or "").split(",")
                 ),
             )
@@ -937,6 +943,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 config_reader=config_reader,
                 allow_autofix=kwargs.get("fix"),
                 ignore_support_level=kwargs.get("ignore_support_level"),
+                ignore=kwargs.get("ignore"),
             )
             exit_code += validator_v2.run_validations()
         return exit_code

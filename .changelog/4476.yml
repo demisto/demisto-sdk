@@ -1,4 +1,0 @@
-changes:
-- description: Moved PR100 and XD100 validations to run the `validate-content-path` **pre-commit** hook. These validations ensure the ParsingRule and XSIAM Dashboard filenames are valid.
-  type: internal
-pr_number: 4476

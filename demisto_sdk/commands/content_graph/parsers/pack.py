@@ -3,6 +3,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Set
 
+import pydantic
 import regex
 from git import InvalidGitRepositoryError
 
@@ -18,6 +19,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
+    get_file,
     get_json,
     get_pack_ignore_content,
     get_pack_latest_rn_version,
@@ -40,6 +42,12 @@ from demisto_sdk.commands.content_graph.parsers.content_items_list import (
 )
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     StructureError,
+)
+from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
+    StrictPackMetadata,
+)
+from demisto_sdk.commands.content_graph.strict_objects.release_notes_config import (
+    StrictReleaseNotesConfig,
 )
 
 
@@ -388,12 +396,47 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "default_data_source_id": "defaultDataSource",
         }
 
-    # TODO - implementing all those 3 methods
-    def validate_structure(self) -> List[StructureError]:
-        return []
-
     def raw_data(self) -> dict:
         raise NotImplementedError
 
+    @property
     def strict_object(self):
-        raise NotImplementedError
+        raise NotImplementedError("This object has a different behavior")
+
+    def validate_structure(self) -> List[StructureError]:
+        """
+        This method uses the parsed data and attempts to build a Pydantic (strict) object from it.
+        Whenever the data and schema mismatch, we store the error using the 'structure_errors' attribute,
+        which will be read during the ST110 validation run.
+        In Pack, we need to check two files: the metadata and the RNs json files, so we override the
+        method for combing all the pydantic errors from the both files.
+        """
+        pydantic_error_list: List[StructureError] = []
+
+        # validate Rn's files
+        for file in self.path.glob("ReleaseNotes/*.json"):
+            validate_structure(file, pydantic_error_list)
+
+        # validate pack metadata file
+        validate_structure(
+            Path(self.path, PACK_METADATA_FILENAME),
+            pydantic_error_list,
+        )
+
+        return pydantic_error_list
+
+
+def validate_structure(file: Path, pydantic_error_list: list) -> None:
+    """
+    This function is called by the method validate_structure and build the appropriate strict object.
+    In case of invalid structure file, adds the error to the given list.
+    """
+    try:
+        if file.stem == "pack_metadata":
+            StrictPackMetadata.parse_obj(get_file(file))
+        else:
+            StrictReleaseNotesConfig.parse_obj(get_file(file))
+    except pydantic.error_wrappers.ValidationError as e:
+        pydantic_error_list += [
+            StructureError(path=file, **error) for error in e.errors()
+        ]

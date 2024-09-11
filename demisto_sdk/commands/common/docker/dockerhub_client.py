@@ -305,7 +305,7 @@ class DockerHubClient:
         )
         ci_headers = {
             "Accept": "application/json",
-            "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+            # "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
         }
         params = {key: value for key, value in params} if params else None
         logger.info(

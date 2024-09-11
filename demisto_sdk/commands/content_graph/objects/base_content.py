@@ -203,7 +203,7 @@ class BaseContent(BaseNode):
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
-    structure_errors: Optional[List[StructureError]] = Field(None, exclude=True)
+    structure_errors: List[StructureError] = Field(default_factory=list, exclude=True)
 
     def _save(
         self,
@@ -259,10 +259,6 @@ class BaseContent(BaseNode):
         Returns:
             list: The list of the ignored error codes.
         """
-        raise NotImplementedError
-
-    @property
-    def support_level(self) -> str:
         raise NotImplementedError
 
     def dump(

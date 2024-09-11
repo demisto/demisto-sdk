@@ -1,4 +1,0 @@
-changes:
-- description: Updated paramiko to v3.4.1, removing the warning that would occasionally show.
-  type: internal
-pr_number: 4470

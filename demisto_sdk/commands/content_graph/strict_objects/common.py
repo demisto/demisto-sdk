@@ -25,7 +25,7 @@ class BaseStrictModel(BaseModel, ABC):
         There is a difference between an empty and missing field.
         Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
         """
-        # TODO - There is currently an exclusion for all fields which failed this validation on the Content repository
+        # There is currently an exclusion for all fields which failed this validation on the Content repository
         if field.name not in {
             "default_value",
             "defaultvalue",
@@ -67,6 +67,8 @@ class BaseStrictModel(BaseModel, ABC):
             "manual_mapping",  # indicator_type
             "file_hashes_priority",  # indicator_type
             "legacy_names",  # indicator_type
+            "default_template_id",  # xsiam-report
+            "breaking_changes_notes",  # release-notes-config
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert value is not None, f"{value} may not be None"

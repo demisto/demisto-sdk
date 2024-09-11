@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue with the parallel logger not showing the thread id.
-  type: fix
-pr_number: 4487

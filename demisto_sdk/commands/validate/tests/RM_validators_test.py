@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from markdown_it.rules_inline import image
 
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -38,6 +39,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_cop
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
     IsImageExistsInReadmeValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM116_missing_playbook_image import (
+    MissingPlaybookImageValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -636,3 +640,32 @@ def test_VerifyTemplateInReadmeValidator_invalid_case(repo):
         ),
     ]
     assert not IsTemplateInReadmeValidator().obtain_invalid_content_items(content_items)
+
+
+def test_missing_playbook_image_validator_no_image():
+    content_items = [
+        create_playbook_object(),
+    ]
+    expected_msg = "No playbook image found, please add playbook image"
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(result) == 1
+
+    if result:
+        assert result[0].message == expected_msg
+
+
+def test_missing_playbook_image_validator_image_exists():
+    content_items = [
+        create_playbook_object(),
+    ]
+    content_items[0].image.exist = True
+    expected_msg = "No playbook image found, please add playbook image"
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(result) == 0
+
+    if result:
+        assert result[0].message == expected_msg

@@ -30,7 +30,7 @@ class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                not content_item.image.exist or 'doc_files' not in str(content_item.image.file_path)
+                not content_item.image.exist or 'doc_files' in str(content_item.image.file_path)
             )
         ]
         

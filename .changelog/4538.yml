@@ -1,0 +1,4 @@
+changes:
+- description: Added RM116 that will validate if the playbook has an image located in doc_files folder
+  type: feature
+pr_number: 4538

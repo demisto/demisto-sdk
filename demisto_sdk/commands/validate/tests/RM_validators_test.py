@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-from markdown_it.rules_inline import image
 
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -647,9 +646,7 @@ def test_missing_playbook_image_validator_no_image():
         create_playbook_object(),
     ]
     expected_msg = "No playbook image found, please add playbook image"
-    result = MissingPlaybookImageValidator().obtain_invalid_content_items(
-        content_items
-    )
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
     assert len(result) == 1
 
     if result:
@@ -662,9 +659,7 @@ def test_missing_playbook_image_validator_image_exists():
     ]
     content_items[0].image.exist = True
     expected_msg = "No playbook image found, please add playbook image"
-    result = MissingPlaybookImageValidator().obtain_invalid_content_items(
-        content_items
-    )
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
     assert len(result) == 0
 
     if result:

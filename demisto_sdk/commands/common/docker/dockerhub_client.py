@@ -177,7 +177,9 @@ class DockerHubClient:
         logger.info(
             f"################################################# {response=}")
         logger.info(
-            f"################################################# response.json() 1: {response.json()}")
+            f"################################################# {response.text=}")
+        logger.info(
+            f"################################################# {response.headers['Content-Type']=}")
         response.raise_for_status()
         try:
             logger.info(

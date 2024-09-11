@@ -33,6 +33,3 @@ class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
                 not content_item.image.exist or 'doc_files' in str(content_item.image.file_path)
             )
         ]
-        
-
-    

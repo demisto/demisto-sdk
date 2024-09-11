@@ -1,4 +1,4 @@
 changes:
-- description: Added RM116 that will validate if the playbook has an image located in doc_files folder
+- description: Added RM116 validation to the new validate flow. The validation ensure that every playbook has an image and that the image is located under doc_files folder.
   type: feature
 pr_number: 4538

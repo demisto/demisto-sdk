@@ -8,7 +8,6 @@ import requests
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
-from demisto_sdk.commands.common.constants import DOCKER_REGISTRY_URL
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -38,7 +37,6 @@ class DockerHubRequestException(Exception):
 
 @lru_cache
 class DockerHubClient:
-    # DEFAULT_REGISTRY = f"https://{DOCKER_REGISTRY_URL}"
     DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
     DOCKER_HUB_API_BASE_URL = "https://hub.docker.com/v2"
     TOKEN_URL = "https://auth.docker.io/token"
@@ -53,7 +51,7 @@ class DockerHubClient:
     ):
         self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
-        self.username: str = username or os.getenv(DOCKERHUB_USER, "")
+        self.username = username or os.getenv(DOCKERHUB_USER, "")
         self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")
         self.auth = (
             (self.username, self.password) if self.username and self.password else None
@@ -79,10 +77,9 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
+        logger.info(
+            f"################################################# get_token")
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
-            logger.info(
-                f"################################################# {token_metadata=}"
-            )
             now = datetime.now()
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
                 # minus 60 seconds to be on the safe side
@@ -117,7 +114,7 @@ class DockerHubClient:
                 and self.auth
             ):
                 # in case of rate-limits with a username:password, retrieve the token without username:password
-                logger.info("Trying to get dockerhub token without username:password")
+                logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
                         self.TOKEN_URL,
@@ -166,16 +163,16 @@ class DockerHubClient:
             params: params if needed
         """
         logger.info(
-            "################################################# start get_request"
-        )
+            f"################################################# get_request")
         auth = None if headers and "Authorization" in headers else self.auth
-        logger.info(f"################################################# {auth=}")
         logger.info(
-            f"################################################# {self.verify_ssl=}"
-        )
-        logger.info(f"################################################# {headers=}")
-        logger.info(f"################################################# {params=}")
-
+            f"################################################# get_request | {auth=}")
+        logger.info(
+            f"################################################# get_request | {url=}")
+        logger.info(
+            f"################################################# get_request | {headers=}")
+        logger.info(
+            f"################################################# get_request | {params=}")
         response = self._session.get(
             url,
             headers=headers,
@@ -183,18 +180,14 @@ class DockerHubClient:
             verify=self.verify_ssl,
             auth=auth,
         )
-        logger.info(f"################################################# {response=}")
         logger.info(
-            f"################################################# {response.text=}"
-        )
+            f"################################################# get_request | {response=}")
         logger.info(
-            f"################################################# {response.headers['Content-Type']=}"
-        )
+            f"################################################# get_request | {response.headers['Content-Type']=}")
+        logger.info(
+            f"################################################# get_request | {response.json()=}")
         response.raise_for_status()
         try:
-            logger.info(
-                f"################################################# response.json() 2: {response.json()}"
-            )
             return response.json()
         except JSONDecodeError as e:
             raise RuntimeError(
@@ -221,8 +214,7 @@ class DockerHubClient:
             results_key: the key to retrieve the results in case its a list
         """
         logger.info(
-            "################################################# start do_docker_hub_get_request"
-        )
+            f"################################################# do_docker_hub_get_request")
         if url_suffix:
             if not url_suffix.startswith("/"):
                 url_suffix = f"/{url_suffix}"
@@ -233,7 +225,10 @@ class DockerHubClient:
             raise ValueError("either url_suffix/next_page_url must be provided")
 
         _params = params or {"page_size": 1000} if not next_page_url else params
-
+        logger.info(
+            f"################################################# do_docker_hub_get_request | {url=}")
+        logger.info(
+            f"################################################# do_docker_hub_get_request | {_params=}")
         raw_json_response = self.get_request(
             url,
             headers={key: value for key, value in headers}
@@ -241,20 +236,14 @@ class DockerHubClient:
             else {"Accept": "application/json"},
             params=_params,
         )
-        logger.info(
-            f"################################################# {raw_json_response=}"
-        )
+
         amount_of_objects = raw_json_response.get("count")
-        logger.info(
-            f"################################################# {amount_of_objects=}"
-        )
         if not amount_of_objects:
             # received only a single record
             return raw_json_response
 
-        logger.info(f'Received {raw_json_response.get("count")} objects from {url=}')
+        logger.debug(f'Received {raw_json_response.get("count")} objects from {url=}')
         results = raw_json_response.get(results_key) or []
-        logger.info(f"################################################# {results=}")
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
             results.extend(
@@ -288,47 +277,25 @@ class DockerHubClient:
             params: query parameters
         """
         logger.info(
-            "################################################# start do_registry_get_request"
-        )
+            f"################################################# do_registry_get_request")
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
+
         logger.info(
-            f"################################################# self.registry_api_url: {self.registry_api_url}"
-        )
-        req_url = f"{self.registry_api_url}/{docker_image}{url_suffix}"
-        logger.info(
-            f"################################################# request url: {req_url}"
-        )
-        ci_headers = {
-            "Accept": "application/json",
+            f"################################################# do_registry_get_request | url: {self.registry_api_url}/{docker_image}{url_suffix}")
+        headers_log = {key: value for key, value in headers} if headers else None or {
+            "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+            "application/vnd.docker.distribution.manifest.list.v2+json",
             "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
         }
-        params = {key: value for key, value in params} if params else None
-        logger.info(f"################################################# {ci_headers=}")
-        logger.info(f"################################################# {params=}")
+        logger.info(
+            f"################################################# do_registry_get_request | headers: {headers_log=}")
+        params_log = {key: value for key, value in params} if params else None
+        logger.info(
+            f"################################################# do_registry_get_request | params: {params_log=} ")
 
-        # if os.getenv("CONTENT_GITLAB_CI"):
-        #     logger.info(
-        #         "################################################# debug: if os.getenv(CONTENT_GITLAB_CI)"
-        #     )
-        #     response = self.get_request(
-        #         url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
-        #         headers=ci_headers,
-        #     )
-        #     logger.info(
-        #         f"################################################# {response.headers['Content-Type']=}"
-        #     )
-        #     logger.info(
 
-        #         f"################################################# {response=}"
-        #     )
-        #     logger.info(
-        #         f"################################################# {response.text=}"
-        #     )
-        #     return response
-
-        # else:
-        response = self.get_request(
+        return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
             headers={key: value for key, value in headers}
             if headers
@@ -340,10 +307,6 @@ class DockerHubClient:
             },
             params={key: value for key, value in params} if params else None,
         )
-        logger.info(
-            msg=f"################################################# {response=}"
-        )
-        return response
 
     def get_image_manifests(self, docker_image: str, tag: str) -> Dict[str, Any]:
         """
@@ -421,7 +384,6 @@ class DockerHubClient:
         Args:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
         """
-        logger.info(f"############### Getting tags for docker image: {docker_image}")
         try:
             response = self.do_registry_get_request(
                 "/tags/list", docker_image=docker_image
@@ -443,14 +405,9 @@ class DockerHubClient:
             tag: The tag of the docker image
         """
         try:
-            if os.getenv("CONTENT_GITLAB_CI"):
-                return self.do_registry_get_request(
-                    url_suffix=f"tags/{tag}", docker_image=docker_image
-                )
-            else:
-                return self.do_docker_hub_get_request(
-                    f"/repositories/{docker_image}/tags/{tag}"
-                )
+            return self.do_docker_hub_get_request(
+                f"/repositories/{docker_image}/tags/{tag}"
+            )
         except RequestException as error:
             raise DockerHubRequestException(
                 f"Failed to retrieve tag metadata of docker-image {docker_image}:{tag}",
@@ -473,11 +430,11 @@ class DockerHubClient:
                 error.exception.response
                 and error.exception.response.status_code == requests.codes.not_found
             ):
-                logger.info(
+                logger.debug(
                     f"docker-image {docker_image}:{tag} does not exist in dockerhub"
                 )
                 return False
-            logger.info(
+            logger.debug(
                 f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"
             )
             return tag in self.get_image_tags(docker_image)
@@ -519,7 +476,7 @@ class DockerHubClient:
                 if max_version_tag.release[-1] < version_tag.release[-1]:
                     max_version_tag = version_tag
             except InvalidVersion:
-                logger.info(
+                logger.debug(
                     f"The tag {tag} has invalid version for docker-image {docker_image}, skipping it"
                 )
 
@@ -567,40 +524,3 @@ class DockerHubClient:
             for image_metadata in self.get_repository_images(repo)
             if image_metadata.get("name")
         ]
-
-    # def pull_image_through_proxy(self, registry_url, image_name, tag='latest'):
-    #     """
-    #     Pull an image through a Docker registry proxy using pre-configured authentication.
-
-    #     Args:
-    #     registry_url (str): The registry URL, typically from an environment variable.
-    #     image_name (str): Image path on Docker Hub that the proxy will intercept.
-    #     tag (str): Tag of the Docker image to pull.
-
-    #     Returns:
-    #     None
-    #     """
-    #     # Create a client
-    #     client = artifactregistry_v1.ArtifactRegistryClient()
-    #     logger.info(f'Created ArtifactRegistryClient instance: {client}')
-
-    #     # Initialize request argument(s)
-    #     request = artifactregistry_v1.UpdateRepositoryRequest()
-    #     logger.info(f'request: {request}')
-
-    #     # Make the request
-    #     response = client.update_repository(request=request)
-    #     # Handle the response
-    #     logger.info(f'response: {response}')
-
-    #     full_image_path = f'{registry_url}/{image_name}:{tag}'
-    #     logger.info(f'full_image_path: {full_image_path}')
-    #     client = docker.from_env()
-    #     logger.info(f'Attempting to pull image: {full_image_path}')
-    #     try:
-    #         image = client.images.pull(full_image_path)
-    #         logger.info(f'Successfully pulled {image.tags}')
-    #     except docker.errors.APIError as error:
-    #         logger.info(f'Failed to pull image: {error}')
-    #     except Exception as e:
-    #         logger.info(f'An error occurred: {e}')

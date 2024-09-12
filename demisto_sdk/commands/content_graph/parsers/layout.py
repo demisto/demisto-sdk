@@ -28,7 +28,9 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
         self.kind = self.json_data.get("kind")
         self.tabs = self.json_data.get("tabs")
         self.definition_id = self.json_data.get("definitionId")
-        self.group = self.json_data.get("group") or "incident"
+        self.group = self.json_data.get("group") or (
+            "incident" if self.definition_id == "ThreatIntelReport" else ""
+        )
 
         self.edit: bool = bool(self.json_data.get("edit"))
         self.indicators_details: bool = bool(self.json_data.get("indicatorsDetails"))

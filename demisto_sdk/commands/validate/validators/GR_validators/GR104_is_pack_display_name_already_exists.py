@@ -19,9 +19,7 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
     description = (
         "Validate that there are no duplicate display names of packs in the repo"
     )
-    rationale = (
-        "Prevent confusion between packs."
-    )
+    rationale = "Prevent confusion between packs."
     error_message = (
         "Pack '{content_id}' has a duplicate display_name as: {pack_display_id}."
     )

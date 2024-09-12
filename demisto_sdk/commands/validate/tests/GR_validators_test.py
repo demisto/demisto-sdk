@@ -145,6 +145,7 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_2.create_classifier("SampleClassifier")
     sample_pack_2.create_test_playbook("SampleTestPlaybook")
     sample_pack_2.create_test_playbook("TestPlaybookNoInUse")
+    sample_pack_2.create_test_playbook("TestReputationPlaybook")
     sample_pack_2.create_test_playbook("TestPlaybookDeprecated").set_data(
         deprecated="true"
     )
@@ -266,6 +267,7 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
     - Ensure that the validator correctly identifies the playbook in use with no errors.
     - Ensure that the validator correctly identifies the playbook not in use and returns an appropriate error message.
     - Ensure that the validator correctly identifies the deprecated playbook with no errors.
+    - Ensure reputation test playbook is not test if they under the `reputation_tests` key in the conf.json.
     """
     mock_conf = ConfJSON.from_path("demisto_sdk/tests/test_files/conf.json")
     mocker.patch.object(ConfJSON, "from_path", return_value=mock_conf)
@@ -298,7 +300,7 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
     )
 
     playbook_deprecated = (
-        prepared_graph_repo.packs[1].test_playbooks[2].get_graph_object(graph_interface)
+        prepared_graph_repo.packs[1].test_playbooks[3].get_graph_object(graph_interface)
     )
     validation_results = (
         IsTestPlaybookInUseValidatorListFiles().obtain_invalid_content_items(
@@ -306,3 +308,13 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
         )
     )
     assert validation_results == []  # the test playbook is deprecated
+
+    reputation_playbook = (
+        prepared_graph_repo.packs[1].test_playbooks[2].get_graph_object(graph_interface)
+    )
+    validation_results = (
+        IsTestPlaybookInUseValidatorListFiles().obtain_invalid_content_items(
+            [reputation_playbook]
+        )
+    )
+    assert validation_results == []

@@ -2,7 +2,6 @@ import os
 from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
-from demisto_sdk.commands.common.docker_helper import init_global_docker_client, docker_login
 import dateparser
 import requests
 from packaging.version import InvalidVersion, Version
@@ -12,6 +11,7 @@ from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
+from demisto_sdk.commands.common.constants import DOCKER_REGISTRY_URL, DEFAULT_DOCKER_REGISTRY_URL
 
 DOCKERHUB_USER = "DOCKERHUB_USER"
 DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
@@ -532,3 +532,102 @@ class DockerHubClient:
             for image_metadata in self.get_repository_images(repo)
             if image_metadata.get("name")
         ]
+
+
+def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
+    global DOCKER_CLIENT
+    if DOCKER_CLIENT is None:
+        if log_prompt:
+            logger.info(f"{log_prompt} - init and login the docker client")
+        else:
+            logger.info("init and login the docker client")
+        if ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None:
+            logger.info(
+                f"{log_prompt} - Using ssh client setting: {ssh_client}")
+        logger.info(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
+        try:
+            DOCKER_CLIENT = docker.from_env(
+                timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
+        except docker.errors.DockerException:
+            logger.warning(
+                f"{log_prompt} - Failed to init docker client. "
+                "This might indicate that your docker daemon is not running."
+            )
+            raise
+        docker_user = os.getenv("DEMISTO_SDK_CR_USER",
+                                os.getenv("DOCKERHUB_USER"))
+        docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
+                                )
+        if docker_user and docker_pass:
+            logger.info(f"{log_prompt} - logging in to docker registry")
+            try:
+                docker_login(DOCKER_CLIENT)
+            except Exception:
+                logger.exception(
+                    f"{log_prompt} - failed to login to docker registry")
+    else:
+        msg = "docker client already available, using current DOCKER_CLIENT"
+        logger.info(f"{log_prompt} - {msg}" if log_prompt else msg)
+    return DOCKER_CLIENT
+
+
+def docker_login(docker_client) -> bool:
+    """Login to docker-hub using environment variables:
+            1. DOCKERHUB_USER - User for docker hub.
+            2. DOCKERHUB_PASSWORD - Password for docker-hub.
+        Used in Circle-CI for pushing into repo devtestdemisto
+
+    Returns:
+        bool: True if logged in successfully.
+    """
+    docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
+    docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD",
+                            os.getenv("DOCKERHUB_PASSWORD"))
+    if docker_user and docker_pass:
+        try:
+            if not is_custom_registry():
+                logger.info("debug: not is_custom_registry() case")
+                docker_client.login(
+                    username=docker_user,
+                    password=docker_pass,
+                    registry="https://index.docker.io/v1",
+                )
+                ping = docker_client.ping()
+                logger.info(
+                    f"Successfully connected to dockerhub, login {ping=}")
+                return ping
+            else:
+                logger.info("debug: is_custom_registry() case")
+                # login to custom docker registry
+                docker_client.login(
+                    username=docker_user,
+                    password=docker_pass,
+                    registry=DOCKER_REGISTRY_URL,
+                )
+                ping = docker_client.ping()
+                logger.info(
+                    f"Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}"
+                )
+                return ping
+        except docker.errors.APIError:
+            logger.info(
+                f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
+            return False
+
+    logger.info(f"Did not log in to {DOCKER_REGISTRY_URL}")
+    return False
+
+
+def is_custom_registry():
+    logger.info("debug: inside is_custom_registry() func")
+    func_res = (
+        not os.getenv("CONTENT_GITLAB_CI")
+        and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
+    )
+    logger.info(
+        f"f{os.getenv('CONTENT_GITLAB_CI')=}, {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}, {func_res}=")
+
+    return (
+        not os.getenv("CONTENT_GITLAB_CI")
+        and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
+    )

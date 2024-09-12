@@ -81,7 +81,7 @@ ContentTypes = Union[
 class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR105"
     description = "Ensures that each content item has a unique ID to prevent conflicts."
-    rationale = "Duplicate IDs can cause conflicts."
+    rationale = "Duplicate IDs can cause conflicts and confusion."
     error_message = "Duplicate ID '{}' found in {}"
     related_field = "id"
     is_auto_fixable = False

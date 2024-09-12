@@ -42,7 +42,7 @@ class DockerHubRequestException(Exception):
 
 @lru_cache
 class DockerHubClient:
-    DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
+    DEFAULT_REGISTRY = f"https://{DOCKER_REGISTRY_URL}" if DOCKER_REGISTRY_URL else "https://registry-1.docker.io/v2"
     DOCKER_HUB_API_BASE_URL = "https://hub.docker.com/v2"
     TOKEN_URL = "https://auth.docker.io/token"
 
@@ -64,6 +64,9 @@ class DockerHubClient:
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
+
+        logger.info(
+            f"################################################# DockerHubClient | {self.registry_api_url=}, {self.docker_hub_api_url=}, {self.username=}, {self.password=}, {verify_ssl=}")
 
 
     def __enter__(self):

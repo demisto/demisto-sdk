@@ -163,6 +163,12 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_4.set_data(marketplaces=MP_XSOAR_AND_V2)
     sample_pack_4.create_integration(name="SampleIntegration")
     # duplicate integration as in sample_pack for testing GR 105
+    assert sample_pack.integrations[0].name == "SampleIntegration", (
+        f"Expected integration name 'SampleIntegration', but found '{sample_pack.integrations[0].name}'."
+        "This assertion is crucial for testing GR105 see `test_DuplicateContentIdValidatorListFiles_integration_is_invalid` test,"
+        "which requires duplicate integration names in sample_pack and sample_pack_4."
+    )
+
     sample_pack_4.create_widget(name="SampleWidget")
     sample_pack.create_widget(name="SampleWidget")
     return graph_repo

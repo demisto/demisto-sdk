@@ -302,7 +302,6 @@ class DockerHubClient:
             logger.info(
                 f"################################################# do_registry_get_request | {docker_client=}")
 
-
         logger.info(
             f"################################################# do_registry_get_request | url: {self.registry_api_url}/{docker_image}{url_suffix}")
         headers_log = {key: value for key, value in headers} if headers else None or {
@@ -560,8 +559,8 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                 f"{log_prompt} - Using ssh client setting: {ssh_client}")
         logger.info(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:
-            DOCKER_CLIENT = docker.from_env(
-                timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
+            DOCKER_CLIENT = docker.from_env()
+            # (timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
         except docker.errors.DockerException:
             logger.warning(
                 f"{log_prompt} - Failed to init docker client. "

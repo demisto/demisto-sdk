@@ -45,7 +45,6 @@ from demisto_sdk.tests.constants_test import (
     NOT_VALID_IMAGE_PATH,
 )
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION,
     DASHBOARD,
     EMPTY_ID_SET,
     GENERIC_DEFINITION,
@@ -2840,95 +2839,6 @@ class TestDashboardValidation:
         assert str_in_call_args_list(
             logger_error.call_args_list,
             "The version for our files should always be -1, please update the file.",
-        )
-        assert result.exit_code == 1
-
-
-class TestConnectionValidation:
-    def test_valid_connection(self, mocker, repo):
-        """
-        Given
-        - a valid Connection.
-
-        When
-        - Running validate on it.
-
-        Then
-        - Ensure validate passes and identifies the file as a connection.
-        """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        mocker.patch.object(tools, "is_external_repository", return_value=True)
-        pack = repo.create_pack("PackName")
-        connection = pack._create_json_based(
-            name="connection", prefix="", content=CONNECTION
-        )
-        with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main,
-                [
-                    VALIDATE_CMD,
-                    "-i",
-                    connection.path,
-                    "--run-old-validate",
-                    "--skip-new-validate",
-                ],
-                catch_exceptions=False,
-            )
-        assert all(
-            [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
-                for current_str in [
-                    f"Validating {connection.path} as canvas-context-connections",
-                    "The files are valid",
-                ]
-            ]
-        )
-        assert result.exit_code == 0
-
-    def test_invalid_connection(self, mocker, repo):
-        """
-        Given
-        - an invalid Connection - no contextKey1 in a connection.
-
-        When
-        - Running validate on it.
-
-        Then
-        - Ensure validate fails on missing contextKey1.
-        """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        mocker.patch.object(tools, "is_external_repository", return_value=True)
-        pack = repo.create_pack("PackName")
-        connection_copy = CONNECTION.copy()
-        del connection_copy["canvasContextConnections"][0]["contextKey1"]
-        connection = pack._create_json_based(
-            name="connection", prefix="", content=connection_copy
-        )
-        with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main,
-                [
-                    VALIDATE_CMD,
-                    "--run-old-validate",
-                    "--skip-new-validate",
-                    "-i",
-                    connection.path,
-                ],
-                catch_exceptions=False,
-            )
-        assert all(
-            [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
-                for current_str in [
-                    f"Validating {connection.path} as canvas-context-connections",
-                ]
-            ]
-        )
-        assert str_in_call_args_list(
-            logger_error.call_args_list, 'Missing the field "contextKey1"'
         )
         assert result.exit_code == 1
 

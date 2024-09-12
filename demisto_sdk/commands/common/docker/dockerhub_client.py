@@ -38,8 +38,8 @@ class DockerHubRequestException(Exception):
 
 @lru_cache
 class DockerHubClient:
-    DEFAULT_REGISTRY = f"https://{DOCKER_REGISTRY_URL}"
-    # DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
+    # DEFAULT_REGISTRY = f"https://{DOCKER_REGISTRY_URL}"
+    DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
     DOCKER_HUB_API_BASE_URL = "https://hub.docker.com/v2"
     TOKEN_URL = "https://auth.docker.io/token"
 
@@ -307,39 +307,39 @@ class DockerHubClient:
         logger.info(f"################################################# {ci_headers=}")
         logger.info(f"################################################# {params=}")
 
-        if os.getenv("CONTENT_GITLAB_CI"):
-            logger.info(
-                "################################################# debug: if os.getenv(CONTENT_GITLAB_CI)"
-            )
-            response = self.get_request(
-                url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
-                headers=ci_headers,
-            )
-            logger.info(
-                f"################################################# {response.headers['Content-Type']=}"
-            )
-            logger.info(
+        # if os.getenv("CONTENT_GITLAB_CI"):
+        #     logger.info(
+        #         "################################################# debug: if os.getenv(CONTENT_GITLAB_CI)"
+        #     )
+        #     response = self.get_request(
+        #         url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
+        #         headers=ci_headers,
+        #     )
+        #     logger.info(
+        #         f"################################################# {response.headers['Content-Type']=}"
+        #     )
+        #     logger.info(
 
-                f"################################################# {response=}"
-            )
-            logger.info(
-                f"################################################# {response.text=}"
-            )
-            return response
+        #         f"################################################# {response=}"
+        #     )
+        #     logger.info(
+        #         f"################################################# {response.text=}"
+        #     )
+        #     return response
 
-        else:
-            response = self.get_request(
-                f"{self.registry_api_url}/{docker_image}{url_suffix}",
-                headers={key: value for key, value in headers}
-                if headers
-                else None
-                or {
-                    "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                    "application/vnd.docker.distribution.manifest.list.v2+json",
-                    "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
-                },
-                params={key: value for key, value in params} if params else None,
-            )
+        # else:
+        response = self.get_request(
+            f"{self.registry_api_url}/{docker_image}{url_suffix}",
+            headers={key: value for key, value in headers}
+            if headers
+            else None
+            or {
+                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+                "application/vnd.docker.distribution.manifest.list.v2+json",
+                "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+            },
+            params={key: value for key, value in params} if params else None,
+        )
         logger.info(
             msg=f"################################################# {response=}"
         )

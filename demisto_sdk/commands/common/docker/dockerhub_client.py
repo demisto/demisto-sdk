@@ -194,8 +194,8 @@ class DockerHubClient:
             f"################################################# get_request | {response=}")
         logger.info(
             f"################################################# get_request | {response.headers['Content-Type']=}")
-        logger.info(
-            f"################################################# get_request | {response.json()=}")
+        # logger.info(
+        #     f"################################################# get_request | {response.json()=}")
         response.raise_for_status()
         try:
             return response.json()
@@ -296,6 +296,12 @@ class DockerHubClient:
             f"################################################# do_registry_get_request")
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
+
+        if os.getenv("CONTENT_GITLAB_CI"):
+            docker_client = init_global_docker_client()
+            logger.info(
+                f"################################################# do_registry_get_request | {docker_client=}")
+
 
         logger.info(
             f"################################################# do_registry_get_request | url: {self.registry_api_url}/{docker_image}{url_suffix}")

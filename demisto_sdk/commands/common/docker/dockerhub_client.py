@@ -2,12 +2,12 @@ import os
 from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
-
+from demisto_sdk.commands.common.docker_helper import init_global_docker_client, docker_login
 import dateparser
 import requests
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
-
+import docker
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.tools import retry
 DOCKERHUB_USER = "DOCKERHUB_USER"
 DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
 DEFAULT_REPOSITORY = "demisto"
-
+DOCKER_CLIENT = None
 
 class DockerHubAuthScope(StrEnum):
     PULL = "pull"  # Grants read-only access to the repository, allowing you to pull images.
@@ -59,6 +59,7 @@ class DockerHubClient:
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
+
 
     def __enter__(self):
         return self
@@ -114,7 +115,8 @@ class DockerHubClient:
                 and self.auth
             ):
                 # in case of rate-limits with a username:password, retrieve the token without username:password
-                logger.debug("Trying to get dockerhub token without username:password")
+                logger.info(
+                    "Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
                         self.TOKEN_URL,
@@ -224,6 +226,11 @@ class DockerHubClient:
         else:
             raise ValueError("either url_suffix/next_page_url must be provided")
 
+        if os.getenv("CONTENT_GITLAB_CI"):
+            docker_client = init_global_docker_client()
+            logger.info(
+            f"################################################# do_docker_hub_get_request | {docker_client=}")
+
         _params = params or {"page_size": 1000} if not next_page_url else params
         logger.info(
             f"################################################# do_docker_hub_get_request | {url=}")
@@ -242,7 +249,8 @@ class DockerHubClient:
             # received only a single record
             return raw_json_response
 
-        logger.debug(f'Received {raw_json_response.get("count")} objects from {url=}')
+        logger.info(
+            f'Received {raw_json_response.get("count")} objects from {url=}')
         results = raw_json_response.get(results_key) or []
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
@@ -430,11 +438,11 @@ class DockerHubClient:
                 error.exception.response
                 and error.exception.response.status_code == requests.codes.not_found
             ):
-                logger.debug(
+                logger.info(
                     f"docker-image {docker_image}:{tag} does not exist in dockerhub"
                 )
                 return False
-            logger.debug(
+            logger.info(
                 f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"
             )
             return tag in self.get_image_tags(docker_image)
@@ -476,7 +484,7 @@ class DockerHubClient:
                 if max_version_tag.release[-1] < version_tag.release[-1]:
                     max_version_tag = version_tag
             except InvalidVersion:
-                logger.debug(
+                logger.info(
                     f"The tag {tag} has invalid version for docker-image {docker_image}, skipping it"
                 )
 

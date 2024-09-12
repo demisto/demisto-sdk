@@ -90,12 +90,12 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
         paths_of_content_items_to_validate = (
-            [
+            []
+            if validate_all_files
+            else [
                 str(content_item.path.relative_to(CONTENT_PATH))
                 for content_item in content_items
             ]
-            if not validate_all_files
-            else []
         )
         return [
             ValidationResult(

@@ -106,8 +106,7 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
     error_message = (
         "The pack version (currently: {old_version}) needs to be raised - "
         "make sure you are merged from master and "
-        'update the "currentVersion" field in the '
-        "pack_metadata.json or in case release notes are required run:\n"
+        "update release notes by running:\n"
         "`demisto-sdk update-release-notes -g` - for automatically generation of release notes and version\n"
         "`demisto-sdk update-release-notes -i Packs/{pack} -u "
         "(major|minor|revision|documentation)` for a specific pack and version."
@@ -150,15 +149,14 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
     ) -> typing.List[ValidationResult]:
         validation_results = []
         content_packs = {}
-        content_packs_ids_to_bump = []
+        content_packs_ids_to_bump = set()
         # Go over all the content items
         for content_item in content_items:
             should_bump, is_metadata = self.should_bump_is_metadata(content_item)
             if should_bump:
                 pack_id = content_item.pack_id  # type: ignore[union-attr]
-                if pack_id not in content_packs_ids_to_bump:
-                    # Collect content pack ids that should be bumped.
-                    content_packs_ids_to_bump.append(pack_id)
+                # Collect content pack ids that should be bumped.
+                content_packs_ids_to_bump.add(pack_id)
             if is_metadata:
                 # Collect content metadata items and link them to their pack ids.
                 content_packs[content_item.pack_id] = content_item  # type: ignore[union-attr]

@@ -311,13 +311,19 @@ class DockerHubClient:
             logger.info(
                 "################################################# debug: if os.getenv(CONTENT_GITLAB_CI)"
             )
-            # resp = self._session.get(req_url)
             response = self.get_request(
                 url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
                 headers=ci_headers,
             )
             logger.info(
-                f"################################################# {resp.json()=}"
+                f"################################################# {response.headers['Content-Type']=}"
+            )
+            logger.info(
+
+                f"################################################# {response=}"
+            )
+            logger.info(
+                f"################################################# {response.text=}"
             )
             return response
 

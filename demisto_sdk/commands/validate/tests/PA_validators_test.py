@@ -1687,8 +1687,7 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
     error_message = (
         "The pack version (currently: {old_version}) needs to be raised - "
         "make sure you are merged from master and "
-        'update the "currentVersion" field in the '
-        "pack_metadata.json or in case release notes are required run:\n"
+        "update release notes by running:\n"
         "`demisto-sdk update-release-notes -g` - for automatically generation of release notes and version\n"
         "`demisto-sdk update-release-notes -i Packs/{pack} -u "
         "(major|minor|revision|documentation)` for a specific pack and version."
@@ -1727,8 +1726,7 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
     error_message = (
         "The pack version (currently: {old_version}) needs to be raised - "
         "make sure you are merged from master and "
-        'update the "currentVersion" field in the '
-        "pack_metadata.json or in case release notes are required run:\n"
+        "update release notes by running:\n"
         "`demisto-sdk update-release-notes -g` - for automatically generation of release notes and version\n"
         "`demisto-sdk update-release-notes -i Packs/{pack} -u "
         "(major|minor|revision|documentation)` for a specific pack and version."

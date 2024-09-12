@@ -1,0 +1,4 @@
+changes:
+- description: Added the ability to have a special value for the hidden attribute of a script argument.
+  type: feature
+pr_number: 4550

@@ -295,7 +295,7 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
         validation_results[0].message
         == (  # the test playbook not in use
             "Test playbook 'TestPlaybookNoInUse' is not linked to any content item."
-            " Make sure at least one integration, script or playbook mentions the test-playbook id under the `tests:` key."
+            " Make sure at least one integration, script or playbook mentions the test-playbook ID under the `tests:` key."
         )
     )
 

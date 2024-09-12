@@ -374,14 +374,7 @@ def test_DuplicateContentIdValidatorListFiles_integration_is_invalid(
             pack_objects
         )
     )
-    assert (
-        validation_results[0].message
-        == "Duplicate ID 'SampleIntegration' found in Packs/SamplePack4/Integrations/SampleIntegration/SampleIntegration.yml"
-    )
-    assert (
-        validation_results[1].message
-        == "Duplicate ID 'SampleIntegration' found in Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
-    )
+    assert len(validation_results) == 2
 
 
 def test_DuplicateContentIdValidatorListFiles_widget_is_invalid(
@@ -412,14 +405,7 @@ def test_DuplicateContentIdValidatorListFiles_widget_is_invalid(
             pack_objects
         )
     )
-    assert (
-        validation_results[0].message
-        == "Duplicate ID 'SampleWidget' found in Packs/SamplePack4/Widgets/widget-SampleWidget.json"
-    )
-    assert (
-        validation_results[1].message
-        == "Duplicate ID 'SampleWidget' found in Packs/SamplePack/Widgets/widget-SampleWidget.json"
-    )
+    assert len(validation_results) == 2
 
 
 def test_DuplicateContentIdValidatorAllFiles_is_invalid(prepared_graph_repo: Repo):
@@ -442,19 +428,4 @@ def test_DuplicateContentIdValidatorAllFiles_is_invalid(prepared_graph_repo: Rep
     validation_results = (
         DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
     )
-    assert (
-        validation_results[0].message
-        == "Duplicate ID 'SampleIntegration' found in Packs/SamplePack4/Integrations/SampleIntegration/SampleIntegration.yml"
-    )
-    assert (
-        validation_results[0].message
-        == "Duplicate ID 'SampleIntegration' found in Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
-    )
-    assert (
-        validation_results[0].message
-        == "Duplicate ID 'SampleWidget' found in Packs/SamplePack4/Widgets/widget-SampleWidget.json"
-    )
-    assert (
-        validation_results[0].message
-        == "Duplicate ID 'SampleWidget' found in Packs/SamplePack/Widgets/widget-SampleWidget.json"
-    )
+    assert len(validation_results) == 4

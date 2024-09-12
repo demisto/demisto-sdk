@@ -1688,16 +1688,6 @@ FEED_REQUIRED_PARAMS = [
         "must_be_one_of": {},
     },
     {
-        "name": "feedExpirationPolicy",
-        "must_equal": {
-            "display": "",
-            "type": 17,
-            "options": ["never", "interval", "indicatorType", "suddenDeath"],
-        },
-        "must_contain": {},
-        "must_be_one_of": {},
-    },
-    {
         "name": "feedExpirationInterval",
         "must_equal": {"display": "", "type": 1},
         "must_contain": {},

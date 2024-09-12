@@ -3065,3 +3065,18 @@ def test_support_attribute_in_integration_object(
             pack_info={"support": pack_support},
         )
         assert test_integration.support == expected_support
+
+
+def test_layout_parser_group():
+    """
+    Ensures that the group attribute has a default value. If the group is an empty string, it will be set to "incident" (which is the default value in all OOTB Threat Intel reports).
+    This is important for Threat Intel report layouts, as the server leaves the group empty by default when created in the UI.
+    """
+    from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
+    pack = REPO.create_pack("TestPack")
+    layout = pack.create_layoutcontainer(
+            "TestLayoutscontainer", load_json("layoutscontainer.json")
+        )
+    layout_path = Path(layout.path)
+    layout_parser_instance = LayoutParser(layout_path, list(MarketplaceVersions))
+    assert layout_parser_instance.group =="incident"

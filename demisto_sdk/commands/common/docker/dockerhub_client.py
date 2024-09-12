@@ -328,7 +328,7 @@ class DockerHubClient:
             logger.info(
                 f"################################################# do_registry_get_request | {client=}"
             )
-            name = "f{DOCKER_REGISTRY_URL}/{docker_image}{url_suffix}"
+            name = f"{DOCKER_REGISTRY_URL}/{docker_image}{url_suffix}"
             logger.info(
                 f"################################################# do_registry_get_request | {name=}"
             )

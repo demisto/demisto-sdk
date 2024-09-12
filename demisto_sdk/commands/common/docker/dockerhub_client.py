@@ -22,7 +22,7 @@ CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
     and (
         (not os.getenv("DOCKER_HOST"))
         or os.getenv("DOCKER_HOST", "").lower().startswith("unix:")
-    )
+    ))
 class DockerHubAuthScope(StrEnum):
     PULL = "pull"  # Grants read-only access to the repository, allowing you to pull images.
     PUSH = "push"  # Grants write access to the repository, allowing you to push images.

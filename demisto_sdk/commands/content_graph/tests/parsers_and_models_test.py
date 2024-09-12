@@ -3073,10 +3073,11 @@ def test_layout_parser_group():
     This is important for Threat Intel report layouts, as the server leaves the group empty by default when created in the UI.
     """
     from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
+
     pack = REPO.create_pack("TestPack")
     layout = pack.create_layoutcontainer(
-            "TestLayoutscontainer", load_json("layoutscontainer.json")
-        )
+        "TestLayoutscontainer", load_json("layoutscontainer.json")
+    )
     layout_path = Path(layout.path)
     layout_parser_instance = LayoutParser(layout_path, list(MarketplaceVersions))
-    assert layout_parser_instance.group =="incident"
+    assert layout_parser_instance.group == "incident"

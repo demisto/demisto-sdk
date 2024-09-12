@@ -1,4 +1,4 @@
 changes:
-- description: Improve **format** command logs by removing whitespace.
+- description: Enhanced the **format** command logs by eliminating unnecessary whitespace.
   type: feature
 pr_number: 4529

@@ -860,3 +860,36 @@ def test_get_command_context_path_from_readme_file_multiple_commands():
         "command2:\nThe following outputs are missing from yml: Test.Path3\nThe following outputs are missing from readme: Test.Path4\n"
         in results[0].message
     )
+
+
+def test_IsCommandsInReadmeValidator_not_valid():
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {"name": "command1"},
+                {"name": "command2"},
+            ]
+        ],
+        readme_content="",
+    )
+    results = IsCommandsInReadmeValidator().obtain_invalid_content_items([content_item])
+    assert results[0].message == (
+        "The following commands appear in the YML file but not in the README file: command1, command2."
+    )
+
+
+def test_IsCommandsInReadmeValidator_valid():
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {"name": "command1"},
+                {"name": "command2"},
+            ]
+        ],
+        readme_content="command1, command2",
+    )
+    assert not IsCommandsInReadmeValidator().obtain_invalid_content_items(
+        [content_item]
+    )

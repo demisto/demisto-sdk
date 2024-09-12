@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 
 import dateparser
 import requests
-from google.cloud import artifactregistry_v1
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
@@ -170,18 +169,12 @@ class DockerHubClient:
             "################################################# start get_request"
         )
         auth = None if headers and "Authorization" in headers else self.auth
+        logger.info(f"################################################# {auth=}")
         logger.info(
-            f"################################################# get_request | {auth=}"
+            f"################################################# {self.verify_ssl=}"
         )
-        logger.info(
-            f"################################################# get_request | {self.verify_ssl=}"
-        )
-        logger.info(
-            f"################################################# get_request | {headers=}"
-        )
-        logger.info(
-            f"################################################# get_request | {params=}"
-        )
+        logger.info(f"################################################# {headers=}")
+        logger.info(f"################################################# {params=}")
 
         response = self._session.get(
             url,
@@ -190,19 +183,17 @@ class DockerHubClient:
             verify=self.verify_ssl,
             auth=auth,
         )
+        logger.info(f"################################################# {response=}")
         logger.info(
-            f"################################################# get_request | {response=}"
+            f"################################################# {response.text=}"
         )
         logger.info(
-            f"################################################# get_request | {response.text=}"
-        )
-        logger.info(
-            f"################################################# get_request | {response.headers['Content-Type']=}"
+            f"################################################# {response.headers['Content-Type']=}"
         )
         response.raise_for_status()
         try:
             logger.info(
-                f"################################################# get_request | response.json() 2: {response.json()}"
+                f"################################################# response.json() 2: {response.json()}"
             )
             return response.json()
         except JSONDecodeError as e:
@@ -302,57 +293,33 @@ class DockerHubClient:
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
         logger.info(
-            f"################################################# do_registry_get_request | self.registry_api_url: {self.registry_api_url}"
+            f"################################################# self.registry_api_url: {self.registry_api_url}"
         )
         req_url = f"{self.registry_api_url}/{docker_image}{url_suffix}"
         logger.info(
-            f"################################################# do_registry_get_request | request url: {req_url}"
+            f"################################################# request url: {req_url}"
         )
         ci_headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
         }
         params = {key: value for key, value in params} if params else None
-        logger.info(
-            f"################################################# do_registry_get_request | {ci_headers=}"
-        )
-        logger.info(
-            f"################################################# do_registry_get_request | {params=}"
-        )
+        logger.info(f"################################################# {ci_headers=}")
+        logger.info(f"################################################# {params=}")
 
         if os.getenv("CONTENT_GITLAB_CI"):
             logger.info(
-                "################################################# do_registry_get_request | if os.getenv(CONTENT_GITLAB_CI)"
+                "################################################# debug: if os.getenv(CONTENT_GITLAB_CI)"
             )
-            client = artifactregistry_v1.ArtifactRegistryClient()
-            logger.info(
-                f"################################################# do_registry_get_request | {client=}"
-            )
-            name = f"{DOCKER_REGISTRY_URL}/{docker_image}{url_suffix}"
-            logger.info(
-                f"################################################# do_registry_get_request | {name=}"
-            )
-            docker_image = client.get_docker_image(name=name)
-            # Print details about the image
-            logger.info(
-                f"################################################# do_registry_get_request | Image URI: {docker_image.uri}"
+            # resp = self._session.get(req_url)
+            response = self.get_request(
+                url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
+                headers=ci_headers,
             )
             logger.info(
-                f"################################################# do_registry_get_request | Image Digest: {docker_image.image_id}"
+                f"################################################# {resp.json()=}"
             )
-            logger.info(
-                f"################################################# do_registry_get_request | Tags: {docker_image.tags}"
-            )
-
-            # response = self.get_request(
-            #     url=f"{self.registry_api_url}/{docker_image}{url_suffix}",
-            #     headers=ci_headers,
-            #     params=params
-            # )
-            # logger.info(
-            #     msg=f"################################################# do_registry_get_request | {response=}"
-            # )
-            # return response
+            return response
 
         else:
             response = self.get_request(
@@ -367,9 +334,9 @@ class DockerHubClient:
                 },
                 params={key: value for key, value in params} if params else None,
             )
-            logger.info(
-                msg=f"################################################# {response=}"
-            )
+        logger.info(
+            msg=f"################################################# {response=}"
+        )
         return response
 
     def get_image_manifests(self, docker_image: str, tag: str) -> Dict[str, Any]:

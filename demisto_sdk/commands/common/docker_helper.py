@@ -54,6 +54,7 @@ class DockerException(Exception):
 
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
+    logger.info("################################################# init_global_docker_client | sanity check ")
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         if log_prompt:

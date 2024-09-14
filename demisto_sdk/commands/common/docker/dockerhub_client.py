@@ -56,6 +56,7 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
+        logger.info("################################################# DockerHubClient sanity check")
         self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")

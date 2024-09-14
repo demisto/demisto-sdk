@@ -453,3 +453,77 @@ def test_DuplicateContentIdValidatorAllFiles_is_invalid(prepared_graph_repo: Rep
         DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
     )
     assert len(validation_results) == 4
+
+
+@pytest.fixture
+def repo_for_test(graph_repo):
+    # A repository with 3 packs:
+    pack_1 = graph_repo.create_pack("Pack1")
+    pack_1.create_script(
+        "MyScript1", code='demisto.execute_command("does_not_exist", dArgs)'
+    )
+    pack_2 = graph_repo.create_pack("pack2")
+    pack_2.create_test_playbook("SampleTestPlaybook")
+    pack_2.create_classifier("SampleClassifier")
+    pack_2.create_script(
+        "MyScript2", code='demisto.execute_command("MyScript1", dArgs)'
+    )
+
+    pack_3 = graph_repo.create_pack("Pack3")
+    pack_3.create_script(
+        "MyScript3", code='demisto.execute_command("MyScript1", dArgs)'
+    )
+    return graph_repo
+
+
+def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
+    repo_for_test: Repo,
+):
+    """
+    Given:
+        - A content graph interface with preloaded repository data:
+            - Pack 1: Exclusively uses unknown content.
+                -  Required dependencies - ('MyScript1' references 'does_not_exist')
+            - Pack 2: Utilizes a mix of 1 known and 2 unknown content items. The unknown content falls into 2 categories:
+                    - Optional dependencies - ('SampleClassifier' references 'Test type')
+                    - Test dependencies - ('TestPlaybookNoInUse' and 'SampleTestPlaybook' reference 'DeleteContext')
+            - Pack 3: Exclusively uses known content.
+    When:
+        - The GR103 validation is executed across the entire repository (-a) to detect instances of unknown content usage.
+    Then:
+        - The validator should accurately identify the content items that are referencing unknown content.
+    """
+    graph_interface = repo_for_test.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items([])
+    assert len(results) == 3
+
+
+@pytest.mark.parametrize("pack_index, expected_len_results", [(0, 1), (1, 2), (2, 0)])
+def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
+    repo_for_test: Repo, pack_index, expected_len_results
+):
+    """
+    Given:
+        Given:
+        - A content graph interface with preloaded repository data:
+            - Pack 1: Exclusively uses unknown content.
+                -  Required dependencies - ('MyScript1' references 'does_not_exist')
+            - Pack 2: Utilizes a mix of 1 known and 2 unknown content items. The unknown content falls into 2 categories:
+                    - Optional dependencies - ('SampleClassifier' references 'Test type')
+                    - Test dependencies - ('TestPlaybookNoInUse' and 'SampleTestPlaybook' reference 'DeleteContext')
+            - Pack 3: Exclusively uses known content.
+    When:
+        - The GR103 validation is run on a specific pack to identify instances of unknown content usage.
+    Then:
+        - The validator should correctly identify the content items that are using unknown content.
+            When running on Pack 1 - there should be 1 results.
+            When running on Pack 2 - there should be 2 result.
+            When running on Pack 3 - there should be 0 results.
+    """
+    graph_interface = repo_for_test.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorListFiles().obtain_invalid_content_items(
+        [repo_for_test.packs[pack_index]]
+    )
+    assert len(results) == expected_len_results

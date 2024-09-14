@@ -1440,10 +1440,6 @@ ERROR_CODE: Dict = {
         "code": "GR102",
         "related_field": "",
     },
-    "using_unknown_content": {
-        "code": "GR103",
-        "related_field": "",
-    },
     "multiple_packs_with_same_display_name": {
         "code": "GR104",
         "related_field": "",
@@ -1551,7 +1547,6 @@ ALLOWED_IGNORE_ERRORS = (
         "LO107",
         "IN107",
         "DB100",
-        "GR103",
         "IN150",
         "IN161",
     ]

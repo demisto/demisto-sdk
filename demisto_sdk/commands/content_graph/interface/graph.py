@@ -149,7 +149,7 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def get_unknown_content_uses(
-        self, file_paths: List[str], raises_error: bool
+        self, file_paths: List[str]
     ) -> List[BaseNode]:
         pass
 

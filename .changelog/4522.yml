@@ -1,4 +1,4 @@
 changes:
-- description: Moved GR103 validation to the new validate format. The validation ensures that content items use other content items only if they exist in the repository.
+- description: Moved GR103 validation to the new validate format. The validation ensures that content items use other content items only if they exist in the repository. Additionally, removed this validation from the old format to improve performance.
   type: feature
 pr_number: 4522

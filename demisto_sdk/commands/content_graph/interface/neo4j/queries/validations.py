@@ -320,7 +320,7 @@ def validate_duplicate_ids(
 
 
 def validate_test_playbook_in_use(
-    tx: Transaction, test_playbook_ids: List[str], tests_skipped: List[str]
+    tx: Transaction, test_playbook_ids: List[str], test_playbooks_ids_to_skip
 ) -> List[graph.Node]:
     query = """
 MATCH (tp:TestPlaybook) WHERE
@@ -330,7 +330,7 @@ MATCH (tp:TestPlaybook) WHERE
     query += f"""
  NOT EXISTS {{ MATCH ()-[:TESTED_BY]->(tp) }}
 AND tp.deprecated = false
-AND NOT (tp.object_id IN {tests_skipped})
+AND NOT (tp.object_id IN {test_playbooks_ids_to_skip})
 MATCH (tp)-[:IN_PACK]->(p:Pack)
 WHERE p.support = "xsoar"
 AND p.deprecated = false

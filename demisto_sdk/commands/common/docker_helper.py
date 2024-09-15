@@ -27,7 +27,8 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
 )
-from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
+
+# from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata # DELETE: circular import
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
@@ -51,16 +52,6 @@ TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
 class DockerException(Exception):
     pass
-
-
-class DockerHubRequestException(Exception):
-    def __init__(self, message: str, exception: RequestException):
-        super().__init__(message)
-        self.message = message
-        self.exception = exception
-
-    def __str__(self):
-        return f"Error - {self.message} - Exception - {self.exception}"
 
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
@@ -238,6 +229,9 @@ class DockerBase:
     def is_image_available(
         image: str,
     ) -> bool:
+        logger.info(
+            "################################################# is_image_available "
+        )
         docker_client = init_global_docker_client(log_prompt="get_image")
         try:
             docker_client.images.get(image)
@@ -641,6 +635,8 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
+    from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
+
     logger.info(f"Get python version from image {image=}")
 
     if not image:

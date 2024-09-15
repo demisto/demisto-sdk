@@ -20,8 +20,8 @@ class DockerImage(str):
     DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
-    _dockerhub_client = DockerHubClient()
     _docker_client = DockerBase()
+    _dockerhub_client = DockerHubClient()
 
     def __new__(
         cls, docker_image: str, raise_if_not_valid: bool = False
@@ -127,6 +127,8 @@ class DockerImage(str):
 
             logger.debug(f"Could not get python version for image {self} from regex")
             image_env = self._dockerhub_client.get_image_env(self.name, tag=self.tag)
+            # image_env = self._docker_client.get_image_env(
+            #     self.name, tag=self.tag)
 
             if python_version := next(
                 (
@@ -151,9 +153,9 @@ class DockerImage(str):
         """
         Returns True if the docker-image exist in dockerhub
         """
-        # return self._dockerhub_client.is_docker_image_exist(self.name, tag=self.tag)
-        logger.info("################################################# is_image_exist")
-        return self._docker_client.is_image_available(self.name)
+        return self._dockerhub_client.is_docker_image_exist(self.name, tag=self.tag)
+        # logger.info("################################################# is_image_exist")
+        # return self._docker_client.is_image_available(self.name)
 
     @property
     def latest_tag(self) -> Version:

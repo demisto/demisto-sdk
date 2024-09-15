@@ -2,21 +2,22 @@ import os
 from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
+
 import dateparser
 import requests
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
-import docker
+
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
-from demisto_sdk.commands.common.constants import DOCKER_REGISTRY_URL, DEFAULT_DOCKER_REGISTRY_URL
-from google.cloud import artifactregistry_v1
 
 DOCKERHUB_USER = "DOCKERHUB_USER"
 DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
 DEFAULT_REPOSITORY = "demisto"
+
+
 # DOCKER_CLIENT = None
 # CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
 #     (not os.getenv("CIRCLECI", False))
@@ -56,7 +57,9 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-        logger.info("################################################# DockerHubClient sanity check")
+        logger.info(
+            "################################################# DockerHubClient sanity check"
+        )
         self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
@@ -69,8 +72,8 @@ class DockerHubClient:
         self.verify_ssl = verify_ssl
 
         logger.info(
-            f"################################################# DockerHubClient | {self.registry_api_url=}, {self.docker_hub_api_url=}, {self.username=}, {self.password=}, {verify_ssl=}")
-
+            f"################################################# DockerHubClient | {self.registry_api_url=}, {self.docker_hub_api_url=}, {self.username=}, {self.password=}, {verify_ssl=}"
+        )
 
     def __enter__(self):
         return self
@@ -89,8 +92,7 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
-        logger.info(
-            f"################################################# get_token")
+        logger.info("################################################# get_token")
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             now = datetime.now()
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
@@ -126,8 +128,7 @@ class DockerHubClient:
                 and self.auth
             ):
                 # in case of rate-limits with a username:password, retrieve the token without username:password
-                logger.info(
-                    "Trying to get dockerhub token without username:password")
+                logger.info("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
                         self.TOKEN_URL,
@@ -175,17 +176,20 @@ class DockerHubClient:
             headers: headers if needed
             params: params if needed
         """
-        logger.info(
-            f"################################################# get_request")
+        logger.info("################################################# get_request")
         auth = None if headers and "Authorization" in headers else self.auth
         logger.info(
-            f"################################################# get_request | {auth=}")
+            f"################################################# get_request | {auth=}"
+        )
         logger.info(
-            f"################################################# get_request | {url=}")
+            f"################################################# get_request | {url=}"
+        )
         logger.info(
-            f"################################################# get_request | {headers=}")
+            f"################################################# get_request | {headers=}"
+        )
         logger.info(
-            f"################################################# get_request | {params=}")
+            f"################################################# get_request | {params=}"
+        )
         response = self._session.get(
             url,
             headers=headers,
@@ -194,9 +198,11 @@ class DockerHubClient:
             auth=auth,
         )
         logger.info(
-            f"################################################# get_request | {response=}")
+            f"################################################# get_request | {response=}"
+        )
         logger.info(
-            f"################################################# get_request | {response.headers['Content-Type']=}")
+            f"################################################# get_request | {response.headers['Content-Type']=}"
+        )
         # logger.info(
         #     f"################################################# get_request | {response.json()=}")
         response.raise_for_status()
@@ -227,7 +233,8 @@ class DockerHubClient:
             results_key: the key to retrieve the results in case its a list
         """
         logger.info(
-            f"################################################# do_docker_hub_get_request")
+            "################################################# do_docker_hub_get_request"
+        )
         if url_suffix:
             if not url_suffix.startswith("/"):
                 url_suffix = f"/{url_suffix}"
@@ -241,13 +248,14 @@ class DockerHubClient:
         #     docker_client = init_global_docker_client()
         #     logger.info(
         #     f"################################################# do_docker_hub_get_request | {docker_client=}")
-        self.test_artifactory()
 
         _params = params or {"page_size": 1000} if not next_page_url else params
         logger.info(
-            f"################################################# do_docker_hub_get_request | {url=}")
+            f"################################################# do_docker_hub_get_request | {url=}"
+        )
         logger.info(
-            f"################################################# do_docker_hub_get_request | {_params=}")
+            f"################################################# do_docker_hub_get_request | {_params=}"
+        )
         raw_json_response = self.get_request(
             url,
             headers={key: value for key, value in headers}
@@ -261,8 +269,7 @@ class DockerHubClient:
             # received only a single record
             return raw_json_response
 
-        logger.info(
-            f'Received {raw_json_response.get("count")} objects from {url=}')
+        logger.info(f'Received {raw_json_response.get("count")} objects from {url=}')
         results = raw_json_response.get(results_key) or []
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
@@ -297,7 +304,8 @@ class DockerHubClient:
             params: query parameters
         """
         logger.info(
-            f"################################################# do_registry_get_request")
+            "################################################# do_registry_get_request"
+        )
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
 
@@ -305,21 +313,27 @@ class DockerHubClient:
         #     docker_client = init_global_docker_client()
         #     logger.info(
         #         f"################################################# do_registry_get_request | {docker_client=}")
-        self.test_artifactory()
 
         logger.info(
-            f"################################################# do_registry_get_request | url: {self.registry_api_url}/{docker_image}{url_suffix}")
-        headers_log = {key: value for key, value in headers} if headers else None or {
-            "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-            "application/vnd.docker.distribution.manifest.list.v2+json",
-            "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
-        }
+            f"################################################# do_registry_get_request | url: {self.registry_api_url}/{docker_image}{url_suffix}"
+        )
+        headers_log = (
+            {key: value for key, value in headers}
+            if headers
+            else None
+            or {
+                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+                "application/vnd.docker.distribution.manifest.list.v2+json",
+                "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+            }
+        )
         logger.info(
-            f"################################################# do_registry_get_request | headers: {headers_log=}")
+            f"################################################# do_registry_get_request | headers: {headers_log=}"
+        )
         params_log = {key: value for key, value in params} if params else None
         logger.info(
-            f"################################################# do_registry_get_request | params: {params_log=} ")
-
+            f"################################################# do_registry_get_request | params: {params_log=} "
+        )
 
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
@@ -551,14 +565,6 @@ class DockerHubClient:
             if image_metadata.get("name")
         ]
 
-    def test_artifactory(self):
-        client = artifactregistry_v1.ArtifactRegistryClient()
-
-        logger.info(
-            f"################################################# | test_artifactory: {client=}")
-
-        logger.info(
-            f"################################################# | test_artifactory: {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}")
 
 # def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 #     global DOCKER_CLIENT

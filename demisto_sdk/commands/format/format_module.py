@@ -24,7 +24,6 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
 )
-from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_correlation_rule import CorrelationRuleYMLFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
@@ -78,7 +77,6 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "pythonfile": PythonFileFormat,
     "report": ReportJSONFormat,
     "testscript": ScriptYMLFormat,
-    "canvas-context-connections": ConnectionJSONFormat,
     "description": DescriptionFormat,
     "genericfield": GenericFieldJSONFormat,
     "generictype": GenericTypeJSONFormat,

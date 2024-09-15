@@ -95,7 +95,6 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
-from TestSuite.test_tools import str_in_call_args_list
 
 
 @pytest.fixture()
@@ -413,9 +412,9 @@ class TestFormattingIncidentTypes:
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "Specific":
-            assert str_in_call_args_list(
-                logger_info.call_args_list,
-                'Please notice that mode was set to "Specific" but there are no specific types',
+            assert (
+                'Please notice that mode was set to "Specific" but there are no specific types'
+                in stdout
             )
 
 

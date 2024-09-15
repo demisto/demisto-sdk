@@ -794,7 +794,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
 
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 "======= Updating file",
                 f"Format Status on file: {playbook.path} - Success",
@@ -802,7 +802,6 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
             ]
         ]
     )
-            assert "The files are valid" in result.output
 
 
 def test_format_integration_skipped_files(repo, mocker, monkeypatch):
@@ -1927,7 +1926,7 @@ class TestFormatWithoutAddTestsFlag:
                 "--console-log-threshold",
                 "DEBUG",
             ],
-      )
+        )
         assert not result.exception
         assert f'Formatting {layouts_path} with "No tests"' not in result.output
         assert f"Format Status on file: {layouts_path} - Success" in result.output

@@ -21,10 +21,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 )
 
 
-def validate_unknown_content(
-    tx: Transaction,
-    file_paths: List[str]
-):
+def validate_unknown_content(tx: Transaction, file_paths: List[str]):
     """Query graph to return all ids used in the provided files that are missing from the repo.
 
     Args:

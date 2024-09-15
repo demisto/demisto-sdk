@@ -544,8 +544,8 @@ def get_remote_file_from_api(
                 f"Getting file from local repository instead. \n"
                 f"If you wish to get the file from the remote repository, \n"
                 f"Please define your github or gitlab token in your environment.\n"
-                f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n"
-                f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN></yellow>"
+                f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=\\<TOKEN> or`\n"
+                f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=\\<TOKEN></yellow>"
             )
         logger.debug(
             f'<yellow>Could not find the old entity file under "{git_path}".\n'

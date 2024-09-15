@@ -8,6 +8,9 @@ from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_DOCKER_NAME,
 )
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
+
+# TODO: un-comment line below and import functions from docker_helper to replace dockerhub_client functions
+from demisto_sdk.commands.common.docker_helper import DockerBase
 from demisto_sdk.commands.common.logger import logger
 
 
@@ -18,6 +21,7 @@ class DockerImage(str):
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
     _dockerhub_client = DockerHubClient()
+    _docker_client = DockerBase()
 
     def __new__(
         cls, docker_image: str, raise_if_not_valid: bool = False
@@ -147,7 +151,9 @@ class DockerImage(str):
         """
         Returns True if the docker-image exist in dockerhub
         """
-        return self._dockerhub_client.is_docker_image_exist(self.name, tag=self.tag)
+        # return self._dockerhub_client.is_docker_image_exist(self.name, tag=self.tag)
+        logger.info("################################################# is_image_exist")
+        return self._docker_client.is_image_available(self.name)
 
     @property
     def latest_tag(self) -> Version:

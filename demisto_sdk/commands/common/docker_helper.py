@@ -728,3 +728,16 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
             f"Failed to get python version from docker hub for image {image}: {e}"
         )
         raise
+
+
+def _get_docker_image_tag_creation_date(image: str):
+    pass
+
+
+def _is_docker_image_exists(image: str):
+    # TODO: probably the functionality of is_image_available in this file
+    pass
+
+
+def _get_latest_docker_image(image: str):
+    pass

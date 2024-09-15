@@ -495,7 +495,9 @@ def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
     """
     graph_interface = repo_for_test.create_graph()
     BaseValidator.graph_interface = graph_interface
-    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items()
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
     assert len(results) == 3
 
 

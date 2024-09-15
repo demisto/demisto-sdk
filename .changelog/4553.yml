@@ -1,0 +1,4 @@
+changes:
+- description: Enhanced the `sdk-changelog` script to include both the version number and release date when generating changelogs for SDK releases.
+  type: feature
+pr_number: 4553

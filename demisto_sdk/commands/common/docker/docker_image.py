@@ -153,9 +153,7 @@ class DockerImage(str):
         """
         Returns True if the docker-image exist in dockerhub
         """
-        return self._dockerhub_client.is_docker_image_exist(self.name, tag=self.tag)
-        # logger.info("################################################# is_image_exist")
-        # return self._docker_client.is_image_available(self.name)
+        return self._docker_client.is_image_available(f"{self.name}:{self.tag}")
 
     @property
     def latest_tag(self) -> Version:

@@ -135,7 +135,6 @@ def _add_file_logger(log_path: Path, threshold: Optional[str], diagnose: bool):
         colorize=False,
         diagnose=diagnose,
         level=(threshold or DEFAULT_FILE_THRESHOLD),
-        enqueue=True,
     )
     if string_to_bool(os.getenv(DEMISTO_SDK_LOG_NOTIFY_PATH), False) and (
         not os.environ.get(DEMISTO_SDK_LOGGING_SET)
@@ -150,7 +149,6 @@ def _add_console_logger(colorize: bool, threshold: Optional[str], diagnose: bool
         colorize=colorize,
         diagnose=diagnose,
         level=(threshold or DEFAULT_CONSOLE_THRESHOLD),
-        enqueue=True,
     )
 
 

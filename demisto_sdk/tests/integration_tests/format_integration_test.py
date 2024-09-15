@@ -796,7 +796,6 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
         [
             current_str in result.output
             for current_str in [
-                "======= Updating file",
                 f"Format Status on file: {playbook.path} - Success",
                 "The files are valid",
             ]

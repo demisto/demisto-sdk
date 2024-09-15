@@ -160,7 +160,7 @@ class Changelog:
         clear_changelogs_folder()
 
         # commit and push CHANGELOG.md
-        # commit_and_push(branch_name=branch_name)
+        commit_and_push(branch_name=branch_name)
         logger.info(f"Combined {len(logs)} changelog files into CHANGELOG.md")
 
     """ HELPER FUNCTIONS """

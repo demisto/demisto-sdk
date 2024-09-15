@@ -94,7 +94,7 @@ klara = {version = "^0.6.3", optional = true}
 typing-extensions = "^4.1.1" # not a mypy types- dependency
 pre-commit = "^3.5.0"
 lxml = "^5.0.0"
-uv = "^0.1.5"
+uv = "<1"
 toml = "^0.10.2"
 werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
 

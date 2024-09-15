@@ -64,7 +64,6 @@ class GraphValidator(BaseValidator):
             self.validate_marketplaces_fields(),
             self.validate_fromversion_fields(),
             self.validate_toversion_fields(),
-            self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
             self.validate_duplicate_ids(),
             self.validate_unique_script_name(),

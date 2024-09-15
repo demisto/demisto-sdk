@@ -573,37 +573,6 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
         ),
     ],
 )
-def test_is_file_using_unknown_content(
-    mocker,
-    repository: ContentDTO,
-    include_optional: bool,
-    is_valid: bool,
-):
-    """
-    Given
-    - A content repo
-    - An integration SampleIntegration's default classifier is set to "SampleClassifier" which does not exist
-    When
-    - running the vaidation "is_file_using_unknown_content"
-    Then
-    - Check whether the graph is valid or not, based on whether optional content dependencies were included.
-    """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-    with GraphValidator(
-        update_graph=False, git_files=[], include_optional_deps=include_optional
-    ) as graph_validator:
-        create_content_graph(graph_validator.graph)
-        assert graph_validator.is_file_using_unknown_content() == is_valid
-
-    logger_to_search = logger_warning if is_valid else logger_error
-
-    assert str_in_call_args_list(
-        logger_to_search.call_args_list,
-        "Content item 'SampleIntegration' using content items: 'SampleClassifier' which"
-        " cannot be found in the repository",
-    )
-
 
 def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
     """

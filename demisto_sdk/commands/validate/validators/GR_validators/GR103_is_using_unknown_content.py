@@ -98,7 +98,7 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
         )
         uses_unknown_content = self.graph.get_unknown_content_uses(
             file_paths_to_validate
-            )
+        )
 
         for content_item in uses_unknown_content:
             if (

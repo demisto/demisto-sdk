@@ -276,7 +276,6 @@ class GraphValidator(BaseValidator):
                     is_valid &= False
         return is_valid
 
-
     @error_codes("GR104")
     def is_file_display_name_already_exists(self):
         """

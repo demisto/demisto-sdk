@@ -381,7 +381,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_SPECIFIC_CONFLICT)
     def test_format_autoextract_specific_mode_conflict(
-        self, mocker, user_answer, expected, capsys, caplog
+        self, mocker, user_answer, expected, caplog
     ):
         """
         Given
@@ -408,13 +408,12 @@ class TestFormattingIncidentTypes:
         )
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
-        stdout, _ = capsys.readouterr()
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "Specific":
             assert (
                 'Please notice that mode was set to "Specific" but there are no specific types'
-                in stdout
+                in caplog.text
             )
 
 

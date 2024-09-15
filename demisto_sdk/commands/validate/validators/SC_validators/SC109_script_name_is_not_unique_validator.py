@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Script
 
 
-class DuplicatedScriptNameValidator(BaseValidator, ABC):
+class DuplicatedScriptNameValidator(BaseValidator[ContentTypes], ABC):
     error_code = "SC109"
     description = (
         "Validate that there are no scripts with the same type and the same name."

@@ -19,6 +19,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_displa
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_list_files import (
     IsPackDisplayNameAlreadyExistsValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR105_duplicate_content_id_all_files import (
+    DuplicateContentIdValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR105_duplicate_content_id_list_files import (
+    DuplicateContentIdValidatorListFiles,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_all_files import (
     IsTestPlaybookInUseValidatorAllFiles,
 )
@@ -145,6 +151,7 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_2.create_classifier("SampleClassifier")
     sample_pack_2.create_test_playbook("SampleTestPlaybook")
     sample_pack_2.create_test_playbook("TestPlaybookNoInUse")
+    sample_pack_2.create_test_playbook("TestReputationPlaybook")
     sample_pack_2.create_test_playbook("TestPlaybookDeprecated").set_data(
         deprecated="true"
     )
@@ -153,6 +160,18 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_3.set_data(marketplaces=MP_XSOAR)
     sample_pack_3.create_script("SampleScriptTwo").set_data(marketplaces=MP_XSOAR)
 
+    sample_pack_4 = graph_repo.create_pack("SamplePack4")
+    sample_pack_4.set_data(marketplaces=MP_XSOAR_AND_V2)
+    sample_pack_4.create_integration(name="SampleIntegration")
+    # duplicate integration as in sample_pack for testing GR 105
+    assert sample_pack.integrations[0].name == "SampleIntegration", (
+        f"Expected integration name 'SampleIntegration', but found '{sample_pack.integrations[0].name}'."
+        "This assertion is crucial for testing GR105 see `test_DuplicateContentIdValidatorListFiles_integration_is_invalid` test,"
+        "which requires duplicate integration names in sample_pack and sample_pack_4."
+    )
+
+    sample_pack_4.create_widget(name="SampleWidget")
+    sample_pack.create_widget(name="SampleWidget")
     return graph_repo
 
 
@@ -266,6 +285,7 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
     - Ensure that the validator correctly identifies the playbook in use with no errors.
     - Ensure that the validator correctly identifies the playbook not in use and returns an appropriate error message.
     - Ensure that the validator correctly identifies the deprecated playbook with no errors.
+    - Ensure reputation test playbook is not test if they under the `reputation_tests` key in the conf.json.
     """
     mock_conf = ConfJSON.from_path("demisto_sdk/tests/test_files/conf.json")
     mocker.patch.object(ConfJSON, "from_path", return_value=mock_conf)
@@ -293,12 +313,12 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
         validation_results[0].message
         == (  # the test playbook not in use
             "Test playbook 'TestPlaybookNoInUse' is not linked to any content item."
-            " Make sure at least one integration, script or playbook mentions the test-playbook id under the `tests:` key."
+            " Make sure at least one integration, script or playbook mentions the test-playbook ID under the `tests:` key."
         )
     )
 
     playbook_deprecated = (
-        prepared_graph_repo.packs[1].test_playbooks[2].get_graph_object(graph_interface)
+        prepared_graph_repo.packs[1].test_playbooks[3].get_graph_object(graph_interface)
     )
     validation_results = (
         IsTestPlaybookInUseValidatorListFiles().obtain_invalid_content_items(
@@ -306,3 +326,124 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
         )
     )
     assert validation_results == []  # the test playbook is deprecated
+
+    reputation_playbook = (
+        prepared_graph_repo.packs[1].test_playbooks[2].get_graph_object(graph_interface)
+    )
+    validation_results = (
+        IsTestPlaybookInUseValidatorListFiles().obtain_invalid_content_items(
+            [reputation_playbook]
+        )
+    )
+    assert validation_results == []
+
+
+def test_DuplicateContentIdValidatorListFiles_is_valid(prepared_graph_repo: Repo):
+    """
+    Test case for the DuplicateContentIdValidatorListFiles validator.
+
+    This test ensures that the validator correctly identifies when there are no duplicate IDs
+    in the content items of the prepared graph repository.
+
+    When:
+    - Validating all pack objects in the prepared graph repository.
+
+    Then:
+    - The validator should return an empty list, indicating no duplicate IDs were found.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    pack_objects = [
+        pack.get_graph_object(graph_interface) for pack in prepared_graph_repo.packs
+    ]
+    validation_results = (
+        DuplicateContentIdValidatorListFiles().obtain_invalid_content_items(
+            pack_objects
+        )
+    )
+    assert validation_results == []
+
+
+def test_DuplicateContentIdValidatorListFiles_integration_is_invalid(
+    prepared_graph_repo: Repo,
+):
+    """
+    Test case for the DuplicateContentIdValidatorListFiles validator with duplicate integration IDs.
+
+    This test ensures that the validator correctly identifies duplicate IDs
+    in integration content items from different packs in the prepared graph repository.
+
+    When:
+    - Validating integration objects from two different packs.
+
+    Then:
+    - The validator should return validation results indicating duplicate IDs were found.
+    - The validation messages should correctly identify the duplicate 'SampleIntegration' ID
+      in both packs.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    pack_objects = [
+        prepared_graph_repo.packs[0].integrations[0].get_graph_object(graph_interface),
+        prepared_graph_repo.packs[3].integrations[0].get_graph_object(graph_interface),
+    ]
+    validation_results = (
+        DuplicateContentIdValidatorListFiles().obtain_invalid_content_items(
+            pack_objects
+        )
+    )
+    assert len(validation_results) == 2
+
+
+def test_DuplicateContentIdValidatorListFiles_widget_is_invalid(
+    prepared_graph_repo: Repo,
+):
+    """
+    Test case for the DuplicateContentIdValidatorListFiles validator with duplicate widget IDs.
+
+    This test ensures that the validator correctly identifies duplicate IDs
+    in widget content items from different packs in the prepared graph repository.
+
+    When:
+    - Validating widget objects from two different packs.
+
+    Then:
+    - The validator should return validation results indicating duplicate IDs were found.
+    - The validation messages should correctly identify the duplicate 'SampleWidget' ID
+      in both packs.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    pack_objects = [
+        prepared_graph_repo.packs[0].widgets[0].get_graph_object(graph_interface),
+        prepared_graph_repo.packs[3].widgets[0].get_graph_object(graph_interface),
+    ]
+    validation_results = (
+        DuplicateContentIdValidatorListFiles().obtain_invalid_content_items(
+            pack_objects
+        )
+    )
+    assert len(validation_results) == 2
+
+
+def test_DuplicateContentIdValidatorAllFiles_is_invalid(prepared_graph_repo: Repo):
+    """
+    Test case for the DuplicateContentIdValidatorAllFiles validator with duplicate IDs.
+
+    This test ensures that the validator correctly identifies duplicate IDs
+    in content items from different packs in the prepared graph repository.
+
+    When:
+    - Validating objects from all packs.
+
+    Then:
+    - The validator should return validation results indicating duplicate IDs were found.
+    - The validation messages should correctly identify the duplicate 'SampleIntegration' and 'SampleWidget' IDs
+      in different packs.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    validation_results = (
+        DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+    assert len(validation_results) == 4

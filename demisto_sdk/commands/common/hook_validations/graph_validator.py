@@ -303,7 +303,7 @@ class GraphValidator(BaseValidator):
     ) -> bool:
         """Validates that there is no usage of unknown content items.
         Note: if self.file_paths is empty, the validation runs on all files - in this case, returns a warning.
-        otherwise, returns an error iff raises_error is True.
+        otherwise, returns an error if raises_error is True.
         """
 
         is_valid = True

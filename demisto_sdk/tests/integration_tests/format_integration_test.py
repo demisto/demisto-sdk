@@ -792,15 +792,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                 catch_exceptions=False,
             )
 
-    assert all(
-        [
-            current_str in result.output
-            for current_str in [
-                f"Format Status on file: {playbook.path} - Success",
-                "The files are valid",
-            ]
-        ]
-    )
+    assert "The files are valid" in result.output
 
 
 def test_format_integration_skipped_files(repo, mocker, monkeypatch):

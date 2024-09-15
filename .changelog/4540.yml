@@ -1,4 +1,4 @@
 changes:
-- description: Upgraded nltk version requirement to 3.9.1.
+- description: Modified *nltk* version requirement to 3.9.1.
   type: internal
 pr_number: 4540

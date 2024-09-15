@@ -4279,11 +4279,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def using_unknown_content(content_name: str, unknown_content_names: Set[str]):
-        return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
-
-    @staticmethod
-    @error_code_decorator
     def multiple_packs_with_same_display_name(
         content_name: str, pack_display_names: List[str]
     ):

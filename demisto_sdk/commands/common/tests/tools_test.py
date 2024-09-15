@@ -9,6 +9,7 @@ from typing import Callable, List, Optional, Tuple, Union
 
 import pytest
 import requests
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -1571,37 +1572,25 @@ def test_get_relative_path_from_packs_dir():
     assert get_relative_path_from_packs_dir(unrelated_path) == unrelated_path
 
 
-@pytest.mark.parametrize(
-    "version,expected_result",
-    [
-        ("1.3.8", ["* Updated the **secrets** command to work on forked branches."]),
-        ("1.3", []),
-    ],
-)
-def test_get_release_note_entries(requests_mock, version, expected_result):
+def test_get_release_note_entries_found(mocker: MockerFixture):
     """
-    Given:
-        - Version of the demisto-sdk.
-
-    When:
-        - Running get_release_note_entries.
-
-    Then:
-        - Ensure that the result as expected.
+    Given: A valid version tag
+    When: Calling get_release_note_entries
+    Then: The correct release note body is returned
     """
-    requests_mock.get("https://api.github.com/repos/demisto/demisto-sdk")
-    #
-    with open(
-        f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_changelog.md",
-        "rb",
-    ) as f:
-        changelog = f.read()
-    requests_mock.get(
-        "https://raw.githubusercontent.com/demisto/demisto-sdk/master/CHANGELOG.md",
-        content=changelog,
-    )
+    from demisto_sdk.commands.common.tools import Github
 
-    assert get_release_note_entries(version) == expected_result
+    mock_repo = mocker.Mock()
+    mocker.patch.object(Github, "get_repo", return_value=mock_repo)
+    mock_release = mocker.Mock()
+    mock_release.tag_name = "v1.0.0"
+    mock_release.body = "Release notes for v1.0.0"
+    mock_repo.get_releases.return_value = [mock_release]
+
+    result = get_release_note_entries("1.0.0")
+
+    assert result == "Release notes for v1.0.0"
+    mock_repo.get_releases.assert_called_once()
 
 
 def test_suppress_stdout(capsys):

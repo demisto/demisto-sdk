@@ -199,7 +199,7 @@ def logging_setup_decorator(func, *args, **kwargs):
 @click.option(
     "-rn",
     "--release-notes",
-    help="Get the release notes of the current demisto-sdk version.",
+    help="Display the release notes for the current demisto-sdk version.",
     is_flag=True,
     default=False,
     show_default=True,
@@ -218,7 +218,9 @@ def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
-    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
+    dotenv.load_dotenv(
+        CONTENT_PATH / ".env", override=True
+    )  # load .env file from the cwd
 
     if platform.system() == "Windows":
         logger.warning(
@@ -258,8 +260,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                     logger.info(
                         "\nThe following are the release note entries for the current version:\n"
                     )
-                    for rn in rn_entries:
-                        logger.info(rn)
+                    logger.info(rn_entries)
                     logger.info("")
 
 

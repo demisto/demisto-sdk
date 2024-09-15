@@ -18,7 +18,5 @@ class IsUsingUnknownContentValidatorAllFiles(
 ):
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 
-    def obtain_invalid_content_items(
-        self, content_items: Iterable[ContentTypes]
-    ) -> List[ValidationResult]:
+    def obtain_invalid_content_items(self) -> List[ValidationResult]:
         return self.obtain_invalid_content_items_using_graph()

@@ -13,7 +13,6 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -219,7 +218,6 @@ class Initiator:
         LAYOUTS_DIR,
         TEST_PLAYBOOKS_DIR,
         CLASSIFIERS_DIR,
-        CONNECTIONS_DIR,
         DASHBOARDS_DIR,
         INDICATOR_TYPES_DIR,
         REPORTS_DIR,

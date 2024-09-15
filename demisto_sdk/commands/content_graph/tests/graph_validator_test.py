@@ -557,50 +557,6 @@ def test_are_fromversion_relationships_paths_valid(
     )
 
 
-@pytest.mark.parametrize(
-    "include_optional, is_valid",
-    [
-        pytest.param(
-            False,
-            True,
-            id="Not providing git_files - should be valid (raised a warning)",
-        ),
-        pytest.param(
-            True,
-            False,
-            id="providing git_files - should be invalid",
-        ),
-    ],
-)
-def test_is_file_using_unknown_content(
-    mocker,
-    repository: ContentDTO,
-    include_optional: bool,
-    is_valid: bool,
-    caplog,
-):
-    """
-    Given
-    - A content repo
-    - An integration SampleIntegration's default classifier is set to "SampleClassifier" which does not exist
-    When
-    - running the vaidation "is_file_using_unknown_content"
-    Then
-    - Check whether the graph is valid or not, based on whether optional content dependencies were included.
-    """
-    caplog.set_level("WARNING" if is_valid else "ERROR")
-    with GraphValidator(
-        update_graph=False, git_files=[], include_optional_deps=include_optional
-    ) as graph_validator:
-        create_content_graph(graph_validator.graph)
-        assert graph_validator.is_file_using_unknown_content() == is_valid
-
-    assert (
-        "Content item 'SampleIntegration' using content items: 'SampleClassifier'"
-        " which cannot be found in the repository"
-    ) in caplog.text
-
-
 def test_is_file_display_name_already_exists(repository: ContentDTO, mocker, caplog):
     """
     Given

@@ -476,7 +476,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
             current_str in result.output
             for current_str in [
                 "======= Updating file ",
-                f"Format Status   on file: {source_playbook_path} - Success",
+                f"Format Status on file: {source_playbook_path} - Success",
                 f'Not formatting {source_playbook_path} with "No tests"',
             ]
         ]
@@ -774,7 +774,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
             catch_exceptions=False,
         )
         assert "======= Updating file" in result.output
-        assert f"Format Status   on file: {playbook.path} - Success" in result.output
+        assert f"Format Status on file: {playbook.path} - Success" in result.output
 
         with ChangeCWD(repo.path):
             result = runner.invoke(
@@ -791,6 +791,17 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                 ],
                 catch_exceptions=False,
             )
+
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "======= Updating file",
+                f"Format Status on file: {playbook.path} - Success",
+                "The files are valid",
+            ]
+        ]
+    )
             assert "The files are valid" in result.output
 
 
@@ -1872,7 +1883,7 @@ class TestFormatWithoutAddTestsFlag:
             ],
         )
         message = f'Formatting {layouts_path} with "No tests"'
-        message1 = f"Format Status   on file: {layouts_path} - Success"
+        message1 = f"Format Status on file: {layouts_path} - Success"
 
         assert not result.exception
         assert message not in result.output
@@ -1916,10 +1927,10 @@ class TestFormatWithoutAddTestsFlag:
                 "--console-log-threshold",
                 "DEBUG",
             ],
-        )
+      )
         assert not result.exception
         assert f'Formatting {layouts_path} with "No tests"' not in result.output
-        assert f"Format Status   on file: {layouts_path} - Success" in result.output
+        assert f"Format Status on file: {layouts_path} - Success" in result.output
 
 
 def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(

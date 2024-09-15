@@ -88,7 +88,6 @@ EX_FAIL = 1
 
 XSOAR_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.CLASSIFIER,
-    FileType.CONNECTION,
     FileType.INCIDENT_FIELD,
     FileType.INCIDENT_TYPE,
     FileType.INDICATOR_FIELD,
@@ -119,7 +118,6 @@ XSOAR_MARKETPLACE_ITEMS_TO_DUMP = [
 ]
 XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.CLASSIFIER,
-    FileType.CONNECTION,
     FileType.INCIDENT_FIELD,
     FileType.INCIDENT_TYPE,
     FileType.INDICATOR_FIELD,
@@ -1003,11 +1001,6 @@ def handle_classifier(
         pack_report += dump_pack_conditionally(artifact_manager, classifier)
 
 
-def handle_connection(pack, pack_report, artifact_manager, **kwargs):
-    for connection in pack.connections:
-        pack_report += dump_pack_conditionally(artifact_manager, connection)
-
-
 def handle_incident_type(
     content_items_handler, pack, pack_report, artifact_manager, **kwargs
 ):
@@ -1294,7 +1287,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     content_items_to_handler = {
         FileType.RELEASE_NOTES: handle_release_notes,
         FileType.RELEASE_NOTES_CONFIG: handle_release_note_config,
-        FileType.CONNECTION: handle_connection,
         FileType.TEST_PLAYBOOK: handle_test_playbook,
         FileType.SCRIPT: handle_script,
         FileType.INCIDENT_FIELD: handle_incident_field,

@@ -67,6 +67,7 @@
         "Sanity Test"
     ],
     "reputation_tests": [
-        "FormattingPerformance - Test"
+        "FormattingPerformance - Test",
+        "TestReputationPlaybook"
     ]
 }

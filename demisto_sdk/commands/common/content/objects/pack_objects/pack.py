@@ -6,7 +6,6 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEPRECATED_DESC_REGEX,
@@ -48,7 +47,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     AuthorImage,
     Classifier,
     ClassifierMapper,
-    Connection,
     Contributors,
     CorrelationRule,
     Dashboard,
@@ -251,12 +249,6 @@ class Pack:
     def indicator_fields(self) -> Iterator[IndicatorField]:
         return self._content_files_list_generator_factory(
             dir_name=INDICATOR_FIELDS_DIR, suffix="json"
-        )
-
-    @property
-    def connections(self) -> Iterator[Connection]:
-        return self._content_files_list_generator_factory(
-            dir_name=CONNECTIONS_DIR, suffix="json"
         )
 
     @property

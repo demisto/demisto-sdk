@@ -558,7 +558,6 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
     )
 
 
-
 def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
     """
     Given

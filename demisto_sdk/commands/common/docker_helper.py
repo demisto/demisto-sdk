@@ -53,8 +53,20 @@ class DockerException(Exception):
     pass
 
 
+class DockerHubRequestException(Exception):
+    def __init__(self, message: str, exception: RequestException):
+        super().__init__(message)
+        self.message = message
+        self.exception = exception
+
+    def __str__(self):
+        return f"Error - {self.message} - Exception - {self.exception}"
+
+
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
-    logger.info("################################################# init_global_docker_client | sanity check ")
+    logger.info(
+        "################################################# init_global_docker_client | sanity check "
+    )
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         if log_prompt:
@@ -73,8 +85,9 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
             )
             raise
         docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
-        docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
-)
+        docker_pass = os.getenv(
+            "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
+        )
         if docker_user and docker_pass:
             logger.info(f"{log_prompt} - logging in to docker registry")
             try:
@@ -93,7 +106,9 @@ def is_custom_registry():
         not os.getenv("CONTENT_GITLAB_CI")
         and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
     )
-    logger.info(f"f{os.getenv('CONTENT_GITLAB_CI')=}, {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}, {func_res}=")
+    logger.info(
+        f"f{os.getenv('CONTENT_GITLAB_CI')=}, {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}, {func_res}="
+    )
 
     return (
         not os.getenv("CONTENT_GITLAB_CI")

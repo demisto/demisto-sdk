@@ -1,0 +1,4 @@
+changes:
+- description: Modified *urllib3* version to 2.2.3.
+  type: internal
+pr_number: 4551

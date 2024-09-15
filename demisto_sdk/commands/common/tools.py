@@ -1945,11 +1945,6 @@ def find_type(
         return FileType.MAPPER
 
     if (
-        file_type == "json" or path.lower().endswith(".json")
-    ) and "canvasContextConnections" in _dict:
-        return FileType.CONNECTION
-
-    if (
         ("layout" in _dict or "kind" in _dict)
         and ("kind" in _dict or "typeId" in _dict)
         and Path(path).suffix == ".json"
@@ -4471,27 +4466,6 @@ def extract_image_paths_from_str(
     """
 
     return [image_path for image_path in re.findall(regex_str, text)]
-
-
-def get_full_image_paths_from_relative(
-    pack_name: str, image_paths: List[str]
-) -> List[Path]:
-    """
-        Args:
-            pack_name (str): Pack name to add to path
-            image_paths (List[Path]): List of images with a local path. For example: ![<title>](../doc_files/<image name>.png)
-    )
-
-        Returns:
-            List[Path]: A list of paths with the full path.
-    """
-
-    return [
-        Path(f"Packs/{pack_name}/{image_path.replace('../', '')}")
-        if "Packs" not in image_path
-        else Path(image_path)
-        for image_path in image_paths
-    ]
 
 
 def remove_nulls_from_dictionary(data):

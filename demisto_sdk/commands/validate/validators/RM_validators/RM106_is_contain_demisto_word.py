@@ -46,7 +46,12 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
                     phrases_to_search=["demisto"],
                     ignore_case=True,
                     text=content_item.readme.file_content,
-                    exceptionally_allowed_substrings=["/demisto/"],  # in URL
+                    exceptionally_allowed_substrings=[
+                        "/demisto/",
+                        "devdemisto",
+                        "demistodev",
+                        "@demisto",
+                    ],  # in URL
                 )
             )
         ]

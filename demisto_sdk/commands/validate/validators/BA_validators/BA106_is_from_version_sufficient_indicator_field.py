@@ -9,7 +9,6 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
     IsFromVersionSufficientValidator,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     FixResult,
     ValidationResult,
 )
@@ -24,7 +23,7 @@ ContentTypes = IndicatorField
 
 
 class IsFromVersionSufficientIndicatorFieldValidator(
-    IsFromVersionSufficientValidator, BaseValidator[ContentTypes]
+    IsFromVersionSufficientValidator[ContentTypes]
 ):
     error_message = "The fromversion of IndicatorField with type {0} must be at least {1}, current is {2}."
 

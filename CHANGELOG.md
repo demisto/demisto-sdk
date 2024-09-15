@@ -1,4 +1,34 @@
 # Changelog
+## 0.0.0
+### Breaking
+* IN136 will be handled in the new validate format of RM102. [#4535](https://github.com/demisto/demisto-sdk/pull/4535)
+* The validation GR103 has been removed from the old format to enhance performance. [#4522](https://github.com/demisto/demisto-sdk/pull/4522)
+
+### Feature
+* Discard 'canvas' tab from LO107 validation as it is now supported by XSIAM. [#4544](https://github.com/demisto/demisto-sdk/pull/4544)
+* Added support for a specific value in the hidden attribute of a script argument. [#4550](https://github.com/demisto/demisto-sdk/pull/4550)
+* Moved GR105 validation to the new format. Ensuring that each content item has a unique ID. [#4545](https://github.com/demisto/demisto-sdk/pull/4545)
+* Moved RM110 validation to the new format. Ensuring all commands are documented in the README. [#4542](https://github.com/demisto/demisto-sdk/pull/4542)
+* Added 'ReleaseNotesConfig' and 'PackMetadata' to the `ST110` validation. [#4541](https://github.com/demisto/demisto-sdk/pull/4541)
+* Added 'AssetsModelingRuleSchema' to the `ST110` validation. [#4519](https://github.com/demisto/demisto-sdk/pull/4519)
+* Moved RM102 and IN136 validation to the new format. Ensures context outputs in README and YML files match. [#4535](https://github.com/demisto/demisto-sdk/pull/4535)
+* Moved GR103 validation to the new validate format. The validation ensures that content items use other content items only if they exist in the repository. Additionally, removed this validation from the old format to improve performance. [#4522](https://github.com/demisto/demisto-sdk/pull/4522)
+* Move feed's expirationPolicy validation to a new validation - IN163. [#4460](https://github.com/demisto/demisto-sdk/pull/4460)
+* Enhanced the **format** command logs by trimming whitespaces. [#4529](https://github.com/demisto/demisto-sdk/pull/4529)
+
+### Fix
+* Fixed an issue in the init-validation script where it wasn't generating the correct execution mode for graph validations. [#4543](https://github.com/demisto/demisto-sdk/pull/4543)
+* Fixed an issue where docker validations failed on API Modules in the new validate flow. [#4539](https://github.com/demisto/demisto-sdk/pull/4539)
+* Fixed an issue where running `validate -a` on specific validations failed ignored content items. [#4539](https://github.com/demisto/demisto-sdk/pull/4539)
+* Fixed an issue where RM106 failed on false positive cases of `demisto` word occurrence. [#4539](https://github.com/demisto/demisto-sdk/pull/4539)
+* Fixed an issue where Threat Intel layouts created in the UI would fail when uploaded using the SDK upload command. [#4548](https://github.com/demisto/demisto-sdk/pull/4548)
+* Fixed an issue where the GR106 validation would fail on test playbooks that are marked as reputation tests. [#4549](https://github.com/demisto/demisto-sdk/pull/4549)
+
+### Internal
+* Removed support for the `Connection` content item type. [#4547](https://github.com/demisto/demisto-sdk/pull/4547)
+* Deprecated. Removing the canvas-context-connections.yml schema's file. [#4546](https://github.com/demisto/demisto-sdk/pull/4546)
+
+
 ## 1.31.11
 * Fixed an issue in RM114 where **validate** would not catch problematic images when their file type was not `png` or when their declaration within the README had additional characters present in it. [#4512](https://github.com/demisto/demisto-sdk/pull/4512)
 * Fixed an issue where the default validations would not run properly. [#4532](https://github.com/demisto/demisto-sdk/pull/4532)

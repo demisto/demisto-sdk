@@ -160,7 +160,7 @@ class Changelog:
         clear_changelogs_folder()
 
         # commit and push CHANGELOG.md
-        commit_and_push(branch_name=branch_name)
+        # commit_and_push(branch_name=branch_name)
         logger.info(f"Combined {len(logs)} changelog files into CHANGELOG.md")
 
     """ HELPER FUNCTIONS """
@@ -283,8 +283,10 @@ def compile_changelog_md(
     # Collecting the new log entries in the following order:
     # breaking, feature, fix, internal
     for log_type in (LogType.breaking, LogType.feature, LogType.fix, LogType.internal):
-        new_changelog.extend(log.to_string() for log in new_logs.get(log_type, ()))
-    # A new line separates versions
+        if log_type in new_logs and new_logs[log_type]:
+            new_changelog.append(f"### {log_type.capitalize()}")
+            new_changelog.extend(log.to_string() for log in new_logs[log_type])
+            new_changelog.append("")  # Add an empty line after each category
     new_changelog.append("")
     # Collecting the old changelog
     new_changelog.extend(old_changelog)

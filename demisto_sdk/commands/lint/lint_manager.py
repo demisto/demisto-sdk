@@ -1,7 +1,6 @@
 # STD packages
 import concurrent.futures
 import os
-import platform
 import re
 import sys
 import textwrap
@@ -12,7 +11,6 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
 import demisto_sdk

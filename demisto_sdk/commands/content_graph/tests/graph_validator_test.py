@@ -558,21 +558,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
     )
 
 
-@pytest.mark.parametrize(
-    "include_optional, is_valid",
-    [
-        pytest.param(
-            False,
-            True,
-            id="Not providing git_files - should be valid (raised a warning)",
-        ),
-        pytest.param(
-            True,
-            False,
-            id="providing git_files - should be invalid",
-        ),
-    ],
-)
+
 def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
     """
     Given

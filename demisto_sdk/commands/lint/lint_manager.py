@@ -566,16 +566,7 @@ class LintManager:
         except Exception as e:
             msg = f"Stop demisto-sdk lint - {e}"
             logger.debug(f"[yellow]{msg}[/yellow]", exc_info=True)
-
-            if Version(platform.python_version()) > Version("3.9"):
-                executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
-            else:
-                logger.info("Using Python under 3.8, we will cancel futures manually.")
-                executor.shutdown(
-                    wait=True
-                )  # Note that `cancel_futures` not supported in python 3.8
-                for res in results:
-                    res.cancel()
+            executor.shutdown(wait=True, cancel_futures=True)
             return 1, 0
 
     def run(

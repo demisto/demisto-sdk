@@ -86,9 +86,7 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
     is_auto_fixable = False
 
     def obtain_invalid_content_items_using_graph(
-        self,
-        content_items: Iterable[ContentTypes],
-        validate_all_files: bool,
+        self, content_items: Iterable[ContentTypes], validate_all_files: bool = False
     ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         file_paths_to_validate = (

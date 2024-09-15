@@ -21,4 +21,4 @@ class IsUsingUnknownContentValidatorListFiles(
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        return self.obtain_invalid_content_items_using_graph(content_items, False)
+        return self.obtain_invalid_content_items_using_graph(content_items)

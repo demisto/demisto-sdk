@@ -1,0 +1,4 @@
+changes:
+- description: Moved RN112 to the new validate format. The validation ensure that if RN contains 'breaking change' then the breaking change release note exist and filled correctly.
+  type: internal
+pr_number: 4559

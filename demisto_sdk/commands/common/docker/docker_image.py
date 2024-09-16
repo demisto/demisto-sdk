@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 
 # TODO: un-comment line below and import functions from docker_helper to replace dockerhub_client functions
-from demisto_sdk.commands.common.docker_helper import DockerBase
+from demisto_sdk.commands.common.docker_helper import DockerBase, get_python_version
 from demisto_sdk.commands.common.logger import logger
 
 
@@ -180,19 +180,22 @@ class DockerImage(str):
 
             logger.debug(f"Could not get python version for image {self} from regex")
 
-            image_env = self._dockerhub_client.get_image_env(self.name, tag=self.tag)
+            # image_env = self._dockerhub_client.get_image_env(self.name, tag=self.tag)
 
-            if python_version := next(
-                (
-                    var.split("=")[1]
-                    for var in image_env
-                    if var.startswith("PYTHON_VERSION=")
-                ),
-                None,
-            ):
-                return Version(python_version)
+            # if python_version := next(
+            #     (
+            #         var.split("=")[1]
+            #         for var in image_env
+            #         if var.startswith("PYTHON_VERSION=")
+            #     ),
+            #     None,
+            # ):
+            #     return Version(python_version)
 
-            logger.error(f"Could not find python-version of docker-image {self}")
+            if python_version := get_python_version(self.name):
+                return python_version
+            else:
+                logger.error(f"Could not find python-version of docker-image {self}")
 
         else:
             logger.debug(
@@ -223,4 +226,5 @@ class DockerImage(str):
         """
         Returns the docker image with the latest tag
         """
-        return DockerImage(self._dockerhub_client.get_latest_docker_image(self.name))
+        # return DockerImage(self._dockerhub_client.get_latest_docker_image(self.name))
+        return DockerImage(f"{self.repository}:{self.latest_tag}")

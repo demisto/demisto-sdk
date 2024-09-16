@@ -135,7 +135,6 @@ def docker_login(docker_client) -> bool:
                     username=docker_user,
                     password=docker_pass,
                     registry=DOCKER_REGISTRY_URL,
-                    # registry="https://index.docker.io/v1",
                 )
                 ping = docker_client.ping()
                 logger.info(
@@ -149,7 +148,7 @@ def docker_login(docker_client) -> bool:
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
-                    registry="https: // index.docker.io/v1,
+                    registry="https: // index.docker.io/v1",
                 )
                 ping = docker_client.ping()
                 logger.info(

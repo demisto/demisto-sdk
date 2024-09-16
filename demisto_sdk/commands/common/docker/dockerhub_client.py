@@ -18,16 +18,6 @@ DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
 DEFAULT_REPOSITORY = "demisto"
 
 
-DOCKER_CLIENT = None
-CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
-    (not os.getenv("CIRCLECI", False))
-    and (
-        (not os.getenv("DOCKER_HOST"))
-        or os.getenv("DOCKER_HOST", "").lower().startswith("unix:")
-    )
-)
-
-
 class DockerHubAuthScope(StrEnum):
     PULL = "pull"  # Grants read-only access to the repository, allowing you to pull images.
     PUSH = "push"  # Grants write access to the repository, allowing you to push images.
@@ -47,7 +37,6 @@ class DockerHubRequestException(Exception):
 
 @lru_cache
 class DockerHubClient:
-    # DEFAULT_REGISTRY = f"https://{DOCKER_REGISTRY_URL}" if DOCKER_REGISTRY_URL else "https://registry-1.docker.io/v2"
     DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
     DOCKER_HUB_API_BASE_URL = "https://hub.docker.com/v2"
     TOKEN_URL = "https://auth.docker.io/token"
@@ -60,9 +49,6 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-        logger.info(
-            "################################################# DockerHubClient sanity check"
-        )
         self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
@@ -73,10 +59,6 @@ class DockerHubClient:
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
-
-        logger.info(
-            f"################################################# DockerHubClient | {self.registry_api_url=}, {self.docker_hub_api_url=}, {self.username=}, {self.password=}, {verify_ssl=}"
-        )
 
     def __enter__(self):
         return self
@@ -95,7 +77,6 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
-        logger.info("################################################# get_token")
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             now = datetime.now()
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
@@ -131,7 +112,7 @@ class DockerHubClient:
                 and self.auth
             ):
                 # in case of rate-limits with a username:password, retrieve the token without username:password
-                logger.info("Trying to get dockerhub token without username:password")
+                logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
                         self.TOKEN_URL,
@@ -179,20 +160,8 @@ class DockerHubClient:
             headers: headers if needed
             params: params if needed
         """
-        logger.info("################################################# get_request")
         auth = None if headers and "Authorization" in headers else self.auth
-        logger.info(
-            f"################################################# get_request | {auth=}"
-        )
-        logger.info(
-            f"################################################# get_request | {url=}"
-        )
-        logger.info(
-            f"################################################# get_request | {headers=}"
-        )
-        logger.info(
-            f"################################################# get_request | {params=}"
-        )
+
         response = self._session.get(
             url,
             headers=headers,
@@ -200,14 +169,6 @@ class DockerHubClient:
             verify=self.verify_ssl,
             auth=auth,
         )
-        logger.info(
-            f"################################################# get_request | {response=}"
-        )
-        logger.info(
-            f"################################################# get_request | {response.headers['Content-Type']=}"
-        )
-        # logger.info(
-        #     f"################################################# get_request | {response.json()=}")
         response.raise_for_status()
         try:
             return response.json()
@@ -235,9 +196,6 @@ class DockerHubClient:
             params: query parameters
             results_key: the key to retrieve the results in case its a list
         """
-        logger.info(
-            "################################################# do_docker_hub_get_request"
-        )
         if url_suffix:
             if not url_suffix.startswith("/"):
                 url_suffix = f"/{url_suffix}"
@@ -247,18 +205,8 @@ class DockerHubClient:
         else:
             raise ValueError("either url_suffix/next_page_url must be provided")
 
-        # if os.getenv("CONTENT_GITLAB_CI"):
-        #     docker_client = init_global_docker_client()
-        #     logger.info(
-        #     f"################################################# do_docker_hub_get_request | {docker_client=}")
-
         _params = params or {"page_size": 1000} if not next_page_url else params
-        logger.info(
-            f"################################################# do_docker_hub_get_request | {url=}"
-        )
-        logger.info(
-            f"################################################# do_docker_hub_get_request | {_params=}"
-        )
+
         raw_json_response = self.get_request(
             url,
             headers={key: value for key, value in headers}
@@ -272,7 +220,7 @@ class DockerHubClient:
             # received only a single record
             return raw_json_response
 
-        logger.info(f'Received {raw_json_response.get("count")} objects from {url=}')
+        logger.debug(f'Received {raw_json_response.get("count")} objects from {url=}')
         results = raw_json_response.get(results_key) or []
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
@@ -306,37 +254,8 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
-        logger.info(
-            "################################################# do_registry_get_request"
-        )
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
-
-        # if os.getenv("CONTENT_GITLAB_CI"):
-        #     docker_client = init_global_docker_client()
-        #     logger.info(
-        #         f"################################################# do_registry_get_request | {docker_client=}")
-
-        logger.info(
-            f"################################################# do_registry_get_request | url: {self.registry_api_url}/{docker_image}{url_suffix}"
-        )
-        headers_log = (
-            {key: value for key, value in headers}
-            if headers
-            else None
-            or {
-                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                "application/vnd.docker.distribution.manifest.list.v2+json",
-                "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
-            }
-        )
-        logger.info(
-            f"################################################# do_registry_get_request | headers: {headers_log=}"
-        )
-        params_log = {key: value for key, value in params} if params else None
-        logger.info(
-            f"################################################# do_registry_get_request | params: {params_log=} "
-        )
 
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
@@ -473,11 +392,11 @@ class DockerHubClient:
                 error.exception.response
                 and error.exception.response.status_code == requests.codes.not_found
             ):
-                logger.info(
+                logger.debug(
                     f"docker-image {docker_image}:{tag} does not exist in dockerhub"
                 )
                 return False
-            logger.info(
+            logger.debug(
                 f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"
             )
             return tag in self.get_image_tags(docker_image)
@@ -519,7 +438,7 @@ class DockerHubClient:
                 if max_version_tag.release[-1] < version_tag.release[-1]:
                     max_version_tag = version_tag
             except InvalidVersion:
-                logger.info(
+                logger.debug(
                     f"The tag {tag} has invalid version for docker-image {docker_image}, skipping it"
                 )
 
@@ -567,102 +486,3 @@ class DockerHubClient:
             for image_metadata in self.get_repository_images(repo)
             if image_metadata.get("name")
         ]
-
-
-# def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
-#     global DOCKER_CLIENT
-#     if DOCKER_CLIENT is None:
-#         if log_prompt:
-#             logger.info(f"{log_prompt} - init and login the docker client")
-#         else:
-#             logger.info("init and login the docker client")
-#         if ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None:
-#             logger.info(
-#                 f"{log_prompt} - Using ssh client setting: {ssh_client}")
-#         logger.info(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
-#         try:
-#             DOCKER_CLIENT = docker.from_env()
-#             # (timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
-#         except docker.errors.DockerException:
-#             logger.warning(
-#                 f"{log_prompt} - Failed to init docker client. "
-#                 "This might indicate that your docker daemon is not running."
-#             )
-#             raise
-#         docker_user = os.getenv("DEMISTO_SDK_CR_USER",
-#                                 os.getenv("DOCKERHUB_USER"))
-#         docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
-#                                 )
-#         if docker_user and docker_pass:
-#             logger.info(f"{log_prompt} - logging in to docker registry")
-#             try:
-#                 docker_login(DOCKER_CLIENT)
-#             except Exception:
-#                 logger.exception(
-#                     f"{log_prompt} - failed to login to docker registry")
-#     else:
-#         msg = "docker client already available, using current DOCKER_CLIENT"
-#         logger.info(f"{log_prompt} - {msg}" if log_prompt else msg)
-#     return DOCKER_CLIENT
-
-
-# def docker_login(docker_client) -> bool:
-#     """Login to docker-hub using environment variables:
-#             1. DOCKERHUB_USER - User for docker hub.
-#             2. DOCKERHUB_PASSWORD - Password for docker-hub.
-#         Used in Circle-CI for pushing into repo devtestdemisto
-
-#     Returns:
-#         bool: True if logged in successfully.
-#     """
-#     docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
-#     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD",
-#                             os.getenv("DOCKERHUB_PASSWORD"))
-#     if docker_user and docker_pass:
-#         try:
-#             if not is_custom_registry():
-#                 logger.info("debug: not is_custom_registry() case")
-#                 docker_client.login(
-#                     username=docker_user,
-#                     password=docker_pass,
-#                     registry="https://index.docker.io/v1",
-#                 )
-#                 ping = docker_client.ping()
-#                 logger.info(
-#                     f"Successfully connected to dockerhub, login {ping=}")
-#                 return ping
-#             else:
-#                 logger.info("debug: is_custom_registry() case")
-#                 # login to custom docker registry
-#                 docker_client.login(
-#                     username=docker_user,
-#                     password=docker_pass,
-#                     registry=DOCKER_REGISTRY_URL,
-#                 )
-#                 ping = docker_client.ping()
-#                 logger.info(
-#                     f"Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}"
-#                 )
-#                 return ping
-#         except docker.errors.APIError:
-#             logger.info(
-#                 f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
-#             return False
-
-#     logger.info(f"Did not log in to {DOCKER_REGISTRY_URL}")
-#     return False
-
-
-# def is_custom_registry():
-#     logger.info("debug: inside is_custom_registry() func")
-#     func_res = (
-#         not os.getenv("CONTENT_GITLAB_CI")
-#         and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
-#     )
-#     logger.info(
-#         f"f{os.getenv('CONTENT_GITLAB_CI')=}, {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}, {func_res}=")
-
-#     return (
-#         not os.getenv("CONTENT_GITLAB_CI")
-#         and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
-#     )

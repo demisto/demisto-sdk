@@ -15,15 +15,17 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     FixResult,
     ValidationResult,
+)
+from demisto_sdk.commands.validate.validators.DO_validators.docker_validator import (
+    DockerValidator,
 )
 
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
+class DockerImageTagIsNotOutdated(DockerValidator[ContentTypes]):
     error_code = "DO106"
     description = "Validate that the given content-item's docker image isn't outdated."
     rationale = "Updated Docker images ensure that the code doesn't use outdated dependencies, including bug fixes and fixed vulnerabilities."
@@ -70,13 +72,8 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
         invalid_content_items = []
         for content_item in content_items:
             if not content_item.is_javascript:
-                logger.info(f"################################################# {content_item=}")
-                docker_image: DockerImage = content_item.docker_image
-                logger.info(docker_image.summary)
-                logger.info(
-                    f"################################################# docker_image 1: {type(docker_image)} , {docker_image=}")
+                docker_image = content_item.docker_image
                 if not docker_image.is_valid:
-                    logger.info("################################################# not docker_image.is_valid")
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
@@ -86,11 +83,7 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
                     )
                     continue
                 try:
-                    logger.info(
-                        f"################################################# docker_image 2: {type(docker_image)} , {docker_image=}")
-                    logger.info(f"################################################# {docker_image.latest_tag=}")
-                    docker_image_latest_tag = docker_image if isinstance(docker_image, str) else str(docker_image.latest_tag)
-                    logger.info(f"################################################# {docker_image_latest_tag=}")
+                    docker_image_latest_tag = str(docker_image.latest_tag)
                 except DockerHubRequestException as error:
                     logger.error(f"DO106 - Error when fetching latest tag:\n{error}")
                     if (

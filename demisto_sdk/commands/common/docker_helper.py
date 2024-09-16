@@ -98,7 +98,7 @@ def is_custom_registry():
         and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
     )
     logger.info(
-        f"{os.getenv('CONTENT_GITLAB_CI')=}, {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}, {func_res}="
+        f"{os.getenv('CONTENT_GITLAB_CI')=}, {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}, {func_res=}"
     )
 
     return (
@@ -445,7 +445,12 @@ class DockerBase:
     @staticmethod
     def get_image_registry(image: str) -> str:
         if DOCKER_REGISTRY_URL not in image:
+            res = f"{DOCKER_REGISTRY_URL}/{image}"
+            logger.info(
+                f"################################################# get_image_registry | DOCKER_REGISTRY_URL not in image case | returned: {res}")
             return f"{DOCKER_REGISTRY_URL}/{image}"
+        logger.info(
+            f"################################################# get_image_registry | not DOCKER_REGISTRY_URL not in image case |returned:  {image}")
         return image
 
     def get_or_create_test_image(
@@ -467,7 +472,8 @@ class DockerBase:
         Returns:
             The test image name and errors to create it if any
         """
-
+        logger.info(
+            "################################################# get_or_create_test_image")
         errors = ""
         if (
             not python_version
@@ -497,6 +503,8 @@ class DockerBase:
             f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
         )
         if is_custom_registry():
+            logger.info(
+                "################################################# get_or_create_test_image | is_custom_registry")
             # if we use a custom registry, we need to have to pull the image and we can't use dockerhub api
             should_pull = True
         if not should_pull and self.is_image_available(test_docker_image):
@@ -680,6 +688,8 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
     from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
+    logger.info(
+        "################################################# get_python_version")
 
     logger.info(f"Get python version from image {image=}")
 
@@ -744,6 +754,8 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
+    logger.info(
+        f"################################################# _get_python_version_from_dockerhub_api")
     if is_custom_registry():
         raise RuntimeError(
             f"Docker registry is configured to be {DOCKER_REGISTRY_URL}, unable to query the dockerhub api"

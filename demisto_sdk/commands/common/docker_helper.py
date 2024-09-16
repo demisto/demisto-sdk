@@ -214,7 +214,7 @@ class DockerBase:
         logger.info(
             f"################################################# pull_image | {base_request=}")
         request = artifactregistry_v1.GetDockerImageRequest(
-            name=f"{base_request}/dockerImages/demisto/python3:3.11.10.111526",
+            name=f"{base_request}/dockerImages/python3:3.11.10.111526",
         )
         logger.info(
             f"################################################# pull_image | {request=}")

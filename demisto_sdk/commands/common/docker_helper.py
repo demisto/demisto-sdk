@@ -98,7 +98,7 @@ def is_custom_registry():
         and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
     )
     logger.info(
-        f"f{os.getenv('CONTENT_GITLAB_CI')=}, {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}, {func_res}="
+        f"{os.getenv('CONTENT_GITLAB_CI')=}, {DOCKER_REGISTRY_URL=}, {DEFAULT_DOCKER_REGISTRY_URL=}, {func_res}="
     )
 
     return (
@@ -117,12 +117,20 @@ def docker_login(docker_client) -> bool:
     Returns:
         bool: True if logged in successfully.
     """
+    logger.info(
+        f"################################################# docker_login | {docker_client=}"
+    )
     docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
+    logger.info(
+        f"################################################# docker_login | {docker_user=}, {docker_pass=}"
+    )
     if docker_user and docker_pass:
         try:
             if not is_custom_registry():
-                logger.info("debug: not is_custom_registry() case")
+                logger.info(
+                    "################################################# docker_login | not is_custom_registry() case"
+                )
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
@@ -132,7 +140,9 @@ def docker_login(docker_client) -> bool:
                 logger.info(f"Successfully connected to dockerhub, login {ping=}")
                 return ping
             else:
-                logger.info("debug: is_custom_registry() case")
+                logger.info(
+                    "################################################# docker_login | is_custom_registry() case"
+                )
                 # login to custom docker registry
                 docker_client.login(
                     username=docker_user,
@@ -198,6 +208,8 @@ class DockerBase:
     @staticmethod
     @functools.lru_cache
     def version() -> Version:
+        logger.info("################################################# version")
+
         version = init_global_docker_client().version()["Version"]
         try:
             return Version(version)
@@ -215,6 +227,10 @@ class DockerBase:
         """
         Get a local docker image, or pull it when unavailable.
         """
+        logger.info(
+            f"################################################# pull_image | {image=}"
+        )
+
         docker_client = init_global_docker_client(log_prompt="pull_image")
         try:
             return docker_client.images.get(image)
@@ -234,6 +250,10 @@ class DockerBase:
         Returns:
             The latest tag for the image.
         """
+        logger.info(
+            f"################################################# get_latest_docker_image_tag | {image=}"
+        )
+
         docker_client = init_global_docker_client(log_prompt="get_latest_tag")
         try:
             repository_tags = docker_client.images.list(name=image)
@@ -254,7 +274,7 @@ class DockerBase:
         image: str,
     ) -> bool:
         logger.info(
-            "################################################# is_image_available "
+            f" ################################################# is_image_available | {image=}"
         )
         docker_client = init_global_docker_client(log_prompt="get_image")
         try:

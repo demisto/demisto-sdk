@@ -132,8 +132,11 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
             # check that their code files and description files were not modified as well.
             related_files_unchanged = [
                 content_item.code_file.git_status is None,  # type: ignore[union-attr]
-                content_item.description_file.git_status is None,  # type: ignore[union-attr]
             ]
+            if content_item.content_type.value == Integration.content_type.value:
+                related_files_unchanged.append(
+                    content_item.description_file.git_status is None  # type: ignore[union-attr]
+                )
 
             return not all(related_files_unchanged)
 

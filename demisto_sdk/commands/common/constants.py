@@ -88,7 +88,6 @@ GENERIC_DEFINITIONS_DIR = "GenericDefinitions"
 LAYOUTS_DIR = "Layouts"
 CLASSIFIERS_DIR = "Classifiers"
 MAPPERS_DIR = "Classifiers"
-CONNECTIONS_DIR = "Connections"
 PACKS_DIR = "Packs"
 TOOLS_DIR = "Tools"
 RELEASE_NOTES_DIR = "ReleaseNotes"
@@ -128,7 +127,6 @@ INCIDENT = "incident"  # prefix to identify any incident entity
 INCIDENT_TYPE = "incidenttype"
 INCIDENT_FIELD = "incidentfield"
 INDICATOR_FIELD = "indicatorfield"
-CONNECTION = "connection"
 CLASSIFIER = "classifier"
 DASHBOARD = "dashboard"
 REPORT = "report"
@@ -139,7 +137,6 @@ TOOL = "tools"
 BETA_INTEGRATION = "betaintegration"
 DOCUMENTATION = "doc"
 MAPPER = "classifier-mapper"
-CANVAS = "canvas"
 OLD_REPUTATION = "reputations.json"
 PACK_VERIFY_KEY = "content.pack.verify"
 XSOAR_CONFIG_FILE = "xsoar_config.json"
@@ -173,6 +170,17 @@ DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
+# Server Types
+XSOAR_SERVER_TYPE = "XSOAR"
+XSIAM_SERVER_TYPE = "XSIAM"
+XPANSE_SERVER_TYPE = "XPANSE"
+XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
+
+# Product Types
+XSOAR_PRODUCT_TYPE = "XSOAR"
+XSIAM_PRODUCT_TYPE = "XSIAM"
+XPANSE_PRODUCT_TYPE = "XPANSE"
+
 
 class FileType(StrEnum):
     INTEGRATION = "integration"
@@ -193,7 +201,6 @@ class FileType(StrEnum):
     CLASSIFIER = "classifier"
     WIDGET = "widget"
     REPORT = "report"
-    CONNECTION = "canvas-context-connections"
     README = "readme"
     RELEASE_NOTES = "releasenotes"
     RELEASE_NOTES_CONFIG = "releasenotesconfig"
@@ -276,7 +283,6 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.REPORT: "Reports",
     FileType.WIDGET: "Widgets",
     FileType.DASHBOARD: "Dashboards",
-    FileType.CONNECTION: "Connections",
     FileType.MAPPER: "Mappers",
     FileType.PRE_PROCESS_RULES: "PreProcess Rules",
     FileType.GENERIC_DEFINITION: "Objects",
@@ -316,7 +322,6 @@ ENTITY_TYPE_TO_DIR = {
     FileType.INCIDENT_TYPE.value: INCIDENT_TYPES_DIR,
     FileType.INDICATOR_FIELD.value: INDICATOR_FIELDS_DIR,
     FileType.INDICATOR_TYPE.value: INDICATOR_TYPES_DIR,
-    FileType.CONNECTION.value: CONNECTIONS_DIR,
     FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.DASHBOARD.value: DASHBOARDS_DIR,
     FileType.REPUTATION.value: INDICATOR_TYPES_DIR,
@@ -387,7 +392,6 @@ CONTENT_ENTITIES_DIRS = [
     INCIDENT_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     GENERIC_MODULES_DIR,
@@ -769,11 +773,6 @@ PACKS_CLASSIFIER_JSON_5_9_9_REGEX = rf"{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.jso
 _PACKS_MAPPER_BASE_REGEX = rf"{PACKS_CLASSIFIERS_DIR_REGEX}\/classifier-(?=mapper).*"
 PACKS_MAPPER_JSON_REGEX = rf"{_PACKS_MAPPER_BASE_REGEX}\.json"
 
-PACKS_CONNECTIONS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{CONNECTIONS_DIR}"
-PACKS_CONNECTION_JSON_REGEX = (
-    rf"{PACKS_CONNECTIONS_DIR_REGEX}\/canvas-context-connections.*\.json$"
-)
-
 PACKS_RELEASE_NOTES_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{RELEASE_NOTES_DIR}"
 
 PLAYBOOKS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{PLAYBOOKS_DIR}"
@@ -809,10 +808,6 @@ TEST_NOT_PLAYBOOK_REGEX = (
     rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!playbook).*-.*\.yml$"
 )
 
-CONNECTIONS_REGEX = (
-    rf"{CAN_START_WITH_DOT_SLASH}{CONNECTIONS_DIR}.*canvas-context-connections.*\.json$"
-)
-
 INDICATOR_TYPES_REPUTATIONS_REGEX = (
     rf"{CAN_START_WITH_DOT_SLASH}{INDICATOR_TYPES_DIR}.reputations\.json$"
 )
@@ -820,6 +815,8 @@ INDICATOR_TYPES_REPUTATIONS_REGEX = (
 INCIDENT_FIELD_FILE_NAME_REGEX = r"incidentfield-.*\.json"
 
 LAYOUT_FILE_NAME__REGEX = r"layout.*\.json"
+
+VALID_INDICATOR_TYPE_REGEX = "^[A-Za-z0-9_& ]*$"
 
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
@@ -868,6 +865,7 @@ MANDATORY_PACK_METADATA_FIELDS = (
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
     PACK_METADATA_KEYWORDS,
+    MARKETPLACE_KEY_PACK_METADATA,
 )
 PACK_METADATA_MANDATORY_FILLED_FIELDS = [
     PACK_METADATA_KEYWORDS,
@@ -931,9 +929,9 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
-PACKS_README_FILE_NAME = (
-    INTEGRATIONS_README_FILE_NAME
-) = SCRIPTS_README_FILE_NAME = "README.md"
+PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAME = (
+    "README.md"
+)
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
@@ -1070,10 +1068,6 @@ JSON_ALL_GENERIC_DEFINITIONS_REGEXES = [
 
 JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES = [PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX]
 
-JSON_ALL_CONNECTIONS_REGEXES = [
-    CONNECTIONS_REGEX,
-]
-
 JSON_ALL_REPORTS_REGEXES = [PACKS_REPORT_JSON_REGEX]
 
 JSON_ALL_JOB_REGEXES = [JOB_JSON_REGEX]
@@ -1123,7 +1117,6 @@ CHECKED_TYPES_REGEXES = [
     PACKS_REPORT_JSON_REGEX,
     PACKS_RELEASE_NOTES_REGEX,
     PACKS_TOOLS_REGEX,
-    CONNECTIONS_REGEX,
     JOB_JSON_REGEX,
     WIZARD_JSON_REGEX,
     # ReleaseNotes
@@ -1178,7 +1171,6 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
     INDICATOR_TYPES_DIR,
-    CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
     LISTS_DIR,
     JOBS_DIR,
@@ -1194,7 +1186,6 @@ PACKS_DIRECTORIES = [
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
     REPORTS_DIR,
-    CONNECTIONS_DIR,
     PLAYBOOKS_DIR,
     JOBS_DIR,
     WIZARDS_DIR,
@@ -1282,6 +1273,12 @@ class GitStatuses(StrEnum):
     DELETED = "D"
 
 
+class ExecutionMode(StrEnum):
+    ALL_FILES = "-a"
+    USE_GIT = "-g"
+    SPECIFIC_FILES = "-i"
+
+
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
 
 # python subtypes
@@ -1314,7 +1311,6 @@ OFFICIAL_INDEX_JSON_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETP
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
-FILTER_CONF = "./artifacts/filter_file.txt"
 
 GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com"
 
@@ -1380,7 +1376,6 @@ SCHEMA_TO_REGEX = {
     "script": YML_SCRIPT_REGEXES,
     "widget": JSON_ALL_WIDGETS_REGEXES,
     "dashboard": JSON_ALL_DASHBOARDS_REGEXES,
-    "canvas-context-connections": JSON_ALL_CONNECTIONS_REGEXES,
     "classifier_5_9_9": JSON_ALL_CLASSIFIER_REGEXES_5_9_9,
     "classifier": JSON_ALL_CLASSIFIER_REGEXES,
     "mapper": JSON_ALL_MAPPER_REGEXES,
@@ -1613,7 +1608,8 @@ GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 
 FEATURE_BRANCHES = ["v4.5.0"]
 VERSION_REGEX = r"(\d{1,2}\.){2}\d{1,2}$"
-DOC_FILE_IMAGE_REGEX = r"\.\./doc_files/[a-zA-Z0-9_-]+\.png"
+DOC_FILE_IMAGE_REGEX = r"[\.\./]*doc_files/[a-zA-Z0-9_-]+\.png"
+DOC_FILE_FULL_IMAGE_REGEX = r"!\[.*?\]\(((?!http).*?doc_files.*?)\)"
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"
@@ -1665,16 +1661,6 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
-        "must_be_one_of": {},
-    },
-    {
-        "name": "feedExpirationPolicy",
-        "must_equal": {
-            "display": "",
-            "type": 17,
-            "options": ["never", "interval", "indicatorType", "suddenDeath"],
-        },
-        "must_contain": {},
         "must_be_one_of": {},
     },
     {
@@ -1821,6 +1807,16 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
     "blocked",
 ]
 
+INTEGRATION_FIELDS_NOT_ALLOWED_TO_CHANGE = [
+    "feed",
+    "isfetch",
+    "longRunning",
+    "longRunningPort",
+    "ismappable",
+    "isremotesyncin",
+    "isremotesyncout",
+]
+
 CONTEXT_OUTPUT_README_TABLE_HEADER = "| **Path** | **Type** | **Description** |"
 
 ARGUMENT_FIELDS_TO_CHECK = ["defaultValue", "required", "isArray"]
@@ -1954,11 +1950,11 @@ MarketplaceVersionToMarketplaceName = {
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
-    MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_ON_PREM: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
-    MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
+    MarketplaceVersions.XSOAR: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_SAAS: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
+    MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
+    MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
 }
 
 
@@ -2057,7 +2053,9 @@ class ParameterType(Enum):
     DAY_DROPDOWN = 21
 
 
-class IncidentFieldType:  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
+class IncidentFieldType(
+    StrEnum
+):  # For more info please see https://xsoar.pan.dev/docs/incidents/incident-fields#field-types
     SHORT_TEXT = "shortText"
     LONG_TEXT = "longText"
     NUMBER = "number"
@@ -2134,6 +2132,7 @@ XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
 XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
+MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 STRING_TO_BOOL_MAP = {
@@ -2150,6 +2149,8 @@ STRING_TO_BOOL_MAP = {
     "t": True,
     "f": False,
 }
+
+SCHEMA_FILE_VALID_ATTRIBUTES_TYPE = {"string", "int", "float", "datetime", "boolean"}
 
 
 #  date formats:
@@ -2177,6 +2178,17 @@ class IncidentState(StrEnum):
     ACKNOWLEDGED = "ACKNOWLEDGED"
 
 
+class PlaybookTaskType(StrEnum):
+    REGULAR = "regular"
+    PLAYBOOK = "playbook"
+    CONDITION = "condition"
+    START = "start"
+    TITLE = "title"
+    SECTION = "section"
+    STANDARD = "standard"
+    COLLECTION = "collection"
+
+
 # Used to format the writing of the yml/json file
 DEFAULT_JSON_INDENT = 4
 DEFAULT_YAML_INDENT = 0
@@ -2190,3 +2202,7 @@ PACK_DEFAULT_MARKETPLACES: List = [
 INVALID_IMAGE_PATH_REGEX = (
     r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")"
 )
+
+# Test types:
+TEST_PLAYBOOKS = "TestPlaybooks"
+TEST_MODELING_RULES = "TestModelingRules"

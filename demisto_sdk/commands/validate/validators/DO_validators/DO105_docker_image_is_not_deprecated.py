@@ -7,14 +7,16 @@ from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     ValidationResult,
+)
+from demisto_sdk.commands.validate.validators.DO_validators.docker_validator import (
+    DockerValidator,
 )
 
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
+class DockerImageIsNotDeprecatedValidator(DockerValidator[ContentTypes]):
     error_code = "DO105"
     description = "Validate that the given content item uses a docker image that is not deprecated"
     rationale = "It is best practice to use images that are maintained by the platform."
@@ -25,8 +27,9 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
         Dict[str, str]
     ] = {}  # map between deprecated docker to the reason its deprecated
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         if not self.deprecated_dockers_to_reasons:
             deprecated_dockers = JsonFile.read_from_github_api(
                 path="/docker/deprecated_images.json",

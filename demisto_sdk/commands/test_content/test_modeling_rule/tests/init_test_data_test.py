@@ -365,7 +365,8 @@ class TestInitTestDataMultiInput:
         test_data_file_2 = mrule_dir_2 / f"{DEFAULT_MODELING_RULE_NAME_2}_testdata.json"
         count = 1
         result = runner.invoke(
-            init_test_data_app, [pack.path, mrule_dir.as_posix(), f"--count={count}"]
+            init_test_data_app,
+            [str(pack.path), mrule_dir.as_posix(), f"--count={count}"],
         )
         assert result.exit_code != 0
         assert test_data_file.exists() is True
@@ -396,7 +397,8 @@ class TestInitTestDataMultiInput:
         test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         count = 1
         result = runner.invoke(
-            init_test_data_app, [pack.path, mrule_dir.as_posix(), f"--count={count}"]
+            init_test_data_app,
+            [str(pack.path), mrule_dir.as_posix(), f"--count={count}"],
         )
         assert result.exit_code != 0
         assert test_data_file.exists() is True

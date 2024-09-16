@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue in the `pre-commit` command where if the DEMISTO_DEFAULT_BRANCH environment variable was set to something other than "master", the command would fail.
-  type: fix
-pr_number: 4325

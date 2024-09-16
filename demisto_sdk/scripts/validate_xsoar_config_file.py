@@ -13,8 +13,7 @@ from demisto_sdk.commands.content_graph.objects.xsoar_conf_file import (
 FILE_NAME = "xsoar_config.json"
 
 
-class NotAJSONError(Exception):
-    ...
+class NotAJSONError(Exception): ...
 
 
 def _validate(path: Path = Path(FILE_NAME)) -> None:

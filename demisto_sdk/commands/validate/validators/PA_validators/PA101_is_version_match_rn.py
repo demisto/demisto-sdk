@@ -23,7 +23,9 @@ class IsVersionMatchRnValidator(BaseValidator[ContentTypes]):
     error_message = "The currentVersion in the metadata ({0}) doesn't match the latest rn version ({1})."
     related_field = "currentVersion"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

@@ -162,3 +162,13 @@ def compare_lists(sub_list: List[str], main_list: List[str]) -> List[str]:
         List the elements that appear in the sublist but not in the main list, including duplicates if they are not all present in the main list.
     """
     return list((Counter(sub_list) - Counter(main_list)).elements())
+
+
+def is_indicator_pb(playbook: Playbook):
+    """
+    Check if the playbook has indicators as input query.
+    """
+    return any(
+        (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators"
+        for i in playbook.data.get("inputs", {})
+    )

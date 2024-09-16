@@ -1,4 +1,3 @@
-from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -38,12 +37,3 @@ class PlaybookParser(BasePlaybookParser, content_type=ContentType.PLAYBOOK):
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
-
-    @cached_property
-    def field_mapping(self):
-        super().field_mapping.update({"tasks": "tasks"})
-        return super().field_mapping
-
-    @property
-    def tasks(self):
-        return self.yml_data.get("tasks", {})

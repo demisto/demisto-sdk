@@ -57,7 +57,7 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SecretsIgnoreRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-    replace_markdown_urls_and_upload_to_artifacts,
+    update_markdown_images_with_urls_and_rel_paths,
 )
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
@@ -191,10 +191,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return Version(self.current_version) if self.current_version else None
 
     @property
-    def support_level(self):
-        return self.support
-
-    @property
     def depends_on(self) -> List["RelationshipData"]:
         """
         This returns the packs which this content item depends on.
@@ -286,7 +282,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
-
         shutil.copyfile(self.path / "README.md", path)
         if self.contributors:
             fixed_contributor_names = [
@@ -314,15 +309,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
-        replace_markdown_urls_and_upload_to_artifacts(
+        update_markdown_images_with_urls_and_rel_paths(
             path, marketplace, self.object_id, file_type=ImagesFolderNames.README_IMAGES
         )
 
-    def dump(
-        self,
-        path: Path,
-        marketplace: MarketplaceVersions,
-    ):
+    def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool = False):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
@@ -330,8 +321,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         try:
             path.mkdir(exist_ok=True, parents=True)
 
+            content_types_excluded_from_upload = (
+                CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
+            )
+            if tpb:
+                content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
+
             for content_item in self.content_items:
-                if content_item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+                if content_item.content_type in content_types_excluded_from_upload:
                     logger.debug(
                         f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
                         "whose type was passed in `exclude_content_types`"
@@ -376,6 +373,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             except FileNotFoundError:
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
 
+            try:
+                shutil.copytree(self.path / "doc_files", path / "doc_files")
+            except FileNotFoundError:
+                logger.debug(f'No such directory {self.path / "doc_files"}')
+
             if self.object_id == BASE_PACK:
                 self._copy_base_pack_docs(path, marketplace)
 
@@ -394,6 +396,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         target_demisto_version: Version,
         destination_zip_dir: Optional[Path] = None,
         zip: bool = True,
+        tpb: bool = False,
         **kwargs,
     ):
         if destination_zip_dir is None:
@@ -406,12 +409,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 target_demisto_version=target_demisto_version,
                 skip_validations=kwargs.get("skip_validations", False),
                 destination_dir=destination_zip_dir,
+                tpb=tpb,
             )
         else:
             self._upload_item_by_item(
                 client=client,
                 marketplace=marketplace,
                 target_demisto_version=target_demisto_version,
+                tpb=tpb,
             )
 
     def _zip_and_upload(
@@ -421,6 +426,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         skip_validations: bool,
         marketplace: MarketplaceVersions,
         destination_dir: DirectoryPath,
+        tpb: bool = False,
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(f"Uploading zipped pack {self.object_id}")
@@ -428,7 +434,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         # 1) dump the pack into a temporary file
         with TemporaryDirectory() as temp_dump_dir:
             temp_dir_path = Path(temp_dump_dir)
-            self.dump(temp_dir_path, marketplace=marketplace)
+            self.dump(temp_dir_path, marketplace=marketplace, tpb=tpb)
 
             # 2) zip the dumped pack
             with TemporaryDirectory() as pack_zips_dir:
@@ -465,6 +471,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         client: demisto_client,
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
+        tpb: bool = False,
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(
@@ -474,8 +481,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         uploaded_successfully: List[ContentItem] = []
         incompatible_content_items = []
 
+        content_types_excluded_from_upload = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
+        if tpb:
+            content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
+
         for item in self.content_items:
-            if item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+            if item.content_type in content_types_excluded_from_upload:
                 logger.debug(
                     f"SKIPPING upload of {item.content_type} {item.object_id}: type is skipped"
                 )
@@ -521,7 +532,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def _copy_base_pack_docs(
         self, destination_path: Path, marketplace: MarketplaceVersions
     ):
-
         documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = destination_path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
@@ -558,7 +568,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def save(self):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
-        super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
+        super()._save(
+            file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS
+        )  # type: ignore
 
     @cached_property
     def readme(self) -> ReadmeRelatedFile:

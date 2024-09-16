@@ -78,7 +78,6 @@ class TestRNUpdate:
         """
         expected_result = (
             "\n#### Classifiers\n\n##### Hello World Classifier\n\n- %%UPDATE_RN%%\n"
-            "\n#### Connections\n\n##### Hello World Connection\n\n- %%UPDATE_RN%%\n"
             "\n#### Dashboards\n\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%\n"
             "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- %%UPDATE_RN%%\n"
             "\n#### Incident Types\n\n##### Hello World Incident Type\n\n- %%UPDATE_RN%%\n"
@@ -155,10 +154,6 @@ class TestRNUpdate:
                 "is_new_file": False,
             },
             ("Hello World Dashboard", FileType.DASHBOARD): {
-                "description": "",
-                "is_new_file": False,
-            },
-            ("Hello World Connection", FileType.CONNECTION): {
                 "description": "",
                 "is_new_file": False,
             },
@@ -348,7 +343,7 @@ class TestRNUpdate:
             - a dict of changed items
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
@@ -378,7 +373,7 @@ class TestRNUpdate:
             - a dict of changed items, with a documentation rn update
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
@@ -1700,12 +1695,6 @@ class TestRNUpdateUnit:
         ),
         (
             "Packs/VulnDB",
-            "Packs/VulnDB/Connections/VulnDB/VulnDB.yml",
-            FileType.CONNECTION,
-            ("VulnDB", FileType.CONNECTION),
-        ),
-        (
-            "Packs/VulnDB",
             "Packs/VulnDB/Dashboards/VulnDB/VulnDB.yml",
             FileType.DASHBOARD,
             ("VulnDB", FileType.DASHBOARD),
@@ -2799,12 +2788,12 @@ def test_create_md_if_currentversion_is_higher(
         added_files=set(),
     )
     client.execute_update()
-    updated_rn_folder = glob.glob(pack.path + "/ReleaseNotes/*")
+    updated_rn_folder = glob.glob(str(pack.path) + "/ReleaseNotes/*")
     updated_versions_list = [rn[rn.rindex("/") + 1 : -3] for rn in updated_rn_folder]
     assert Counter(first_expected_results) == Counter(updated_versions_list)
     pack.pack_metadata.write_json({"currentVersion": "0.0.3"})
     client.execute_update()
-    updated_rn_folder = glob.glob(pack.path + "/ReleaseNotes/*")
+    updated_rn_folder = glob.glob(str(pack.path) + "/ReleaseNotes/*")
     updated_versions_list = [rn[rn.rindex("/") + 1 : -3] for rn in updated_rn_folder]
     assert Counter(second_expected_results) == Counter(updated_versions_list)
 

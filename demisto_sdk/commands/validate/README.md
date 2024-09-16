@@ -39,7 +39,10 @@ Whether to skip validations based on their support level or not.
 Whether to run the old validate flow or not. Alternatively, you can configure the RUN_OLD_VALIDATE env variable
 * **--skip-new-validate**
 Whether to skip the new validate flow or not. Alternatively, you can configure the SKIP_NEW_VALIDATE env variable.
-
+* **-sv, --run-specific-validations**
+A comma separated list of validations to run stated the error codes.
+* **--ignore**
+An error code to not run. To ignore more than one error, repeat this option (e.g. `--ignore AA123 --ignore BC321`)
 **Examples**:
 
 `demisto-sdk validate --prev-ver SHA1-HASH`

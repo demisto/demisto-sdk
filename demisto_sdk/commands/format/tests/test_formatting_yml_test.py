@@ -9,12 +9,15 @@ from unittest.mock import Mock, patch
 
 import pytest
 import requests_mock
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
+    BETA_INTEGRATION,
     FEED_REQUIRED_PARAMS,
     GENERAL_DEFAULT_FROMVERSION,
     INCIDENT_FETCH_REQUIRED_PARAMS,
+    INTEGRATION,
     NO_TESTS_DEPRECATED,
     MarketplaceVersions,
 )
@@ -1441,6 +1444,7 @@ class TestFormatting:
             bs.set_fromVersion()
             assert bs.data["fromversion"] == GENERAL_DEFAULT_FROMVERSION, path
 
+    @pytest.mark.parametrize("file_type", [INTEGRATION, BETA_INTEGRATION])
     @pytest.mark.parametrize(
         "user_input, description_result",
         [
@@ -1449,7 +1453,13 @@ class TestFormatting:
         ],
     )
     def test_update_deprecate_in_integration(
-        self, pack, mocker, monkeypatch, user_input, description_result
+        self,
+        pack: Pack,
+        mocker: MockerFixture,
+        monkeypatch: pytest.MonkeyPatch,
+        user_input: str,
+        description_result: str,
+        file_type: str,
     ):
         """
         Given
@@ -1465,7 +1475,7 @@ class TestFormatting:
             BaseUpdateYML, "get_id_and_version_path_object", return_value={}
         )
         base_update_yml = BaseUpdateYML(input=integration.yml.path, deprecate=True)
-        base_update_yml.update_deprecate(file_type="integration")
+        base_update_yml.update_deprecate(file_type=file_type)
 
         assert base_update_yml.data["deprecated"]
         assert base_update_yml.data["tests"] == [NO_TESTS_DEPRECATED]

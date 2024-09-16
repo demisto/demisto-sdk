@@ -16,8 +16,8 @@ ContentTypes = IncidentField
 def select_values_do_not_contain_empty_values_in_multi_select_types(
     content_item: ContentTypes,
 ) -> bool:
-    if content_item.data.get("type") == IncidentFieldType.MULTI_SELECT:
-        select_values = content_item.data.get("selectValues") or []
+    if content_item.field_type == IncidentFieldType.MULTI_SELECT:
+        select_values = content_item.select_values or []
         if "" in select_values:
             return False
     return True
@@ -37,7 +37,9 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(
     is_auto_fixable = True
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -53,12 +55,12 @@ class SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator(
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        select_values = content_item.data.get("selectValues") or []
+        select_values = content_item.select_values or []
 
         if all(select_value == "" for select_value in select_values):
             raise Exception
 
-        content_item.data["selectValues"] = list(
+        content_item.data["selectValues"] = content_item.select_values = list(
             filter(lambda select_value: select_value != "", select_values)
         )
 

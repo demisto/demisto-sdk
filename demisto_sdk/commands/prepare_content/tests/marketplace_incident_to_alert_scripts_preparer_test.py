@@ -22,14 +22,14 @@ COMMENT_ALERT_CONSTANT = (
 GIT_ROOT = git_path()
 
 
-def create_script_for_test(tmp_path, repo):
+def create_script_for_test(tmp_path, repo, deprecated=False):
     script = Script(
         tmpdir=tmp_path, name="script_incident_to_alert", repo=repo, create_unified=True
     )
     script.create_default_script(name="setIncident")
     data = script.yml.read_dict()
     data["comment"] = COMMENT_INCIDENT_CONSTANT
-    data["deprecated"] = False
+    data["deprecated"] = deprecated
     return data
 
 
@@ -88,3 +88,34 @@ def test_marketplace_incident_to_alert_scripts_preparer(
 
     for i, is_deprecated in enumerate(expected_deprecated, start=0):
         assert data[i]["deprecated"] == is_deprecated
+
+
+def test_marketplace_incident_to_alert_deprecated_scripts_preparer(
+    tmp_path,
+    repo,
+):
+    """
+    Given:
+        - A deprecated script that includes the word incident in its name.
+    When:
+        - MarketplaceIncidentToAlertScriptsPreparer.prepare() command is executed
+    Then:
+        - Ensure that a script is created with a new name when the word incident is replaced by the word alert.
+        - Ensure that a wrapper script is created for the new script with the old name that includes the word incident.
+        - Ensure that which returns a tuple from the function.
+    """
+
+    data = create_script_for_test(tmp_path, repo, deprecated=True)
+
+    data = MarketplaceIncidentToAlertScriptsPreparer.prepare(
+        data,
+        current_marketplace=MarketplaceVersions.MarketplaceV2,
+        incident_to_alert=True,
+    )
+
+    assert isinstance(data, tuple)
+
+    for i, script_name in enumerate(("setIncident", "setAlert")):
+        assert data[i].get("name") == script_name
+
+    assert all([i["deprecated"] for i in data])

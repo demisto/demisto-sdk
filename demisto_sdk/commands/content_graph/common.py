@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_json,
     get_remote_file,
+    pascalToSpace,
 )
 
 NEO4J_ADMIN_DOCKER = ""
@@ -65,7 +66,6 @@ class ContentType(StrEnum):
     CLASSIFIER = "Classifier"
     COMMAND = "Command"
     COMMAND_OR_SCRIPT = "CommandOrScript"
-    CONNECTION = "Connection"
     CORRELATION_RULE = "CorrelationRule"
     DASHBOARD = "Dashboard"
     GENERIC_DEFINITION = "GenericDefinition"
@@ -257,7 +257,7 @@ class ContentType(StrEnum):
                             yield tir_folder
 
     @staticmethod
-    def by_schema(path: Path) -> "ContentType":
+    def by_schema(path: Path, git_sha: Optional[str] = None) -> "ContentType":
         """
         Determines a content type value of a given file by accessing it and making minimal checks on its schema.
         """
@@ -265,7 +265,7 @@ class ContentType(StrEnum):
             CONTENT_TYPE_TO_MODEL,
         )
 
-        parsed_dict = get_dict_from_file(str(path))
+        parsed_dict = get_dict_from_file(str(path), git_sha=git_sha)
         if parsed_dict and isinstance(parsed_dict, tuple):
             _dict = parsed_dict[0]
         else:
@@ -275,6 +275,54 @@ class ContentType(StrEnum):
                 if content_type_obj.match(_dict, path):
                     return content_type
         raise ValueError(f"Could not find content type in path {path}")
+
+    @property
+    def convert_content_type_to_rn_header(self) -> str:
+        """
+        Convert ContentType to the Release note header.
+        """
+        if self == ContentType.PREPROCESS_RULE:
+            return "PreProcess Rules"
+        elif self == ContentType.TRIGGER:
+            return "Triggers Recommendations"  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+        elif self == ContentType.XSIAM_REPORT:
+            return "XSIAM Reports"
+        elif self == ContentType.XDRC_TEMPLATE:
+            return "XDRC Templates"
+        elif self == ContentType.XSIAM_DASHBOARD:
+            return "XSIAM Dashboards"
+        elif self == ContentType.GENERIC_TYPE:
+            return "Object Types"
+        elif self == ContentType.GENERIC_FIELD:
+            return "Object Fields"
+        elif self == ContentType.GENERIC_DEFINITION:
+            return "Objects"
+        elif self == ContentType.GENERIC_MODULE:
+            return "Modules"
+        separated_str = pascalToSpace(self)
+        return f"{separated_str}s"
+
+    @staticmethod
+    def convert_header_to_content_type(header: str) -> "ContentType":
+        """
+        Convert Release note header to ContentType.
+        """
+        if header == "Triggers Recommendations":
+            return ContentType.TRIGGER
+        elif header == "Preprocess Rules":
+            return ContentType.PREPROCESS_RULE
+        elif header == "Mappers":
+            return ContentType.MAPPER
+        elif header == "Objects":
+            return ContentType.GENERIC_DEFINITION
+        elif header == "Modules":
+            return ContentType.GENERIC_MODULE
+        elif header == "Object Types":
+            return ContentType.GENERIC_TYPE
+        elif header == "Object Fields":
+            return ContentType.GENERIC_FIELD
+        normalized_header = header.rstrip("s").replace(" ", "_").upper()
+        return ContentType[normalized_header]
 
 
 class Relationship(BaseModel):

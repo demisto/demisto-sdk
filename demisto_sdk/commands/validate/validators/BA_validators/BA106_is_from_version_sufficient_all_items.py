@@ -41,7 +41,6 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
     IsFromVersionSufficientValidator,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     FixResult,
     ValidationResult,
 )
@@ -109,7 +108,7 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
 
 
 class IsFromVersionSufficientAllItemsValidator(
-    IsFromVersionSufficientValidator, BaseValidator[ContentTypes]
+    IsFromVersionSufficientValidator[ContentTypes]
 ):
     """
     This class is for cases where the IsFromVersionSufficientValidator need to run on items that are not dependent on the item's type.
@@ -117,7 +116,9 @@ class IsFromVersionSufficientAllItemsValidator(
 
     error_message = "The {0} from version field is either missing or insufficient, need at least {1}, current is {2}."
 
-    def is_valid(self, content_items: Iterable[ContentItem]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentItem]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

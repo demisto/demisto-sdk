@@ -41,7 +41,6 @@ class MarketplaceSuffixPreparer:
                     value = datum[key]
                     if isinstance(value, (list, dict)):
                         fix_recursively(value)
-                        continue
                     if SEPARATOR not in key:
                         continue
                     for suffix in suffixes:

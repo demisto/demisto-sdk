@@ -3,7 +3,7 @@ from functools import partial
 import pytest
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import PB_Status
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS, PB_Status
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.TestContentClasses import (
@@ -33,7 +33,9 @@ def playbook(mocker):
         ),
         default_test_timeout=30,
     )
-    pb_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    pb_instance = TestPlaybook(
+        mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+    )
     pb_instance.build_context.logging_module = mocker.MagicMock()
     return pb_instance
 
@@ -57,7 +59,9 @@ def test_is_runnable_on_this_instance(mocker):
     test_context_builder = partial(
         TestContext,
         build_context=mocker.MagicMock(),
-        playbook=TestPlaybook(mocker.MagicMock(), test_playbook_configuration),
+        playbook=TestPlaybook(
+            mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+        ),
         client=mocker.MagicMock(),
     )
 
@@ -96,6 +100,12 @@ def init_server_context(mocker, tmp_path, mockable=False):
     unmockable_integration = {integrations_type: "reason"} if not mockable else {}
 
     filtered_tests = [playbook_type]
+    machine_assignment_content = {
+        "xsoar-machine": {
+            "packs_to_install": ["TEST"],
+            "tests": {TEST_PLAYBOOKS: filtered_tests},
+        }
+    }
     tests = [
         generate_test_configuration(
             playbook_id=playbook_id_type, integrations=[integrations_type]
@@ -108,17 +118,22 @@ def init_server_context(mocker, tmp_path, mockable=False):
     content_conf_json = generate_content_conf_json(
         tests=tests, unmockable_integrations=unmockable_integration
     )
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.BuildContext.create_servers",
+        return_value=set(),
+    )
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
         secret_conf_json=secret_test_conf,
         content_conf_json=content_conf_json,
-        filtered_tests_content=filtered_tests,
+        machine_assignment_content=machine_assignment_content,
     )
     mocked_demisto_client = DemistoClientMock(integrations=[integrations_type])
     server_context = generate_mocked_server_context(
         build_context, mocked_demisto_client, mocker
     )
+    build_context.servers = {server_context}
     mocker.patch.object(server_context, mock_func, return_value=None)
 
     return build_context, server_context
@@ -506,7 +521,9 @@ def test_docker_thresholds_for_non_pwsh_integrations(mocker):
         ),
         default_test_timeout=30,
     )
-    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance = TestPlaybook(
+        mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+    )
     playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
     test_context = TestContext(
         build_context=mocker.MagicMock(),
@@ -535,7 +552,9 @@ def test_docker_thresholds_for_pwsh_integrations(mocker):
         ),
         default_test_timeout=30,
     )
-    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance = TestPlaybook(
+        mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+    )
     playbook_instance.integrations[
         0
     ].integration_type = Docker.POWERSHELL_INTEGRATION_TYPE
@@ -559,7 +578,9 @@ class TestPrintContextToLog:
             ),
             default_test_timeout=30,
         )
-        pb_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+        pb_instance = TestPlaybook(
+            mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+        )
         pb_instance.build_context.logging_module = mocker.MagicMock()
         return pb_instance
 
@@ -661,6 +682,12 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
     """
     # Setting up the build context
     filtered_tests = ["playbook_integration", "playbook_second_integration"]
+    machine_assignment_content = {
+        "xsoar-machine": {
+            "packs_to_install": ["TEST"],
+            "tests": {TEST_PLAYBOOKS: filtered_tests},
+        }
+    }
     # Setting up the content conf.json
     tests = [
         generate_test_configuration(
@@ -693,26 +720,39 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
         ),
         default_test_timeout=30,
     )
-    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance = TestPlaybook(
+        mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+    )
     playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
-
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
+        return_value=False,
+    )
     # Setting up the build_context instance
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
         secret_conf_json=secret_test_conf,
-        filtered_tests_content=filtered_tests,
+        machine_assignment_content=machine_assignment_content,
     )
 
     integration = Integration(
-        build_context, "integration_with_placeholders", ["instance"], playbook
+        build_context,
+        "integration_with_placeholders",
+        ["instance"],
+        playbook,
+        mocker.MagicMock(),
     )
     integration._set_integration_params(
         server_url="1.1.1.1", playbook_id="playbook_integration", is_mockable=False
     )
     integration = Integration(
-        build_context, "integration_with_placeholders", ["instance"], playbook
+        build_context,
+        "integration_with_placeholders",
+        ["instance"],
+        playbook,
+        mocker.MagicMock(),
     )
     integration._set_integration_params(
         server_url="1.2.3.4", playbook_id="playbook_integration", is_mockable=False
@@ -819,11 +859,12 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
         ),
         default_test_timeout=30,
     )
-    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance = TestPlaybook(
+        mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+    )
     playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
 
-    class clientMock(DefaultApi):
-        ...
+    class clientMock(DefaultApi): ...
 
     test_context = TestContext(
         build_context=mocker.MagicMock(),
@@ -953,8 +994,7 @@ def test_replacing_pb_inputs_fails_with_build_pass(
         demisto_client,
     )
 
-    class ClientMock(DefaultApi):
-        ...
+    class ClientMock(DefaultApi): ...
 
     def generic_request_func(self, path, method, body=None, **kwargs):
         if path == "/playbook/inputs/pb_test" and method == "POST":
@@ -975,7 +1015,9 @@ def test_replacing_pb_inputs_fails_with_build_pass(
         default_test_timeout=30,
     )
 
-    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance = TestPlaybook(
+        mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+    )
 
     test_context = TestContext(
         build_context=mocker.MagicMock(),
@@ -1075,8 +1117,7 @@ def test_replacing_pb_inputs_fails_with_build_fail(
         demisto_client,
     )
 
-    class clientMock(DefaultApi):
-        ...
+    class clientMock(DefaultApi): ...
 
     def generic_request_func(self, path, method, body=None, **kwargs):
         if path == "/playbook/inputs/pb_test" and method == "POST":
@@ -1096,7 +1137,9 @@ def test_replacing_pb_inputs_fails_with_build_fail(
         ),
         default_test_timeout=30,
     )
-    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance = TestPlaybook(
+        mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+    )
 
     test_context = TestContext(
         build_context=mocker.MagicMock(),

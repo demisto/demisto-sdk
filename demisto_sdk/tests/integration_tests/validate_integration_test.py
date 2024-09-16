@@ -45,7 +45,6 @@ from demisto_sdk.tests.constants_test import (
     NOT_VALID_IMAGE_PATH,
 )
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION,
     DASHBOARD,
     EMPTY_ID_SET,
     GENERIC_DEFINITION,
@@ -913,9 +912,9 @@ class TestDeprecatedIntegration:
         )
         valid_integration_yml["deprecated"] = True
         valid_integration_yml["display"] = "ServiceNow (Deprecated)"
-        valid_integration_yml[
-            "description"
-        ] = "Deprecated. Use the ServiceNow v2 integration instead."
+        valid_integration_yml["description"] = (
+            "Deprecated. Use the ServiceNow v2 integration instead."
+        )
         integration = pack.create_integration(yml=valid_integration_yml)
 
         with ChangeCWD(pack.repo_path):
@@ -1145,9 +1144,9 @@ class TestDeprecatedIntegration:
         valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml["deprecated"] = True
         valid_integration_yml["display"] = "ServiceNow (Deprecated)"
-        valid_integration_yml[
-            "description"
-        ] = "Deprecated. Use the ServiceNow v2 integration instead."
+        valid_integration_yml["description"] = (
+            "Deprecated. Use the ServiceNow v2 integration instead."
+        )
         valid_integration_yml["commonfields"]["version"] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
@@ -1206,9 +1205,9 @@ class TestDeprecatedIntegration:
         valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml["deprecated"] = True
         valid_integration_yml["display"] = "ServiceNow (Deprecated)"
-        valid_integration_yml[
-            "description"
-        ] = "Deprecated. Use the ServiceNow v2 integration instead."
+        valid_integration_yml["description"] = (
+            "Deprecated. Use the ServiceNow v2 integration instead."
+        )
         valid_integration_yml["commonfields"]["version"] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         modified_files = {integration.yml.rel_path}
@@ -1562,7 +1561,6 @@ class TestIntegrationValidation:
         - Ensure failure message on non-latest docker image.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         pack_integration_path = join(
             AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"
         )
@@ -1591,13 +1589,8 @@ class TestIntegrationValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {pack_integration_path} as integration",
-                    "You can check for the most updated version of demisto/python3 here:",
                 ]
             ]
-        )
-        assert str_in_call_args_list(
-            logger_error.call_args_list,
-            "The docker image tag is not the latest numeric tag, please update it",
         )
         assert result.exit_code == 1
 
@@ -2846,95 +2839,6 @@ class TestDashboardValidation:
         assert str_in_call_args_list(
             logger_error.call_args_list,
             "The version for our files should always be -1, please update the file.",
-        )
-        assert result.exit_code == 1
-
-
-class TestConnectionValidation:
-    def test_valid_connection(self, mocker, repo):
-        """
-        Given
-        - a valid Connection.
-
-        When
-        - Running validate on it.
-
-        Then
-        - Ensure validate passes and identifies the file as a connection.
-        """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        mocker.patch.object(tools, "is_external_repository", return_value=True)
-        pack = repo.create_pack("PackName")
-        connection = pack._create_json_based(
-            name="connection", prefix="", content=CONNECTION
-        )
-        with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main,
-                [
-                    VALIDATE_CMD,
-                    "-i",
-                    connection.path,
-                    "--run-old-validate",
-                    "--skip-new-validate",
-                ],
-                catch_exceptions=False,
-            )
-        assert all(
-            [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
-                for current_str in [
-                    f"Validating {connection.path} as canvas-context-connections",
-                    "The files are valid",
-                ]
-            ]
-        )
-        assert result.exit_code == 0
-
-    def test_invalid_connection(self, mocker, repo):
-        """
-        Given
-        - an invalid Connection - no contextKey1 in a connection.
-
-        When
-        - Running validate on it.
-
-        Then
-        - Ensure validate fails on missing contextKey1.
-        """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        mocker.patch.object(tools, "is_external_repository", return_value=True)
-        pack = repo.create_pack("PackName")
-        connection_copy = CONNECTION.copy()
-        del connection_copy["canvasContextConnections"][0]["contextKey1"]
-        connection = pack._create_json_based(
-            name="connection", prefix="", content=connection_copy
-        )
-        with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main,
-                [
-                    VALIDATE_CMD,
-                    "--run-old-validate",
-                    "--skip-new-validate",
-                    "-i",
-                    connection.path,
-                ],
-                catch_exceptions=False,
-            )
-        assert all(
-            [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
-                for current_str in [
-                    f"Validating {connection.path} as canvas-context-connections",
-                ]
-            ]
-        )
-        assert str_in_call_args_list(
-            logger_error.call_args_list, 'Missing the field "contextKey1"'
         )
         assert result.exit_code == 1
 
@@ -4682,9 +4586,9 @@ class TestScriptDeprecatedValidation:
         pack = repo.create_pack("PackName")
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml["deprecated"] = True
-        valid_script_yml[
-            "comment"
-        ] = "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        valid_script_yml["comment"] = (
+            "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        )
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -4773,9 +4677,9 @@ class TestScriptDeprecatedValidation:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml["deprecated"] = True
         valid_script_yml["commonfields"]["version"] = -2
-        valid_script_yml[
-            "comment"
-        ] = "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        valid_script_yml["comment"] = (
+            "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        )
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -4829,9 +4733,9 @@ class TestScriptDeprecatedValidation:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml["deprecated"] = True
         valid_script_yml["commonfields"]["version"] = -2
-        valid_script_yml[
-            "comment"
-        ] = "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        valid_script_yml["comment"] = (
+            "Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead."
+        )
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
         mocker.patch.object(
@@ -6180,7 +6084,7 @@ class TestValidationUsingGit:
                     "--no-conf-json",
                     "--skip-pack-release-notes",
                     "-i",
-                    pack_1.path,
+                    str(pack_1.path),
                 ],
                 catch_exceptions=False,
             )
@@ -6438,7 +6342,6 @@ def test_local_node_server_up_and_down():
 
     assert not mdx_server_is_up()
     with start_local_MDX_server():
-
         assert mdx_server_is_up()
         assert_successful_mdx_call()
     sleep(1)

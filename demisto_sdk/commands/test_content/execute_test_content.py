@@ -9,7 +9,6 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import (
 )
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext,
-    ServerContext,
 )
 
 SKIPPED_CONTENT_COMMENT = (
@@ -85,15 +84,11 @@ def execute_test_content(**kwargs):
         f'Starting to run tests on Server version:{kwargs["server_version"]} Server Type:{kwargs["server_type"]}'
     )
     build_context = BuildContext(kwargs, logging_manager)
-    use_retries_mechanism = kwargs.get("use_retries", False)
+
     threads_list = []
-    for server_ip in build_context.instances_ips:
-        tests_execution_instance = ServerContext(
-            build_context,
-            server_private_ip=server_ip,
-            use_retries_mechanism=use_retries_mechanism,
-        )
-        threads_list.append(Thread(target=tests_execution_instance.execute_tests))
+    for index, server in enumerate(build_context.servers):
+        thread_name = f"{server.machine}-{index} (execute_tests)"
+        threads_list.append(Thread(target=server.execute_tests, name=thread_name))
 
     logging_manager.info("Finished creating configurations, starting to run tests.")
     for thread in threads_list:
@@ -103,15 +98,16 @@ def execute_test_content(**kwargs):
         t.join()
 
     logging_manager.info("Finished running tests.")
-    if (
-        not build_context.unmockable_tests_to_run.empty()
-        or not build_context.mockable_tests_to_run.empty()
-    ):
-        logging_manager.critical(
-            "Not all tests have been executed. Not destroying instances. Exiting",
-            real_time=True,
-        )
-        sys.exit(1)
+    for server in build_context.servers:
+        if (
+            not server.unmockable_tests_to_run.empty()
+            or not server.mockable_tests_to_run.empty()
+        ):
+            logging_manager.critical(
+                "Not all tests have been executed. Not destroying instances. Exiting",
+                real_time=True,
+            )
+            sys.exit(1)
     if (
         build_context.tests_data_keeper.playbook_skipped_integration
         and build_context.build_name != "master"
@@ -126,6 +122,14 @@ def execute_test_content(**kwargs):
         build_context.isAMI, logging_manager
     )
     build_context.tests_data_keeper.create_result_files()
+
+    if kwargs["nightly"]:
+        build_number = kwargs["build_number"]
+        build_context.tests_data_keeper.upload_playbook_result_json_to_bucket(
+            kwargs["server_type"],
+            f"playbook_report_{build_number}.xml",
+            logging_manager,
+        )
     if build_context.tests_data_keeper.failed_playbooks:
         logging_manager.critical(
             "Some tests have failed. Not destroying instances.", real_time=True

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import PlaybookTaskType
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -23,50 +24,48 @@ class IsAskConditionHasUnhandledReplyOptionsValidator(BaseValidator[ContentTypes
     description = "Checks whether an ask conditional has unhandled reply options."
     rationale = "Checks whether an ask conditional has unhandled reply options."
     error_message = (
-        "Playbook conditional task with id:{task_id} has an unhandled "
-        "condition: {condition}."
+        "The playbook contains conditional tasks with unhandled conditions:{0}"
     )
     related_field = "conditions"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         """Checks whether a builtin conditional task branches are handled properly
         Args:
             - content_items (Iterable[ContentTypes]): The content items to check.
         Return:
             - List[ValidationResult]. List of ValidationResults objects.
         """
-        results: List[ValidationResult] = []
-        for content_item in content_items:
-            invalid_tasks = self.unhandled_conditions(content_item)
-
-            for task_id, unhandled_options in invalid_tasks.items():
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            task_id=task_id,
-                            condition=",".join(
-                                map(lambda x: f"{str(x)}", unhandled_options)
-                            ),
-                        ),
-                        content_object=content_item,
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    "\n".join(
+                        [
+                            f"Playbook conditional task with {task_id=} contains the following unhandled conditions: {', '.join(list(unhandled_options))}."
+                            for task_id, unhandled_options in invalid_tasks.items()
+                        ]
                     )
-                )
-
-        return results
+                ),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (invalid_tasks := self.unhandled_conditions(content_item))
+        ]
 
     @staticmethod
     def unhandled_conditions(playbook: ContentTypes):
         unhandled_conditions = {}
         tasks = playbook.tasks
         for task in tasks.values():
-            if task.get("type") == "condition" and task.get("message"):
-                next_tasks: dict = task.get("nexttasks", {})
+            if task.type == PlaybookTaskType.CONDITION and task.message:
+                next_tasks: dict = task.nexttasks or {}
 
                 # ADD all replyOptions to unhandled_reply_options (UPPER)
                 unhandled_reply_options = set(
-                    map(str.upper, task.get("message", {}).get("replyOptions", []))
+                    map(str.upper, task.message.get("replyOptions", []))
                 )
 
                 # Rename the keys in dictionary to upper case
@@ -92,6 +91,6 @@ class IsAskConditionHasUnhandledReplyOptionsValidator(BaseValidator[ContentTypes
                         len(unhandled_reply_options) == 1
                         and "#DEFAULT#" in next_tasks_upper
                     ):
-                        unhandled_conditions[task.get("id")] = unhandled_reply_options
+                        unhandled_conditions[task.id] = unhandled_reply_options
 
         return unhandled_conditions

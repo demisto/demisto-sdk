@@ -56,7 +56,7 @@ class Obj:
     object_id: str = "id1"
     is_powershell: bool = False
     docker_image: str = "dockerimage"
-    support_level: str = "xsoar"
+    support: str = "xsoar"
 
     @property
     def docker_images(self):
@@ -92,7 +92,6 @@ def create_hook(
 
 @dataclass
 class MockProcess:
-
     returncode = 0
     stdout = "finished"
     stderr = ""
@@ -274,7 +273,7 @@ def test_mypy_hooks(mocker):
 
     mypy_hook = create_hook(mypy_hook)
     MypyHook(**mypy_hook).prepare_hook()
-    for (hook, python_version) in itertools.zip_longest(
+    for hook, python_version in itertools.zip_longest(
         mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         assert hook["args"][-1] == f"--python-version={python_version}"
@@ -303,7 +302,7 @@ def test_ruff_hook(github_actions, mocker):
     )
     RuffHook(**ruff_hook).prepare_hook()
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
-    for (hook, python_version) in itertools.zip_longest(
+    for hook, python_version in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         assert (
@@ -334,7 +333,7 @@ def test_ruff_hook_nightly_mode(mocker):
 
     RuffHook(**ruff_hook).prepare_hook()
 
-    for (hook, _) in itertools.zip_longest(
+    for hook, _ in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         hook_args = hook["args"]
@@ -482,6 +481,104 @@ class TestPreprocessFiles:
         output = preprocess_files(all_files=True)
         assert output == expected_output
 
+    @pytest.mark.parametrize(
+        "untracked_files, modified_files, untracked_files_in_content ,expected_output",
+        [
+            (
+                ["Packs/untracked.txt"],
+                set([Path("Packs/modified.txt")]),
+                set([Path("Packs/untracked.txt")]),
+                set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
+            ),
+            (
+                [
+                    "Packs/untracked_1.txt",
+                    "Packs/untracked_2.txt",
+                    "invalid/path/untracked.txt",
+                    "another/invalid/path/untracked.txt",
+                ],
+                set([Path("Packs/modified.txt")]),
+                set(
+                    [
+                        Path("Packs/untracked_1.txt"),
+                        Path("Packs/untracked_2.txt"),
+                    ]
+                ),
+                set(
+                    [
+                        Path("Packs/modified.txt"),
+                        Path("Packs/untracked_1.txt"),
+                        Path("Packs/untracked_2.txt"),
+                    ]
+                ),
+            ),
+            (
+                [
+                    "Packs/untracked_1.txt",
+                    "Packs/untracked_2.txt",
+                    "invalid/path/untracked.txt",
+                    "another/invalid/path/untracked.txt",
+                ],
+                set(),
+                set(
+                    [
+                        Path("Packs/untracked_1.txt"),
+                        Path("Packs/untracked_2.txt"),
+                    ]
+                ),
+                set(
+                    [
+                        Path("Packs/untracked_1.txt"),
+                        Path("Packs/untracked_2.txt"),
+                    ]
+                ),
+            ),
+        ],
+        ids=[
+            "Valid untracked and modified files",
+            "Invalid untracked, valid untracked and modified files",
+            "No modified files, invalid and valid untracked files only",
+        ],
+    )
+    def test_preprocess_files_in_external_pr_use_case(
+        self,
+        mocker,
+        untracked_files,
+        modified_files,
+        untracked_files_in_content,
+        expected_output,
+    ):
+        """
+        This UT verifies changes made to pre commit command to support collection of
+        staged (modified) files when running the build on an external contribution PR.
+
+        Given:
+            - A content build is running on external contribution PR, meaning:
+                - `CONTRIB_BRANCH` environment variable exists.
+                - pre commit command is running in context of an external contribution PR
+        When:
+            Case 1: All untracked files have a "Pack/..." path, regular modified files are also exist.
+            Case 2: Not all untracked files have a "Pack/..." path, irrelevant untracked files also exist which pre commit shouldn't run on.
+                    Regular modified files are also exist.
+            Case 3: Not all untracked files have a "Pack/..." path, irrelevant untracked files also exist, regular modified files are also exist, No modified files.
+
+        Then:
+            - Collect all files within "Packs/" path and run the pre commit on them along with regular modified files if exist.
+        """
+        mocker.patch.object(
+            GitUtil, "_get_all_changed_files", return_value=expected_output
+        )
+        mocker.patch.dict(os.environ, {"CONTRIB_BRANCH": "true"})
+        mocker.patch.object(GitUtil, "_get_staged_files", return_value=modified_files)
+        mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
+        mocker.patch(
+            "git.repo.base.Repo._get_untracked_files",
+            return_value=untracked_files,
+        )
+
+        output = preprocess_files(use_git=True)
+        assert output == expected_output
+
 
 def test_exclude_hooks_by_version(mocker, repo: Repo):
     """
@@ -541,7 +638,7 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {
         "2.7": {(Path("file1.py"), Obj())},
-        "3.8": {(Path("file2.py"), Obj(support_level="community"))},
+        "3.8": {(Path("file2.py"), Obj(support="community"))},
     }
     pre_commit_context = pre_commit_command.PreCommitContext(
         None,

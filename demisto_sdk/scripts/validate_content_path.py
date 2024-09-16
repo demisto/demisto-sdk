@@ -11,7 +11,6 @@ from typing_extensions import Annotated
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DOC_FILES_DIR,
@@ -94,7 +93,6 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         LAYOUTS_DIR,
         CLASSIFIERS_DIR,
         MAPPERS_DIR,
-        CONNECTIONS_DIR,
         RELEASE_NOTES_DIR,
         DOC_FILES_DIR,
         JOBS_DIR,
@@ -180,6 +178,14 @@ class InvalidXSIAMReportFileName(InvalidPathException):
     message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
 
 
+class InvalidXSIAMDashboardFileName(InvalidPathException):
+    message = "Only .json and .png file extension are supported for XSIAM dashboard. File must be named  <pack_name>_<dashboard_name>.json."
+
+
+class InvalidXSIAMParsingRuleFileName(InvalidPathException):
+    message = "Only .yml and .xif file extension are supported for XSIAM Parsing Rule. File must be named as the parent folder name."
+
+
 class InvalidImageFileName(InvalidPathException):
     message = "Name of image files may only contain only latin letters, digits, underscores or hyphens."
 
@@ -190,6 +196,13 @@ class InvalidSuffix(InvalidPathException):
 
 class InvalidCommandExampleFile(InvalidPathException):
     message = "This file's name must be command_examples"
+
+
+class InvalidModelingRuleFileName(InvalidPathException):
+    message = (
+        "Name of modeling rules files must match the directory containing them, e.g. `{parent folder}.json`, "
+        "`{parent folder}.yml` and `{parent folder}.xif`"
+    )
 
 
 class InvalidXDRCTemplatesFileName(InvalidPathException):
@@ -265,7 +278,9 @@ def _validate(path: Path) -> None:
         raise SpacesInFileName
 
     if path.suffix not in ALLOWED_SUFFIXES:
-        raise InvalidSuffix
+        if set(path.parts).isdisjoint(TESTS_AND_DOC_DIRECTORIES):
+            # all files are allowed under TESTS_AND_DOC_DIRECTORIES
+            raise InvalidSuffix
 
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
         _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
@@ -291,6 +306,12 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidXSIAMReportFileName
 
+        if first_level_folder == XSIAM_DASHBOARDS_DIR and not (
+            path.stem.startswith(f"{parts_after_packs[0]}_")
+            and path.suffix in (".json", ".png")
+        ):
+            raise InvalidXSIAMDashboardFileName
+
         if (
             first_level_folder == DOC_FILES_DIR
             and path.suffix in SUPPORTED_IMAGE_FORMATS
@@ -307,6 +328,21 @@ def _validate(path: Path) -> None:
             path.stem == path.parent.name and path.suffix in {".json", ".yml"}
         ):
             raise InvalidXDRCTemplatesFileName
+
+        elif first_level_folder == ContentType.MODELING_RULE.as_folder and not (
+            (path.stem == path.parent.name and path.suffix in {".yml", ".xif"})
+            or (
+                path.stem.startswith(path.parent.name)
+                and path.stem.endswith(("_schema", "_testdata"))
+                and path.suffix == ".json"
+            )
+        ):
+            raise InvalidModelingRuleFileName
+
+        elif first_level_folder == PARSING_RULES_DIR and not (
+            path.stem == path.parent.name and path.suffix in {".yml", ".xif"}
+        ):
+            raise InvalidXSIAMParsingRuleFileName
 
 
 def _validate_image_file_name(image_name: str):
@@ -432,7 +468,7 @@ def validate(
         return False
 
 
-@app.command(name="validate")
+@app.command(name="validate", context_settings={"help_option_names": ["-h", "--help"]})
 def validate_paths(
     paths: Annotated[
         List[Path], typer.Argument(exists=True, file_okay=True, dir_okay=True)
@@ -466,7 +502,9 @@ def validate_paths(
         raise typer.Exit(1)
 
 
-@app.command(name="validate-all")
+@app.command(
+    name="validate-all", context_settings={"help_option_names": ["-h", "--help"]}
+)
 def validate_all(
     content_path: Annotated[Path, typer.Argument(dir_okay=True, file_okay=False)],
     skip_depth_one_file: bool = False,

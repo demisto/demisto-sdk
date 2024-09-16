@@ -28,14 +28,18 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
+    create_classifier_object,
+    create_integration_object,
     create_pack_object,
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
 def content_items_to_node_ids(
-    content_items_dict: Dict[ContentType, List[str]]
+    content_items_dict: Dict[ContentType, List[str]],
 ) -> Set[str]:
     """A helper method that converts a dict of content items to a set of their node ids."""
     return {
@@ -280,7 +284,7 @@ class PackRelationshipsVerifier:
 
 
 class TestParsersAndModels:
-    def test_classifier_parser_below_min_marketplace_version(self, pack: Pack):
+    def test_classifier_parser_below_min_marketplace_version(self):
         """
         Given:
             - A pack with a classifier.
@@ -294,13 +298,11 @@ class TestParsersAndModels:
             ClassifierParser,
         )
 
-        classifier = pack.create_classifier(
-            "TestClassifier", load_json("classifier.json")
-        )
-        classifier.update({"toVersion": "5.9.9"})
-        classifier_path = Path(classifier.path)
-        with pytest.raises(NotAContentItemException):
-            ClassifierParser(classifier_path, list(MarketplaceVersions))
+        with ChangeCWD(REPO.path):
+            classifier = create_classifier_object(paths=["toVersion"], values=["5.9.9"])
+            classifier_path = Path(classifier.path)
+            with pytest.raises(NotAContentItemException):
+                ClassifierParser(classifier_path, list(MarketplaceVersions))
 
     def test_classifier_parser(self, pack: Pack):
         """
@@ -696,7 +698,7 @@ class TestParsersAndModels:
         ContentItemModelVerifier.run(
             model,
             expected_id="urlRep",
-            expected_name="URL",
+            expected_name="urlRep",
             expected_path=indicator_type_path,
             expected_content_type=ContentType.INDICATOR_TYPE,
             expected_fromversion="5.5.0",
@@ -1272,7 +1274,14 @@ class TestParsersAndModels:
 
     @pytest.mark.parametrize(
         "raw_value, expected_value",
-        [("false", False), ("true", True), ("tRue", True), ("something", True)],
+        [
+            (False, False),
+            (True, True),
+            ("true", True),
+            ("false", False),
+            ("tRue", True),
+            ("faLse", False),
+        ],
     )
     def test_script_parser_set_autoupdate(self, raw_value, expected_value, pack: Pack):
         """
@@ -3001,3 +3010,86 @@ def test_get_related_text_file():
     """
     pack = create_pack_object(readme_text="This is a test")
     assert pack.readme.file_content == "This is a test"
+
+
+def test_convert_content_type_to_rn_header_and_from_release_note_header():
+    """
+    Given:
+        - A ContentType enum value, such as ContentType.MAPPER, ContentType.PREPROCESS_RULE, or ContentType.TRIGGER.
+    When:
+        - Calling convert_content_type_to_rn_header(content_type) with the ContentType enum value.
+        - Calling from_release_note_header(header) with the generated header string.
+    Then:
+        - Assert that the ContentType enum value returned by from_release_note_header(header) matches the original ContentType enum value.
+    """
+    from demisto_sdk.commands.content_graph.common import ContentType
+
+    for content_type in ContentType:
+        if content_type in (
+            ContentType.BASE_CONTENT,
+            ContentType.BASE_NODE,
+            ContentType.BASE_PLAYBOOK,
+            ContentType.COMMAND_OR_SCRIPT,
+            ContentType.COMMAND,
+        ):
+            continue
+        assert content_type == ContentType.convert_header_to_content_type(
+            content_type.convert_content_type_to_rn_header
+        )
+
+
+@pytest.mark.parametrize(
+    "pack_support, integration_support, expected_support",
+    [
+        ("pack_support", "integration_support", "integration_support"),
+        ("pack_support", "", "pack_support"),
+        ("", "integration_support", "integration_support"),
+    ],
+)
+def test_support_attribute_in_integration_object(
+    pack_support, integration_support, expected_support
+):
+    """
+    Given:
+        - A pack support level and an integration support level.
+    When:
+        - Creating an Integration object with the given support levels.
+    Then:
+        - Ensure that the support attribute of the Integration object is set to the expected support level, e.g., the integration support level if it is not an empty string, or the pack support level otherwise.
+    """
+    with ChangeCWD(REPO.path):
+        test_integration = create_integration_object(
+            paths=["supportlevelheader"],
+            values=[integration_support],
+            pack_info={"support": pack_support},
+        )
+        assert test_integration.support == expected_support
+
+
+def test_layout_parser_group():
+    """
+    Ensures that the group attribute has a default value in Threat Intel report layouts. If the group is an empty string, it will be set to "incident" (the default value in all OOTB Threat Intel reports).
+    This is important because the server leaves the group empty by default when these layouts are created in the UI, but we use it.
+
+    Given:
+        - A layout definition ID and an expected group.
+    When:
+        - Creating a layout object with the given definition ID and an empty group.
+    Then:
+        - Ensure that the group attribute of the Layout object is set to the expected group.
+    """
+    from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
+
+    pack = REPO.create_pack("TestPack")
+    layout = pack.create_layoutcontainer(
+        "TestLayoutscontainer",
+        content={
+            "id": "123",
+            "name": "testLayout",
+            "group": "",
+            "definitionId": "ThreatIntelReport",
+        },
+    )
+    layout_path = Path(layout.path)
+    layout_parser_instance = LayoutParser(layout_path, list(MarketplaceVersions))
+    assert layout_parser_instance.group == "incident"

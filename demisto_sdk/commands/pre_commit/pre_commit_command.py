@@ -55,7 +55,6 @@ INTEGRATIONS_BATCH = 300
 
 
 class PreCommitRunner:
-
     original_hook_id_to_generated_hook_ids: Dict[str, GeneratedHooks] = {}
 
     @staticmethod
@@ -82,17 +81,17 @@ class PreCommitRunner:
 
         for hook_id in hooks.copy():
             if hook_id in custom_hooks_to_classes:
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = custom_hooks_to_classes[hook_id](
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                    custom_hooks_to_classes[
+                        hook_id
+                    ](**hooks.pop(hook_id), context=pre_commit_context).prepare_hook()
+                )
             elif hook_id.endswith("in-docker"):
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = DockerHook(
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                    DockerHook(
+                        **hooks.pop(hook_id), context=pre_commit_context
+                    ).prepare_hook()
+                )
             else:
                 # this is used to handle the mode property correctly even for non-custom hooks which do not require
                 # special preparation
@@ -329,9 +328,9 @@ class PreCommitRunner:
         PreCommitRunner.prepare_hooks(pre_commit_context)
 
         if pre_commit_context.all_files:
-            pre_commit_context.precommit_template[
-                "exclude"
-            ] += f"|{join_files(exclude_files or set())}"
+            pre_commit_context.precommit_template["exclude"] += (
+                f"|{join_files(exclude_files or set())}"
+            )
         else:
             pre_commit_context.precommit_template["files"] = join_files(
                 pre_commit_context.files_to_run
@@ -570,7 +569,6 @@ def pre_commit_manager(
             pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
         else:
             pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
-
     if pre_commit_template_path and not pre_commit_template_path.exists():
         logger.error(
             f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
@@ -591,6 +589,7 @@ def pre_commit_manager(
         docker_image,
         pre_commit_template_path=pre_commit_template_path,
     )
+
     return PreCommitRunner.prepare_and_run(
         pre_commit_context,
         verbose,
@@ -654,6 +653,7 @@ def preprocess_files(
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files().union(staged_files)
+    contribution_flow = os.getenv("CONTRIB_BRANCH")
     if input_files:
         raw_files = set(input_files)
     elif staged_only:
@@ -662,12 +662,25 @@ def preprocess_files(
         raw_files = git_util._get_all_changed_files(prev_version)
         if not commited_only:
             raw_files = raw_files.union(staged_files)
+        if contribution_flow:
+            """
+            If this command runs on a build triggered by an external contribution PR,
+            the relevant modified files initially have an "untracked" status in git.
+            They are staged by Utils/update_contribution_pack_in_base_branch.py (Infra) which runs before pre-commit is triggered,
+            so that pre-commit hooks can detect and run on said files.
+            See CIAC-10968 for more info.
+            """
+            logger.info(
+                "\n[cyan]CONTRIB_BRANCH environment variable found, running pre-commit in contribution flow "
+                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
+            )
     elif all_files:
         raw_files = all_git_files
     else:
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."
         )
+
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():

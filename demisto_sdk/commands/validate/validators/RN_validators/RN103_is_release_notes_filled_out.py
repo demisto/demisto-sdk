@@ -38,7 +38,9 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
         """
         return re.sub(r"<!--.*?-->", "", release_notes_comments, flags=re.DOTALL)
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -46,13 +48,16 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not (
-                rn_stripped_content := self.strip_exclusion_tag(
-                    content_item.release_note.file_content
+            if content_item.release_note.exist
+            and (
+                not (
+                    rn_stripped_content := self.strip_exclusion_tag(
+                        content_item.release_note.file_content
+                    )
                 )
-            )
-            or any(
-                note in rn_stripped_content
-                for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+                or any(
+                    note in rn_stripped_content
+                    for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+                )
             )
         ]

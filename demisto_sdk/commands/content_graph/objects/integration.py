@@ -199,7 +199,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         return False
 
     def save(self):
-        super().save()
+        super().save(fields_to_exclude=["params"])
         data = self.data
         data["script"]["commands"] = [command.to_raw_dict for command in self.commands]
         data["configuration"] = [param.dict(exclude_none=True) for param in self.params]

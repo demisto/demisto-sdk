@@ -44,7 +44,6 @@ class IncidentTypeValidator(ContentEntityValidator):
             is_incident_type__valid = all(
                 [
                     is_incident_type__valid,
-                    self.is_id_equals_name(),
                     self.is_including_int_fields(),
                     self.is_valid_playbook_id(),
                 ]
@@ -58,14 +57,6 @@ class IncidentTypeValidator(ContentEntityValidator):
             bool. Whether the version is valid or not.
         """
         return super()._is_valid_version()
-
-    def is_id_equals_name(self) -> bool:
-        """Check whether the incident Type ID is equal to its name.
-
-        Returns:
-            bool. Whether the file id equals to its name
-        """
-        return super()._is_id_equals_name("incident_type")
 
     @error_codes("IF110")
     def is_changed_from_version(self) -> bool:

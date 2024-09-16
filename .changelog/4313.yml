@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where **format** did not work with private github repositories.
-  type: fix
-pr_number: 4313

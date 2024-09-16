@@ -418,7 +418,6 @@ class CustomBaseChecker(BaseChecker):
                         if command in self.commands:
                             self.commands.remove(command)
                         if not self.test_module_implemented and command == TEST_MODULE:
-
                             self.test_module_implemented = True
 
             # for if command in ('command1','command2')
@@ -505,7 +504,6 @@ class CustomBaseChecker(BaseChecker):
         # In case of a formatted string input
         if isinstance(comp_with, astroid.JoinedStr):
             for value in comp_with.values:
-
                 # In a case of formatted string with a variable
                 if isinstance(value, astroid.FormattedValue):
                     infered.extend(_infer_single_var(value.value))

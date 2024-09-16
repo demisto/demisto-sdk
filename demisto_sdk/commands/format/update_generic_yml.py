@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import click
 
 from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION,
     ENTITY_TYPE_TO_DIR,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION,
@@ -366,11 +367,15 @@ class BaseUpdateYML(BaseUpdate):
 
         self.data["deprecated"] = True
 
-        if self.data.get("tests") or file_type in (INTEGRATION, PLAYBOOK, SCRIPT):
+        if self.data.get("tests") or file_type in (
+            INTEGRATION,
+            BETA_INTEGRATION,
+            PLAYBOOK,
+            SCRIPT,
+        ):
             self.data["tests"] = [NO_TESTS_DEPRECATED]
 
-        if file_type in [INTEGRATION, PLAYBOOK]:
-
+        if file_type in (INTEGRATION, BETA_INTEGRATION, PLAYBOOK):
             description_field = "description"
 
             if file_type == INTEGRATION:

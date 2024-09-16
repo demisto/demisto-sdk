@@ -253,7 +253,7 @@ jobs:
         run: |
           # Run only a specific validation to make sure validate is triggered successfully in demisto-sdk pre-commit
           cd content
-          echo -e "[validate]\nrun_specific_validations=BA101" > .demisto-sdk-conf
+          echo -e '[use_git]\nselect = ["BA100"]\n[path_based_validations]\nselect = ["BA100"]' > validation_config.toml
 
       - name: run pre-commit on changed files
         timeout-minutes: 60
@@ -284,7 +284,7 @@ jobs:
           cd content
           rm -rf .pre-commit-config_template.yaml
           rm -f Tests/docker_native_image_config.json
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
 
       - name: Upload artifacts
         if: always()
@@ -304,7 +304,7 @@ jobs:
 
       - name: Check whether validate_content_path changed
         id: files-changed
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v45
         with:
           files: |
             demisto_sdk/scripts/validate_content_path.py

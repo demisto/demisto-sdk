@@ -13,37 +13,23 @@ from demisto_sdk.commands.validate.validators.LO_validators.LO107_is_valid_type 
     "paths, values, expected_field_error_messages",
     [
         pytest.param(
-            ["detailsV2.tabs[0].type"],
-            ["canvas"],
-            ["canvas"],
-            id="Case1: Single invalid type in first tab",
-        ),
-        pytest.param(
             ["detailsV2.tabs[1].sections[0].type"],
             ["evidence"],
             ["evidence"],
-            id="Case2: Single invalid type in a section of the second tab",
-        ),
-        pytest.param(
-            ["detailsV2.tabs[1].sections[0].type", "detailsV2.tabs[0].type"],
-            ["evidence", "canvas"],
-            ["canvas", "evidence"],
-            id="Case3: Multiple invalid types in different tabs",
-        ),
+            id="Single invalid type in a section of the second tab",
+        )
     ],
 )
-def test_IsValidTypeValidator_is_valid_failure(
+def test_IsValidTypeValidator_obtain_invalid_content_items_failure(
     paths: List[str],
     values: List[str],
     expected_field_error_messages: List[str],
 ):
     """
     Given
-        Case1: a layout object with a single invalid type in the first tab,
-        Case2: a layout object with a single invalid type in a section of the second tab,
-        Case3: a layout object with multiple invalid types in different tabs,
+        Case: a layout object with a single invalid type in a section of the second tab,
     When
-        the IsValidTypeValidator's is_valid method is called with the layout object.
+        the IsValidTypeValidator's obtain_invalid_content_items method is called with the layout object.
     Then
         it should return a list of results with one failure message that matches the expected error message.
     Note
@@ -57,7 +43,6 @@ def test_IsValidTypeValidator_is_valid_failure(
             "detailsV2.tabs[1].sections[3].type",
             "detailsV2.tabs[4].type",
             "detailsV2.tabs[5].type",
-            "detailsV2.tabs[6].type",
         ]
     )
     values.extend(
@@ -66,11 +51,10 @@ def test_IsValidTypeValidator_is_valid_failure(
             "dynamic",
             "dynamic",
             "dynamic",
-            "dynamic",
         ]
     )
     content_items = create_layout_object(paths=paths, values=values)
-    results = IsValidTypeValidator().is_valid([content_items])
+    results = IsValidTypeValidator().obtain_invalid_content_items([content_items])
     assert len(results) == 1  # one failure
     assert (
         results[0].message
@@ -78,12 +62,12 @@ def test_IsValidTypeValidator_is_valid_failure(
     )
 
 
-def test_IsValidTypeValidator_is_valid_success():
+def test_IsValidTypeValidator_obtain_invalid_content_items_success():
     """
     Given
         a layout object created by the create_layout_object function,
     When
-        the IsValidTypeValidator's is_valid method is called with the layout object,
+        the IsValidTypeValidator's obtain_invalid_content_items method is called with the layout object,
     Then
         it should return no failures, indicating that the layout object is valid.
     Note
@@ -96,11 +80,12 @@ def test_IsValidTypeValidator_is_valid_success():
             "detailsV2.tabs[1].sections[3].type",
             "detailsV2.tabs[4].type",
             "detailsV2.tabs[5].type",
-            "detailsV2.tabs[6].type",
         ],
-        values=["dynamic", "dynamic", "dynamic", "dynamic", "dynamic"],
+        values=["dynamic", "dynamic", "dynamic", "dynamic"],
     )
-    assert not IsValidTypeValidator().is_valid([valid_layout_object])  # no failures
+    assert not IsValidTypeValidator().obtain_invalid_content_items(
+        [valid_layout_object]
+    )  # no failures
 
 
 def test_IsValidTypeValidator_returns_no_failures_after_removal_of_MarketplaceV2():
@@ -110,7 +95,7 @@ def test_IsValidTypeValidator_returns_no_failures_after_removal_of_MarketplaceV2
     When
         MarketplaceV2 in the marketplaces of the layout object,
     Then
-        the IsValidTypeValidator's is_valid method should initially return failures,
+        the IsValidTypeValidator's obtain_invalid_content_items method should initially return failures,
         but after the removal of MarketplaceV2, it should return no failures, indicating that the layout object is now valid.
     Note
         The create_layout_object() function is used to create a layout object.
@@ -118,12 +103,12 @@ def test_IsValidTypeValidator_returns_no_failures_after_removal_of_MarketplaceV2
     """
     layout_object = create_layout_object()
 
-    assert IsValidTypeValidator().is_valid(
+    assert IsValidTypeValidator().obtain_invalid_content_items(
         [layout_object]
     ), "Expected initial validation to fail due to presence of MarketplaceV2"
 
     layout_object.marketplaces.remove(MarketplaceVersions.MarketplaceV2)
 
-    assert not IsValidTypeValidator().is_valid(
+    assert not IsValidTypeValidator().obtain_invalid_content_items(
         [layout_object]
     ), "Expected validation to pass after removal of MarketplaceV2"

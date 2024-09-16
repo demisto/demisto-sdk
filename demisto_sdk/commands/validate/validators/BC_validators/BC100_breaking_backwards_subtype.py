@@ -28,7 +28,7 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     old_subtype: ClassVar[dict] = {}
 
-    def is_valid(
+    def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:

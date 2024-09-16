@@ -11,7 +11,6 @@ yaml = YAML_Handler()
 
 
 class Playbook(YAML):
-
     default_assets_dir = "assets"
 
     def __init__(self, tmpdir: Path, name, repo, is_test_playbook: bool = False):
@@ -32,7 +31,7 @@ class Playbook(YAML):
             self.create_default_playbook()
         else:
             # build test playbook
-            self.create_default_test_playbook()
+            self.create_default_test_playbook(name=name)
 
     @property
     def yml(self):

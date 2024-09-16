@@ -689,6 +689,39 @@ class TestDownloadExistingFile:
             code_data = code_file.read()
         assert "# TEST" in code_data
 
+    def test_download_and_format_existing_file(self, tmp_path):
+        """
+        Given: A remote Script with differernt comment.
+        When: Downloading with force=True and run_format=True.
+        Then: Assert the file is merged and the remote comment is formatted is in the new file.
+        """
+        env = Environment(tmp_path)
+        downloader = Downloader(force=True, run_format=True)
+        script_file_name = env.SCRIPT_CUSTOM_CONTENT_OBJECT["file_name"]
+        script_file_path = env.SCRIPT_INSTANCE_PATH / "TestScript.yml"
+
+        script_data = get_file_details(
+            file_content=env.SCRIPT_CUSTOM_CONTENT_OBJECT["file"].getvalue(),
+            full_file_path=str(env.CUSTOM_CONTENT_SCRIPT_PATH),
+        )
+
+        # The downloaded yml contains some other comment now.
+        script_data["comment"] = "some other comment"
+
+        env.SCRIPT_CUSTOM_CONTENT_OBJECT["data"] = script_data
+
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={
+                script_file_name: env.SCRIPT_CUSTOM_CONTENT_OBJECT
+            },
+            existing_pack_structure=env.PACK_CONTENT,
+            output_path=env.PACK_INSTANCE_PATH,
+        )
+        assert script_file_path.is_file()
+        data = get_yaml(script_file_path)
+        # Make sure the new comment is formatted and a '.' was added.
+        assert data["comment"] == "some other comment."
+
     def test_download_existing_no_force_skip(self, tmp_path):
         """
         Given: A Downloader object
@@ -1499,3 +1532,30 @@ def test_invalid_regex_error(mocker):
         logger_error.call_args_list,
         "Error: Invalid regex pattern provided: '*invalid-regex*'.",
     )
+
+
+def test_download_with_subplaybook(mocker):
+    """
+    Given: A downloader object.
+    When: Downloading a custom playbook with task of subplaybook.
+    Then: Ensure that "playbookId" attribute of the sub-playbook task is replaced with "playbookName" attribute
+    """
+    playbook_path = (
+        TESTS_DATA_FOLDER / "custom_content" / "playbook-task_with_sub-playbook.yml"
+    )
+
+    filtered_custom_content_objects = {
+        "playbook-task_with_sub-playbook": {
+            "id": "1111-111-111",
+            "name": "task_with_sub-playbook",
+            "type": "playbook",
+            "data": get_yaml(playbook_path),
+        }
+    }
+    format_playbook_task(
+        filtered_custom_content_objects["playbook-task_with_sub-playbook"]
+    )
+    returned_playbookName_value = filtered_custom_content_objects[
+        "playbook-task_with_sub-playbook"
+    ]["data"]["tasks"]["1"]["task"]["playbookName"]
+    assert returned_playbookName_value == "test2"

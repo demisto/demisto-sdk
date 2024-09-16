@@ -6,12 +6,13 @@ from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    FixResult,
     ValidationResult,
 )
 
 ContentTypes = Dashboard
 
-FIELDS_TO_EXCLUDE = [
+FIELDS_TO_EXCLUDE = {
     "system",
     "isCommon",
     "shared",
@@ -20,26 +21,31 @@ FIELDS_TO_EXCLUDE = [
     "vcShouldIgnore",
     "commitMessage",
     "shouldCommit",
-]
+}
 
 
 class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.ADDED]
     error_code = "DA100"
     description = "Validate that the dashboard excludes all the unnecessary fields."
-    rationale = "The Dashboard should contains only the required fields."
+    rationale = "The Dashboard should contain only the required fields."
     dashboard_error_message = "The '{0}' fields need to be removed from {1}."
     widgets_error_message = (
         "The '{0}' fields need to be removed from {1} Widget listed under {2}."
     )
+    fix_message = "Removed all unnecessary fields from {}: " + ", ".join(
+        FIELDS_TO_EXCLUDE
+    )
     related_field = "layout"
-    is_auto_fixable = False
+    is_auto_fixable = True
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         results = []
-        error_messages = []
         for content_item in content_items:
-            invalid_dashboard_fields = self.dashboard_contains_forbidden_fields(
+            error_messages = []
+            invalid_dashboard_fields = FIELDS_TO_EXCLUDE.intersection(
                 content_item.data_dict
             )
             invalid_widgets_fields = self.widgets_contain_forbidden_fields(content_item)
@@ -71,25 +77,26 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
                 )
         return results
 
-    @staticmethod
-    def dashboard_contains_forbidden_fields(dashboard) -> List[str]:
+    def widgets_contain_forbidden_fields(self, dashboard: ContentTypes) -> dict:
+        widgets = [item.get("widget", {}) for item in dashboard.layout]
+        return {
+            widget.get("id"): fields
+            for widget in widgets
+            if (fields := FIELDS_TO_EXCLUDE.intersection(widget))
+        }
 
-        invalid_fields = [
-            field for field in FIELDS_TO_EXCLUDE if dashboard.get(field) is not None
-        ]
-        return invalid_fields
+    def fix(self, content_item: Dashboard) -> FixResult:
+        for field in FIELDS_TO_EXCLUDE:
+            content_item.data_dict.pop(field, None)
 
-    def widgets_contain_forbidden_fields(self, dashboard) -> dict:
-        widgets = self.get_widgets_from_dashboard(dashboard)
-        invalid_fields = dict()
-        for widget in widgets:
-            fields = [
-                field for field in FIELDS_TO_EXCLUDE if widget.get(field) is not None
-            ]
-            if fields:
-                invalid_fields[widget.get("id")] = fields
-        return invalid_fields
+        for item in content_item.layout:
+            new_item = item.get("widget", {})
+            for field in FIELDS_TO_EXCLUDE:
+                new_item.pop(field, None)
+            item["widget"] = new_item
 
-    @staticmethod
-    def get_widgets_from_dashboard(dashboard: ContentTypes) -> list:
-        return [item.get("widget") for item in dashboard.layout]
+        return FixResult(
+            validator=self,
+            message=self.fix_message.format(content_item.name),
+            content_object=content_item,
+        )

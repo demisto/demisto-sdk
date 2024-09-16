@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-
+from google.cloud import artifactregistry_v1
 import docker
 import requests
 import urllib3
@@ -57,6 +57,10 @@ class DockerException(Exception):
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     logger.info(
         "################################################# init_global_docker_client | sanity check "
+    )
+    client = artifactregistry_v1.ArtifactRegistryClient()
+    logger.info(
+        "################################################# init_global_docker_client | {client=} "
     )
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:

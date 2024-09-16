@@ -27,7 +27,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
 )
-from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
@@ -205,33 +204,14 @@ class DockerBase:
 
         docker_client = init_global_docker_client(log_prompt="pull_image")
 
-        artifactory_client = artifactregistry_v1.ArtifactRegistryClient()
-        logger.info(
-            f"################################################# pull_image | {artifactory_client=}")
-        logger.info(
-            f"################################################# pull_image | {DOCKER_REGISTRY_URL=}")
-        base_request = parse_docker_io(DOCKER_REGISTRY_URL)
-        logger.info(
-            f"################################################# pull_image | {base_request=}")
-
-
-        try:
-            # Call the API to list packages
-            packages_iterator = artifactory_client.list_packages(
-                request={"parent": base_request})
-
-            logger.info(
-                f"################################################# pull_image | {packages_iterator=}")
-
-            # Iterate through the retrieved packages and print their names
-            for package in packages_iterator:
-                logger.info(
-                    f"################################################# pull_image | Package Name: {package.name}")
-
-        except Exception as e:
-            logger.info(f"An error occurred 1: {e}")
-
-
+        # artifactory_client = artifactregistry_v1.ArtifactRegistryClient()
+        # logger.info(
+        #     f"################################################# pull_image | {artifactory_client=}")
+        # logger.info(
+        #     f"################################################# pull_image | {DOCKER_REGISTRY_URL=}")
+        # base_request = parse_docker_io(DOCKER_REGISTRY_URL)
+        # logger.info(
+        #     f"################################################# pull_image | {base_request=}")
 
         try:
             return docker_client.images.get(image)
@@ -651,6 +631,7 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
+    from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
     logger.info(f"Get python version from image {image=}")
 
     if not image:

@@ -1440,10 +1440,6 @@ ERROR_CODE: Dict = {
         "code": "GR102",
         "related_field": "",
     },
-    "using_unknown_content": {
-        "code": "GR103",
-        "related_field": "",
-    },
     "multiple_packs_with_same_display_name": {
         "code": "GR104",
         "related_field": "",
@@ -4281,11 +4277,6 @@ class Errors:
             f"The {deprecated_item_type} '{deprecated_item}' is deprecated but used in the following content item: "
             f"{using_deprecated_item}."
         )
-
-    @staticmethod
-    @error_code_decorator
-    def using_unknown_content(content_name: str, unknown_content_names: Set[str]):
-        return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
 
     @staticmethod
     @error_code_decorator

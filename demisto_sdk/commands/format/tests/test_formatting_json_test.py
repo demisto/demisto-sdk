@@ -20,7 +20,6 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
 )
-from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
@@ -1438,7 +1437,6 @@ class TestFormattingReport:
         LayoutBaseFormat,
         ReportJSONFormat,
         WidgetJSONFormat,
-        ConnectionJSONFormat,
         ListsFormat,
         PreProcessRulesFormat,
     ]

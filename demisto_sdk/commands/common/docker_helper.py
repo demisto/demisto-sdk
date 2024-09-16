@@ -216,17 +216,27 @@ class DockerBase:
 
 
         try:
-            # Iterate through all images (packages) in the repository
-            for package in artifactory_client.list_packages(request={"parent": base_request}):
-                logger.info(
-                    f"################################################# pull_image | Package name: {package.name}")
+            request = artifactregistry_v1.GetTagRequest(
+                name=f"{base_request}/packages/demisto/python3:3.11.10.110725")
+            tag = artifactory_client.get_tag(request=request)
+            logger.info(
+                f"Tag found: {tag.name}, Version: {tag.version}, Annotations: {tag.annotations}")
 
-                # Fetch versions of each package (image tags in Docker terms)
-                for version in artifactory_client.list_versions(request={"parent": package.name}):
-                    logger.info(
-                        f"################################################# pull_image | Version: {version.name}, Description: {version.description}")
+        except Exception as e:
+            logger.info(f"An error occurred 1: {e}")
+
+
+        try:
+            request = artifactregistry_v1.GetTagRequest(
+                name=f"{base_request}/packages/python3:3.11.10.110725")
+            tag = artifactory_client.get_tag(request=request)
+            logger.info(
+                f"Tag found: {tag.name}, Version: {tag.version}, Annotations: {tag.annotations}")
+
         except Exception as e:
             logger.info(f"An error occurred 2: {e}")
+
+
 
         try:
             return docker_client.images.get(image)

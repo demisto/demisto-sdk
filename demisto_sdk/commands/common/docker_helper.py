@@ -213,16 +213,31 @@ class DockerBase:
         base_request = parse_docker_io(DOCKER_REGISTRY_URL)
         logger.info(
             f"################################################# pull_image | {base_request=}")
-        request = artifactregistry_v1.GetDockerImageRequest(
-            name=f"{base_request}/dockerImages/python3:3.11.10.111526",
-        )
-        logger.info(
-            f"################################################# pull_image | {request=}")
+
+        # request = artifactregistry_v1.GetDockerImageRequest(
+        #     name=f"{base_request}/dockerImages/python3:3.11.10.111526",
+        # )
+        # logger.info(
+        #     f"################################################# pull_image | {request=}")
 
         try:
-            docker_image = artifactory_client.get_docker_image(request=request)
+            # docker_image = artifactory_client.get_docker_image(request=request)
+            # logger.info(
+            #     f"################################################# pull_image | {docker_image=}")
+
+            list_docker_images = artifactory_client.list_docker_images(
+                parent=base_request)
             logger.info(
-                f"################################################# pull_image | {docker_image=}")
+                f"################################################# pull_image | {list_docker_images=}")
+
+            logger.info(
+                f"################################################# pull_image| Listing Docker images in repository...")
+            for image in list_docker_images:
+                logger.info(f"Image: {image.name}")
+                logger.info(f"  URI: {image.uri}")
+                logger.info(f"  Tags: {image.tags}")
+                logger.info(f"  Created Date: {image.create_time}")
+
 
             return docker_client.images.get(image)
 

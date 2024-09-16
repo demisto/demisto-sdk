@@ -24,7 +24,6 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
 )
-from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_correlation_rule import CorrelationRuleYMLFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
@@ -78,7 +77,6 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "pythonfile": PythonFileFormat,
     "report": ReportJSONFormat,
     "testscript": ScriptYMLFormat,
-    "canvas-context-connections": ConnectionJSONFormat,
     "description": DescriptionFormat,
     "genericfield": GenericFieldJSONFormat,
     "generictype": GenericTypeJSONFormat,
@@ -425,30 +423,30 @@ def format_output(
     skipped_list = []
     if format_res and validate_res:
         if validate_res == VALIDATE_RES_SKIPPED_CODE:
-            error_list.append(f"Format Status   on file: {input} - Failed")
+            error_list.append(f"Format Status on file: {input} - Failed")
             skipped_list.append(f"Validate Status on file: {input} - Skipped")
         elif validate_res == VALIDATE_RES_FAILED_CODE:
-            error_list.append(f"Format Status   on file: {input} - Failed")
+            error_list.append(f"Format Status on file: {input} - Failed")
         else:
-            error_list.append(f"Format Status   on file: {input} - Failed")
+            error_list.append(f"Format Status on file: {input} - Failed")
             error_list.append(f"Validate Status on file: {input} - Failed")
     elif format_res and not validate_res:
-        error_list.append(f"Format Status   on file: {input} - Failed")
+        error_list.append(f"Format Status on file: {input} - Failed")
         info_list.append(f"Validate Status on file: {input} - Success")
     elif not format_res and validate_res:
         if validate_res == VALIDATE_RES_SKIPPED_CODE:
-            info_list.append(f"Format Status   on file: {input} - Success")
+            info_list.append(f"Format Status on file: {input} - Success")
             skipped_list.append(f"Validate Status on file: {input} - Skipped")
         elif validate_res == VALIDATE_RES_FAILED_CODE:
-            info_list.append(f"Format Status   on file: {input} - Success")
+            info_list.append(f"Format Status on file: {input} - Success")
         else:
-            info_list.append(f"Format Status   on file: {input} - Success")
+            info_list.append(f"Format Status on file: {input} - Success")
             error_list.append(f"Validate Status on file: {input} - Failed")
             error_list.append(
                 f"For more information run: `demisto-sdk validate -i {input}`"
             )
     elif not format_res and not validate_res:
-        info_list.append(f"Format Status   on file: {input} - Success")
+        info_list.append(f"Format Status on file: {input} - Success")
         info_list.append(f"Validate Status on file: {input} - Success")
     return info_list, error_list, skipped_list
 

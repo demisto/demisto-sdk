@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue in RM114 where **validate** would not catch problematic images when their file type was not `png` or when their declaration within the README had additional characters present in it.
-  type: fix
-pr_number: 4512

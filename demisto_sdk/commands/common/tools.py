@@ -1945,11 +1945,6 @@ def find_type(
         return FileType.MAPPER
 
     if (
-        file_type == "json" or path.lower().endswith(".json")
-    ) and "canvasContextConnections" in _dict:
-        return FileType.CONNECTION
-
-    if (
         ("layout" in _dict or "kind" in _dict)
         and ("kind" in _dict or "typeId" in _dict)
         and Path(path).suffix == ".json"

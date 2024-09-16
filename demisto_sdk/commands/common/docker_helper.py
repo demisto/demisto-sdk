@@ -106,25 +106,26 @@ def docker_login(docker_client) -> bool:
     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
     if docker_user and docker_pass:
         try:
-            if os.getenv("CONTENT_GITLAB_CI") or is_custom_registry():
+            if is_custom_registry():
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
-                    # registry="https://index.docker.io/v1",
-                    registry=DOCKER_REGISTRY_URL,
+                    registry="https://index.docker.io/v1",
+                    # registry=DOCKER_REGISTRY_URL,
                 )
                 ping = docker_client.ping()
-                # logger.info(f"Successfully connected to dockerhub, login {ping=}")
                 logger.info(
-                    f"Successfully log in to {DOCKER_REGISTRY_URL}, login {ping=}")
+                    f"Successfully connected to dockerhub, login {ping=}")
+                # logger.info(
+                #     f"Successfully log in to {DOCKER_REGISTRY_URL}, login {ping=}")
                 return ping
             else:
                 # login to custom docker registry
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
-                    # registry=DOCKER_REGISTRY_URL,
-                    registry="https://index.docker.io/v1"
+                    registry=DOCKER_REGISTRY_URL,
+                    # registry="https://index.docker.io/v1"
                 )
                 ping = docker_client.ping()
                 logger.info(
@@ -745,9 +746,5 @@ def get_location_path(url: str):
     location = parts[0]
     project_repo_image = parts[1]
     project_id, registry_id = project_repo_image.split('/')
-
-    project_id = "xdr-shared-services-prod-eu-01"
-    location = "europe-west4"
-    registry_id = "xdr-docker-hub-virtual"
 
     return f"projects/{project_id}/locations/{location}"

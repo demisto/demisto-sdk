@@ -223,10 +223,10 @@ class DockerBase:
             logger.info(f"docker {image=} not found locally, pulling")
             ret = docker_client.images.pull(image)
             logger.info(f"pulled docker {image=} successfully")
-            return re
+            return ret
 
     @staticmethod
-    def get_latest_docker_image_tag(image: str):
+    def get_latest_docker_image_tag(image: str) -> Version:
         """
         Get the latest tag for a given Docker image.
         Args:
@@ -243,11 +243,11 @@ class DockerBase:
             else:
                 return Version("0.0.0.0")
         except docker.errors.NotFound:
-            return f"Error: The image '{image}' is not found."
+            raise DockerException(f"Error: The image '{image}' is not found.")
         except docker.errors.APIError as e:
-            return f"API error occurred: {e}"
+            raise DockerException(f"API error occurred: {e}")
         except Exception as e:
-            return f"An unexpected error occurred: {e}"
+            raise DockerException(f"An unexpected error occurred: {e}")
 
     @staticmethod
     def is_image_available(

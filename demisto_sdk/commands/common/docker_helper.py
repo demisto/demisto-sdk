@@ -214,16 +214,49 @@ class DockerBase:
         logger.info(
             f"################################################# pull_image | {base_request=}")
 
-        request = artifactregistry_v1.GetDockerImageRequest(
-            name=f"{base_request}/dockerImages/demisto/python3:3.11.10.110725",
-        )
-        logger.info(
-            f"################################################# pull_image | {request=}")
         try:
-            docker_image = artifactory_client.get_docker_image(request=request)
+            request = artifactregistry_v1.GetDockerImageRequest(
+                name=f"{base_request}/dockerImages/devdemisto/python3:3.11.10.110725",
+            )
             logger.info(
-                f"################################################# pull_image | {docker_image=}")
+                f"################################################# pull_image 1 | {request=}")
 
+            docker_image = artifactory_client.get_docker_image(request=request)
+        except Exception as e:
+            logger.info(f"An error occurred 1: {e}")
+
+
+
+
+
+
+        try:
+            request = artifactregistry_v1.GetDockerImageRequest(
+                name=f"{DOCKER_REGISTRY_URL}/library/python3:3.11.10.110725",
+            )
+            logger.info(
+                f"################################################# pull_image 2 | {request=}")
+
+            docker_image = artifactory_client.get_docker_image(request=request)
+        except Exception as e:
+            logger.info(f"An error occurred 2: {e}")
+
+        try:
+            request = artifactregistry_v1.ListArtifactsRequest(
+                parent=base_request)
+            artifacts = artifactory_client.list_artifacts(request=request)
+            logger.info(
+                f"################################################# pull_image 3 | {request[0]=}")
+            for artifact in artifacts:
+                logger.info(artifact.name)
+            logger.info(
+                f"################################################# pull_image 3 | {request=}")
+
+            docker_image = artifactory_client.get_docker_image(request=request)
+        except Exception as e:
+            logger.info(f"An error occurred 3: {e}")
+
+        try:
             return docker_client.images.get(image)
 
         except docker.errors.ImageNotFound:

@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-from google.cloud import artifactregistry_v1
+# from google.cloud import artifactregistry_v1
 import docker
 import requests
 import urllib3
@@ -107,11 +107,12 @@ def docker_login(docker_client) -> bool:
     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
     if docker_user and docker_pass:
         try:
-            if not is_custom_registry():
+            if os.getenv("CONTENT_GITLAB_CI") or is_custom_registry():
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
-                    registry="https://index.docker.io/v1",
+                    # registry="https://index.docker.io/v1",
+                    registry=DOCKER_REGISTRY_URL,
                 )
                 ping = docker_client.ping()
                 logger.info(f"Successfully connected to dockerhub, login {ping=}")
@@ -121,7 +122,8 @@ def docker_login(docker_client) -> bool:
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
-                    registry=DOCKER_REGISTRY_URL,
+                    # registry=DOCKER_REGISTRY_URL,
+                    registry="https://index.docker.io/v1"
                 )
                 ping = docker_client.ping()
                 logger.info(

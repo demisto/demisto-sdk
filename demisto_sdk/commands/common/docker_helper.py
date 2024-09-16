@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-
+from google.cloud import artifactregistry_v1
 import docker
 import requests
 import urllib3
@@ -200,7 +200,17 @@ class DockerBase:
         """
         Get a local docker image, or pull it when unavailable.
         """
+        logger.info(
+            "################################################# pull_image")
+
         docker_client = init_global_docker_client(log_prompt="pull_image")
+
+        artifactory_client = artifactregistry_v1.ArtifactRegistryClient()
+        logger.info(
+            f"################################################# pull_image | {artifactory_client=}")
+        logger.info(
+            f"################################################# pull_image | {DOCKER_REGISTRY_URL=}")
+
         try:
             return docker_client.images.get(image)
 

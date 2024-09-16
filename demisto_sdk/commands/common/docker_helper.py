@@ -210,8 +210,20 @@ class DockerBase:
             f"################################################# pull_image | {artifactory_client=}")
         logger.info(
             f"################################################# pull_image | {DOCKER_REGISTRY_URL=}")
+        base_request = parse_docker_io(DOCKER_REGISTRY_URL)
+        logger.info(
+            f"################################################# pull_image | {base_request=}")
+        request = artifactregistry_v1.GetDockerImageRequest(
+            name=f"{base_request}/dockerImages/demisto/python3:3.11.10.111526",
+        )
+        logger.info(
+            f"################################################# pull_image | {request=}")
 
         try:
+            docker_image = artifactory_client.get_docker_image(request=request)
+            logger.info(
+                f"################################################# pull_image | {docker_image=}")
+
             return docker_client.images.get(image)
 
         except docker.errors.ImageNotFound:
@@ -219,6 +231,8 @@ class DockerBase:
             ret = docker_client.images.pull(image)
             logger.info(f"pulled docker {image=} successfully")
             return ret
+        except Exception as e:
+            logger.info(f"An error occurred: {e}")
 
     @staticmethod
     def is_image_available(
@@ -716,3 +730,16 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
             f"Failed to get python version from docker hub for image {image}: {e}"
         )
         raise
+
+
+def parse_docker_io(url: str):
+    parts = url.split('-docker.pkg.dev/')
+    location = parts[0]
+    project_repo_image = parts[1]
+    project_id, registry_id = project_repo_image.split('/')
+
+    project_id = "xdr-shared-services-prod-eu-01"
+    location = "europe-west4"
+    registry_id = "xdr-docker-hub-virtual"
+
+    return f"projects/{project_id}/locations/{location}/repositories/{registry_id}"

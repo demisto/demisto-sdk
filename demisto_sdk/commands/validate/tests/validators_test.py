@@ -19,9 +19,9 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -30,8 +30,8 @@ from demisto_sdk.commands.validate.config_reader import (
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
-    create_script_object,
     create_pack_object,
+    create_script_object,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter

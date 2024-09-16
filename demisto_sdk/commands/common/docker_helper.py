@@ -127,17 +127,19 @@ def docker_login(docker_client) -> bool:
     )
     if docker_user and docker_pass:
         try:
-            if not is_custom_registry():
+            if os.getenv("CONTENT_GITLAB_CI") or is_custom_registry():
                 logger.info(
                     "################################################# docker_login | not is_custom_registry() case"
                 )
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
-                    registry="https://index.docker.io/v1",
+                    registry=DOCKER_REGISTRY_URL,
+                    # registry="https://index.docker.io/v1",
                 )
                 ping = docker_client.ping()
-                logger.info(f"Successfully connected to dockerhub, login {ping=}")
+                logger.info(
+                    f"Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}")
                 return ping
             else:
                 logger.info(
@@ -147,12 +149,11 @@ def docker_login(docker_client) -> bool:
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,
-                    registry=DOCKER_REGISTRY_URL,
+                    registry="https: // index.docker.io/v1,
                 )
                 ping = docker_client.ping()
                 logger.info(
-                    f"Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}"
-                )
+                    f"Successfully connected to dockerhub, login {ping=}")
                 return ping
         except docker.errors.APIError:
             logger.info(f"Did not successfully log in to {DOCKER_REGISTRY_URL}")

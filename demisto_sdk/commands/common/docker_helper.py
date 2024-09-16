@@ -215,46 +215,20 @@ class DockerBase:
             f"################################################# pull_image | {base_request=}")
 
         try:
-            request = artifactregistry_v1.GetDockerImageRequest(
-                name=f"{base_request}/dockerImages/devdemisto/python3:3.11.10.110725",
-            )
             logger.info(
-                f"################################################# pull_image 1 | {request=}")
-
-            docker_image = artifactory_client.get_docker_image(request=request)
+                "################################################# pull_image | Get all repositores")
+            for repository in artifactory_client.list_repositories(parent=get_location_path(DOCKER_REGISTRY_URL)):
+                logger.info("Repository: ", repository.name)
         except Exception as e:
             logger.info(f"An error occurred 1: {e}")
 
-
-
-
-
-
         try:
-            request = artifactregistry_v1.GetDockerImageRequest(
-                name=f"{DOCKER_REGISTRY_URL}/library/python3:3.11.10.110725",
-            )
             logger.info(
-                f"################################################# pull_image 2 | {request=}")
-
-            docker_image = artifactory_client.get_docker_image(request=request)
+                "################################################# pull_image | Get all images")
+            for image in artifactory_client.list_packages(parent=base_request):
+                logger.info("Image: ", image, image.name)
         except Exception as e:
             logger.info(f"An error occurred 2: {e}")
-
-        try:
-            request = artifactregistry_v1.ListArtifactsRequest(
-                parent=base_request)
-            artifacts = artifactory_client.list_artifacts(request=request)
-            logger.info(
-                f"################################################# pull_image 3 | {request[0]=}")
-            for artifact in artifacts:
-                logger.info(artifact.name)
-            logger.info(
-                f"################################################# pull_image 3 | {request=}")
-
-            docker_image = artifactory_client.get_docker_image(request=request)
-        except Exception as e:
-            logger.info(f"An error occurred 3: {e}")
 
         try:
             return docker_client.images.get(image)
@@ -776,3 +750,16 @@ def parse_docker_io(url: str):
     registry_id = "xdr-docker-hub-virtual"
 
     return f"projects/{project_id}/locations/{location}/repositories/{registry_id}"
+
+
+def get_location_path(url: str):
+    parts = url.split('-docker.pkg.dev/')
+    location = parts[0]
+    project_repo_image = parts[1]
+    project_id, registry_id = project_repo_image.split('/')
+
+    project_id = "xdr-shared-services-prod-eu-01"
+    location = "europe-west4"
+    registry_id = "xdr-docker-hub-virtual"
+
+    return f"projects/{project_id}/locations/{location}"

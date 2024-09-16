@@ -214,19 +214,17 @@ class DockerBase:
         logger.info(
             f"################################################# pull_image | {base_request=}")
 
-        try:
-            logger.info(
-                "################################################# pull_image | Get all repositores")
-            for repository in artifactory_client.list_repositories(parent=get_location_path(DOCKER_REGISTRY_URL)):
-                logger.info("Repository: ", repository.name)
-        except Exception as e:
-            logger.info(f"An error occurred 1: {e}")
 
         try:
-            logger.info(
-                "################################################# pull_image | Get all images")
-            for image in artifactory_client.list_packages(parent=base_request):
-                logger.info("Image: ", image, image.name)
+            # Iterate through all images (packages) in the repository
+            for package in artifactory_client.list_packages(request={"parent": base_request}):
+                logger.info(
+                    f"################################################# pull_image | Package name: {package.name}")
+
+                # Fetch versions of each package (image tags in Docker terms)
+                for version in artifactory_client.list_versions(request={"parent": package.name}):
+                    logger.info(
+                        f"################################################# pull_image | Version: {version.name}, Description: {version.description}")
         except Exception as e:
             logger.info(f"An error occurred 2: {e}")
 

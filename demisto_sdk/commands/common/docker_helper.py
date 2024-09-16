@@ -106,7 +106,7 @@ def docker_login(docker_client) -> bool:
     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
     if docker_user and docker_pass:
         try:
-            if is_custom_registry():
+            if not is_custom_registry():
                 docker_client.login(
                     username=docker_user,
                     password=docker_pass,

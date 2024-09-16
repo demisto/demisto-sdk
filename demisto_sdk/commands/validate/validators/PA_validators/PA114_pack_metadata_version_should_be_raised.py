@@ -8,7 +8,7 @@ from packaging.version import Version
 from demisto_sdk.commands.common.constants import (
     PACK_METADATA_REQUIRE_RN_FIELDS,
     SKIP_RELEASE_NOTES_FOR_TYPES,
-    FileType,
+    IGNORED_PACK_NAMES,
 )
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.content_graph.objects import (
@@ -113,36 +113,42 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
     )
 
     @staticmethod
-    def should_bump_is_metadata(content_item: ContentTypes):
+    def should_bump(content_item: ContentTypes):
         """Return if the version should be bumped as a result of the input content item.
         Args:
             content_item (ContentTypes): The content item for which to decide.
 
         Return:
-            ((Boolean) True if should bump due to change False otherwise,
-             (Boolean) True if the content item is the pack_metadata False otherwise)
+            (Boolean) True if should bump due to change False otherwise.
         """
-        content_item_type = find_type(str(content_item.path))  # type: ignore[union-attr]
-        is_metadata = False
+        if content_item.pack_name in IGNORED_PACK_NAMES:
+            return False
 
-        if (
-            not content_item_type
-            and content_item.content_type.value == Pack.content_type.value  # type: ignore[union-attr]
-        ):
-            content_item_type = FileType.METADATA
-            is_metadata = True
+        if content_item.git_status is None and content_item.content_type.value in [Integration.content_type.value,
+                                                                                   Script.content_type.value]:
+            # If the file collected is an Integration or Script and they were not modified directly,
+            # check that their code files and description files were not modified as well.
+            related_files_unchanged = [content_item.code_file.git_status is None,
+                                       content_item.description_file.git_status is None]
 
-        if content_item_type not in SKIP_RELEASE_NOTES_FOR_TYPES:
-            if content_item_type != FileType.METADATA:
-                return True, False
-            else:
-                is_metadata = True
-                old_dict = content_item.old_base_content_object.to_dict()  # type: ignore[union-attr]
-                current_dict = content_item.to_dict()  # type: ignore[union-attr]
-                for field in PACK_METADATA_REQUIRE_RN_FIELDS:
-                    if old_dict.get(field) != current_dict.get(field):
-                        return True, True
-        return False, is_metadata
+            return not all(related_files_unchanged)
+
+        if content_item.content_type.value == Pack.content_type.value:
+            # If it's a pack content type check for the fields that require RNs.
+            old_dict = content_item.old_base_content_object.to_dict()  # type: ignore[union-attr]
+            current_dict = content_item.to_dict()  # type: ignore[union-attr]
+            for field in PACK_METADATA_REQUIRE_RN_FIELDS:
+                if old_dict.get(field) != current_dict.get(field):
+                    return True
+
+        elif content_item.git_status is not None:
+            # If the content_item was changed
+            if find_type(str(content_item.path)) in SKIP_RELEASE_NOTES_FOR_TYPES:  # type: ignore[union-attr]
+                # If we should skip the release notes
+                return False
+            return True
+
+        return False
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -152,14 +158,16 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         content_packs_ids_to_bump = set()
         # Go over all the content items
         for content_item in content_items:
-            should_bump, is_metadata = self.should_bump_is_metadata(content_item)
-            if should_bump:
-                pack_id = content_item.pack_id  # type: ignore[union-attr]
-                # Collect content pack ids that should be bumped.
-                content_packs_ids_to_bump.add(pack_id)
-            if is_metadata:
+            is_metadata_item = (content_item.content_type.value == Pack.content_type.value)
+            if is_metadata_item:
                 # Collect content metadata items and link them to their pack ids.
                 content_packs[content_item.pack_id] = content_item  # type: ignore[union-attr]
+
+            if content_item.pack_id not in content_packs_ids_to_bump:
+                should_bump = self.should_bump(content_item)
+                if should_bump:
+                    # Collect content pack ids that should be bumped.
+                    content_packs_ids_to_bump.add(content_item.pack_id)  # type: ignore[union-attr]
 
         # Go over all the pack ids that need to be bumped.
         for pack_id in content_packs_ids_to_bump:

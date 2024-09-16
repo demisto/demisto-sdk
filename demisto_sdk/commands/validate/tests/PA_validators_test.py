@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
     MarketplaceVersions,
+    GitStatuses,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseNode
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFile
@@ -1697,6 +1698,7 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
             pack_info={"currentVersion": current_version}
         )
         pack = integration.in_pack
+        integration.git_status = GitStatuses.MODIFIED
 
         old_pack = pack.copy(deep=True)
         old_pack.current_version = old_version

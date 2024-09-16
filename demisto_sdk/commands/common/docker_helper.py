@@ -7,7 +7,6 @@ import tarfile
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-# from google.cloud import artifactregistry_v1
 import docker
 import requests
 import urllib3
@@ -117,7 +116,7 @@ def docker_login(docker_client) -> bool:
                 ping = docker_client.ping()
                 # logger.info(f"Successfully connected to dockerhub, login {ping=}")
                 logger.info(
-                    f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
+                    f"Successfully log in to {DOCKER_REGISTRY_URL}, login {ping=}")
                 return ping
             else:
                 # login to custom docker registry

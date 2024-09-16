@@ -215,7 +215,8 @@ class DockerImage(str):
 
     @property
     def latest_tag(self) -> Version:
-        return self._dockerhub_client.get_latest_docker_image_tag(self.name)
+        # FIXME: Currently return last available tag of the client, not necessarily the latest in DockerHub
+        return self._docker_client.get_latest_docker_image_tag(self.name)
 
     @property
     def latest_docker_image(self) -> "DockerImage":

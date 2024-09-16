@@ -223,7 +223,31 @@ class DockerBase:
             logger.info(f"docker {image=} not found locally, pulling")
             ret = docker_client.images.pull(image)
             logger.info(f"pulled docker {image=} successfully")
-            return ret
+            return re
+
+    @staticmethod
+    def get_latest_docker_image_tag(image: str):
+        """
+        Get the latest tag for a given Docker image.
+        Args:
+            image: The Docker image name.
+        Returns:
+            The latest tag for the image.
+        """
+        docker_client = init_global_docker_client(log_prompt="get_latest_tag")
+        try:
+            repository_tags = docker_client.images.list(name=image)
+            tags = [tag for image in repository_tags for tag in image.tags]
+            if tags:
+                return Version(tags[0].split(":")[1])
+            else:
+                return Version("0.0.0.0")
+        except docker.errors.NotFound:
+            return f"Error: The image '{image}' is not found."
+        except docker.errors.APIError as e:
+            return f"API error occurred: {e}"
+        except Exception as e:
+            return f"An unexpected error occurred: {e}"
 
     @staticmethod
     def is_image_available(
@@ -724,11 +748,3 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
             f"Failed to get python version from docker hub for image {image}: {e}"
         )
         raise
-
-
-def _get_docker_image_tag_creation_date(image: str):
-    pass
-
-
-def _get_latest_docker_image(image: str):
-    pass

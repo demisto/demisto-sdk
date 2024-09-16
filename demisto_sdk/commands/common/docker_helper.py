@@ -216,25 +216,20 @@ class DockerBase:
 
 
         try:
-            request = artifactregistry_v1.GetTagRequest(
-                name=f"{base_request}/packages/demisto/python3:3.11.10.110725")
-            tag = artifactory_client.get_tag(request=request)
+            # Call the API to list packages
+            packages_iterator = artifactory_client.list_packages(
+                request={"parent": base_request})
+
             logger.info(
-                f"Tag found: {tag.name}, Version: {tag.version}, Annotations: {tag.annotations}")
+                f"################################################# pull_image | {packages_iterator=}")
+
+            # Iterate through the retrieved packages and print their names
+            for package in packages_iterator:
+                logger.info(
+                    f"################################################# pull_image | Package Name: {package.name}")
 
         except Exception as e:
             logger.info(f"An error occurred 1: {e}")
-
-
-        try:
-            request = artifactregistry_v1.GetTagRequest(
-                name=f"{base_request}/packages/python3:3.11.10.110725")
-            tag = artifactory_client.get_tag(request=request)
-            logger.info(
-                f"Tag found: {tag.name}, Version: {tag.version}, Annotations: {tag.annotations}")
-
-        except Exception as e:
-            logger.info(f"An error occurred 2: {e}")
 
 
 

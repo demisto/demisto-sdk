@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
-    MarketplaceVersions,
     GitStatuses,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseNode
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFile

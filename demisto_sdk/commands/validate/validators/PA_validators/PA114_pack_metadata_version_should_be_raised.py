@@ -6,9 +6,9 @@ from typing import Iterable, Union
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
+    IGNORED_PACK_NAMES,
     PACK_METADATA_REQUIRE_RN_FIELDS,
     SKIP_RELEASE_NOTES_FOR_TYPES,
-    IGNORED_PACK_NAMES,
 )
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.content_graph.objects import (
@@ -124,12 +124,16 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         if content_item.pack_name in IGNORED_PACK_NAMES:
             return False
 
-        if content_item.git_status is None and content_item.content_type.value in [Integration.content_type.value,
-                                                                                   Script.content_type.value]:
+        if content_item.git_status is None and content_item.content_type.value in [
+            Integration.content_type.value,
+            Script.content_type.value,
+        ]:
             # If the file collected is an Integration or Script and they were not modified directly,
             # check that their code files and description files were not modified as well.
-            related_files_unchanged = [content_item.code_file.git_status is None,
-                                       content_item.description_file.git_status is None]
+            related_files_unchanged = [
+                content_item.code_file.git_status is None,  # type: ignore[union-attr]
+                content_item.description_file.git_status is None,  # type: ignore[union-attr]
+            ]
 
             return not all(related_files_unchanged)
 
@@ -158,7 +162,9 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         content_packs_ids_to_bump = set()
         # Go over all the content items
         for content_item in content_items:
-            is_metadata_item = (content_item.content_type.value == Pack.content_type.value)
+            is_metadata_item = (
+                content_item.content_type.value == Pack.content_type.value
+            )
             if is_metadata_item:
                 # Collect content metadata items and link them to their pack ids.
                 content_packs[content_item.pack_id] = content_item  # type: ignore[union-attr]

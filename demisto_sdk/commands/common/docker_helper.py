@@ -66,6 +66,8 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         logger.info(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:
             DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
+            logger.info(
+                f"init_global_docker_client | docker.from_env(timeout=timeout, use_ssh_client=ssh_client), {DOCKER_CLIENT=}")
         except docker.errors.DockerException:
             logger.warning(
                 f"{log_prompt} - Failed to init docker client. "
@@ -76,6 +78,8 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_pass = os.getenv(
             "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
         )
+        logger.info(
+            f"init_global_docker_client | {docker_user=}, {docker_pass=}")
         if docker_user and docker_pass:
             logger.info(f"{log_prompt} - logging in to docker registry")
             try:
@@ -184,6 +188,7 @@ class DockerBase:
     @staticmethod
     @functools.lru_cache
     def version() -> Version:
+        logger.info(f"version is called")
         version = init_global_docker_client().version()["Version"]
         try:
             return Version(version)
@@ -201,6 +206,7 @@ class DockerBase:
         """
         Get a local docker image, or pull it when unavailable.
         """
+        logger.info(f"version is called with image={image}")
         docker_client = init_global_docker_client(log_prompt="pull_image")
         try:
             return docker_client.images.get(image)
@@ -350,6 +356,8 @@ class DockerBase:
             2. running the istallation scripts
             3. committing the docker changes (installed packages) to a new local image
         """
+        logger.info(
+            f"create_image is called with base_image={base_image}, image={image}")
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
         )
@@ -384,7 +392,10 @@ class DockerBase:
     @staticmethod
     def get_image_registry(image: str) -> str:
         if DOCKER_REGISTRY_URL not in image:
+            logger.info(
+                f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}")
             return f"{DOCKER_REGISTRY_URL}/{image}"
+        logger.info(f"get_image_registry | returned: {image}")
         return image
 
     def get_or_create_test_image(

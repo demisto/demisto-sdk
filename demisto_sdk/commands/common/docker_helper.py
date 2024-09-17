@@ -74,10 +74,8 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                 )
                 DOCKER_CLIENT = docker.from_env()  # type: ignore
                 test_image_path = f"{DOCKER_IO}/demisto/crypto:1.0.0.83343"
-                logger.info("running test pull with image {test_image_path=}")
-                DOCKER_CLIENT.client.images.pull(
-                    f"{DOCKER_IO}/demisto/crypto:1.0.0.83343"
-                )
+                logger.info(f"running test pull with image {test_image_path=}")
+                DOCKER_CLIENT.images.pull(test_image_path)
                 return DOCKER_CLIENT
             else:
                 logger.info(

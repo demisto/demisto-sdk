@@ -112,7 +112,7 @@ class DockerHubClient:
                 and self.auth
             ):
                 # in case of rate-limits with a username:password, retrieve the token without username:password
-                logger.info("Trying to get dockerhub token without username:password")
+                logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
                         self.TOKEN_URL,
@@ -220,7 +220,7 @@ class DockerHubClient:
             # received only a single record
             return raw_json_response
 
-        logger.info(f'Received {raw_json_response.get("count")} objects from {url=}')
+        logger.debug(f'Received {raw_json_response.get("count")} objects from {url=}')
         results = raw_json_response.get(results_key) or []
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
@@ -392,11 +392,11 @@ class DockerHubClient:
                 error.exception.response
                 and error.exception.response.status_code == requests.codes.not_found
             ):
-                logger.info(
+                logger.debug(
                     f"docker-image {docker_image}:{tag} does not exist in dockerhub"
                 )
                 return False
-            logger.info(
+            logger.debug(
                 f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"
             )
             return tag in self.get_image_tags(docker_image)
@@ -438,7 +438,7 @@ class DockerHubClient:
                 if max_version_tag.release[-1] < version_tag.release[-1]:
                     max_version_tag = version_tag
             except InvalidVersion:
-                logger.info(
+                logger.debug(
                     f"The tag {tag} has invalid version for docker-image {docker_image}, skipping it"
                 )
 

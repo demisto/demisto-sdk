@@ -30,7 +30,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
-IS_CONTENT_GITLAB_CI = os.getenv('CONTENT_GITLAB_CI')
+
+IS_CONTENT_GITLAB_CI = os.getenv("CONTENT_GITLAB_CI")
+logger.info(f"{IS_CONTENT_GITLAB_CI=}")
 DOCKER_IO = os.getenv("DOCKER_IO")
 DOCKER_CLIENT = None
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
@@ -57,7 +59,7 @@ class DockerException(Exception):
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
-        logger.info(f"init_global_docker_client | DOCKER_CLIENT is None")
+        logger.info("init_global_docker_client | DOCKER_CLIENT is None")
         if log_prompt:
             logger.info(f"{log_prompt} - init and login the docker client")
         else:
@@ -68,20 +70,25 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         try:
             if IS_CONTENT_GITLAB_CI:
                 logger.info(
-                    f"init_global_docker_client | IS_CONTENT_GITLAB_CI it True , {log_prompt} - Setting docker client for GitLab CI")
+                    f"init_global_docker_client | IS_CONTENT_GITLAB_CI it True , {log_prompt} - Setting docker client for GitLab CI"
+                )
                 DOCKER_CLIENT = docker.from_env()  # type: ignore
                 test_image_path = f"{DOCKER_IO}/demisto/crypto:1.0.0.83343"
                 logger.info("running test pull with image {test_image_path=}")
                 DOCKER_CLIENT.client.images.pull(
-                    f"{DOCKER_IO}/demisto/crypto:1.0.0.83343")
+                    f"{DOCKER_IO}/demisto/crypto:1.0.0.83343"
+                )
                 return DOCKER_CLIENT
             else:
                 logger.info(
-                    f"init_global_docker_client | {log_prompt} - Using default docker client settings")
+                    f"init_global_docker_client | {log_prompt} - Using default docker client settings"
+                )
                 DOCKER_CLIENT = docker.from_env(
-                    timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
+                    timeout=timeout, use_ssh_client=ssh_client
+                )  # type: ignore
             logger.info(
-                f"init_global_docker_client | docker.from_env(timeout=timeout, use_ssh_client=ssh_client), {DOCKER_CLIENT=}")
+                f"init_global_docker_client | docker.from_env(timeout=timeout, use_ssh_client=ssh_client), {DOCKER_CLIENT=}"
+            )
         except docker.errors.DockerException:
             logger.warning(
                 f"{log_prompt} - Failed to init docker client. "
@@ -92,8 +99,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_pass = os.getenv(
             "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
         )
-        logger.info(
-            f"init_global_docker_client | {docker_user=}, {docker_pass=}")
+        logger.info(f"init_global_docker_client | {docker_user=}, {docker_pass=}")
         if docker_user and docker_pass:
             logger.info(f"{log_prompt} - logging in to docker registry")
             try:
@@ -202,7 +208,7 @@ class DockerBase:
     @staticmethod
     @functools.lru_cache
     def version() -> Version:
-        logger.info(f"version is called")
+        logger.info("version is called")
         version = init_global_docker_client().version()["Version"]
         try:
             return Version(version)
@@ -371,7 +377,8 @@ class DockerBase:
             3. committing the docker changes (installed packages) to a new local image
         """
         logger.info(
-            f"create_image is called with base_image={base_image}, image={image}")
+            f"create_image is called with base_image={base_image}, image={image}"
+        )
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
         )
@@ -406,8 +413,7 @@ class DockerBase:
     @staticmethod
     def get_image_registry(image: str) -> str:
         if DOCKER_REGISTRY_URL not in image:
-            logger.info(
-                f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}")
+            logger.info(f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}")
             return f"{DOCKER_REGISTRY_URL}/{image}"
         logger.info(f"get_image_registry | returned: {image}")
         return image

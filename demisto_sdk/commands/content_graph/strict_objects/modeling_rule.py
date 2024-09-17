@@ -18,7 +18,7 @@ class _StrictModelingRule(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toversion")
     tags: Optional[str] = None
     rules: Optional[str] = None
-    schema_: Optional[str] = Field(None, alias="schema")
+    schema_: Optional[str] = Field(None, alias="schema")  # key_word
     comment: Optional[str] = None
     deprecated: Optional[bool] = None
 

@@ -111,7 +111,7 @@ class DockerImage(str):
     def python_version(self) -> Optional[Version]:
         if self.is_valid:
             if "pwsh" == self.image_name or "powershell" == self.image_name:
-                logger.debug(
+                logger.info(
                     f"The {self} image is a powershell image, does not have python version"
                 )
                 return None
@@ -121,7 +121,7 @@ class DockerImage(str):
             ):
                 return Version(match.group("python_version"))
 
-            logger.debug(f"Could not get python version for image {self} from regex")
+            logger.info(f"Could not get python version for image {self} from regex")
             image_env = self._dockerhub_client.get_image_env(self.name, tag=self.tag)
 
             if python_version := next(
@@ -137,7 +137,7 @@ class DockerImage(str):
             logger.error(f"Could not find python-version of docker-image {self}")
 
         else:
-            logger.debug(
+            logger.info(
                 f"docker-image {self} is not valid, could not get its python-version"
             )
         return None

@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 import re
@@ -30,7 +28,9 @@ class EmptySectionsValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the pack contains a full README.md file with pack information. "
     )
-    error_message = "The section: {0} are empty\nplease elaborate or delete the section.\n"
+    error_message = (
+        "The section/s: {0} is/are empty\nplease elaborate or delete the section.\n"
+    )
     related_field = "readme"
     rationale = """Check that if the following headlines exists, they are not empty:
             1. Troubleshooting
@@ -77,7 +77,7 @@ class EmptySectionsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(', '.join(self.empty_sections)),
+                message=self.error_message.format(", ".join(self.empty_sections)),
                 content_object=content_item,
             )
             for content_item in content_items

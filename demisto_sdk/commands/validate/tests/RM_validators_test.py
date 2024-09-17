@@ -1,7 +1,13 @@
+from typing import Literal
+
 import more_itertools
 import pytest
 
 from demisto_sdk.commands.common.tools import find_pack_folder
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_doc_file_object,
@@ -9,6 +15,10 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_pack_object,
     create_playbook_object,
     create_script_object,
+)
+from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
+from demisto_sdk.commands.validate.validators.RM_validators.RM100_no_empty_sections import (
+    EmptySectionsValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_valid import (
     IsImagePathValidValidator,
@@ -46,7 +56,7 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_cop
 from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
     IsImageExistsInReadmeValidator,
 )
-from TestSuite.repo import ChangeCWD
+from TestSuite.repo import ChangeCWD, Repo
 
 
 @pytest.mark.parametrize(
@@ -70,9 +80,9 @@ from TestSuite.repo import ChangeCWD
     ],
 )
 def test_IsContainCopyRightSectionValidator_obtain_invalid_content_items(
-    content_items,
-    expected_number_of_failures,
-    expected_msgs,
+    content_items: list[Pack],
+    expected_number_of_failures: Literal[0] | Literal[1],
+    expected_msgs: list[str],
 ):
     """
     Given
@@ -143,9 +153,9 @@ def test_IsContainCopyRightSectionValidator_obtain_invalid_content_items(
     ],
 )
 def test_empty_readme_validator(
-    content_items,
-    expected_number_of_failures,
-    expected_msgs,
+    content_items: list[Pack],
+    expected_number_of_failures: Literal[0] | Literal[1],
+    expected_msgs: list[str],
 ):
     """
     Given:
@@ -212,7 +222,10 @@ def test_empty_readme_validator(
         ),
     ],
 )
-def test_is_image_path_validator(content_items, expected_number_of_failures):
+def test_is_image_path_validator(
+    content_items: list[Integration] | list[Script] | list[Pack] | list[Playbook],
+    expected_number_of_failures: Literal[0] | Literal[1],
+):
     """
     Given:
         - A list of content items with their respective readme contents.
@@ -309,10 +322,10 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
     ],
 )
 def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
-    content_items,
-    doc_files_name,
-    expected_number_of_failures,
-    expected_msgs,
+    content_items: list[Playbook | Integration],
+    doc_files_name: list[str | None],
+    expected_number_of_failures: Literal[0] | Literal[5],
+    expected_msgs: list[str],
 ):
     with ChangeCWD(REPO.path):
         for content_item, file_name in zip(content_items, doc_files_name):
@@ -412,7 +425,9 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
     ],
 )
 def test_IsReadmeExistsValidator_obtain_invalid_content_items(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: list[Playbook] | list[Script] | list[Integration],
+    expected_number_of_failures: Literal[1],
+    expected_msgs: list[str],
 ):
     """
     Given:
@@ -595,7 +610,7 @@ def test_ImagePathOnlyReadMeValidator_obtain_invalid_content_items_invalid_case(
     assert result[0].message == expected
 
 
-def test_VerifyTemplateInReadmeValidator_valid_case(repo):
+def test_VerifyTemplateInReadmeValidator_valid_case(repo: Repo):
     """
     Given
     content_items.
@@ -633,7 +648,7 @@ def test_VerifyTemplateInReadmeValidator_valid_case(repo):
         assert validator_result.message == expected_error_message
 
 
-def test_VerifyTemplateInReadmeValidator_invalid_case(repo):
+def test_VerifyTemplateInReadmeValidator_invalid_case(repo: Repo):
     """
     Given
     content_items.
@@ -906,3 +921,89 @@ def test_IsCommandsInReadmeValidator_valid():
     assert not IsCommandsInReadmeValidator().obtain_invalid_content_items(
         [content_item]
     )
+
+
+@pytest.mark.parametrize(
+    "file_input, missing_section",
+    [
+        ("## Troubleshooting\n## OtherSection", "Troubleshooting"),
+        ("## Troubleshooting", "Troubleshooting"),
+        ("## Troubleshooting\n\n---\n## OtherSection", "Troubleshooting"),
+        ("## Use Cases\n\n----------\n## OtherSection", "Use Cases"),
+        ("## Additional Information\n\n## OtherSection", "Additional Information"),
+        ("## Known Limitations\n\n----------\n", "Known Limitations"),
+    ],
+)
+def test_unvalid_verify_no_empty_sections(
+    file_input: Literal["## Troubleshooting\n## OtherSection"]
+    | Literal["## Troubleshooting"]
+    | Literal["## Troubleshooting\n\n---\n## OtherSection"]
+    | Literal["## Use Cases\n\n----------\n## OtherSection"]
+    | Literal["## Additional Information\n\n## OtherSection"]
+    | Literal["## Known Limitations\n\n----------\n"],
+    missing_section: Literal["Troubleshooting"]
+    | Literal["Use Cases"]
+    | Literal["Additional Information"]
+    | Literal["Known Limitations"],
+):
+    """
+    Given
+        - Empty sections in different forms
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+    content_item = create_integration_object(readme_content=file_input)
+    validation_result: list[ValidationResult] = EmptySectionsValidator().is_valid(
+        [content_item]
+    )
+    section_error = f"The section/s: {missing_section} is/are empty\nplease elaborate or delete the section.\n"
+    if validation_result:
+        assert validation_result[0].message == section_error
+
+
+def test_combined_unvalid_verify_no_empty_sections():
+    """
+    Given
+        - Couple of empty sections
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+    file_input = "## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"
+    content_item = create_integration_object(readme_content=file_input)
+    empty_section_validator = EmptySectionsValidator()
+    validation_results: list[ValidationResult] = empty_section_validator.is_valid(
+        [content_item]
+    )
+    error = "The section/s: Troubleshooting, Additional Information is/are empty\nplease elaborate or delete the section.\n"
+    assert error == validation_results[0].message
+
+
+@pytest.mark.parametrize(
+    "file_input",
+    [
+        "## Troubleshooting\ninput",
+        "## Troubleshooting\n\n---\ninput",
+        "## Use Cases\n\n----------\ninput",
+        "## Additional Information\n\ninput",
+        "## Additional Information\n\n### OtherSection",
+        "## Known Limitations\n\n----------\ninput",
+    ],
+)
+def test_valid_sections(file_input):
+    """
+    Given
+        - Valid sections in different forms from SECTIONS
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+    content_item = create_integration_object(readme_content=file_input)
+    validation_result: list[ValidationResult] = EmptySectionsValidator().is_valid(
+        [content_item]
+    )
+    assert not validation_result

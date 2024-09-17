@@ -176,8 +176,10 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
     )
 
 
-class InvalidXSIAMReportFileName(InvalidPathException):
-    message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
+class InvalidXSIAMItemName(InvalidPathException):
+    message = (
+        "This item's name must start with the pack's name, e.g. `myPack_foobar.json`"
+    )
 
 
 class InvalidXSIAMDashboardFileName(InvalidPathException):
@@ -303,16 +305,17 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidClassifier
 
-        if first_level_folder == XSIAM_REPORTS_DIR and not (
-            path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix == ".json"
-        ):
-            raise InvalidXSIAMReportFileName
-
-        if first_level_folder == XSIAM_DASHBOARDS_DIR and not (
-            path.stem.startswith(f"{parts_after_packs[0]}_")
-            and path.suffix in (".json", ".png")
-        ):
-            raise InvalidXSIAMDashboardFileName
+        if first_level_folder in {XSIAM_REPORTS_DIR, XSIAM_DASHBOARDS_DIR}:
+            if (
+                path.stem.startswith(f"{parts_after_packs[0]}_")
+                and path.suffix == ".json"
+            ):
+                raise InvalidXSIAMItemName
+            if first_level_folder == XSIAM_DASHBOARDS_DIR and path.suffix not in (
+                ".json",
+                ".png",
+            ):
+                raise InvalidXSIAMDashboardFileName
 
         if (
             first_level_folder == DOC_FILES_DIR

@@ -1,4 +1,4 @@
 changes:
-- description: Added support for including release date alongside version number in sdk-changelog script.
+- description: Added support for version number and release date when generating changelog entry for a demisto-sdk release.
   type: feature
 pr_number: 4553

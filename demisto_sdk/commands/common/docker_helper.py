@@ -68,25 +68,9 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
             logger.info(f"{log_prompt} - Using ssh client setting: {ssh_client}")
         logger.info(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:
-            # if IS_CONTENT_GITLAB_CI:
-            #     logger.info(
-            #         f"init_global_docker_client | IS_CONTENT_GITLAB_CI it True , {log_prompt} - Setting docker client for GitLab CI"
-            #     )
-            #     DOCKER_CLIENT = docker.from_env()  # type: ignore
-            #     test_image_path = f"{DOCKER_IO}/demisto/crypto:1.0.0.83343"
-            #     logger.info(f"running test pull with image {test_image_path=}")
-            #     DOCKER_CLIENT.images.pull(test_image_path)
-            #     return DOCKER_CLIENT
-            # else:
-            logger.info(
-                f"init_global_docker_client | {log_prompt} - Using default docker client settings"
-            )
             DOCKER_CLIENT = docker.from_env(
                 timeout=timeout, use_ssh_client=ssh_client
             )  # type: ignore
-            logger.info(
-                f"init_global_docker_client | docker.from_env(timeout=timeout, use_ssh_client=ssh_client), {DOCKER_CLIENT=}"
-            )
         except docker.errors.DockerException:
             logger.warning(
                 f"{log_prompt} - Failed to init docker client. "

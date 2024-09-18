@@ -57,6 +57,7 @@ class DockerException(Exception):
 
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
+    logger.info("docker_helper | init_global_docker_client")
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         logger.info("init_global_docker_client | DOCKER_CLIENT is None")
@@ -126,6 +127,7 @@ def docker_login(docker_client) -> bool:
     Returns:
         bool: True if logged in successfully.
     """
+    logger.info("docker_helper | docker_login")
     docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
     if docker_user and docker_pass:
@@ -169,6 +171,7 @@ def get_pip_requirements_from_file(requirements_file: Path) -> List[str]:
     Returns:
         A list of pip requirements.
     """
+    logger.info("docker_helper | get_pip_requirements_from_file")
     return requirements_file.read_text().strip().splitlines()
 
 
@@ -205,6 +208,7 @@ class DockerBase:
     @staticmethod
     @functools.lru_cache
     def version() -> Version:
+        logger.info("docker_helper | version")
         logger.info("version is called")
         version = init_global_docker_client().version()["Version"]
         try:
@@ -223,6 +227,7 @@ class DockerBase:
         """
         Get a local docker image, or pull it when unavailable.
         """
+        logger.info("docker_helper | pull_image")
         logger.info(f"version is called with image={image}")
         docker_client = init_global_docker_client(log_prompt="pull_image")
         try:
@@ -238,6 +243,7 @@ class DockerBase:
     def is_image_available(
         image: str,
     ) -> bool:
+        logger.info("docker_helper | is_image_available")
         docker_client = init_global_docker_client(log_prompt="get_image")
         try:
             docker_client.images.get(image)
@@ -268,6 +274,7 @@ class DockerBase:
             container: the container object.
             files: a list of (target path in container, source path in machine).
         """
+        logger.info("docker_helper | copy_files_container")
         if files:
             with tempfile.NamedTemporaryFile() as tar_file_path:
                 with tarfile.open(name=tar_file_path.name, mode="w") as tar_file:
@@ -298,6 +305,7 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
+        logger.info("docker_helper | create_container")
         docker_client = init_global_docker_client()
 
         try:
@@ -330,6 +338,7 @@ class DockerBase:
             image (str): The image to push
             log_prompt (str, optional): The log prompt to print. Defaults to "".
         """
+        logger.info("docker_helper | push_image")
         for _ in range(2):
             try:
                 test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
@@ -373,6 +382,7 @@ class DockerBase:
             2. running the istallation scripts
             3. committing the docker changes (installed packages) to a new local image
         """
+        logger.info("docker_helper | create_image")
         logger.info(
             f"create_image is called with base_image={base_image}, image={image}"
         )
@@ -409,6 +419,7 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
+        logger.info("docker_helper | get_image_registry")
         if DOCKER_REGISTRY_URL not in image:
             logger.info(f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}")
             return f"{DOCKER_REGISTRY_URL}/{image}"
@@ -434,7 +445,7 @@ class DockerBase:
         Returns:
             The test image name and errors to create it if any
         """
-
+        logger.info("docker_helper | get_or_create_test_image")
         errors = ""
         if (
             not python_version
@@ -515,6 +526,7 @@ class MountableDocker(DockerBase):
         Returns:
             a list of mounts
         """
+        logger.info("docker_helper | get_mounts")
         mounts = []
         for src, target in files:
             try:
@@ -537,6 +549,7 @@ class MountableDocker(DockerBase):
         """
         Creates a container and pushing requested files to the container.
         """
+        logger.info("docker_helper | create_container")
         kwargs = kwargs or {}
         if files_to_push and mount_files:
             return super().create_container(
@@ -558,10 +571,12 @@ class MountableDocker(DockerBase):
 
 
 def get_docker():
+    logger.info("docker_helper | get_docker")
     return MountableDocker() if CAN_MOUNT_FILES else DockerBase()
 
 
 def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
+    logger.info("docker_helper | _get_python_version_from_tag_by_regex")
     if match := DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
 
@@ -571,7 +586,7 @@ def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
 @retry(times=5, exceptions=(RuntimeError, RequestException))
 def _get_docker_hub_token(repo: str) -> str:
     auth = None
-
+    logger.info("docker_helper | _get_docker_hub_token")
     # If the user has credentials for docker hub, use them to get the token
     if (docker_user := os.getenv("DOCKERHUB_USER")) and (
         docker_pass := os.getenv("DOCKERHUB_PASSWORD")
@@ -592,6 +607,7 @@ def _get_docker_hub_token(repo: str) -> str:
 
 
 def _get_image_digest(repo: str, tag: str, token: str) -> str:
+    logger.info("docker_helper | _get_image_digest")
     response = requests.get(
         f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}",
         headers={
@@ -609,6 +625,7 @@ def _get_image_digest(repo: str, tag: str, token: str) -> str:
 
 @functools.lru_cache
 def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
+    logger.info("docker_helper | _get_image_env")
     response = requests.get(
         f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}",
         headers={
@@ -625,6 +642,7 @@ def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
 
 
 def _get_python_version_from_env(env: List[str]) -> Version:
+    logger.info("docker_helper | _get_python_version_from_env")
     python_version_envs = tuple(
         filter(lambda env: env.startswith("PYTHON_VERSION="), env)
     )
@@ -646,6 +664,7 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
+    logger.info("docker_helper | get_python_version")
     logger.info(f"Get python version from image {image=}")
 
     if not image:
@@ -697,7 +716,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
-    logger.info("_get_python_version_from_image_client")
+    logger.info("docker_helper | _get_python_version_from_image_client")
     try:
         image = DockerBase.get_image_registry(image)
         image_model = DockerBase.pull_image(image)
@@ -719,6 +738,7 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
+    logger.info("docker_helper | _get_python_version_from_dockerhub_api")
     if is_custom_registry():
         raise RuntimeError(
             f"Docker registry is configured to be {DOCKER_REGISTRY_URL}, unable to query the dockerhub api"

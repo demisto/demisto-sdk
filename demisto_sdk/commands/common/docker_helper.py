@@ -669,6 +669,15 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         return python_version
     logger.info(f"Could not get python version for {image=} from regex")
 
+    if os.getenv("CONTENT_GITLAB_CI"):
+        try:
+            logger.info(f"get python version for {image=} from available docker client")
+            return _get_python_version_from_image_client(image)
+        except Exception:
+            logger.info(
+                f"Could not get python version for {image=} from available docker client"
+            )
+
     try:
         logger.info(f"get python version for {image=} from dockerhub api")
         return _get_python_version_from_dockerhub_api(image)
@@ -688,6 +697,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
+    logger.info("_get_python_version_from_image_client")
     try:
         image = DockerBase.get_image_registry(image)
         image_model = DockerBase.pull_image(image)

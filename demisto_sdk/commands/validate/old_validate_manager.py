@@ -875,10 +875,6 @@ class OldValidateManager:
             ):
                 valid_in_conf = False
 
-        # Note: these file are not ignored but there are no additional validators for connections
-        if file_type == FileType.CONNECTION:
-            return True
-
         # test playbooks and test scripts are using the same validation.
         elif file_type in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
             return self.validate_test_playbook(

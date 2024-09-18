@@ -4,10 +4,11 @@ from abc import ABC
 
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    ContentTypes,
 )
 
 
-class IsFromVersionSufficientValidator(BaseValidator, ABC):
+class IsFromVersionSufficientValidator(BaseValidator[ContentTypes], ABC):
     error_code = "BA106"
     description = "Validate that the item's fromversion field is sufficient."
     fix_message = "Raised the fromversion field to {0}"

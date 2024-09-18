@@ -11,7 +11,6 @@ from demisto_sdk.commands.common.content import Pack
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool,
     Classifier,
-    Connection,
     Contributors,
     Dashboard,
     DocFile,
@@ -68,7 +67,6 @@ def temp_dir():
         ("playbooks", (Playbook,), 3),
         ("incident_fields", (IncidentField,), 3),
         ("incident_types", (IncidentType,), 3),
-        ("connections", (Connection,), 3),
         ("indicator_fields", (IndicatorField,), 1),
         ("indicator_types", (IndicatorType,), 3),
         ("reports", (Report,), 3),

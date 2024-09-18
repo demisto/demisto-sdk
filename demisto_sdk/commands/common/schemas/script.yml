@@ -148,6 +148,8 @@ mapping:
     type: bool
   deprecated:xsoar_on_prem:
     type: bool
+  hidden:marketplacev2:
+    type: bool
 schema;argument_schema:
   type: map
   mapping:

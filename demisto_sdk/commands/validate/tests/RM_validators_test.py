@@ -56,6 +56,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_cop
 from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
     IsImageExistsInReadmeValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM115_no_default_section_left import (
+    NoDefaultSectionsLeftReadmeValidator,
+)
 from TestSuite.repo import ChangeCWD, Repo
 
 
@@ -1007,3 +1010,116 @@ def test_valid_sections(file_input):
         [content_item]
     )
     assert not validation_result
+
+
+@pytest.mark.parametrize(
+    "file_input, section",
+    [
+        (
+            "##### Required Permissions\n**FILL IN REQUIRED PERMISSIONS HERE**\n##### Base Command",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "##### Required Permissions **FILL IN REQUIRED PERMISSIONS HERE**\n##### Base Command",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "This integration was integrated and tested with version xx of integration v2.",
+            "version xx",
+        ),
+        (
+            "##Dummy Integration\n this integration is for getting started and learn how to build an "
+            "integration. some extra text here",
+            "getting started and learn how to build an integration",
+        ),
+        (
+            "In this readme template all required notes should be replaced.\n# %%UPDATE%% <Product Name>",
+            "%%UPDATE%%",
+        ),
+    ],
+)
+def test_verify_no_default_sections_left(file_input, section):
+    """
+    Given
+        - Readme that contains sections that are created as default and need to be changed
+    When
+        - Run validate on README file
+    Then
+        - Ensure no default sections in the readme file
+    """
+    content_item = create_integration_object(readme_content=file_input)
+    no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator(
+        [content_item]
+    )
+    validation_result: list[ValidationResult] = (
+        no_default_section_left_validator.is_valid()
+    )
+    section_error = f'Replace "{section}" with a suitable info.'
+    assert section_error == validation_result[0].message
+
+
+# @pytest.mark.parametrize(
+#     "readme_fake_path, readme_text",
+#     [
+#         (
+#             "/HelloWorld/README.md",
+#             "getting started and learn how to build an integration",
+#         )
+#     ],
+# )
+# def test_readme_ignore(integration, readme_fake_path, readme_text):
+#     """
+#     Check that packs in ignore list are ignored.
+#        Given
+#             - README path of ignore pack
+#         When
+#             - Run validate on README of ignored pack
+#         Then
+#             - Ensure validation ignored the pack
+#     """
+#     integration.readme.write(readme_text)
+#     readme_path = integration.readme.path
+#     readme_validator = ReadMeValidator(readme_path)
+#     # change the pack path to readme_fake_path
+#     from pathlib import Path
+
+#     readme_validator.file_path = Path(readme_fake_path)
+#     readme_validator.pack_path = readme_validator.file_path.parent
+
+#     result = readme_validator.verify_no_default_sections_left()
+#     assert result
+
+
+# @pytest.mark.parametrize(
+#     "error_code_to_ignore, expected_result",
+#     [({"README.md": "RM100"}, True), ({}, False)],
+# )
+# def test_readme_verify_no_default_ignore_test(
+#     error_code_to_ignore, expected_result, integration
+# ):
+#     """
+#     Given:
+#         - A readme that violates a validation and the ignore error code for the validation.
+#         - A readme that violates a validation without the ignore error code for the validation.
+
+#     When:
+#         - When running the validate command on a readme file.
+
+#     Then:
+#         - Validate that when the error code is ignored, the validation passes.
+#         - Validate that when the error code is not ignored, the validation fails.
+#     """
+#     readme_text = "This is a test readme running on version xx"
+#     readme_path = "fake_path"
+#     integration.readme.write(readme_text)
+#     readme_path = integration.readme.path
+#     readme_validator = ReadMeValidator(readme_path, ignored_errors=error_code_to_ignore)
+#     assert readme_validator.verify_no_default_sections_left() == expected_result

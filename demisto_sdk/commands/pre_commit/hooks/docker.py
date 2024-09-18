@@ -167,6 +167,7 @@ def devtest_image(
     image_tag: str,
     is_powershell: bool,
     should_pull: bool,
+    should_install_mypy_additional_dep: Optional[bool],
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -175,6 +176,7 @@ def devtest_image(
         image_tag: the base image tag
         is_powershell: if the image is a powershell based image
         should_pull: if true, don't pull images on background
+        should_install_mypy_additional_dep: if true the mypy types dependencies
     Returns: The build and pulled dev image
 
     """
@@ -185,7 +187,9 @@ def devtest_image(
         push=docker_login(docker_client=init_global_docker_client()),
         should_pull=False,
         log_prompt="DockerHook",
-        additional_requirements=get_mypy_requirements(),
+        additional_requirements=get_mypy_requirements()
+        if should_install_mypy_additional_dep
+        else None,
     )
     if not errors:
         if not should_pull:
@@ -304,8 +308,10 @@ class DockerHook(Hook):
             run_isolated,
         )
         is_image_powershell = any(obj.is_powershell for _, obj in files_with_objects)
-
-        dev_image = devtest_image(image, is_image_powershell, self.context.dry_run)
+        mypy_additional_dep = self.base_hook["name"].startswith("mypy-in-docker")
+        dev_image = devtest_image(
+            image, is_image_powershell, self.context.dry_run, mypy_additional_dep
+        )
         hooks = self.generate_hooks(dev_image, image, object_to_files, config_arg)
         logger.debug(f"Generated {len(hooks)} hooks for image {image}")
         return hooks

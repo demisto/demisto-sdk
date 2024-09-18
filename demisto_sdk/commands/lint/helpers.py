@@ -556,7 +556,7 @@ def generate_coverage_report(
             raise warning
         report_data.seek(0)
         # avoid parsing % that may exist in the data
-        logger.info("%s", report_data.read())
+        logger.info("{}", report_data.read())  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
 
     if html:
         html_dir = os.path.join(cov_dir, "html")

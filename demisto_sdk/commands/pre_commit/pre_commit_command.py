@@ -141,9 +141,9 @@ class PreCommitRunner:
         )
 
         if process.stdout:
-            logger.info("%s", process.stdout)
+            logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         if process.stderr:
-            logger.error("%s", process.stderr)
+            logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         return process.returncode
 
     @staticmethod

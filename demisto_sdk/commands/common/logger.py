@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.string_to_bool import (
 )
 
 FILE_FORMAT = (
-    "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {message} @ {file}:{function}:{line}"
+    "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {message} @ {file}:{line} (function)"
 )
 CONSOLE_FORMAT = "{message}"
 

@@ -3,10 +3,9 @@ from demisto_sdk.commands.content_graph.strict_objects.modeling_rule_schema impo
     StrictModelingRuleSchema,
 )
 
-# This model/class represents the StrictAssetsModelingRuleSchema.
-# The AssetsModelingRuleSchema and ModelingRuleSchema objects have the same schema,
-# but they are separate for future changes.
-
+"""
+The `AssetsModelingRule` and `ModelingRule` objects use the same schema, use use separate classes to make future diversions easier.
+"""
 
 StrictAssetsModelingRuleSchema = create_model(
     model_name="StrictAssetsModelingRule",

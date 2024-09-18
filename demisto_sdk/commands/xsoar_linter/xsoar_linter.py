@@ -174,9 +174,10 @@ def process_file(file_path: Path) -> ProcessResults:
             # catch only error codes from the error and warning string
             for line in errors_and_warnings_str.splitlines():
                 if error_or_warning := ERROR_AND_WARNING_CODE_PATTERN.match(line):
-                    results.errors.append(line) if error_or_warning[
-                        "type"
-                    ] == "E" else results.warnings.append(line)
+                    if error_or_warning["type"] == "E":
+                        results.errors.append(line)
+                    else:
+                        results.warnings.append(line)
         except subprocess.TimeoutExpired:
             results.errors.append(
                 f"Got a timeout while processing the following file: {str(file_path)}"
@@ -222,12 +223,12 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     logger.info(errors_and_warnings_concat)
 
     if any(return_codes):  # An error was found
-        errors, warning = list(filter(None, errors)), list(filter(None, warning))
+        errors, warnings = list(filter(None, errors)), list(filter(None, warning))
 
         if os.getenv("GITHUB_ACTIONS"):
             print_errors_github_action(errors)
             if os.getenv("IS_CONTRIBUTION"):
-                print_errors_github_action(warning)
+                print_errors_github_action(warnings)
 
         errors_str = "\n".join(errors)
         logger.error(f"Found the following errors: \n{errors_str}")
@@ -235,10 +236,10 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     return int(any(return_codes))
 
 
-def print_errors_github_action(errors_and_warning: List[str]) -> None:
-    for error_and_warning in errors_and_warning:
-        if not (match := ERROR_AND_WARNING_CODE_PATTERN.match(error_and_warning)):
-            logger.debug(f"Failed parsing error {error_and_warning}")
+def print_errors_github_action(errors_and_warnings: List[str]) -> None:
+    for item in errors_and_warnings:
+        if not (match := ERROR_AND_WARNING_CODE_PATTERN.match(item)):
+            logger.debug(f"Failed parsing error {item}")
             continue
 
         prefix = {"W": "warning", "E": "error"}[match["type"]]

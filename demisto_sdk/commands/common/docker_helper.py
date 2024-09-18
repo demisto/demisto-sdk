@@ -69,17 +69,23 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         logger.info(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:
             if os.getenv("CONTENT_GITLAB_CI"):
+                """In the case of running in CONTENT_GITLAB_CI env, init a docker client from the
+                job environment to utilize dockerhub proxy (DOCKER_IO)"""
                 logger.info(
-                    "CONTENT_GITLAB_CI use case, try to create docker client from env and pull a docker image")
+                    "CONTENT_GITLAB_CI use case, try to create docker client from env and pull a docker image"
+                )
                 DOCKER_CLIENT = docker.from_env()
-                image = f"{DOCKER_REGISTRY_URL}/demisto/crypto:1.0.0.83343"
-                logger.info(f'{image=}')
-                image = DOCKER_CLIENT.images.pull(image)
-                logger.info(f"{image=}, {image.tags=}")
-
-            DOCKER_CLIENT = docker.from_env(
-                timeout=timeout, use_ssh_client=ssh_client
-            )  # type: ignore
+                # image = f"{DOCKER_REGISTRY_URL}/demisto/crypto:1.0.0.83343"
+                # logger.info(f"{image=}")
+                # image = DOCKER_CLIENT.images.pull(image)
+                # logger.info(f"{image=}, {image.tags=}")
+                return DOCKER_CLIENT
+        except docker.errors.DockerException:
+            logger.warning(
+                f"{log_prompt} - Failed to init docker client in CONTENT_GITLAB_CI use case. "
+            )
+        try:
+            DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
         except docker.errors.DockerException:
             logger.warning(
                 f"{log_prompt} - Failed to init docker client. "
@@ -641,16 +647,6 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
     logger.info(f"Get python version from image {image=}")
-
-    if os.getenv("CONTENT_GITLAB_CI"):
-        logger.info(
-            "CONTENT_GITLAB_CI use case, try to create docker client from env and pull a docker image")
-        DOCKER_CLIENT = docker.from_env()
-        logger.info(f"{DOCKER_CLIENT=}")
-        image_to_pull = f"{DOCKER_REGISTRY_URL}/{image}"
-        logger.info(f'{image_to_pull=}')
-        image_result = DOCKER_CLIENT.images.pull(image_to_pull)
-        logger.info(f"{image_result=}, {image_result.tags=}")
 
     if not image:
         # When no docker_image is specified, we use the default python version which is Python 2.7.18

@@ -108,7 +108,9 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     }
 
 
-def get_items_using_deprecated(tx: Transaction, file_paths: List[str]):
+def get_items_using_deprecated(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, str, List[graph.Node]]]:
     return get_items_using_deprecated_commands(
         tx, file_paths
     ) + get_items_using_deprecated_content_items(tx, file_paths)
@@ -125,8 +127,15 @@ WHERE elementId(i) <> elementId(i2)
 WITH p, c, i2
 WHERE i2 IS NULL
 {files_filter}
-RETURN c.object_id AS deprecated_command, c.content_type AS deprecated_content_type, collect(p.path) AS object_using_deprecated"""
-    return list(run_query(tx, command_query))
+RETURN c.object_id AS deprecated_command, c.content_type AS deprecated_content_type, collect(p) AS object_using_deprecated"""
+    return [
+        (
+            item.get("deprecated_command"),
+            item.get("deprecated_content_type"),
+            item.get("object_using_deprecated"),
+        )
+        for item in run_query(tx, command_query)
+    ]
 
 
 def get_items_using_deprecated_content_items(tx: Transaction, file_paths: List[str]):
@@ -140,9 +149,16 @@ OPTIONAL MATCH (p)-[:USES]->(c1:Command)<-[:HAS_COMMAND]-(d)
 WITH p, d, c1
 WHERE c1 IS NULL
 {files_filter}
-RETURN d.object_id AS deprecated_content, d.content_type AS deprecated_content_type, collect(p.path) AS object_using_deprecated
+RETURN d.object_id AS deprecated_content, d.content_type AS deprecated_content_type, collect(p) AS object_using_deprecated
     """
-    return list(run_query(tx, query))
+    return [
+        (
+            item.get("deprecated_content"),
+            item.get("deprecated_content_type"),
+            item.get("object_using_deprecated"),
+        )
+        for item in run_query(tx, query)
+    ]
 
 
 def validate_marketplaces(tx: Transaction, pack_ids: List[str]):

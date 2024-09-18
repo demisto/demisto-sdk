@@ -505,7 +505,21 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[dict]: A list of dicts with the deprecated item and all the items used it.
         """
         with self.driver.session() as session:
-            return session.execute_read(get_items_using_deprecated, file_paths)
+            deprecated_usage = session.execute_read(
+                get_items_using_deprecated, file_paths
+            )
+        all_related_nodes = [node for _, _, nodes in deprecated_usage for node in nodes]
+        self._add_nodes_to_mapping(all_related_nodes)
+        return [
+            {
+                "deprecated_content_id": dep_content,
+                "deprecated_content_type": dep_type,
+                "content_items_using_deprecated": [
+                    self._id_to_obj[node.element_id] for node in nodes
+                ],
+            }
+            for dep_content, dep_type, nodes in deprecated_usage
+        ]
 
     def find_uses_paths_with_invalid_marketplaces(
         self, pack_ids: List[str]

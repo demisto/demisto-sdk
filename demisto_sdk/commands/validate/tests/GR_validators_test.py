@@ -37,6 +37,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplayboo
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_list_files import (
     IsTestPlaybookInUseValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR107_is_deprecated_content_item_in_usage_valid_all_files import (
+    IsDeprecatedContentItemInUsageValidatorAllFiles as GR107_IsDeprecatedContentItemInUsageValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR107_is_deprecated_content_item_in_usage_valid_list_files import (
+    IsDeprecatedContentItemInUsageValidatorListFiles as GR107_IsDeprecatedContentItemInUsageValidatorListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -529,3 +535,185 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
         [repo_for_test.packs[pack_index]]
     )
     assert len(results) == expected_len_results
+
+
+@pytest.fixture
+def repo_for_test_gr_107(graph_repo: Repo):
+    playbook_dict_using_deprecate_commands = {
+        "id": "UsingDeprecatedCommand",
+        "name": "UsingDeprecatedCommand",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "|||test-command",
+                },
+            }
+        },
+    }
+    playbook_dict_using_deprecated_playbook = {
+        "id": "UsingDeprecatedPlaybook",
+        "name": "UsingDeprecatedPlaybook",
+        "tasks": {
+            "4": {
+                "id": "4",
+                "taskid": "1",
+                "type": "playbook",
+                "task": {
+                    "id": "1",
+                    "name": "DeprecatedPlaybook",
+                    "playbookName": "DeprecatedPlaybook",
+                },
+            }
+        },
+    }
+    pack_1 = graph_repo.create_pack("Pack1")
+    integration = pack_1.create_integration("MyIntegration")
+    integration.set_commands(["test-command"])
+    integration.set_data(**{"script.commands[0].deprecated": "true"})
+    pack_2 = graph_repo.create_pack("pack2")
+    pack_2.create_playbook(
+        "UsingDeprecatedCommand", yml=playbook_dict_using_deprecate_commands
+    )
+    pack_2.create_playbook(
+        name="DeprecatedPlaybook",
+        yml={
+            "deprecated": "true",
+            "id": "DeprecatedPlaybook",
+            "name": "DeprecatedPlaybook",
+        },
+    )
+    pack_2.create_playbook(
+        name="UsingDeprecatedPlaybook", yml=playbook_dict_using_deprecated_playbook
+    )
+    pack_2.create_script(name="DeprecatedScript").set_data(**{"deprecated": "true"})
+    pack_2.create_script(
+        name="UsingDeprecatedScript",
+        code='demisto.execute_command("DeprecatedScript", dArgs)',
+    )
+    pack_2.create_script(name="SampleScript")
+    return graph_repo
+
+
+@pytest.mark.parametrize(
+    "playbook_index, expected_validation_count",
+    [
+        pytest.param(0, 1, id="Playbook using deprecated command"),
+        pytest.param(2, 1, id="Playbook using deprecated playbook"),
+    ],
+)
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_invalid_playbook(
+    repo_for_test_gr_107: Repo, playbook_index: int, expected_validation_count: int
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for invalid cases.
+
+    Given:
+    - A repository with deprecated content items in use.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on specific playbooks.
+
+    Then:
+    - Verify that the validator correctly identifies the usage of deprecated content items.
+
+    Parameters:
+    - playbook_index: Index of the playbook to test in the pack.
+    - expected_validation_count: Expected number of validation results.
+    """
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1]
+        .playbooks[playbook_index]
+        .get_graph_object(graph_interface),
+    ]
+    validator = GR107_IsDeprecatedContentItemInUsageValidatorListFiles()
+    validation_results = validator.obtain_invalid_content_items(pack_objects)
+
+    assert len(validation_results) == expected_validation_count
+
+
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_invalid_script(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for an invalid script.
+
+    Given:
+    - A repository with a script that uses a deprecated content item.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific script.
+
+    Then:
+    - Verify that the validator correctly identifies the usage of the deprecated content item.
+    - Assert that the validation results contain exactly one item.
+    """
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].scripts[1].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 1
+
+
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for a valid script.
+
+    Given:
+    - A repository with a script that doesn't use any deprecated content items.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific script.
+
+    Then:
+    - Verify that the validator correctly identifies that no deprecated content items are used.
+    - Assert that the validation results are empty.
+    """
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].scripts[2].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 0
+
+
+def test_GR107_IsDeprecatedContentItemInUsageValidatorAllFiles_is_invalid(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorAllFiles validator for invalid cases across all files.
+
+    Given:
+    - A repository with multiple content items, some of which use deprecated content.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorAllFiles on the entire repository.
+
+    Then:
+    - Verify that the validator correctly identifies all instances of deprecated content usage.
+    - Assert that the validation results contain exactly three items.
+    """
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorAllFiles().obtain_invalid_content_items(
+        []
+    )
+    assert len(validation_results) == 3

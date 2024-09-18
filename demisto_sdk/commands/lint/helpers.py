@@ -555,7 +555,7 @@ def generate_coverage_report(
                 return
             raise warning
         report_data.seek(0)
-        # avoid parsing % that may exist in the data
+        # the `{}` formatting prevents failed parsing of `%` that may exist in the data
         logger.info("{}", report_data.read())  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
 
     if html:

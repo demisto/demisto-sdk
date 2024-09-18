@@ -531,7 +531,7 @@ def generate_integration_doc(
                 errors.extend(update_errors)
         else:
             docs: list = []
-            docs.extend(add_lines(yml_data.get("description")))
+            docs.extend(add_lines(yml_data.get("description", "")))
             if not is_contribution:
                 docs.extend(
                     [

@@ -21,6 +21,7 @@ from demisto_sdk.commands.content_graph.objects import (
     LayoutRule,
     Mapper,
     ModelingRule,
+    Pack,
     ParsingRule,
     Playbook,
     PreProcessRule,
@@ -72,6 +73,7 @@ ContentTypes = Union[
     CaseField,
     CaseLayout,
     CaseLayoutRule,
+    Pack,
 ]
 
 

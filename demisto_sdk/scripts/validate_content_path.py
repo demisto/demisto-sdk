@@ -11,7 +11,6 @@ from typing_extensions import Annotated
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DOC_FILES_DIR,
@@ -94,7 +93,6 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         LAYOUTS_DIR,
         CLASSIFIERS_DIR,
         MAPPERS_DIR,
-        CONNECTIONS_DIR,
         RELEASE_NOTES_DIR,
         DOC_FILES_DIR,
         JOBS_DIR,

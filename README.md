@@ -10,7 +10,7 @@ The Demisto SDK library can be used to manage your Cortex XSOAR content with eas
 
 Requirements:
 
-- Python 3.8, 3.9 or 3.10.
+- Python 3.9, 3.10 or 3.11.
 - git installed.
 - A linux, mac or WSL2 machine.
 

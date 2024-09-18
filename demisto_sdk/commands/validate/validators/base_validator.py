@@ -192,11 +192,29 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
 
 def get_all_validators() -> List[BaseValidator]:
-    return [
-        validator()
-        for validator in BaseValidator.__subclasses__()
-        if not is_abstract_class(validator)
-    ]
+    validators = []
+    for validator in BaseValidator.__subclasses__():
+        validators.append(validator)
+        validators.extend(get_all_validators_specific_validation(validator))  # type: ignore[arg-type]
+    return [validator() for validator in validators if not is_abstract_class(validator)]
+
+
+def get_all_validators_specific_validation(
+    validation: BaseValidator,
+) -> List[BaseValidator]:
+    """Recursively return all sub classes of a given validator
+
+    Args:
+        validation (BaseValidator): The validator to retrieve its sub classes.
+
+    Returns:
+        List[BaseValidator]: The list of obtained sub classes.
+    """
+    validators = []
+    for validator in validation.__subclasses__():  # type: ignore[attr-defined]
+        validators.append(validator)
+        validators.extend(get_all_validators_specific_validation(validator))
+    return validators
 
 
 class BaseResult(BaseModel):

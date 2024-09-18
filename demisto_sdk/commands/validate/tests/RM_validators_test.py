@@ -59,6 +59,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exist
 from demisto_sdk.commands.validate.validators.RM_validators.RM115_no_default_section_left import (
     NoDefaultSectionsLeftReadmeValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM116_readme_not_to_short import (
+    NotToShortReadmeValidator,
+)
 from TestSuite.repo import ChangeCWD, Repo
 
 
@@ -1056,70 +1059,46 @@ def test_verify_no_default_sections_left(file_input, section):
         - Ensure no default sections in the readme file
     """
     content_item = create_integration_object(readme_content=file_input)
-    no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator(
-        [content_item]
-    )
+    no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator()
     validation_result: list[ValidationResult] = (
-        no_default_section_left_validator.is_valid()
+        no_default_section_left_validator.is_valid([content_item])
     )
     section_error = f'Replace "{section}" with a suitable info.'
     assert section_error == validation_result[0].message
 
 
-# @pytest.mark.parametrize(
-#     "readme_fake_path, readme_text",
-#     [
-#         (
-#             "/HelloWorld/README.md",
-#             "getting started and learn how to build an integration",
-#         )
-#     ],
-# )
-# def test_readme_ignore(integration, readme_fake_path, readme_text):
-#     """
-#     Check that packs in ignore list are ignored.
-#        Given
-#             - README path of ignore pack
-#         When
-#             - Run validate on README of ignored pack
-#         Then
-#             - Ensure validation ignored the pack
-#     """
-#     integration.readme.write(readme_text)
-#     readme_path = integration.readme.path
-#     readme_validator = ReadMeValidator(readme_path)
-#     # change the pack path to readme_fake_path
-#     from pathlib import Path
-
-#     readme_validator.file_path = Path(readme_fake_path)
-#     readme_validator.pack_path = readme_validator.file_path.parent
-
-#     result = readme_validator.verify_no_default_sections_left()
-#     assert result
+def test_readme_ignore():
+    """
+    Check that packs in ignore list are ignored.
+       Given
+            - A pack from the ignore list
+        When
+            - Run validate on README of ignored pack
+        Then
+            - Ensure validation ignored the pack
+    """
+    readme_text = "getting started and learn how to build an integration"
+    pack_content_item = create_pack_object(name="HelloWorld", readme_text=readme_text)
+    no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator()
+    assert not no_default_section_left_validator.is_valid([pack_content_item])
 
 
-# @pytest.mark.parametrize(
-#     "error_code_to_ignore, expected_result",
-#     [({"README.md": "RM100"}, True), ({}, False)],
-# )
-# def test_readme_verify_no_default_ignore_test(
-#     error_code_to_ignore, expected_result, integration
-# ):
-#     """
-#     Given:
-#         - A readme that violates a validation and the ignore error code for the validation.
-#         - A readme that violates a validation without the ignore error code for the validation.
-
-#     When:
-#         - When running the validate command on a readme file.
-
-#     Then:
-#         - Validate that when the error code is ignored, the validation passes.
-#         - Validate that when the error code is not ignored, the validation fails.
-#     """
-#     readme_text = "This is a test readme running on version xx"
-#     readme_path = "fake_path"
-#     integration.readme.write(readme_text)
-#     readme_path = integration.readme.path
-#     readme_validator = ReadMeValidator(readme_path, ignored_errors=error_code_to_ignore)
-#     assert readme_validator.verify_no_default_sections_left() == expected_result
+def test_invalid_short_file():
+    """
+    Given
+        - Non empty Readme with less than 30 chars.
+    When
+        - Running validate on README file
+    Then
+        - Ensure verify on Readme fails
+    """
+    short_readme = "This is a short readme"
+    test_pack = create_pack_object(readme_text=short_readme)
+    not_to_short_readme_validator = NotToShortReadmeValidator()
+    short_readme_error = (
+        "Your Pack README is too small (29 chars). Please move its content to the pack "
+        "description or add more useful information to the Pack README. "
+        "Pack README files are expected to include a few sentences about the pack and/or images."
+    )
+    result: list[ValidationResult] = not_to_short_readme_validator.is_valid([test_pack])
+    assert result[0].message == short_readme_error

@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true
-python_version = "3.8"
+python_version = "3.9"
 show_error_codes = true
 follow_imports = "silent"
 pretty = true
@@ -23,7 +23,6 @@ classifiers = [
   'Intended Audience :: Developers',
   'Natural Language :: English',
   'License :: OSI Approved :: MIT License',
-  'Programming Language :: Python :: 3.8',
   'Programming Language :: Python :: 3.9',
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
@@ -39,7 +38,7 @@ exclude = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.12"
+python = ">=3.9,<3.12"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"
@@ -158,7 +157,7 @@ exclude = [
   "demisto_sdk/commands/init/templates",
   "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
 ]
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 ignore = [

@@ -81,6 +81,7 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
+        logger.info("docker_client | get_token")
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             now = datetime.now()
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
@@ -164,6 +165,7 @@ class DockerHubClient:
             headers: headers if needed
             params: params if needed
         """
+        logger.info("docker_client | get_request")
         if self.docker_client:
             logger.info("Try using docker client to make request")
             try:
@@ -213,6 +215,7 @@ class DockerHubClient:
             params: query parameters
             results_key: the key to retrieve the results in case its a list
         """
+        logger.info("docker_client | do_docker_hub_get_request")
         if url_suffix:
             if not url_suffix.startswith("/"):
                 url_suffix = f"/{url_suffix}"
@@ -271,6 +274,7 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
+        logger.info("docker_client | do_registry_get_request")
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
 
@@ -295,6 +299,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
+        logger.info("docker_client | get_image_manifests")
         try:
             return self.do_registry_get_request(
                 f"/manifests/{tag}", docker_image=docker_image
@@ -313,6 +318,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
+        logger.info("docker_client | get_image_digest")
         response = self.get_image_manifests(docker_image, tag=tag)
         try:
             return response["config"]["digest"]
@@ -329,6 +335,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             image_digest: The docker image's digest
         """
+        logger.info("docker_client | get_image_blobs")
         try:
             return self.do_registry_get_request(
                 f"/blobs/{image_digest}", docker_image=docker_image
@@ -347,6 +354,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
+        logger.info("docker_client | get_image_env")
         image_digest = self.get_image_digest(docker_image, tag=tag)
         response = self.get_image_blobs(docker_image, image_digest=image_digest)
         try:
@@ -363,6 +371,7 @@ class DockerHubClient:
         Args:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
         """
+        logger.info("docker_client | get_image_tags")
         try:
             response = self.do_registry_get_request(
                 "/tags/list", docker_image=docker_image
@@ -383,6 +392,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
+        logger.info("docker_client | get_image_tag_metadata")
         try:
             return self.do_docker_hub_get_request(
                 f"/repositories/{docker_image}/tags/{tag}"
@@ -401,6 +411,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
+        logger.info("docker_client | is_docker_image_exist")
         try:
             self.get_image_tag_metadata(docker_image, tag=tag)
             return True
@@ -428,6 +439,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
+        logger.info("docker_client | get_docker_image_tag_creation_date")
         response = self.get_image_tag_metadata(docker_image, tag=tag)
         return datetime.strptime(
             response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -440,6 +452,7 @@ class DockerHubClient:
         Args:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
         """
+        logger.info("docker_client | get_latest_docker_image_tag")
         raw_image_tags = self.get_image_tags(docker_image)
         if not raw_image_tags:
             raise RuntimeError(
@@ -473,6 +486,7 @@ class DockerHubClient:
             str: the full docker-image included the tag, for example demisto/pan-os-python:2.0.0
 
         """
+        logger.info("docker_client | get_latest_docker_image")
         return f"{docker_image}:{self.get_latest_docker_image_tag(docker_image)}"
 
     def get_repository_images(
@@ -484,6 +498,7 @@ class DockerHubClient:
         Args:
             repo: The repository name, e.g.: demisto
         """
+        logger.info("docker_client | get_repository_images")
         try:
             return self.do_docker_hub_get_request(f"/repositories/{repo}")
         except RequestException as error:
@@ -498,6 +513,7 @@ class DockerHubClient:
         Args:
             repo: The repository name, e.g.: demisto
         """
+        logger.info("docker_client | get_repository_images_names")
         return [
             image_metadata.get("name", "")
             for image_metadata in self.get_repository_images(repo)

@@ -164,6 +164,19 @@ class DockerHubClient:
             headers: headers if needed
             params: params if needed
         """
+        if self.docker_client:
+            logger.info("Try using docker client to make request")
+            try:
+                response = self.docker_client.api.get(
+                    url,
+                    headers=headers,
+                    params=params,
+                )
+                return response.json()
+            except docker.errors.APIError as e:
+                logger.warning(f"Failed to make request using docker client: {e}")
+                # Fall through to use requests if docker client fails
+
         auth = None if headers and "Authorization" in headers else self.auth
 
         response = self._session.get(
@@ -260,21 +273,6 @@ class DockerHubClient:
         """
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
-
-        if self.docker_client:
-            logger.info("do_registry_get_request | if self.docker_client:")
-            try:
-                response = self.docker_client.api.get(
-                    f"{self.registry_api_url}/{docker_image}{url_suffix}",
-                    headers=dict(headers) if headers else None,
-                    params=dict(params) if params else None,
-                )
-                return response.json()
-            except docker.errors.APIError as e:
-                # raise DockerHubRequestException(
-                #     f"Failed to make request using docker client: {e}", exception=e
-                # )
-                logger.info(f"Failed to make request using docker client: {e}")
 
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",

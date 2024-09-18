@@ -78,7 +78,6 @@ class TestRNUpdate:
         """
         expected_result = (
             "\n#### Classifiers\n\n##### Hello World Classifier\n\n- %%UPDATE_RN%%\n"
-            "\n#### Connections\n\n##### Hello World Connection\n\n- %%UPDATE_RN%%\n"
             "\n#### Dashboards\n\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%\n"
             "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- %%UPDATE_RN%%\n"
             "\n#### Incident Types\n\n##### Hello World Incident Type\n\n- %%UPDATE_RN%%\n"
@@ -155,10 +154,6 @@ class TestRNUpdate:
                 "is_new_file": False,
             },
             ("Hello World Dashboard", FileType.DASHBOARD): {
-                "description": "",
-                "is_new_file": False,
-            },
-            ("Hello World Connection", FileType.CONNECTION): {
                 "description": "",
                 "is_new_file": False,
             },
@@ -348,7 +343,7 @@ class TestRNUpdate:
             - a dict of changed items
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
@@ -378,7 +373,7 @@ class TestRNUpdate:
             - a dict of changed items, with a documentation rn update
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
@@ -1697,12 +1692,6 @@ class TestRNUpdateUnit:
             "Packs/VulnDB/Integrations/VulnDB/VulnDB.yml",
             FileType.INTEGRATION,
             ("VulnDB", FileType.INTEGRATION),
-        ),
-        (
-            "Packs/VulnDB",
-            "Packs/VulnDB/Connections/VulnDB/VulnDB.yml",
-            FileType.CONNECTION,
-            ("VulnDB", FileType.CONNECTION),
         ),
         (
             "Packs/VulnDB",

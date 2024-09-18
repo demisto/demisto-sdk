@@ -146,9 +146,10 @@ class PacksManager(ArtifactsManager):
         """
         reports = []
         # we quiet the outputs and in case we want the output - a summery will be printed
-        with QuietModeController(
-            quiet_logger=True, quiet_output=True
-        ), PacksDirsHandler(self):
+        with (
+            QuietModeController(quiet_logger=True, quiet_output=True),
+            PacksDirsHandler(self),
+        ):
             for pack_name in self.pack_names:
                 if pack_name not in IGNORED_PACKS:
                     reports.append(dump_pack(self, self.packs[pack_name]))

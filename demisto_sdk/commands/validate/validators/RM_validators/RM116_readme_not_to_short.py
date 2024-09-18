@@ -17,10 +17,7 @@ MINIMUM_README_LENGTH = 30
 class NotToShortReadmeValidator(BaseValidator[ContentTypes]):
     error_code = "RM116"
     description = "Validate that the readme file is not to short"
-    error_message = """Your Pack README is too short ({0} chars). Please move its content to the pack
-                        description or add more useful information to the Pack README.
-                        Pack README files are expected to include a few sentences about the pack and/or images.
-                        File {1} """
+    error_message = """Your Pack README is too short ({0} chars). Please move its content to the pack description or add more useful information to the Pack README. Pack README files are expected to include a few sentences about the pack and/or images."""
 
     related_field = "readme"
     rationale = """Check that the readme files are not to short."""

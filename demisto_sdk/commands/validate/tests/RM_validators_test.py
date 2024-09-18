@@ -1095,10 +1095,7 @@ def test_invalid_short_file():
     short_readme = "This is a short readme"
     test_pack = create_pack_object(readme_text=short_readme)
     not_to_short_readme_validator = NotToShortReadmeValidator()
-    short_readme_error = (
-        "Your Pack README is too small (29 chars). Please move its content to the pack "
-        "description or add more useful information to the Pack README. "
-        "Pack README files are expected to include a few sentences about the pack and/or images."
-    )
+    short_readme_error = """Your Pack README is too short (22 chars). Please move its content to the pack description or add more useful information to the Pack README. Pack README files are expected to include a few sentences about the pack and/or images."""
+
     result: list[ValidationResult] = not_to_short_readme_validator.is_valid([test_pack])
     assert result[0].message == short_readme_error

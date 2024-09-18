@@ -4,6 +4,7 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import dateparser
+import docker
 import requests
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
@@ -59,6 +60,9 @@ class DockerHubClient:
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
+        self.docker_client = (
+            docker.from_env() if os.getenv("CONTENT_GITLAB_CI") else None
+        )
 
     def __enter__(self):
         return self
@@ -256,6 +260,21 @@ class DockerHubClient:
         """
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
+
+        if self.docker_client:
+            logger.info("do_registry_get_request | if self.docker_client:")
+            try:
+                response = self.docker_client.api.get(
+                    f"{self.registry_api_url}/{docker_image}{url_suffix}",
+                    headers=dict(headers) if headers else None,
+                    params=dict(params) if params else None,
+                )
+                return response.json()
+            except docker.errors.APIError as e:
+                # raise DockerHubRequestException(
+                #     f"Failed to make request using docker client: {e}", exception=e
+                # )
+                logger.info(f"Failed to make request using docker client: {e}")
 
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",

@@ -1,0 +1,4 @@
+changes:
+- description: Converted RM100 to the new validate format.
+  type: feature
+pr_number: 4371

@@ -1685,6 +1685,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.LAYOUT_RULE
         elif PRE_PROCESS_RULES_DIR in path.parts:
             return FileType.PRE_PROCESS_RULES
+        elif path.parent.name == INCIDENT_TYPES_DIR:
+            return FileType.INCIDENT_TYPE
 
     elif (path.stem.endswith("_image") and path.suffix == ".png") or (
         (path.stem.endswith("_dark") or path.stem.endswith("_light"))

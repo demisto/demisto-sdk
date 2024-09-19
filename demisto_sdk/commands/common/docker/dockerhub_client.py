@@ -4,8 +4,9 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import dateparser
-import docker
+import google.auth
 import requests
+from google.auth.transport.requests import Request
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
@@ -18,6 +19,7 @@ DOCKERHUB_USER = "DOCKERHUB_USER"
 DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
 DEFAULT_REPOSITORY = "demisto"
 IS_CONTENT_GITLAB_CI = os.getenv("CONTENT_GITLAB_CI")
+DOCKER_IO = os.getenv("DOCKER_IO", "")
 
 
 class DockerHubAuthScope(StrEnum):
@@ -51,7 +53,7 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-        self.registry_api_url = registry or self.DEFAULT_REGISTRY
+        self.registry_api_url = get_registry_api_url(registry, self.DEFAULT_REGISTRY)
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
         self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")
@@ -61,9 +63,6 @@ class DockerHubClient:
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
-        self.docker_client = (
-            docker.from_env() if os.getenv("CONTENT_GITLAB_CI") else None
-        )
 
     def __enter__(self):
         return self
@@ -83,6 +82,17 @@ class DockerHubClient:
             scope: the scope needed for the repository
         """
         logger.info("dockerhub_client | get_token")
+
+        if IS_CONTENT_GITLAB_CI:
+            # If running in a Gitlab CI environment, try using the Google Cloud access token
+            logger.info(
+                "Attempting to use Google Cloud access token for Docker Hub proxy authentication")
+            try:
+                if gcloud_access_token := get_gcloud_access_token():
+                    return gcloud_access_token
+            except Exception as e:
+                logger.error(f"Failed to get gcloud access token: {e}")
+
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             now = datetime.now()
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
@@ -167,18 +177,6 @@ class DockerHubClient:
             params: params if needed
         """
         logger.info("dockerhub_client | get_request")
-        # if self.docker_client:
-        #     logger.info("Try using docker client to make request")
-        #     try:
-        #         response = self.docker_client.api.get(
-        #             url,
-        #             # headers=headers,
-        #             # params=params,
-        #         )
-        #         return response.json()
-        #     except docker.errors.APIError as e:
-        #         logger.warning(f"Failed to make request using docker client: {e}")
-        #         # Fall through to use requests if docker client fails
 
         auth = None if headers and "Authorization" in headers else self.auth
 
@@ -521,3 +519,83 @@ class DockerHubClient:
             for image_metadata in self.get_repository_images(repo)
             if image_metadata.get("name")
         ]
+
+
+""" Google Artifactory functions """
+
+
+def get_dockerhub_artifact_registry_url(base_path: str) -> str:
+    """
+    Parses a DockerHub Google Artifact Registry internal base path into a base url for DockerHub proxy API calls.
+    See https://confluence-dc.paloaltonetworks.com/display/VisibilityApplication/Shared-Services+GCP+Services+-+GAR for more details.
+
+    Args:
+        base_path (str): The base path of the DockerHub Google Artifact Registry, usually from the DOCKER_IO environment variable.
+
+    Returns:
+        str: The base URL for the DockerHub proxy API calls based on the provided Artifactory URL.
+    """
+    parts = base_path.split("/")
+    if len(parts) != 4:
+        raise ValueError("Invalid Artifactory URL format")
+
+    region, domain, project, repository = parts
+    return f"https://{region}-{domain}/v2/{project}/{repository}"
+
+
+def get_registry_api_url(registry: str, default_registry: str) -> str:
+    """
+    Determine the appropriate registry API URL based on the environment and provided parameters.
+
+    This function checks if the code is running in a GitLab CI environment and if a custom Docker.io URL is set.
+    If both conditions are true, it uses the custom Docker.io URL. Otherwise, it falls back to the provided
+    registry or the default registry.
+
+    Args:
+        registry (str): The registry URL provided by the user.
+        default_registry (str): The default registry URL to use if no custom URL is provided.
+
+    Returns:
+        str: The determined registry API URL to use for Docker operations.
+    """
+    if IS_CONTENT_GITLAB_CI and DOCKER_IO:
+        return get_dockerhub_artifact_registry_url(DOCKER_IO)
+    else:
+        return registry or default_registry
+
+
+def get_gcloud_access_token() -> str | None:
+    """
+    Retrieves a Google Cloud access token using environment credentials.
+
+    This method attempts to obtain credentials from the environment and use them
+    to retrieve a valid Google Cloud access token. If successful, it returns the
+    token as a string. If unsuccessful, it returns None.
+
+    Returns:
+        str | None: The Google Cloud access token if successful, None otherwise.
+
+    Raises:
+        Exception: Any exception that occurs during the token retrieval process
+                   is caught and logged, but not re-raised.
+    """
+    try:
+        # Automatically obtain credentials from the environment
+        credentials, project_id = google.auth.default()
+
+        # Refresh the token if needed (ensures the token is valid)
+        credentials.refresh(Request())
+
+        # Extract the access token
+        access_toke = credentials.token
+
+        if access_toke:
+            logger.info(
+                f"Successfully obtained Google Cloud access token, {project_id=}.")
+            return access_toke
+        else:
+            logger.info("Failed to obtain Google Cloud access token.")
+            return None
+    except Exception as e:
+        logger.info(f"Failed to get access token: {str(e)}")
+        return None

@@ -27,8 +27,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
 )
-
-# from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
@@ -177,6 +175,33 @@ def get_pip_requirements_from_file(requirements_file: Path) -> List[str]:
 
 
 class DockerBase:
+    """
+    Base class for Docker-related operations in the Demisto SDK.
+
+    This class utilizes any environment where a Docker Daemon is initialized,
+    and provides core functionality for working with Docker containers and images.
+
+    Attributes:
+        tmp_dir_name (tempfile.TemporaryDirectory): Temporary directory for Docker operations.
+        tmp_dir (Path): Path object for the temporary directory.
+        installation_scripts (dict): Mapping of container types to installation script paths.
+        changes (dict): Docker image changes for different container types.
+        requirements (Path): Path to the requirements.txt file.
+        _files_to_push_on_installation (List[Tuple[os.PathLike, str]]): Files to be pushed during installation.
+
+    Methods:
+        version(): Get the Docker version.
+        installation_files(container_type): Get installation files for a specific container type.
+        pull_image(image): Pull a Docker image.
+        is_image_available(image): Check if a Docker image is available.
+        copy_files_container(container, files): Copy files to a Docker container.
+        create_container(image, command, files_to_push, environment, **kwargs): Create a Docker container.
+        push_image(image, log_prompt): Push a Docker image to the repository.
+        create_image(base_image, image, container_type, install_packages, push, log_prompt): Create a new Docker image.
+        get_image_registry(image): Get the full image name with registry.
+        get_or_create_test_image(base_image, container_type, python_version, additional_requirements, push, should_pull, log_prompt): Get or create a test Docker image.
+    """
+
     def __init__(self):
         self.tmp_dir_name = tempfile.TemporaryDirectory(
             prefix=os.path.join(os.getcwd(), "tmp")

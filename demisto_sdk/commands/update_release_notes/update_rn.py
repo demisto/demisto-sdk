@@ -1103,6 +1103,7 @@ def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]
     else:
         diff_lines = diff.splitlines()
         for diff_line in diff_lines:
+            logger.info(diff_line)
             if (
                 "dockerimage:" in diff_line
             ):  # search whether exists a line that notes that the Docker image was

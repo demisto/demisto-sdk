@@ -76,7 +76,7 @@ class PreCommitRunner:
             "sourcery": SourceryHook,
             "validate": ValidateFormatHook,
             "format": ValidateFormatHook,
-            "mypy": MypyHook,  # TODO delete this hook after https://github.com/demisto/content/pull/35880 will merged
+            "mypy": MypyHook,
         }
 
         for hook_id in hooks.copy():

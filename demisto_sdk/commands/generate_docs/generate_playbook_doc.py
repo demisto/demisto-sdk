@@ -118,10 +118,10 @@ def generate_playbook_doc(
         if errors:
             logger.warning("<yellow>Possible Errors:</yellow>")
             for error in errors:
-                logger.warning(f"<yellow>{error}</yellow>")
+                logger.warning(error)
 
-    except Exception as e:
-        logger.exception(f"<red>{e}</red>")
+    except Exception:
+        logger.exception("Failed generating playbook doc")
         raise
 
 

@@ -167,7 +167,7 @@ def devtest_image(
     image_tag: str,
     is_powershell: bool,
     should_pull: bool,
-    should_install_mypy_additional_dep: Optional[bool],
+    should_install_mypy_additional_dependencies: Optional[bool],
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -176,7 +176,7 @@ def devtest_image(
         image_tag: the base image tag
         is_powershell: if the image is a powershell based image
         should_pull: if true, don't pull images on background
-        should_install_mypy_additional_dep: if true the mypy types dependencies
+        should_install_mypy_additional_dependencies: if true the mypy types dependencies
     Returns: The build and pulled dev image
 
     """
@@ -252,7 +252,7 @@ def _split_by_objects(
     object_to_files: Dict[
         Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
     ] = defaultdict(set)
-    _, config_filename = config_arg if config_arg else ("", "")
+    config_filename = (config_arg or ("", "")[1]
     for file, obj in files_with_objects:
         if run_isolated or (
             config_arg and (obj.path.parent / config_filename).exists()
@@ -308,7 +308,7 @@ class DockerHook(Hook):
             run_isolated,
         )
         is_image_powershell = any(obj.is_powershell for _, obj in files_with_objects)
-        mypy_additional_dep = self.base_hook["name"].startswith("mypy-in-docker")
+        mypy_additional_dependencies = self.base_hook["name"].startswith("mypy-in-docker")
         dev_image = devtest_image(
             image, is_image_powershell, self.context.dry_run, mypy_additional_dep
         )

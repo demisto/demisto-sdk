@@ -1,5 +1,3 @@
-"""Delete This File After https://github.com/demisto/content/pull/35880 Is Merged"""
-
 from copy import deepcopy
 from typing import Any, Dict
 

@@ -206,6 +206,7 @@ An internet connection is required for the following commands to work properly:
 1. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
 2. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
 3. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
+4. [Pre-commit](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md)
 
 Note that the following commands may work partially without an internet connection:
 

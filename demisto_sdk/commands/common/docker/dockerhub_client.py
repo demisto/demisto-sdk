@@ -64,6 +64,10 @@ class DockerHubClient:
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
 
+        logger.info("DockerHubClient | sanity check")
+        response = self.get_image_tags("demisto/pan-os-python")
+        logger.info(f"Got image tags: {response=}")
+
     def __enter__(self):
         return self
 
@@ -538,6 +542,7 @@ def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     Raises:
         ValueError: If the input base_path is not in the expected format.
     """
+    logger.info(f"{base_path=}")
     # Split base path into region-domain, project, and repository
     try:
         region_domain, project, repository = base_path.split('/')
@@ -545,6 +550,8 @@ def get_dockerhub_artifact_registry_url(base_path: str) -> str:
         raise ValueError("Invalid Artifact Registry path format. Expected format: 'region-domain/project/repository'")
 
     # Construct and return the base URL for DockerHub proxy API calls
+    logger.info(
+        f"get_dockerhub_artifact_registry_url returned: https://{region_domain}/v2/{project}/{repository}")
     return f"https://{region_domain}/v2/{project}/{repository}"
 
 
@@ -563,9 +570,13 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
     Returns:
         str: The determined registry API URL to use for Docker operations.
     """
+    logger.info(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
     if IS_CONTENT_GITLAB_CI and DOCKER_IO:
+        logger.info(
+            "Running in GitLab CI environment with custom Docker.io URL")
         return get_dockerhub_artifact_registry_url(DOCKER_IO)
     else:
+        logger.info(f"using provided or default registry, {default_registry=}")
         return registry or default_registry
 
 

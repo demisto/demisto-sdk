@@ -1,7 +1,6 @@
 # STD packages
 import concurrent.futures
 import os
-import platform
 import re
 import sys
 import textwrap
@@ -12,7 +11,6 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
 import demisto_sdk
@@ -75,6 +73,7 @@ class LintManager:
         id_set_path(str): Path to an existing id_set.json.
         check_dependent_api_module(bool): Whether to run lint also on the packs dependent on the modified api modules
         files.
+        show_deprecation_message (bool): Whether to show deprecation alert or not.
     """
 
     def __init__(
@@ -85,8 +84,8 @@ class LintManager:
         prev_ver: str,
         json_file_path: str = "",
         check_dependent_api_module: bool = False,
+        show_deprecation_message: bool = True,
     ):
-
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver
@@ -102,6 +101,7 @@ class LintManager:
             all_packs=all_packs,
             base_branch=self._prev_ver,
         )
+        self.show_deprecation_message = show_deprecation_message
 
         if check_dependent_api_module:
             dependent_on_api_module = self._get_api_module_dependent_items()
@@ -241,7 +241,9 @@ class LintManager:
         logger.debug("creating docker client from env")
 
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="LintManager")  # type: ignore
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="LintManager"
+            )  # type: ignore
             logger.debug("pinging docker daemon")
             docker_client.ping()
         except (
@@ -287,7 +289,9 @@ class LintManager:
         """
         pkgs: list
         if all_packs or git:
-            pkgs = LintManager._get_all_packages(content_dir=content_repo.repo.working_dir)  # type: ignore
+            pkgs = LintManager._get_all_packages(
+                content_dir=content_repo.repo.working_dir  # type: ignore[arg-type]
+            )
         else:  # specific pack as input, -i flag has been used
             pkgs = []
             if isinstance(input, str):
@@ -560,16 +564,7 @@ class LintManager:
         except Exception as e:
             msg = f"Stop demisto-sdk lint - {e}"
             logger.debug(f"[yellow]{msg}[/yellow]", exc_info=True)
-
-            if Version(platform.python_version()) > Version("3.9"):
-                executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
-            else:
-                logger.info("Using Python under 3.8, we will cancel futures manually.")
-                executor.shutdown(
-                    wait=True
-                )  # Note that `cancel_futures` not supported in python 3.8
-                for res in results:
-                    res.cancel()
+            executor.shutdown(wait=True, cancel_futures=True)
             return 1, 0
 
     def run(
@@ -722,6 +717,12 @@ class LintManager:
                 return_exit_code = SUCCESS
             else:
                 return_exit_code = FAIL
+
+        if self.show_deprecation_message:
+            logger.error(
+                "This command is deprecated and will be removed soon. Use the `demisto-sdk pre-commit` command instead."
+            )
+
         return return_exit_code
 
     def _report_results(

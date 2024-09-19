@@ -38,6 +38,7 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
                 msg_id="sys-exit-exists",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_b)
 
@@ -50,18 +51,17 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that it does not raise any errors, Check that there is no error message.
         """
-        node_a, node_b = astroid.extract_node(
-            """
+        assert (
+            astroid.extract_node(
+                """
             def test_function():
                 ''' this is sys.exit(1) in doc string test''' #@
                 # this is sys.exit(1) in comment #@
                 return True
         """
+            )
+            == []
         )
-        assert node_a is None and node_b is None
-        with self.assertNoMessages():
-            self.checker.visit_call(node_a)
-            self.checker.visit_call(node_b)
 
     def test_sys_exit_non_zero_exists(self):
         """
@@ -156,6 +156,7 @@ class TestMainChecker(pylint.testutils.CheckerTestCase):
                 msg_id="main-func-doesnt-exist",
                 node=node_a,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_functiondef(node_a)
             self.checker.visit_functiondef(node_c)
@@ -190,6 +191,7 @@ class TestDemistoResultsChecker(pylint.testutils.CheckerTestCase):
                 msg_id="demisto-results-exists",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_b)
 
@@ -222,18 +224,18 @@ class TestDemistoResultsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b, node_c = astroid.extract_node(
+        def_node, return_node = astroid.extract_node(
             """
             def test_function(): #@
                 # demisto.results('ok') should be used #@
                 return True #@
         """
         )
-        assert node_a is not None and node_b is None and node_c is not None
+        assert def_node
+        assert return_node
         with self.assertNoMessages():
-            self.checker.visit_call(node_a)
-            self.checker.visit_call(node_b)
-            self.checker.visit_call(node_c)
+            self.checker.visit_call(def_node)
+            self.checker.visit_call(return_node)
 
 
 class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
@@ -264,6 +266,7 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
                 msg_id="return-outputs-exists",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_b)
 
@@ -296,18 +299,18 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b, node_c = astroid.extract_node(
+        def_node, return_true_node = astroid.extract_node(
             """
             def test_function(): #@
                 # return_outputs(human_readable, ec) should be used #@
                 return True #@
         """
         )
-        assert node_a is not None and node_b is None and node_c is not None
+        assert def_node
+        assert return_true_node
         with self.assertNoMessages():
-            self.checker.visit_call(node_a)
-            self.checker.visit_call(node_b)
-            self.checker.visit_call(node_c)
+            self.checker.visit_call(def_node)
+            self.checker.visit_call(return_true_node)
 
 
 class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
@@ -364,6 +367,7 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
                 msg_id="init-params-outside-main",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_b)
 
@@ -422,5 +426,6 @@ class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
                 msg_id="init-args-outside-main",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_b)

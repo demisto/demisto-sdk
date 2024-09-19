@@ -6,6 +6,7 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_value, get_yaml
@@ -32,7 +33,7 @@ class YAMLContentItemParser(ContentItemParser):
             if not self.path.suffix == ".yml"
             else self.path
         )  # If git_sha is given then we know we're running on the old_content_object copy and we can assume that the file_path is either the actual item path or the path to the item's dir.
-
+        self.structure_errors = self.validate_structure()
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(
                 f"The content of {self.path} must be in a JSON dictionary format"
@@ -40,6 +41,10 @@ class YAMLContentItemParser(ContentItemParser):
 
         if self.should_skip_parsing():
             raise NotAContentItemException
+
+    @property
+    def raw_data(self) -> dict:
+        return self.yml_data
 
     @cached_property
     def field_mapping(self):
@@ -88,7 +93,9 @@ class YAMLContentItemParser(ContentItemParser):
         return get_value(
             self.yml_data,
             self.field_mapping.get("fromversion", ""),
-            DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            DEFAULT_CONTENT_ITEM_FROM_VERSION
+            if MarketplaceVersions.XSOAR_ON_PREM in self.supported_marketplaces
+            else MINIMUM_XSOAR_SAAS_VERSION,
         )
 
     @property
@@ -104,6 +111,10 @@ class YAMLContentItemParser(ContentItemParser):
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return self.get_marketplaces(self.yml_data)
+
+    @property
+    def support(self) -> str:
+        return self.get_support(self.yml_data)
 
     def connect_to_tests(self) -> None:
         """Iterates over the test playbooks registered to this content item,

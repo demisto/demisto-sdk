@@ -1,24 +1,27 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
+from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = IncidentField
+ContentTypes = Union[CaseField, IncidentField]
 
 
 class IsCliNameFieldAlphanumericValidator(BaseValidator[ContentTypes]):
     error_code = "IF105"
     description = "Checks if cliName field is alphanumeric and lowercase."
-    rationale = "Required by the platform"
+    rationale = "Required by the platform."
     error_message = "Field `cliName` contains uppercase or non-alphanumeric symbols."
     related_field = "cliName"
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

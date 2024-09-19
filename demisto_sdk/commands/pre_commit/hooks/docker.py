@@ -10,6 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import more_itertools
 from docker.errors import DockerException
 from packaging.version import Version
 
@@ -34,10 +35,12 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook
+from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 
 NO_SPLIT = None
 USER_DEMITSO = "demisto"
+
+IMAGES_BATCH = int(os.getenv("IMAGES_BATCH") or 40)
 
 
 @lru_cache()
@@ -56,7 +59,8 @@ def get_docker_python_path() -> str:
 
 def with_native_tags(
     tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]],
-    docker_image_flag: str,
+    docker_flags: Set[str],
+    docker_image: Optional[str],
 ) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
     """
     Adds the native image images into the dict with the files that should be run on them
@@ -67,30 +71,38 @@ def with_native_tags(
     Returns: The updated dict with the native images.
 
     """
-    docker_flags = set(docker_image_flag.split(","))
+
     all_tags_to_files = defaultdict(list)
-    native_image_config = NativeImageConfig.get_instance()
+    is_native_image = any(
+        DockerImageFlagOption.NATIVE.value in docker_flag
+        for docker_flag in docker_flags
+    )
 
     for image, scripts in tags_to_files.items():
         for file, obj in scripts:
+            if is_native_image:
+                native_image_config = NativeImageConfig.get_instance()
+                supported_native_images = ScriptIntegrationSupportedNativeImages(
+                    _id=obj.object_id,
+                    native_image_config=native_image_config,
+                    docker_image=image,
+                ).get_supported_native_docker_tags(docker_flags, include_candidate=True)
 
-            supported_native_images = ScriptIntegrationSupportedNativeImages(
-                _id=obj.object_id,
-                native_image_config=native_image_config,
-                docker_image=image,
-            ).get_supported_native_docker_tags(docker_flags)
-            for native_image in supported_native_images:
-                all_tags_to_files[native_image].append((file, obj))
+                for native_image in supported_native_images:
+                    all_tags_to_files[docker_image or native_image].append((file, obj))
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,
             } & docker_flags:
-                all_tags_to_files[image].append((file, obj))
+                all_tags_to_files[docker_image or image].append((file, obj))
+
     return all_tags_to_files
 
 
 def docker_tag_to_runfiles(
-    files_to_run: Iterable[Tuple[Path, Optional[IntegrationScript]]], docker_image_flag
+    files_to_run: Iterable[Tuple[Path, Optional[IntegrationScript]]],
+    docker_image_flag: str,
+    docker_image: Optional[str] = None,
 ) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
     """
     Iterates over all files snf groups the files by the dockerimages
@@ -101,13 +113,14 @@ def docker_tag_to_runfiles(
     Returns: A dict of image to List of files(Tuple[path, obj]) including native images
 
     """
+    docker_flags = set(docker_image_flag.split(","))
     tags_to_files = defaultdict(list)
     for file, obj in files_to_run:
-        if not obj:
-            continue
-        for docker_image in obj.docker_images:
-            tags_to_files[docker_image].append((file, obj))
-    return with_native_tags(tags_to_files, docker_image_flag)
+        if obj:
+            for image in obj.docker_images:
+                tags_to_files[image].append((file, obj))
+
+    return with_native_tags(tags_to_files, docker_flags, docker_image)
 
 
 @functools.lru_cache(maxsize=512)
@@ -137,6 +150,21 @@ def devtest_image(
     if not errors:
         if not should_pull:
             # pull images in background
+            if os.getenv("CONTENT_GITLAB_CI"):
+                # When running from Gitlab CI
+                docker_user = os.getenv("DOCKERHUB_USER", "")
+                docker_pass = os.getenv("DOCKERHUB_PASSWORD", "")
+                login_command = [
+                    "docker",
+                    "login",
+                    "-u",
+                    docker_user,
+                    "-p",
+                    docker_pass,
+                ]
+                subprocess.run(
+                    login_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
             subprocess.Popen(
                 ["docker", "pull", image],
                 stdout=subprocess.DEVNULL,
@@ -179,7 +207,6 @@ def _split_by_objects(
     ] = defaultdict(set)
     config_name, config_filename = config_arg if config_arg else ("", "")
     for file, obj in files_with_objects:
-
         if run_isolated or (
             config_arg and (obj.path.parent / config_filename).exists()
         ):
@@ -242,7 +269,7 @@ class DockerHook(Hook):
 
     def prepare_hook(
         self,
-    ):
+    ) -> GeneratedHooks:
         """
         Group all the files by dockerimages
         Split those images by config files
@@ -258,7 +285,7 @@ class DockerHook(Hook):
             logger.debug(
                 "No files matched docker hook filter, skipping docker preparation"
             )
-            return
+            return []
         filtered_files_with_objects = {
             (file, obj)
             for file, obj in self.context.files_to_run_with_objects
@@ -266,7 +293,8 @@ class DockerHook(Hook):
         }
         tag_to_files_objs = docker_tag_to_runfiles(
             filtered_files_with_objects,
-            self._get_property("docker_image", "from-yml"),
+            self.context.docker_image or self._get_property("docker_image", "from-yml"),
+            self.context.image_ref,
         )
         end_time = time.time()
         logger.debug(
@@ -286,29 +314,35 @@ class DockerHook(Hook):
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
-        logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
-        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-            results = []
-            for image, files_objs in sorted(
-                tag_to_files_objs.items(), key=lambda item: item[0]
-            ):
-                results.append(
-                    executor.submit(
-                        self.process_image,
-                        image,
-                        files_objs,
-                        config_arg,
-                        run_isolated,
+        logger.debug(
+            f'collected images: {" ".join(filter(None, tag_to_files_objs.keys()))}'
+        )
+        docker_hook_ids = []
+        results: List[List[Dict]] = []
+
+        for chunk in more_itertools.chunked(
+            sorted(tag_to_files_objs.items()), IMAGES_BATCH
+        ):
+            with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+                # process images in batches to avoid memory issues
+                results.extend(
+                    executor.map(
+                        lambda item: self.process_image(
+                            item[0], item[1], config_arg, run_isolated
+                        ),
+                        chunk,
                     )
                 )
-        for result in results:
-            hooks = result.result()
+        for hooks in results:
             self.hooks.extend(hooks)
+            docker_hook_ids.extend([hook["id"] for hook in hooks])
 
         end_time = time.time()
         logger.debug(
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
+
+        return GeneratedHooks(hook_ids=docker_hook_ids, parallel=self.parallel)
 
     def generate_hooks(
         self,
@@ -341,9 +375,9 @@ class DockerHook(Hook):
         if docker_version < Version("19.03"):
             quiet = False
         docker_extra_args = self._get_property("pass_docker_extra_args", "")
-        new_hook[
-            "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} {dev_image}'
+        new_hook["entry"] = (
+            f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} {dev_image}'
+        )
         ret_hooks = []
         for (
             integration_script,
@@ -370,16 +404,16 @@ class DockerHook(Hook):
                         ]
                     )
                     hook["args"] = args
-                hook[
-                    "id"
-                ] = f"{hook['id']}-{integration_script.object_id}"  # for uniqueness
-                hook[
-                    "name"
-                ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
+                hook["id"] = (
+                    f"{hook['id']}-{integration_script.object_id}"  # for uniqueness
+                )
+                hook["name"] = (
+                    f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
+                )
                 # change the working directory to the integration script, as it runs in an isolated container
-                hook[
-                    "entry"
-                ] = f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"
+                hook["entry"] = (
+                    f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"
+                )
 
             if self._set_files_on_hook(
                 hook,

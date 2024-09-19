@@ -189,7 +189,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             }
 
     def set_group_field(self):
-        if self.data["group"] != "incident" and self.data["group"] != "indicator":
+        if self.data["group"] not in ("incident", "indicator", "case"):
             logger.info(
                 "[red]No group is specified for this layout, would you like me to update for you? [Y/n][/red]"
             )
@@ -200,13 +200,15 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 return
 
             logger.info(
-                "[yellow]Please specify the desired group: incident or indicator[/yellow]"
+                "[yellow]Please specify the desired group: incident, indicator or case[/yellow]"
             )
             user_desired_group = input()
             if re.match(r"(^incident$)", user_desired_group, re.IGNORECASE):
                 self.data["group"] = "incident"
             elif re.match(r"(^indicator$)", user_desired_group, re.IGNORECASE):
                 self.data["group"] = "indicator"
+            elif re.match(r"(^case$)", user_desired_group, re.IGNORECASE):
+                self.data["group"] = "case"
             else:
                 logger.info("[red]Group is not valid[/red]")
 

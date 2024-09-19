@@ -5,6 +5,8 @@ import os
 import re
 import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import List
 
 import pytest
 import requests
@@ -241,12 +243,14 @@ def test_insert_description_to_yml_with_markdown_image(
         IntegrationScriptUnifier, "get_data", return_value=(description_as_bytes, True)
     )
     package_path = Path("Packs/CybleEventsV2/Integrations/CybleEventsV2")
-    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
-        package_path,
-        {"commonfields": {"id": "VulnDB"}},
-        is_script,
-        MarketplaceVersions.XSOAR,
-    )
+    with TemporaryDirectory() as dir:
+        mocker.patch.object(os, "getenv", return_value=dir)
+        yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
+            package_path,
+            {"commonfields": {"id": "VulnDB"}},
+            is_script,
+            MarketplaceVersions.XSOAR,
+        )
     assert (
         GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH in yml_unified["detaileddescription"]
     ) == res
@@ -274,6 +278,70 @@ def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
     assert (
         "[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)"
         == yml_unified["detaileddescription"]
+    )
+
+
+@pytest.mark.parametrize(
+    "display_name, support_level, expected_name",
+    (
+        ("Cymulate v2", "partner", "Cymulate v2 (Partner Contribution)"),
+        (
+            "Cymulate v2 (Partner Contribution)",
+            "partner",
+            "Cymulate v2 (Partner Contribution)",
+        ),
+        ("Cymulate v2", "xsoar", "Cymulate v2"),
+        ("Cymulate v2", None, "Cymulate v2"),
+        ("Cymulate v2", "community", "Cymulate v2 (Community Contribution)"),
+        (None, "community", None),
+        ("", "community", ""),
+    ),
+)
+def test_get_display_name(display_name, support_level, expected_name):
+    """
+    Given:
+        - Current display name and pack support level
+
+    When:
+        - Enhancing the integration yml display name to also hold the support level
+
+    Then:
+        - The returned display name holds the expected support level suffix
+    """
+    assert (
+        IntegrationScriptUnifier.get_display_name(display_name, support_level)
+        == expected_name
+    )
+
+
+@pytest.mark.parametrize(
+    "display_name, support_level, expected_name",
+    (
+        ("Cymulate v2 (Partner Contribution)", "partner", "Cymulate v2"),
+        ("Cymulate v2 (Partner Contribution)", "partner", "Cymulate v2"),
+        ("Cymulate v2", "xsoar", "Cymulate v2"),
+        ("Cymulate v2", None, "Cymulate v2"),
+        ("Cymulate v2 (Community Contribution)", "community", "Cymulate v2"),
+        (None, "community", None),
+        ("", "community", ""),
+    ),
+)
+def test_remove_support_from_display_name(display_name, support_level, expected_name):
+    """
+    Given:
+        - Current display name and pack support level
+
+    When:
+        - Removing the support level from the integration display name to hold the
+
+    Then:
+        - The returned display name doesn't hold the support level suffix
+    """
+    assert (
+        IntegrationScriptUnifier.remove_support_from_display_name(
+            display_name, support_level
+        )
+        == expected_name
     )
 
 
@@ -494,33 +562,76 @@ def test_insert_hierarchy_api_module(mocker):
     )
 
 
-def test_insert_pack_version_and_script_to_yml():
+def test_insert_pack_version_and_script_to_yml_js_and_ps1():
     """
     Given:
-     - A pack name.
+     - A pack version.
 
     When:
-     - calling insert_pack_version.
+     - Calling insert_pack_version for different script types (.ps1, .js).
 
     Then:
-     - Ensure the code returned contains the pack version in it.
+     - Ensure the code returned contains the correct pack version.
+     - Ensure the pack version is added only once.
+     - Ensure unsupported script types do not get the pack version added.
     """
-    version_str = "### pack version: 1.0.3"
-    assert version_str not in DUMMY_SCRIPT
-    assert version_str in IntegrationScriptUnifier.insert_pack_version(
-        ".py", DUMMY_SCRIPT, "1.0.3"
+    pack_version = "1.0.3"
+    pack_name = "test"
+
+    # Test for JavaScript script
+    updated_script_js = IntegrationScriptUnifier.insert_pack_version(
+        ".js", DUMMY_SCRIPT, pack_version, pack_name
     )
-    assert version_str in IntegrationScriptUnifier.insert_pack_version(
-        ".ps1", DUMMY_SCRIPT, "1.0.3"
+
+    assert (
+        updated_script_js.count(f"// pack version: {pack_version}") == 1
+    )  # Ensure it is added only once
+
+    # Test for PowerShell script
+    updated_script_ps1 = IntegrationScriptUnifier.insert_pack_version(
+        ".ps1", DUMMY_SCRIPT, pack_version, pack_name
     )
-    assert version_str not in IntegrationScriptUnifier.insert_pack_version(
-        ".js", DUMMY_SCRIPT, "1.0.3"
+    assert (
+        updated_script_ps1.count(f"### pack version: {pack_version}") == 1
+    )  # Ensure it is added only once
+
+
+@pytest.mark.parametrize(
+    "dummy_script, pack_data, expected_version_str",
+    [
+        pytest.param(
+            """
+            def main():
+            """,
+            ["test pack", "1.0.3"],
+            "demisto.debug('pack name = test pack, pack version = 1.0.3')",
+            id="script without version",
+        ),
+        pytest.param(
+            """
+            demisto.debug('pack name = test pack, pack version = 1.0.3')
+            def main():
+            """,
+            ["test pack", "1.0.4"],
+            "demisto.debug('pack name = test pack, pack version = 1.0.4')",
+            id="script with version",
+        ),
+    ],
+)
+def test_insert_pack_version_and_script_to_yml_python_script(
+    dummy_script: str, pack_data: List[str], expected_version_str: str
+):
+    """
+    Test that the pack version is correctly inserted into the Python script.
+    """
+    updated_script = IntegrationScriptUnifier.insert_pack_version(
+        ".py", dummy_script, pack_data[1], pack_data[0]
     )
-    version_str_js = "// pack version: 1.0.3"
-    assert version_str_js not in DUMMY_SCRIPT
-    assert version_str_js in IntegrationScriptUnifier.insert_pack_version(
-        ".js", DUMMY_SCRIPT, "1.0.3"
-    )
+
+    debug_log_with_pack_version_count = updated_script.count(expected_version_str)
+    assert (
+        debug_log_with_pack_version_count == 1
+    ), f"Pack version found {debug_log_with_pack_version_count} times in updated script, expected only once"
 
 
 def get_generated_module_code(import_name, api_module_name):
@@ -706,9 +817,11 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            input=Path(self.export_dir_path), output=Path(self.test_dir_path)
-        )
+        with TemporaryDirectory() as dir:
+            mocker.patch.object(os, "getenv", return_value=dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path), output=Path(self.test_dir_path)
+            )
 
         assert export_yml_path == Path(self.expected_yml_path)
 
@@ -751,11 +864,13 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        unified_yml = PrepareUploadManager.prepare_for_upload(
-            input=Path(self.export_dir_path),
-            output=Path(self.test_dir_path),
-            marketplace=marketplace,
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            unified_yml = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path),
+                output=Path(self.test_dir_path),
+                marketplace=marketplace,
+            )
 
         hidden_true = set()
         hidden_false = set()
@@ -843,11 +958,13 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        unified_yml = PrepareUploadManager.prepare_for_upload(
-            input=Path(self.export_dir_path),
-            output=Path(self.test_dir_path),
-            marketplace=marketplace,
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            unified_yml = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path),
+                output=Path(self.test_dir_path),
+                marketplace=marketplace,
+            )
 
         for param in get_yaml(unified_yml)["configuration"]:
             # updates the three sets
@@ -883,9 +1000,11 @@ class TestMergeScriptPackageToYMLIntegration:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(self.export_dir_path), output=Path(self.test_dir_path)
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                Path(self.export_dir_path), output=Path(self.test_dir_path)
+            )
 
         assert export_yml_path == Path(self.expected_yml_path)
         actual_yml = get_yaml(export_yml_path)
@@ -926,9 +1045,11 @@ final test: hi
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(self.export_dir_path), output=Path(self.test_dir_path)
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                Path(self.export_dir_path), output=Path(self.test_dir_path)
+            )
 
         assert export_yml_path == Path(self.expected_yml_path)
 
@@ -959,9 +1080,11 @@ final test: hi
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(input_path_integration)
-        )
+        with TemporaryDirectory() as artifact_dir:
+            mocker.patch.object(os, "getenv", return_value=artifact_dir)
+            export_yml_path = PrepareUploadManager.prepare_for_upload(
+                Path(input_path_integration)
+            )
         expected_yml_path = (
             TESTS_DIR
             + "/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml"

@@ -7,6 +7,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.trigger import StrictTrigger
 
 
 class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
@@ -34,3 +35,7 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
         """Collects the playbook used in the trigger as a mandatory dependency."""
         if playbook := self.json_data.get("playbook_id"):
             self.add_dependency_by_id(playbook, ContentType.PLAYBOOK)
+
+    @property
+    def strict_object(self):
+        return StrictTrigger

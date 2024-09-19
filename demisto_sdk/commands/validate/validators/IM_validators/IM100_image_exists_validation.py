@@ -18,11 +18,13 @@ class ImageExistsValidator(BaseValidator[ContentTypes]):
     description = "Checks if the integration has an image path."
     error_message = "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at"
     related_field = "image"
-    rationale = "Images make it easier to find integrations"
+    rationale = "Images make it easier to find integrations."
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.IMAGE]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

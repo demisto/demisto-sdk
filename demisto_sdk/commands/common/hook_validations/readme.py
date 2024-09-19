@@ -7,22 +7,16 @@ from functools import lru_cache
 from pathlib import Path
 from threading import Lock
 from typing import Callable, List, Optional, Set
-from urllib.parse import urlparse
 
 import docker
 import requests
-from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
-from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.constants import (
-    DEMISTO_GIT_PRIMARY_BRANCH,
-    HTML_IMAGE_LINK_REGEX,
     PACKS_DIR,
     RELATIVE_HREF_URL_REGEX,
     RELATIVE_MARKDOWN_URL_REGEX,
-    URL_IMAGE_LINK_REGEX,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
@@ -31,7 +25,6 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     Errors,
 )
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
@@ -46,7 +39,6 @@ from demisto_sdk.commands.common.MDXServer import (
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme,
     get_pack_name,
-    get_url_with_retries,
     get_yaml,
     get_yml_paths_in_dir,
     run_command_os,
@@ -197,10 +189,8 @@ class ReadMeValidator(BaseValidator):
         """
         return all(
             [
-                self.verify_readme_relative_urls(),
                 self.is_image_path_valid(),
                 self.verify_image_exist(),
-                self.verify_readme_image_paths(),
                 self.is_mdx_file(),
                 self.verify_no_empty_sections(),
                 self.verify_no_default_sections_left(),
@@ -336,32 +326,6 @@ class ReadMeValidator(BaseValidator):
                 return False
         return True
 
-    def verify_readme_image_paths(self) -> bool:
-        """Validate readme (not pack readme) images relative and absolute paths.
-
-        Returns:
-            bool: True If all links both relative and absolute are valid else False.
-        """
-        # If there are errors in one of the following validations return False
-        if any(
-            [
-                self.check_readme_relative_image_paths(),
-                self.check_readme_absolute_image_paths(),
-            ]
-        ):
-            return False
-        return True
-
-    @error_codes("RM112")
-    def verify_readme_relative_urls(self) -> bool:
-        """Validate readme (not pack readme) relative urls.
-
-        Returns:
-            bool: True If there are no invalid relative urls.
-        """
-        # If there are errors in one of the following validations return False
-        return not self.check_readme_relative_url_paths()
-
     def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:
         """Validate readme url relative paths.
             prints an error if relative paths in README are found since they are not supported.
@@ -472,137 +436,6 @@ class ReadMeValidator(BaseValidator):
                 f"will run in a docker container"
             )
         return valid
-
-    def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
-        """Validate readme images relative paths.
-            (1) prints an error if relative paths in the pack README are found since they are not supported.
-            (2) Checks if relative paths are valid (in other readme files).
-
-        Arguments:
-            is_pack_readme (bool) - True if the the README file is a pack README, default: False
-
-        Returns:
-            list: List of the errors found
-        """
-        error_list = []
-        error_code: str = ""
-        error_message: str = ""
-        relative_images = re.findall(
-            r"(\!\[.*?\])\(((?!http).*?)\)$",
-            self.readme_content,
-            re.IGNORECASE | re.MULTILINE,
-        )
-        relative_images += re.findall(  # HTML image tag
-            r'(<img.*?src\s*=\s*"((?!http).*?)")',
-            self.readme_content,
-            re.IGNORECASE | re.MULTILINE,
-        )
-
-        for img in relative_images:
-            # striping in case there are whitespaces at the beginning/ending of url.
-            relative_path = img[1].strip()
-
-            if "Insert the link to your image here" in relative_path:
-                # the line is generated automatically in playbooks readme, the user should replace it with
-                # an image or remove the line.
-                error_message, error_code = Errors.invalid_readme_image_error(
-                    relative_path, error_type="insert_image_link_error"
-                )
-            elif is_pack_readme:
-                error_message, error_code = Errors.invalid_readme_image_error(
-                    relative_path,
-                    error_type="pack_readme_relative_error",
-                )
-            else:
-                # generates absolute path from relative and checks for the file existence.
-                if not Path(self.file_path.parent, relative_path).is_file():
-                    error_message, error_code = Errors.invalid_readme_image_error(
-                        relative_path,
-                        error_type="general_readme_relative_error",
-                    )
-            if error_code and error_message:  # error was found
-                formatted_error = self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                )
-                # if error is None it should be ignored
-                if formatted_error:
-                    error_list.append(formatted_error)
-
-        return error_list
-
-    def check_readme_absolute_image_paths(self, is_pack_readme: bool = False) -> list:
-        """Validate readme images absolute paths - Check if absolute paths are not broken.
-
-        Arguments:
-            is_pack_readme (bool) - True if the the README file is a pack README, default: False
-
-        Returns:
-            list: List of the errors found
-        """
-        error_list = []
-        working_branch_name: str = ""
-        try:
-            working_branch_name = GitUtil().get_current_git_branch_or_hash()
-        except InvalidGitRepositoryError:
-            pass
-        absolute_links = re.findall(
-            URL_IMAGE_LINK_REGEX,
-            self.readme_content,
-            re.IGNORECASE | re.MULTILINE,
-        )
-        absolute_links += re.findall(
-            HTML_IMAGE_LINK_REGEX,
-            self.readme_content,
-            re.IGNORECASE | re.MULTILINE,
-        )
-        for link in absolute_links:
-            error_message: str = ""
-            error_code: str = ""
-            img_url = link[
-                1
-            ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
-            try:
-                # a link that contains a branch name (other than master) is invalid since the branch will be deleted
-                # after merge to master. in the url path (after '.com'), the third element should be the branch name.
-                # example 'https://raw.githubusercontent.com/demisto/content/<branch-name>/Packs/.../image.png'
-                url_path_elem_list = urlparse(img_url).path.split("/")[1:]
-                if len(url_path_elem_list) >= 3 and (
-                    url_path_elem_list[2] == working_branch_name
-                    and working_branch_name != DEMISTO_GIT_PRIMARY_BRANCH
-                ):
-                    error_message, error_code = Errors.invalid_readme_image_error(
-                        img_url,
-                        error_type="branch_name_readme_absolute_error",
-                    )
-                else:
-                    try:
-                        get_url_with_retries(
-                            img_url, retries=5, backoff_factor=1, timeout=10
-                        )
-                    except HTTPError as error:
-                        error_message, error_code = Errors.invalid_readme_image_error(
-                            img_url,
-                            error_type="general_readme_absolute_error",
-                            response=error.response,
-                        )
-            except Exception as ex:
-                logger.exception(
-                    f"[yellow]Could not validate the image link: {img_url}\n {ex}[/yellow]"
-                )
-                continue
-
-            if error_message and error_code:
-                formatted_error = self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                )
-                if formatted_error:
-                    error_list.append(formatted_error)
-
-        return error_list
 
     @error_codes("RM100")
     def verify_no_empty_sections(self) -> bool:

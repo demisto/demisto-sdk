@@ -29,6 +29,8 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_setup_section,
     generate_single_command_section,
     get_command_examples,
+    get_commands_sections,
+    get_integration_commands,
 )
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
@@ -969,6 +971,9 @@ class TestGenerateIntegrationDoc:
     def teardown_class(cls):
         cls.rm_readme()
 
+    def _get_function_name(self) -> str:
+        return inspect.currentframe().f_back.f_code.co_name
+
     def test_generate_integration_doc(self, mocker: MockerFixture, tmp_path: Path):
         """
         Given
@@ -1106,6 +1111,173 @@ class TestGenerateIntegrationDoc:
                     "| API Token | The API key to use for the connection. | False |"
                     in readme_data
                 )
+
+    def test_add_integration_arg(
+        self, mocker: MockerFixture, git_repo: Repo, tmp_path: Path
+    ):
+        """
+        Test addition of a command argument to an already existing
+        integration.
+
+        Given:
+        - A version-controlled content repo.
+        - An integration README.md with command example output.
+
+        When:
+        - Passing the force flag.
+        - No command examples are supplied to generate_integration_doc.
+
+        Then:
+        - The resulting README doesn't have the command examples sections.
+        """
+
+        pack_name = integration_name = "Akamai_WAF"
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+
+        yml_code_path = Path(
+            TEST_FILES,
+            "test_force_existing_integration_no_input_cmd_examples",
+            f"{integration_name}.yml",
+        )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(
+            TEST_FILES,
+            "test_force_existing_integration_no_input_cmd_examples",
+            INTEGRATIONS_README_FILE_NAME,
+        )
+
+        # Create Pack and add/commit to git
+        git_repo.create_pack(pack_name).create_integration(
+            name=integration_name, readme=readme_path.read_text(), yml=yml_code
+        )
+        git_repo.git_util.repo.index.add(git_repo.packs[0].path)
+        git_repo.git_util.repo.index.commit(f"Added {pack_name}")
+
+        # Create a new branch and make changes to YML
+        contrib_branch = git_repo.git_util.repo.create_head(self._get_function_name())
+        git_repo.git_util.repo.head.reference = contrib_branch
+        updated_yml_code_path = Path(
+            TEST_FILES,
+            "test_force_existing_integration_no_input_cmd_examples",
+            f"{integration_name}_updated.yml",
+        )
+        shutil.copyfile(
+            src=updated_yml_code_path, dst=git_repo.packs[0].integrations[0].yml.path
+        )
+
+        generate_integration_doc(git_repo.packs[0].integrations[0].yml.path)
+
+        actual_doc = git_repo.packs[0].integrations[0].readme.read().splitlines()
+        assert "#### Command example" in actual_doc
+        assert "#### Context Example" in actual_doc
+        assert (
+            actual_doc[1078]
+            == "| allowed_input_type_param | Enum Found as the last part of Change.allowedInput[].update hypermedia URL.supported values include:change-management-ack,lets-encrypt-challenges-completed,post-verification-warnings-ack,pre-verification-warnings-ack. Possible values are: change-management-ack, lets-encrypt-challenges-completed, post-verification-warnings-ack, pre-verification-warnings-ack. Default is post-verification-warnings-ack. | Optional | "
+        )
+
+    def test_force_existing_integration_no_input_cmd_examples(
+        self, mocker: MockerFixture, git_repo: Repo
+    ):
+        """
+        Test the --force flag with an already existing integration
+        README that has command examples output in it.
+
+        Given:
+        - A version-controlled content repo.
+        - An integration README.md with command example output.
+
+        When:
+        - Passing the force flag.
+        - No command examples are supplied to generate_integration_doc.
+
+        Then:
+        - The resulting README doesn't have the command examples sections.
+        """
+
+        pack_name = integration_name = "Akamai_WAF"
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+
+        yml_code_path = Path(
+            TEST_FILES, self._get_function_name(), f"{integration_name}.yml"
+        )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(
+            TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
+        )
+
+        # Create Pack and add/commit to git
+        git_repo.create_pack(pack_name).create_integration(
+            name=integration_name, readme=readme_path.read_text(), yml=yml_code
+        )
+        git_repo.git_util.repo.index.add(git_repo.packs[0].path)
+        git_repo.git_util.repo.index.commit(f"Added {pack_name}")
+
+        # Create a new branch and make changes to YML
+        contrib_branch = git_repo.git_util.repo.create_head(self._get_function_name())
+        git_repo.git_util.repo.head.reference = contrib_branch
+        updated_yml_code_path = Path(
+            TEST_FILES, self._get_function_name(), f"{integration_name}_updated.yml"
+        )
+        shutil.copyfile(
+            src=updated_yml_code_path, dst=git_repo.packs[0].integrations[0].yml.path
+        )
+
+        generate_integration_doc(git_repo.packs[0].integrations[0].yml.path, force=True)
+
+        actual_doc = git_repo.packs[0].integrations[0].readme.read().splitlines()
+        assert "#### Command example" not in actual_doc
+        assert "#### Context Example" not in actual_doc
+
+    def test_missing_cmd_description(self, tmp_path: Path):
+        """
+        Test generation of an integration README when one of the
+        command arguments is missing a description field.
+
+        Given:
+        - An integration YML.
+
+        When:
+        - The integration YML has a command that is missing
+        an argument description.
+
+        Then:
+        - The integration README is generated.
+        """
+
+        yml_path = (
+            Path(__file__).parent
+            / "test_files"
+            / "test_missing_cmd_description"
+            / "FTP.yml"
+        )
+
+        generate_integration_doc(str(yml_path), output=str(tmp_path))
+
+        assert (tmp_path / INTEGRATIONS_README_FILE_NAME).exists()
+
+        actual_text = (
+            (tmp_path / INTEGRATIONS_README_FILE_NAME).read_text().splitlines()
+        )
+        assert (
+            actual_text[54]
+            == f"| entry_id | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+        assert (
+            actual_text[55]
+            == f"| target | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+        assert (
+            actual_text[73]
+            == f"| file_path | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
+        assert (
+            actual_text[74]
+            == f"| file_name | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
+        )
 
 
 class TestGetCommandExamples:
@@ -1745,8 +1917,115 @@ def test_missing_data_sections_when_generating_table_section(
     assert section == expected_result
 
 
-class TestIntegrationDocUpdate:
+def test_get_integration_commands_aha():
+    """
+    Test to check that the AHA integration
+    has 4 commands. No deprecated commands exist.
 
+    Given:
+    - An integration YAML.
+
+    When:
+    - The integration YAML has 4 commands (none deprecated).
+
+    Then:
+    - get_integration_commands returns 4 commands.
+    """
+
+    yml_path = Path(__file__).parent / "test_files" / "test_added_commands" / "AHA.yml"
+    with yml_path.open("r") as stream:
+        input = yaml.load(stream)
+
+    actual = get_integration_commands(input)
+    actual_cmd_names = [cmd["name"] for cmd in actual]
+
+    expected = [
+        "aha-get-features",
+        "aha-edit-feature",
+        "aha-get-ideas",
+        "aha-edit-idea",
+    ]
+
+    assert actual_cmd_names == expected
+
+
+def test_get_integration_commands_slack():
+    """
+    Test to check that the AHA integration
+    has 13 commands. 3 of which are deprecated commands.
+
+    Given:
+    - An integration YAML.
+
+    When:
+    - The integration YAML has 13 commands (3 deprecated).
+
+    Then:
+    - get_integration_commands returns 10 commands.
+    """
+
+    yml_path = (
+        Path(__file__).parent.parent.parent.parent
+        / "tests"
+        / "test_files"
+        / "update-docker"
+        / "Slack.yml"
+    )
+    with yml_path.open("r") as stream:
+        input = yaml.load(stream)
+
+    actual = get_integration_commands(input)
+    actual_cmd_names = [cmd["name"] for cmd in actual]
+
+    expected = [
+        "mirror-investigation",
+        "send-notification",
+        "close-channel",
+        "slack-send-file",
+        "slack-set-channel-topic",
+        "slack-create-channel",
+        "slack-invite-to-channel",
+        "slack-kick-from-channel",
+        "slack-rename-channel",
+        "slack-get-user-details",
+    ]
+
+    assert actual_cmd_names == expected
+
+
+def test_get_commands_sections():
+    """
+    Test get_commands_sections method output.
+
+    Given:
+    - The AHA integration README.
+
+    When:
+    - The README includes 4 commands.
+
+    Then:
+    - The output has the expected start/end line per each command in the README.
+    """
+
+    md_path = (
+        Path(__file__).parent
+        / "test_files"
+        / "test_added_commands"
+        / INTEGRATIONS_README_FILE_NAME
+    )
+
+    actual = get_commands_sections(md_path.read_text())
+    expected = {
+        "aha-get-features": (24, 54),
+        "aha-edit-feature": (54, 81),
+        "aha-get-ideas": (81, 111),
+        "aha-edit-idea": (111, len(md_path.read_text().splitlines())),
+    }
+
+    assert actual == expected
+
+
+class TestIntegrationDocUpdate:
     repo_dir_name = "content"
     pack_name = integration_name = "AHA"
 
@@ -2046,13 +2325,14 @@ class TestIntegrationDocUpdate:
         generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
         actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
-        actual[61] == "    | Debug logging enabled |  | False |"
-        actual[
-            804
-        ] == "| limit | Maximum number of records to return. Default is 100. | Optional |"
-        actual[805] == "| new_arg | New argument for testing. | Optional | "
-        actual[812] == "| Splunk.Test | String | Test output for Splunk | "
-        assert actual[1149:1171] == [
+        assert actual[61] == "    | Debug logging enabled |  | False |"
+        assert (
+            actual[806]
+            == "| limit | Maximum number of records to return. Default is 100. | Optional | "
+        )
+        assert actual[807] == "| new_arg | New argument for testing. | Optional | "
+        assert actual[814] == "| Splunk.Test | String | Test output for Splunk | "
+        assert actual[1081:1102] == [
             "### splunk-test-cmd",
             "",
             "***",
@@ -2074,7 +2354,6 @@ class TestIntegrationDocUpdate:
             "| --- | --- | --- |",
             "| Splunk.Test.Output | String | Some sample test output | ",
             "| Splunk.Test.Date | Date | Some sample test output date | ",
-            "",
         ]
 
     def test_added_conf_cmd_modified_cmd_with_examples(
@@ -2371,3 +2650,58 @@ class TestIntegrationDocUpdate:
         assert "#### Command example" in actual_readme
         assert "#### Context Example" in actual_readme
         assert f"{integration_name.lower()}-get-audits" in actual_readme
+
+    def test_rename_cmd_name(self, git_repo: Repo, mocker: MockerFixture):
+        """
+        Test the behavior of the doc update when a
+        command name is modified.
+
+        Given:
+        - An integration.
+        - An updated integration.
+
+        When:
+        - The updated integration includes a change to a command name.
+
+        Then:
+        - The command is not modified.
+        - An error printed to indicate the command name was changed.
+        """
+
+        integration_name = pack_name = "SplunkPy"
+        test_asset_path = "test_added_conf_cmd_modified_cmd"
+
+        yml_code_path = Path(TEST_FILES, test_asset_path, f"{integration_name}.yml")
+        modified_yml_path = Path(
+            TEST_FILES, test_asset_path, f"{integration_name}_change_cmd_name.yml"
+        )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(TEST_FILES, test_asset_path, INTEGRATIONS_README_FILE_NAME)
+
+        # Create Pack and Integration
+        git_repo.create_pack(pack_name)
+        git_repo.packs[0].create_integration(
+            integration_name, yml=yml_code, readme=readme_path.read_text()
+        )
+
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
+        )
+
+        shutil.copyfile(
+            src=modified_yml_path, dst=git_repo.packs[0].integrations[0].yml.path
+        )
+
+        generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
+
+        assert Path(git_repo.packs[0].integrations[0].readme.path).exists()
+        actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
+        assert actual
+        assert "### splunk-results-1" not in actual
+        assert "### splunk-results" in actual

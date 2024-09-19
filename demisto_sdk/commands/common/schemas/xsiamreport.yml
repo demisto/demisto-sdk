@@ -17,6 +17,8 @@ mapping:
 schema;templates_data_schema:
   type: map
   mapping:
+    metadata:
+      type: str
     global_id:
       type: str
       required: true
@@ -55,6 +57,16 @@ schema;layout_schema:
       sequence:
       - include: layout_data_schema
 
+    id:xsoar:
+      type: str
+    id:marketplacev2:
+      type: str
+    id:xpanse:
+      type: str
+    id:xsoar_saas:
+      type: str
+    id:xsoar_on_prem:
+      type: str
 schema;layout_data_schema:
   type: map
   mapping:

@@ -1,3 +1,4 @@
+import copy
 from typing import List
 
 import pytest
@@ -24,6 +25,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
+    create_old_file_pointers,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy_and_insecure import (
@@ -125,9 +127,6 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN146_is_containing_
 from demisto_sdk.commands.validate.validators.IN_validators.IN149_does_common_outputs_have_description import (
     DoesCommonOutputsHaveDescriptionValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN150_is_valid_display_for_siem_integration import (
-    IsValidDisplayForSiemIntegrationValidator,
-)
 from demisto_sdk.commands.validate.validators.IN_validators.IN151_is_none_command_args import (
     IsNoneCommandArgsValidator,
 )
@@ -158,7 +157,88 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN161_is_siem_integr
 from demisto_sdk.commands.validate.validators.IN_validators.IN162_is_partner_collector_has_xsoar_support_level import (
     IsPartnerCollectorHasXsoarSupportLevelValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN163_is_valid_feed_expiration_policy import (
+    BAD_TYPE_OR_DISPLAY,
+    MISSING_SUDDEN_DEATH_ERROR_MESSAGE,
+    REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE,
+    IsValidFeedExpirationPolicyValidator,
+)
 from TestSuite.repo import ChangeCWD
+
+INVALID_HIDDEN_PARAM_INTEGRATIONS = [
+    create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "non_hiddenable_param",
+                    "type": 8,
+                    "display": "test param",
+                    "required": False,
+                    "hidden": True,
+                }
+            ]
+        ],
+    ),
+    create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "type": 1,
+                    "display": "API key",
+                    "hidden": True,
+                    "name": "test_old",
+                },
+                {
+                    "type": 9,
+                    "displaypassword": "API key",
+                    "name": "test_new",
+                },
+            ]
+        ],
+    ),
+    create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "non_hiddenable_param",
+                    "type": 8,
+                    "display": "test param",
+                    "required": False,
+                    "hidden": "true",
+                }
+            ]
+        ],
+    ),
+    create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "non_hiddenable_param",
+                    "type": 8,
+                    "display": "test param",
+                    "required": False,
+                    "hidden": [
+                        "xsoar",
+                        "marketplacev2",
+                        "xpanse",
+                        "xsoar_saas",
+                        "xsoar_on_prem",
+                    ],
+                },
+                {
+                    "type": 4,
+                    "display": "API key",
+                    "hidden": True,
+                    "name": "test_old",
+                },
+            ]
+        ],
+    ),
+]
 
 
 @pytest.mark.parametrize(
@@ -201,7 +281,7 @@ from TestSuite.repo import ChangeCWD
         ),
     ],
 )
-def test_ValidSubtypeValidator_is_valid(
+def test_ValidSubtypeValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures: int, expected_msgs: List[str]
 ):
     """
@@ -220,7 +300,7 @@ def test_ValidSubtypeValidator_is_valid(
         - Case 3: Should'nt fail at all.
         - Case 4: Should fail all content items.
     """
-    results = ValidSubtypeValidator().is_valid(content_items)
+    results = ValidSubtypeValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -305,7 +385,7 @@ def test_ValidSubtypeValidator_is_valid(
         ),
     ],
 )
-def test_IsIntegrationRunnableValidator_is_valid(
+def test_IsIntegrationRunnableValidator_obtain_invalid_content_items(
     content_items: List[Integration], expected_number_of_failures: int
 ):
     """
@@ -326,7 +406,9 @@ def test_IsIntegrationRunnableValidator_is_valid(
         - Case 4: Should pass.
         - Case 5: Should pass.
     """
-    results = IsIntegrationRunnableValidator().is_valid(content_items)
+    results = IsIntegrationRunnableValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert (
         not results
@@ -439,7 +521,7 @@ def test_IsIntegrationRunnableValidator_is_valid(
         ),
     ],
 )
-def test_IsValidProxyAndInsecureValidator_is_valid(
+def test_IsValidProxyAndInsecureValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -464,7 +546,9 @@ def test_IsValidProxyAndInsecureValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidProxyAndInsecureValidator().is_valid(content_items)
+    results = IsValidProxyAndInsecureValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -585,7 +669,7 @@ def test_IsValidProxyAndInsecureValidator_fix():
         ),
     ],
 )
-def test_IsValidCheckboxDefaultFieldValidator_is_valid(
+def test_IsValidCheckboxDefaultFieldValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -604,7 +688,9 @@ def test_IsValidCheckboxDefaultFieldValidator_is_valid(
         - Make sure the validation fail when it needs to and the right error message is returned.
         - Case 1: Should fail only the first param of the last integration.
     """
-    results = IsValidCheckboxDefaultFieldValidator().is_valid(content_items)
+    results = IsValidCheckboxDefaultFieldValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -672,7 +758,7 @@ def test_IsValidCheckboxDefaultFieldValidator_fix():
         ),
     ],
 )
-def test_IsValidCategoryValidator_is_valid(
+def test_IsValidCategoryValidator_obtain_invalid_content_items(
     mocker,
     content_items: List[Integration],
     expected_number_of_failures: int,
@@ -687,7 +773,7 @@ def test_IsValidCategoryValidator_is_valid(
             - Two integrations with a valid category.
             - One integration with an invalid category.
     When
-    - Calling the IsValidCategoryValidator is_valid function.
+    - Calling the IsValidCategoryValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
@@ -699,7 +785,7 @@ def test_IsValidCategoryValidator_is_valid(
         "demisto_sdk.commands.validate.validators.IN_validators.IN104_is_valid_category.get_current_categories",
         return_value=["Network Security", "Utilities", "Forensics & Malware Analysis"],
     )
-    results = IsValidCategoryValidator().is_valid(content_items)
+    results = IsValidCategoryValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -715,11 +801,11 @@ def test_IsValidCategoryValidator_is_valid(
         (
             [
                 create_integration_object(
-                    paths=["commonfields.id", "script.beta"],
+                    paths=["commonfields.id", "beta"],
                     values=["contain_beta", False],
                 ),
                 create_integration_object(
-                    paths=["commonfields.id", "script.beta"], values=["test", True]
+                    paths=["commonfields.id", "beta"], values=["test", True]
                 ),
             ],
             0,
@@ -728,10 +814,10 @@ def test_IsValidCategoryValidator_is_valid(
         (
             [
                 create_integration_object(
-                    paths=["commonfields.id", "script.beta"], values=["beta_test", True]
+                    paths=["commonfields.id", "beta"], values=["beta_test", True]
                 ),
                 create_integration_object(
-                    paths=["commonfields.id", "script.beta"], values=["test beta", True]
+                    paths=["commonfields.id", "beta"], values=["test beta", True]
                 ),
             ],
             2,
@@ -742,7 +828,7 @@ def test_IsValidCategoryValidator_is_valid(
         ),
     ],
 )
-def test_IsIdContainBetaValidator_is_valid(
+def test_IsIdContainBetaValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -763,7 +849,7 @@ def test_IsIdContainBetaValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail both.
     """
-    results = IsIdContainBetaValidator().is_valid(content_items)
+    results = IsIdContainBetaValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -783,7 +869,7 @@ def test_IsIdContainBetaValidator_fix():
         - Make sure the right ID was fixed correctly and that the right ID was returned.
     """
     content_item = create_integration_object(
-        paths=["commonfields.id", "script.beta"], values=["test beta", True]
+        paths=["commonfields.id", "beta"], values=["test beta", True]
     )
     assert content_item.object_id == "test beta"
     assert (
@@ -799,10 +885,10 @@ def test_IsIdContainBetaValidator_fix():
         (
             [
                 create_integration_object(
-                    paths=["name", "script.beta"], values=["contain_beta", False]
+                    paths=["name", "beta"], values=["contain_beta", False]
                 ),
                 create_integration_object(
-                    paths=["name", "script.beta"], values=["test", True]
+                    paths=["name", "beta"], values=["test", True]
                 ),
             ],
             0,
@@ -811,10 +897,10 @@ def test_IsIdContainBetaValidator_fix():
         (
             [
                 create_integration_object(
-                    paths=["name", "script.beta"], values=["beta_test", True]
+                    paths=["name", "beta"], values=["beta_test", True]
                 ),
                 create_integration_object(
-                    paths=["name", "script.beta"], values=["test beta", True]
+                    paths=["name", "beta"], values=["test beta", True]
                 ),
             ],
             2,
@@ -825,7 +911,7 @@ def test_IsIdContainBetaValidator_fix():
         ),
     ],
 )
-def test_IsNameContainBetaValidator_is_valid(
+def test_IsNameContainBetaValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -846,7 +932,7 @@ def test_IsNameContainBetaValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail both.
     """
-    results = IsNameContainBetaValidator().is_valid(content_items)
+    results = IsNameContainBetaValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -866,7 +952,7 @@ def test_IsNameContainBetaValidator_fix():
         - Make sure the right ID was fixed correctly and that the right name was returned.
     """
     content_item = create_integration_object(
-        paths=["name", "script.beta"], values=["test beta", True]
+        paths=["name", "beta"], values=["test beta", True]
     )
     assert content_item.name == "test beta"
     assert (
@@ -882,10 +968,10 @@ def test_IsNameContainBetaValidator_fix():
         (
             [
                 create_integration_object(
-                    paths=["display", "script.beta"], values=["contain beta", True]
+                    paths=["display", "beta"], values=["contain beta", True]
                 ),
                 create_integration_object(
-                    paths=["display", "script.beta"], values=["test", False]
+                    paths=["display", "beta"], values=["test", False]
                 ),
             ],
             0,
@@ -894,7 +980,7 @@ def test_IsNameContainBetaValidator_fix():
         (
             [
                 create_integration_object(
-                    paths=["display", "script.beta"], values=["should fail", True]
+                    paths=["display", "beta"], values=["should fail", True]
                 ),
             ],
             1,
@@ -904,7 +990,7 @@ def test_IsNameContainBetaValidator_fix():
         ),
     ],
 )
-def test_IsDisplayContainBetaValidator_is_valid(
+def test_IsDisplayContainBetaValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -924,7 +1010,9 @@ def test_IsDisplayContainBetaValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail.
     """
-    results = IsDisplayContainBetaValidator().is_valid(content_items)
+    results = IsDisplayContainBetaValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1059,7 +1147,7 @@ def test_IsDisplayContainBetaValidator_is_valid(
         ),
     ],
 )
-def test_IsCommandArgsContainDuplicationsValidator_is_valid(
+def test_IsCommandArgsContainDuplicationsValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1079,7 +1167,9 @@ def test_IsCommandArgsContainDuplicationsValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail.
     """
-    results = IsCommandArgsContainDuplicationsValidator().is_valid(content_items)
+    results = IsCommandArgsContainDuplicationsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1122,7 +1212,7 @@ def test_IsCommandArgsContainDuplicationsValidator_is_valid(
         ),
     ],
 )
-def test_IsParamsContainDuplicationsValidator_is_valid(
+def test_IsParamsContainDuplicationsValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1141,7 +1231,9 @@ def test_IsParamsContainDuplicationsValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsParamsContainDuplicationsValidator().is_valid(content_items)
+    results = IsParamsContainDuplicationsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1292,7 +1384,7 @@ def test_IsParamsContainDuplicationsValidator_is_valid(
         ),
     ],
 )
-def test_IsValidContextPathValidator_is_valid(
+def test_IsValidContextPathValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1314,7 +1406,7 @@ def test_IsValidContextPathValidator_is_valid(
         - Case 1: Shouldn't fail any.
         - Case 2: Should fail all.
     """
-    results = IsValidContextPathValidator().is_valid(content_items)
+    results = IsValidContextPathValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1410,7 +1502,7 @@ def test_IsValidContextPathValidator_is_valid(
         ),
     ],
 )
-def test_ShouldHaveDisplayFieldValidator_is_valid(
+def test_ShouldHaveDisplayFieldValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1432,7 +1524,9 @@ def test_ShouldHaveDisplayFieldValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all the type 17 with display names.
     """
-    results = ShouldHaveDisplayFieldValidator().is_valid(content_items)
+    results = ShouldHaveDisplayFieldValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1572,7 +1666,7 @@ def test_ShouldHaveDisplayFieldValidator_fix():
         ),
     ],
 )
-def test_IsMissingDisplayFieldValidator_is_valid(
+def test_IsMissingDisplayFieldValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1594,7 +1688,9 @@ def test_IsMissingDisplayFieldValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all the type 8 / 10 without display names.
     """
-    results = IsMissingDisplayFieldValidator().is_valid(content_items)
+    results = IsMissingDisplayFieldValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1670,7 +1766,7 @@ def test_IsMissingDisplayFieldValidator_is_valid(
         ),
     ],
 )
-def test_IsValidMaxFetchParamValidator_is_valid(
+def test_IsValidMaxFetchParamValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1690,7 +1786,9 @@ def test_IsValidMaxFetchParamValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all the type 8 / 10 without display names.
     """
-    results = IsValidMaxFetchParamValidator().is_valid(content_items)
+    results = IsValidMaxFetchParamValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1792,7 +1890,7 @@ def test_IsValidMaxFetchParamValidator_fix():
         ),
     ],
 )
-def test_IsValidFetchIntegrationValidator_is_valid(
+def test_IsValidFetchIntegrationValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1819,7 +1917,9 @@ def test_IsValidFetchIntegrationValidator_is_valid(
             - Second integration should fail due to missing first_fetch.
             - Third integration should fail due to missing max_fetch.
     """
-    results = IsValidFetchIntegrationValidator().is_valid(content_items)
+    results = IsValidFetchIntegrationValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1866,7 +1966,7 @@ def test_IsValidFetchIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsValidAsMappableIntegrationValidator_is_valid(
+def test_IsValidAsMappableIntegrationValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1887,7 +1987,9 @@ def test_IsValidAsMappableIntegrationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsValidAsMappableIntegrationValidator().is_valid(content_items)
+    results = IsValidAsMappableIntegrationValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -1945,7 +2047,7 @@ def test_IsValidAsMappableIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsContainingMultipleDefaultArgsValidator_is_valid(
+def test_IsContainingMultipleDefaultArgsValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -1965,7 +2067,9 @@ def test_IsContainingMultipleDefaultArgsValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsContainingMultipleDefaultArgsValidator().is_valid(content_items)
+    results = IsContainingMultipleDefaultArgsValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2056,7 +2160,7 @@ def test_IsContainingMultipleDefaultArgsValidator_is_valid(
         ),
     ],
 )
-def test_IsValidParamDisplayValidator_is_valid(
+def test_IsValidParamDisplayValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2076,7 +2180,7 @@ def test_IsValidParamDisplayValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail and mention only the invalid params in the message.
     """
-    results = IsValidParamDisplayValidator().is_valid(content_items)
+    results = IsValidParamDisplayValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2174,7 +2278,7 @@ def test_IsValidParamDisplayValidator_fix():
         ),
     ],
 )
-def test_IsSiemIntegrationValidMarketplaceValidator_is_valid(
+def test_IsSiemIntegrationValidMarketplaceValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs, marketplaces
 ):
     """
@@ -2193,7 +2297,9 @@ def test_IsSiemIntegrationValidMarketplaceValidator_is_valid(
     """
     for content_item in content_items:
         content_item.marketplaces = marketplaces
-    results = IsSiemIntegrationValidMarketplaceValidator().is_valid(content_items)
+    results = IsSiemIntegrationValidMarketplaceValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2253,7 +2359,7 @@ def test_IsSiemIntegrationValidMarketplaceValidator_fix():
         ),
     ],
 )
-def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
+def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2271,7 +2377,7 @@ def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsValidDisplayNameForNonDeprecatedIntegrationValidator().is_valid(
+    results = IsValidDisplayNameForNonDeprecatedIntegrationValidator().obtain_invalid_content_items(
         content_items
     )
     assert len(results) == expected_number_of_failures
@@ -2320,7 +2426,7 @@ def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsValidDescriptionForNonDeprecatedIntegrationValidator_is_valid(
+def test_IsValidDescriptionForNonDeprecatedIntegrationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2338,7 +2444,7 @@ def test_IsValidDescriptionForNonDeprecatedIntegrationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsValidDescriptionForNonDeprecatedIntegrationValidator().is_valid(
+    results = IsValidDescriptionForNonDeprecatedIntegrationValidator().obtain_invalid_content_items(
         content_items
     )
     assert len(results) == expected_number_of_failures
@@ -2424,7 +2530,7 @@ def test_IsValidDescriptionForNonDeprecatedIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsMissingReliabilityParamValidator_is_valid(
+def test_IsMissingReliabilityParamValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2444,7 +2550,9 @@ def test_IsMissingReliabilityParamValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsMissingReliabilityParamValidator().is_valid(content_items)
+    results = IsMissingReliabilityParamValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2520,7 +2628,7 @@ def test_IsMissingReliabilityParamValidator_is_valid(
         ),
     ],
 )
-def test_IsValidUrlDefaultValueValidator_is_valid(
+def test_IsValidUrlDefaultValueValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -2541,7 +2649,9 @@ def test_IsValidUrlDefaultValueValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidUrlDefaultValueValidator().is_valid(content_items)
+    results = IsValidUrlDefaultValueValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2681,7 +2791,7 @@ def test_IsValidUrlDefaultValueValidator_fix():
         ),
     ],
 )
-def test_IsValidDefaultValueForCheckboxParamValidator_is_valid(
+def test_IsValidDefaultValueForCheckboxParamValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -2704,7 +2814,11 @@ def test_IsValidDefaultValueForCheckboxParamValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidDefaultValueForCheckboxParamValidator().is_valid(content_items)
+    results = (
+        IsValidDefaultValueForCheckboxParamValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2830,7 +2944,7 @@ def test_IsValidDefaultValueForCheckboxParamValidator_fix():
         ),
     ],
 )
-def test_IsNoneCommandArgsValidator_is_valid(
+def test_IsNoneCommandArgsValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -2849,7 +2963,7 @@ def test_IsNoneCommandArgsValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsNoneCommandArgsValidator().is_valid(content_items)
+    results = IsNoneCommandArgsValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -2895,90 +3009,6 @@ def test_IsNoneCommandArgsValidator_fix():
         content_item.data.get("script", {}).get("commands", [])[0].get("arguments")
         == []
     )
-
-
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(),
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["test Event Collector", True],
-                ),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["test", True],
-                ),
-                create_integration_object(
-                    paths=["display", "script.isfetchevents"],
-                    values=["Event Collector test", True],
-                ),
-            ],
-            2,
-            [
-                "The integration is a siem integration with invalid display name (test). Please make sure the display name ends with 'Event Collector'",
-                "The integration is a siem integration with invalid display name (Event Collector test). Please make sure the display name ends with 'Event Collector'",
-            ],
-        ),
-    ],
-)
-def test_IsValidDisplayForSiemIntegrationValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
-):
-    """
-    Given
-    content_items iterables.
-        - Case 1: Two valid integrations:
-            - One non siem integration with display name not ending with 'Event Collector'.
-            - One siem integration with display name ending with 'Event Collector'.
-        - Case 2: Two invalid integrations:
-            - One siem integration with display name without 'Event Collector'.
-            - One siem integration with display name starting with 'Event Collector'.
-    When
-    - Calling the IsValidDisplayForSiemIntegrationValidator is valid function.
-    Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail.
-    """
-    results = IsValidDisplayForSiemIntegrationValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
-        ]
-    )
-
-
-def test_IsValidDisplayForSiemIntegrationValidator_fix():
-    """
-    Given
-        A siem integration without Event Collector suffix in the display name.
-    When
-    - Calling the IsValidDisplayForSiemIntegrationValidator fix function.
-    Then
-        - Make sure that the Event Collector was added to the display name, and that the right message was returned.
-    """
-    content_item = create_integration_object(
-        paths=["display", "script.isfetchevents"],
-        values=["test", True],
-    )
-    assert content_item.display_name == "test"
-    validator = IsValidDisplayForSiemIntegrationValidator()
-    assert (
-        validator.fix(content_item).message
-        == "Added the 'Event Collector' suffix to the display name, the new display name is test Event Collector."
-    )
-    assert content_item.display_name == "test Event Collector"
 
 
 @pytest.mark.parametrize(
@@ -3097,7 +3127,7 @@ def test_IsValidDisplayForSiemIntegrationValidator_fix():
         ),
     ],
 )
-def test_DoesCommonOutputsHaveDescriptionValidator_is_valid(
+def test_DoesCommonOutputsHaveDescriptionValidator_obtain_invalid_content_items(
     mocker, content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3123,7 +3153,9 @@ def test_DoesCommonOutputsHaveDescriptionValidator_is_valid(
             "Test.Test_3": "This is test 3 output.",
         },
     )
-    results = DoesCommonOutputsHaveDescriptionValidator().is_valid(content_items)
+    results = DoesCommonOutputsHaveDescriptionValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3346,7 +3378,7 @@ def test_DoesCommonOutputsHaveDescriptionValidator_fix():
         ),
     ],
 )
-def test_IsValidEndpointCommandValidator_is_valid(
+def test_IsValidEndpointCommandValidator_obtain_invalid_content_items(
     mocker, content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3373,7 +3405,9 @@ def test_IsValidEndpointCommandValidator_is_valid(
             "Test.Test_3": "This is test 3 output.",
         },
     )
-    results = IsValidEndpointCommandValidator().is_valid(content_items)
+    results = IsValidEndpointCommandValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3502,7 +3536,7 @@ def test_IsValidEndpointCommandValidator_is_valid(
         ),
     ],
 )
-def test_IsContainingDefaultAdditionalInfoValidator_is_valid(
+def test_IsContainingDefaultAdditionalInfoValidator_obtain_invalid_content_items(
     mocker,
     content_items: List[Integration],
     expected_number_of_failures: int,
@@ -3537,7 +3571,9 @@ def test_IsContainingDefaultAdditionalInfoValidator_is_valid(
             "Source Reliability": "Reliability of the source providing the intelligence data.",
         },
     )
-    results = IsContainingDefaultAdditionalInfoValidator().is_valid(content_items)
+    results = IsContainingDefaultAdditionalInfoValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3636,7 +3672,7 @@ def test_IsContainingDefaultAdditionalInfoValidator_fix():
         ),
     ],
 )
-def test_IsValidDeprecatedIntegrationDisplayNameValidator_is_valid(
+def test_IsValidDeprecatedIntegrationDisplayNameValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3654,7 +3690,11 @@ def test_IsValidDeprecatedIntegrationDisplayNameValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsValidDeprecatedIntegrationDisplayNameValidator().is_valid(content_items)
+    results = (
+        IsValidDeprecatedIntegrationDisplayNameValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3791,7 +3831,7 @@ def test_IsValidDeprecatedIntegrationDisplayNameValidator_fix():
         ),
     ],
 )
-def test_IsValidRepCommandValidator_is_valid(
+def test_IsValidRepCommandValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3811,7 +3851,7 @@ def test_IsValidRepCommandValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail only the ip commands for for both integrations.
     """
-    results = IsValidRepCommandValidator().is_valid(content_items)
+    results = IsValidRepCommandValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -3948,7 +3988,7 @@ def test_IsValidRepCommandValidator_is_valid(
         ),
     ],
 )
-def test_IsMissingReputationOutputValidator_is_valid(
+def test_IsMissingReputationOutputValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -3967,7 +4007,9 @@ def test_IsMissingReputationOutputValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsMissingReputationOutputValidator().is_valid(content_items)
+    results = IsMissingReputationOutputValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4136,13 +4178,13 @@ def test_IsMissingReputationOutputValidator_is_valid(
             ],
             2,
             [
-                "The integration is a feed integration with malformed params: The param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'options' must be equal '['A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable', 'E - Unreliable', 'F - Reliability cannot be judged']'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.\nThe param 'feedExpirationPolicy' should be in the following structure: \n\tThe field 'display' must be equal ''.\n\tThe field 'type' must be equal '17'.\n\tThe field 'options' must be equal '['never', 'interval', 'indicatorType', 'suddenDeath']'.",
+                "The integration is a feed integration with malformed params: The param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'options' must be equal '['A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable', 'E - Unreliable', 'F - Reliability cannot be judged']'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.",
                 "The integration is a feed integration with malformed params: The param 'feed' should be in the following structure: \n\tThe field 'defaultvalue' must be equal 'true'.\n\tThe field 'display' must be equal 'Fetch indicators'.\n\tThe field 'type' must be equal '8'.\nThe param 'feedReputation' should be in the following structure: \n\tThe field 'display' must be equal 'Indicator Reputation'.\n\tThe field 'type' must be equal '18'.\n\tThe field 'options' must be equal '['None', 'Good', 'Suspicious', 'Bad']'.\n\tThe field 'additionalinfo' must appear and contain 'Indicators from this integration instance will be marked with this reputation'.\nThe param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'options' must be equal '['A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable', 'E - Unreliable', 'F - Reliability cannot be judged']'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.",
             ],
         ),
     ],
 )
-def test_IsValidFeedIntegrationValidator_is_valid(
+def test_IsValidFeedIntegrationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -4160,9 +4202,11 @@ def test_IsValidFeedIntegrationValidator_is_valid(
     Then
         - Make sure the validation fail when it needs to and the right error message is returned.
         - Case 1: Should pass all.
-        - Case 2: Should fail and mention only the format of feedReliability and feedExpirationPolicy in the first msg and feed, feedReputation, and feedReliability in the second msg.
+        - Case 2: Should fail and mention only the format of feedReliability in the first msg and feed, feedReputation, and feedReliability in the second msg.
     """
-    results = IsValidFeedIntegrationValidator().is_valid(content_items)
+    results = IsValidFeedIntegrationValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4256,80 +4300,7 @@ def test_IsValidFeedIntegrationValidator_is_valid(
             [],
         ),
         (
-            [
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "non_hiddenable_param",
-                                "type": 8,
-                                "display": "test param",
-                                "required": False,
-                                "hidden": True,
-                            }
-                        ]
-                    ],
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "type": 1,
-                                "display": "API key",
-                                "hidden": True,
-                                "name": "test_old",
-                            },
-                            {
-                                "type": 9,
-                                "displaypassword": "API key",
-                                "name": "test_new",
-                            },
-                        ]
-                    ],
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "non_hiddenable_param",
-                                "type": 8,
-                                "display": "test param",
-                                "required": False,
-                                "hidden": "true",
-                            }
-                        ]
-                    ],
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "non_hiddenable_param",
-                                "type": 8,
-                                "display": "test param",
-                                "required": False,
-                                "hidden": [
-                                    "xsoar",
-                                    "marketplacev2",
-                                    "xpanse",
-                                    "xsoar_saas",
-                                    "xsoar_on_prem",
-                                ],
-                            },
-                            {
-                                "type": 4,
-                                "display": "API key",
-                                "hidden": True,
-                                "name": "test_old",
-                            },
-                        ]
-                    ],
-                ),
-            ],
+            INVALID_HIDDEN_PARAM_INTEGRATIONS,
             4,
             [
                 "The following fields are hidden and cannot be hidden, please unhide them: non_hiddenable_param.",
@@ -4340,7 +4311,7 @@ def test_IsValidFeedIntegrationValidator_is_valid(
         ),
     ],
 )
-def test_IsHiddenableParamValidator_is_valid(
+def test_IsHiddenableParamValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -4354,7 +4325,7 @@ def test_IsHiddenableParamValidator_is_valid(
             - One integration with a hiddenable param with hidden value = 'true'.
             - One integration with a non-hiddenable param with hidden value = [xsoar].
             - One integration with a non-hiddenable param with hidden value = True and type = 4, with a type 9 replacement.
-        - Case 1: Four invalid integrations:
+        - Case 2: Four invalid integrations:
             - One integration with a non-hiddenable param with hidden value = True.
             - One integration with a non-hiddenable param with hidden value = True and type not in 0,4,12,14, with a type 9 replacement.
             - One integration with a non-hiddenable param with hidden value = 'true'.
@@ -4366,7 +4337,8 @@ def test_IsHiddenableParamValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsHiddenableParamValidator().is_valid(content_items)
+
+    results = IsHiddenableParamValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4374,6 +4346,27 @@ def test_IsHiddenableParamValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IsHiddenableParamValidator_with_old_content_object_obtain_invalid_content_items():
+    """
+    Given
+    content_items iterables.
+        - Case 1: Four invalid integrations with old content objects which is a copy of the current one:
+            - One integration with a non-hiddenable param with hidden value = True.
+            - One integration with a non-hiddenable param with hidden value = True and type not in 0,4,12,14, with a type 9 replacement.
+            - One integration with a non-hiddenable param with hidden value = 'true'.
+            - One integration with a non-hiddenable param with hidden value = all market places and another hidden type 4 param without type 9 replacement.
+    When
+    - Calling the IsHiddenableParamValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+    """
+    content_items = INVALID_HIDDEN_PARAM_INTEGRATIONS
+    old_content_items = copy.deepcopy(content_items)
+    create_old_file_pointers(content_items, old_content_items)
+    assert not IsHiddenableParamValidator().obtain_invalid_content_items(content_items)
 
 
 def test_IsHiddenableParamValidator_fix():
@@ -4536,7 +4529,7 @@ def test_IsHiddenableParamValidator_fix():
         ),
     ],
 )
-def test_IsValidHiddenValueValidator_is_valid(
+def test_IsValidHiddenValueValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -4566,7 +4559,7 @@ def test_IsValidHiddenValueValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidHiddenValueValidator().is_valid(content_items)
+    results = IsValidHiddenValueValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4769,7 +4762,7 @@ def test_IsValidHiddenValueValidator_is_valid(
         ),
     ],
 )
-def test_IsValidReputationCommandContextPathCapitalizationValidator_is_valid(
+def test_IsValidReputationCommandContextPathCapitalizationValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -4792,7 +4785,7 @@ def test_IsValidReputationCommandContextPathCapitalizationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidReputationCommandContextPathCapitalizationValidator().is_valid(
+    results = IsValidReputationCommandContextPathCapitalizationValidator().obtain_invalid_content_items(
         content_items
     )
     assert len(results) == expected_number_of_failures
@@ -4909,7 +4902,7 @@ def test_IsValidReputationCommandContextPathCapitalizationValidator_is_valid(
         ),
     ],
 )
-def test_IsValidFetchValidator_is_valid(
+def test_IsValidFetchValidator_obtain_invalid_content_items(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -4934,7 +4927,7 @@ def test_IsValidFetchValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all and mention only the missing display (and nothing about isFetch) for the last integration.
     """
-    results = IsValidFetchValidator().is_valid(content_items)
+    results = IsValidFetchValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -4944,119 +4937,126 @@ def test_IsValidFetchValidator_is_valid(
     )
 
 
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(pack_info={"support": XSOAR_SUPPORT}),
-                create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
-                create_integration_object(pack_info={"support": DEVELOPER_SUPPORT}),
-                create_integration_object(pack_info={"support": COMMUNITY_SUPPORT}),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "insecure",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "fromlicense": "encrypted",
-                            }
-                        ]
-                    ],
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "fromlicense": "encrypted",
-                            }
-                        ]
-                    ],
-                    pack_info={"support": PARTNER_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_2",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "fromlicense": "encrypted",
-                            }
-                        ]
-                    ],
-                    pack_info={"support": DEVELOPER_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_3",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "fromlicense": "encrypted",
-                            }
-                        ]
-                    ],
-                    pack_info={"support": COMMUNITY_SUPPORT},
-                ),
-            ],
-            3,
-            [
-                'The following parameters contain the "fromlicense" field: test_1. The field is not allowed for contributors, please remove it.',
-                'The following parameters contain the "fromlicense" field: test_2. The field is not allowed for contributors, please remove it.',
-                'The following parameters contain the "fromlicense" field: test_3. The field is not allowed for contributors, please remove it.',
-            ],
-        ),
-    ],
-)
-def test_IsContainingFromLicenseInParamsValidator_is_valid(
-    content_items: List[Integration],
-    expected_number_of_failures: int,
-    expected_msgs: List[str],
-):
+def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__all_valid():
     """
     Given
-    content_items iterables.
-        - Case 1: Five valid integrations:
-            - One Xsoar supported integration without fromlicense field in any of the integration params.
-            - One Partner supported integration without fromlicense field in any of the integration params.
-            - One Developer supported integration without fromlicense field in any of the integration params.
-            - One Community supported integration without fromlicense field in any of the integration params.
-            - One Xsoar supported integration with fromlicense field in one of the integration params.
-        - Case 2: Three invalid integrations:
-            - One Partner supported integration with fromlicense field in one of the integration params.
-            - One Developer supported integration with fromlicense field in one of the integration params.
-            - One Community supported integration with fromlicense field in one of the integration params.
+    - Five valid integrations:
+        - One Xsoar supported integration without fromlicense field in any of the integration params.
+        - One Partner supported integration without fromlicense field in any of the integration params.
+        - One Developer supported integration without fromlicense field in any of the integration params.
+        - One Community supported integration without fromlicense field in any of the integration params.
+        - One Xsoar supported integration with fromlicense field in one of the integration params.
     When
     - Calling the IsContainingFromLicenseInParamsValidator is valid function.
     Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail all.
+    - Make sure the validation pass for all.
     """
     with ChangeCWD(REPO.path):
-        results = IsContainingFromLicenseInParamsValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
+        content_items = [
+            create_integration_object(pack_info={"support": XSOAR_SUPPORT}),
+            create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
+            create_integration_object(pack_info={"support": DEVELOPER_SUPPORT}),
+            create_integration_object(pack_info={"support": COMMUNITY_SUPPORT}),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "insecure",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "fromlicense": "encrypted",
+                        }
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
+        results = (
+            IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
+                content_items
+            )
+        )
+
+    assert len(results) == 0
+
+
+def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__all_invalid():
+    """
+    Given
+    - Three invalid integrations:
+        - One Partner supported integration with fromlicense field in one of the integration params.
+        - One Developer supported integration with fromlicense field in one of the integration params.
+        - One Community supported integration with fromlicense field in one of the integration params.
+    When
+    - Calling the IsContainingFromLicenseInParamsValidator is valid function.
+    Then
+    - Make sure the validation fail and the right error message is returned.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "fromlicense": "encrypted",
+                        }
+                    ]
+                ],
+                pack_info={"support": PARTNER_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_2",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "fromlicense": "encrypted",
+                        }
+                    ]
+                ],
+                pack_info={"support": DEVELOPER_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_3",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "fromlicense": "encrypted",
+                        }
+                    ]
+                ],
+                pack_info={"support": COMMUNITY_SUPPORT},
+            ),
+        ]
+
+        results = (
+            IsContainingFromLicenseInParamsValidator().obtain_invalid_content_items(
+                content_items
+            )
+        )
+
+    expected_msgs = [
+        'The following parameters contain the "fromlicense" field: test_1. The field is not allowed for contributors, please remove it.',
+        'The following parameters contain the "fromlicense" field: test_2. The field is not allowed for contributors, please remove it.',
+        'The following parameters contain the "fromlicense" field: test_3. The field is not allowed for contributors, please remove it.',
+    ]
+
+    assert len(results) == 3
     assert all(
         [
             result.message == expected_msg
@@ -5105,149 +5105,154 @@ def test_IsContainingFromLicenseInParamsValidator_fix():
     assert not any([param.fromlicense for param in content_item.params])
 
 
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": True,
-                            },
-                            {
-                                "name": "test_2",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": False,
-                            },
-                        ]
-                    ],
-                    pack_info={"support": PARTNER_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": True,
-                            },
-                            {
-                                "name": "test_2",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": False,
-                            },
-                        ]
-                    ],
-                    pack_info={"support": DEVELOPER_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": True,
-                            },
-                            {
-                                "name": "test_2",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": False,
-                            },
-                        ]
-                    ],
-                    pack_info={"support": COMMUNITY_SUPPORT},
-                ),
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test_1",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": True,
-                            },
-                            {
-                                "name": "test_3",
-                                "type": 8,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                            },
-                        ]
-                    ],
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["configuration"],
-                    values=[
-                        [
-                            {
-                                "name": "test",
-                                "type": 4,
-                                "required": False,
-                                "display": "Trust any certificate (not secure)",
-                                "hidden": False,
-                            }
-                        ]
-                    ],
-                    pack_info={"support": XSOAR_SUPPORT},
-                ),
-            ],
-            1,
-            [
-                "In order to allow fetching the following params: test from an external vault, the type of the parameters should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'.\nFor more details, check the convention for credentials - https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
-            ],
-        ),
-    ],
-)
-def test_IsAPITokenInCredentialTypeValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
-):
+def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_valid():
     """
     Given
-    content_items iterables.
-        - Case 1: Five valid integrations:
-            - One Partner supported integration with one hidden and one non-hidden type 4 params.
-            - One Developer supported integration with one hidden and one non-hidden type 4 params.
-            - One Community supported integration with one hidden and one non-hidden type 4 params.
-            - One Xsoar supported integration with one hidden type 4 param, and one non-hidden non type 4 param.
-        - Case 2: One invalid integration with a non-hidden type 4 param.
+    - Four valid integrations:
+        - One Partner supported integration with one hidden and one non-hidden type 4 params.
+        - One Developer supported integration with one hidden and one non-hidden type 4 params.
+        - One Community supported integration with one hidden and one non-hidden type 4 params.
+        - One Xsoar supported integration with one hidden type 4 param, and one non-hidden non type 4 param.
     When
     - Calling the IsAPITokenInCredentialTypeValidator is valid function.
     Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail.
+    - Make sure the validation pass for all.
     """
     with ChangeCWD(REPO.path):
-        results = IsAPITokenInCredentialTypeValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": True,
+                        },
+                        {
+                            "name": "test_2",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": False,
+                        },
+                    ]
+                ],
+                pack_info={"support": PARTNER_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": True,
+                        },
+                        {
+                            "name": "test_2",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": False,
+                        },
+                    ]
+                ],
+                pack_info={"support": DEVELOPER_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": True,
+                        },
+                        {
+                            "name": "test_2",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": False,
+                        },
+                    ]
+                ],
+                pack_info={"support": COMMUNITY_SUPPORT},
+            ),
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_1",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": True,
+                        },
+                        {
+                            "name": "test_3",
+                            "type": 8,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
+        results = IsAPITokenInCredentialTypeValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+    assert len(results) == 0
+
+
+def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_invalid():
+    """
+    Given
+    - One invalid integration with a non-hidden type 4 param.
+    When
+    - Calling the IsAPITokenInCredentialTypeValidator is valid function.
+    Then
+    - Make sure the validation fail and the right error message is returned.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test",
+                            "type": 4,
+                            "required": False,
+                            "display": "Trust any certificate (not secure)",
+                            "hidden": False,
+                        }
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
+        results = IsAPITokenInCredentialTypeValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+    expected_msgs = [
+        "In order to allow fetching the following params: test from an external vault, the type of the parameters should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'.\nFor more details, check the convention for credentials - https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
+    ]
+
+    assert len(results) == 1
     assert all(
         [
             result.message == expected_msg
@@ -5370,7 +5375,7 @@ def test_IsAPITokenInCredentialTypeValidator_is_valid(
         ),
     ],
 )
-def test_IsNameContainIncidentInCorePackValidator_is_valid(
+def test_IsNameContainIncidentInCorePackValidator_obtain_invalid_content_items(
     mocker, content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -5393,7 +5398,11 @@ def test_IsNameContainIncidentInCorePackValidator_is_valid(
         return_value=["pack_no_1", "pack_no_2", "pack_no_4"],
     )
     with ChangeCWD(REPO.path):
-        results = IsNameContainIncidentInCorePackValidator().is_valid(content_items)
+        results = (
+            IsNameContainIncidentInCorePackValidator().obtain_invalid_content_items(
+                content_items
+            )
+        )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5403,87 +5412,87 @@ def test_IsNameContainIncidentInCorePackValidator_is_valid(
     )
 
 
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [
-                create_integration_object(
-                    pack_info={"support": XSOAR_SUPPORT},
-                    paths=["script.isfetchevents"],
-                    values=[True],
-                ),
-                create_integration_object(
-                    pack_info={"support": PARTNER_SUPPORT},
-                    paths=["supportlevelheader", "script.isfetchevents"],
-                    values=[XSOAR_SUPPORT, True],
-                ),
-                create_integration_object(
-                    pack_info={"support": XSOAR_SUPPORT},
-                    paths=["script.isfetcheventsandassets"],
-                    values=[True],
-                ),
-                create_integration_object(
-                    pack_info={"support": PARTNER_SUPPORT},
-                    paths=["supportlevelheader", "script.isfetcheventsandassets"],
-                    values=[XSOAR_SUPPORT, True],
-                ),
-                create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
-            ],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    pack_info={"support": PARTNER_SUPPORT},
-                    paths=["script.isfetchevents"],
-                    values=[True],
-                ),
-                create_integration_object(
-                    pack_info={"support": PARTNER_SUPPORT},
-                    paths=["script.isfetcheventsandassets"],
-                    values=[True],
-                ),
-            ],
-            2,
-            [
-                "The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key supportlevelheader = xsoar in its yml.",
-                "The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key supportlevelheader = xsoar in its yml.",
-            ],
-        ),
-    ],
-)
-def test_IsPartnerCollectorHasXsoarSupportLevelValidator_is_valid(
-    content_items: List[Integration],
-    expected_number_of_failures: int,
-    expected_msgs: List[str],
-):
+def test_IsPartnerCollectorHasXsoarSupportLevelValidator_obtain_invalid_content_items__all_valid():
     """
     Given
-    content_items iterables.
-        - Case 1: Five valid integrations:
-            - One Xsoar supported events fetching integration.
-            - One Partner supported events fetching integration with support level header = Xsoar.
-            - One Xsoar supported events&assets fetching integration.
-            - One Xsoar supported events&assets fetching integration with support level header = Xsoar.
-            - One non-fetching Partner supported integration without support level header = Xsoar.
-        - Case 2: Two invalid integrations:
-            - One Partner supported events fetching integration without support level header = Xsoar.
-            - One Xsoar supported events&assets fetching integration without support level header = Xsoar.
+    - Five valid integrations:
+        - One Xsoar supported events fetching integration.
+        - One Partner supported events fetching integration with support level header = Xsoar.
+        - One Xsoar supported events&assets fetching integration.
+        - One Xsoar supported events&assets fetching integration with support level header = Xsoar.
+        - One non-fetching Partner supported integration without support level header = Xsoar.
     When
     - Calling the IsPartnerCollectorHasXsoarSupportLevelValidator is valid function.
     Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should pass all.
-        - Case 2: Should fail all.
+    - Make sure the validation pass for all.
     """
-
     with ChangeCWD(REPO.path):
-        results = IsPartnerCollectorHasXsoarSupportLevelValidator().is_valid(
+        content_items = [
+            create_integration_object(
+                pack_info={"support": XSOAR_SUPPORT},
+                paths=["script.isfetchevents"],
+                values=[True],
+            ),
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT},
+                paths=["supportlevelheader", "script.isfetchevents"],
+                values=[XSOAR_SUPPORT, True],
+            ),
+            create_integration_object(
+                pack_info={"support": XSOAR_SUPPORT},
+                paths=["script.isfetcheventsandassets"],
+                values=[True],
+            ),
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT},
+                paths=["supportlevelheader", "script.isfetcheventsandassets"],
+                values=[XSOAR_SUPPORT, True],
+            ),
+            create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
+        ]
+
+        results = IsPartnerCollectorHasXsoarSupportLevelValidator().obtain_invalid_content_items(
             content_items
         )
-    assert len(results) == expected_number_of_failures
+
+    assert len(results) == 0
+
+
+def test_IsPartnerCollectorHasXsoarSupportLevelValidator_obtain_invalid_content_items__all_invalid():
+    """
+    Given
+    - Two invalid integrations:
+        - One Partner supported events fetching integration without support level header = Xsoar.
+        - One Xsoar supported events&assets fetching integration without support level header = Xsoar.
+    When
+    - Calling the IsPartnerCollectorHasXsoarSupportLevelValidator is valid function.
+    Then
+    - Make sure the validation fail and the right error message is returned.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT},
+                paths=["script.isfetchevents"],
+                values=[True],
+            ),
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT},
+                paths=["script.isfetcheventsandassets"],
+                values=[True],
+            ),
+        ]
+
+        results = IsPartnerCollectorHasXsoarSupportLevelValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+    expected_msgs = [
+        "The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key supportlevelheader = xsoar in its yml.",
+        "The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key supportlevelheader = xsoar in its yml.",
+    ]
+
+    assert len(results) == 2
     assert all(
         [
             result.message == expected_msg
@@ -5515,7 +5524,7 @@ def test_IsPartnerCollectorHasXsoarSupportLevelValidator_fix():
     assert content_item.data.get(SUPPORT_LEVEL_HEADER) == XSOAR_SUPPORT
 
 
-def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
+def test_IntegrationDisplayNameVersionedCorrectlyValidator_obtain_invalid_content_items():
     """
     Given:
      - 1 integration with valid versioned display-name
@@ -5533,7 +5542,7 @@ def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
         create_integration_object(paths=["display"], values=["test V3"]),
     ]
 
-    results = IntegrationDisplayNameVersionedCorrectlyValidator().is_valid(
+    results = IntegrationDisplayNameVersionedCorrectlyValidator().obtain_invalid_content_items(
         content_items
     )
     assert len(results) == 1
@@ -5627,7 +5636,7 @@ def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
         ),
     ],
 )
-def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
+def test_IsRepCommandContainIsArrayArgumentValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -5645,7 +5654,11 @@ def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsRepCommandContainIsArrayArgumentValidator().is_valid(content_items)
+    results = (
+        IsRepCommandContainIsArrayArgumentValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5759,7 +5772,7 @@ def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
         ),
     ],
 )
-def test_IsValidDbotValidator_is_valid(
+def test_IsValidDbotValidator_obtain_invalid_content_items(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -5778,7 +5791,7 @@ def test_IsValidDbotValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsValidDbotValidator().is_valid(content_items)
+    results = IsValidDbotValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5786,3 +5799,172 @@ def test_IsValidDbotValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IsValidFeedExpirationPolicy_no_display_parameter():
+    """
+    Given:
+    - A feed integration with no display parameter under expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should fail.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "options": ["never", "interval", "indicatorType", "suddenDeath"],
+                }
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 1
+    assert validation_results[0].message == (
+        IsValidFeedExpirationPolicyValidator.error_message + " " + BAD_TYPE_OR_DISPLAY
+    )
+
+
+def test_IsValidFeedExpirationPolicy_incremental_feed_with_suddenDeath():
+    """
+    Given:
+    - An incremental feed, that cannot be changed, with suddenDeath as an option for expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should fail.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedIncremental",
+                    "hidden": True,
+                    "type": 8,
+                    "defaultvalue": True,
+                },
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "display": "",
+                    "options": ["never", "interval", "indicatorType", "suddenDeath"],
+                },
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 1
+    assert validation_results[0].message == (
+        IsValidFeedExpirationPolicyValidator.error_message
+        + " "
+        + REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE
+    )
+
+
+def test_IsValidFeedExpirationPolicy_incremental_feed_no_suddenDeath():
+    """
+    Given:
+    - An incremental feed, that cannot be changed, without suddenDeath as an option for expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should pass.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedIncremental",
+                    "hidden": True,
+                    "type": 8,
+                    "defaultvalue": True,
+                },
+                {
+                    "name": "feedExpirationPolicy",
+                    "display": "",
+                    "type": 17,
+                    "options": ["never", "interval", "indicatorType"],
+                },
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 0
+
+
+def test_IsValidFeedExpirationPolicy_fully_fetched_feed_no_suddenDeath():
+    """
+    Given:
+    - A fully fetched feed, without suddenDeath as an option for expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should fail.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "display": "",
+                    "options": ["never", "interval", "indicatorType"],
+                }
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 1
+    assert validation_results[0].message == (
+        IsValidFeedExpirationPolicyValidator.error_message
+        + " "
+        + MISSING_SUDDEN_DEATH_ERROR_MESSAGE
+    )
+
+
+def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
+    """
+    Given:
+    - A fully fetched feed, with suddenDeath as an option for expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should pass.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "display": "",
+                    "options": ["never", "interval", "indicatorType", "suddenDeath"],
+                }
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 0

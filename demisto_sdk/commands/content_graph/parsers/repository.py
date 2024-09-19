@@ -60,8 +60,8 @@ class RepositoryParser:
     def parse_pack(pack_path: Path) -> Optional[PackParser]:
         try:
             return PackParser(pack_path)
-        except NotAContentItemException:
-            logger.error(f"Pack {pack_path.name} is not a valid pack. Skipping")
+        except (NotAContentItemException, FileNotFoundError):
+            logger.warning(f"Pack {pack_path.name} is not a valid pack. Skipping")
             return None
 
     @staticmethod

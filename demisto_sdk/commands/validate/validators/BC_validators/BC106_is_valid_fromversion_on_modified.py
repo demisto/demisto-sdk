@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.content_graph.objects.case_field import CaseField
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
@@ -12,7 +14,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Script, Mapper, IncidentType]
+ContentTypes = Union[
+    Integration, Script, Mapper, IncidentType, IncidentField, CaseField
+]
 
 
 class IsValidFromversionOnModifiedValidator(BaseValidator[ContentTypes]):
@@ -25,7 +29,9 @@ class IsValidFromversionOnModifiedValidator(BaseValidator[ContentTypes]):
     related_field = "fromversion"
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

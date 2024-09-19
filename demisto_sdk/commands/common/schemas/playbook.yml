@@ -76,7 +76,7 @@ mapping:
     required: true
     matching-rule: 'all'
     mapping:
-      regex;(^[0-9]+$):
+      regex;(^[0-9]+(:?(xsoar|marketplacev2|xpanse|xsoar_saas|xsoar_on_prem))?$):
         type: map
         mapping:
           id:
@@ -92,7 +92,37 @@ mapping:
           form:
             type: map
             allowempty: true
+          form:xsoar:
+            type: map
+            allowempty: true
+          form:marketplacev2:
+            type: map
+            allowempty: true
+          form:xpanse:
+            type: map
+            allowempty: true
+          form:xsoar_saas:
+            type: map
+            allowempty: true
+          form:xsoar_on_prem:
+            type: map
+            allowempty: true
           message:
+            type: map
+            allowempty: true
+          message:xsoar:
+            type: map
+            allowempty: true
+          message:marketplacev2:
+            type: map
+            allowempty: true
+          message:xpanse:
+            type: map
+            allowempty: true
+          message:xsoar_saas:
+            type: map
+            allowempty: true
+          message:xsoar_on_prem:
             type: map
             allowempty: true
           defaultassigneecomplex:
@@ -109,6 +139,21 @@ mapping:
           restrictedcompletion:
             type: bool
           scriptarguments:
+            type: map
+            allowempty: true
+          scriptarguments:xsoar:
+            type: map
+            allowempty: true
+          scriptarguments:marketplacev2:
+            type: map
+            allowempty: true
+          scriptarguments:xpanse:
+            type: map
+            allowempty: true
+          scriptarguments:xsoar_saas:
+            type: map
+            allowempty: true
+          scriptarguments:xsoar_on_prem:
             type: map
             allowempty: true
           timertriggers:
@@ -232,6 +277,16 @@ mapping:
                 type: str
               description:xsoar_on_prem:
                 type: str
+              id:xsoar:
+                type: text
+              id:marketplacev2:
+                type: text
+              id:xpanse:
+                type: text
+              id:xsoar_saas:
+                type: text
+              id:xsoar_on_prem:
+                type: text
           note:
             type: bool
           nexttasks:
@@ -254,7 +309,32 @@ mapping:
                 type: str
               scriptId_x2:
                 type: str
+              scriptId:xsoar:
+                type: str
+              scriptId:marketplacev2:
+                type: str
+              scriptId:xpanse:
+                type: str
+              scriptId:xsoar_saas:
+                type: str
+              scriptId:xsoar_on_prem:
+                type: str
               scriptArguments:
+                type: map
+                allowempty: true
+              scriptArguments:xsoar:
+                type: map
+                allowempty: true
+              scriptArguments:marketplacev2:
+                type: map
+                allowempty: true
+              scriptArguments:xpanse:
+                type: map
+                allowempty: true
+              scriptArguments:xsoar_saas:
+                type: map
+                allowempty: true
+              scriptArguments:xsoar_on_prem:
                 type: map
                 allowempty: true
               exitCondition:
@@ -291,6 +371,16 @@ mapping:
             - type: map
               allowempty: true
 
+          id:xsoar:
+            type: text
+          id:marketplacev2:
+            type: text
+          id:xpanse:
+            type: text
+          id:xsoar_saas:
+            type: text
+          id:xsoar_on_prem:
+            type: text
   system:
     type: bool
   fromversion:
@@ -346,6 +436,16 @@ mapping:
     type: bool
   deprecated:xsoar_on_prem:
     type: bool
+  id:xsoar:
+    type: str
+  id:marketplacev2:
+    type: str
+  id:xpanse:
+    type: str
+  id:xsoar_saas:
+    type: str
+  id:xsoar_on_prem:
+    type: str
 schema;task_schema:
   type: map
   allowempty: true
@@ -368,8 +468,26 @@ schema;input_schema:
       type: bool
     playbookInputQuery:
       type: any
-
-# playbook->inputSections
+    key:xsoar:
+      type: str
+    key:marketplacev2:
+      type: str
+    key:xpanse:
+      type: str
+    key:xsoar_saas:
+      type: str
+    key:xsoar_on_prem:
+      type: str
+    value:xsoar:
+      type: any
+    value:marketplacev2:
+      type: any
+    value:xpanse:
+      type: any
+    value:xsoar_saas:
+      type: any
+    value:xsoar_on_prem:
+      type: any
     description:xsoar:
       type: str
     description:marketplacev2:
@@ -390,6 +508,16 @@ schema;input_schema:
       type: bool
     required:xsoar_on_prem:
       type: bool
+    playbookInputQuery:xsoar:
+      type: any
+    playbookInputQuery:marketplacev2:
+      type: any
+    playbookInputQuery:xpanse:
+      type: any
+    playbookInputQuery:xsoar_saas:
+      type: any
+    playbookInputQuery:xsoar_on_prem:
+      type: any
 schema;inputsSection_schema:
   type: map
   mapping:
@@ -511,26 +639,30 @@ schema;arg_filter_schema:
     ignorecase:
       type: bool
     left:
-      type: map
+      include: left_or_right_schema
       required: true
-      mapping:
-        value:
-          type: any
-          required: true
-        value_x2:
-          type: any
-        iscontext:
-          type: bool
+    left:xsoar:
+      include: left_or_right_schema
+    left:marketplacev2:
+      include: left_or_right_schema
+    left:xpanse:
+      include: left_or_right_schema
+    left:xsoar_saas:
+      include: left_or_right_schema
+    left:xsoar_on_prem:
+      include: left_or_right_schema
     right:
-      type: map
-      mapping:
-        value:
-          type: any
-          required: true
-        value_x2:
-          type: any
-        iscontext:
-          type: bool
+      include: left_or_right_schema
+    right:xsoar:
+      include: left_or_right_schema
+    right:marketplacev2:
+      include: left_or_right_schema
+    right:xpanse:
+      include: left_or_right_schema
+    right:xsoar_saas:
+      include: left_or_right_schema
+    right:xsoar_on_prem:
+      include: left_or_right_schema
 
 schema;timertriggers_schema:
   type: map
@@ -539,3 +671,34 @@ schema;timertriggers_schema:
       type: str
     action:
       type: str
+
+schema;left_or_right_schema:
+  type: map
+  mapping:
+    value:
+      type: any
+      required: true
+    value:xsoar:
+      type: any
+    value:marketplacev2:
+      type: any
+    value:xpanse:
+      type: any
+    value:xsoar_saas:
+      type: any
+    value:xsoar_on_prem:
+      type: any
+    value_x2:
+      type: any
+    iscontext:
+      type: bool
+    iscontext:xsoar:
+      type: bool
+    iscontext:marketplacev2:
+      type: bool
+    iscontext:xpanse:
+      type: bool
+    iscontext:xsoar_saas:
+      type: bool
+    iscontext:xsoar_on_prem:
+      type: bool

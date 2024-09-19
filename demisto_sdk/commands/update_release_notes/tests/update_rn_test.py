@@ -78,19 +78,18 @@ class TestRNUpdate:
         """
         expected_result = (
             "\n#### Classifiers\n\n##### Hello World Classifier\n\n- %%UPDATE_RN%%\n"
-            "\n#### Connections\n\n- **Hello World Connection**\n"
             "\n#### Dashboards\n\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%\n"
-            "\n#### Incident Fields\n\n- **Hello World IncidentField**\n"
-            "\n#### Incident Types\n\n- **Hello World Incident Type**\n"
-            "\n#### Indicator Fields\n\n- **Hello World Indicator Field**\n"
-            "\n#### Indicator Types\n\n- **Hello World Indicator Type**\n"
+            "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- %%UPDATE_RN%%\n"
+            "\n#### Incident Types\n\n##### Hello World Incident Type\n\n- %%UPDATE_RN%%\n"
+            "\n#### Indicator Fields\n\n##### Hello World Indicator Field\n\n- %%UPDATE_RN%%\n"
+            "\n#### Indicator Types\n\n##### Hello World Indicator Type\n\n- %%UPDATE_RN%%\n"
             "\n#### Integrations\n\n##### Hello World Integration\n\n- %%UPDATE_RN%%\n"
             "\n#### Jobs\n\n##### Hello World Job #1\n\n- %%UPDATE_RN%%\n"
             "##### Hello World Job #2\n\n- %%UPDATE_RN%%\n"
-            "\n#### Layouts\n\n- **Hello World Layout**\n"
-            "- **Second Hello World Layout**\n"
-            "\n#### Modules\n\n- **Hello World Generic Module**\n"
-            "\n#### Objects\n\n- **Hello World Generic Definition**\n"
+            "\n#### Layouts\n\n##### Hello World Layout\n\n- %%UPDATE_RN%%\n"
+            "##### Second Hello World Layout\n\n- %%UPDATE_RN%%\n"
+            "\n#### Modules\n\n##### Hello World Generic Module\n\n- %%UPDATE_RN%%\n"
+            "\n#### Objects\n\n##### Hello World Generic Definition\n\n- %%UPDATE_RN%%\n"
             "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n"
             "\n#### Reports\n\n##### Hello World Report\n\n- %%UPDATE_RN%%\n"
             "\n#### Scripts\n\n##### Hello World Script\n\n- %%UPDATE_RN%%\n"
@@ -158,10 +157,6 @@ class TestRNUpdate:
                 "description": "",
                 "is_new_file": False,
             },
-            ("Hello World Connection", FileType.CONNECTION): {
-                "description": "",
-                "is_new_file": False,
-            },
             ("Hello World Report", FileType.REPORT): {
                 "description": "",
                 "is_new_file": False,
@@ -202,8 +197,8 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Object Fields\n\n- **Sample Generic Field**\n"
-            "\n#### Object Types\n\n- **Sample Generic Type**\n"
+            "\n#### Object Fields\n\n##### Sample Generic Field\n\n- %%UPDATE_RN%%\n"
+            "\n#### Object Types\n\n##### Sample Generic Type\n\n- %%UPDATE_RN%%\n"
         )
 
         pack_path = TestRNUpdate.FILES_PATH + "/generic_testing"
@@ -348,11 +343,11 @@ class TestRNUpdate:
             - a dict of changed items
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Incident Fields\n\n- **Hello World IncidentField**\n"
+        expected_result = "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -378,7 +373,7 @@ class TestRNUpdate:
             - a dict of changed items, with a documentation rn update
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
@@ -1302,7 +1297,7 @@ class TestRNUpdate:
     def test_update_rn_new_incident_field(repo):
         """
         Case - new incident field, XSOAR, fromversion exists, description exists
-        Expected - release note should not contain new and version
+        Expected - release note should contain new and version
         """
         pack = repo.create_pack("test_pack")
         new_incident_field = pack.create_incident_field(
@@ -1323,9 +1318,11 @@ class TestRNUpdate:
             from_version=new_incident_field.read_json_as_dict().get("fromversion"),
         )
 
-        assert f"- New: **{new_incident_field}**" not in rn_desc
+        assert (
+            "##### New:" in rn_desc
+        )  # check if release note contains New - when new file
         assert "test_pack" in rn_desc
-        assert "(Available from Cortex XSOAR 6.5.0)." not in rn_desc
+        assert "(Available from Cortex XSOAR 6.5.0)." in rn_desc
 
     def test_update_rn_with_deprecated_and_text(self, mocker):
         """
@@ -1536,19 +1533,27 @@ class TestRNUpdateUnit:
     CURRENT_RN = """
 #### Incident Types
 
-- **Cortex XDR Incident**
+##### Cortex XDR Incident
+
+- %%UPDATE_RN%%
 
 #### Incident Fields
 
-- **XDR Alerts**
+##### XDR Alerts
+
+- %%UPDATE_RN%%
 
 #### Object Types
 
-- **Sample GenericType**
+##### Sample GenericType
+
+- %%UPDATE_RN%%
 
 #### Object Fields
 
-- **Sample GenericField**
+##### Sample GenericField
+
+- %%UPDATE_RN%%
 """
     CHANGED_FILES = {
         ("Cortex XDR Incident", FileType.INCIDENT_TYPE): {
@@ -1583,21 +1588,31 @@ class TestRNUpdateUnit:
     EXPECTED_RN_RES = """
 #### Incident Types
 
-- **Cortex XDR Incident**
+##### Cortex XDR Incident
+
+- %%UPDATE_RN%%
 
 #### Incident Fields
 
-- **Sample IncidentField**
+##### Sample IncidentField
 
-- **XDR Alerts**
+- %%UPDATE_RN%%
+
+##### XDR Alerts
+
+- %%UPDATE_RN%%
 
 #### Object Types
 
-- **Sample GenericType**
+##### Sample GenericType
+
+- %%UPDATE_RN%%
 
 #### Object Fields
 
-- **Sample GenericField**
+##### Sample GenericField
+
+- %%UPDATE_RN%%
 
 #### Integrations
 
@@ -1677,12 +1692,6 @@ class TestRNUpdateUnit:
             "Packs/VulnDB/Integrations/VulnDB/VulnDB.yml",
             FileType.INTEGRATION,
             ("VulnDB", FileType.INTEGRATION),
-        ),
-        (
-            "Packs/VulnDB",
-            "Packs/VulnDB/Connections/VulnDB/VulnDB.yml",
-            FileType.CONNECTION,
-            ("VulnDB", FileType.CONNECTION),
         ),
         (
             "Packs/VulnDB",
@@ -2779,12 +2788,12 @@ def test_create_md_if_currentversion_is_higher(
         added_files=set(),
     )
     client.execute_update()
-    updated_rn_folder = glob.glob(pack.path + "/ReleaseNotes/*")
+    updated_rn_folder = glob.glob(str(pack.path) + "/ReleaseNotes/*")
     updated_versions_list = [rn[rn.rindex("/") + 1 : -3] for rn in updated_rn_folder]
     assert Counter(first_expected_results) == Counter(updated_versions_list)
     pack.pack_metadata.write_json({"currentVersion": "0.0.3"})
     client.execute_update()
-    updated_rn_folder = glob.glob(pack.path + "/ReleaseNotes/*")
+    updated_rn_folder = glob.glob(str(pack.path) + "/ReleaseNotes/*")
     updated_versions_list = [rn[rn.rindex("/") + 1 : -3] for rn in updated_rn_folder]
     assert Counter(second_expected_results) == Counter(updated_versions_list)
 

@@ -15,6 +15,7 @@
  `test_build_xsoar_linter_py2_command` of the `command_builder_test.py` file.
 5. Add the check to the `xsoar_linter_integration_test.py` test suit.
 """
+
 import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker

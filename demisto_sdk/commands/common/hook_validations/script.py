@@ -361,7 +361,6 @@ class ScriptValidator(ContentEntityValidator):
 
         if scripts_folder == "Scripts":
             if not script_file.startswith("script-"):
-
                 error_message, error_code = Errors.is_valid_script_file_path_in_folder(
                     script_file
                 )
@@ -439,7 +438,6 @@ class ScriptValidator(ContentEntityValidator):
         invalid_files = []
 
         for file_path in files_to_check:
-
             file_name = Path(file_path).name
 
             if file_name.endswith("_test.py") or file_name.endswith("_unified.yml"):
@@ -455,7 +453,6 @@ class ScriptValidator(ContentEntityValidator):
                 invalid_files.append(file_name)
 
         if invalid_files:
-
             error_message, error_code = Errors.file_name_has_separators(
                 "script", invalid_files, valid_files
             )

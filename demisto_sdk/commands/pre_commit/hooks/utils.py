@@ -11,4 +11,6 @@ def get_property(hook: dict, mode: str, name: str, default=None):
     ret = None
     if mode:
         ret = hook.get(f"{name}:{mode}")
-    return ret or hook.get(name, default)
+    if ret is None:
+        return hook.get(name, default)
+    return ret

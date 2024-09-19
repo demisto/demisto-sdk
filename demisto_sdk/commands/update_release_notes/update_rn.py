@@ -1,6 +1,7 @@
 """
 This script is used to create a release notes template
 """
+
 import copy
 import errno
 import os
@@ -16,7 +17,6 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     EVENT_COLLECTOR,
     IGNORED_PACK_NAMES,
-    RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     SIEM_ONLY_ENTITIES,
     XSIAM_DASHBOARDS_DIR,
@@ -360,6 +360,7 @@ class UpdateRN:
             f.write(json.dumps(bc_file_data, indent=4))
         logger.info(
             f"[green]Finished creating config file for RN version {new_version}.\n"
+            "If the breaking changes apply only for specific marketplaces, add those values under the `marketplaces` field.\n"
             "If you wish only specific text to be shown as breaking changes, please fill the "
             "`breakingChangesNotes` field with the appropriate breaking changes text.[/green]"
         )
@@ -745,13 +746,8 @@ class UpdateRN:
         :return
         The release notes description
         """
-        if _type in RN_CONTENT_ENTITY_WITH_STARS:
-            if is_new_file:
-                rn_desc = f"- New: **{content_name}**\n"
-            else:
-                rn_desc = f"- **{content_name}**\n"
 
-        elif self.is_force:
+        if self.is_force:
             rn_desc = f"## {content_name}\n\n"
             rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
         else:

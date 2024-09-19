@@ -1,0 +1,79 @@
+exclude: .devcontainer/|.vscode|Pipfile.lock|.gitlab/ci/|.circleci/|docs
+files: ''
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+  - id: check-json
+  - id: check-yaml
+  - id: check-ast
+    min_py_version: '3.7'
+  - id: check-merge-conflict
+  - id: debug-statements
+    language_version: python3
+    min_py_version: '3.7'
+  - id: name-tests-test
+    min_py_version: '3.7'
+    files: .+_test.py$
+
+- repo: local
+  hooks:
+
+  - id: pytest-in-docker
+    name: pytest-in-docker
+    description: Run pytest with network enabled on the code in content packs
+    entry: coverage
+    language: docker
+    files: Packs\/.*_test\.py$
+    env:
+      COVERAGE_FILE: /src/.pre-commit/coverage/.coverage
+    args:
+    - run
+    - -p
+    - --source=.
+    - -m
+    - pytest
+    - -v
+    - --override-ini='asyncio_mode=auto'
+    - --rootdir=/src
+    - --junitxml=/src/.pre-commit/pytest-junit/.report_pytest.xml
+    - --color=yes
+    copy_files:
+    - Tests/scripts/dev_envs/pytest/conftest.py
+    run_isolated: true
+
+  - id: pwsh-test-in-docker
+    name: pwsh-test-in-docker
+    description: Run powershell tests
+    entry: pwsh
+    args:
+    - -Command
+    - Invoke-Pester
+    - -Output
+    - Detailed
+    - -CI
+    - -Path
+    files: .Tests.ps1$
+    copy_files:
+    - Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1
+    - Tests/demistomock/demistomock.ps1
+    run_isolated: true
+
+  - id: validate
+    name: validate
+    description: validate content
+    entry: demisto-sdk validate
+    args:
+    - --skip-pack-dependencies
+    pass_filenames: false
+    language: system
+    require_serial: true
+
+  - id: merge-pytest-reports
+    name: merge-pytest-reports
+    entry: merge-pytest-reports
+    language: system
+    require_serial: true
+    pass_filenames: false
+    needs:
+    - pytest-in-docker

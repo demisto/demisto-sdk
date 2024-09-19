@@ -278,12 +278,10 @@ def configure_module_discovery(ide_type: IDEType):
         ide_folder = CONTENT_PATH / ".vscode"
         ide_folder.mkdir(exist_ok=True, parents=True)
         configure_vscode_settings(ide_folder=ide_folder)
-        # Delete PYTHONPATH and MYPYPATH from env file because they are not needed
         env_file = CONTENT_PATH / ".env"
         env_vars = dotenv.dotenv_values(env_file)
-        env_vars.pop("PYTHONPATH", None)
-        env_vars.pop("MYPYPATH", None)
-        update_dotenv(env_file, env_vars)
+        env_vars["PYTHONPATH"] = PYTHONPATH_STR
+        update_dotenv(DOTENV_PATH, env_vars)
 
     if ide_type == IDEType.PYCHARM:
         python_discovery_paths = PYTHONPATH.copy()
@@ -306,7 +304,6 @@ def configure_vscode_tasks(
     if integration_script.type == "powershell":
         logger.debug("Powershell integration, skipping tasks.json")
         return
-    docker_python_path = get_docker_python_path("/app")
 
     def build_tasks():
         return {
@@ -315,16 +312,17 @@ def configure_vscode_tasks(
                 {
                     "type": "docker-run",
                     "label": "docker-run: debug",
-                    "python": {
-                        "file": f"/app/{integration_script.path.with_suffix('.py').relative_to(CONTENT_PATH.absolute())}"
-                    },
+                    "python": {"file": str(integration_script.path.with_suffix(".py"))},
                     "dockerRun": {
                         "image": integration_script.docker_image,
                         "volumes": [
-                            {"localPath": str(CONTENT_PATH), "containerPath": "/app"}
+                            {
+                                "localPath": str(CONTENT_PATH),
+                                "containerPath": str(CONTENT_PATH),
+                            }
                         ],
                         "env": {
-                            "PYTHONPATH": ":".join(docker_python_path),
+                            "PYTHONPATH": PYTHONPATH_STR,
                         },
                     },
                 },
@@ -337,7 +335,11 @@ def configure_vscode_tasks(
                         "args": [
                             "-s",
                             "-vv",
-                            f"/app/{integration_script.path.with_name(integration_script.path.stem + '_test.py').relative_to(CONTENT_PATH.absolute())}",
+                            str(
+                                integration_script.path.with_name(
+                                    integration_script.path.stem + "_test.py"
+                                )
+                            ),
                         ],
                     },
                     "dockerRun": {
@@ -345,11 +347,11 @@ def configure_vscode_tasks(
                         "volumes": [
                             {
                                 "localPath": str(CONTENT_PATH),
-                                "containerPath": "/app",
+                                "containerPath": str(CONTENT_PATH),
                             }
                         ],
-                        "customOptions": f"-w /app/{integration_script.path.parent.relative_to(CONTENT_PATH.absolute())}",
-                        "env": {"PYTHONPATH": ":".join(docker_python_path)},
+                        "customOptions": f"-w {integration_script.path.parent}",
+                        "env": {"PYTHONPATH": PYTHONPATH_STR},
                     },
                 },
             ],
@@ -389,7 +391,10 @@ def configure_vscode_launch(
                         "preLaunchTask": "docker-run: debug",
                         "python": {
                             "pathMappings": [
-                                {"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}
+                                {
+                                    "localRoot": str(CONTENT_PATH),
+                                    "remoteRoot": str(CONTENT_PATH),
+                                }
                             ],
                             "projectType": "general",
                             "justMyCode": False,
@@ -404,7 +409,7 @@ def configure_vscode_launch(
                             "pathMappings": [
                                 {
                                     "localRoot": str(CONTENT_PATH),
-                                    "remoteRoot": "/app",
+                                    "remoteRoot": str(CONTENT_PATH),
                                 },
                             ],
                             "projectType": "general",
@@ -413,7 +418,7 @@ def configure_vscode_launch(
                     },
                     {
                         "name": "Python: Debug Integration locally",
-                        "type": "python",
+                        "type": "debugpy",
                         "request": "launch",
                         "program": f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
                         if devcontainer
@@ -425,7 +430,7 @@ def configure_vscode_launch(
                     },
                     {
                         "name": "Python: Debug Tests",
-                        "type": "python",
+                        "type": "debugpy",
                         "request": "launch",
                         "program": "${file}",
                         "purpose": ["debug-test"],
@@ -621,9 +626,12 @@ def configure_params(
     if not secret_id:
         secret_id = integration_script.name.replace(" ", "_")
         secret_id = re.sub(r"[()]", "", secret_id)
-    if (project_id := os.getenv("DEMISTO_SDK_GCP_PROJECT_ID")) and isinstance(
-        integration_script, Integration
-    ):
+    if not isinstance(integration_script, Integration):
+        logger.info(
+            "Skipping Google Secret Manager lookup as script does not have parameters."
+        )
+        return
+    if project_id := os.getenv("DEMISTO_SDK_GCP_PROJECT_ID"):
         try:
             params = get_integration_params(secret_id, project_id)
             if params and instance_name:
@@ -640,6 +648,7 @@ def configure_params(
                 values={"DEMISTO_PARAMS": json.dumps(params)},
                 quote_mode="never",
             )
+
         except SecretManagerException:
             logger.warning(
                 f"Failed to fetch integration params for '{secret_id}' from Google Secret Manager."
@@ -744,7 +753,10 @@ def configure_integration(
             "Failed to initialize Docker client. Please assure Docker is running and properly configured."
         )
         raise
-    (test_docker_image, errors,) = docker_helper.get_docker().get_or_create_test_image(
+    (
+        test_docker_image,
+        errors,
+    ) = docker_helper.get_docker().get_or_create_test_image(
         docker_image, integration_script.type
     )
     if errors:
@@ -753,6 +765,7 @@ def configure_integration(
         )
 
     if create_virtualenv and integration_script.type.startswith("python"):
+        (base_path / ".vscode" / "launch.json").unlink(missing_ok=True)
         pack = integration_script.in_pack
         assert isinstance(pack, Pack), "Expected pack"
         base_path = pack.path
@@ -781,7 +794,7 @@ def clean_repo():
     """
     for path in PYTHONPATH:
         for temp_file in CONTENT_PATH.rglob(f"{path.name}.py"):
-            if temp_file.parent != path:
+            if temp_file.parent != path and ".venv" not in temp_file.parts:
                 temp_file.unlink(missing_ok=True)
     for path in CONTENT_PATH.rglob("*.pyc"):
         path.unlink(missing_ok=True)

@@ -17,7 +17,6 @@ class CircleCIError(Exception):
 
 
 class CircleCIResponse(SimpleNamespace):
-
     ATTRIBUTES_DEFAULT_MAPPING = {
         "items": [],
         "steps": [],
@@ -91,7 +90,6 @@ def parse_http_response(expected_valid_code: int = 200, response_type: str = "cl
 
 
 class CircleCIClient:
-
     API_VERSION_V2 = "v2"
     API_VERSION_V1 = "v1.1"
 
@@ -101,7 +99,10 @@ class CircleCIClient:
         base_url: Optional[str] = None,
         verify: bool = True,
     ):
-        self.auth = HTTPBasicAuth(username=token or os.getenv("CCI_TOKEN"), password="")
+        self.auth = HTTPBasicAuth(
+            username=token or os.getenv("CCI_TOKEN") or "",
+            password="",
+        )
         self.base_url = base_url or API_BASE_URL
         self.verify = verify
 

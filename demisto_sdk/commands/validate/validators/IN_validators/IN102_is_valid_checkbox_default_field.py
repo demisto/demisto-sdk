@@ -26,7 +26,9 @@ class IsValidCheckboxDefaultFieldValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     misconfigured_checkbox_params_by_integration: ClassVar[dict] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

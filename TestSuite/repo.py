@@ -127,9 +127,9 @@ class Repo:
         integration.yml.update({"name": f"{name}_integration"})
         integration.yml.update({"display": f"{name}_integration"})
         integration_content = integration.yml.read_dict()
-        integration_content["script"]["commands"][0][
-            "name"
-        ] = f"command_{name}_integration"
+        integration_content["script"]["commands"][0]["name"] = (
+            f"command_{name}_integration"
+        )
         integration.yml.write_dict(integration_content)
 
         classifier = pack.create_classifier(f"{name}_classifier")
@@ -189,7 +189,7 @@ class Repo:
         dashboard = pack.create_dashboard(f"{name}_dashboard")
         dashboard.write_json({"id": f"{name} - dashboard"})
         dashboard.update({"name": f"{name} - dashboard"})
-        dashboard.update({"layout": ""})
+        dashboard.update({"layout": []})
 
         report = pack.create_report(f"{name}_report")
         report.write_json({"id": f"{name} - report"})

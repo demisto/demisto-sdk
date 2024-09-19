@@ -111,7 +111,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             content_type: ContentType = ContentType.by_path(path)
         except ValueError:
             try:
-                optional_content_type = ContentType.by_schema(path)
+                optional_content_type = ContentType.by_schema(path, git_sha=git_sha)
             except ValueError as e:
                 logger.error(f"Could not determine content type for {path}: {e}")
                 raise InvalidContentItemException from e
@@ -157,6 +157,14 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         pass
 
     @property
+    @abstractmethod
+    def support(self) -> str:
+        pass
+
+    def get_support(self, data: dict) -> str:
+        return data.get("supportlevelheader") or ""
+
+    @property
     def version(self) -> int:
         pass
 
@@ -180,27 +188,19 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             MarketplaceVersions(mp) for mp in data.get("marketplaces", [])
         ]:
             marketplaces = file_marketplaces
+            marketplaces = list(
+                ContentItemParser.update_marketplaces_set_with_xsoar_values(
+                    set(marketplaces)
+                )
+            )
         else:
+            # update_marketplaces_set_with_xsoar_values is already handeled as part of pack parser.
             marketplaces = self.pack_marketplaces
 
-        marketplaces_set = set(marketplaces).intersection(self.supported_marketplaces)
-        marketplaces_set = self.update_marketplaces_set_with_xsoar_values(
-            marketplaces_set
+        marketplaces_intersection = set(marketplaces).intersection(
+            self.supported_marketplaces
         )
-        return sorted(marketplaces_set)
-
-    @staticmethod
-    def update_marketplaces_set_with_xsoar_values(marketplaces_set: set) -> set:
-        if (
-            MarketplaceVersions.XSOAR in marketplaces_set
-            and MarketplaceVersions.XSOAR_ON_PREM not in marketplaces_set
-        ):
-            marketplaces_set.add(MarketplaceVersions.XSOAR_SAAS)
-
-        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_set:
-            marketplaces_set.add(MarketplaceVersions.XSOAR)
-
-        return marketplaces_set
+        return sorted(marketplaces_intersection)
 
     @property
     @abstractmethod

@@ -1,4 +1,5 @@
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -8,6 +9,7 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import (
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext,
     Integration,
+    ServerContext,
     TestConfiguration,
     TestPlaybook,
 )
@@ -70,13 +72,15 @@ def playbook(mocker):
         ),
         default_test_timeout=30,
     )
-    pb_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    pb_instance = TestPlaybook(
+        mocker.MagicMock(), test_playbook_configuration, mocker.MagicMock()
+    )
     pb_instance.build_context.logging_module = mocker.MagicMock()
     return pb_instance
 
 
 @pytest.mark.parametrize("incident_configuration, expected", INCIDENT_CASES)
-def test_create_module(mocker, playbook, incident_configuration, expected):
+def test_create_module(mocker, playbook, incident_configuration, expected, request):
     """
     Given:
         incident configuration with only incident type
@@ -110,6 +114,10 @@ def test_create_module(mocker, playbook, incident_configuration, expected):
         "mem_check": "",
         "server_version": "",
         "artifacts_path": ".",
+        "service_account": "",
+        "artifacts_bucket": "",
+        "machine_assignment": "machine_assignment_path",
+        "cloud_machine_ids": "qa2-test-222222,qa2-test-111111",
     }
     mocker.patch.object(
         BuildContext, "_load_conf_files", return_value=(Dummyconf(), "")
@@ -117,17 +125,24 @@ def test_create_module(mocker, playbook, incident_configuration, expected):
     mocker.patch.object(BuildContext, "_load_env_results_json")
     mocker.patch.object(BuildContext, "_get_server_numeric_version")
     mocker.patch.object(BuildContext, "_get_instances_ips")
-    mocker.patch.object(BuildContext, "_extract_filtered_tests")
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.get_json_file",
+        return_value={},
+    )
     mocker.patch.object(BuildContext, "_get_unmockable_tests_from_conf")
-    mocker.patch.object(BuildContext, "_get_tests_to_run", return_value=("", ""))
-    mocker.patch.object(BuildContext, "_retrieve_slack_user_id")
-    mocker.patch.object(BuildContext, "_get_all_integration_config")
+    mocker.patch.object(ServerContext, "_get_tests_to_run", return_value=("", ""))
+    mocker.patch.object(ServerContext, "_get_all_integration_config")
 
+    def delete_temp_logs():
+        Path("temp_log").unlink(missing_ok=True)
+
+    request.addfinalizer(delete_temp_logs)
     test_integration = Integration(
         BuildContext(test_build_params, ParallelLoggingManager("temp_log")),
         "example_integration",
         [],
         playbook,
+        mocker.MagicMock(),
     )
 
     res_module = test_integration.create_module(

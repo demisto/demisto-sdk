@@ -16,14 +16,18 @@ ContentTypes = Pack
 class IsValidModulesValidator(BaseValidator[ContentTypes]):
     error_code = "PA104"
     description = "Validate that the modules field include only labels from the list of allowed labels."
-    rationale = f"See the list of allowed modules in the platform: {', '.join(MODULES)}"
+    rationale = (
+        f"See the list of allowed modules in the platform: {', '.join(MODULES)}."
+    )
     error_message = f"Module field can include only label from the following options: {', '.join(MODULES)}."
     related_field = "modules"
     is_auto_fixable = True
     fix_message = "Removed the following label from the modules field: {0}."
     non_approved_modules_dict: ClassVar[dict] = {}
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -45,7 +49,9 @@ class IsValidModulesValidator(BaseValidator[ContentTypes]):
         content_item: ContentTypes,
     ) -> FixResult:
         content_item.modules = [
-            module for module in content_item.modules if module not in self.non_approved_modules_dict[content_item.name]  # type: ignore[union-attr, arg-type]
+            module
+            for module in content_item.modules
+            if module not in self.non_approved_modules_dict[content_item.name]  # type: ignore[union-attr, arg-type]
         ]
         return FixResult(
             validator=self,

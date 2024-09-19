@@ -8,6 +8,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.indicator_type import (
+    StrictIndicatorType,
+)
 
 
 class IndicatorTypeParser(
@@ -69,3 +72,7 @@ class IndicatorTypeParser(
 
         if layout := self.json_data.get("layout"):
             self.add_dependency_by_id(layout, ContentType.LAYOUT, is_mandatory=False)
+
+    @property
+    def strict_object(self):
+        return StrictIndicatorType

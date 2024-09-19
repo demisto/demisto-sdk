@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -6,6 +7,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.dashboard import StrictDashboard
 
 
 class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD):
@@ -18,6 +20,10 @@ class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD)
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
 
         self.connect_to_dependencies()
+
+    @property
+    def strict_object(self):
+        return StrictDashboard
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
@@ -36,3 +42,20 @@ class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD)
                     self.add_dependency_by_id(
                         script_name, ContentType.SCRIPT, is_mandatory=False
                     )
+
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {
+                "layout": "layout",
+            }
+        )
+        return super().field_mapping
+
+    @property
+    def data_dict(self):
+        return self.json_data
+
+    @property
+    def layout(self):
+        return self.json_data.get("layout", [])

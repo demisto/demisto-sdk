@@ -1,6 +1,7 @@
 """
-    This file contains functions that are related to the coverage reports but not used in the demisto-sdk source.
+This file contains functions that are related to the coverage reports but not used in the demisto-sdk source.
 """
+
 from datetime import datetime, timedelta
 from typing import Optional
 

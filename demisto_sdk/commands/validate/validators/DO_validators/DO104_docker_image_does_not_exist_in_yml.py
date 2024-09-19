@@ -6,14 +6,16 @@ from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     ValidationResult,
+)
+from demisto_sdk.commands.validate.validators.DO_validators.docker_validator import (
+    DockerValidator,
 )
 
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageExistValidator(BaseValidator[ContentTypes]):
+class DockerImageExistValidator(DockerValidator[ContentTypes]):
     error_code = "DO104"
     description = "Validate that the given content item has a docker_image."
     rationale = "Python and Powershell content run in containers."
@@ -26,7 +28,9 @@ class DockerImageExistValidator(BaseValidator[ContentTypes]):
         docker_name = f"demisto/{content_item.subtype if content_item.type == 'python' else 'powershell'}"
         return DockerHubClient().get_latest_docker_image(docker_name)
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

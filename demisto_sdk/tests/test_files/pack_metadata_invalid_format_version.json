@@ -11,6 +11,9 @@
         "Data Enrichment & Threat Intelligence"
     ],
     "tags": [],
+    "marketplaces": [
+        "xsoar"
+    ],
     "beta": false,
     "deprecated": false,
     "certification": "certified",

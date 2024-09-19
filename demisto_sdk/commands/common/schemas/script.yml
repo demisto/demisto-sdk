@@ -12,6 +12,16 @@ mapping:
       version:
         type: int
         required: true
+      id:xsoar:
+        type: str
+      id:marketplacev2:
+        type: str
+      id:xpanse:
+        type: str
+      id:xsoar_saas:
+        type: str
+      id:xsoar_on_prem:
+        type: str
   name:
     type: str
     required: true
@@ -137,6 +147,8 @@ mapping:
   deprecated:xsoar_saas:
     type: bool
   deprecated:xsoar_on_prem:
+    type: bool
+  hidden:marketplacev2:
     type: bool
 schema;argument_schema:
   type: map

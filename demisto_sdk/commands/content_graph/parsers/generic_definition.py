@@ -6,6 +6,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.generic_definition import (
+    StrictGenericDefinition,
+)
 
 
 class GenericDefinitionParser(
@@ -26,3 +29,7 @@ class GenericDefinitionParser(
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @property
+    def strict_object(self):
+        return StrictGenericDefinition

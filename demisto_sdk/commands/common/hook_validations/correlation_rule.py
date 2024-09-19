@@ -2,7 +2,6 @@
 This module is designed to validate the correctness of generic definition entities in content.
 """
 
-
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,

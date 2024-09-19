@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from pydantic import Field
 
@@ -16,3 +16,14 @@ class GenericModule(ContentItem, content_type=ContentType.GENERIC_MODULE):  # ty
         if "definitionIds" in _dict and "views" in _dict and path.suffix == ".json":
             return True
         return False
+
+    def metadata_fields(self) -> Set[str]:
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "definitionIds",
+                }
+            )
+        )

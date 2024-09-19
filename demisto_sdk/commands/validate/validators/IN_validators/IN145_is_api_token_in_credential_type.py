@@ -28,7 +28,9 @@ class IsAPITokenInCredentialTypeValidator(BaseValidator[ContentTypes]):
     related_field = "configuration"
     is_auto_fixable = False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -36,7 +38,7 @@ class IsAPITokenInCredentialTypeValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.support_level == XSOAR_SUPPORT
+            if content_item.support == XSOAR_SUPPORT
             and (invalid_params := self.get_invalid_params(content_item.params))
         ]
 

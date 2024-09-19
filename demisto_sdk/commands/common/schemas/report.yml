@@ -123,6 +123,16 @@ mapping:
         type: str
       name:xsoar_on_prem:
         type: str
+      id:xsoar:
+        type: str
+      id:marketplacev2:
+        type: str
+      id:xpanse:
+        type: str
+      id:xsoar_saas:
+        type: str
+      id:xsoar_on_prem:
+        type: str
   decoder:
     type: map
     mapping:
@@ -170,6 +180,16 @@ mapping:
   description:xsoar_saas:
     type: str
   description:xsoar_on_prem:
+    type: str
+  id:xsoar:
+    type: str
+  id:marketplacev2:
+    type: str
+  id:xpanse:
+    type: str
+  id:xsoar_saas:
+    type: str
+  id:xsoar_on_prem:
     type: str
 schema;layout_schema:
   type: map
@@ -243,3 +263,23 @@ schema;layout_schema:
           type: str
         name:xsoar_on_prem:
           type: str
+        id:xsoar:
+          type: str
+        id:marketplacev2:
+          type: str
+        id:xpanse:
+          type: str
+        id:xsoar_saas:
+          type: str
+        id:xsoar_on_prem:
+          type: str
+    id:xsoar:
+      type: str
+    id:marketplacev2:
+      type: str
+    id:xpanse:
+      type: str
+    id:xsoar_saas:
+      type: str
+    id:xsoar_on_prem:
+      type: str

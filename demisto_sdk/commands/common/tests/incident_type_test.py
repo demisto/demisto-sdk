@@ -54,16 +54,6 @@ data_is_id_equal_name = [
 ]
 
 
-@pytest.mark.parametrize("id_, name, is_valid", data_is_id_equal_name)
-def test_is_id_equal_name(id_, name, is_valid):
-    structure = StructureValidator("")
-    structure.current_file = {"id": id_, "name": name}
-    validator = IncidentTypeValidator(structure)
-    assert (
-        validator.is_id_equals_name() == is_valid
-    ), f"is_id_equal_name returns {not is_valid}."
-
-
 data_is_including_int_fields = [
     (
         {

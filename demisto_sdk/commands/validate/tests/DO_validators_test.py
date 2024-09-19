@@ -61,7 +61,7 @@ def dockerhub_client() -> DockerHubClient:
         ),
     ],
 )
-def test_DockerImageExistValidator_is_valid(
+def test_DockerImageExistValidator_obtain_invalid_content_items(
     mocker,
     content_items,
     expected_number_of_failures,
@@ -91,12 +91,12 @@ def test_DockerImageExistValidator_is_valid(
         DockerImageExistValidator, "get_latest_image", return_value="1.0.0"
     )
 
-    results = DockerImageExistValidator().is_valid(content_items)
+    results = DockerImageExistValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert _mocker.call_count == expected_call_count
 
 
-def test_LatestDockerImageTagValidator_is_valid():
+def test_LatestDockerImageTagValidator_obtain_invalid_content_items():
     """
     Given:
      - 1 integration and 1 script which uses the latest tag
@@ -138,7 +138,9 @@ def test_LatestDockerImageTagValidator_is_valid():
             paths=["type"], values=["javascript"]
         ),  # javascript script
     ]
-    results = LatestDockerImageTagValidator().is_valid(content_items)
+    results = LatestDockerImageTagValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 2
     for result in results:
         content_item: IntegrationScript = result.content_object
@@ -147,7 +149,7 @@ def test_LatestDockerImageTagValidator_is_valid():
         assert content_item.name == "LatestDockerImageIntegrationScript"
 
 
-def test_DockerImageIsNotDemistoValidator_is_valid():
+def test_DockerImageIsNotDemistoValidator_obtain_invalid_content_items():
     """
     Given:
      - 1 integration and 1 script which uses a valid demisto version
@@ -189,7 +191,9 @@ def test_DockerImageIsNotDemistoValidator_is_valid():
             paths=["type"], values=["javascript"]
         ),  # javascript script
     ]
-    results = DockerImageIsNotDemistoValidator().is_valid(content_items)
+    results = DockerImageIsNotDemistoValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 2
     for result in results:
         content_item: IntegrationScript = result.content_object
@@ -198,7 +202,9 @@ def test_DockerImageIsNotDemistoValidator_is_valid():
         assert content_item.name == "NonDemistoImageIntegrationScript"
 
 
-def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests_mock):
+def test_DockerImageTagIsLatestNumericVersionValidator_obtain_invalid_content_items(
+    mocker, requests_mock
+):
     """
     Given:
      - 1 integration and 1 script which uses a valid demisto version but not with the latest tag
@@ -269,7 +275,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
         return_value=True,
     )
 
-    results = DockerImageTagIsNotOutdated().is_valid(content_items)
+    results = DockerImageTagIsNotOutdated().obtain_invalid_content_items(content_items)
     assert len(results) == 2
     for result in results:
         content_item: IntegrationScript = result.content_object
@@ -314,7 +320,9 @@ def test_DockerImageTagIsLatestNumericVersionValidator_fix(requests_mock):
     assert fix_result.content_object.docker_image == "demisto/python3:3.10.13.99999"
 
 
-def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
+def test_DockerImageDoesNotExistInDockerhubValidator_obtain_invalid_content_items(
+    requests_mock,
+):
     """
     Given:
      - 1 integration and 1 script which uses a valid demisto image that exists in dockerhub
@@ -370,6 +378,14 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
         json={"token": "1234", "issued_at": "1234", "expires_in": 300},
     )
     requests_mock.get(
+        f"{DockerHubClient.DEFAULT_REGISTRY}/demisto/python3/tags/list",
+        json={"success": True},
+    )
+    requests_mock.get(
+        f"{DockerHubClient.DEFAULT_REGISTRY}/demisto/ml/tags/list",
+        json={"success": True},
+    )
+    requests_mock.get(
         f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/3.10.13.99999",
         json={"success": True},
     )
@@ -394,7 +410,11 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
         ),
     )
 
-    results = DockerImageDoesNotExistInDockerhubValidator().is_valid(content_items)
+    results = (
+        DockerImageDoesNotExistInDockerhubValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
     assert len(results) == 2
     for result in results:
         content_item: IntegrationScript = result.content_object
@@ -402,7 +422,9 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
         assert content_item.name == "NonExistentDockerImageIntegrationScript"
 
 
-def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
+def test_DockerImageIsNotDeprecatedValidator_obtain_invalid_content_items(
+    mocker, requests_mock
+):
     """
     Given:
      - 1 integration and 1 script which uses a deprecated docker image
@@ -476,7 +498,9 @@ def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
         ),  # javascript script
     ]
 
-    results = DockerImageIsNotDeprecatedValidator().is_valid(content_items)
+    results = DockerImageIsNotDeprecatedValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 2
     for result in results:
         content_item: IntegrationScript = result.content_object
@@ -487,7 +511,7 @@ def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
     assert DockerImageIsNotDeprecatedValidator.deprecated_dockers_to_reasons
 
 
-def test_DockerImageIsNotNativeImageValidator_is_valid():
+def test_DockerImageIsNotNativeImageValidator_obtain_invalid_content_items():
     """
     Given:
      - 1 integration and 1 script which uses a native-image
@@ -529,7 +553,9 @@ def test_DockerImageIsNotNativeImageValidator_is_valid():
             paths=["type"], values=["javascript"]
         ),  # javascript script
     ]
-    results = DockerImageIsNotNativeImageValidator().is_valid(content_items)
+    results = DockerImageIsNotNativeImageValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == 2
     for result in results:
         content_item: IntegrationScript = result.content_object

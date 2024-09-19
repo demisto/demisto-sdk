@@ -1,11 +1,15 @@
-from typing import Any, Generator, List
+from typing import Any, Dict, Generator, List
 
+from more_itertools import map_reduce
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
+from demisto_sdk.commands.content_graph.objects.case_field import CaseField
+from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
+from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
@@ -44,6 +48,11 @@ from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
 class PackContentItems(BaseModel):
     # The alias is for marshalling purposes
+    case_field: List[CaseField] = Field([], alias=ContentType.CASE_FIELD.value)
+    case_layout: List[CaseLayout] = Field([], alias=ContentType.CASE_LAYOUT.value)
+    case_layout_rule: List[CaseLayoutRule] = Field(
+        [], alias=ContentType.CASE_LAYOUT_RULE.value
+    )
     classifier: List[Classifier] = Field([], alias=ContentType.CLASSIFIER.value)
     correlation_rule: List[CorrelationRule] = Field(
         [], alias=ContentType.CORRELATION_RULE.value
@@ -99,6 +108,9 @@ class PackContentItems(BaseModel):
         """Defines the iteration of the object. Each iteration yields a single content item."""
         for content_items in vars(self).values():
             yield from content_items
+
+    def items_by_type(self) -> Dict[ContentType, List[ContentItem]]:
+        return map_reduce(iter(self), lambda i: i.content_type)
 
     def __bool__(self) -> bool:
         """Used for easier determination of content items existence in a pack."""

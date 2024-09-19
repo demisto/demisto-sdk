@@ -35,8 +35,7 @@ CONTENT_TYPE_SECTION_REGEX = re.compile(
     r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
 )
 CONTENT_ITEM_SECTION_REGEX = re.compile(
-    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|"
-    r"^- (?:New: )?\*\*(.+)\*\*$",
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$",
     re.M,
 )
 
@@ -457,7 +456,6 @@ class ReleaseNotesValidator(BaseValidator):
         validations = [self.validate_first_level_header_exists()]
         self.filter_rn_headers(headers=headers)
         for content_type, content_items in headers.items():
-
             validations.append(
                 self.rn_valid_header_format(
                     content_type=content_type, content_items=content_items

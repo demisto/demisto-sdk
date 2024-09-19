@@ -330,7 +330,10 @@ def commit_and_push(branch_name: str):
     remote.push(branch_name)
 
 
-main = typer.Typer(pretty_exceptions_enable=False)
+main = typer.Typer(
+    pretty_exceptions_enable=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 logging_setup(skip_log_file_creation=True)
 
 release = typer.Option(False, "--release", help="releasing", is_flag=True)

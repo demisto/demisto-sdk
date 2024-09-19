@@ -1,4 +1,3 @@
-import enum
 import os
 import re
 from pathlib import Path
@@ -16,10 +15,12 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_json,
     get_remote_file,
+    pascalToSpace,
 )
 
 NEO4J_ADMIN_DOCKER = ""
@@ -44,7 +45,7 @@ class Neo4jRelationshipResult(NamedTuple):
     nodes_to: List[graph.Node]
 
 
-class RelationshipType(str, enum.Enum):
+class RelationshipType(StrEnum):
     DEPENDS_ON = "DEPENDS_ON"
     HAS_COMMAND = "HAS_COMMAND"
     IMPORTS = "IMPORTS"
@@ -58,14 +59,13 @@ class RelationshipType(str, enum.Enum):
     USES_PLAYBOOK = "USES_PLAYBOOK"
 
 
-class ContentType(str, enum.Enum):
+class ContentType(StrEnum):
     BASE_CONTENT = "BaseContent"
     BASE_NODE = "BaseNode"
     BASE_PLAYBOOK = "BasePlaybook"
     CLASSIFIER = "Classifier"
     COMMAND = "Command"
     COMMAND_OR_SCRIPT = "CommandOrScript"
-    CONNECTION = "Connection"
     CORRELATION_RULE = "CorrelationRule"
     DASHBOARD = "Dashboard"
     GENERIC_DEFINITION = "GenericDefinition"
@@ -99,6 +99,9 @@ class ContentType(str, enum.Enum):
     XDRC_TEMPLATE = "XDRCTemplate"
     LAYOUT_RULE = "LayoutRule"
     ASSETS_MODELING_RULE = "AssetsModelingRule"
+    CASE_LAYOUT_RULE = "CaseLayoutRule"
+    CASE_FIELD = "CaseField"
+    CASE_LAYOUT = "CaseLayout"
 
     @property
     def labels(self) -> List[str]:
@@ -126,7 +129,9 @@ class ContentType(str, enum.Enum):
             return "reputation"
         elif self == ContentType.INDICATOR_FIELD:
             return "incidentfield-indicatorfield"
-        elif self == ContentType.LAYOUT:
+        elif self == ContentType.CASE_FIELD:
+            return "casefield"
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "layoutscontainer"
         elif self == ContentType.PREPROCESS_RULE:
             return "preprocessrule"
@@ -145,7 +150,7 @@ class ContentType(str, enum.Enum):
             return "automation"
         elif self == ContentType.INDICATOR_TYPE:
             return "reputation"
-        elif self == ContentType.LAYOUT:
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "layoutscontainer"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
@@ -161,7 +166,7 @@ class ContentType(str, enum.Enum):
             return "Reputation"
         elif self == ContentType.MAPPER:
             return "Classifier"
-        elif self == ContentType.LAYOUT:
+        elif self in (ContentType.LAYOUT, ContentType.CASE_LAYOUT):
             return "Layouts Container"
         else:
             return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)
@@ -252,7 +257,7 @@ class ContentType(str, enum.Enum):
                             yield tir_folder
 
     @staticmethod
-    def by_schema(path: Path) -> "ContentType":
+    def by_schema(path: Path, git_sha: Optional[str] = None) -> "ContentType":
         """
         Determines a content type value of a given file by accessing it and making minimal checks on its schema.
         """
@@ -260,7 +265,7 @@ class ContentType(str, enum.Enum):
             CONTENT_TYPE_TO_MODEL,
         )
 
-        parsed_dict = get_dict_from_file(str(path))
+        parsed_dict = get_dict_from_file(str(path), git_sha=git_sha)
         if parsed_dict and isinstance(parsed_dict, tuple):
             _dict = parsed_dict[0]
         else:
@@ -270,6 +275,54 @@ class ContentType(str, enum.Enum):
                 if content_type_obj.match(_dict, path):
                     return content_type
         raise ValueError(f"Could not find content type in path {path}")
+
+    @property
+    def convert_content_type_to_rn_header(self) -> str:
+        """
+        Convert ContentType to the Release note header.
+        """
+        if self == ContentType.PREPROCESS_RULE:
+            return "PreProcess Rules"
+        elif self == ContentType.TRIGGER:
+            return "Triggers Recommendations"  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+        elif self == ContentType.XSIAM_REPORT:
+            return "XSIAM Reports"
+        elif self == ContentType.XDRC_TEMPLATE:
+            return "XDRC Templates"
+        elif self == ContentType.XSIAM_DASHBOARD:
+            return "XSIAM Dashboards"
+        elif self == ContentType.GENERIC_TYPE:
+            return "Object Types"
+        elif self == ContentType.GENERIC_FIELD:
+            return "Object Fields"
+        elif self == ContentType.GENERIC_DEFINITION:
+            return "Objects"
+        elif self == ContentType.GENERIC_MODULE:
+            return "Modules"
+        separated_str = pascalToSpace(self)
+        return f"{separated_str}s"
+
+    @staticmethod
+    def convert_header_to_content_type(header: str) -> "ContentType":
+        """
+        Convert Release note header to ContentType.
+        """
+        if header == "Triggers Recommendations":
+            return ContentType.TRIGGER
+        elif header == "Preprocess Rules":
+            return ContentType.PREPROCESS_RULE
+        elif header == "Mappers":
+            return ContentType.MAPPER
+        elif header == "Objects":
+            return ContentType.GENERIC_DEFINITION
+        elif header == "Modules":
+            return ContentType.GENERIC_MODULE
+        elif header == "Object Types":
+            return ContentType.GENERIC_TYPE
+        elif header == "Object Fields":
+            return ContentType.GENERIC_FIELD
+        normalized_header = header.rstrip("s").replace(" ", "_").upper()
+        return ContentType[normalized_header]
 
 
 class Relationship(BaseModel):

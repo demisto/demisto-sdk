@@ -472,7 +472,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
             str_in_call_args_list(logger_info.call_args_list, current_str)
             for current_str in [
                 "======= Updating file ",
-                f"Format Status   on file: {source_playbook_path} - Success",
+                f"Format Status on file: {source_playbook_path} - Success",
             ]
         ]
     )
@@ -814,6 +814,8 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                     "--no-docker-checks",
                     "--no-conf-json",
                     "--allow-skipped",
+                    "--run-old-validate",
+                    "--skip-new-validate",
                 ],
                 catch_exceptions=False,
             )
@@ -823,7 +825,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
             str_in_call_args_list(logger_info.call_args_list, current_str)
             for current_str in [
                 "======= Updating file",
-                f"Format Status   on file: {playbook.path} - Success",
+                f"Format Status on file: {playbook.path} - Success",
                 "The files are valid",
             ]
         ]
@@ -1884,7 +1886,7 @@ class TestFormatWithoutAddTestsFlag:
         layouts_path = layout.path
         result = runner.invoke(main, [FORMAT_CMD, "-i", layouts_path, "-y", "-ngr"])
         message = f'Formatting {layouts_path} with "No tests"'
-        message1 = f"Format Status   on file: {layouts_path} - Success"
+        message1 = f"Format Status on file: {layouts_path} - Success"
 
         assert not result.exception
         assert not str_in_call_args_list(logger_info.call_args_list, message)
@@ -1925,7 +1927,7 @@ class TestFormatWithoutAddTestsFlag:
             main, [FORMAT_CMD, "-i", layouts_path, "-at", "-y", "-ngr"]
         )
         message = f'Formatting {layouts_path} with "No tests"'
-        message1 = f"Format Status   on file: {layouts_path} - Success"
+        message1 = f"Format Status on file: {layouts_path} - Success"
         assert not result.exception
         assert not str_in_call_args_list(logger_info.call_args_list, message)
         assert str_in_call_args_list(
@@ -1981,7 +1983,6 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
 
     # Run
     with ChangeCWD(repo_path):
-
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", f"{pack_path}", "-d", "-ngr"], input="\n"

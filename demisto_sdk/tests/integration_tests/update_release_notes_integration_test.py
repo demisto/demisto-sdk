@@ -201,7 +201,9 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
-    expected_rn = "\n" + "#### Incident Fields\n\n" + "- **City**\n"
+    expected_rn = (
+        "\n" + "#### Incident Fields\n\n" + "##### City\n\n" + "- %%UPDATE_RN%%\n"
+    )
 
     runner = CliRunner(mix_stderr=False)
     modified_files = {
@@ -376,7 +378,9 @@ def test_update_release_notes_existing(demisto_client, mocker):
         + "- Azure.CloudIPs Feed Integration.\n"
         + "\n"
         + "#### Incident Fields\n\n"
-        + "- **City**\n\n"
+        + "##### City\n\n"
+        + "- %%UPDATE_RN%%\n"
+        + "\n"
     )
 
     input_rn = (
@@ -808,7 +812,7 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
     assert result.exit_code == 0
     assert not result.exception
     for current_call in logger_info.call_args_list:
-        if type(current_call[0]) == tuple:
+        if isinstance(current_call[0], tuple):
             print(f"*** INFO *** {current_call[0][0]=}")  # noqa: T201
     assert all(
         [

@@ -5,32 +5,169 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
+    DOC_FILES_DIR,
+    DOCS_DIRECTORIES,
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
     PACKS_FOLDER,
+    PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
+    TESTS_DIRECTORIES,
+    XDRC_TEMPLATE_DIR,
 )
 from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     DIRS_ALLOWING_SPACE_IN_FILENAMES,
+    MODELING_RULES_DIR,
+    XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR,
     ZERO_DEPTH_FILES,
     InvalidClassifier,
     InvalidDepthOneFile,
     InvalidDepthOneFolder,
     InvalidDepthZeroFile,
+    InvalidImageFileName,
     InvalidIntegrationScriptFileName,
     InvalidIntegrationScriptFileType,
     InvalidLayoutFileName,
+    InvalidModelingRuleFileName,
     InvalidSuffix,
+    InvalidXDRCTemplatesFileName,
+    InvalidXSIAMDashboardFileName,
+    InvalidXSIAMParsingRuleFileName,
+    InvalidXSIAMReportFileName,
     PathIsFolder,
-    PathIsTestOrDocData,
+    PathIsTestData,
     PathIsUnified,
     PathUnderDeprecatedContent,
     SpacesInFileName,
     _validate,
 )
+
+
+@pytest.mark.parametrize(
+    "suffix",
+    ("json", "yml"),
+)
+def test_xdrc_template_file_valid(suffix: str):
+    folder = "foo"
+    _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{folder}.{suffix}")
+
+
+@pytest.mark.parametrize(
+    "file, suffix",
+    (
+        pytest.param("MyXDRCTemplate_test", "json", id="bad name, good suffix - json"),
+        pytest.param("MyXDRCTemplate_test", "yml", id="bad name, good suffix - yml"),
+        pytest.param("MyXDRCTemplate", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xdrc_template_file_invalid(file: str, suffix: str):
+    folder = "MyXDRCTemplate"
+    with pytest.raises(InvalidXDRCTemplatesFileName):
+        _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{file}.{suffix}")
+
+
+def test_xsiam_report_file_valid():
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    _validate(pack_path / XSIAM_REPORTS_DIR / f"{pack_name}_Report.json")
+
+
+@pytest.mark.parametrize(
+    "file_prefix, suffix",
+    (
+        pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
+        pytest.param("myPack", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    with pytest.raises(InvalidXSIAMReportFileName):
+        _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")
+
+
+def test_xsiam_dashboard_file__valid():
+    """
+    Given:
+            A valid XSIAM dashboard file
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation passes
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    _validate(pack_path / XSIAM_DASHBOARDS_DIR / f"{pack_name}_dashboard.json")
+
+
+@pytest.mark.parametrize(
+    "file_prefix, suffix",
+    (
+        pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
+        pytest.param("myPack", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xsiam_dashboard_file__invalid(file_prefix: str, suffix: str):
+    """
+    Given:
+            An invalid XSIAM dashboard file
+            Case 1: wrong prefix - file name does not start with pack name
+            Case 2: wrong suffix - file name does not end with .json
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation raises InvalidXSIAMDashboardFileName
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    with pytest.raises(InvalidXSIAMDashboardFileName):
+        _validate(
+            pack_path / XSIAM_DASHBOARDS_DIR / f"{file_prefix}_dashboard.{suffix}"
+        )
+
+
+def test_xsiam_parsing_rule_file__valid():
+    """
+    Given:
+            A valid XSIAM parsing rule file
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation passes
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    folder_name = f"{pack_name}_{PARSING_RULES_DIR}"
+    _validate(pack_path / PARSING_RULES_DIR / folder_name / f"{folder_name}.yml")
+
+
+@pytest.mark.parametrize(
+    "file_name, suffix",
+    (
+        pytest.param("wrongName", "json", id="bad name, good suffix"),
+        pytest.param("myPack_ParsingRules", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xsiam_parsing_rule_file__invalid(file_name: str, suffix: str):
+    """
+    Given:
+            An invalid XSIAM parsing rule file
+            Case 1: wrong name - file name is not identical to the folder name
+            Case 2: wrong suffix - file name does not end with .yml or.xif
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation raises InvalidXSIAMParsingRuleFileName
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    folder_name = f"{pack_name}_{PARSING_RULES_DIR}"
+    with pytest.raises(InvalidXSIAMParsingRuleFileName):
+        _validate(pack_path / PARSING_RULES_DIR / folder_name / f"{file_name}.{suffix}")
 
 
 def test_content_entities_dir_length():
@@ -39,7 +176,7 @@ def test_content_entities_dir_length():
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 34
+    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 33
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
@@ -48,7 +185,7 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 26
+        == 25
     )
 
 
@@ -117,10 +254,18 @@ def test_depth_one_pass(folder: str):
     try:
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "file"))
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
-    except PathIsTestOrDocData:
+    except PathIsTestData:
         pass
-    except (InvalidIntegrationScriptFileType, InvalidIntegrationScriptFileName):
+    except (
+        InvalidIntegrationScriptFileType,
+        InvalidIntegrationScriptFileName,
+        InvalidXDRCTemplatesFileName,
+        InvalidModelingRuleFileName,
+        InvalidXSIAMParsingRuleFileName,
+    ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
+        # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
+        # InvalidModelingRuleFileName will be raised but it is irrelevant for this test.
         pass
 
 
@@ -342,3 +487,77 @@ def test_classifier_mapper_file_valid(file_name: str):
 def test_classifier_mapper_file_invalid(file_name: str):
     with pytest.raises(InvalidClassifier):
         _validate(DUMMY_PACK_PATH / CLASSIFIERS_DIR / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "image_file.png",
+        "image.svg",
+        "image1.svg",
+        "image-1-1.png",
+    ),
+)
+def test_doc_file_valid(file_name: str):
+    _validate(DUMMY_PACK_PATH / DOC_FILES_DIR / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "Mitre&Attc.png",
+        "image(1).png",
+        "image_%.svg",
+    ),
+)
+def test_doc_file_invalid(file_name: str):
+    with pytest.raises(InvalidImageFileName):
+        _validate(DUMMY_PACK_PATH / DOC_FILES_DIR / file_name)
+
+
+EXOTIC_SUFFIXES = ("xys", "sh", "pem")
+
+
+@pytest.mark.parametrize("folder", TESTS_DIRECTORIES)
+@pytest.mark.parametrize("suffix", EXOTIC_SUFFIXES)
+def test_exotic_suffix_test_data(folder: str, suffix: str):
+    # should NOT raise InvalidSuffix
+    with pytest.raises(PathIsTestData):
+        _validate((DUMMY_PACK_PATH / folder / "file").with_suffix(f".{suffix}"))
+
+
+@pytest.mark.parametrize("folder", DOCS_DIRECTORIES)
+@pytest.mark.parametrize("suffix", EXOTIC_SUFFIXES)
+def test_exotic_suffix_doc_data(folder: str, suffix: str):
+    # should NOT raise InvalidSuffix
+    _validate((DUMMY_PACK_PATH / folder / "file").with_suffix(f".{suffix}"))
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "RuleEventCollector_1_2.yml",
+        "RuleEventCollector_1_2.xif",
+        "RuleEventCollector_1_2_schema.json",
+        "RuleEventCollector_1_2_testdata.json",
+    ],
+)
+def test_modeling_rule_file_valid(file_name: str):
+    folder = "RuleEventCollector_1_2"
+    _validate(DUMMY_PACK_PATH / MODELING_RULES_DIR / folder / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "RuleEventCollector_1_3.yml",
+        "RuleEventCollector1_1_2.xif",
+        "RuleEventColector_1_2_schema.json",
+        "RuleEventCollector_1_2.json",  # json without schema
+        "RuleEventCollector_1_2_3.yml",
+    ],
+)
+def test_modeling_rule_file_invalid(file_name: str):
+    folder = "RuleEventCollector_1_2"
+    with pytest.raises(InvalidModelingRuleFileName):
+        _validate(DUMMY_PACK_PATH / MODELING_RULES_DIR / folder / file_name)

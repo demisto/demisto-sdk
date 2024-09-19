@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open
 
@@ -80,9 +79,6 @@ class TestTimeStampReplacer:
         master_mock = mocker.MagicMock()
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.load(master_mock)
-        python_version = sys.version_info
-        if python_version.major == 3 and python_version.minor == 7:
-            pytest.skip("The current mock syntax is supported only in python 3.8+")
         assert master_mock.add_option.call_count == 4
         for call in master_mock.add_option.mock_calls:
             assert (
@@ -320,9 +316,9 @@ class TestTimeStampReplacer:
             - Ensure that the boundary will be replaced to 'fixed_boundary'
         """
         original_boundary = "original_boundary"
-        flow.request.headers[
-            "Content-Type"
-        ] = f"multipart/form-data; boundary={original_boundary}"
+        flow.request.headers["Content-Type"] = (
+            f"multipart/form-data; boundary={original_boundary}"
+        )
         flow.request.content = (
             f"--{original_boundary}\nContent-Disposision: form-data; "
             f'name="test"\n\nsomething\n--{original_boundary}--'.encode()
@@ -338,9 +334,7 @@ class TestTimeStampReplacer:
 
 def test_demisto_sdk_imports():
     code_file = Path(__file__).parent.parent / "timestamp_replacer.py"
-    assert (
-        code_file.exists()
-    ), "Do not move this file unless you understand where is this files used in the mock process."
+    assert code_file.exists(), "Do not move this file unless you understand where is this files used in the mock process."
     assert (
         "demisto_sdk" not in code_file.read_text()
     ), "This file should be a stand alone file and should be cleaned up from any demisto_sdk references."

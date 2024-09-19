@@ -6,7 +6,6 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 
 
 class JsonFile(StructuredFile):
-
     default_handler: JSON_Handler = json
 
     @classmethod

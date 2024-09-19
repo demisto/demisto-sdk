@@ -1,6 +1,7 @@
 import os
 import re
 from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Set
 
@@ -14,6 +15,18 @@ from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
 PROPERTIES_TO_DELETE = {"needs"}
 
 
+@dataclass
+class GeneratedHooks:
+    hook_ids: List[str]
+    parallel: bool = True
+
+    def __str__(self):
+        return f"generated-hooks: {', '.join(self.hook_ids)}, parallel: {self.parallel}"
+
+    def __bool__(self) -> bool:
+        return len(self.hook_ids) > 0
+
+
 class Hook:
     def __init__(
         self,
@@ -25,6 +38,7 @@ class Hook:
         self.base_hook = deepcopy(hook)
         self.hook_index = self.hooks.index(self.base_hook)
         self.hooks.remove(self.base_hook)
+        self.parallel = self.base_hook.pop("parallel", True)
         self.mode = context.mode
         self.all_files = context.all_files
         self.input_mode = bool(context.input_files)
@@ -32,13 +46,19 @@ class Hook:
         self._set_properties()
         self.exclude_irrelevant_files()
 
-    def prepare_hook(self):
+    def prepare_hook(self) -> GeneratedHooks:
         """
         This method should be implemented in each hook.
         Since we removed the base hook from the hooks list, we must add it back.
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
+
+        Each original hook can be split into multiple hooks, see docker-hook for example.
+
+        Returns:
+            a list of generated hook IDs
         """
         self.hooks.append(deepcopy(self.base_hook))
+        return GeneratedHooks(hook_ids=[self.base_hook["id"]], parallel=self.parallel)
 
     def exclude_irrelevant_files(self):
         self._exclude_hooks_by_version()
@@ -92,7 +112,6 @@ class Hook:
         include_pattern = None
         exclude_pattern = None
         try:
-
             if files_reg := self.base_hook.get("files"):
                 include_pattern = re.compile(files_reg)
             if exclude_reg := self.base_hook.get("exclude"):

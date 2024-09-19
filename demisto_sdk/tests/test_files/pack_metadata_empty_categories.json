@@ -9,6 +9,9 @@
     "email": "",
     "categories": [],
     "tags": [],
+    "marketplaces": [
+        "xsoar"
+    ],
     "beta": false,
     "deprecated": false,
     "certification": "certified",

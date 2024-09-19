@@ -24,8 +24,17 @@ from demisto_sdk.tests.constants_test import (
 
 files = [
     # ---------------------------------------- For Valid file -------------------------------------------------
-    (Path(f"{XSOAR_LINTER_PY3_VALID}"), "3.8", "base", False, 0, [], []),
-    (
+    pytest.param(
+        Path(f"{XSOAR_LINTER_PY3_VALID}"),
+        "3.8",
+        "base",
+        False,
+        0,
+        [],
+        [],
+        id="valid empty",
+    ),
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_VALID}"),
         "3.8",
         "base",
@@ -39,10 +48,10 @@ files = [
             "kace-queues-list",
             "kace-tickets-list",
         ],
+        id="valid",
     ),
     # -------------------------------------------- For Invalid file -------------------------------------------------
-    # -------------------- For Invalid file with support level base and long running True -----------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
         "3.8",
         "base",
@@ -56,9 +65,9 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
+        id="invalid,support=base,longrunning=True",
     ),
-    # -------------------- For Invalid file with support level base and long running False -----------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
         "3.8",
         "base",
@@ -82,9 +91,9 @@ files = [
             "kace-tickets-list",
             "error",
         ],
+        id="invalid,support=base,longrunning=False",
     ),
-    # ------------- For Invalid file with support level certified partner and long running False ------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
         "3.8",
         "certified partner",
@@ -99,9 +108,9 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
+        id="invalid,support=certified partner,longrunning=False",
     ),
-    # ------------- For Invalid file with support level certified partner and long running True ---------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
         "3.8",
         "certified partner",
@@ -115,9 +124,9 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
+        id="invalid,support=certified partner,longrunning=True",
     ),
-    # ------------- For Invalid file with support level community and long running False ------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
         "3.8",
         "community",
@@ -130,9 +139,9 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
+        id="invalid,support=community,longrunning=False",
     ),
-    # ------------- For Invalid file with default support level and long running False ------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
         "3.8",
         "",
@@ -147,9 +156,9 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
+        id="invalid,support=partner,longrunning=False",
     ),
-    # ------------- For Invalid file with xsoar support level and long running False ------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
         "3.8",
         "xsoar",
@@ -164,10 +173,10 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
+        id="invalid,support=xsoar,longrunning=False",
     ),
     # -------------------------------- For Warning file which is relevant from partner level and bigger---------------
-    # -------------------------------- For Warning file with support level partner------------------------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"),
         "3.8",
         "partner",
@@ -179,9 +188,9 @@ files = [
             "return_error used too many times, should be used only once in the code, in main function.",
         ],
         [],
+        id="warning,support=partner",
     ),
-    # -------------------------------- For Warning file with support level community-----------------------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"),
         "3.8",
         "community",
@@ -189,9 +198,9 @@ files = [
         0,
         [],
         [],
+        id="warning,support=community",
     ),
-    # -------------------------------- For Warning file with support level xsoar-----------------------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"),
         "3.8",
         "xsoar",
@@ -202,10 +211,10 @@ files = [
             "return_error used too many times, should be used only once in the code, in main function.",
         ],
         [],
+        id="warning,support=xsoar",
     ),
     # --------------------------------------- For Warning file -------------------------------------------------------
-    # --------------------- For Warning file with support level certified partner -----------------------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"),
         "3.8",
         "certified partner",
@@ -220,9 +229,9 @@ files = [
             "Hardcoded http URL was found in the code, using https (when possible) is recommended.",
         ],
         [],
+        id="warning,support=certified partner",
     ),
-    # ------------- For Warning file with support level certified partner with indicator format file -------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_NO_DEMISTO_RESULTS_WARNINGS}"),
         "3.8",
         "certified partner",
@@ -232,9 +241,9 @@ files = [
             "Do not use return_outputs function. Please return CommandResults object instead."
         ],
         [],
+        id="warning,support=xsoar, certified partner, indicator format",
     ),
-    # --------------------- For Warning file with support level xsoar------------- -----------------------------------
-    (
+    pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"),
         "3.8",
         "xsoar",
@@ -246,12 +255,13 @@ files = [
             "Hardcoded http URL was found in the code, using https (when possible) is recommended.",
         ],
         [],
+        id="warning,support=xsoar",
     ),
 ]
 
 
 @pytest.mark.parametrize(
-    "file, python_version,support_level,long_running,exit_code,error_msgs,commands",
+    "file, python_version,support_level,long_running,expected_exit_code,error_msgs,commands",
     files,
 )
 def test_xsoar_linter_errors(
@@ -260,7 +270,7 @@ def test_xsoar_linter_errors(
     python_version,
     support_level,
     long_running,
-    exit_code,
+    expected_exit_code,
     error_msgs,
     commands,
 ):
@@ -293,7 +303,7 @@ def test_xsoar_linter_errors(
     runner._facts["support_level"] = support_level
     runner._facts["is_long_running"] = long_running
     runner._facts["commands"] = commands
-    exit_code_actual, output = runner._run_xsoar_linter(python_version, [file])
-    assert exit_code == exit_code_actual
+    exit_code, output = runner._run_xsoar_linter(python_version, [file])
+    assert exit_code == expected_exit_code
     for msg in error_msgs:
         assert msg in output

@@ -1,9 +1,13 @@
-from typing import List
+from typing import List, Optional, Union
 
 import pytest
 
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
-from demisto_sdk.commands.validate.tests.test_tools import create_incident_field_object
+from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
+    create_incident_field_object,
+    create_old_file_pointers,
+)
 from demisto_sdk.commands.validate.validators.IF_validators.IF100_is_valid_name_and_cli_name import (
     IsValidNameAndCliNameValidator,
 )
@@ -28,6 +32,23 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     INCIDENT_PROHIBITED_CLI_NAMES,
     IsCliNameReservedWordValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF111_is_field_type_changed import (
+    IsFieldTypeChangedValidator,
+)
+from demisto_sdk.commands.validate.validators.IF_validators.IF113_name_field_prefix import (
+    PACKS_IGNORE,
+    NameFieldPrefixValidator,
+)
+from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_key import (
+    UnsearchableKeyValidator,
+)
+from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import (
+    SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator,
+)
+from demisto_sdk.commands.validate.validators.IF_validators.IF119_select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types import (
+    SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator,
+)
+from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.mark.parametrize(
@@ -55,14 +76,16 @@ def test_IsValidNameAndCliNameValidator_not_valid(
     Given:
         - IncidentFields content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         Case 1:
             - Ensure the error message is as expected
         Case 2:
             - Ensure the error message is as expected with the bad words list
     """
-    results = IsValidNameAndCliNameValidator().is_valid(content_items=[content_items])
+    results = IsValidNameAndCliNameValidator().obtain_invalid_content_items(
+        content_items=[content_items]
+    )
     assert results
     assert results[0].message == expected_msg
 
@@ -72,16 +95,16 @@ def test_IsValidContentFieldValidator_not_valid():
     Given:
         - IncidentField content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'content' field is set to False
     """
     content_items: List[IncidentField] = [
         create_incident_field_object(["content"], [False])
     ]
 
-    results = IsValidContentFieldValidator().is_valid(content_items)
+    results = IsValidContentFieldValidator().obtain_invalid_content_items(content_items)
     assert results
     assert results[0].message == "The `content` key must be set to true."
 
@@ -91,16 +114,16 @@ def test_IsValidSystemFlagValidator_not_valid():
     Given:
         - IncidentField content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'system' field is set to True
     """
     content_items: List[IncidentField] = [
         create_incident_field_object(["system"], [True])
     ]
 
-    results = IsValidSystemFlagValidator().is_valid(content_items)
+    results = IsValidSystemFlagValidator().obtain_invalid_content_items(content_items)
     assert results
     assert results[0].message == "The `system` key must be set to false."
 
@@ -110,16 +133,16 @@ def test_IsValidFieldTypeValidator_not_valid():
     Given:
         - IncidentField content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'type' field is not valid
     """
     content_items: List[IncidentField] = [
         create_incident_field_object(["type"], ["test"])
     ]
 
-    results = IsValidFieldTypeValidator().is_valid(content_items)
+    results = IsValidFieldTypeValidator().obtain_invalid_content_items(content_items)
     assert results
     assert (
         results[0].message
@@ -132,14 +155,14 @@ def test_IsValidGroupFieldValidator_not_valid():
     Given:
         - IncidentField content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'group' field is not valid
     """
     content_items: List[IncidentField] = [create_incident_field_object(["group"], [2])]
 
-    results = IsValidGroupFieldValidator().is_valid(content_items)
+    results = IsValidGroupFieldValidator().obtain_invalid_content_items(content_items)
     assert results
     assert results[0].message == "The `group` key must be set to 0 for Incident Field"
 
@@ -150,16 +173,18 @@ def test_IsCliNameFieldAlphanumericValidator_not_valid(cli_name_value):
     Given:
         - IncidentField content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'cliName' value is non-alphanumeric, or contains an uppercase letter.
     """
     content_items: List[IncidentField] = [
         create_incident_field_object(["cliName"], [cli_name_value])
     ]
 
-    results = IsCliNameFieldAlphanumericValidator().is_valid(content_items)
+    results = IsCliNameFieldAlphanumericValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert results
     assert (
         results[0].message
@@ -173,16 +198,18 @@ def test_IsCliNameReservedWordValidator_not_valid(reserved_word):
     Given:
         - IncidentField content items
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
-        - Ensure that the ValidationResult returned
+        - Ensure that a ValidationResult (failure) is returned
           for the IncidentField whose 'cliName' value is a reserved word
     """
     content_items: List[IncidentField] = [
         create_incident_field_object(["cliName"], [reserved_word])
     ]
 
-    results = IsCliNameReservedWordValidator().is_valid(content_items)
+    results = IsCliNameReservedWordValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert results
     assert (
         results[0].message
@@ -190,12 +217,166 @@ def test_IsCliNameReservedWordValidator_not_valid(reserved_word):
     )
 
 
+def test_IsFieldTypeChangedValidator_obtain_invalid_content_items():
+    """
+    Given:
+        - IncidentFiled content items
+    When:
+        - run obtain_invalid_content_items method
+    Then:
+        - Ensure that a ValidationResult (failure) is returned
+          for the IncidentField whose 'type' field has changed
+        - Ensure that no ValidationResult returned when 'type' field has not changed
+    """
+    old_type = "short text"
+    new_type = "html"
+
+    # not valid
+    content_item = create_incident_field_object(["type"], [new_type])
+    old_content_items = [create_incident_field_object(["type"], [old_type])]
+    create_old_file_pointers([content_item], old_content_items)
+    assert IsFieldTypeChangedValidator().obtain_invalid_content_items([content_item])
+
+    # valid
+    content_item.field_type = old_type
+    assert not IsFieldTypeChangedValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+
+@pytest.mark.parametrize("unsearchable", (False, None))
+def test_UnsearchableKeyValidator_obtain_invalid_content_items(
+    unsearchable: Optional[bool],
+):
+    """
+    Given:
+        - IncidentFiled content items
+    When:
+        - run obtain_invalid_content_items method
+    Then:
+        - Ensure that a ValidationResult (failure) is returned
+          for the IncidentField whose 'unsearchable' field is set to false or not or undefined
+        - Ensure that no ValidationResult returned when unsearchable set to true
+    """
+    # not valid
+    content_item = create_incident_field_object(
+        paths=["unsearchable"], values=[unsearchable]
+    )
+    assert UnsearchableKeyValidator().obtain_invalid_content_items([content_item])
+
+    # valid
+    content_item.unsearchable = True
+    assert not UnsearchableKeyValidator().obtain_invalid_content_items([content_item])
+
+
+def test_NameFieldPrefixValidator_obtain_invalid_content_items_without_item_prefix():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run obtain_invalid_content_items method
+    Then:
+        - Ensure that a ValidationResult (failure) is returned
+          for the IncidentField whose prefix name that not start with relevant pack name
+    """
+    # not valid
+    pack_name = "Foo"
+    with ChangeCWD(REPO.path):
+        # Create an Incident field so that there is no prefix name of the pack in the name field
+        content_item = create_incident_field_object(pack_info={"name": pack_name})
+        assert not content_item.name.startswith(pack_name)
+        results = NameFieldPrefixValidator().obtain_invalid_content_items(
+            [content_item]
+        )
+        assert results
+        assert results[0].message == (
+            "Field name must start with the relevant pack name or one of the item prefixes found in pack metadata."
+            "\nFollowing prefixes are allowed for this IncidentField:"
+            f"\n{pack_name}"
+        )
+
+        # valid
+        content_item.name = "Foo CVE"
+        assert not NameFieldPrefixValidator().obtain_invalid_content_items(
+            [content_item]
+        )
+
+
+@pytest.mark.parametrize(
+    "item_prefix, valid_prefix, expected_allowed_prefixes",
+    [
+        pytest.param(
+            ["Foo test", "Test Incident"],
+            "Foo test CVE",
+            ["Foo", "Foo test", "Test Incident"],
+            id="itemPrefix is a list",
+        ),
+        pytest.param(
+            "Foo test", "Foo test CVE", ["Foo", "Foo test"], id="itemPrefix is a str"
+        ),
+        pytest.param(None, "Foo CVE", ["Foo"], id="itemPrefix is None"),
+    ],
+)
+def test_NameFieldPrefixValidator_obtain_invalid_content_items_with_item_prefix(
+    item_prefix: Optional[Union[List[str], str]],
+    valid_prefix: str,
+    expected_allowed_prefixes: List[str],
+):
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run obtain_invalid_content_items method
+    Then:
+        - Ensure that a ValidationResult (failure) is returned
+          for the IncidentField whose prefix name is not in `itemPrefix`
+          which is in pack_metadata
+        - Ensure that no ValidationResult returned when prefix name
+          is in itemPrefix which is in pack_metadata
+    """
+    # not valid
+    with ChangeCWD(REPO.path):
+        content_item = create_incident_field_object(
+            pack_info={"name": "Foo", "itemPrefix": item_prefix}
+        )
+        results = NameFieldPrefixValidator().obtain_invalid_content_items(
+            [content_item]
+        )
+        assert results
+        assert all(prefix in results[0].message for prefix in expected_allowed_prefixes)
+
+        # valid
+        content_item.name = valid_prefix
+        assert not NameFieldPrefixValidator().obtain_invalid_content_items(
+            [content_item]
+        )
+
+
+@pytest.mark.parametrize("special_pack", PACKS_IGNORE)
+def test_NameFieldPrefixValidator_obtain_invalid_content_items_with_special_packs(
+    special_pack: str,
+):
+    """
+    Given:
+        - IncidentField content item whose pack name is one of the special packs
+    When:
+        - run obtain_invalid_content_items method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    with ChangeCWD(REPO.path):
+        content_item = create_incident_field_object(pack_info={"name": special_pack})
+        assert not NameFieldPrefixValidator().obtain_invalid_content_items(
+            [content_item]
+        )
+
+
 def test_IsValidContentFieldValidator_valid():
     """
     Given:
         - IncidentField content items with a content value True
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
     """
@@ -203,7 +384,7 @@ def test_IsValidContentFieldValidator_valid():
         create_incident_field_object(["content"], [True])
     ]
 
-    results = IsValidContentFieldValidator().is_valid(content_items)
+    results = IsValidContentFieldValidator().obtain_invalid_content_items(content_items)
     assert not results
 
 
@@ -212,7 +393,7 @@ def test_IsValidSystemFlagValidator_valid():
     Given:
         - IncidentField content items with a system value False
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
     """
@@ -220,7 +401,7 @@ def test_IsValidSystemFlagValidator_valid():
         create_incident_field_object(["system"], [False])
     ]
 
-    results = IsValidSystemFlagValidator().is_valid(content_items)
+    results = IsValidSystemFlagValidator().obtain_invalid_content_items(content_items)
     assert not results
 
 
@@ -229,7 +410,7 @@ def test_IsValidFieldTypeValidator_valid():
     Given:
         - IncidentField content items with a valid type value
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
     """
@@ -237,7 +418,7 @@ def test_IsValidFieldTypeValidator_valid():
         create_incident_field_object(["type"], ["html"])
     ]
 
-    results = IsValidFieldTypeValidator().is_valid(content_items)
+    results = IsValidFieldTypeValidator().obtain_invalid_content_items(content_items)
     assert not results
 
 
@@ -246,13 +427,13 @@ def test_IsValidGroupFieldValidator_valid():
     Given:
         - IncidentField content items with a group value 0
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
     """
     content_items: List[IncidentField] = [create_incident_field_object(["group"], [0])]
 
-    results = IsValidGroupFieldValidator().is_valid(content_items)
+    results = IsValidGroupFieldValidator().obtain_invalid_content_items(content_items)
     assert not results
 
 
@@ -263,7 +444,7 @@ def test_IsCliNameFieldAlphanumericValidator_valid(cli_name_value):
         - IncidentField content items with a cliName value
           that is alphanumeric and lowercase letters
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
     """
@@ -271,7 +452,9 @@ def test_IsCliNameFieldAlphanumericValidator_valid(cli_name_value):
         create_incident_field_object(["cliName"], [cli_name_value])
     ]
 
-    results = IsCliNameFieldAlphanumericValidator().is_valid(content_items)
+    results = IsCliNameFieldAlphanumericValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert not results
 
 
@@ -280,7 +463,7 @@ def test_IsCliNameReservedWordValidator_valid():
     Given:
         - IncidentField content items with a cliName value that is not reserve word
     When:
-        - run is_valid method
+        - run obtain_invalid_content_items method
     Then:
         - Ensure that no ValidationResult returned
     """
@@ -288,7 +471,9 @@ def test_IsCliNameReservedWordValidator_valid():
         create_incident_field_object(["cliName"], ["foo"])
     ]
 
-    results = IsCliNameReservedWordValidator().is_valid(content_items)
+    results = IsCliNameReservedWordValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert not results
 
 
@@ -338,3 +523,194 @@ def test_IsValidGroupFieldValidator_fix():
     result = IsValidGroupFieldValidator().fix(incident_field)
     assert result.message == f"`group` field is set to {REQUIRED_GROUP_VALUE}."
     assert incident_field.group == REQUIRED_GROUP_VALUE
+
+
+def test_IsFieldTypeChangedValidator_fix():
+    """
+    Given:
+        - IncidentField that its `type` field has changed
+    When:
+        - run fix method
+    Then:
+        - Ensure the field `type` has changed back
+    """
+    old_type = "short text"
+    new_type = "html"
+    content_item = create_incident_field_object(["type"], [new_type])
+    old_content_items = [create_incident_field_object(["type"], [old_type])]
+    create_old_file_pointers([content_item], old_content_items)
+    results = IsFieldTypeChangedValidator().fix(content_item)
+    assert content_item.field_type == old_type
+    assert results.message == f"Changed the `type` field back to `{old_type}`."
+
+
+def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_valid():
+    """
+    Given:
+        - valid IncidentField of type multySelect with no empty strings in selectValues key.
+    When:
+        - run obtain_invalid_content_items method.
+    Then:
+        - Ensure that ValidationResult returned as expected.
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(
+            ["type", "selectValues"], ["multiSelect", ["blabla", "test"]]
+        )
+    ]
+    results = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert not results
+
+
+def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_invalid():
+    """
+    Given:
+        - invalid IncidentField of type multySelect with empty strings in selectValues key.
+    When:
+        - run obtain_invalid_content_items method.
+    Then:
+        - Ensure that ValidationResult returned as expected.
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(
+            ["type", "selectValues"], ["multiSelect", ["", "test"]]
+        )
+    ]
+    results = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert results
+    assert (
+        results[0].message
+        == "multiSelect types cannot contain empty values in the selectValues field."
+    )
+
+
+def test_SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator_fix():
+    """
+    Given:
+        - invalid IncidentField of type multySelect with empty strings in selectValues key.
+    When:
+        - run fix method.
+    Then:
+        - Ensure the fix message is as expected.
+        - Ensure there is no emtpy values in the selectValues field.
+    """
+    incident_field = create_incident_field_object(
+        ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
+    )
+    result = SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator().fix(
+        incident_field
+    )
+    assert result.message == "Removed all empty values in the selectValues field."
+    assert result.content_object.select_values == ["test"]
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_multiple_empty_values_invalid():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with multiple emtpy values in the selectValues filed.
+    When:
+        - run obtain_invalid_content_items method
+    Then:
+        - Ensure that ValidationResult runs as expected
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(
+            ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
+        )
+    ]
+    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert results
+    assert (
+        results[0].message
+        == "singleSelect types cannot contain more than one empty values in the selectValues field."
+    )
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_only_empty_values_invalid():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with only one emtpy value in the selectValues filed.
+    When:
+        - run obtain_invalid_content_items method
+    Then:
+        - Ensure that ValidationResult runs as expected
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["type", "selectValues"], ["singleSelect", [""]])
+    ]
+    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert results
+    assert (
+        results[0].message
+        == "singleSelect types cannot contain only empty values in the selectValues field."
+    )
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_only_one_empty_value_valid():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with one emtpy value in the selectValues filed.
+    When:
+        - run obtain_invalid_content_items method
+    Then:
+        - Ensure that ValidationResult runs as expected
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(
+            ["type", "selectValues"], ["singleSelect", ["", "test"]]
+        )
+    ]
+    results = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert not results
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_fix_only_empty_value():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with only emtpy value in the selectValues filed.
+    When:
+        - run fix method.
+    Then:
+        - Ensure the fix returns an exception.
+    """
+    incident_field = create_incident_field_object(
+        ["type", "selectValues"], ["singleSelect", [""]]
+    )
+    with pytest.raises(Exception) as exc_info:
+        SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().fix(
+            incident_field
+        )
+        assert exc_info
+
+
+def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator_fix_multiple_empty_values():
+    """
+    Given:
+        - invalid IncidentField of type singleSelect with multiple emtpy values in the selectValues filed.
+    When:
+        - run fix method.
+    Then:
+        - Ensure the fix message as expected
+        - Ensure there is only one emtpy value in the selectValues field.
+    """
+    incident_field = create_incident_field_object(
+        ["type", "selectValues"], ["singleSelect", ["", "", "test"]]
+    )
+    result = SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator().fix(
+        incident_field
+    )
+    assert (
+        result.message
+        == "Removed all redundant empty values in the selectValues field."
+    )
+    assert result.content_object.select_values == ["test", ""]

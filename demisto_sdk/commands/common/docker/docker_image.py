@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_DOCKER_NAME,
 )
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
-from demisto_sdk.commands.common.docker_helper import DockerBase
 from demisto_sdk.commands.common.logger import logger
 
 
@@ -19,7 +18,7 @@ class DockerImage(str):
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
     _dockerhub_client = DockerHubClient()
-    _docker_helper_client = DockerBase
+
 
     def __new__(
         cls, docker_image: str, raise_if_not_valid: bool = False

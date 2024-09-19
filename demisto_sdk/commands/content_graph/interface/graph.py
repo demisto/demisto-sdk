@@ -1,7 +1,7 @@
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -13,9 +13,6 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    DeprecatedItemUsage,
-)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseNode,
@@ -23,6 +20,12 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+
+class DeprecatedItemUsage(NamedTuple):
+    deprecated_item_id: str
+    deprecated_item_type: str
+    content_items_using_deprecated: List[BaseNode]
 
 
 class ContentGraphInterface(ABC):

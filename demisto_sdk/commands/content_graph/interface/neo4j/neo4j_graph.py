@@ -2,7 +2,7 @@ import os
 from multiprocessing import Pool
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from neo4j import Driver, GraphDatabase, Session, graph
 
@@ -19,7 +19,10 @@ from demisto_sdk.commands.content_graph.common import (
     Neo4jRelationshipResult,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.graph import (
+    ContentGraphInterface,
+    DeprecatedItemUsage,
+)
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
     Neo4jImportHandler,
 )
@@ -80,12 +83,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-
-
-class DeprecatedItemUsage(NamedTuple):
-    deprecated_item_id: str
-    deprecated_item_type: str
-    content_items_using_deprecated: List[BaseNode]
 
 
 def _parse_node(element_id: str, node: dict) -> BaseNode:

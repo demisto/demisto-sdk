@@ -28,7 +28,14 @@ classifiers = [
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: Implementation :: CPython'
 ]
-exclude = ["TestSuite/**", "tests_end_to_end/**", "demisto_sdk/tests/**", "demisto_sdk/**/tests/**", "demisto_sdk/**/test_data/**", "demisto_sdk/**/test_files/**"]
+exclude = [
+  "TestSuite/**",
+  "tests_end_to_end/**",
+  "demisto_sdk/tests/**",
+  "demisto_sdk/**/tests/**",
+  "demisto_sdk/**/test_data/**",
+  "demisto_sdk/**/test_files/**"
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
@@ -141,7 +148,7 @@ validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission
 prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
 
 [tool.pylint]
-disable = "W"
+disable = ["W", 'import-error']
 reports = false
 score = false
 py-version = 3.9
@@ -160,16 +167,13 @@ exclude = [
   "demisto_sdk/commands/init/tests/test_files",
   "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
   "demisto_sdk/commands/init/templates",
-  "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
+  "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py",
+  "demisto_sdk/commands/init/templates"
 ]
 target-version = "py39"
 
 [tool.ruff.lint]
-ignore = [
-  "F403",
-  "F405",
-  "E501"
-]
+ignore = ["F403", "F405", "E501"]
 select = [
   "C9",
   "E",

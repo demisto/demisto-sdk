@@ -5431,4 +5431,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.12"
-content-hash = "e1b2272f67c09e7aef30193fdd32166523e843ac4060ffbcf5318935acaa903a"
+content-hash = "785588f59f156534974ec0120794e611fc86cc98c41a5983cfe88afc12135bec"

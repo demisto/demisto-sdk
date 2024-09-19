@@ -66,7 +66,6 @@ class ContentType(StrEnum):
     CLASSIFIER = "Classifier"
     COMMAND = "Command"
     COMMAND_OR_SCRIPT = "CommandOrScript"
-    CONNECTION = "Connection"
     CORRELATION_RULE = "CorrelationRule"
     DASHBOARD = "Dashboard"
     GENERIC_DEFINITION = "GenericDefinition"

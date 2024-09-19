@@ -6,9 +6,6 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
-)
 from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_image_path_valid import (
     RelativeImagePathValidator,
 )
@@ -16,9 +13,7 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_image_path_
 ContentTypes = Union[Script, Playbook, Pack]
 
 
-class ReadmeRelativeImagePathValidator(
-    RelativeImagePathValidator, BaseValidator[ContentTypes]
-):
+class ReadmeRelativeImagePathValidator(RelativeImagePathValidator[ContentTypes]):
     related_file_type = [RelatedFileType.README]
 
     def validate_content_items(self, content_item: ContentTypes) -> str:

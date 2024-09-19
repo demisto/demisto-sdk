@@ -410,11 +410,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return sources, targets
 
     def get_unknown_content_uses(
-        self, file_paths: List[str], raises_error: bool, include_optional: bool = False
+        self,
+        file_paths: List[str],
     ) -> List[BaseNode]:
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
-                validate_unknown_content, file_paths, raises_error, include_optional
+                validate_unknown_content,
+                file_paths,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

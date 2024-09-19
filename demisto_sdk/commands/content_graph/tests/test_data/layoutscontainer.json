@@ -295,11 +295,6 @@
                 "id": "relatedIncidents",
                 "name": "Related Incidents",
                 "type": "relatedIncidents"
-            },
-            {
-                "id": "canvas",
-                "name": "Canvas",
-                "type": "canvas"
             }
         ]
     },

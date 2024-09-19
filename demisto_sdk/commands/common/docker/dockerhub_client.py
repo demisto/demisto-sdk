@@ -530,21 +530,22 @@ def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     See https://confluence-dc.paloaltonetworks.com/display/VisibilityApplication/Shared-Services+GCP+Services+-+GAR for more details.
 
     Args:
-        base_path (str): The base path of the DockerHub Google Artifact Registry, usually from the DOCKER_IO environment variable.
+    base_path (str): The base path of the Google Artifact Registry in the format 'region-domain/project/repository'.
 
     Returns:
-        str: The base URL for the DockerHub proxy API calls based on the provided Artifactory URL.
-    """
-    logger.info(f"{base_path=}")
-    parts = base_path.split("/")
-    logger.info(f"{parts=}, {len(parts)=}")
-    if len(parts) != 4:
-        raise ValueError("Invalid Artifactory URL format")
+        str: The base URL for the DockerHub proxy API calls based on the provided Artifact Registry path.
 
-    region, domain, project, repository = parts
-    log_string = f"https://{region}-{domain}/v2/{project}/{repository}"
-    logger.info(f"{log_string=}")
-    return f"https://{region}-{domain}/v2/{project}/{repository}"
+    Raises:
+        ValueError: If the input base_path is not in the expected format.
+    """
+    # Split base path into region-domain, project, and repository
+    try:
+        region_domain, project, repository = base_path.split('/')
+    except ValueError:
+        raise ValueError("Invalid Artifact Registry path format. Expected format: 'region-domain/project/repository'")
+
+    # Construct and return the base URL for DockerHub proxy API calls
+    return f"https://{region_domain}/v2/{project}/{repository}"
 
 
 def get_registry_api_url(registry: str, default_registry: str) -> str:

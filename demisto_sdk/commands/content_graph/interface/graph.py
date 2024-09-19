@@ -13,6 +13,9 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    DeprecatedItemUsage,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseNode,
@@ -194,7 +197,9 @@ class ContentGraphInterface(ABC):
     def clean_graph(self): ...
 
     @abstractmethod
-    def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+    def find_items_using_deprecated_items(
+        self, file_paths: List[str]
+    ) -> List[DeprecatedItemUsage]:
         pass
 
     @abstractmethod

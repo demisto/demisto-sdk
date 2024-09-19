@@ -501,7 +501,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_items_using_deprecated_items(  # type: ignore[override]
+    def find_items_using_deprecated_items(
         self, file_paths: List[str]
     ) -> List[DeprecatedItemUsage]:
         """Searches for content items who use content items which are deprecated.

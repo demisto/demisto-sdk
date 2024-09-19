@@ -10,14 +10,14 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
-from demisto_sdk.commands.content_graph.strict_objects.assets_modeling_rule import (
-    StrictAssetsModelingRule,
-)
-from demisto_sdk.commands.content_graph.strict_objects.assets_modeling_rule_schema import (
-    StrictAssetsModelingRuleSchema,
-)
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     StructureError,
+)
+from demisto_sdk.commands.content_graph.strict_objects.modeling_rule import (
+    StrictModelingRule,
+)
+from demisto_sdk.commands.content_graph.strict_objects.modeling_rule_schema import (
+    StrictModelingRuleSchema,
 )
 
 
@@ -66,9 +66,9 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
         for file in directory.iterdir():
             try:
                 if file.suffix == ".yml":
-                    StrictAssetsModelingRule.parse_obj(get_file(file))
+                    StrictModelingRule.parse_obj(get_file(file))
                 elif file.suffix == ".json":
-                    StrictAssetsModelingRuleSchema.parse_obj(get_file(file))
+                    StrictModelingRuleSchema.parse_obj(get_file(file))
             except pydantic.error_wrappers.ValidationError as e:
                 directory_pydantic_error += [
                     StructureError(path=file, **error) for error in e.errors()

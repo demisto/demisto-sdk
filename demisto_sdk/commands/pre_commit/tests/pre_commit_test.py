@@ -121,7 +121,12 @@ def test_config_files(mocker, repo: Repo, native_image_config):
         - make sure that the created hooks are pylint based only as its the only hook that should be split
     """
 
-    def devtest_side_effect(image_tag: str, is_powershell: bool, should_pull: bool):
+    def devtest_side_effect(
+        image_tag: str,
+        is_powershell: bool,
+        should_pull: bool,
+        should_install_mypy_additional_dependencies: bool,
+    ):
         return image_tag
 
     mocker.patch(

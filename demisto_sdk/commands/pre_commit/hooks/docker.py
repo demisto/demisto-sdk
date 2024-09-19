@@ -67,6 +67,7 @@ def get_mypy_requirements():
             requirements = TextFile.read_from_github_api(
                 "mypy-requirements.txt", verify_ssl=False
             ).split("\n")
+            logger.debug("Retrieved mypy requirements from demisto/content repository.")
         except (FileReadError, ConnectionError, Timeout) as e:
             raise RuntimeError(
                 "Could not read mypy-requirements.txt from Github"
@@ -188,7 +189,7 @@ def devtest_image(
         should_pull=False,
         log_prompt="DockerHook",
         additional_requirements=get_mypy_requirements()
-        if should_install_mypy_additional_dep
+        if should_install_mypy_additional_dependencies
         else None,
     )
     if not errors:
@@ -252,7 +253,7 @@ def _split_by_objects(
     object_to_files: Dict[
         Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
     ] = defaultdict(set)
-    config_filename = (config_arg or ("", "")[1]
+    config_filename = (config_arg or ("", ""))[1]
     for file, obj in files_with_objects:
         if run_isolated or (
             config_arg and (obj.path.parent / config_filename).exists()
@@ -308,9 +309,14 @@ class DockerHook(Hook):
             run_isolated,
         )
         is_image_powershell = any(obj.is_powershell for _, obj in files_with_objects)
-        mypy_additional_dependencies = self.base_hook["name"].startswith("mypy-in-docker")
+        mypy_additional_dependencies = self.base_hook.get("name", "").startswith(
+            "mypy-in-docker"
+        )
         dev_image = devtest_image(
-            image, is_image_powershell, self.context.dry_run, mypy_additional_dep
+            image,
+            is_image_powershell,
+            self.context.dry_run,
+            mypy_additional_dependencies,
         )
         hooks = self.generate_hooks(dev_image, image, object_to_files, config_arg)
         logger.debug(f"Generated {len(hooks)} hooks for image {image}")

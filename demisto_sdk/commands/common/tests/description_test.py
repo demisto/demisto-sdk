@@ -42,7 +42,7 @@ def test_is_duplicate_description_unified_deprecated_integration(
     yaml.dump(integration_obj, unified_integration_yml.open("w"))
     description_validator = DescriptionValidator(str(unified_integration_yml))
     assert description_validator.is_duplicate_description()
-    assert not DescriptionValidator.handle_error.called
+    assert not DescriptionValidator.handle_error.called  # pylint: disable=no-member
 
 
 def test_is_duplicate_description_given(pack, mocker):
@@ -62,7 +62,7 @@ def test_is_duplicate_description_given(pack, mocker):
     integration.create_default_integration()
     description_validator = DescriptionValidator(integration.description.path)
     assert description_validator.is_duplicate_description()
-    assert not DescriptionValidator.handle_error.called
+    assert not DescriptionValidator.handle_error.called  # pylint: disable=no-member
 
 
 @pytest.mark.parametrize(

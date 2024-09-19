@@ -18,6 +18,7 @@ class PackSupportOption(StrEnum):
 
 
 class StrictPackMetadata(BaseStrictModel):
+    @classmethod
     @validator("current_version")
     def is_valid_current_version(cls, value: str) -> str:
         """

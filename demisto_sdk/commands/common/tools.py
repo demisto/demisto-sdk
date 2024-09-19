@@ -2052,6 +2052,7 @@ def is_external_repository() -> bool:
         return True
 
 
+# pylint: disable=no-member
 def is_external_repo() -> bool:
     """
     Returns True if script executed from an external repository (use this instead of is_external_repository)
@@ -2409,7 +2410,7 @@ def search_and_delete_from_conf(
         [
             test_config
             for test_config in conf_json_tests
-            if is_test_config_match(test_config, **{keyword: content_item_id})
+            if is_test_config_match(test_config, **{keyword: content_item_id})  # pylint: disable=unexpected-keyword-arg
         ]
     )
     if not no_test_playbooks_explicitly:
@@ -3166,9 +3167,9 @@ def suppress_stdout():
             logger.info('This message will not be printed')
         logger.info('This message will be printed')
     """
+    old_stdout = sys.stdout
     with open(os.devnull, "w") as devnull:
         try:
-            old_stdout = sys.stdout
             sys.stdout = devnull
             yield
         finally:
@@ -3272,7 +3273,7 @@ def get_current_repo() -> Tuple[str, str, str]:
         host = parsed_git.host
         if "@" in host:
             host = host.split("@")[1]
-        return host, parsed_git.owner, parsed_git.repo
+        return host, parsed_git.owner, parsed_git.repo  # pylint: disable=E1133
     except git.InvalidGitRepositoryError:
         logger.info("[yellow]git repo is not found[/yellow]")
         return "Unknown source", "", ""

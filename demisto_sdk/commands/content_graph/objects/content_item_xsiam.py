@@ -24,6 +24,7 @@ from demisto_sdk.commands.upload.exceptions import (
 
 
 class ContentItemXSIAM(ContentItem, ABC):
+    @classmethod
     @validator("fromversion", always=True)
     def validate_from_version(cls, v: str) -> str:
         if not v or DEFAULT_CONTENT_ITEM_FROM_VERSION == v:

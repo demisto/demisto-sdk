@@ -222,7 +222,7 @@ class File(ABC):
         path = Path(path)
 
         if clear_cache:
-            cls.read_from_local_path.cache_clear()
+            cls.read_from_local_path.cache_clear()  # pylint: disable=E1101
 
         if not path.is_absolute():
             logger.debug(f"path {path} is not absolute path")
@@ -283,7 +283,7 @@ class File(ABC):
         path = Path(path)
 
         if clear_cache:
-            cls.read_from_git_path.cache_clear()
+            cls.read_from_git_path.cache_clear()  # pylint: disable=E1101
 
         git_util = GitUtil.from_content_path()
         if not git_util.is_file_exist_in_commit_or_branch(
@@ -460,7 +460,7 @@ class File(ABC):
 
         """
         if clear_cache:
-            cls.read_from_http_request.cache_clear()
+            cls.read_from_http_request.cache_clear()  # pylint: disable=E1101
 
         if is_sdk_defined_working_offline():
             raise NoInternetConnectionException

@@ -577,7 +577,7 @@ def test_demisto_in_repo_readme(mocker, repo):
         f.write("This checks if we have the word Demisto in the README.")
 
     with ChangeCWD(repo.path):
-        readme_validator = ReadMeValidator()
+        readme_validator = ReadMeValidator(str(readme_path))
         init_readmeValidator(readme_validator, repo, readme_path)
         assert readme_validator.verify_demisto_in_readme_content()
 

@@ -17,8 +17,8 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 @pytest.fixture(autouse=True)
 def dockerhub_client() -> DockerHubClient:
     dockerhub_client = DockerHubClient(username="test", password="test")
-    dockerhub_client.do_registry_get_request.cache_clear()
-    dockerhub_client.do_docker_hub_get_request.cache_clear()
+    dockerhub_client.do_registry_get_request.cache_clear()  # pylint: disable=E1101
+    dockerhub_client.do_docker_hub_get_request.cache_clear()  # pylint: disable=E1101
     return dockerhub_client
 
 

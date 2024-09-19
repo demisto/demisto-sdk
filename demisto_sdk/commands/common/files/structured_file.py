@@ -51,7 +51,7 @@ class StructuredFile(TextFile, ABC):
         output_path = Path(output_path)
 
         try:
-            cls.as_default(encoding=encoding, handler=handler).write_safe_unicode(
+            cls.as_default(encoding=encoding, handler=handler).write_safe_unicode(  # pylint: disable=E1101
                 data, path=output_path, indent=indent, sort_keys=sort_keys, **kwargs
             )
         except Exception as e:

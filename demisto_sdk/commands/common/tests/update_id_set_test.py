@@ -68,6 +68,7 @@ from TestSuite.utils import IsEqualFunctions
 TESTS_DIR = f"{git_path()}/demisto_sdk/tests"
 
 
+# pylint: disable=E1120
 class TestPacksMetadata:
     METADATA_WITH_XSOAR_SUPPORT = {
         "name": "Pack1",

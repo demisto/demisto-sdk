@@ -3928,4 +3928,4 @@ def dump_api(
 main.add_command(typer.main.get_command(export_app), "dump-api")
 
 if __name__ == "__main__":
-    main()
+    main()  # pylint: disable=E1120

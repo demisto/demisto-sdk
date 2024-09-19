@@ -425,7 +425,7 @@ class Downloader:
             )[0]
 
         except Exception as e:
-            if isinstance(e, ApiException) and e.status == 401:
+            if isinstance(e, ApiException) and getattr(e, "status") == 401:
                 logger.error(
                     f"Server authentication error: {e}\n"
                     "Please verify that the required environment variables ('DEMISTO_API_KEY', or "

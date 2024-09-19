@@ -642,6 +642,7 @@ class Linter:
             myenv["is_script"] = str(self._facts["is_script"])
             # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
             # as a result we can use the env vars as a getway.
+            # pylint: disable=E1133
             myenv["commands"] = (
                 ",".join([str(elem) for elem in self._facts["commands"]])
                 if self._facts["commands"]

@@ -140,6 +140,20 @@ validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission_changes:main"
 prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
 
+[tool.pylint]
+disable = "W"
+reports = false
+score = false
+py-version = 3.9
+extension-pkg-whitelist = "pydantic" # https://github.com/pydantic/pydantic/issues/1961
+ignore-paths = 'demisto_sdk/tests/test_files'
+errors-only = true
+generated-members = [
+  "requests.codes.*",
+  "demisto_sdk.commands.common.docker.dockerhub_client.DockerHubClient.do_docker_hub_get_request.cache_clear",
+  "demisto_sdk.commands.common.docker.dockerhub_client.DockerHubClient.do_registry_get_request.cache_clear"
+]
+
 [tool.ruff]
 exclude = [
   "demisto_sdk/tests/test_files/",

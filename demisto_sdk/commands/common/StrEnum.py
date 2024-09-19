@@ -30,5 +30,5 @@ else:
     from enum import Enum
 
     class StrEnum(str, Enum):  # type:ignore[no-redef]
-        def __str__(self):
+        def __str__(self):  # pylint: disable=invalid-str-returned # edge case
             return self

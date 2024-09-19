@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.tools import get_pack_metadata, get_yaml
 
 # disable insecure warnings
-requests.packages.urllib3.disable_warnings()  # type: ignore
+requests.packages.urllib3.disable_warnings()  # type: ignore # pylint: disable=no-member
 
 ACCEPT_HEADER = {
     "Accept": "application/json, "

@@ -535,11 +535,15 @@ def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     Returns:
         str: The base URL for the DockerHub proxy API calls based on the provided Artifactory URL.
     """
+    logger.info(f"{base_path=}")
     parts = base_path.split("/")
+    logger.info(f"{parts=}, {len(parts)=}")
     if len(parts) != 4:
         raise ValueError("Invalid Artifactory URL format")
 
     region, domain, project, repository = parts
+    log_string = f"https://{region}-{domain}/v2/{project}/{repository}"
+    logger.info(f"{log_string=}")
     return f"https://{region}-{domain}/v2/{project}/{repository}"
 
 

@@ -1,0 +1,4 @@
+changes:
+- description: Fix an issue with **generate-docs** command when an integration is missing a description.
+  type: fix
+pr_number: 4510

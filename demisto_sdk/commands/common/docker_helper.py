@@ -346,7 +346,7 @@ class DockerBase:
             the new created image
         Flow:
             1. creating a container using an existing image
-            2. running the istallation scripts
+            2. running the installation scripts
             3. committing the docker changes (installed packages) to a new local image
         """
         self.requirements.write_text(

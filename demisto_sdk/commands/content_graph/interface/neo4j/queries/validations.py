@@ -116,7 +116,9 @@ def get_items_using_deprecated(
     ) + get_items_using_deprecated_content_items(tx, file_paths)
 
 
-def get_items_using_deprecated_commands(tx: Transaction, file_paths: List[str]):
+def get_items_using_deprecated_commands(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, str, List[graph.Node]]]:
     files_filter = (
         f"AND (p.path in {file_paths} OR i.path IN {file_paths})" if file_paths else ""
     )
@@ -138,7 +140,9 @@ RETURN c.object_id AS deprecated_command, c.content_type AS deprecated_content_t
     ]
 
 
-def get_items_using_deprecated_content_items(tx: Transaction, file_paths: List[str]):
+def get_items_using_deprecated_content_items(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, str, List[graph.Node]]]:
     files_filter = (
         f"AND (p.path IN {file_paths} OR d.path IN {file_paths})" if file_paths else ""
     )

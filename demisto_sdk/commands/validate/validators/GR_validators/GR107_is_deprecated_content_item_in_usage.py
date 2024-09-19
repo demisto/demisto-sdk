@@ -103,8 +103,8 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    deprecated_item_type=item.get("deprecated_content_type"),
-                    deprecated_item=item.get("deprecated_content_id"),
+                    deprecated_item_type=item.deprecated_item_type,
+                    deprecated_item=item.deprecated_item_id,
                     using_deprecated_item=str(
                         item_using_deprecated.path.relative_to(CONTENT_PATH)
                     ),
@@ -112,5 +112,5 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
                 content_object=item_using_deprecated,
             )
             for item in self.graph.find_items_using_deprecated_items(content_item_paths)
-            for item_using_deprecated in item.get("content_items_using_deprecated", [])
+            for item_using_deprecated in item.content_items_using_deprecated
         ]

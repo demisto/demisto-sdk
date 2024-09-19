@@ -2,7 +2,7 @@ import os
 from multiprocessing import Pool
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Set, Tuple, Union
 
 from neo4j import Driver, GraphDatabase, Session, graph
 
@@ -80,6 +80,12 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+
+
+class DeprecatedItemUsage(NamedTuple):
+    deprecated_item_id: str
+    deprecated_item_type: str
+    content_items_using_deprecated: List[BaseNode]
 
 
 def _parse_node(element_id: str, node: dict) -> BaseNode:
@@ -495,14 +501,16 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+    def find_items_using_deprecated_items(
+        self, file_paths: List[str]
+    ) -> List[DeprecatedItemUsage]:  # type: ignore[override]
         """Searches for content items who use content items which are deprecated.
 
         Args:
             file_paths (List[str]): A list of content items' paths to check.
                 If not given, runs the query over all content items.
         Returns:
-            List[dict]: A list of dicts with the deprecated item and all the items used it.
+            List[DeprecatedItemUsage]: A list of DeprecatedItemUsage with the deprecated item and all the items used it.
         """
         with self.driver.session() as session:
             deprecated_usage = session.execute_read(
@@ -511,13 +519,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         all_related_nodes = [node for _, _, nodes in deprecated_usage for node in nodes]
         self._add_nodes_to_mapping(all_related_nodes)
         return [
-            {
-                "deprecated_content_id": dep_content,
-                "deprecated_content_type": dep_type,
-                "content_items_using_deprecated": [
+            DeprecatedItemUsage(
+                deprecated_item_id=dep_content,
+                deprecated_item_type=dep_type,
+                content_items_using_deprecated=[
                     self._id_to_obj[node.element_id] for node in nodes
                 ],
-            }
+            )
             for dep_content, dep_type, nodes in deprecated_usage
         ]
 

@@ -65,6 +65,8 @@ class DockerHubClient:
         self.verify_ssl = verify_ssl
 
         logger.info("DockerHubClient | sanity check")
+        logger.info(f"{DOCKER_IO=}")
+        logger.info(f"{IS_CONTENT_GITLAB_CI=}")
         response = self.get_image_tags("demisto/pan-os-python")
         logger.info(f"Got image tags: {response=}")
 

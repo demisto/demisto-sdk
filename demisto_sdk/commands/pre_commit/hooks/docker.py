@@ -309,7 +309,9 @@ class DockerHook(Hook):
             run_isolated,
         )
         is_image_powershell = any(obj.is_powershell for _, obj in files_with_objects)
-        mypy_additional_dependencies = self.base_hook.get("name", "").startswith(
+        mypy_additional_dependencies = self.base_hook.get(
+            "name", ""
+        ).startswith(  # see CIAC-11832
             "mypy-in-docker"
         )
         dev_image = devtest_image(
@@ -443,7 +445,7 @@ class DockerHook(Hook):
             files = {file for file, _ in files_with_objects}
             objects_ = [object_ for _, object_ in files_with_objects]
             hook = deepcopy(new_hook)
-            if new_hook["name"].startswith("mypy-in-docker"):
+            if new_hook["name"].startswith("mypy-in-docker"):  # see CIAC-11832
                 for obj in objects_:
                     python_version = Version(obj.python_version)
                     hook["args"].append(

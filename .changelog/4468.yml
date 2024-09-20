@@ -1,0 +1,4 @@
+changes:
+- description: Modified the `mypy` pre-commit hook in the **pre-commit** command which would previously run locally. The hook now runs in Docker and is renamed to `mypy-in-docker`.
+  type: feature
+pr_number: 4468

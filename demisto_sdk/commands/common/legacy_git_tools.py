@@ -341,7 +341,7 @@ def filter_changed_files(
                     ignored_files.add(file_path)
                     if print_ignored_files:
                         logger.info(
-                            f"[yellow]Ignoring file path: {file_path} - code file[/yellow]"
+                            f"<yellow>Ignoring file path: {file_path} - code file</yellow>"
                         )
                 continue
 
@@ -351,7 +351,7 @@ def filter_changed_files(
                     ignored_files.add(file_path)
                     if print_ignored_files:
                         logger.info(
-                            f"[yellow]Ignoring file path: {file_path} - test file[/yellow]"
+                            f"<yellow>Ignoring file path: {file_path} - test file</yellow>"
                         )
                 continue
 
@@ -363,7 +363,7 @@ def filter_changed_files(
             elif not Path(file_path).is_file():
                 if print_ignored_files:
                     logger.info(
-                        f"[yellow]Ignoring file path: {file_path} - directory[/yellow]"
+                        f"<yellow>Ignoring file path: {file_path} - directory</yellow>"
                     )
                 continue
 
@@ -399,7 +399,7 @@ def filter_changed_files(
                     modified_files_list.add((file_data[1], file_data[2]))
             elif file_status.lower() not in KNOWN_FILE_STATUSES:
                 logger.error(
-                    "[red]{} file status is an unknown one, please check. File status was: {}[/red]".format(
+                    "<red>{} file status is an unknown one, please check. File status was: {}</red>".format(
                         file_path, file_status
                     )
                 )
@@ -416,12 +416,12 @@ def filter_changed_files(
                         ignored_files.add(file_path)
                         if print_ignored_files:
                             logger.info(
-                                f"[yellow]Ignoring file path: {file_path} - system file[/yellow]",
+                                f"<yellow>Ignoring file path: {file_path} - system file</yellow>",
                             )
                     else:
                         if print_ignored_files:
                             logger.info(
-                                f"[yellow]Ignoring file path: {file_path} - system file[/yellow]"
+                                f"<yellow>Ignoring file path: {file_path} - system file</yellow>"
                             )
 
         # handle a case where a file was deleted locally though recognised as added against master.
@@ -430,7 +430,7 @@ def filter_changed_files(
                 ignored_files.add(file_path)
                 if print_ignored_files:
                     logger.info(
-                        f"[yellow]Ignoring file path: {file_path} - File not found[/yellow]"
+                        f"<yellow>Ignoring file path: {file_path} - File not found</yellow>"
                     )
 
     modified_files_list, added_files_list, deleted_files = filter_packagify_changes(

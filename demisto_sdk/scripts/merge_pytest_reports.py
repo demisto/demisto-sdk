@@ -101,7 +101,7 @@ def merge_junit_reports():
 
 def main():
     try:
-        logging_setup()
+        logging_setup(calling_function=Path(__file__).stem)
         merge_coverage_report()
         merge_junit_reports()
     except Exception as e:

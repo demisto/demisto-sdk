@@ -97,7 +97,7 @@ def generate_desc_with_spinner(command_output_path, insecure, output):
 
 
 def generate_desc(input_ctx, prob_check=False, insecure=False):
-    # from demisto_sdk.commands.common.logger import logger
+    # from demisto_sdk.commands.common.loguru_logger import logger
     # logger.setLevel(logging.ERROR)
 
     prompt = get_current_prompt()
@@ -109,7 +109,7 @@ def generate_desc(input_ctx, prob_check=False, insecure=False):
 def ai21_api_request(prompt, options={}):
     ai21_key = os.environ.get("AI21_KEY")
     if not ai21_key:
-        logger.info("[red]No ai21 key provided, see docs and obtain one.[/red]")
+        logger.info("<red>No ai21 key provided, see docs and obtain one.</red>")
         return
 
     res = requests.post(
@@ -298,7 +298,7 @@ def generate_ai_descriptions(
                     f.write(get_current_prompt())
 
     except Exception as ex:
-        logger.info(f"[red]Error: {str(ex)}[/red]")
+        logger.info(f"<red>Error: {str(ex)}</red>")
 
     # backup all of the prompts (without truncating)
     if DEBUG_PROMPT:

@@ -16,12 +16,12 @@ class IntegrationDiffDetector:
     def __init__(self, new: str = "", old: str = "", docs_format: bool = False):
         if not Path(new).exists():
             logger.error(
-                "[red]No such file or directory for the new integration version.[/red]"
+                "<red>No such file or directory for the new integration version.</red>"
             )
 
         if not Path(old).exists():
             logger.error(
-                "[red]No such file or directory for the old integration version.[/red]"
+                "<red>No such file or directory for the old integration version.</red>"
             )
 
         self.new = new
@@ -346,9 +346,11 @@ class IntegrationDiffDetector:
                     parameters.append(
                         {
                             "type": "parameters",
-                            "name": old_param["display"]
-                            if "display" in old_param
-                            else old_param["name"],
+                            "name": (
+                                old_param["display"]
+                                if "display" in old_param
+                                else old_param["name"]
+                            ),
                             "message": f'Missing the parameter \'{old_param["display"] if "display" in old_param else old_param["name"]}\'.',
                         }
                     )
@@ -404,18 +406,18 @@ class IntegrationDiffDetector:
         changed = []
 
         for missing_type in self.missing_items_report:
-            logger.info(f"[red]Missing {missing_type}:[/red]\n")
+            logger.info(f"<red>Missing {missing_type}:</red>\n")
 
             for item in self.missing_items_report[missing_type]:
                 if "changed_field" in item:
                     changed.append(item["message"])
 
                 else:
-                    logger.info(f'[red]{item["message"]}[/red]')
+                    logger.info(f'<red>{item["message"]}</red>')
 
             if changed:
-                logger.info(f"\n[red]Changed {missing_type}:[/red]\n")
-                logger.info("[red]" + "\n".join(changed) + "[/red]")
+                logger.info(f"\n<red>Changed {missing_type}:</red>\n")
+                logger.info("<red>" + "\n".join(changed) + "</red>")
                 changed.clear()
 
             logger.info("")
@@ -503,7 +505,7 @@ class IntegrationDiffDetector:
             bool. return true if found items to print and false if not.
         """
         if not self.missing_items_report:
-            logger.info("[green]The integrations are backwards compatible[/green]")
+            logger.info("<green>The integrations are backwards compatible</green>")
             return False
 
         if self.docs_format_output:

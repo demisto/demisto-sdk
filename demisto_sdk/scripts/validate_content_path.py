@@ -1,7 +1,7 @@
 import re
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, List, Sequence
+from typing import ClassVar, List, NamedTuple, Sequence, Set, Type
 
 import typer
 from more_itertools import split_at
@@ -310,15 +310,14 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidClassifier
 
-        if (
-            first_level_folder in XSIAM_CHECKS
+        if xsiam_constraints := XSIAM_DEPTH_1_CHECKS.get(
+            first_level_folder
         ):  # items whose name must start with `{pack_folder}_`
-            allowed_suffixes, exception = XSIAM_CHECKS[first_level_folder]
             if not (
                 path.stem.startswith(f"{pack_folder_name}_")
-                and path.suffix in allowed_suffixes
+                and path.suffix in xsiam_constraints.allowed_suffixes
             ):
-                raise exception
+                raise xsiam_constraints.exception
 
         if (
             first_level_folder == DOC_FILES_DIR
@@ -358,10 +357,22 @@ def _validate_image_file_name(image_name: str):
         raise InvalidImageFileName
 
 
-XSIAM_CHECKS = {
-    XSIAM_REPORTS_DIR: ({".json"}, InvalidXSIAMReportFileName),
-    XSIAM_DASHBOARDS_DIR: ({".json", ".jpg"}, InvalidXSIAMDashboardFileName),
-    CORRELATION_RULES_DIR: ({".yml"}, InvalidCorrelationRuleFileName),
+class XsiamStemConstraints(NamedTuple):
+    allowed_suffixes: Set[str]
+    exception: Type[InvalidPathException]
+
+
+XSIAM_DEPTH_1_CHECKS = {
+    # Useful for depth-1 items, to avoid rewriting the same checks over and over again
+    CORRELATION_RULES_DIR: XsiamStemConstraints(
+        {".yml"}, InvalidCorrelationRuleFileName
+    ),
+    XSIAM_DASHBOARDS_DIR: XsiamStemConstraints(
+        {".json", ".jpg"}, InvalidXSIAMDashboardFileName
+    ),
+    XSIAM_REPORTS_DIR: XsiamStemConstraints(
+        {".json", ".jpg"}, InvalidXSIAMReportFileName
+    ),
 }
 
 

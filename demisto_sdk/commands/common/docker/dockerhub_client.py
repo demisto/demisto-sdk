@@ -64,16 +64,16 @@ class DockerHubClient:
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
 
-        # logger.warning("DockerHubClient | sanity check")
-        # logger.warning(f"{DOCKER_IO=}")
-        # logger.warning(f"{IS_CONTENT_GITLAB_CI=}")
-        # response = self.get_image_tags("demisto/pan-os-python")
-        # logger.warning(
-        #     f"Got image tags for demisto/pan-os-python: {response=}")
-        # response_2 = self.get_image_manifests(
-        #     "demisto/pan-os-python", "1.0.0.58823")
-        # logger.warning(
-        #     f"Got image manifest for demisto/pan-os-python:1.0.0.58823: {response_2=}")
+        logger.warning("DockerHubClient | sanity check")
+        logger.warning(f"{DOCKER_IO=}")
+        logger.warning(f"{IS_CONTENT_GITLAB_CI=}")
+        response = self.get_image_tags("demisto/pan-os-python")
+        logger.warning(
+            f"Got image tags for demisto/pan-os-python: {response=}")
+        response_2 = self.get_image_manifests(
+            "demisto/pan-os-python", "1.0.0.58823")
+        logger.warning(
+            f"Got image manifest for demisto/pan-os-python:1.0.0.58823: {response_2=}")
 
     def __enter__(self):
         return self
@@ -584,7 +584,7 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
     if IS_CONTENT_GITLAB_CI and DOCKER_IO:
         try:
             logger.warning(
-                "Running in GitLab CI environment with custom Docker.io URL")
+                "Running in GitLab CI environment with custom Docker_IO URL")
             return get_dockerhub_artifact_registry_url(DOCKER_IO)
         except Exception as e:
             logger.warning(

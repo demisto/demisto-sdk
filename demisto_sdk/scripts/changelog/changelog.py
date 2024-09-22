@@ -285,8 +285,10 @@ def compile_changelog_md(
     # Collecting the new log entries in the following order:
     # breaking, feature, fix, internal
     for log_type in (LogType.breaking, LogType.feature, LogType.fix, LogType.internal):
-        new_changelog.extend(log.to_string() for log in new_logs.get(log_type, ()))
-    # A new line separates versions
+        if logs := new_logs.get(log_type, []):
+            new_changelog.append(f"### {log_type.capitalize()}")
+            new_changelog.extend(log.to_string() for log in logs)
+            new_changelog.append("")  # Add an empty line after each category
     new_changelog.append("")
     # Collecting the old changelog
     new_changelog.extend(old_changelog)

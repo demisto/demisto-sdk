@@ -28,7 +28,14 @@ classifiers = [
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: Implementation :: CPython'
 ]
-exclude = ["TestSuite/**", "tests_end_to_end/**", "demisto_sdk/tests/**", "demisto_sdk/**/tests/**", "demisto_sdk/**/test_data/**", "demisto_sdk/**/test_files/**"]
+exclude = [
+  "TestSuite/**",
+  "tests_end_to_end/**",
+  "demisto_sdk/tests/**",
+  "demisto_sdk/**/tests/**",
+  "demisto_sdk/**/test_data/**",
+  "demisto_sdk/**/test_files/**"
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
@@ -96,6 +103,7 @@ lxml = "^5.0.0"
 uv = "^0.1.5"
 toml = "^0.10.2"
 werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
+loguru = "^0.7.2"
 
 [tool.poetry.extras]
 build = ["gsutil"]
@@ -115,6 +123,7 @@ ruff = "^0.5.2"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
 pygithub = "^2.2.0"
+pytest-loguru = "^0.4.0"
 
 [tool.poetry.group.types.dependencies]
 types-requests = "^2.31.0.20240311"
@@ -172,23 +181,29 @@ select = [
   "PTH110",
   "PTH119"
 ]
+logger-objects = ["demisto_sdk.commands.common.logger.logger"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
-"distutils.version".msg = "Use packaging.version.Version instead"
+"distutils.version".msg = "Use packaging.version.Version"
 "git.Repo".msg = "Use GitUtil instead"
-# "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
 "json".msg = "use JSON_Handler instead"
 "json5".msg = "use JSON_Handler instead"
+"logging".msg = "Use demisto_sdk.commands.common.logger"
+"loguru".msg = "Use demisto_sdk.commands.common.logger"
 "orjson".msg = "use JSON_Handler instead"
-"packaging.version.LooseVersion".msg = "Use packaging.version.Version instead"
+"packaging.version.LooseVersion".msg = "Use packaging.version.Version"
 "ruamel.yaml".msg = "use YAML_Handler instead"
 "str.StrEnum".msg = "Import from demisto_sdk.commands.common.StrEnum for <3.11 compatability"
-"ujson".msg = "use JSON_Handler instead"
+"ujson".msg = "use JSON_Handler"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 30
+
+[tool.ruff.lint.per-file-ignores]
+"demisto_sdk/commands/test_content/timestamp_replacer.py" = ["TID251"] # used outside the SDK
+"demisto_sdk/__main__.py" = ["E402"] # The logger must be set up before everything else
 
 [tool.vulture]
 exclude = ["*/tests/*"]

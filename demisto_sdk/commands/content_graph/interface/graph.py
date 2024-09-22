@@ -71,9 +71,9 @@ class ContentGraphInterface(ABC):
     def dump_metadata(self, override_commit: bool = True) -> None:
         """Adds metadata to the graph."""
         metadata = {
-            "commit": GitUtil().get_current_commit_hash()
-            if override_commit
-            else self.commit,
+            "commit": (
+                GitUtil().get_current_commit_hash() if override_commit else self.commit
+            ),
             "content_parser_latest_hash": self._get_latest_content_parser_hash(),
             "schema": self.get_schema(),
         }

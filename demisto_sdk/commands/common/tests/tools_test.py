@@ -1,5 +1,4 @@
 import glob
-import logging
 import os
 import shutil
 from configparser import ConfigParser
@@ -65,6 +64,9 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.logger import (
+    string_to_bool as string_to_bool_logger,
+)
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     TagParser,
@@ -157,7 +159,7 @@ from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
 
@@ -2660,25 +2662,47 @@ def test_get_display_name(data, answer, tmpdir):
     assert get_display_name(file.path) == answer
 
 
-@pytest.mark.parametrize("value", ("true", "True", 1, "1", "yes", "y"))
-def test_string_to_bool_true(value: str):
-    assert string_to_bool(value)
+@pytest.mark.parametrize(
+    "value,expected_result",
+    (
+        ("true", True),
+        ("True", True),
+        (1, True),
+        ("1", True),
+        ("yes", True),
+        ("y", True),
+        ("Yes", True),
+        ("Y", True),
+        ("false", False),
+        ("False", False),
+        ("F", False),
+        ("f", False),
+        (0, False),
+        ("0", False),
+        ("n", False),
+        ("N", False),
+        ("no", False),
+        ("No", False),
+        ("NO", False),
+    ),
+)
+def test_string_to_bool_true(value: Tuple[str, ...], expected_result: bool):
+    assert string_to_bool(value) is expected_result
+    assert string_to_bool_logger(value) is expected_result
 
 
 @pytest.mark.parametrize("value", ("", None))
 def test_string_to_bool_default_true(value: str):
     assert string_to_bool(value, True)
-
-
-@pytest.mark.parametrize("value", ("false", "False", 0, "0", "n", "no"))
-def test_string_to_bool_false(value: str):
-    assert not string_to_bool(value)
+    assert string_to_bool_logger(value, True)
 
 
 @pytest.mark.parametrize("value", ("", " ", "כן", None, "None"))
 def test_string_to_bool_error(value: str):
     with pytest.raises(ValueError):
         string_to_bool(value)
+    with pytest.raises(ValueError):
+        string_to_bool_logger(value)
 
 
 @pytest.mark.parametrize(
@@ -3205,7 +3229,7 @@ def test_get_content_path(input_path, expected_output):
     assert tools.get_content_path(input_path) == expected_output
 
 
-def test_get_content_path_no_remote(mocker):
+def test_get_content_path_no_remote(mocker, caplog, monkeypatch):
     """
     Given:
         - A path to a file or directory in the content repo, with no remote
@@ -3214,21 +3238,15 @@ def test_get_content_path_no_remote(mocker):
     Then:
         Validate that a warning is issued as (resulting from a raised exception).
     """
-    from git import Repo  # noqa: TID251
+    from git import Repo  # noqa: TID251 # required for the test
 
-    def raise_value_exception(name):
-        raise ValueError()
-
-    mocker.patch.object(Repo, "remote", side_effect=raise_value_exception)
+    mocker.patch.object(Repo, "remote", side_effect=ValueError())
     mocker.patch(
         "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
     )
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING", "")
     tools.get_content_path(Path("/User/username/test"))
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        "[yellow]Please run demisto-sdk in content repository![/yellow]",
-    )
+    assert "run demisto-sdk in a content repository" in caplog.text
 
 
 @pytest.mark.parametrize(

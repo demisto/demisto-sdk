@@ -1,0 +1,6 @@
+changes:
+- description: Fixed an issue where logs would not show up correctly.
+  type: fix
+- description: Fixed an issue where the **run-test-playbook** command (used internally) reported incorrect results.
+  type: internal
+pr_number: 4514

@@ -44,7 +44,7 @@ def update_command_args_from_config_file(command, args):
                 section: dict(config[section]) for section in config.sections()
             }
             logger.info(
-                f"[yellow]{config_file_path} sections={config_sections}[/yellow]"
+                f"<yellow>{config_file_path} sections={config_sections}</yellow>"
             )
             if command in config.sections():
                 for key in config[command]:

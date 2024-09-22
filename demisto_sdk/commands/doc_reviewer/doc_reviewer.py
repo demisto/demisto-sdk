@@ -140,18 +140,18 @@ class DocReviewer:
                     return packs_ignore_path, packs_known_words
                 else:
                     logger.info(
-                        f"\n[yellow]No [known_words] section was found within: {packs_ignore_path}[/yellow]"
+                        f"\n<yellow>No [known_words] section was found within: {packs_ignore_path}</yellow>"
                     )
                     return packs_ignore_path, default_pack_known_words
 
             logger.info(
-                f"\n[yellow]No .pack-ignore file was found within pack: {packs_ignore_path}[/yellow]"
+                f"\n<yellow>No .pack-ignore file was found within pack: {packs_ignore_path}</yellow>"
             )
             return "", default_pack_known_words
 
         logger.error(
-            f"\n[red]Could not load pack's known words file since no pack structure was found for {file_path}"
-            f"\nMake sure you are running from the content directory.[/red]"
+            f"\n<red>Could not load pack's known words file since no pack structure was found for {file_path}"
+            f"\nMake sure you are running from the content directory.</red>"
         )
         return "", []
 
@@ -205,7 +205,7 @@ class DocReviewer:
         return modified.union(added).union(renamed)  # type: ignore[arg-type]
 
     def get_files_from_git(self):
-        logger.info("[cyan]Gathering all changed files from git[/cyan]")
+        logger.info("<cyan>Gathering all changed files from git</cyan>")
         for file in self.gather_all_changed_files():
             file = str(file)
             if (
@@ -239,37 +239,37 @@ class DocReviewer:
             correction_text = f" - did you mean: {corrections}" if corrections else ""
 
             if sub_word:
-                logger.info(f"[red]  - {sub_word} in {word}{correction_text}[/red]")
+                logger.info(f"<red>  - {sub_word} in {word}{correction_text}</red>")
             else:
-                logger.info(f"[red]  - {word}{correction_text}[/red]")
+                logger.info(f"<red>  - {word}{correction_text}</red>")
         logger.info(
-            "[yellow]If these are not misspelled consider adding them to a known_words file:\n"
-            "  Pack related words: content/Packs/<PackName>/.pack-ignore under the [known_words] section.\n"
+            "<yellow>If these are not misspelled consider adding them to a known_words file:\n"
+            "  Pack related words: content/Packs/\\<PackName>/.pack-ignore under the [known_words] section.\n"
             "  Not pack specific words: content/Tests/known_words.txt\n"
-            "To test locally add --use-packs-known-words or --known-words flags.[/yellow]"
+            "To test locally add --use-packs-known-words or --known-words flags.</yellow>"
         )
 
     def print_file_report(self):
         if self.files_without_misspells:
             logger.info(
-                "\n[green]================= Files Without Misspells =================[/green]"
+                "\n<green>================= Files Without Misspells =================</green>"
             )
             no_misspells_string = "\n".join(self.files_without_misspells)
-            logger.info(f"[green]{no_misspells_string}[/green]")
+            logger.info(f"<green>{no_misspells_string}</green>")
 
         if self.files_with_misspells:
             logger.info(
-                "\n[red]================= Files With Misspells =================[/red]"
+                "\n<red>================= Files With Misspells =================</red>"
             )
             misspells_string = "\n".join(self.files_with_misspells)
-            logger.info(f"[red]{misspells_string}[/red]")
+            logger.info(f"<red>{misspells_string}</red>")
 
         if self.malformed_rn_files:
             logger.info(
-                "\n[red]================= Malformed Release Notes =================[/red]"
+                "\n<red>================= Malformed Release Notes =================</red>"
             )
             bad_rn = "\n".join(self.malformed_rn_files)
-            logger.info(f"[red]{bad_rn}[/red]")
+            logger.info(f"<red>{bad_rn}</red>")
 
     def run_doc_review(self):
         """Runs spell-check on the given file and release notes check if relevant.
@@ -278,10 +278,10 @@ class DocReviewer:
             bool. True if no problematic words found, False otherwise.
         """
         logger.info(
-            "\n[cyan]================= Starting Doc Review =================[/cyan]"
+            "\n<cyan>================= Starting Doc Review =================</cyan>"
         )
         if len(self.SUPPORTED_FILE_TYPES) == 1:
-            logger.info("[cyan]Running only on release notes[/cyan]")
+            logger.info("<cyan>Running only on release notes</cyan>")
 
         if self.file_paths:
             for file_path in self.file_paths:
@@ -302,7 +302,7 @@ class DocReviewer:
             # --xsoar-only flag is specified.
             if self.is_xsoar_supported_rn_only and not is_xsoar_supported_pack(file):
                 logger.info(
-                    f"[yellow]File '{file}' was skipped because it does not belong to an XSOAR-supported Pack[/yellow]"
+                    f"<yellow>File '{file}' was skipped because it does not belong to an XSOAR-supported Pack</yellow>"
                 )
                 continue
 
@@ -318,15 +318,14 @@ class DocReviewer:
 
             if self.unknown_words:
                 logger.info(
-                    f"\n[red] - Words that might be misspelled were found in "
-                    f"{file}:[/red]"
+                    f"\n<red> - Words that might be misspelled were found in {file}:</red>"
                 )
                 self.print_unknown_words(unknown_words=self.unknown_words)
                 self.found_misspelled = True
                 self.files_with_misspells.add(file)
 
             else:
-                logger.info(f"[green] - No misspelled words found in {file}[/green]")
+                logger.info(f"<green> - No misspelled words found in {file}</green>")
                 self.files_without_misspells.add(file)
 
         self.print_file_report()
@@ -350,7 +349,7 @@ class DocReviewer:
             )
             if self.known_pack_words_file_path != known_pack_words_file_path:
                 logger.info(
-                    f"\n[yellow]Using known words file found within pack: {known_pack_words_file_path}[/yellow]"
+                    f"\n<yellow>Using known words file found within pack: {known_pack_words_file_path}</yellow>"
                 )
                 if self.known_pack_words_file_path:
                     # Restart Spellchecker to remove old known_words packs file
@@ -390,7 +389,7 @@ class DocReviewer:
 
             # downloading "brown" and "webtext" sets from nltk.
             logger.info(
-                "[yellow]Downloading expanded dictionary, this may take a minute...[/yellow]"
+                "<yellow>Downloading expanded dictionary, this may take a minute...</yellow>"
             )
             nltk.download("brown")
             nltk.download("webtext")

@@ -56,7 +56,7 @@ def validate_changed_files_permissions(
 
     exit_code = 0
 
-    logging_setup()
+    logging_setup(calling_function=__name__)
 
     if changed_files:
         logger.debug(

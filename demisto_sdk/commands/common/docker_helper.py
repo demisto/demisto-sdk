@@ -76,10 +76,6 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                     "CONTENT_GITLAB_CI use case, try to create docker client from env and pull a docker image"
                 )
                 DOCKER_CLIENT = docker.from_env()
-                # image = f"{DOCKER_REGISTRY_URL}/demisto/crypto:1.0.0.83343"
-                # logger.info(f"{image=}")
-                # image = DOCKER_CLIENT.images.pull(image)
-                # logger.info(f"{image=}, {image.tags=}")
                 return DOCKER_CLIENT
         except docker.errors.DockerException:
             logger.warning(

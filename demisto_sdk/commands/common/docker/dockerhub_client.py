@@ -64,16 +64,16 @@ class DockerHubClient:
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
 
-        logger.warning("DockerHubClient | sanity check")
-        logger.warning(f"{DOCKER_IO=}")
-        logger.warning(f"{IS_CONTENT_GITLAB_CI=}")
-        response = self.get_image_tags("demisto/pan-os-python")
-        logger.warning(
-            f"Got image tags for demisto/pan-os-python: {response=}")
-        response_2 = self.get_image_manifests(
-            "demisto/pan-os-python", "1.0.0.58823")
-        logger.warning(
-            f"Got image manifest for demisto/pan-os-python:1.0.0.58823: {response_2=}")
+        # logger.warning("DockerHubClient | sanity check")
+        # logger.warning(f"{DOCKER_IO=}")
+        # logger.warning(f"{IS_CONTENT_GITLAB_CI=}")
+        # response = self.get_image_tags("demisto/pan-os-python")
+        # logger.warning(
+        #     f"Got image tags for demisto/pan-os-python: {response=}")
+        # response_2 = self.get_image_manifests(
+        #     "demisto/pan-os-python", "1.0.0.58823")
+        # logger.warning(
+        #     f"Got image manifest for demisto/pan-os-python:1.0.0.58823: {response_2=}")
 
     def __enter__(self):
         return self

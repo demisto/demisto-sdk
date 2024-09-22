@@ -540,6 +540,8 @@ def get_dockerhub_artifact_registry_url(base_path: str) -> str:
 
     Returns:
         str: The base URL for the DockerHub proxy API calls based on the provided Artifact Registry path.
+        Example: For base_path 'us-docker.pkg.dev/my-project/my-repo',
+        the returned URL would be 'https://region-domain-docker.pkg.dev/v2/my-project/my-repo'
 
     Raises:
         ValueError: If the input base_path is not in the expected format.
@@ -574,12 +576,16 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
     """
     logger.warning(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
     if IS_CONTENT_GITLAB_CI and DOCKER_IO:
-        logger.warning(
-            "Running in GitLab CI environment with custom Docker.io URL")
-        return get_dockerhub_artifact_registry_url(DOCKER_IO)
-    else:
-        logger.warning(f"using provided or default registry, {default_registry=}")
-        return registry or default_registry
+        try:
+            logger.warning(
+                "Running in GitLab CI environment with custom Docker.io URL")
+            return get_dockerhub_artifact_registry_url(DOCKER_IO)
+        except Exception as e:
+            logger.warning(
+                f"Could not initialize a valid API URL from the DOCKER_IO environment variable, Error: {str(e)} ")
+
+    logger.warning(f"using provided or default registry, {default_registry=}")
+    return registry or default_registry
 
 
 def get_gcloud_access_token() -> str | None:

@@ -46,6 +46,7 @@ import google
 import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
+from github import Github
 from google.cloud import secretmanager
 from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
@@ -145,6 +146,7 @@ from demisto_sdk.commands.common.string_to_bool import (
     string_to_bool,
 )
 
+DEMISTO_SDK_REPO = "demisto/demisto-sdk"
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
@@ -3071,37 +3073,21 @@ def is_uuid(s: str) -> Optional[Match]:
     return re.match(UUID_REGEX, s)
 
 
-def get_release_note_entries(version="") -> list:
+def get_release_note_entries(tag_version: str) -> Optional[str]:
     """
-    Gets the release notes entries for the current version.
+    Retrieves the release notes entries for a specified version tag.
 
     Args:
-        version: The current demisto-sdk version.
+        tag_version (str): The version tag for which to retrieve the release notes.
 
-    Return:
-        list: A list of the release notes given from the CHANGELOG file.
+    Returns:
+        Optional[str]: The body of the release tag if found, otherwise None.
     """
-
-    changelog_file_content = (
-        get_remote_file(
-            full_file_path="CHANGELOG.md",
-            return_content=True,
-            git_content_config=GitContentConfig(repo_name="demisto/demisto-sdk"),
-        )
-        .decode("utf-8")
-        .split("\n")
-    )
-
-    if not version or "dev" in version:
-        version = "Unreleased"
-
-    if f"## {version}" not in changelog_file_content:
-        return []
-
-    result = changelog_file_content[changelog_file_content.index(f"## {version}") + 1 :]
-    result = result[: result.index("")]
-
-    return result
+    releases = Github(verify=False).get_repo(DEMISTO_SDK_REPO).get_releases()
+    for release in releases:
+        if release.tag_name == f"v{tag_version}":
+            return release.body
+    return None
 
 
 def get_current_usecases() -> list:

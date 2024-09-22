@@ -68,7 +68,12 @@ class DockerHubClient:
         logger.warning(f"{DOCKER_IO=}")
         logger.warning(f"{IS_CONTENT_GITLAB_CI=}")
         response = self.get_image_tags("demisto/pan-os-python")
-        logger.warning(f"Got image tags: {response=}")
+        logger.warning(
+            f"Got image tags for demisto/pan-os-python: {response=}")
+        response_2 = self.get_image_manifests(
+            "demisto/pan-os-python", "1.0.0.58823")
+        logger.warning(
+            f"Got image manifest for demisto/pan-os-python:1.0.0.58823: {response_2=}")
 
     def __enter__(self):
         return self
@@ -95,6 +100,7 @@ class DockerHubClient:
                 "Attempting to use Google Cloud access token for Docker Hub proxy authentication")
             try:
                 if gcloud_access_token := get_gcloud_access_token():
+                    logger.warning("returning gcloud_access_token")
                     return gcloud_access_token
             except Exception as e:
                 logger.error(f"Failed to get gcloud access token: {e}")

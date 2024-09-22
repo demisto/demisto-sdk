@@ -176,8 +176,10 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
     )
 
 
-class InvalidXSIAMReportFileName(InvalidPathException):
-    message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
+class InvalidXSIAMItemName(InvalidPathException):
+    message = (
+        "This item's name must start with the pack's name, e.g. `myPack_foobar.json`"
+    )
 
 
 class InvalidXSIAMDashboardFileName(InvalidPathException):

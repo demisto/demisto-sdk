@@ -184,6 +184,10 @@ class InvalidXSIAMDashboardFileName(InvalidPathException):
     message = "Only .json and .png file extension are supported for XSIAM dashboard. File must be named  <pack_name>_<dashboard_name>.json."
 
 
+class InvalidCorrelationRuleFileName(InvalidPathException):
+    message = "Only .yml files are supported for XSIAM dashboard. File names must start with `<pack_name>_`"
+
+
 class InvalidXSIAMParsingRuleFileName(InvalidPathException):
     message = "Only .yml and .xif file extension are supported for XSIAM Parsing Rule. File must be named as the parent folder name."
 
@@ -252,7 +256,10 @@ def _validate(path: Path) -> None:
         split_at(path.parts, lambda v: v == PACKS_FOLDER, maxsplit=1)
     )
 
-    if parts_after_packs[0] in {"DeprecatedContent", "D2"}:  # Pack name
+    if (pack_folder_name := parts_after_packs[0]) in {
+        "DeprecatedContent",
+        "D2",
+    }:  # Pack name
         """
         This set neither does nor should contain all names of deprecated packs.
         D2 is unique with the files it has, so it is explicitly mentioned here.
@@ -303,16 +310,15 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidClassifier
 
-        if first_level_folder == XSIAM_REPORTS_DIR and not (
-            path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix == ".json"
-        ):
-            raise InvalidXSIAMReportFileName
-
-        if first_level_folder == XSIAM_DASHBOARDS_DIR and not (
-            path.stem.startswith(f"{parts_after_packs[0]}_")
-            and path.suffix in (".json", ".png")
-        ):
-            raise InvalidXSIAMDashboardFileName
+        if (
+            first_level_folder in XSIAM_CHECKS
+        ):  # items whose name must start with `{pack_folder}_`
+            allowed_suffixes, exception = XSIAM_CHECKS[first_level_folder]
+            if not (
+                path.stem.startswith(f"{pack_folder_name}_")
+                and path.suffix in allowed_suffixes
+            ):
+                raise exception
 
         if (
             first_level_folder == DOC_FILES_DIR
@@ -350,6 +356,13 @@ def _validate(path: Path) -> None:
 def _validate_image_file_name(image_name: str):
     if INVALID_CHARS_IN_IMAGES_REGEX.findall(image_name):
         raise InvalidImageFileName
+
+
+XSIAM_CHECKS = {
+    XSIAM_REPORTS_DIR: ({".json"}, InvalidXSIAMReportFileName),
+    XSIAM_DASHBOARDS_DIR: ({".json", ".jpg"}, InvalidXSIAMDashboardFileName),
+    CORRELATION_RULES_DIR: ({".yml"}, InvalidCorrelationRuleFileName),
+}
 
 
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):

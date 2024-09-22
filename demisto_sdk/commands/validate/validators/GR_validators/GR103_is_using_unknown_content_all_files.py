@@ -4,17 +4,15 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     ValidationResult,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content import (
-    ContentTypes,
     IsUsingUnknownContentValidator,
 )
 
 
 class IsUsingUnknownContentValidatorAllFiles(
-    IsUsingUnknownContentValidator, BaseValidator[ContentTypes]
+    IsUsingUnknownContentValidator
 ):
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 

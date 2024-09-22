@@ -11,6 +11,7 @@ class TestValidateFileChangePermissions:
 
     from demisto_sdk.scripts.validate_file_permission_changes import main as func
 
+    @classmethod
     def test_unchanged_permissions(cls, tmp_path: Path):
         """
         Test `validate_file_permission_changes` exit code when
@@ -35,6 +36,7 @@ class TestValidateFileChangePermissions:
 
         assert result.exit_code == 0
 
+    @classmethod
     def test_set_executable(cls, tmp_path: Path):
         """
         Test `validate_file_permission_changes` exit code when
@@ -66,6 +68,7 @@ class TestValidateFileChangePermissions:
             in actual_output
         )
 
+    @classmethod
     def test_one_executable_one_not(cls, tmp_path: Path):
         """
         Test `validate_file_permission_changes` exit code when

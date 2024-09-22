@@ -657,7 +657,9 @@ class TestDocReviewPrinting:
         """
 
         t = TestDocReviewXSOAROnly()
-
+        expected_supported = expected_not_supported_rn = (
+            expected_not_supported_readme
+        ) = None  # defaults avoiding pylint E0606
         cmd_args: List[str] = []
         for pack in mix_invalid_packs:
             cmd_args.append("--input")

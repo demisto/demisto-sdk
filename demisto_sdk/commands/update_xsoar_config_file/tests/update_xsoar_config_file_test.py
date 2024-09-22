@@ -117,7 +117,7 @@ class TestXSOARConfigFileUpdater:
             if expected_path_object.is_file():
                 with open(expected_path_object) as config_file:
                     config_file_info = json.load(config_file)
-            elif not expected_path_object.is_file():
+            else:
                 config_file_info = {}
 
             assert config_file_info == {

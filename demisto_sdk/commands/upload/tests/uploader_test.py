@@ -811,7 +811,7 @@ class TestZippedPackUpload:
         click.Context(command=upload).invoke(upload, input=str(TEST_PACK_ZIP))
 
         # validate
-        tools.update_server_configuration.call_count == exp_call_count
+        tools.update_server_configuration.call_count == exp_call_count  # pylint: disable=no-member
 
     def test_upload_zip_does_not_exist(self):
         """

@@ -3,11 +3,12 @@ from typing import List, Optional, Union
 from wcmatch.pathlib import EXTMATCH, Path
 
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
+    YAMLContentObject,
+)
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-
-from .yaml_content_object import YAMLContentObject
 
 
 class YAMLContentUnifiedObject(YAMLContentObject):
@@ -174,7 +175,9 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             #   2. <original_file_name>_4_5.yml
             if self.docker_image_4_5:
                 # Split file as described above.
-                created_files.extend(self._split_yaml_4_5_0(dest_dir))
+                created_files.extend(
+                    self._split_yaml_4_5_0(dest_dir)
+                )  # TODO doesn't exist
                 # Adding readme and changelog if requested.
                 created_files.extend(
                     super().dump(

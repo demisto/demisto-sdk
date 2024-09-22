@@ -48,6 +48,7 @@ class LogEntry(BaseModel):
         use_enum_values = True
 
     @validator("type", pre=True)
+    @classmethod
     def validate_type(cls, value):
         if value == INITIAL_TYPE:
             raise ValueError(
@@ -60,6 +61,7 @@ class LogEntry(BaseModel):
 
         return value
 
+    @classmethod
     @validator("description", pre=True)
     def validate_description(cls, value):
         if value == INITIAL_DESCRIPTION:

@@ -36,6 +36,7 @@ class TestValidateMyPyGlobalIgnore:
     Test class for validation of mypy global ignore.
     """
 
+    @classmethod
     def test_mypy_ignore_not_added(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -58,6 +59,7 @@ class TestValidateMyPyGlobalIgnore:
 
         assert result.exit_code == 0
 
+    @classmethod
     def test_mypy_ignore_add_not_global(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -80,6 +82,7 @@ class TestValidateMyPyGlobalIgnore:
 
         assert result.exit_code == 0
 
+    @classmethod
     def test_mypy_ignore_add_tab(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -104,6 +107,7 @@ class TestValidateMyPyGlobalIgnore:
 
         assert result.exit_code == 0
 
+    @classmethod
     def test_mypy_ignore_add_global(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -163,6 +167,7 @@ class TestValidateMyPyGlobalIgnore:
             in actual_output[1]
         )
 
+    @classmethod
     def test_mypy_ignore_add_global_no_whitespace_2(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -193,6 +198,7 @@ class TestValidateMyPyGlobalIgnore:
             in actual_output[1]
         )
 
+    @classmethod
     def test_mypy_ignore_add_global_no_whitespace_3(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -223,6 +229,7 @@ class TestValidateMyPyGlobalIgnore:
             in actual_output[1]
         )
 
+    @classmethod
     def test_mypy_disable_error_code(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -251,6 +258,7 @@ class TestValidateMyPyGlobalIgnore:
             in actual_output[1]
         )
 
+    @classmethod
     def test_mypy_disable_multiple_error_code(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -279,6 +287,7 @@ class TestValidateMyPyGlobalIgnore:
             in actual_output[1]
         )
 
+    @classmethod
     def test_mypy_disable_error_code_no_whitespace(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -309,6 +318,7 @@ class TestValidateMyPyGlobalIgnore:
             in actual_output[1]
         )
 
+    @classmethod
     def test_mypy_disable_error_code_no_whitespace_2(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when

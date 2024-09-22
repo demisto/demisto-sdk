@@ -1029,8 +1029,7 @@ class TestFormatting:
             "integration-VMware.yml",
         )
         formatter = IntegrationYMLFormat(input=integration_yml_path, output="")
-        res = formatter.update_tests()
-        assert res is None
+        formatter.update_tests()
         assert formatter.data.get("tests") == ["VMWare Test"]
 
     def test_format_beta_integration(self):

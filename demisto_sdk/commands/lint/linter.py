@@ -600,17 +600,17 @@ class Linter:
         # check for any exit code other than 0
         if exit_code:
             error, warning, other = split_warnings_errors(output)
-        if exit_code and warning:
-            self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
-            self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
-        if exit_code & FAIL:
-            self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-            # if the error were extracted correctly as they start with E
-            if error:
-                self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
-                # if there were errors but they do not start with E
-            else:
-                self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
+            if warning:
+                self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
+                self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
+            if exit_code == FAIL:
+                self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
+                # if the error were extracted correctly as they start with E
+                if error:
+                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                    # if there were errors but they do not start with E
+                else:
+                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
     @timer(group_name="lint")
     def _run_xsoar_linter(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:

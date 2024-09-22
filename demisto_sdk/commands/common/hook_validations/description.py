@@ -294,7 +294,7 @@ class DescriptionValidator(BaseValidator):
                 description_content = f.read()
 
         invalid_lines = []
-        for line_num, line in enumerate(description_content.split("\n")):
+        for line_num, line in enumerate((description_content or "").split("\n")):
             if "demisto " in line.lower() or " demisto" in line.lower():
                 invalid_lines.append(line_num + yml_line_num + 1)
 

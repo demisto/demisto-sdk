@@ -1,5 +1,0 @@
-changes:
-- description: Modified the `sdk-changelog` script which would previously generate all release notes in one section. Now it generates the changelog with different sections separated by headers Fixed, Breaking Changes, and Internal.
-
-  type: feature
-pr_number: 4555

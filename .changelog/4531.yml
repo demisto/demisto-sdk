@@ -1,4 +1,0 @@
-changes:
-- description: Dropped support for Python 3.8.
-  type: breaking
-pr_number: 4531

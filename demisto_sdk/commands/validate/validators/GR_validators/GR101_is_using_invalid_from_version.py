@@ -103,13 +103,13 @@ class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
         invalid_content_items = self.graph.find_uses_paths_with_invalid_fromversion(
             file_paths=file_paths_to_validate, for_supported_versions=True
         )
-        final_validation_results = []
+        result = []
         for content_item in invalid_content_items:
             used_content_items = [
                 relationship.content_item_to.object_id
                 for relationship in content_item.uses
             ]
-            final_validation_results.append(
+            result.append(
                 ValidationResult(
                     validator=self,
                     message=self.error_message.format(
@@ -121,4 +121,4 @@ class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
                 )
             )
 
-        return final_validation_results
+        return result

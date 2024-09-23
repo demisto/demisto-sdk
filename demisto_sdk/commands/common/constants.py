@@ -55,7 +55,7 @@ DEMISTO_SDK_LOG_NOTIFY_PATH = "DEMISTO_SDK_LOG_NOTIFY_PATH"
 DEMISTO_SDK_LOG_FILE_SIZE = "DEMISTO_SDK_LOG_FILE_SIZE"
 DEMISTO_SDK_LOG_FILE_COUNT = "DEMISTO_SDK_LOG_FILE_COUNT"
 DEMISTO_SDK_LOG_NO_COLORS = "DEMISTO_SDK_LOG_NO_COLORS"
-
+DEMISTO_SDK_LOGGING_SET = "DEMISTO_SDK_LOGGING_SET"
 # Neo4j
 DEMISTO_SDK_NEO4J_VERSION = "DEMISTO_SDK_NEO4J_VERSION"
 DEMISTO_SDK_NEO4J_DATABASE_HTTP = "DEMISTO_SDK_NEO4J_DATABASE_HTTP"
@@ -2136,18 +2136,17 @@ MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 STRING_TO_BOOL_MAP = {
+    # should only have lowercase keys, see string_to_bool
+    "t": True,
     "y": True,
     "1": True,
     "yes": True,
     "true": True,
-    "True": True,
     "n": False,
+    "f": False,
     "0": False,
     "no": False,
     "false": False,
-    "False": False,
-    "t": True,
-    "f": False,
 }
 
 SCHEMA_FILE_VALID_ATTRIBUTES_TYPE = {"string", "int", "float", "datetime", "boolean"}

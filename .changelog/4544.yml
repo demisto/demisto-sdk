@@ -1,4 +1,0 @@
-changes:
-- description: Discard 'canvas' tab from LO107 validation as it is now supported by XSIAM.
-  type: feature
-pr_number: 4544

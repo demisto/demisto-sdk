@@ -81,10 +81,12 @@ ContentTypes = Union[
 class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR101"
     description = "Validates that source's fromversion >= target's fromversion."
-    rationale = "Prevent issues where used objects are not available due to a version mismatch."
+    rationale = (
+        "Prevent issues where used objects are not available due to a version mismatch."
+    )
     error_message = (
         "Content item '{0}' whose from_version is '{1}' is using content items:"
-        " {2} whose from_version is higher (should be <= {1})"
+        " {2} whose from_version is higher (should be <= {3})"
     )
     related_field = ""
     is_auto_fixable = False
@@ -116,6 +118,7 @@ class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
                         content_item.name,
                         content_item.fromversion,
                         ", ".join(f"'{name}'" for name in used_content_items),
+                        content_item.fromversion,
                     ),
                     content_object=content_item,
                 )

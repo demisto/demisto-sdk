@@ -60,9 +60,9 @@ class ValidateManager:
         Returns:
             int: the exit code to obtained from the calculations of post_results.
         """
-        logger.info("Starting validate items.")
+        logger.warning("Starting validate items.")
         for validator in self.validators:
-            logger.debug(f"Starting execution for {validator.error_code} validator.")
+            logger.warning(f"Starting execution for {validator.error_code} validator.")
             if filtered_content_objects_for_validator := list(
                 filter(
                     lambda content_object: validator.should_run(
@@ -115,7 +115,7 @@ class ValidateManager:
                         validation_caught_exception_result
                     )
         if BaseValidator.graph_interface:
-            logger.info("Closing graph.")
+            logger.warning("Closing graph.")
             BaseValidator.graph_interface.close()
         self.add_invalid_content_items()
         return self.validation_results.post_results(

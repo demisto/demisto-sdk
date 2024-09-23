@@ -335,7 +335,8 @@ class Initializer:
         invalid_content_items: Set[Path] = set()
         non_content_items: Set[Path] = set()
         logger.warning(
-            f'gather_objects_to_run_on | {ExecutionMode.USE_GIT=}, {content_objects_to_run=}, {invalid_content_items=}, {non_content_items=}')
+            f"gather_objects_to_run_on | {ExecutionMode.USE_GIT=}, {content_objects_to_run=}, {invalid_content_items=}, {non_content_items=}"
+        )
         if self.execution_mode == ExecutionMode.USE_GIT:
             (
                 content_objects_to_run,
@@ -376,7 +377,8 @@ class Initializer:
             )
 
         logger.warning(
-            f'gather_objects_to_run_on | {len(content_objects_to_run_with_packs)}, {len(invalid_content_items)}')
+            f"gather_objects_to_run_on | {len(content_objects_to_run_with_packs)=}, {len(invalid_content_items)=}"
+        )
         return content_objects_to_run_with_packs, invalid_content_items
 
     def get_items_from_packs(
@@ -408,7 +410,7 @@ class Initializer:
         self.validate_git_installed()
         self.set_prev_ver()
         self.setup_git_params()
-        logger.warning('get_files_using_git')
+        logger.warning("get_files_using_git")
         self.print_git_config()
 
         (

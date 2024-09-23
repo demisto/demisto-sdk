@@ -1,0 +1,4 @@
+changes:
+- description: Add a GitHub annotation for XSOAR linter warnings only for contribution PR.
+  type: internal
+pr_number: 4400

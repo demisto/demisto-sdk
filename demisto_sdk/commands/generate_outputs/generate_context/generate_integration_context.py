@@ -126,9 +126,9 @@ def generate_integration_context(
                 yml_data = insert_outputs(yml_data, command, output_contexts)
 
         # Make the changes in place the input yml
-        logger.info(f"[green]Writing outputs to {output_path}[/green]")
+        logger.info(f"<green>Writing outputs to {output_path}</green>")
         write_dict(output_path, yml_data)
     except ValueError as ex:
-        logger.info(f"[red]Error: {str(ex)}[/red]")
+        logger.info(f"<red>Error: {str(ex)}</red>")
         return 1
     return 0

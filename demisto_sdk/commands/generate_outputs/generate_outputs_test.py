@@ -1,10 +1,7 @@
-import logging
-
 import pytest
 from click.testing import CliRunner
 
 import demisto_sdk.__main__ as main
-from TestSuite.test_tools import str_in_call_args_list
 
 
 @pytest.mark.parametrize(
@@ -28,19 +25,14 @@ def test_generate_outputs_json_to_outputs_flow(
     Then
         - Ensure that the outputs are valid
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
-
     import demisto_sdk.commands.generate_outputs.generate_outputs as go
 
     mocker.patch.object(go, "json_to_outputs", return_value="None")
 
     runner = CliRunner()
-    runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
+    result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
     if expected_stdout:
-        assert str_in_call_args_list(logger_error.call_args_list, expected_stdout)
-    else:
-        assert len(logger_error.call_args_list) == 0
+        assert expected_stdout in result.output
 
 
 @pytest.mark.parametrize(
@@ -52,7 +44,7 @@ def test_generate_outputs_json_to_outputs_flow(
     ],
 )
 def test_generate_outputs_generate_integration_context_flow(
-    mocker, monkeypatch, args, expected_stdout, expected_exit_code
+    mocker, args, expected_stdout, expected_exit_code
 ):
     """
     Given
@@ -64,8 +56,6 @@ def test_generate_outputs_generate_integration_context_flow(
     Then
         - Ensure that the outputs are valid
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     import demisto_sdk.commands.generate_outputs.generate_outputs as go
 
@@ -75,4 +65,4 @@ def test_generate_outputs_generate_integration_context_flow(
     result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
     assert result.exit_code == expected_exit_code
     if expected_exit_code == 0:
-        assert str_in_call_args_list(logger_info.call_args_list, expected_stdout)
+        assert expected_stdout in result.output

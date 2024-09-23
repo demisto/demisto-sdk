@@ -78,10 +78,10 @@ class XSOARConfigFileUpdater:
         if self.add_marketplace_pack or self.add_custom_pack:
             if not self.pack_id:
                 is_valid_pack_structure = False
-                logger.info("[red]Error: Missing option '-pi' / '--pack-id'.[/red]")
+                logger.info("<red>Error: Missing option '-pi' / '--pack-id'.</red>")
             if not self.pack_data:
                 is_valid_pack_structure = False
-                logger.info("[red]Error: Missing option '-pd' / '--pack-data'.[/red]")
+                logger.info("<red>Error: Missing option '-pd' / '--pack-data'.</red>")
         return is_valid_pack_structure
 
     def add_all_installed_packs_to_config_file(self):

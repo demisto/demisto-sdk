@@ -81,7 +81,7 @@ ContentTypes = Union[
 class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR101"
     description = "Validates that source's fromversion >= target's fromversion."
-    rationale = "Content items should only use content items which have an equal or smaller fromversion."
+    rationale = "Prevent issues where used objects are not available due to a version mismatch."
     error_message = (
         "Content item '{0}' whose from_version is '{1}' is using content items:"
         " {2} whose from_version is higher (must be equal to, or less than ..)"
@@ -103,13 +103,13 @@ class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
         invalid_content_items = self.graph.find_uses_paths_with_invalid_fromversion(
             file_paths=file_paths_to_validate, for_supported_versions=True
         )
-        final_validation_results = []
+        result = []
         for content_item in invalid_content_items:
             used_content_items = [
                 relationship.content_item_to.object_id
                 for relationship in content_item.uses
             ]
-            final_validation_results.append(
+            result.append(
                 ValidationResult(
                     validator=self,
                     message=self.error_message.format(
@@ -121,4 +121,4 @@ class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
                 )
             )
 
-        return final_validation_results
+        return result

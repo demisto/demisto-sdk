@@ -808,7 +808,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-    logger.warning('validate | function runnin')
+    logger.warning('validate | function running')
 
     if is_sdk_defined_working_offline():
         logger.warning('validate | SDK is offline, skipping validation')
@@ -952,7 +952,8 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 ignore_support_level=kwargs.get("ignore_support_level"),
                 ignore=kwargs.get("ignore"),
             )
-            logger.warning(f'validate | {validator_v2=}, {validator_v2.validators=}, {validator_v2.objects_to_run=}')
+            logger.warning(
+                f'validate | {validator_v2=}, {validator_v2.objects_to_run=}')
             exit_code += validator_v2.run_validations()
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

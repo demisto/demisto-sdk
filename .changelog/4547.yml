@@ -1,4 +1,0 @@
-changes:
-- description: Removed support for the `Connection` content item type.
-  type: internal
-pr_number: 4547

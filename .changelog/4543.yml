@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue in the init-validation script where it wasn't generating the correct execution mode for graph validations.
-  type: fix
-pr_number: 4543

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where **create artifacts** failed logging in certain scenarios
+  type: fix
+pr_number: 4574

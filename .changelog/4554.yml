@@ -1,0 +1,4 @@
+changes:
+- description: Modified the `--release-notes` flag which would previously support a specific changelog file format. Now it retrieves the release data from the GitHub tags info.
+  type: feature
+pr_number: 4554

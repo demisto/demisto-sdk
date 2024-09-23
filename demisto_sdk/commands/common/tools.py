@@ -4365,7 +4365,9 @@ def get_pack_latest_rn_version(pack_path: str) -> str:
         (str): The lastest version of RN.
     """
     list_of_files = glob.glob(pack_path + "/ReleaseNotes/*")
-    list_of_release_notes = [Path(file).name for file in list_of_files]
+    list_of_release_notes = [
+        Path(file).name for file in list_of_files if Path(file).suffix == ".md"
+    ]
     list_of_versions = [
         rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
     ]

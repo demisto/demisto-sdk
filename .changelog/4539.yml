@@ -1,8 +1,0 @@
-changes:
-- description: Fixed an issue where docker validations failed on API Modules in the new validate flow.
-  type: fix
-- description: Fixed an issue where running `validate -a` on specific validations failed ignored content items.
-  type: fix
-- description: Fixed an issue where RM106 failed on false positive cases of `demisto` word occurrence.
-  type: fix
-pr_number: 4539

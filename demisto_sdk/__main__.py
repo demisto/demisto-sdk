@@ -232,7 +232,7 @@ def main(ctx, config, version, release_notes, **kwargs):
             __version__ = get_distribution("demisto-sdk").version
         except DistributionNotFound:
             __version__ = "dev"
-            logger.info(
+            logger.warning(
                 "[yellow]Could not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
@@ -241,7 +241,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "CI"
             ):  # Check only when not running in CI (e.g running locally).
                 last_release = get_last_remote_release_version()
-            logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
+            logger.warning(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
                 logger.warning(
                     f"A newer version ({last_release}) is available. "
@@ -255,12 +255,12 @@ def main(ctx, config, version, release_notes, **kwargs):
                         "\n[yellow]Could not get the release notes for this version.[/yellow]"
                     )
                 else:
-                    logger.info(
+                    logger.warning(
                         "\nThe following are the release note entries for the current version:\n"
                     )
                     for rn in rn_entries:
-                        logger.info(rn)
-                    logger.info("")
+                        logger.warning(rn)
+                    logger.warning("")
 
 
 # ====================== split ====================== #
@@ -322,7 +322,7 @@ def split(ctx, config, **kwargs):
         FileType.LISTS,
         FileType.ASSETS_MODELING_RULE,
     ]:
-        logger.info(
+        logger.warning(
             "[red]File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.[/red]"
         )
         return 1
@@ -380,7 +380,7 @@ def extract_code(ctx, config, **kwargs):
     update_command_args_from_config_file("extract-code", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        logger.info("[red]File is not an Integration or Script.[/red]")
+        logger.warning("[red]File is not an Integration or Script.[/red]")
         return 1
     extractor = YmlSplitter(
         configuration=config.configuration, file_type=file_type.value, **kwargs
@@ -808,11 +808,15 @@ def validate(ctx, config, file_paths: str, **kwargs):
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
+    logger.warning('validate | function runnin')
+
     if is_sdk_defined_working_offline():
+        logger.warning('validate | SDK is offline, skipping validation')
         logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)
 
     if file_paths and not kwargs["input"]:
+        logger.warning('validate | using file_paths argument as input')
         # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
         kwargs["input"] = ",".join(file_paths)
     run_with_mp = not kwargs.pop("no_multiprocessing")
@@ -822,7 +826,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
     file_path = kwargs["input"]
 
     if kwargs["post_commit"] and kwargs["staged"]:
-        logger.info(
+        logger.warning(
             "[red]Could not supply the staged flag with the post-commit flag[/red]"
         )
         sys.exit(1)
@@ -886,6 +890,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                     )
 
         if run_old_validate:
+            logger.warning(f'validate | run_old_validate')
             if not kwargs["skip_new_validate"]:
                 kwargs["graph"] = False
             validator = OldValidateManager(
@@ -919,6 +924,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             )
             exit_code += validator.run_validation()
         if run_new_validate:
+            logger.warning('validate | run_new_validate')
             validation_results = ResultWriter(
                 json_file_path=kwargs.get("json_file"),
             )
@@ -936,6 +942,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 file_path=file_path,
                 execution_mode=execution_mode,
             )
+            logger.warning(f'validate | {initializer=}')
             validator_v2 = ValidateManager(
                 file_path=file_path,
                 initializer=initializer,
@@ -945,11 +952,12 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 ignore_support_level=kwargs.get("ignore_support_level"),
                 ignore=kwargs.get("ignore"),
             )
+            logger.warning(f'validate | {validator_v2=}')
             exit_code += validator_v2.run_validations()
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
-        logger.info(f"[red]{e}[/red]")
-        logger.info(
+        logger.warning(f"[red]{e}[/red]")
+        logger.warning(
             "\n[red]You may not be running `demisto-sdk validate` command in the content directory.\n"
             "Please run the command from content directory[red]"
         )
@@ -2078,7 +2086,7 @@ def generate_test_playbook(ctx, **kwargs):
     update_command_args_from_config_file("generate-test-playbook", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        logger.info(
+        logger.warning(
             "[red]Generating test playbook is possible only for an Integration or a Script.[/red]"
         )
         return 1
@@ -2089,7 +2097,7 @@ def generate_test_playbook(ctx, **kwargs):
             sys.exit(0)
         sys.exit(1)
     except PlaybookTestsGenerator.InvalidOutputPathError as e:
-        logger.info(f"[red]{e}[/red]")
+        logger.warning(f"[red]{e}[/red]")
         return 1
 
 
@@ -2372,7 +2380,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             )
 
         if file_type == FileType.INTEGRATION:
-            logger.info(f"Generating {file_type.value.lower()} documentation")
+            logger.warning(f"Generating {file_type.value.lower()} documentation")
             use_cases = kwargs.get("use_cases")
             command_permissions = kwargs.get("command_permissions")
             return generate_integration_doc(
@@ -2390,7 +2398,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 force=force,
             )
         elif file_type == FileType.SCRIPT:
-            logger.info(f"Generating {file_type.value.lower()} documentation")
+            logger.warning(f"Generating {file_type.value.lower()} documentation")
             return generate_script_doc(
                 input_path=input_path,
                 output=output_path,
@@ -2401,7 +2409,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 use_graph=use_graph,
             )
         elif file_type == FileType.PLAYBOOK:
-            logger.info(f"Generating {file_type.value.lower()} documentation")
+            logger.warning(f"Generating {file_type.value.lower()} documentation")
             return generate_playbook_doc(
                 input_path=input_path,
                 output=output_path,
@@ -2411,7 +2419,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             )
 
         elif file_type == FileType.README:
-            logger.info(f"Adding template to {file_type.value.lower()} file")
+            logger.warning(f"Adding template to {file_type.value.lower()} file")
             return generate_readme_template(
                 input_path=Path(input_path), readme_template=readme_template
             )
@@ -2508,7 +2516,7 @@ def merge_id_sets(ctx, **kwargs):
         first_id_set_path=first, second_id_set_path=second, output_id_set_path=output
     )
     if duplicates:
-        logger.info(
+        logger.warning(
             f"[red]Failed to merge ID sets: {first} with {second}, "
             f"there are entities with ID: {duplicates} that exist in both ID sets"
         )
@@ -2588,7 +2596,7 @@ def update_release_notes(ctx, **kwargs):
 
     update_command_args_from_config_file("update-release-notes", kwargs)
     if kwargs.get("force") and not kwargs.get("input"):
-        logger.info(
+        logger.warning(
             "[red]Please add a specific pack in order to force a release notes update."
         )
         sys.exit(0)
@@ -2615,7 +2623,7 @@ def update_release_notes(ctx, **kwargs):
         rn_mng.manage_rn_update()
         sys.exit(0)
     except Exception as e:
-        logger.info(
+        logger.warning(
             f"[red]An error occurred while updating the release notes: {str(e)}[/red]"
         )
         sys.exit(1)
@@ -2716,7 +2724,7 @@ def find_dependencies(ctx, **kwargs):
         )
 
     except ValueError as exp:
-        logger.info(f"[red]{exp}[/red]")
+        logger.warning(f"[red]{exp}[/red]")
 
 
 # ====================== postman-codegen ====================== #
@@ -2795,7 +2803,7 @@ def postman_codegen(
     if config_out:
         path = Path(output) / f"config-{postman_config.name}.json"
         path.write_text(json.dumps(postman_config.to_dict(), indent=4))
-        logger.info(f"Config file generated at:\n{str(path.absolute())}")
+        logger.warning(f"Config file generated at:\n{str(path.absolute())}")
     else:
         # generate integration yml
         yml_path = postman_config.generate_integration_package(output, is_unified=True)
@@ -2807,11 +2815,11 @@ def postman_codegen(
                 output=str(output),
             )
             yml_splitter.extract_to_package_format()
-            logger.info(
+            logger.warning(
                 f"[green]Package generated at {str(Path(output).absolute())} successfully[/green]"
             )
         else:
-            logger.info(
+            logger.warning(
                 f"[green]Integration generated at {str(yml_path.absolute())} successfully[/green]"
             )
 
@@ -2929,10 +2937,10 @@ def openapi_codegen(ctx, **kwargs):
         try:
             os.mkdir(output_dir)
         except Exception as err:
-            logger.info(f"[red]Error creating directory {output_dir} - {err}[/red]")
+            logger.warning(f"[red]Error creating directory {output_dir} - {err}[/red]")
             sys.exit(1)
     if not os.path.isdir(output_dir):
-        logger.info(f'[red]The directory provided "{output_dir}" is not a directory')
+        logger.warning(f'[red]The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
 
     input_file = kwargs["input_file"]
@@ -2964,9 +2972,9 @@ def openapi_codegen(ctx, **kwargs):
             with open(kwargs["config_file"]) as config_file:
                 configuration = json.load(config_file)
         except Exception as e:
-            logger.info(f"[red]Failed to load configuration file: {e}[/red]")
+            logger.warning(f"[red]Failed to load configuration file: {e}[/red]")
 
-    logger.info("Processing swagger file...")
+    logger.warning("Processing swagger file...")
     integration = OpenAPIIntegration(
         input_file,
         base_name,
@@ -2981,7 +2989,7 @@ def openapi_codegen(ctx, **kwargs):
     integration.load_file()
     if not kwargs.get("config_file"):
         integration.save_config(integration.configuration, output_dir)
-        logger.info(f"[green]Created configuration file in {output_dir}[/green]")
+        logger.warning(f"[green]Created configuration file in {output_dir}[/green]")
         if not kwargs.get("use_default", False):
             config_path = os.path.join(output_dir, f"{base_name}_config.json")
             command_to_run = (
@@ -3001,18 +3009,18 @@ def openapi_codegen(ctx, **kwargs):
             if fix_code:
                 command_to_run = command_to_run + " -f"
 
-            logger.info(
+            logger.warning(
                 f"Run the command again with the created configuration file(after a review): {command_to_run}"
             )
             sys.exit(0)
 
     if integration.save_package(output_dir):
-        logger.info(
+        logger.warning(
             f"Successfully finished generating integration code and saved it in {output_dir}",
             "green",
         )
     else:
-        logger.info(
+        logger.warning(
             f"[red]There was an error creating the package in {output_dir}[/red]"
         )
         sys.exit(1)
@@ -3629,12 +3637,12 @@ def setup_env(
     if ide == "auto-detect":
         # Order decides which IDEType will be selected for configuration if multiple IDEs are detected
         if (CONTENT_PATH / ".vscode").exists():
-            logger.info(
+            logger.warning(
                 "Visual Studio Code IDEType has been detected and will be configured."
             )
             ide_type = IDEType.VSCODE
         elif (CONTENT_PATH / ".idea").exists():
-            logger.info(
+            logger.warning(
                 "PyCharm / IDEA IDEType has been detected and will be configured."
             )
             ide_type = IDEType.PYCHARM

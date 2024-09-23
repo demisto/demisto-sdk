@@ -490,7 +490,7 @@ class ReleaseNotesValidator(BaseValidator):
     def get_information_from_rn(rn: str, splitter: str) -> dict:
         """
             Extract the various categories from the release note according to the splitter
-            rn : the relese notes
+            rn : the release notes
             splitter: a string to split by
         Return:
             dict. dictionary where each entry is the category name in the release notes

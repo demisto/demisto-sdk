@@ -316,3 +316,15 @@ RETURN collect(tp) AS content_items
         filter(None, (item.get("content_items") for item in run_query(tx, query))),
         default=[],
     )
+
+
+def validate_pack_dep_is_valid(tx: Transaction, packs_ids: list[str]):
+    """Returns the packs that use deprecated or non-supported dependencies"""
+    query = f"""
+MATCH (pack:Pack)-[r:DEPENDS_ON]->(dep:Pack)
+WHERE pack.object_id IN {packs_ids}
+AND (dep.deprecated = true OR dep.support = 'unsupported')
+RETURN pack, collect(r) as relationships, collect(dep) as nodes_to
+    """
+    return run_query(tx, query)
+

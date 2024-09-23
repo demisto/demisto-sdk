@@ -614,6 +614,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_content_private_nodes)
             session.execute_write(remove_server_nodes)
 
+    def find_invalid_pack_dep(self, packs_id: list[str]):
+         with self.driver.session() as session:
+            results = session.execute_read(
+                validate_pack_dep,
+                packs_id
+            )
+
     def import_graph(
         self,
         imported_path: Optional[Path] = None,

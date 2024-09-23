@@ -308,8 +308,8 @@ def test_IsBCRNExistValidator_obtain_invalid_content_items():
         content_items=content_items
     )
     expected_msgs = [
-        f"The Release notes contains information about breaking changes but missing a breaking change file, make sure to add one as {str(content_items[1].release_note.file_path).replace('.md', '.json')} and that the file contains the 'breakingChanges' entry.",
-        f"The Release notes contains information about breaking changes but missing a breaking change file, make sure to add one as {str(content_items[2].release_note.file_path).replace('.md', '.json')} and that the file contains the 'breakingChanges' entry.",
+        f"The release notes contain information about breaking changes but missing a breaking change file, make sure to add one as {str(content_items[1].release_note.file_path).replace('.md', '.json')} and that the file contains the 'breakingChanges' entry.",
+        f"The release notes contain information about breaking changes but missing a breaking change file, make sure to add one as {str(content_items[2].release_note.file_path).replace('.md', '.json')} and that the file contains the 'breakingChanges' entry.",
     ]
 
     assert len(results) == 2

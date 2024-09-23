@@ -18,7 +18,7 @@ class IsBCRNExistValidator(BaseValidator[ContentTypes]):
     error_code = "RN112"
     description = "Validate that if RN contains 'breaking change' then the breaking change release note exist and filled correctly."
     rationale = "Breaking changes should be well documented so they can pop up to users when updating versions."
-    error_message = "The Release notes contains information about breaking changes but missing a breaking change file, make sure to add one as {0} and that the file contains the 'breakingChanges' entry."
+    error_message = "The release notes contain information about breaking changes but missing a breaking change file, make sure to add one as {0} and that the file contains the 'breakingChanges' entry."
     related_field = "release notes"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
@@ -28,22 +28,13 @@ class IsBCRNExistValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         validation_results = []
         for content_item in content_items:
-            if "breaking change" in content_item.release_note.file_content:
-                json_path = str(content_item.release_note.file_path).replace(
-                    ".md", ".json"
-                )
-                if Path(json_path).exists():
-                    if (
-                        json_file_content := get_dict_from_file(path=json_path)[0]
-                    ) and not json_file_content.get("breakingChanges"):
-                        validation_results.append(
-                            ValidationResult(
-                                validator=self,
-                                message=self.error_message.format(json_path),
-                                content_object=content_item,
-                            )
-                        )
-                else:
+            if "breaking change" not in content_item.release_note.file_content:
+                continue
+            json_path = str(content_item.release_note.file_path).replace(".md", ".json")
+            if Path(json_path).exists():
+                if (
+                    json_file_content := get_dict_from_file(path=json_path)[0]
+                ) and not json_file_content.get("breakingChanges"):
                     validation_results.append(
                         ValidationResult(
                             validator=self,
@@ -51,4 +42,12 @@ class IsBCRNExistValidator(BaseValidator[ContentTypes]):
                             content_object=content_item,
                         )
                     )
+            else:
+                validation_results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(json_path),
+                        content_object=content_item,
+                    )
+                )
         return validation_results

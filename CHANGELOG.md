@@ -1,9 +1,9 @@
 # Changelog
 ## 1.32.0
-* IN136 will be handled in the new validate format of RM102. [#4535](https://github.com/demisto/demisto-sdk/pull/4535)
+* Moved IN136 to the new validate format as part of RM102. [#4535](https://github.com/demisto/demisto-sdk/pull/4535)
 * Dropped support for Python 3.8. [#4531](https://github.com/demisto/demisto-sdk/pull/4531)
-* The validation GR103 has been removed from the old format to enhance performance. [#4522](https://github.com/demisto/demisto-sdk/pull/4522)
-* Move feed's expirationPolicy validation to a new validation - IN163. [#4460](https://github.com/demisto/demisto-sdk/pull/4460)
+* Removed GR103 from the old format to enhance performance. [#4522](https://github.com/demisto/demisto-sdk/pull/4522)
+* Moved feed's expirationPolicy validation to a new validation - IN163. [#4460](https://github.com/demisto/demisto-sdk/pull/4460)
 * Modified the `--release-notes` flag which would previously support a specific changelog file format. Now it retrieves the release data from the GitHub tags info. [#4554](https://github.com/demisto/demisto-sdk/pull/4554)
 * Moved RM102 and IN136 validation to the new format. Ensures context outputs in README and YML files match. [#4535](https://github.com/demisto/demisto-sdk/pull/4535)
 * Moved RM110 validation to the new format. Ensuring all commands are documented in the README. [#4542](https://github.com/demisto/demisto-sdk/pull/4542)
@@ -14,7 +14,7 @@
 * Modified the `sdk-changelog` script which would previously generate all release notes in one section. Now it generates the changelog with different sections separated by headers Fixed, Breaking Changes, and Internal. [#4555](https://github.com/demisto/demisto-sdk/pull/4555)
 * Modified the `mypy` pre-commit hook in the **pre-commit** command which would previously run locally. The hook now runs in Docker and is renamed to `mypy-in-docker`. [#4468](https://github.com/demisto/demisto-sdk/pull/4468)
 * Added 'AssetsModelingRuleSchema' to the `ST110` validation. [#4519](https://github.com/demisto/demisto-sdk/pull/4519)
-* Discard 'canvas' tab from LO107 validation as it is now supported by XSIAM. [#4544](https://github.com/demisto/demisto-sdk/pull/4544)
+* Removed 'canvas' tab from LO107 validation as it is now supported by XSIAM. [#4544](https://github.com/demisto/demisto-sdk/pull/4544)
 * Added support for a specific value in the hidden attribute of a script argument. [#4550](https://github.com/demisto/demisto-sdk/pull/4550)
 * Moved GR103 validation to the new validate format. The validation ensures that content items use other content items only if they exist in the repository. Additionally, removed this validation from the old format to improve performance. [#4522](https://github.com/demisto/demisto-sdk/pull/4522)
 * Fixed an issue in the init-validation script where it wasn't generating the correct execution mode for graph validations. [#4543](https://github.com/demisto/demisto-sdk/pull/4543)
@@ -27,7 +27,7 @@
 * Fixed an issue where logs would not show up correctly. [#4514](https://github.com/demisto/demisto-sdk/pull/4514)
 * Modified *nltk* version requirement to 3.9.1. [#4540](https://github.com/demisto/demisto-sdk/pull/4540)
 * Removed support for the `Connection` content item type. [#4547](https://github.com/demisto/demisto-sdk/pull/4547)
-* Deprecated. Removing the canvas-context-connections.yml schema's file. [#4546](https://github.com/demisto/demisto-sdk/pull/4546)
+* Deprecated. Removed the canvas-context-connections.yml schema's file. [#4546](https://github.com/demisto/demisto-sdk/pull/4546)
 * Fixed an issue where the **run-test-playbook** command (used internally) reported incorrect results. [#4514](https://github.com/demisto/demisto-sdk/pull/4514)
 
 

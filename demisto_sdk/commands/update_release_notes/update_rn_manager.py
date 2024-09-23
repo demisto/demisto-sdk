@@ -80,9 +80,9 @@ class UpdateReleaseNotesManager:
         self.create_release_notes(modified_files, added_files, old_format_files)
         if len(self.total_updated_packs) > 1:
             logger.info(
-                "\n[green]Successfully updated the following packs:\n"
+                "\n<green>Successfully updated the following packs:\n"
                 + "\n".join(self.total_updated_packs)
-                + "[/green]"
+                + "</green>"
             )
 
     def filter_to_relevant_files(
@@ -282,8 +282,8 @@ class UpdateReleaseNotesManager:
                 )
         else:
             logger.info(
-                "[yellow]No changes that require release notes were detected. If such changes were made, "
-                "please commit the changes and rerun the command.[/yellow]"
+                "<yellow>No changes that require release notes were detected. If such changes were made, "
+                "please commit the changes and rerun the command.</yellow>"
             )
 
     def create_pack_release_notes(
@@ -342,9 +342,9 @@ class UpdateReleaseNotesManager:
                     os.unlink(self.packs_existing_rn[pack])
         else:
             logger.info(
-                f"[yellow]Either no changes were found in {pack} pack "
+                f"<yellow>Either no changes were found in {pack} pack "
                 f"or the changes found should not be documented in the release notes file.\n"
-                f"If relevant changes were made, please commit the changes and rerun the command.[/yellow]"
+                f"If relevant changes were made, please commit the changes and rerun the command.</yellow>"
             )
 
     def get_existing_rn(self, pack) -> Optional[str]:

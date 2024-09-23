@@ -167,8 +167,8 @@ class Initializer:
         ):
             non_existing_remote = self.prev_ver.split("/")[0]
             logger.info(
-                f"[red]Could not find remote {non_existing_remote} reverting to "
-                f"{str(self.git_util.repo.remote())}[/red]"
+                f"<red>Could not find remote {non_existing_remote} reverting to "
+                f"{str(self.git_util.repo.remote())}</red>"
             )
             self.prev_ver = self.prev_ver.replace(
                 non_existing_remote, str(self.git_util.repo.remote())
@@ -190,7 +190,7 @@ class Initializer:
     def print_git_config(self):
         """Printing the git configurations - all the relevant flags."""
         logger.info(
-            f"\n[cyan]================= Running on branch {self.branch_name} =================[/cyan]"
+            f"\n<cyan>================= Running on branch {self.branch_name} =================</cyan>"
         )
         logger.info(f"Running against {self.prev_ver}")
 
@@ -258,8 +258,8 @@ class Initializer:
             See CIAC-10968 for more info.
             """
             logger.info(
-                "\n[cyan]CONTRIB_BRANCH environment variable found, running validate in contribution flow "
-                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
+                "\n<cyan>CONTRIB_BRANCH environment variable found, running validate in contribution flow "
+                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
             )
             # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
             relative_untracked_files_paths: Set[Path] = set()

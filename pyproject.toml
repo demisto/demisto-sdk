@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true
-python_version = "3.8"
+python_version = "3.9"
 show_error_codes = true
 follow_imports = "silent"
 pretty = true
@@ -14,7 +14,7 @@ exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.31.11"
+version = "1.32.0"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -23,16 +23,22 @@ classifiers = [
   'Intended Audience :: Developers',
   'Natural Language :: English',
   'License :: OSI Approved :: MIT License',
-  'Programming Language :: Python :: 3.8',
   'Programming Language :: Python :: 3.9',
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: Implementation :: CPython'
 ]
-exclude = ["TestSuite/**", "tests_end_to_end/**", "demisto_sdk/tests/**", "demisto_sdk/**/tests/**", "demisto_sdk/**/test_data/**", "demisto_sdk/**/test_files/**"]
+exclude = [
+  "TestSuite/**",
+  "tests_end_to_end/**",
+  "demisto_sdk/tests/**",
+  "demisto_sdk/**/tests/**",
+  "demisto_sdk/**/test_data/**",
+  "demisto_sdk/**/test_files/**"
+]
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.12"
+python = ">=3.9,<3.12"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"
@@ -55,7 +61,7 @@ inflection = "^0.5.1"
 jsonschema = "^4.4.0"
 mergedeep = "^1.3.4"
 networkx = "^2.7.1"
-nltk = "==3.8.1"
+nltk = "==3.9.1"
 prettytable = "^3.2.0"
 pykwalify = "^1.8.0"
 pyspellchecker = "^0.6.3"
@@ -97,6 +103,8 @@ lxml = "^5.0.0"
 uv = "^0.1.5"
 toml = "^0.10.2"
 werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
+loguru = "^0.7.2"
+pygithub = "^2.2.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]
@@ -115,7 +123,7 @@ ipykernel = "^6.16.1"
 ruff = "^0.5.2"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
-pygithub = "^2.2.0"
+pytest-loguru = "^0.4.0"
 
 [tool.poetry.group.types.dependencies]
 types-requests = "^2.31.0.20240311"
@@ -149,7 +157,7 @@ exclude = [
   "demisto_sdk/commands/init/templates",
   "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
 ]
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 ignore = [
@@ -173,23 +181,29 @@ select = [
   "PTH110",
   "PTH119"
 ]
+logger-objects = ["demisto_sdk.commands.common.logger.logger"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
-"distutils.version".msg = "Use packaging.version.Version instead"
+"distutils.version".msg = "Use packaging.version.Version"
 "git.Repo".msg = "Use GitUtil instead"
-# "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
 "json".msg = "use JSON_Handler instead"
 "json5".msg = "use JSON_Handler instead"
+"logging".msg = "Use demisto_sdk.commands.common.logger"
+"loguru".msg = "Use demisto_sdk.commands.common.logger"
 "orjson".msg = "use JSON_Handler instead"
-"packaging.version.LooseVersion".msg = "Use packaging.version.Version instead"
+"packaging.version.LooseVersion".msg = "Use packaging.version.Version"
 "ruamel.yaml".msg = "use YAML_Handler instead"
 "str.StrEnum".msg = "Import from demisto_sdk.commands.common.StrEnum for <3.11 compatability"
-"ujson".msg = "use JSON_Handler instead"
+"ujson".msg = "use JSON_Handler"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 30
+
+[tool.ruff.lint.per-file-ignores]
+"demisto_sdk/commands/test_content/timestamp_replacer.py" = ["TID251"] # used outside the SDK
+"demisto_sdk/__main__.py" = ["E402"] # The logger must be set up before everything else
 
 [tool.vulture]
 exclude = ["*/tests/*"]

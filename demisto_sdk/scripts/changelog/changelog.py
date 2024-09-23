@@ -25,6 +25,8 @@ from demisto_sdk.scripts.changelog.changelog_obj import (
     LogType,
 )
 
+logging_setup(calling_function=Path(__file__).stem)
+
 DEMISTO_SDK_REPO = "demisto/demisto-sdk"
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
 CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
@@ -196,7 +198,7 @@ def extract_errors(error: str, file_name: Path) -> str:
     """
     error_msg = error.split("\n", 1)
     header_error_msg = f"{error_msg[0][:-len('LogFileObject')] + f'{file_name} file'}"
-    return f"[red]{header_error_msg}\n{error_msg[1]}[/red]"
+    return f"<red>{header_error_msg}\n{error_msg[1]}</red>"
 
 
 def is_changelog_modified() -> bool:
@@ -283,8 +285,10 @@ def compile_changelog_md(
     # Collecting the new log entries in the following order:
     # breaking, feature, fix, internal
     for log_type in (LogType.breaking, LogType.feature, LogType.fix, LogType.internal):
-        new_changelog.extend(log.to_string() for log in new_logs.get(log_type, ()))
-    # A new line separates versions
+        if logs := new_logs.get(log_type, []):
+            new_changelog.append(f"### {log_type.capitalize()}")
+            new_changelog.extend(log.to_string() for log in logs)
+            new_changelog.append("")  # Add an empty line after each category
     new_changelog.append("")
     # Collecting the old changelog
     new_changelog.extend(old_changelog)
@@ -334,7 +338,7 @@ main = typer.Typer(
     pretty_exceptions_enable=False,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
-logging_setup(skip_log_file_creation=True)
+
 
 release = typer.Option(False, "--release", help="releasing", is_flag=True)
 init = typer.Option(

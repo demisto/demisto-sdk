@@ -116,12 +116,12 @@ def generate_playbook_doc(
         save_output(output, f"{playbook_filename}_README.md", doc_text)
 
         if errors:
-            logger.info("[yellow]Possible Errors:[yellow]")
+            logger.warning("<yellow>Possible Errors:</yellow>")
             for error in errors:
-                logger.info(f"[yellow]{error}[/yellow]")
+                logger.warning(error)
 
-    except Exception as ex:
-        logger.info(f"[red]Error: {str(ex)}[/red]")
+    except Exception:
+        logger.exception("Failed generating playbook doc")
         raise
 
 

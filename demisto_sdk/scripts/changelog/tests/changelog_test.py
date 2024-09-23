@@ -167,7 +167,7 @@ def test_get_new_log_entries(changelog_folder_mock: Path):
 
 
 def test_comment_newly_added_changelog(
-    mocker, git_repo: Repo, changelog_mock: Changelog
+    mocker, git_repo: Repo, changelog_mock: Changelog, caplog
 ):
     """
     Given:
@@ -177,7 +177,6 @@ def test_comment_newly_added_changelog(
     Then:
         - Ensure that the log is commented out to the PR.
     """
-    from demisto_sdk.commands.common.logger import logger
 
     changelog_folder = Path(f"{git_repo.path}/.changelog")
     changelog_folder.mkdir()
@@ -185,7 +184,6 @@ def test_comment_newly_added_changelog(
 
     mocker.patch.object(changelog, "GIT_UTIL", git_repo.git_util)
     github_mocker = mocker.patch("demisto_sdk.scripts.changelog.changelog.Github")
-    info_logger_mocker = mocker.patch.object(logger, "info")
 
     changelog_path = changelog_folder / f"{DUMMY_PR_NUMBER}.yml"
     YmlFile.write(data=LOG_FILE_1, output_path=changelog_path)
@@ -199,13 +197,12 @@ def test_comment_newly_added_changelog(
             current_commit, github_token="1234"
         )
     assert github_mocker.called
-    assert (
-        info_logger_mocker.call_args_list[1].args[0]
-        == "Successfully commented on PR 12345 the changelog"
-    )
+    assert "Successfully commented on PR 12345 the changelog" in caplog.text
 
 
-def test_comment_modified_changelog(mocker, git_repo: Repo, changelog_mock: Changelog):
+def test_comment_modified_changelog(
+    mocker, git_repo: Repo, changelog_mock: Changelog, caplog
+):
     """
     Given:
         - repo with modified change-log
@@ -214,7 +211,6 @@ def test_comment_modified_changelog(mocker, git_repo: Repo, changelog_mock: Chan
     Then:
         - Ensure that the log is commented out to the PR.
     """
-    from demisto_sdk.commands.common.logger import logger
 
     changelog_folder = Path(f"{git_repo.path}/.changelog")
     changelog_folder.mkdir()
@@ -222,7 +218,6 @@ def test_comment_modified_changelog(mocker, git_repo: Repo, changelog_mock: Chan
 
     mocker.patch.object(changelog, "GIT_UTIL", git_repo.git_util)
     github_mocker = mocker.patch("demisto_sdk.scripts.changelog.changelog.Github")
-    info_logger_mocker = mocker.patch.object(logger, "info")
 
     changelog_path = changelog_folder / f"{DUMMY_PR_NUMBER}.yml"
     YmlFile.write(data=LOG_FILE_1, output_path=changelog_path)
@@ -240,14 +235,11 @@ def test_comment_modified_changelog(mocker, git_repo: Repo, changelog_mock: Chan
             current_commit, github_token="1234"
         )
     assert github_mocker.called
-    assert (
-        info_logger_mocker.call_args_list[1].args[0]
-        == "Successfully commented on PR 12345 the changelog"
-    )
+    assert "Successfully commented on PR 12345 the changelog" in caplog.text
 
 
 def test_comment_unmodified_changelog(
-    mocker, git_repo: Repo, changelog_mock: Changelog
+    mocker, git_repo: Repo, changelog_mock: Changelog, caplog
 ):
     """
     Given:
@@ -257,7 +249,6 @@ def test_comment_unmodified_changelog(
     Then:
         - Ensure that the log is NOT commented out to the PR.
     """
-    from demisto_sdk.commands.common.logger import logger
 
     changelog_folder = Path(f"{git_repo.path}/.changelog")
     changelog_folder.mkdir()
@@ -265,12 +256,12 @@ def test_comment_unmodified_changelog(
 
     mocker.patch.object(changelog, "GIT_UTIL", git_repo.git_util)
     github_mocker = mocker.patch("demisto_sdk.scripts.changelog.changelog.Github")
-    info_logger_mocker = mocker.patch.object(logger, "info")
 
     changelog_path = changelog_folder / f"{DUMMY_PR_NUMBER}.yml"
     YmlFile.write(data=LOG_FILE_1, output_path=changelog_path)
 
     git_util = git_repo.git_util
+    assert git_util is not None  # for mypy mostly
     git_util.commit_files("Commit changelog file")
 
     # modify the changelog
@@ -284,6 +275,6 @@ def test_comment_unmodified_changelog(
         )
     assert not github_mocker.called
     assert (
-        info_logger_mocker.call_args_list[0].args[0]
-        == f"{changelog_path} has not been changed, not commenting on PR 12345"
+        f"{changelog_path} has not been changed, not commenting on PR 12345"
+        in caplog.text
     )

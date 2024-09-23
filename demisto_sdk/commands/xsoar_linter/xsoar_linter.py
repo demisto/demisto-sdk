@@ -227,7 +227,7 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
 
         if os.getenv("GITHUB_ACTIONS"):
             print_errors_github_action(errors)
-            if os.getenv("IS_CONTRIBUTION"):
+            if os.getenv("DEMISTO_SDK_XSOAR_LINTER_WARNING_ANNOTATIONS"):
                 print_errors_github_action(warnings)
 
         errors_str = "\n".join(errors)

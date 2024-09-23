@@ -62,7 +62,6 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_
 from demisto_sdk.commands.validate.validators.PA_validators.PA114_pack_metadata_version_should_be_raised import (
     PackMetadataVersionShouldBeRaisedValidator,
 )
-from TestSuite.test_tools import str_in_call_args_list
 
 INTEGRATION = create_integration_object()
 INTEGRATION.path = Path(

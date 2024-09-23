@@ -515,9 +515,12 @@ class Initializer:
                 if obj:
                     obj.git_status = git_status
                     # Check if the file exists
-                    if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED) or (
-                        not git_status
-                        and find_type_by_path(file_path) == FileType.METADATA
+                    if (
+                        git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED)
+                        or (
+                            not git_status  # Always collect the origin version of the metadata.
+                            and find_type_by_path(file_path) == FileType.METADATA
+                        )
                     ):
                         try:
                             obj.old_base_content_object = BaseContent.from_path(
@@ -541,18 +544,45 @@ class Initializer:
                 invalid_content_items.add(file_path)  # type: ignore[arg-type]
         return basecontent_with_path_set, invalid_content_items, non_content_items
 
+    @staticmethod
+    def log_related_files(
+        all_files: Set[Path], explicitly_collected_files: Set[Path]
+    ) -> None:
+        """Log the files that were not explicitly collected in previous steps.
+
+        Args:
+            all_files (set): A set of all the files including implicit related files.
+            explicitly_collected_files (set): The set of all the explicitly collected files.
+        """
+        related_files = all_files.difference(explicitly_collected_files)
+        if related_files:
+            logger.info("Running on related files:")
+            logger.info(f"{[str(path) for path in related_files]}")
+
     def get_items_status(
         self, file_by_status_dict: Dict[Path, GitStatuses]
     ) -> Dict[Path, Union[GitStatuses, None]]:
+        """Get the relevant content items given the input files and their statuses.
+
+        Args:
+            file_by_status_dict (dict): A dict of all the input files and their git statuses.
+
+        Returns:
+            (dict) A dict of all paths to content items and their git statuses.
+        """
         statuses_dict: Dict[Path, Union[GitStatuses, None]] = {}
         for path, git_status in file_by_status_dict.items():
             path_str = str(path)
             if self.is_unrelated_path(path_str):
+                # If the path is not related to a content item, continue.
                 continue
             if f"/{INTEGRATIONS_DIR}/" in path_str or f"/{SCRIPTS_DIR}/" in path_str:
+                # If it's an integration or a script obtain the yml file to create the content item.
                 if path_str.endswith(".yml"):
+                    # File already is the yml.
                     statuses_dict[path] = git_status
                 elif self.is_code_file(path, path_str):
+                    # File is the code file.
                     path = self.obtain_yml_from_code(path_str)
                     if path not in statuses_dict:
                         if git_status != GitStatuses.RENAMED:
@@ -560,45 +590,53 @@ class Initializer:
                         else:
                             statuses_dict[path] = None
                 elif f"_{PACKS_README_FILE_NAME}" in path_str:
+                    # File is the readme file.
                     path = Path(path_str.replace(f"_{PACKS_README_FILE_NAME}", ".yml"))
                     if path not in statuses_dict:
                         statuses_dict[path] = None
                 else:
+                    # Otherwise, assume the yml name is the name of the parent directory.
                     path = Path(path.parent / f"{path.parts[-2]}.yml")
                     if path not in statuses_dict:
                         statuses_dict[path] = None
             elif f"/{PLAYBOOKS_DIR }/" in path_str:
+                # If it's inside the playbook directory collect the yml.
                 if path_str.endswith(".yml"):
+                    # File is already the yml.
                     statuses_dict[path] = git_status
                 else:
+                    # Otherwise obtain the yml path independently.
                     path = self.obtain_playbook_path(path)
                     if path not in statuses_dict:
                         statuses_dict[path] = None
             elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
+                # If it's a modeling rule or a parsing rule obtain the yml.
                 if path.suffix in [".json", ".xif"]:
+                    # If it ends with a .json or a .xif replace the ending to the corresponding yml.
                     path = Path(
                         path_str.replace(".xif", ".yml").replace("_schema.json", ".yml")
                     )
                     if path not in statuses_dict:
                         statuses_dict[path] = None
                 else:
+                    # Otherwise assume it's already the yml and collect it.
                     statuses_dict[path] = git_status
             elif PACKS_PACK_META_FILE_NAME in path_str:
+                # If the file is a pack metadata, collect it.
                 statuses_dict[path] = git_status
             elif not self.is_pack_item(path_str):
+                # If the file is not a pack item, collect it as well.
                 statuses_dict[path] = git_status
 
+            # Always collect the metadata file of the relevant path.
             metadata_path = self.obtain_metadata_path(path)
             if metadata_path not in statuses_dict:
+                # If the metadata file was not already collected explicitly, set its status to None.
                 statuses_dict[metadata_path] = None
 
-        all_collected_files = set(statuses_dict.keys())
-        git_only_files = set(file_by_status_dict.keys())
-        related_files = all_collected_files.difference(git_only_files)
-        if related_files:
-            logger.info("Running on related files:")
-            logger.info(f"{[str(path) for path in related_files]}")
-
+        self.log_related_files(
+            set(statuses_dict.keys()), set(file_by_status_dict.keys())
+        )
         return statuses_dict
 
     def load_files(self, files: List[str]) -> Set[Path]:

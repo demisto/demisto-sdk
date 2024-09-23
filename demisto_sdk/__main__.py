@@ -955,6 +955,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             logger.warning(
                 f'validate | {validator_v2=}')
             exit_code += validator_v2.run_validations()
+        logger.warning(f'exit_code: {exit_code}')
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         logger.warning(f"[red]{e}[/red]")

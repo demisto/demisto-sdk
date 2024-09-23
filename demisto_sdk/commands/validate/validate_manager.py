@@ -62,8 +62,7 @@ class ValidateManager:
         """
         logger.warning("Starting validate items.")
         for validator in self.validators:
-            logger.debug(
-                f"Starting execution for {validator.error_code} validator.")
+            logger.debug(f"Starting execution for {validator.error_code} validator.")
             if filtered_content_objects_for_validator := list(
                 filter(
                     lambda content_object: validator.should_run(
@@ -119,6 +118,7 @@ class ValidateManager:
             logger.warning("Closing graph.")
             BaseValidator.graph_interface.close()
         self.add_invalid_content_items()
+        logger.warning("Adding results for invalid content items.")
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.warning
         )

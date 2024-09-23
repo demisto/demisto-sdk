@@ -25,19 +25,15 @@ SECTIONS = [
 
 class EmptySectionsValidator(BaseValidator[ContentTypes]):
     error_code = "RM100"
-    description = (
-        "Validate that the pack contains a full README.md file with pack information. "
-    )
+    description = """Check that there are no default leftovers such as:
+    1. 'FILL IN REQUIRED PERMISSIONS HERE'.
+    2. unexplicit version number - such as "version xx of".
+    3. Default description belonging to one of the examples integrations`"""
     error_message = (
         "The section/s: {0} is/are empty\nplease elaborate or delete the section.\n"
     )
     related_field = "readme"
-    rationale = """Check that if the following headlines exists, they are not empty:
-            1. Troubleshooting
-            2. Use Cases
-            3. Known Limitations
-            4. Additional Information
-            """
+    rationale = """Ensure that no default section is left empty with just headings"""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
     empty_sections: List[str] = []
@@ -73,7 +69,9 @@ class EmptySectionsValidator(BaseValidator[ContentTypes]):
 
         return False
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,

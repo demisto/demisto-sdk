@@ -26,7 +26,11 @@ DEFAULT_SENTENCES = ["getting started and learn how to build an integration"]
 
 class NoDefaultSectionsLeftReadmeValidator(BaseValidator[ContentTypes]):
     error_code = "RM115"
-    description = "Validate that no default section were left in the readme"
+    description = """Check that there are no default leftovers such as:
+    1. 'FILL IN REQUIRED PERMISSIONS HERE'.
+    2. unexplicit version number - such as "version xx of".
+    3. Default description belonging to one of the examples integrations"""
+
     error_message = "Replace {0} with a suitable info."
     related_field = "readme"
     rationale = """Check that there are no default leftovers such as:
@@ -36,17 +40,14 @@ class NoDefaultSectionsLeftReadmeValidator(BaseValidator[ContentTypes]):
             """
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
-    sections: List[str] = []
 
-    def verify_no_default_sections_left(self, content_item: ContentTypes) -> bool:
+    def verify_no_default_sections_left(self, content_item: ContentTypes) -> list:
         """Check that there are no default leftovers"""
-        self.sections = []
-        self.sections = self._find_section_in_text(
+        sections = []
+        sections = self._find_section_in_text(
             content_item, USER_FILL_SECTIONS
         ) + self._find_section_in_text(content_item, DEFAULT_SENTENCES, PACKS_TO_IGNORE)
-        if self.sections:
-            return True
-        return False
+        return sections
 
     def _find_section_in_text(
         self,
@@ -76,15 +77,17 @@ class NoDefaultSectionsLeftReadmeValidator(BaseValidator[ContentTypes]):
 
         return found_sections
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    ", ".join([f'"{section}"' for section in self.sections])
+                    ", ".join([f'"{section}"' for section in sections])
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (self.verify_no_default_sections_left(content_item))
+            if (sections := (self.verify_no_default_sections_left(content_item)))
         ]

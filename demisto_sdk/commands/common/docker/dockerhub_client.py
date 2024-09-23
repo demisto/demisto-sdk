@@ -53,7 +53,8 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-        self.registry_api_url = get_registry_api_url(registry, self.DEFAULT_REGISTRY)
+        # self.registry_api_url = get_registry_api_url(registry, self.DEFAULT_REGISTRY)
+        self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
         self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")
@@ -83,16 +84,16 @@ class DockerHubClient:
         """
         logger.warning("dockerhub_client | get_token")
 
-        if IS_CONTENT_GITLAB_CI:
-            # If running in a Gitlab CI environment, try using the Google Cloud access token
-            logger.warning(
-                "Attempting to use Google Cloud access token for Docker Hub proxy authentication")
-            try:
-                if gcloud_access_token := get_gcloud_access_token():
-                    logger.warning("returning gcloud_access_token")
-                    return gcloud_access_token
-            except Exception as e:
-                logger.error(f"Failed to get gcloud access token: {e}")
+        # if IS_CONTENT_GITLAB_CI:
+        #     # If running in a Gitlab CI environment, try using the Google Cloud access token
+        #     logger.warning(
+        #         "Attempting to use Google Cloud access token for Docker Hub proxy authentication")
+        #     try:
+        #         if gcloud_access_token := get_gcloud_access_token():
+        #             logger.warning("returning gcloud_access_token")
+        #             return gcloud_access_token
+        #     except Exception as e:
+        #         logger.error(f"Failed to get gcloud access token: {e}")
 
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             now = datetime.now()

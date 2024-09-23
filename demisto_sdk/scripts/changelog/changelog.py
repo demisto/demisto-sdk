@@ -1,5 +1,6 @@
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
@@ -281,7 +282,9 @@ def compile_changelog_md(
     # The title
     new_changelog = ["# Changelog"]
     # New version (x.x.x)
-    new_changelog.append(f"## {release_version}")
+    new_changelog.append(
+        f"## {release_version} ({datetime.now().strftime('%Y-%m-%d')})"
+    )
     # Collecting the new log entries in the following order:
     # breaking, feature, fix, internal
     for log_type in (LogType.breaking, LogType.feature, LogType.fix, LogType.internal):

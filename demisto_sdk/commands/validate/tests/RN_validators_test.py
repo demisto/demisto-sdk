@@ -22,7 +22,9 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN112_is_bc_rn_exist
 from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
     ReleaseNoteHeaderValidator,
 )
-from demisto_sdk.commands.validate.validators.RN_validators.RN116_first_level_header_missing import FirstLevelHeaderMissingValidator
+from demisto_sdk.commands.validate.validators.RN_validators.RN116_first_level_header_missing import (
+    FirstLevelHeaderMissingValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -344,17 +346,39 @@ def test_FirstLevelHeaderMissingValidator_obtain_invalid_content_items():
         - Case 5: Shouldn't fail anything.
     """
     content_items = [
-        create_pack_object(paths=["version"], values=["2.0.5"], release_note_content="#### Scripts\n##### script_name\n- Some description."),
-        create_pack_object(paths=["version"], values=["2.0.5"], release_note_content="#### Scripts\n- Some description."),
-        create_pack_object(paths=["version"], values=["2.0.5"], release_note_content="##### script_name\n- Some description."),
-        create_pack_object(paths=["version"], values=["2.0.5"], release_note_content="- Some description."),
-        create_pack_object(paths=["version"], values=["2.0.5"], release_note_content="## script_name\n- Some description.")
-        ]
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="#### Scripts\n##### script_name\n- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="#### Scripts\n- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="##### script_name\n- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="## script_name\n- Some description.",
+        ),
+    ]
     validator = FirstLevelHeaderMissingValidator()
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 2
-    expected_msgs = ['The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/pack_7."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
-              'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/pack_8."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes']
+    expected_msgs = [
+        'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/pack_7."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+        'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/pack_8."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+    ]
     assert all(
         [
             result.message == expected_msg

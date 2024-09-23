@@ -1,0 +1,4 @@
+changes:
+- description: Converted RN116 validation to the new validation format. The validation ensures that the RN contains a first level header.
+  type: internal
+pr_number: 4575

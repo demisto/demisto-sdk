@@ -84,7 +84,7 @@ class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
     rationale = "Prevent issues where used objects are not available due to a version mismatch."
     error_message = (
         "Content item '{0}' whose from_version is '{1}' is using content items:"
-        " {2} whose from_version is higher (must be equal to, or less than ..)"
+        " {2} whose from_version is higher (should be <= {1})"
     )
     related_field = ""
     is_auto_fixable = False

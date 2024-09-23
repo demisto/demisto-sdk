@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 import sys
@@ -69,7 +68,7 @@ from demisto_sdk.tests.constants_test import (
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD
 
 INTEGRATION_TEST_ARGS = (
     SOURCE_FORMAT_INTEGRATION_COPY,
@@ -1253,7 +1252,7 @@ class TestFormatting:
         # Asserting some non related keys are not being deleted
         assert "some-other-key" in modified_schema
 
-    def test_recursive_extend_schema_prints_warning(self, mocker, monkeypatch):
+    def test_recursive_extend_schema_prints_warning(self, caplog):
         """
         Given
             - A dict that represents a schema with sub-schema reference that has no actual sub-schema
@@ -1262,8 +1261,6 @@ class TestFormatting:
         Then
             - Ensure a warning about the missing sub-schema is printed
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         schema = {
             "mapping": {
@@ -1271,10 +1268,10 @@ class TestFormatting:
             },
         }
         BaseUpdate.recursive_extend_schema(schema, schema)
-        assert logger_info.call_count == 1
+        assert len(caplog.records) == 1
         assert (
-            "Could not find sub-schema for input_schema"
-            in logger_info.call_args_list[0][0][0]
+            caplog.records[0].message
+            == "<yellow>Could not find sub-schema for input_schema</yellow>"
         )
 
     @staticmethod
@@ -1928,7 +1925,7 @@ FORMAT_OBJECT = [
     argnames="format_object",
     argvalues=FORMAT_OBJECT,
 )
-def test_yml_run_format_exception_handling(format_object, mocker):
+def test_yml_run_format_exception_handling(format_object, mocker, caplog):
     """
     Given
         - A YML object formatter
@@ -1937,7 +1934,7 @@ def test_yml_run_format_exception_handling(format_object, mocker):
     Then
         - Ensure the error is printed.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     formatter = format_object(input="my_file_path")
     mocker.patch.object(
         BaseUpdateYML, "update_yml", side_effect=TestFormatting.exception_raise
@@ -1947,10 +1944,7 @@ def test_yml_run_format_exception_handling(format_object, mocker):
     )
 
     formatter.run_format()
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        "Failed to update file my_file_path. Error: MY ERROR",
-    )
+    assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 
 
 def test_handle_hidden_marketplace_params():

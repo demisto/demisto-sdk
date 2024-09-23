@@ -12,7 +12,6 @@ For a new checker, add the invalid statement in the relevant file and add it to 
 import pytest
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     xsoar_linter_manager,
 )
@@ -253,6 +252,7 @@ def test_xsoar_linter_errors(
     exit_code,
     error_msgs,
     commands,
+    caplog,
 ):
     """
     Given
@@ -282,14 +282,11 @@ def test_xsoar_linter_errors(
         f.write(test_content)
 
     with ChangeCWD(pack.repo_path):
-        logger_error_mocker = mocker.patch.object(logger, "error")
-        logger_info_mocker = mocker.patch.object(logger, "info")
-
         res = xsoar_linter_manager([Path(integration_obj.path)])
         assert res == exit_code
         if exit_code:
             for error_msg in error_msgs:
-                assert error_msg in logger_error_mocker.call_args_list[0].args[0]
+                assert error_msg in caplog.text
         else:
             for warning in error_msgs:
-                assert warning in logger_info_mocker.call_args_list[0].args[0]
+                assert warning in caplog.text

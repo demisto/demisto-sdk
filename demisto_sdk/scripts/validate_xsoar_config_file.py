@@ -25,7 +25,7 @@ def _validate(path: Path = Path(FILE_NAME)) -> None:
 def validate(path: Path) -> None:
     try:
         _validate(path)
-        logger.info(f"[green]{path} is valid [/green]")
+        logger.info(f"<green>{path} is valid </green>")
 
     except FileNotFoundError:
         logger.error(f"File {path} does not exist")
@@ -39,11 +39,11 @@ def validate(path: Path) -> None:
         logger.error(f"Could not parse JSON from {path}")
         raise typer.Exit(1)
 
-    except ValidationError as e:
-        logger.error(f"{path} is not a valid XSOAR configuration file: {e}")
+    except ValidationError:
+        logger.exception(f"{path} is not a valid XSOAR configuration file")
         raise typer.Exit(1)
 
 
 if __name__ == "__main__":
-    logging_setup()
+    logging_setup(calling_function=Path(__file__).stem)
     typer.run(validate)

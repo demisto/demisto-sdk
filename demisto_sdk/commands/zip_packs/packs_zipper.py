@@ -1,6 +1,3 @@
-import logging
-import os
-import sys
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import make_archive
@@ -106,7 +103,7 @@ class PacksManager(ArtifactsManager):
 
             if not Path(path).exists():
                 logger.info(
-                    f"[red]Error: Given input path: {path} does not exist, ignored[/red]"
+                    f"<red>Error: Given input path: {path} does not exist, ignored</red>"
                 )
                 continue
 
@@ -146,9 +143,7 @@ class PacksManager(ArtifactsManager):
         """
         reports = []
         # we quiet the outputs and in case we want the output - a summery will be printed
-        with QuietModeController(
-            quiet_logger=True, quiet_output=True
-        ), PacksDirsHandler(self):
+        with QuietModeController(), PacksDirsHandler(self):
             for pack_name in self.pack_names:
                 if pack_name not in IGNORED_PACKS:
                     reports.append(dump_pack(self, self.packs[pack_name]))
@@ -171,30 +166,11 @@ class PacksManager(ArtifactsManager):
 
 
 class QuietModeController:
-    """Control a quiet mode for loggers and stdout.
-
-    Attributes:
-        quiet_modes (dict): Dict with bool flags for the various outputs (logger, stdout).
-        old_stdout (TextIO): The previous target of the system stdout.
-        logger (logging.Logger): The active logger.
-        prev_logger_level (int): The previous log level before quiet mode was activated.
-    """
-
-    def __init__(self, quiet_logger: bool, quiet_output):
-        self.quiet_modes = dict(quiet_logger=quiet_logger, quiet_output=quiet_output)
-        self.old_stdout = sys.stdout
-        self.prev_logger_level = logger.getEffectiveLevel()
-
     def __enter__(self):
-        if self.quiet_modes["quiet_output"]:
-            sys.stdout = open(os.devnull, "w")
-        if self.quiet_modes["quiet_logger"]:
-            logger.setLevel(logging.ERROR)
+        logger.disable("packs_zipper")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        logger.debug(f"{exc_type} {exc_val} {exc_tb}")
-        sys.stdout = self.old_stdout
-        logger.setLevel(self.prev_logger_level)
+        logger.enable("packs_zipper")
 
 
 def zip_uploadable_packs(artifact_manager: ArtifactsManager):

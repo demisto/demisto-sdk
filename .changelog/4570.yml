@@ -1,0 +1,5 @@
+changes:
+- description: Moved GR101 validation to the new validate format. This validation checks whether the content item uses another one with a higher version.
+  Additionally, removed the warnings when the higher version is lower than the general default version.
+  type: feature
+pr_number: 4570

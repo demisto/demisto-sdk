@@ -71,7 +71,7 @@ class JobJSONFormat(BaseUpdateJSON):
                 )
             )
             logger.debug(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE
 

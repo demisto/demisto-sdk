@@ -12,5 +12,5 @@ class AssetType(BaseStrictModel):
     is_array: bool = Field(description="Whether the asset is an array")
 
 
-class StrictAssetsModelingRuleSchema(BaseStrictModel):
+class StrictModelingRuleSchema(BaseStrictModel):
     __root__: Optional[Dict[constr(regex=r".+"), Dict[str, AssetType]]] = None  # type:ignore[valid-type]

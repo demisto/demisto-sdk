@@ -116,4 +116,4 @@ class ArtifactsReport:
             values = [x.values() for x in objects]
             table = tabulate(headers=headers, tabular_data=values)
 
-        return f"\n[cyan]{self._header}[/cyan]\n" + table
+        return f"\n<cyan>{self._header}</cyan>\n" + table

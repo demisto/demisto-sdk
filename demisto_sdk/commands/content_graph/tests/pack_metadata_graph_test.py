@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -50,7 +48,7 @@ def repository(mocker):
     return repository
 
 
-def test_pack_metadata_xsoar(git_repo: Repo, tmp_path: Path, mocker):
+def test_pack_metadata_xsoar(git_repo: Repo, tmp_path: Path, mocker, monkeypatch):
     """
     Given:
         - A repository with a pack TestPack, containing multiple content items.
@@ -110,10 +108,8 @@ def test_pack_metadata_xsoar(git_repo: Repo, tmp_path: Path, mocker):
     with ChangeCWD(git_repo.path):
         with ContentGraphInterface() as interface:
             create_content_graph(interface, output_path=tmp_path)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", tmp_path)
             content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
-
-        with TemporaryDirectory() as dir:
-            mocker.patch.object(os, "getenv", return_value=dir)
             content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
 
     assert (tmp_path / "TestPack" / "metadata.json").exists()
@@ -180,7 +176,9 @@ def test_pack_metadata_xsoar(git_repo: Repo, tmp_path: Path, mocker):
     assert metadata_playbook.get("name") == "MyPlaybook"
 
 
-def test_pack_metadata_marketplacev2(git_repo: Repo, tmp_path: Path, mocker):
+def test_pack_metadata_marketplacev2(
+    git_repo: Repo, tmp_path: Path, mocker, monkeypatch
+):
     """
     Given:
         - A repository with a pack TestPack, containing multiple content items.
@@ -243,8 +241,7 @@ def test_pack_metadata_marketplacev2(git_repo: Repo, tmp_path: Path, mocker):
         with ContentGraphInterface() as interface:
             create_content_graph(interface, output_path=tmp_path)
             content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
-        with TemporaryDirectory() as dir:
-            mocker.patch.object(os, "getenv", return_value=dir)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", tmp_path)
             content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
 
     assert (tmp_path / "TestPack" / "metadata.json").exists()

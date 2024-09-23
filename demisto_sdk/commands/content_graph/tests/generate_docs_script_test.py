@@ -64,12 +64,7 @@ def repository(mocker, repo) -> ContentDTO:
     repo_pack = repo.create_pack()
     in_script_yml = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
     script = repo_pack.create_script(name=INPUT_SCRIPT)
-    with open(in_script_yml) as original_yml, open(
-        f"{script.path}/{INPUT_SCRIPT}.yml", "w"
-    ) as new_script_yml:
-        for line in original_yml:
-            new_script_yml.write(line)
-
+    Path(script.path, f"{INPUT_SCRIPT}.yml").write_text(Path(in_script_yml).read_text())
     pack = mock_pack()
     pack.relationships = relationships
     pack.content_items.script.append(

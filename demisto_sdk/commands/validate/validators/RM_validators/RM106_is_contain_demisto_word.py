@@ -51,7 +51,8 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
                         "devdemisto",
                         "demistodev",
                         "@demisto",
-                    ],  # in URL
+                        "-demisto",
+                    ],
                 )
             )
         ]

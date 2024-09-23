@@ -376,7 +376,7 @@ class Initializer:
             )
 
         logger.warning(
-            f'gather_objects_to_run_on | {content_objects_to_run_with_packs=}, {invalid_content_items=}')
+            f'gather_objects_to_run_on | {len(ontent_objects_to_run_with_packs)}, {len(invalid_content_items)}')
         return content_objects_to_run_with_packs, invalid_content_items
 
     def get_items_from_packs(

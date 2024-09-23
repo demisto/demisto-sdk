@@ -599,19 +599,20 @@ def get_gcloud_access_token() -> str | None:
                    is caught and logged, but not re-raised.
     """
     try:
+        logger.warning('get_gcloud_access_token')
         # Automatically obtain credentials from the environment
         credentials, project_id = google.auth.default()
-
+        logger.warning(f'get_gcloud_access_token | {credentials}')
         # Refresh the token if needed (ensures the token is valid)
         credentials.refresh(Request())
-
+        logger.warning('get_gcloud_access_token | token refresh')
         # Extract the access token
-        access_toke = credentials.token
-
-        if access_toke:
+        access_token = credentials.token
+        logger.warning(f'get_gcloud_access_token | {access_token}')
+        if access_token:
             logger.warning(
                 f"Successfully obtained Google Cloud access token, {project_id=}.")
-            return access_toke
+            return access_token
         else:
             logger.warning("Failed to obtain Google Cloud access token.")
             return None

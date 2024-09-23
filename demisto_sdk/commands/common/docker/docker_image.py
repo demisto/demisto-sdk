@@ -17,8 +17,8 @@ class DockerImage(str):
     DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
+    logger.warning('Creating DockerImage object')
     _dockerhub_client = DockerHubClient()
-
 
     def __new__(
         cls, docker_image: str, raise_if_not_valid: bool = False

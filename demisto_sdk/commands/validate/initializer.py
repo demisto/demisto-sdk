@@ -74,7 +74,7 @@ class Initializer:
                 raise
             # if we are not using git - simply move on.
             else:
-                logger.info("Unable to connect to git")
+                logger.warning("Unable to connect to git")
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
@@ -164,7 +164,7 @@ class Initializer:
             self.prev_ver
         ):
             non_existing_remote = self.prev_ver.split("/")[0]
-            logger.info(
+            logger.warning(
                 f"[red]Could not find remote {non_existing_remote} reverting to "
                 f"{str(self.git_util.repo.remote())}[/red]"
             )
@@ -187,25 +187,25 @@ class Initializer:
 
     def print_git_config(self):
         """Printing the git configurations - all the relevant flags."""
-        logger.info(
+        logger.warning(
             f"\n[cyan]================= Running on branch {self.branch_name} =================[/cyan]"
         )
-        logger.info(f"Running against {self.prev_ver}")
+        logger.warning(f"Running against {self.prev_ver}")
 
         if self.branch_name in [
             self.prev_ver,
             self.prev_ver.replace(f"{DEMISTO_GIT_UPSTREAM}/", ""),
         ]:  # pragma: no cover
-            logger.info("Running only on last commit")
+            logger.warning("Running only on last commit")
 
         elif self.committed_only:
-            logger.info("Running only on committed files")
+            logger.warning("Running only on committed files")
 
         elif self.staged:
-            logger.info("Running only on staged files")
+            logger.warning("Running only on staged files")
 
         else:
-            logger.info("Running on committed and staged files")
+            logger.warning("Running on committed and staged files")
 
     def get_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """Get the added and modified files.
@@ -255,7 +255,7 @@ class Initializer:
             The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
             See CIAC-10968 for more info.
             """
-            logger.info(
+            logger.warning(
                 "\n[cyan]CONTRIB_BRANCH environment variable found, running validate in contribution flow "
                 "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
             )
@@ -267,7 +267,7 @@ class Initializer:
                 for single_line in contribution_file:
                     clean_line: str = single_line.rstrip("\n")
                     relative_untracked_files_paths.add(Path(clean_line))
-            logger.info(
+            logger.warning(
                 f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
             )
             # modified_files = modified_files.union(relative_untracked_files_paths)
@@ -351,7 +351,7 @@ class Initializer:
                 set(self.load_files(self.file_path.split(",")))
             )
         elif self.execution_mode == ExecutionMode.ALL_FILES:
-            logger.info("Running validation on all files.")
+            logger.warning("Running validation on all files.")
             content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")

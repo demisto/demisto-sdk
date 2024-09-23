@@ -1,4 +1,4 @@
-## 1.32.
+## 1.32.1
 * Modified the `sdk-changelog` script, to include the release date for each version in the title. [#4553](https://github.com/demisto/demisto-sdk/pull/4553)
 * The **xsoar-lint** command now shows GitHub Annotations for _errors_, when the `GITHUB_ACTIONS` environment key is set. _Warnings_ are shown when the `DEMISTO_SDK_XSOAR_LINTER_WARNING_ANNOTATIONS` and `GITHUB_ACTIONS` are set. [#4400](https://github.com/demisto/demisto-sdk/pull/4400)
 * Fixed an issue where **create artifacts** failed logging in certain scenarios [#4574](https://github.com/demisto/demisto-sdk/pull/4574)

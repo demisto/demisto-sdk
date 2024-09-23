@@ -288,7 +288,7 @@ jobs:
           cd content
           rm -rf .pre-commit-config_template.yaml
           rm -f Tests/docker_native_image_config.json
-          demisto-sdk pre-commit --no-validate --show-diff-on-failure --verbose
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
 
       - name: Upload artifacts
         if: always()

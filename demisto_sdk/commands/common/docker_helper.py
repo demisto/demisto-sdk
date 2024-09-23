@@ -68,19 +68,19 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         if ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None:
             logger.info(f"{log_prompt} - Using ssh client setting: {ssh_client}")
         logger.info(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
-        try:
-            if os.getenv("CONTENT_GITLAB_CI"):
-                """In the case of running in CONTENT_GITLAB_CI env, init a docker client from the
-                job environment to utilize dockerhub proxy (DOCKER_IO)"""
-                logger.info(
-                    "CONTENT_GITLAB_CI use case, try to create docker client from env and pull a docker image"
-                )
-                DOCKER_CLIENT = docker.from_env()
-                return DOCKER_CLIENT
-        except docker.errors.DockerException:
-            logger.warning(
-                f"{log_prompt} - Failed to init docker client in CONTENT_GITLAB_CI use case. "
-            )
+        # try:
+        #     if os.getenv("CONTENT_GITLAB_CI"):
+        #         """In the case of running in CONTENT_GITLAB_CI env, init a docker client from the
+        #         job environment to utilize dockerhub proxy (DOCKER_IO)"""
+        #         logger.info(
+        #             "CONTENT_GITLAB_CI use case, try to create docker client from env and pull a docker image"
+        #         )
+        #         DOCKER_CLIENT = docker.from_env()
+        #         return DOCKER_CLIENT
+        # except docker.errors.DockerException:
+        #     logger.warning(
+        #         f"{log_prompt} - Failed to init docker client in CONTENT_GITLAB_CI use case. "
+        #     )
         try:
             DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
         except docker.errors.DockerException:

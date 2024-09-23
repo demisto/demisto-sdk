@@ -534,6 +534,7 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
     assert len(results) == expected_len_results
 
 
+# TODO - need to understand how to create relationships between content item in the graph and implement those 3 UTs
 @pytest.fixture
 def repo_test_from_version(graph_repo):
     # A repository with 2 packs:
@@ -604,7 +605,7 @@ def test_IsUsingInvalidFromVersionValidator_valid(
 
 
 def test_IsUsingInvalidFromVersionValidator_invalid(
-    repo_for_testing_versions_dependencies: Repo,
+    repo_test_from_version: Repo,
 ):
     """
     Given:
@@ -613,7 +614,7 @@ def test_IsUsingInvalidFromVersionValidator_invalid(
 
     Then:
     """
-    graph_interface = repo_for_testing_versions_dependencies.create_graph()
+    graph_interface = repo_test_from_version.create_graph()
     BaseValidator.graph_interface = graph_interface
     results = (
         IsUsingInvalidFromVersionValidator().obtain_invalid_content_items_using_graph(

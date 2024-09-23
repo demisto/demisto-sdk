@@ -13,6 +13,9 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_list_files import (
     MarketplacesFieldValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR101_is_using_invalid_from_version import (
+    IsUsingInvalidFromVersionValidator,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_all_files import (
     IsUsingUnknownContentValidatorAllFiles,
 )
@@ -529,3 +532,92 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
         [repo_for_test.packs[pack_index]]
     )
     assert len(results) == expected_len_results
+
+
+@pytest.fixture
+def repo_test_from_version(graph_repo):
+    # A repository with 2 packs:
+    pack_1 = graph_repo.create_pack("Pack1")
+    pack_1.create_script(
+        "MyScript1", code='demisto.execute_command("does_not_exist", dArgs)'
+    )
+
+    pack_2 = graph_repo.create_pack("Pack2")
+    pack_2.create_script(
+        "MyScript2", code='demisto.execute_command("MyScript1", dArgs)'
+    )
+
+    metadata_json = {
+        "name": "Pack2",
+        "support": "xsoar",
+        "currentVersion": "1.1.0",
+        "dependencies": {"MyScript1": {"mandatory": True, "display_name": "MyScript1"}},
+    }
+
+    pack_metadata = pack_2.pack_metadata
+    pack_metadata.write_json(metadata_json)
+
+    return graph_repo
+
+
+def test_IsUsingInvalidFromVersionValidator_sanity_all_files(
+    repo_for_test: Repo,
+):
+    """
+    Given:
+
+    When:
+
+    Then:
+    """
+    graph_interface = repo_for_test.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsUsingInvalidFromVersionValidator().obtain_invalid_content_items_using_graph(
+            content_items=[]
+        )
+    )
+    assert len(results) == 0
+
+
+def test_IsUsingInvalidFromVersionValidator_valid(
+    repo_test_from_version: Repo,
+):
+    """
+    Given:
+
+    When:
+
+    Then:
+
+    """
+    # repo_test_from_version.packs[0].scripts[0].yml.object.fromversion = '11.0.0'
+    # repo_test_from_version.packs[1].scripts[0].yml.object.fromversion = '10.0.0'
+    graph_interface = repo_test_from_version.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsUsingInvalidFromVersionValidator().obtain_invalid_content_items_using_graph(
+            content_items=[repo_test_from_version.packs[1].scripts[0]]
+        )
+    )
+    assert len(results) == 0
+
+
+def test_IsUsingInvalidFromVersionValidator_invalid(
+    repo_for_testing_versions_dependencies: Repo,
+):
+    """
+    Given:
+
+    When:
+
+    Then:
+    """
+    graph_interface = repo_for_testing_versions_dependencies.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsUsingInvalidFromVersionValidator().obtain_invalid_content_items_using_graph(
+            content_items=[]
+        )
+    )
+    assert len(results) == 0

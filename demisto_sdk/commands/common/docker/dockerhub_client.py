@@ -55,7 +55,6 @@ class DockerHubClient:
     ):
         self.registry_api_url = get_registry_api_url(
             registry, self.DEFAULT_REGISTRY)
-        # self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
         self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")

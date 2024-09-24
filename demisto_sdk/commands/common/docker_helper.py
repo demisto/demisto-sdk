@@ -249,7 +249,6 @@ class DockerBase:
                 with tarfile.open(name=tar_file_path.name, mode="w") as tar_file:
                     for src, dst in files:
                         try:
-                            print(f'Copy {src}')
                             tar_file.add(src, arcname=dst)
                         except Exception as error:
                             logger.debug(error)

@@ -141,9 +141,9 @@ class PreCommitRunner:
         )
 
         if process.stdout:
-            logger.info("%s", process.stdout)
+            logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         if process.stderr:
-            logger.error("%s", process.stderr)
+            logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         return process.returncode
 
     @staticmethod
@@ -210,10 +210,10 @@ class PreCommitRunner:
         """
         if pre_commit_context.mode:
             logger.info(
-                f"[yellow]Running pre-commit hooks in `{pre_commit_context.mode}` mode.[/yellow]"
+                f"<yellow>Running pre-commit hooks in `{pre_commit_context.mode}` mode.</yellow>"
             )
         if pre_commit_context.run_hook:
-            logger.info(f"[yellow]Running hook {pre_commit_context.run_hook}[/yellow]")
+            logger.info(f"<yellow>Running hook {pre_commit_context.run_hook}</yellow>")
 
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
@@ -671,8 +671,8 @@ def preprocess_files(
             See CIAC-10968 for more info.
             """
             logger.info(
-                "\n[cyan]CONTRIB_BRANCH environment variable found, running pre-commit in contribution flow "
-                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
+                "\n<cyan>CONTRIB_BRANCH environment variable found, running pre-commit in contribution flow "
+                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
             )
     elif all_files:
         raw_files = all_git_files

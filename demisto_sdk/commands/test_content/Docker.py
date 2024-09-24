@@ -1,4 +1,4 @@
-import logging
+import logging  # noqa: TID251 # special case: parallel logging
 import re
 from subprocess import PIPE, Popen
 

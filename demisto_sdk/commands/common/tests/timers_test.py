@@ -1,7 +1,6 @@
 import tempfile
 from pathlib import Path
 
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import (
     MEASURE_TYPE_TO_HEADERS,
     MeasureType,
@@ -10,7 +9,7 @@ from demisto_sdk.commands.common.timers import (
 )
 
 
-def test_timers__happy_path(mocker):
+def test_timers__happy_path(caplog):
     """
     Given -
         method to measure it's run time
@@ -19,7 +18,6 @@ def test_timers__happy_path(mocker):
     Then -
         verify the output as expected and the csv file output was created
     """
-    mocker.patch.object(logger, "info")
 
     @timer(group_name="test_group")
     def some_func():
@@ -35,13 +33,13 @@ def test_timers__happy_path(mocker):
         )
         assert some_func.stat_info().call_count == 2
         assert all(
-            header in logger.info.call_args[0][0]
+            header in caplog.text
             for header in MEASURE_TYPE_TO_HEADERS[MeasureType.FUNCTIONS]
         )
         assert (Path(dir) / "test_group_time_measurements.csv").exists()
 
 
-def test_timers__no_group_exist(mocker):
+def test_timers__no_group_exist(mocker, caplog):
     """
     Given -
         time_measurements_reporter to report for non existing group
@@ -51,7 +49,6 @@ def test_timers__no_group_exist(mocker):
         verify the output as expected
     """
 
-    mocker.patch.object(logger, "debug")
     mocker.patch("demisto_sdk.commands.common.timers.write_measure_to_file")
 
     @timer(group_name="test_group")
@@ -65,6 +62,5 @@ def test_timers__no_group_exist(mocker):
 
     assert some_func.stat_info().call_count == 1
     assert (
-        f"There is no timers registered for the group {not_exist_group}"
-        in logger.debug.call_args[0][0]
+        f"There is no timers registered for the group {not_exist_group}" in caplog.text
     )

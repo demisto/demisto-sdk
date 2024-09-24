@@ -71,10 +71,10 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         """Validate that all outputs entry has contextPath key for a given command.
 
         Args:
-            command (Command): The command to run on
+            command_paths (dict): The command outputs to run on
 
         Returns:
-           List of bad context paths if the contextPath depths is bigger then 5. Otherwise, return False.
+           Dict [command name: invalid context paths] of bad context paths for each command if the contextPath depths is bigger than 5. Otherwise, return False.
         """
         message = {}
         for command_name, command_outputs in command_paths.items():
@@ -88,10 +88,10 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         """Validate that all outputs entry has contextPath key for a given command.
 
         Args:
-            content_item (Iterable[ContentTypes]: The content item to run on
+            outputs (set): The outputs from script to check
 
         Returns:
-             List of bad context paths if the contextPath depths is bigger then 5. Otherwise, return False.
+             String of bad context paths if the contextPath depths is bigger then 5. Otherwise, return False.
         """
         wrong_depth_values = [
             output for output in outputs if len(output.split(".")) > 5
@@ -116,9 +116,9 @@ class IsValidContextPathDepthValidator(BaseValidator[ContentTypes]):
         )
 
     def create_command_outputs_dict(self, integration) -> dict:
-        """Creates a dict of
+        """Creates a dict of:
          key: command name
-         value: context paths from command.
+         value: Invalid context paths from command.
 
         Args:
            integration: the integration to review

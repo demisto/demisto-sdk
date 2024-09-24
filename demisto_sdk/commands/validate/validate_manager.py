@@ -118,7 +118,7 @@ class ValidateManager:
             logger.info("Closing graph.")
             BaseValidator.graph_interface.close()
         self.add_invalid_content_items()
-        logger.warning("Adding results for invalid content items.")
+        logger.info("Adding results for invalid content items.")
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.warning
         )

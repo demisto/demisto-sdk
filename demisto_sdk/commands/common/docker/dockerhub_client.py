@@ -49,7 +49,8 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-        self.registry_api_url = registry or self.DEFAULT_REGISTRY
+        # self.registry_api_url = registry or self.DEFAULT_REGISTRY
+        self.registry_api_url = get_registry_api_url(registry, self.DEFAULT_REGISTRY)
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
         self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")
@@ -490,3 +491,98 @@ class DockerHubClient:
             for image_metadata in self.get_repository_images(repo)
             if image_metadata.get("name")
         ]
+
+def get_dockerhub_artifact_registry_url(base_path: str) -> str:
+    """
+    Parses a DockerHub Google Artifact Registry internal base path into a base url for DockerHub proxy API calls.
+    See https://confluence-dc.paloaltonetworks.com/display/VisibilityApplication/Shared-Services+GCP+Services+-+GAR for more details.
+
+    Args:
+    base_path (str): The base path of the Google Artifact Registry in the format 'region-domain/project/repository'.
+
+    Returns:
+        str: The base URL for the DockerHub proxy API calls based on the provided Artifact Registry path.
+        Example: For base_path 'us-docker.pkg.dev/my-project/my-repo',
+        the returned URL would be 'https://region-domain-docker.pkg.dev/v2/my-project/my-repo'
+
+    Raises:
+        ValueError: If the input base_path is not in the expected format.
+    """
+    logger.warning(f"{base_path=}")
+    # Split base path into region-domain, project, and repository
+    try:
+        region_domain, project, repository = base_path.split('/')
+    except ValueError:
+        raise ValueError("Invalid Artifact Registry path format. Expected format: 'region-domain/project/repository'")
+
+    # Construct and return the base URL for DockerHub proxy API calls
+    logger.warning(
+        f"get_dockerhub_artifact_registry_url returned: https://{region_domain}/v2/{project}/{repository}")
+    return f"https://{region_domain}/v2/{project}/{repository}"
+
+
+def get_registry_api_url(registry: str, default_registry: str) -> str:
+    """
+    Determine the appropriate registry API URL based on the environment and provided parameters.
+
+    This function checks if the code is running in a GitLab CI environment and if a custom Docker.io URL is set.
+    If both conditions are true, it uses the custom Docker.io URL. Otherwise, it falls back to the provided
+    registry or the default registry.
+
+    Args:
+        registry (str): The registry URL provided by the user.
+        default_registry (str): The default registry URL to use if no custom URL is provided.
+
+    Returns:
+        str: The determined registry API URL to use for Docker operations.
+    """
+    logger.warning(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
+    if IS_CONTENT_GITLAB_CI and DOCKER_IO:
+        try:
+            logger.warning(
+                "Running in GitLab CI environment with custom Docker_IO URL")
+            return get_dockerhub_artifact_registry_url(DOCKER_IO)
+        except Exception as e:
+            logger.warning(
+                f"Could not initialize a valid API URL from the DOCKER_IO environment variable, Error: {str(e)} ")
+
+    logger.warning(f"using provided or default registry, {default_registry=}")
+    return registry or default_registry
+
+
+def get_gcloud_access_token() -> str | None:
+    """
+    Retrieves a Google Cloud access token using environment credentials.
+
+    This method attempts to obtain credentials from the environment and use them
+    to retrieve a valid Google Cloud access token. If successful, it returns the
+    token as a string. If unsuccessful, it returns None.
+
+    Returns:
+        str | None: The Google Cloud access token if successful, None otherwise.
+
+    Raises:
+        Exception: Any exception that occurs during the token retrieval process
+                   is caught and logged, but not re-raised.
+    """
+    try:
+        logger.warning('get_gcloud_access_token')
+        # Automatically obtain credentials from the environment
+        credentials, project_id = google.auth.default()
+        logger.warning(f'get_gcloud_access_token | {credentials}')
+        # Refresh the token if needed (ensures the token is valid)
+        credentials.refresh(Request())
+        logger.warning('get_gcloud_access_token | token refresh')
+        # Extract the access token
+        access_token = credentials.token
+        logger.warning(f'get_gcloud_access_token | {access_token}')
+        if access_token:
+            logger.warning(
+                f"Successfully obtained Google Cloud access token, {project_id=}.")
+            return access_token
+        else:
+            logger.warning("Failed to obtain Google Cloud access token.")
+            return None
+    except Exception as e:
+        logger.warning(f"Failed to get access token: {str(e)}")
+        return None

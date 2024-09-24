@@ -60,7 +60,7 @@ class ValidateManager:
         Returns:
             int: the exit code to obtained from the calculations of post_results.
         """
-        logger.warning("Starting validate items.")
+        logger.info("Starting validate items.")
         for validator in self.validators:
             logger.debug(f"Starting execution for {validator.error_code} validator.")
             if filtered_content_objects_for_validator := list(

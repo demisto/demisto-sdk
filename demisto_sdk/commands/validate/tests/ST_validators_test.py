@@ -6,6 +6,7 @@ from demisto_sdk.commands.content_graph.parsers import (
     ModelingRuleParser,
     ScriptParser,
 )
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
@@ -180,3 +181,62 @@ def test_modeling_rule_parser_errors_check(pack: Pack):
         "value could not be parsed to a boolean",
     } == error_messages
     assert {"value_error.missing", "type_error.bool"} == error_types
+
+
+def test_pack_parser_sanity_check(pack: Pack):
+    """
+    Given:
+        - a pack which contains valid RN and pack_metadata files
+    When:
+        - execute the PackParser
+    Then:
+        - Ensure there are no structure errors
+    """
+    pack.create_release_notes_config(version="5.0.0", content={"breakingChanges": True})
+    pack_parser = PackParser(path=pack.path)
+    assert pack_parser.structure_errors == []
+
+
+def test_pack_parser_errors_check(pack: Pack):
+    """
+    Given:
+        - a pack which contains invalid RN and invalid pack_metadata files
+    When:
+        - execute the PackParser
+    Then:
+        - Ensure there are two structure errors of the expected types
+    """
+    # invalid value for breakingChanges field (should be a boolean)
+    pack.create_release_notes_config(
+        version="1.0.0", content={"breakingChanges": "aaa"}
+    )
+
+    pack.pack_metadata.update(
+        {
+            "name": "name",
+            "description": "here be description",
+            # invalid str for 'support' key ->
+            # should contain one of those options ["xsoar", "partner", "community", "developer"]
+            "support": "aaa",
+            "url": "https://paloaltonetworks.com",
+            "author": "Cortex XSOAR",
+            "currentVersion": "1.0.0",
+            "tags": [],
+            "categories": [],
+            "useCases": [],
+            "keywords": [],
+        }
+    )
+
+    pack_parser = PackParser(path=pack.path)
+
+    assert len(pack_parser.structure_errors) == 2
+
+    error_messages = {e.error_message for e in pack_parser.structure_errors}
+    error_types = {e.error_type for e in pack_parser.structure_errors}
+
+    assert {
+        "value could not be parsed to a boolean",
+        "value is not a valid enumeration member; permitted: 'xsoar', 'partner', 'community', 'developer'",
+    } == error_messages
+    assert {"type_error.bool", "type_error.enum"} == error_types

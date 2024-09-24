@@ -1,4 +1,3 @@
-import logging
 import os
 from os.path import join
 from typing import Optional
@@ -18,7 +17,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import BaseVali
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = (
     BaseValidator.create_reverse_ignored_errors_list(
@@ -45,7 +44,11 @@ DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = (
     ],
 )
 def test_handle_error_on_unignorable_error_codes(
-    mocker, monkeypatch, ignored_errors, error_code
+    caplog,
+    mocker,
+    monkeypatch,
+    ignored_errors,
+    error_code,
 ):
     """
     Given
@@ -61,8 +64,6 @@ def test_handle_error_on_unignorable_error_codes(
     - Ensure that the un-ignorable errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure that the un-ignorable errors are not in FOUND_FILES_AND_IGNORED_ERRORS list.
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     base_validator = BaseValidator(ignored_errors=ignored_errors)
     expected_error = f"file_name: [{error_code}] can not be ignored in .pack-ignore\n"
@@ -74,7 +75,7 @@ def test_handle_error_on_unignorable_error_codes(
         suggested_fix="fix",
     )
     assert expected_error in result
-    assert str_in_call_args_list(logger_error.call_args_list, expected_error)
+    assert expected_error in caplog.text
     assert f"file_name - [{error_code}]" in FOUND_FILES_AND_ERRORS
     assert f"file_name - [{error_code}]" not in FOUND_FILES_AND_IGNORED_ERRORS
 
@@ -134,7 +135,7 @@ def test_handle_error_github_annotation(
     assert captured.out == expected_result
 
 
-def test_handle_error(mocker):
+def test_handle_error(mocker, caplog):
     """
     Given
     - An ignore errors list associated with a file.
@@ -149,8 +150,7 @@ def test_handle_error(mocker):
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-
+    caplog.set_level("WARNING")
     base_validator = BaseValidator(
         ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True
     )
@@ -174,10 +174,7 @@ def test_handle_error(mocker):
     assert formatted_error is None
     assert "path/to/file_name - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
-    assert str_in_call_args_list(
-        logger_warning.call_args_list,
-        "path/to/file_name: [BA101] - ignore-file-specific\n",
-    )
+    assert "path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
     formatted_error = base_validator.handle_error(
         "Error-message", "ST109", "path/to/file_name"
     )

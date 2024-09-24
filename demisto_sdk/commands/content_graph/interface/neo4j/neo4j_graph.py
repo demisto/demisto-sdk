@@ -282,12 +282,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             nodes (List[graph.Node]): list of nodes to add
         """
-        nodes = filter(lambda node: node.element_id not in self._id_to_obj, nodes)
+        nodes = tuple(
+            filter(lambda node: node.element_id not in self._id_to_obj, nodes)
+        )
         if not nodes:
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
-                self._id_to_obj,
             )
+            logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(
@@ -410,11 +412,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return sources, targets
 
     def get_unknown_content_uses(
-        self, file_paths: List[str], raises_error: bool, include_optional: bool = False
+        self,
+        file_paths: List[str],
     ) -> List[BaseNode]:
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
-                validate_unknown_content, file_paths, raises_error, include_optional
+                validate_unknown_content,
+                file_paths,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
@@ -568,7 +572,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_unused_test_playbook(
-        self, test_playbook_ids: List[str], skipped_tests_keys: List[str]
+        self, test_playbook_ids: List[str], test_playbooks_ids_to_skip: List[str]
     ) -> List[BaseNode]:
         """
         Finds unused test playbooks.
@@ -585,7 +589,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         with self.driver.session() as session:
             results = session.execute_read(
-                validate_test_playbook_in_use, test_playbook_ids, skipped_tests_keys
+                validate_test_playbook_in_use,
+                test_playbook_ids,
+                test_playbooks_ids_to_skip,
             )
             self._add_nodes_to_mapping(results)
             return [self._id_to_obj[result.element_id] for result in results]

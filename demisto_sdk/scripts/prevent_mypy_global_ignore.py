@@ -56,7 +56,7 @@ def prevent_mypy_global_ignore(
 
     exit_code = 0
 
-    logging_setup()
+    logging_setup(calling_function=__name__)
 
     if changed_files:
         result: Dict[str, Union[int, None]] = {}

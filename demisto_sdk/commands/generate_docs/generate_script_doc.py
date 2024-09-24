@@ -62,7 +62,7 @@ def generate_script_doc(
         else:
             errors.append(
                 "Note: Script example was not provided. For a more complete documentation,run with the -e "
-                'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".'
+                'option with an example command. For example: -e "!ConvertFile entry_id=\\<entry_id>".'
             )
 
         script = get_yaml(input_path)
@@ -125,7 +125,7 @@ def generate_script_doc(
             doc.extend(
                 generate_list_section(
                     "Dependencies",
-                    dependencies,
+                    sorted(dependencies),
                     True,
                     text="This script uses the following commands and scripts.",
                 )
@@ -147,8 +147,8 @@ def generate_script_doc(
                 )
             else:  # if we have more than 10 use a sample
                 logger.info(
-                    f'[yellow]"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
-                    " Full list is available as a comment in the README file.[/yellow]"
+                    f'<yellow>"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
+                    " Full list is available as a comment in the README file.</yellow>"
                 )
                 sample_used_in = random.sample(used_in, 10)
                 doc.extend(
@@ -190,12 +190,12 @@ def generate_script_doc(
         save_output(output, "README.md", doc_text)
 
         if errors:
-            logger.info("[yellow]Possible Errors:[/yellow]")
+            logger.info("<yellow>Possible Errors:</yellow>")
             for error in errors:
-                logger.info(f"[yellow]{error}[/yellow]")
+                logger.info(f"<yellow>{error}</yellow>")
 
     except Exception as ex:
-        logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
+        logger.info(f"<yellow>Error: {str(ex)}</yellow>")
         return
 
 

@@ -16,7 +16,8 @@ from demisto_sdk.commands.common.tools import retry
 DOCKERHUB_USER = "DOCKERHUB_USER"
 DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
 DEFAULT_REPOSITORY = "demisto"
-
+IS_CONTENT_GITLAB_CI = os.getenv("CONTENT_GITLAB_CI")
+DOCKER_IO = os.getenv("DOCKER_IO", "")
 
 class DockerHubAuthScope(StrEnum):
     PULL = "pull"  # Grants read-only access to the repository, allowing you to pull images.
@@ -78,6 +79,17 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
+        if IS_CONTENT_GITLAB_CI:
+            # If running in a Gitlab CI environment, try using the Google Cloud access token
+            logger.warning(
+                "Attempting to use Google Cloud access token for Docker Hub proxy authentication")
+            try:
+                if gcloud_access_token := get_gcloud_access_token():
+                    logger.warning("returning gcloud_access_token")
+                    return gcloud_access_token
+            except Exception as e:
+                logger.error(f"Failed to get gcloud access token: {e}")
+
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             now = datetime.now()
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):

@@ -17,7 +17,6 @@ class DockerImage(str):
     DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
-    logger.warning('Creating DockerImage object')
     _dockerhub_client = DockerHubClient()
 
     def __new__(
@@ -80,7 +79,7 @@ class DockerImage(str):
             bool: True if the structure is valid, False if not.
         """
         if not self.repository or not self.image_name or not self.tag:
-            logger.warning(
+            logger.debug(
                 f"Docker image {self} is not valid, should be in the form of repository/image-name:tag"
             )
             return False
@@ -112,7 +111,7 @@ class DockerImage(str):
     def python_version(self) -> Optional[Version]:
         if self.is_valid:
             if "pwsh" == self.image_name or "powershell" == self.image_name:
-                logger.info(
+                logger.debug(
                     f"The {self} image is a powershell image, does not have python version"
                 )
                 return None
@@ -122,7 +121,7 @@ class DockerImage(str):
             ):
                 return Version(match.group("python_version"))
 
-            logger.info(f"Could not get python version for image {self} from regex")
+            logger.debug(f"Could not get python version for image {self} from regex")
             image_env = self._dockerhub_client.get_image_env(self.name, tag=self.tag)
 
             if python_version := next(
@@ -138,7 +137,7 @@ class DockerImage(str):
             logger.error(f"Could not find python-version of docker-image {self}")
 
         else:
-            logger.info(
+            logger.debug(
                 f"docker-image {self} is not valid, could not get its python-version"
             )
         return None

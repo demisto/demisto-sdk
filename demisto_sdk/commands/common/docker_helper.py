@@ -93,28 +93,28 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         if ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None:
             logger.debug(f"{log_prompt} - Using ssh client setting: {ssh_client}")
         logger.debug(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
-        try:
-            if IS_CONTENT_GITLAB_CI:
-                """In the case of running in Gitlab CI environment, try to init a docker client from the
-                job environment to utilize DockerHub API proxy requests (DOCKER_IO)"""
-                logger.info(
-                    "Gitlab CI use case detected, trying to create docker client from Gitlab CI job environment."
-                )
-                DOCKER_CLIENT = docker.from_env()
-                if DOCKER_CLIENT.ping():
-                    # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping().
-                    logger.info(
-                        "Successfully initialized docker client from Gitlab CI job environment."
-                    )
-                    return DOCKER_CLIENT
-                else:
-                    logger.warning(
-                        f"{log_prompt} - Failed to init docker client in Gitlab CI use case."
-                    )
-        except docker.errors.DockerException:
-            logger.warning(
-                f"{log_prompt} - Failed to init docker client in CONTENT_GITLAB_CI use case. "
-            )
+        # try:
+        #     if IS_CONTENT_GITLAB_CI:
+        #         """In the case of running in Gitlab CI environment, try to init a docker client from the
+        #         job environment to utilize DockerHub API proxy requests (DOCKER_IO)"""
+        #         logger.info(
+        #             "Gitlab CI use case detected, trying to create docker client from Gitlab CI job environment."
+        #         )
+        #         DOCKER_CLIENT = docker.from_env()
+        #         if DOCKER_CLIENT.ping():
+        #             # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping().
+        #             logger.info(
+        #                 "Successfully initialized docker client from Gitlab CI job environment."
+        #             )
+        #             return DOCKER_CLIENT
+        #         else:
+        #             logger.warning(
+        #                 f"{log_prompt} - Failed to init docker client in Gitlab CI use case."
+        #             )
+        # except docker.errors.DockerException:
+        #     logger.warning(
+        #         f"{log_prompt} - Failed to init docker client in CONTENT_GITLAB_CI use case. "
+        #     )
         try:
             DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
         except docker.errors.DockerException:

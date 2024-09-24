@@ -32,7 +32,6 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 IS_CONTENT_GITLAB_CI = os.getenv("CONTENT_GITLAB_CI")
-logger.info(f"{IS_CONTENT_GITLAB_CI=}")
 DOCKER_IO = os.getenv("DOCKER_IO")
 DOCKER_CLIENT = None
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
@@ -57,10 +56,36 @@ class DockerException(Exception):
 
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
-    logger.info("docker_helper | init_global_docker_client")
+    """
+    Initialize and return a global Docker client to access and use a local Docker Daemon.
+
+    This function initializes a global Docker client if it doesn't exist, or returns the existing one.
+    It handles different environments, including GitLab CI, and attempts to log in to the Docker registry
+    if credentials are available.
+
+    Args:
+        timeout (int, optional): The timeout for Docker client operations in seconds. Defaults to 60.
+        log_prompt (str, optional): A prefix for log messages. Defaults to an empty string.
+
+    Returns:
+        docker.client.DockerClient: An initialized Docker client.
+
+    Raises:
+        docker.errors.DockerException: If initialization fails, likely due to Docker daemon not running.
+
+    Behavior:
+    1. Checks if a global Docker client already exists.
+    2. If in GitLab CI environment, attempts to create a client using the job environment.
+    3. If not in GitLab CI or if connecting via Gitlab CI environment fails,
+       attempts to log in to the Docker registry if credentials are available.
+    5. Logs various steps and outcomes of the initialization process.
+
+    Note:
+    - The function uses environment variables for Docker credentials.
+    - It handles both standard and SSH-based Docker connections.
+    """
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
-        logger.info("init_global_docker_client | DOCKER_CLIENT is None")
         if log_prompt:
             logger.info(f"{log_prompt} - init and login the docker client")
         else:
@@ -73,17 +98,17 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                 """In the case of running in Gitlab CI environment, try to init a docker client from the
                 job environment to utilize DockerHub API proxy requests (DOCKER_IO)"""
                 logger.info(
-                    "Gitlab CI use case, try to create docker client from Gitlab CI job environment"
+                    "Gitlab CI use case detected, trying to create docker client from Gitlab CI job environment."
                 )
                 DOCKER_CLIENT = docker.from_env()
                 if DOCKER_CLIENT.ping():
-                    # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping()
+                    # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping().
                     logger.info(
-                        'Sucessfully initialized docker client from Gitlab CI job environment and logged in the docker client.')
+                        'Successfully initialized docker client from Gitlab CI job environment.')
                     return DOCKER_CLIENT
                 else:
                     logger.warning(
-                        f"{log_prompt} - Failed to init docker client in Gitlab CI use case. "
+                        f"{log_prompt} - Failed to init docker client in Gitlab CI use case."
                     )
         except docker.errors.DockerException:
             logger.warning(

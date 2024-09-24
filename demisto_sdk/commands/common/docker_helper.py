@@ -69,14 +69,22 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
             logger.info(f"{log_prompt} - Using ssh client setting: {ssh_client}")
         logger.info(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:
-            if os.getenv("CONTENT_GITLAB_CI"):
-                """In the case of running in CONTENT_GITLAB_CI env, init a docker client from the
-                job environment to utilize dockerhub proxy (DOCKER_IO)"""
+            if IS_CONTENT_GITLAB_CI:
+                """In the case of running in Gitlab CI environment, try to init a docker client from the
+                job environment to utilize DockerHub API proxy requests (DOCKER_IO)"""
                 logger.info(
-                    "CONTENT_GITLAB_CI use case, try to create docker client from Gitlab CI job environment"
+                    "Gitlab CI use case, try to create docker client from Gitlab CI job environment"
                 )
                 DOCKER_CLIENT = docker.from_env()
-                return DOCKER_CLIENT
+                if DOCKER_CLIENT.ping():
+                    # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping()
+                    logger.info(
+                        'Sucessfully initialized docker client from Gitlab CI job environment and logged in the docker client.')
+                    return DOCKER_CLIENT
+                else:
+                    logger.warning(
+                        f"{log_prompt} - Failed to init docker client in Gitlab CI use case. "
+                    )
         except docker.errors.DockerException:
             logger.warning(
                 f"{log_prompt} - Failed to init docker client in CONTENT_GITLAB_CI use case. "
@@ -108,7 +116,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 def is_custom_registry():
     return (
-        not os.getenv("CONTENT_GITLAB_CI")
+        not IS_CONTENT_GITLAB_CI
         and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
     )
 
@@ -430,13 +438,13 @@ class DockerBase:
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
-        if os.getenv("CONTENT_GITLAB_CI"):
+        if IS_CONTENT_GITLAB_CI:
             container.commit(
                 repository=repository.replace(f"{DOCKER_REGISTRY_URL}/", ""),
                 tag=tag,
                 changes=self.changes[container_type],
             )
-        if push and os.getenv("CONTENT_GITLAB_CI"):
+        if push and IS_CONTENT_GITLAB_CI:
             self.push_image(image, log_prompt=log_prompt)
         return image
 
@@ -713,7 +721,7 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         return python_version
     logger.info(f"Could not get python version for {image=} from regex")
 
-    if os.getenv("CONTENT_GITLAB_CI"):
+    if IS_CONTENT_GITLAB_CI:
         try:
             logger.info(f"get python version for {image=} from available docker client")
             return _get_python_version_from_image_client(image)
@@ -775,7 +783,7 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
         raise ValueError(f"Invalid docker image: {image}")
     else:
         repo, tag = image.split(":")
-    if os.getenv("CONTENT_GITLAB_CI"):
+    if IS_CONTENT_GITLAB_CI:
         # we need to remove the gitlab prefix, as we query the API
         repo = repo.replace(f"{DOCKER_REGISTRY_URL}/", "")
     try:

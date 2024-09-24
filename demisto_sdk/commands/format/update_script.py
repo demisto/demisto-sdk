@@ -62,13 +62,13 @@ class ScriptYMLFormat(BaseUpdateYML):
         """
         if script_obj.get("type") == TYPE_JS:
             logger.info(
-                "[yellow]Skipping docker image update as this is a Javascript automation.[/yellow]"
+                "<yellow>Skipping docker image update as this is a Javascript automation.</yellow>"
             )
             return
         dockerimage = script_obj.get("dockerimage")
         if not dockerimage:  # default image -> nothing to do
             logger.info(
-                "[yellow]Skipping docker image update as default docker image is being used.[/yellow]"
+                "<yellow>Skipping docker image update as default docker image is being used.</yellow>"
             )
             return
         image_name = dockerimage.split(":")[0]
@@ -82,11 +82,11 @@ class ScriptYMLFormat(BaseUpdateYML):
                     image_name
                 )
             if not latest_tag:
-                logger.info("[yellow]Failed getting docker image latest tag[/yellow]")
+                logger.info("<yellow>Failed getting docker image latest tag</yellow>")
                 return
         except Exception as e:
             logger.info(
-                f"[yellow]Failed getting docker image latest tag. {e} - Invalid docker image[/yellow]"
+                f"<yellow>Failed getting docker image latest tag. {e} - Invalid docker image</yellow>"
             )
             return
         full_name = f"{image_name}:{latest_tag}"
@@ -114,7 +114,7 @@ class ScriptYMLFormat(BaseUpdateYML):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n<blue>================= Updating file {self.source_file} =================</blue>"
             )
             super().update_yml(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[FileType.SCRIPT],
@@ -125,7 +125,7 @@ class ScriptYMLFormat(BaseUpdateYML):
             return SUCCESS_RETURN_CODE
         except Exception as err:
             logger.info(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE
 

@@ -335,15 +335,7 @@ class ContentItem(BaseContent):
         for _ in range(2):
             # we iterate twice to handle cases of doubled prefixes like `classifier-mapper-`
             for prefix in server_names:
-                try:
-                    name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
-                except AttributeError:
-                    # not supported in python 3.8
-                    name = (
-                        name[len(prefix) + 1 :]
-                        if name.startswith(f"{prefix}-")
-                        else name
-                    )
+                name = name.removeprefix(f"{prefix}-")
         normalized = f"{self.content_type.server_name}-{name}"
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized

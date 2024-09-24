@@ -1,7 +1,6 @@
-from pathlib import PosixPath
-
+import more_itertools
 import pytest
-
+from pathlib import PosixPath
 from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -37,6 +36,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_readme_imag
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM110_is_commands_in_readme import (
+    IsCommandsInReadmeValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_copy_right_section import (
     IsContainCopyRightSectionValidator,
@@ -864,6 +866,51 @@ def test_get_command_context_path_from_readme_file_multiple_commands():
     )
 
 
+def test_IsCommandsInReadmeValidator_not_valid():
+    """
+    Given: An integration object with commands 'command1' and 'command2'
+    When: The README content is empty
+    Then: The IsCommandsInReadmeValidator should return a single result with a message
+          indicating that the commands are missing from the README file
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {"name": "command1"},
+                {"name": "command2"},
+            ]
+        ],
+        readme_content="",
+    )
+    results = IsCommandsInReadmeValidator().obtain_invalid_content_items([content_item])
+    assert more_itertools.one(results), "The validator should return a single result"
+    assert results[0].message == (
+        "The following commands appear in the YML file but not in the README file: command1, command2."
+    )
+
+
+def test_IsCommandsInReadmeValidator_valid():
+    """
+    Given: An integration object with commands 'command1' and 'command2'
+    When: The README content includes both command names
+    Then: The IsCommandsInReadmeValidator should not report any invalid content items
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {"name": "command1"},
+                {"name": "command2"},
+            ]
+        ],
+        readme_content="command1, command2",
+    )
+    assert not IsCommandsInReadmeValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    <<<<<< rm116
 def test_missing_playbook_image_validator_no_image():
     """
     Given

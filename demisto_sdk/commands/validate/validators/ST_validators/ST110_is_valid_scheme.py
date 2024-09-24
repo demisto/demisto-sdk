@@ -59,7 +59,6 @@ ContentTypes = Union[
     Job,
     ListObject,
     Mapper,
-    ModelingRule,
     ParsingRule,
     PreProcessRule,
     Report,
@@ -69,11 +68,12 @@ ContentTypes = Union[
     XSIAMDashboard,
     XSIAMReport,
     IndicatorType,
-    AssetsModelingRule,
     CaseField,
     CaseLayout,
     CaseLayoutRule,
     Pack,
+    ModelingRule,
+    AssetsModelingRule,
 ]
 
 

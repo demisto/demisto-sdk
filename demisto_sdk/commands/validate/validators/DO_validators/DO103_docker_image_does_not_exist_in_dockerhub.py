@@ -5,14 +5,16 @@ from typing import Iterable, List, Union
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     ValidationResult,
+)
+from demisto_sdk.commands.validate.validators.DO_validators.docker_validator import (
+    DockerValidator,
 )
 
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
+class DockerImageDoesNotExistInDockerhubValidator(DockerValidator[ContentTypes]):
     error_code = "DO103"
     description = "Validate that the given content item's docker-image actually exists in dockerhub"
     rationale = "Platform supported content must have their images available in dockerhub so they can be widely pulled and used."

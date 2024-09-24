@@ -183,7 +183,7 @@ def docker_login(docker_client) -> bool:
                 )
                 return ping
         except docker.errors.APIError:
-            logger.debug(f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
+            logger.info(f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
             return False
 
     logger.debug(f"Did not log in to {DOCKER_REGISTRY_URL}")
@@ -394,7 +394,7 @@ class DockerBase:
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
-                logger.debug(
+                logger.info(
                     f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
                 )
                 break
@@ -536,7 +536,7 @@ class DockerBase:
             )
             self.pull_image(test_docker_image)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
-            logger.debug(
+            logger.info(
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
             try:
@@ -617,7 +617,6 @@ class MountableDocker(DockerBase):
 
 
 def get_docker():
-    logger.debug("docker_helper | get_docker")
     return MountableDocker() if CAN_MOUNT_FILES else DockerBase()
 
 

@@ -53,8 +53,7 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-        self.registry_api_url = get_registry_api_url(
-            registry, self.DEFAULT_REGISTRY)
+        self.registry_api_url = get_registry_api_url(registry, self.DEFAULT_REGISTRY)
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
         self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")
@@ -82,15 +81,16 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
-        logger.warning("dockerhub_client | get_token")
+        logger.info("dockerhub_client | get_token")
 
         if IS_CONTENT_GITLAB_CI:
             # If running in a Gitlab CI environment, try using the Google Cloud access token
-            logger.warning(
-                "Attempting to use Google Cloud access token for Docker Hub proxy authentication")
+            logger.info(
+                "Attempting to use Google Cloud access token for Docker Hub proxy authentication"
+            )
             try:
                 if gcloud_access_token := get_gcloud_access_token():
-                    logger.warning("returning gcloud_access_token")
+                    logger.info("returning gcloud_access_token")
                     return gcloud_access_token
             except Exception as e:
                 logger.error(f"Failed to get gcloud access token: {e}")
@@ -118,9 +118,7 @@ class DockerHubClient:
         try:
             response.raise_for_status()
         except RequestException as _error:
-            logger.warning(
-                f"Error when trying to get dockerhub token, error\n:{_error}"
-            )
+            logger.info(f"Error when trying to get dockerhub token, error\n:{_error}")
             if (
                 _error.response is not None
                 and (
@@ -130,7 +128,7 @@ class DockerHubClient:
                 and self.auth
             ):
                 # in case of rate-limits with a username:password, retrieve the token without username:password
-                logger.warning("Trying to get dockerhub token without username:password")
+                logger.info("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
                         self.TOKEN_URL,
@@ -178,7 +176,7 @@ class DockerHubClient:
             headers: headers if needed
             params: params if needed
         """
-        logger.warning("dockerhub_client | get_request")
+        logger.info("dockerhub_client | get_request")
 
         auth = None if headers and "Authorization" in headers else self.auth
 
@@ -216,7 +214,7 @@ class DockerHubClient:
             params: query parameters
             results_key: the key to retrieve the results in case its a list
         """
-        logger.warning("dockerhub_client | do_docker_hub_get_request")
+        logger.info("dockerhub_client | do_docker_hub_get_request")
         if url_suffix:
             if not url_suffix.startswith("/"):
                 url_suffix = f"/{url_suffix}"
@@ -243,7 +241,7 @@ class DockerHubClient:
             # received only a single record
             return raw_json_response
 
-        logger.warning(f'Received {raw_json_response.get("count")} objects from {url=}')
+        logger.info(f'Received {raw_json_response.get("count")} objects from {url=}')
         results = raw_json_response.get(results_key) or []
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
@@ -277,7 +275,7 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
-        logger.warning("dockerhub_client | do_registry_get_request")
+        logger.info("dockerhub_client | do_registry_get_request")
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
 
@@ -304,7 +302,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
-        logger.warning("dockerhub_client | get_image_manifests")
+        logger.info("dockerhub_client | get_image_manifests")
         try:
             return self.do_registry_get_request(
                 f"/manifests/{tag}", docker_image=docker_image
@@ -323,7 +321,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
-        logger.warning("dockerhub_client | get_image_digest")
+        logger.info("dockerhub_client | get_image_digest")
 
         response = self.get_image_manifests(docker_image, tag=tag)
         try:
@@ -341,7 +339,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             image_digest: The docker image's digest
         """
-        logger.warning("dockerhub_client | get_image_blobs")
+        logger.info("dockerhub_client | get_image_blobs")
         try:
             return self.do_registry_get_request(
                 f"/blobs/{image_digest}", docker_image=docker_image
@@ -360,7 +358,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
-        logger.warning("dockerhub_client | get_image_env")
+        logger.info("dockerhub_client | get_image_env")
         image_digest = self.get_image_digest(docker_image, tag=tag)
         response = self.get_image_blobs(docker_image, image_digest=image_digest)
         try:
@@ -377,7 +375,7 @@ class DockerHubClient:
         Args:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
         """
-        logger.warning("dockerhub_client | get_image_tags")
+        logger.info("dockerhub_client | get_image_tags")
         try:
             response = self.do_registry_get_request(
                 "/tags/list", docker_image=docker_image
@@ -398,8 +396,12 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
-        logger.warning("dockerhub_client | get_image_tag_metadata")
+        logger.info("dockerhub_client | get_image_tag_metadata")
         try:
+            if IS_CONTENT_GITLAB_CI:
+                image_digest = self.get_image_digest(docker_image, tag=tag)
+                response = self.get_image_blobs(docker_image, image_digest=image_digest)
+                return response
             return self.do_docker_hub_get_request(
                 f"/repositories/{docker_image}/tags/{tag}"
             )
@@ -417,7 +419,7 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
-        logger.warning("dockerhub_client | is_docker_image_exist")
+        logger.info("dockerhub_client | is_docker_image_exist")
         try:
             self.get_image_tag_metadata(docker_image, tag=tag)
             return True
@@ -426,11 +428,11 @@ class DockerHubClient:
                 error.exception.response
                 and error.exception.response.status_code == requests.codes.not_found
             ):
-                logger.warning(
+                logger.info(
                     f"docker-image {docker_image}:{tag} does not exist in dockerhub"
                 )
                 return False
-            logger.warning(
+            logger.info(
                 f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"
             )
             return tag in self.get_image_tags(docker_image)
@@ -445,11 +447,14 @@ class DockerHubClient:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
             tag: The tag of the docker image
         """
-        logger.warning("dockerhub_client | get_docker_image_tag_creation_date")
+        logger.info("dockerhub_client | get_docker_image_tag_creation_date")
         response = self.get_image_tag_metadata(docker_image, tag=tag)
-        return datetime.strptime(
-            response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
-        )
+        if creation_date := response.get("created"):
+            return datetime.strptime(creation_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+        else:
+            return datetime.strptime(
+                response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
 
     def get_latest_docker_image_tag(self, docker_image: str) -> Version:
         """
@@ -458,7 +463,7 @@ class DockerHubClient:
         Args:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
         """
-        logger.warning("dockerhub_client | get_latest_docker_image_tag")
+        logger.info("dockerhub_client | get_latest_docker_image_tag")
         raw_image_tags = self.get_image_tags(docker_image)
         if not raw_image_tags:
             raise RuntimeError(
@@ -474,7 +479,7 @@ class DockerHubClient:
                 if max_version_tag.release[-1] < version_tag.release[-1]:
                     max_version_tag = version_tag
             except InvalidVersion:
-                logger.warning(
+                logger.info(
                     f"The tag {tag} has invalid version for docker-image {docker_image}, skipping it"
                 )
 
@@ -492,7 +497,7 @@ class DockerHubClient:
             str: the full docker-image included the tag, for example demisto/pan-os-python:2.0.0
 
         """
-        logger.warning("dockerhub_client | get_latest_docker_image")
+        logger.info("dockerhub_client | get_latest_docker_image")
         return f"{docker_image}:{self.get_latest_docker_image_tag(docker_image)}"
 
     def get_repository_images(
@@ -504,7 +509,7 @@ class DockerHubClient:
         Args:
             repo: The repository name, e.g.: demisto
         """
-        logger.warning("dockerhub_client | get_repository_images")
+        logger.info("dockerhub_client | get_repository_images")
         try:
             return self.do_docker_hub_get_request(f"/repositories/{repo}")
         except RequestException as error:
@@ -519,7 +524,7 @@ class DockerHubClient:
         Args:
             repo: The repository name, e.g.: demisto
         """
-        logger.warning("dockerhub_client | get_repository_images_names")
+        logger.info("dockerhub_client | get_repository_images_names")
         return [
             image_metadata.get("name", "")
             for image_metadata in self.get_repository_images(repo)
@@ -546,18 +551,25 @@ def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     Raises:
         ValueError: If the input base_path is not in the expected format.
     """
-    logger.warning(f"{base_path=}")
+    logger.info(
+        f"Trying to parse a DockerHub Google Artifact Registry internal base path {base_path=}"
+    )
     # Split base path into region-domain, project, and repository
     try:
-        region_domain, project, repository = base_path.split('/')
+        region_domain, project, repository = base_path.split("/")
     except ValueError:
         raise ValueError(
-            "Invalid Artifact Registry path format. Expected format: 'region-domain/project/repository'")
+            "Invalid Artifact Registry path format. Expected format: 'region-domain/project/repository'"
+        )
 
     # Construct and return the base URL for DockerHub proxy API calls
-    logger.warning(
-        f"get_dockerhub_artifact_registry_url returned: https://{region_domain}/v2/{project}/{repository}")
-    return f"https://{region_domain}/v2/{project}/{repository}"
+    parsed_dockerhub_proxy_api_url = (
+        f"https://{region_domain}/v2/{project}/{repository}"
+    )
+    logger.info(
+        f"Returning parsed DockerHub Google Artifact Registry API: {parsed_dockerhub_proxy_api_url=}"
+    )
+    return parsed_dockerhub_proxy_api_url
 
 
 def get_registry_api_url(registry: str, default_registry: str) -> str:
@@ -575,17 +587,26 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
     Returns:
         str: The determined registry API URL to use for Docker operations.
     """
-    logger.warning(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
+    logger.info(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
     if IS_CONTENT_GITLAB_CI and DOCKER_IO:
         try:
-            logger.warning(
-                "Running in GitLab CI environment with custom Docker_IO URL")
-            return get_dockerhub_artifact_registry_url(DOCKER_IO)
+            logger.info(
+                "Running in a GitLab CI environment with custom DOCKER_IO environment variable, Trying to prase a DockerHub Google Artifact Registry from DOCKER_IO environment variable."
+            )
+            if parsed_dockerhub_proxy_api_url := get_dockerhub_artifact_registry_url(
+                DOCKER_IO
+            ):
+                return parsed_dockerhub_proxy_api_url
+            else:
+                logger.info(
+                    "Could not parse a valid API URL from the DOCKER_IO environment variable."
+                )
         except Exception as e:
-            logger.warning(
-                f"Could not initialize a valid API URL from the DOCKER_IO environment variable, Error: {str(e)} ")
+            logger.info(
+                f"Could not parse a valid API URL from the DOCKER_IO environment variable, Error: {str(e)} "
+            )
 
-    logger.warning(f"using provided or default registry, {default_registry=}")
+    logger.info(f"using provided or default registry, {default_registry=}")
     return registry or default_registry
 
 
@@ -605,23 +626,22 @@ def get_gcloud_access_token() -> str | None:
                    is caught and logged, but not re-raised.
     """
     try:
-        logger.warning('get_gcloud_access_token')
+        logger.info("Trying to retrieve a Google Cloud access token.")
         # Automatically obtain credentials from the environment
         credentials, project_id = google.auth.default()
-        logger.warning(f'get_gcloud_access_token | {credentials}')
+
         # Refresh the token if needed (ensures the token is valid)
         credentials.refresh(Request())
-        logger.warning('get_gcloud_access_token | token refresh')
         # Extract the access token
         access_token = credentials.token
-        logger.warning(f'get_gcloud_access_token | {access_token}')
         if access_token:
-            logger.warning(
-                f"Successfully obtained Google Cloud access token, {project_id=}.")
+            logger.info(
+                f"Successfully obtained Google Cloud access token, {project_id=}."
+            )
             return access_token
         else:
-            logger.warning("Failed to obtain Google Cloud access token.")
+            logger.info("Failed to obtain Google Cloud access token.")
             return None
     except Exception as e:
-        logger.warning(f"Failed to get access token: {str(e)}")
+        logger.info(f"Failed to get access token: {str(e)}")
         return None

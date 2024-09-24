@@ -115,7 +115,7 @@ class ValidateManager:
                         validation_caught_exception_result
                     )
         if BaseValidator.graph_interface:
-            logger.warning("Closing graph.")
+            logger.info("Closing graph.")
             BaseValidator.graph_interface.close()
         self.add_invalid_content_items()
         logger.warning("Adding results for invalid content items.")

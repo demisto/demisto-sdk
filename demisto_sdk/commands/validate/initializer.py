@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_DIR,
     SCRIPTS_DIR,
     ExecutionMode,
+    FileType,
     GitStatuses,
     PathLevel,
 )
@@ -28,6 +29,7 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
+    find_type_by_path,
     get_file_by_status,
     get_relative_path_from_packs_dir,
     is_external_repo,
@@ -74,7 +76,7 @@ class Initializer:
                 raise
             # if we are not using git - simply move on.
             else:
-                logger.warning("Unable to connect to git")
+                logger.info("Unable to connect to git")
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
@@ -164,9 +166,9 @@ class Initializer:
             self.prev_ver
         ):
             non_existing_remote = self.prev_ver.split("/")[0]
-            logger.warning(
-                f"[red]Could not find remote {non_existing_remote} reverting to "
-                f"{str(self.git_util.repo.remote())}[/red]"
+            logger.info(
+                f"<red>Could not find remote {non_existing_remote} reverting to "
+                f"{str(self.git_util.repo.remote())}</red>"
             )
             self.prev_ver = self.prev_ver.replace(
                 non_existing_remote, str(self.git_util.repo.remote())
@@ -187,25 +189,25 @@ class Initializer:
 
     def print_git_config(self):
         """Printing the git configurations - all the relevant flags."""
-        logger.warning(
-            f"\n[cyan]================= Running on branch {self.branch_name} =================[/cyan]"
+        logger.info(
+            f"\n<cyan>================= Running on branch {self.branch_name} =================</cyan>"
         )
-        logger.warning(f"Running against {self.prev_ver}")
+        logger.info(f"Running against {self.prev_ver}")
 
         if self.branch_name in [
             self.prev_ver,
             self.prev_ver.replace(f"{DEMISTO_GIT_UPSTREAM}/", ""),
         ]:  # pragma: no cover
-            logger.warning("Running only on last commit")
+            logger.info("Running only on last commit")
 
         elif self.committed_only:
-            logger.warning("Running only on committed files")
+            logger.info("Running only on committed files")
 
         elif self.staged:
-            logger.warning("Running only on staged files")
+            logger.info("Running only on staged files")
 
         else:
-            logger.warning("Running on committed and staged files")
+            logger.info("Running on committed and staged files")
 
     def get_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """Get the added and modified files.
@@ -255,9 +257,9 @@ class Initializer:
             The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
             See CIAC-10968 for more info.
             """
-            logger.warning(
-                "\n[cyan]CONTRIB_BRANCH environment variable found, running validate in contribution flow "
-                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
+            logger.info(
+                "\n<cyan>CONTRIB_BRANCH environment variable found, running validate in contribution flow "
+                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
             )
             # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
             relative_untracked_files_paths: Set[Path] = set()
@@ -267,7 +269,7 @@ class Initializer:
                 for single_line in contribution_file:
                     clean_line: str = single_line.rstrip("\n")
                     relative_untracked_files_paths.add(Path(clean_line))
-            logger.warning(
+            logger.info(
                 f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
             )
             # modified_files = modified_files.union(relative_untracked_files_paths)
@@ -334,9 +336,6 @@ class Initializer:
         content_objects_to_run: Set[BaseContent] = set()
         invalid_content_items: Set[Path] = set()
         non_content_items: Set[Path] = set()
-        logger.warning(
-            f"gather_objects_to_run_on | {ExecutionMode.USE_GIT=}, {content_objects_to_run=}, {invalid_content_items=}, {non_content_items=}"
-        )
         if self.execution_mode == ExecutionMode.USE_GIT:
             (
                 content_objects_to_run,
@@ -352,7 +351,7 @@ class Initializer:
                 set(self.load_files(self.file_path.split(",")))
             )
         elif self.execution_mode == ExecutionMode.ALL_FILES:
-            logger.warning("Running validation on all files.")
+            logger.info("Running validation on all files.")
             content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
@@ -365,20 +364,18 @@ class Initializer:
                 invalid_content_items,
                 non_content_items,
             ) = self.get_files_using_git()
+
         if self.execution_mode != ExecutionMode.USE_GIT:
             content_objects_to_run_with_packs: Set[BaseContent] = (
                 self.get_items_from_packs(content_objects_to_run)
             )
         else:
             content_objects_to_run_with_packs = content_objects_to_run
+
         for non_content_item in non_content_items:
             logger.warning(
                 f"Invalid content path provided: {str(non_content_item)}. Please provide a valid content item or pack path."
             )
-
-        logger.warning(
-            f"gather_objects_to_run_on | {len(content_objects_to_run_with_packs)=}, {len(invalid_content_items)=}"
-        )
         return content_objects_to_run_with_packs, invalid_content_items
 
     def get_items_from_packs(
@@ -410,7 +407,6 @@ class Initializer:
         self.validate_git_installed()
         self.set_prev_ver()
         self.setup_git_params()
-        logger.warning("get_files_using_git")
         self.print_git_config()
 
         (
@@ -519,7 +515,13 @@ class Initializer:
                 if obj:
                     obj.git_status = git_status
                     # Check if the file exists
-                    if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
+                    if (
+                        git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED)
+                        or (
+                            not git_status  # Always collect the origin version of the metadata.
+                            and find_type_by_path(file_path) == FileType.METADATA
+                        )
+                    ):
                         try:
                             obj.old_base_content_object = BaseContent.from_path(
                                 old_path, git_sha=git_sha, raise_on_exception=True
@@ -542,18 +544,45 @@ class Initializer:
                 invalid_content_items.add(file_path)  # type: ignore[arg-type]
         return basecontent_with_path_set, invalid_content_items, non_content_items
 
+    @staticmethod
+    def log_related_files(
+        all_files: Set[Path], explicitly_collected_files: Set[Path]
+    ) -> None:
+        """Log the files that were not explicitly collected in previous steps.
+
+        Args:
+            all_files (set): A set of all the files including implicit related files.
+            explicitly_collected_files (set): The set of all the explicitly collected files.
+        """
+        related_files = all_files.difference(explicitly_collected_files)
+        if related_files:
+            logger.info("Running on related files:")
+            logger.info(f"{[str(path) for path in related_files]}")
+
     def get_items_status(
         self, file_by_status_dict: Dict[Path, GitStatuses]
     ) -> Dict[Path, Union[GitStatuses, None]]:
+        """Get the relevant content items given the input files and their statuses.
+
+        Args:
+            file_by_status_dict (dict): A dict of all the input files and their git statuses.
+
+        Returns:
+            (dict) A dict of all paths to content items and their git statuses.
+        """
         statuses_dict: Dict[Path, Union[GitStatuses, None]] = {}
         for path, git_status in file_by_status_dict.items():
             path_str = str(path)
             if self.is_unrelated_path(path_str):
+                # If the path is not related to a content item, continue.
                 continue
             if f"/{INTEGRATIONS_DIR}/" in path_str or f"/{SCRIPTS_DIR}/" in path_str:
+                # If it's an integration or a script obtain the yml file to create the content item.
                 if path_str.endswith(".yml"):
+                    # File already is the yml.
                     statuses_dict[path] = git_status
                 elif self.is_code_file(path, path_str):
+                    # File is the code file.
                     path = self.obtain_yml_from_code(path_str)
                     if path not in statuses_dict:
                         if git_status != GitStatuses.RENAMED:
@@ -561,38 +590,53 @@ class Initializer:
                         else:
                             statuses_dict[path] = None
                 elif f"_{PACKS_README_FILE_NAME}" in path_str:
+                    # File is the readme file.
                     path = Path(path_str.replace(f"_{PACKS_README_FILE_NAME}", ".yml"))
                     if path not in statuses_dict:
                         statuses_dict[path] = None
                 else:
+                    # Otherwise, assume the yml name is the name of the parent directory.
                     path = Path(path.parent / f"{path.parts[-2]}.yml")
                     if path not in statuses_dict:
                         statuses_dict[path] = None
             elif f"/{PLAYBOOKS_DIR }/" in path_str:
+                # If it's inside the playbook directory collect the yml.
                 if path_str.endswith(".yml"):
+                    # File is already the yml.
                     statuses_dict[path] = git_status
                 else:
+                    # Otherwise obtain the yml path independently.
                     path = self.obtain_playbook_path(path)
                     if path not in statuses_dict:
                         statuses_dict[path] = None
             elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
+                # If it's a modeling rule or a parsing rule obtain the yml.
                 if path.suffix in [".json", ".xif"]:
+                    # If it ends with a .json or a .xif replace the ending to the corresponding yml.
                     path = Path(
                         path_str.replace(".xif", ".yml").replace("_schema.json", ".yml")
                     )
                     if path not in statuses_dict:
                         statuses_dict[path] = None
                 else:
+                    # Otherwise assume it's already the yml and collect it.
                     statuses_dict[path] = git_status
             elif PACKS_PACK_META_FILE_NAME in path_str:
+                # If the file is a pack metadata, collect it.
                 statuses_dict[path] = git_status
-            elif self.is_pack_item(path_str):
-                metadata_path = self.obtain_metadata_path(path)
-                if metadata_path not in statuses_dict:
-                    statuses_dict[metadata_path] = None
-            else:
+            elif not self.is_pack_item(path_str):
+                # If the file is not a pack item, collect it as well.
                 statuses_dict[path] = git_status
 
+            # Always collect the metadata file of the relevant path.
+            metadata_path = self.obtain_metadata_path(path)
+            if metadata_path not in statuses_dict:
+                # If the metadata file was not already collected explicitly, set its status to None.
+                statuses_dict[metadata_path] = None
+
+        self.log_related_files(
+            set(statuses_dict.keys()), set(file_by_status_dict.keys())
+        )
         return statuses_dict
 
     def load_files(self, files: List[str]) -> Set[Path]:

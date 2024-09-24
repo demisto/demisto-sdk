@@ -4,6 +4,11 @@ import sys
 
 import click
 
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,  # Must remain at the top - sets up the logger
+)
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
@@ -16,7 +21,6 @@ except ImportError:
 
 import copy
 import functools
-import logging
 import os
 from pathlib import Path
 from typing import IO, Any, Dict, List, Optional
@@ -40,11 +44,6 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import (
-    handle_deprecated_args,
-    logger,
-    logging_setup,
-)
 from demisto_sdk.commands.common.tools import (
     convert_path_to_str,
     find_type,
@@ -77,8 +76,8 @@ from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 SDK_OFFLINE_ERROR_MESSAGE = (
-    "[red]An internet connection is required for this command. If connected to the "
-    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
+    "<red>An internet connection is required for this command. If connected to the "
+    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.</red>"
 )
 
 
@@ -160,20 +159,21 @@ def logging_setup_decorator(func, *args, **kwargs):
     @click.option(
         "--console-log-threshold",
         help="Minimum logging threshold for the console logger."
-        " Possible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
     )
     @click.option(
         "--file-log-threshold",
         help="Minimum logging threshold for the file logger."
-        " Possible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
     )
     @click.option("--log-file-path", help="Path to save log files onto.")
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
-            console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-            file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log_file_path"),
+            console_threshold=kwargs.get("console_log_threshold") or "INFO",
+            file_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+            path=kwargs.get("log_file_path"),
+            calling_function=func.__name__,
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -199,26 +199,21 @@ def logging_setup_decorator(func, *args, **kwargs):
 @click.option(
     "-rn",
     "--release-notes",
-    help="Get the release notes of the current demisto-sdk version.",
+    help="Display the release notes for the current demisto-sdk version.",
     is_flag=True,
     default=False,
     show_default=True,
 )
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def main(ctx, config, version, release_notes, **kwargs):
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
-        log_file_path=kwargs.get("log_file_path"),
-        skip_log_file_creation=True,  # Log file creation is handled in the logger setup of the sub-command
-    )
-    handle_deprecated_args(ctx.args)
-
     config.configuration = Configuration()
     import dotenv
 
-    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
+    dotenv.load_dotenv(
+        CONTENT_PATH / ".env", override=True
+    )  # load .env file from the cwd
 
     if platform.system() == "Windows":
         logger.warning(
@@ -232,8 +227,8 @@ def main(ctx, config, version, release_notes, **kwargs):
             __version__ = get_distribution("demisto-sdk").version
         except DistributionNotFound:
             __version__ = "dev"
-            logger.warning(
-                "[yellow]Could not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
+            logger.info(
+                "<yellow>Could not find the version of the demisto-sdk. This usually happens when running in a development environment.</yellow>"
             )
         else:
             last_release = ""
@@ -241,7 +236,9 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "CI"
             ):  # Check only when not running in CI (e.g running locally).
                 last_release = get_last_remote_release_version()
-            logger.warning(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
+            logger.opt(colors=True).info(
+                f"<yellow>demisto-sdk {__version__}</yellow>"
+            )  # we only `opt`
             if last_release and __version__ != last_release:
                 logger.warning(
                     f"A newer version ({last_release}) is available. "
@@ -252,15 +249,14 @@ def main(ctx, config, version, release_notes, **kwargs):
 
                 if not rn_entries:
                     logger.warning(
-                        "\n[yellow]Could not get the release notes for this version.[/yellow]"
+                        "\n<yellow>Could not get the release notes for this version.</yellow>"
                     )
                 else:
-                    logger.warning(
+                    logger.info(
                         "\nThe following are the release note entries for the current version:\n"
                     )
-                    for rn in rn_entries:
-                        logger.warning(rn)
-                    logger.warning("")
+                    logger.info(rn_entries)
+                    logger.info("")
 
 
 # ====================== split ====================== #
@@ -322,8 +318,8 @@ def split(ctx, config, **kwargs):
         FileType.LISTS,
         FileType.ASSETS_MODELING_RULE,
     ]:
-        logger.warning(
-            "[red]File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.[/red]"
+        logger.info(
+            "<red>File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.</red>"
         )
         return 1
 
@@ -380,7 +376,7 @@ def extract_code(ctx, config, **kwargs):
     update_command_args_from_config_file("extract-code", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        logger.warning("[red]File is not an Integration or Script.[/red]")
+        logger.info("<red>File is not an Integration or Script.</red>")
         return 1
     extractor = YmlSplitter(
         configuration=config.configuration, file_type=file_type.value, **kwargs
@@ -797,7 +793,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "--ignore",
     default=None,
     multiple=True,
-    help="An error code to not run. To ignore more than one error, repeat this option (e.g. `--ignore AA123 --ignore BC321`)",
+    help="An error code to not run. Must be listed under `ignorable_errors`. To ignore more than one error, repeate this option (e.g. `--ignore AA123 --ignore BC321`)",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
@@ -808,15 +804,11 @@ def validate(ctx, config, file_paths: str, **kwargs):
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-    logger.warning('validate | function running')
-
     if is_sdk_defined_working_offline():
-        logger.warning('validate | SDK is offline, skipping validation')
         logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)
 
     if file_paths and not kwargs["input"]:
-        logger.warning('validate | using file_paths argument as input')
         # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
         kwargs["input"] = ",".join(file_paths)
     run_with_mp = not kwargs.pop("no_multiprocessing")
@@ -826,8 +818,8 @@ def validate(ctx, config, file_paths: str, **kwargs):
     file_path = kwargs["input"]
 
     if kwargs["post_commit"] and kwargs["staged"]:
-        logger.warning(
-            "[red]Could not supply the staged flag with the post-commit flag[/red]"
+        logger.info(
+            "<red>Could not supply the staged flag with the post-commit flag</red>"
         )
         sys.exit(1)
     try:
@@ -890,7 +882,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
                     )
 
         if run_old_validate:
-            logger.warning(f'validate | run_old_validate')
             if not kwargs["skip_new_validate"]:
                 kwargs["graph"] = False
             validator = OldValidateManager(
@@ -924,7 +915,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
             )
             exit_code += validator.run_validation()
         if run_new_validate:
-            logger.warning('validate | run_new_validate')
             validation_results = ResultWriter(
                 json_file_path=kwargs.get("json_file"),
             )
@@ -942,7 +932,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 file_path=file_path,
                 execution_mode=execution_mode,
             )
-            logger.warning(f'validate | {initializer=}')
             validator_v2 = ValidateManager(
                 file_path=file_path,
                 initializer=initializer,
@@ -952,16 +941,13 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 ignore_support_level=kwargs.get("ignore_support_level"),
                 ignore=kwargs.get("ignore"),
             )
-            logger.warning(
-                f'validate | {validator_v2=}')
             exit_code += validator_v2.run_validations()
-        logger.warning(f'exit_code: {exit_code}')
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
-        logger.warning(f"[red]{e}[/red]")
-        logger.warning(
-            "\n[red]You may not be running `demisto-sdk validate` command in the content directory.\n"
-            "Please run the command from content directory[red]"
+        logger.error(f"{e}")
+        logger.error(
+            "\nYou may not be running `demisto-sdk validate` command in the content directory.\n"
+            "Please run the command from content directory"
         )
         sys.exit(1)
 
@@ -1932,7 +1918,7 @@ def run_test_playbook(ctx, **kwargs):
 
     update_command_args_from_config_file("run-test-playbook", kwargs)
     test_playbook_runner = TestPlaybookRunner(**kwargs)
-    return test_playbook_runner.manage_and_run_test_playbooks()
+    ctx.exit(test_playbook_runner.manage_and_run_test_playbooks())
 
 
 # ====================== generate-outputs ====================== #
@@ -2088,8 +2074,8 @@ def generate_test_playbook(ctx, **kwargs):
     update_command_args_from_config_file("generate-test-playbook", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        logger.warning(
-            "[red]Generating test playbook is possible only for an Integration or a Script.[/red]"
+        logger.error(
+            "Generating test playbook is possible only for an Integration or a Script."
         )
         return 1
 
@@ -2099,7 +2085,7 @@ def generate_test_playbook(ctx, **kwargs):
             sys.exit(0)
         sys.exit(1)
     except PlaybookTestsGenerator.InvalidOutputPathError as e:
-        logger.warning(f"[red]{e}[/red]")
+        logger.info(f"<red>{e}</red>")
         return 1
 
 
@@ -2278,17 +2264,17 @@ def generate_docs(ctx, **kwargs):
         update_command_args_from_config_file("generate-docs", kwargs)
         input_path_str: str = kwargs.get("input", "")
         if not (input_path := Path(input_path_str)).exists():
-            raise Exception(f"[red]input {input_path_str} does not exist[/red]")
+            raise Exception(f"<red>input {input_path_str} does not exist</red>")
 
         if (output_path := kwargs.get("output")) and not Path(output_path).is_dir():
             raise Exception(
-                f"[red]Output directory {output_path} is not a directory.[/red]"
+                f"<red>Output directory {output_path} is not a directory.</red>"
             )
 
         if input_path.is_file():
             if input_path.suffix.lower() not in {".yml", ".md"}:
                 raise Exception(
-                    f"[red]input {input_path} is not a valid yml or readme file.[/red]"
+                    f"<red>input {input_path} is not a valid yml or readme file.</red>"
                 )
 
             _generate_docs_for_file(kwargs)
@@ -2302,7 +2288,7 @@ def generate_docs(ctx, **kwargs):
 
         else:
             raise Exception(
-                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file.[/red]"
+                f"<red>Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file.</red>"
             )
 
         return 0
@@ -2357,7 +2343,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 )
             ):
                 raise Exception(
-                    f"[red]The `command` argument must be presented with existing `{INTEGRATIONS_README_FILE_NAME}` docs."
+                    f"<red>The `command` argument must be presented with existing `{INTEGRATIONS_README_FILE_NAME}` docs."
                 )
 
         file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
@@ -2368,21 +2354,21 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             FileType.README,
         }:
             raise Exception(
-                "[red]File is not an Integration, Script, Playbook or a README.[/red]"
+                "<red>File is not an Integration, Script, Playbook or a README.</red>"
             )
 
         if old_version and not Path(old_version).is_file():
             raise Exception(
-                f"[red]Input old version file {old_version} was not found.[/red]"
+                f"<red>Input old version file {old_version} was not found.</red>"
             )
 
         if old_version and not old_version.lower().endswith(".yml"):
             raise Exception(
-                f"[red]Input old version {old_version} is not a valid yml file.[/red]"
+                f"<red>Input old version {old_version} is not a valid yml file.</red>"
             )
 
         if file_type == FileType.INTEGRATION:
-            logger.warning(f"Generating {file_type.value.lower()} documentation")
+            logger.info(f"Generating {file_type.value.lower()} documentation")
             use_cases = kwargs.get("use_cases")
             command_permissions = kwargs.get("command_permissions")
             return generate_integration_doc(
@@ -2400,7 +2386,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 force=force,
             )
         elif file_type == FileType.SCRIPT:
-            logger.warning(f"Generating {file_type.value.lower()} documentation")
+            logger.info(f"Generating {file_type.value.lower()} documentation")
             return generate_script_doc(
                 input_path=input_path,
                 output=output_path,
@@ -2411,7 +2397,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 use_graph=use_graph,
             )
         elif file_type == FileType.PLAYBOOK:
-            logger.warning(f"Generating {file_type.value.lower()} documentation")
+            logger.info(f"Generating {file_type.value.lower()} documentation")
             return generate_playbook_doc(
                 input_path=input_path,
                 output=output_path,
@@ -2421,13 +2407,13 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             )
 
         elif file_type == FileType.README:
-            logger.warning(f"Adding template to {file_type.value.lower()} file")
+            logger.info(f"Adding template to {file_type.value.lower()} file")
             return generate_readme_template(
                 input_path=Path(input_path), readme_template=readme_template
             )
 
         else:
-            raise Exception(f"[red]File type {file_type.value} is not supported.[/red]")
+            raise Exception(f"<red>File type {file_type.value} is not supported.</red>")
 
     except Exception:
         logger.exception(f"Failed generating docs for {input_path}")
@@ -2518,8 +2504,8 @@ def merge_id_sets(ctx, **kwargs):
         first_id_set_path=first, second_id_set_path=second, output_id_set_path=output
     )
     if duplicates:
-        logger.warning(
-            f"[red]Failed to merge ID sets: {first} with {second}, "
+        logger.info(
+            f"<red>Failed to merge ID sets: {first} with {second}, "
             f"there are entities with ID: {duplicates} that exist in both ID sets"
         )
         if fail_duplicates:
@@ -2598,8 +2584,8 @@ def update_release_notes(ctx, **kwargs):
 
     update_command_args_from_config_file("update-release-notes", kwargs)
     if kwargs.get("force") and not kwargs.get("input"):
-        logger.warning(
-            "[red]Please add a specific pack in order to force a release notes update."
+        logger.info(
+            "<red>Please add a specific pack in order to force a release notes update."
         )
         sys.exit(0)
 
@@ -2625,8 +2611,8 @@ def update_release_notes(ctx, **kwargs):
         rn_mng.manage_rn_update()
         sys.exit(0)
     except Exception as e:
-        logger.warning(
-            f"[red]An error occurred while updating the release notes: {str(e)}[/red]"
+        logger.info(
+            f"<red>An error occurred while updating the release notes: {str(e)}</red>"
         )
         sys.exit(1)
 
@@ -2726,7 +2712,7 @@ def find_dependencies(ctx, **kwargs):
         )
 
     except ValueError as exp:
-        logger.warning(f"[red]{exp}[/red]")
+        logger.info(f"<red>{exp}</red>")
 
 
 # ====================== postman-codegen ====================== #
@@ -2805,7 +2791,7 @@ def postman_codegen(
     if config_out:
         path = Path(output) / f"config-{postman_config.name}.json"
         path.write_text(json.dumps(postman_config.to_dict(), indent=4))
-        logger.warning(f"Config file generated at:\n{str(path.absolute())}")
+        logger.info(f"Config file generated at:\n{str(path.absolute())}")
     else:
         # generate integration yml
         yml_path = postman_config.generate_integration_package(output, is_unified=True)
@@ -2817,12 +2803,12 @@ def postman_codegen(
                 output=str(output),
             )
             yml_splitter.extract_to_package_format()
-            logger.warning(
-                f"[green]Package generated at {str(Path(output).absolute())} successfully[/green]"
+            logger.info(
+                f"<green>Package generated at {str(Path(output).absolute())} successfully</green>"
             )
         else:
-            logger.warning(
-                f"[green]Integration generated at {str(yml_path.absolute())} successfully[/green]"
+            logger.info(
+                f"<green>Integration generated at {str(yml_path.absolute())} successfully</green>"
             )
 
 
@@ -2939,10 +2925,10 @@ def openapi_codegen(ctx, **kwargs):
         try:
             os.mkdir(output_dir)
         except Exception as err:
-            logger.warning(f"[red]Error creating directory {output_dir} - {err}[/red]")
+            logger.info(f"<red>Error creating directory {output_dir} - {err}</red>")
             sys.exit(1)
     if not os.path.isdir(output_dir):
-        logger.warning(f'[red]The directory provided "{output_dir}" is not a directory')
+        logger.info(f'<red>The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
 
     input_file = kwargs["input_file"]
@@ -2974,9 +2960,9 @@ def openapi_codegen(ctx, **kwargs):
             with open(kwargs["config_file"]) as config_file:
                 configuration = json.load(config_file)
         except Exception as e:
-            logger.warning(f"[red]Failed to load configuration file: {e}[/red]")
+            logger.info(f"<red>Failed to load configuration file: {e}</red>")
 
-    logger.warning("Processing swagger file...")
+    logger.info("Processing swagger file...")
     integration = OpenAPIIntegration(
         input_file,
         base_name,
@@ -2991,7 +2977,7 @@ def openapi_codegen(ctx, **kwargs):
     integration.load_file()
     if not kwargs.get("config_file"):
         integration.save_config(integration.configuration, output_dir)
-        logger.warning(f"[green]Created configuration file in {output_dir}[/green]")
+        logger.info(f"<green>Created configuration file in {output_dir}</green>")
         if not kwargs.get("use_default", False):
             config_path = os.path.join(output_dir, f"{base_name}_config.json")
             command_to_run = (
@@ -3002,28 +2988,24 @@ def openapi_codegen(ctx, **kwargs):
                 command_to_run = command_to_run + f' -u "{unique_keys}"'
             if root_objects:
                 command_to_run = command_to_run + f' -r "{root_objects}"'
-            if (
-                kwargs.get("console_log_threshold")
-                and int(kwargs.get("console_log_threshold", logging.INFO))
-                >= logging.DEBUG
-            ):
+            if kwargs.get("console_log_threshold"):
                 command_to_run = command_to_run + " -v"
             if fix_code:
                 command_to_run = command_to_run + " -f"
 
-            logger.warning(
+            logger.info(
                 f"Run the command again with the created configuration file(after a review): {command_to_run}"
             )
             sys.exit(0)
 
     if integration.save_package(output_dir):
-        logger.warning(
+        logger.info(
             f"Successfully finished generating integration code and saved it in {output_dir}",
             "green",
         )
     else:
-        logger.warning(
-            f"[red]There was an error creating the package in {output_dir}[/red]"
+        logger.info(
+            f"<red>There was an error creating the package in {output_dir}</red>"
         )
         sys.exit(1)
 
@@ -3398,6 +3380,8 @@ def generate_unit_tests(
     This command is used to generate unit tests automatically from an  integration python code.
     Also supports generating unit tests for specific commands.
     """
+    import logging  # noqa: TID251 # special case: controlling external logger
+
     logging.getLogger("PYSCA").propagate = False
     from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
         run_generate_unit_tests,
@@ -3639,12 +3623,12 @@ def setup_env(
     if ide == "auto-detect":
         # Order decides which IDEType will be selected for configuration if multiple IDEs are detected
         if (CONTENT_PATH / ".vscode").exists():
-            logger.warning(
+            logger.info(
                 "Visual Studio Code IDEType has been detected and will be configured."
             )
             ide_type = IDEType.VSCODE
         elif (CONTENT_PATH / ".idea").exists():
-            logger.warning(
+            logger.info(
                 "PyCharm / IDEA IDEType has been detected and will be configured."
             )
             ide_type = IDEType.PYCHARM
@@ -3783,9 +3767,10 @@ def pre_commit(
     ),
 ):
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
+        calling_function="pre-commit",
     )
 
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager

@@ -125,7 +125,7 @@ def generate_script_doc(
             doc.extend(
                 generate_list_section(
                     "Dependencies",
-                    dependencies,
+                    sorted(dependencies),
                     True,
                     text="This script uses the following commands and scripts.",
                 )

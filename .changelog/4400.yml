@@ -1,4 +1,0 @@
-changes:
-- description: The **xsoar-lint** command now shows GitHub Annotations for _errors_, when the `GITHUB_ACTIONS` environment key is set. _Warnings_ are shown when the `DEMISTO_SDK_XSOAR_LINTER_WARNING_ANNOTATIONS` and `GITHUB_ACTIONS` are set.
-  type: feature
-pr_number: 4400

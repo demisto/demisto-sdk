@@ -54,6 +54,7 @@ class ContentItem(BaseContent):
     description: Optional[str] = ""
     is_test: bool = False
     pack: Any = Field(None, exclude=True, repr=False)
+    support: str = ""
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -75,13 +76,59 @@ class ContentItem(BaseContent):
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
 
+    @validator("pack", always=True)
+    def validate_pack(cls, v: Any, values) -> Optional["Pack"]:
+        # Validate that we have the pack containing the content item.
+        # The pack is either provided directly or needs to be located.
+
+        if v and not isinstance(v, fields.FieldInfo):
+            return v
+        return cls.get_pack(values.get("relationships_data"), values.get("path"))
+
+    @validator("support", always=True)
+    def validate_support(cls, v: str, values) -> str:
+        # Ensure the 'support' field is present.
+        # If not directly provided, the support level from the associated pack will be used.
+        if v:
+            return v
+        pack = values.get("pack")
+        if pack and pack.support:
+            return pack.support
+
+        return ""
+
     @property
-    def support_level(self) -> str:
-        return (
-            self.in_pack.support_level
-            if self.in_pack and self.in_pack.support_level
-            else ""
-        )
+    def in_pack(self) -> Optional["Pack"]:
+        """
+        This returns the Pack which the content item is in.
+
+        Returns:
+            Pack: Pack model.
+        """
+        if not self.pack:
+            self.pack = ContentItem.get_pack(self.relationships_data, self.path)
+        return self.pack  # type: ignore[return-value]
+
+    @staticmethod
+    def get_pack(
+        relationships_data: dict,
+        path: Path,
+    ) -> Optional["Pack"]:
+        """
+        Returns the Pack which the content item is in.
+
+        Returns:
+            Pack: Pack model.
+        """
+        pack = None
+        if in_pack := relationships_data[RelationshipType.IN_PACK]:
+            pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if not pack:
+            if pack_name := get_pack_name(path):
+                pack = BaseContent.from_path(
+                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
+                )  # type: ignore[assignment]
+        return pack  # type: ignore[return-value]
 
     @property
     def ignored_errors(self) -> List[str]:
@@ -119,28 +166,6 @@ class ContentItem(BaseContent):
     @property
     def pack_version(self) -> Optional[Version]:
         return self.in_pack.pack_version if self.in_pack else None
-
-    @property
-    def in_pack(self) -> Optional["Pack"]:
-        """
-        This returns the Pack which the content item is in.
-
-        Returns:
-            Pack: Pack model.
-        """
-        pack = self.pack
-        if not pack or isinstance(pack, fields.FieldInfo):
-            pack = None
-            if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
-                pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
-        if not pack:
-            if pack_name := get_pack_name(self.path):
-                pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
-                )  # type: ignore[assignment]
-        if pack:
-            self.pack = pack
-        return pack  # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:
@@ -310,15 +335,7 @@ class ContentItem(BaseContent):
         for _ in range(2):
             # we iterate twice to handle cases of doubled prefixes like `classifier-mapper-`
             for prefix in server_names:
-                try:
-                    name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
-                except AttributeError:
-                    # not supported in python 3.8
-                    name = (
-                        name[len(prefix) + 1 :]
-                        if name.startswith(f"{prefix}-")
-                        else name
-                    )
+                name = name.removeprefix(f"{prefix}-")
         normalized = f"{self.content_type.server_name}-{name}"
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized

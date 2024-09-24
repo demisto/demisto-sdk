@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
     PACKS_FOLDER,
+    PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TESTS_DIRECTORIES,
@@ -20,6 +21,7 @@ from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     DIRS_ALLOWING_SPACE_IN_FILENAMES,
     MODELING_RULES_DIR,
+    XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     ZERO_DEPTH_FILES,
     InvalidClassifier,
@@ -33,6 +35,8 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidModelingRuleFileName,
     InvalidSuffix,
     InvalidXDRCTemplatesFileName,
+    InvalidXSIAMDashboardFileName,
+    InvalidXSIAMParsingRuleFileName,
     InvalidXSIAMReportFileName,
     PathIsFolder,
     PathIsTestData,
@@ -86,13 +90,93 @@ def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
         _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")
 
 
+def test_xsiam_dashboard_file__valid():
+    """
+    Given:
+            A valid XSIAM dashboard file
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation passes
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    _validate(pack_path / XSIAM_DASHBOARDS_DIR / f"{pack_name}_dashboard.json")
+
+
+@pytest.mark.parametrize(
+    "file_prefix, suffix",
+    (
+        pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
+        pytest.param("myPack", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xsiam_dashboard_file__invalid(file_prefix: str, suffix: str):
+    """
+    Given:
+            An invalid XSIAM dashboard file
+            Case 1: wrong prefix - file name does not start with pack name
+            Case 2: wrong suffix - file name does not end with .json
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation raises InvalidXSIAMDashboardFileName
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    with pytest.raises(InvalidXSIAMDashboardFileName):
+        _validate(
+            pack_path / XSIAM_DASHBOARDS_DIR / f"{file_prefix}_dashboard.{suffix}"
+        )
+
+
+def test_xsiam_parsing_rule_file__valid():
+    """
+    Given:
+            A valid XSIAM parsing rule file
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation passes
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    folder_name = f"{pack_name}_{PARSING_RULES_DIR}"
+    _validate(pack_path / PARSING_RULES_DIR / folder_name / f"{folder_name}.yml")
+
+
+@pytest.mark.parametrize(
+    "file_name, suffix",
+    (
+        pytest.param("wrongName", "json", id="bad name, good suffix"),
+        pytest.param("myPack_ParsingRules", "py", id="good name, bad suffix"),
+    ),
+)
+def test_xsiam_parsing_rule_file__invalid(file_name: str, suffix: str):
+    """
+    Given:
+            An invalid XSIAM parsing rule file
+            Case 1: wrong name - file name is not identical to the folder name
+            Case 2: wrong suffix - file name does not end with .yml or.xif
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation raises InvalidXSIAMParsingRuleFileName
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    folder_name = f"{pack_name}_{PARSING_RULES_DIR}"
+    with pytest.raises(InvalidXSIAMParsingRuleFileName):
+        _validate(pack_path / PARSING_RULES_DIR / folder_name / f"{file_name}.{suffix}")
+
+
 def test_content_entities_dir_length():
     """
     This test is here so we don't forget to update FOLDERS_ALLOWED_TO_CONTAIN_FILES when adding/removing content types.
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 34
+    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 33
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
@@ -101,7 +185,7 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 26
+        == 25
     )
 
 
@@ -177,6 +261,7 @@ def test_depth_one_pass(folder: str):
         InvalidIntegrationScriptFileName,
         InvalidXDRCTemplatesFileName,
         InvalidModelingRuleFileName,
+        InvalidXSIAMParsingRuleFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.

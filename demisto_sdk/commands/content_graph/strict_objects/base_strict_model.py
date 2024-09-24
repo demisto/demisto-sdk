@@ -1,5 +1,7 @@
-from typing import Any, List, Literal, Optional, Union
+from pathlib import Path
+from typing import Any, List, Literal, Optional, Tuple, Union
 
+import more_itertools
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
@@ -62,6 +64,16 @@ Argument = create_model(
 )
 
 
+class BaseOptionalVersionYaml(BaseStrictModel):
+    from_version: Optional[str] = Field(None, alias="fromversion")
+    to_version: Optional[str] = Field(None, alias="toversion")
+
+
+class BaseOptionalVersionJson(BaseStrictModel):
+    from_version: Optional[str] = Field(None, alias="fromVersion")
+    to_version: Optional[str] = Field(None, alias="toVersion")
+
+
 class Output(BaseStrictModel):
     content_path: Optional[str] = Field(None, alias="contentPath")
     context_path: Optional[str] = Field(None, alias="contextPath")
@@ -89,17 +101,28 @@ class ScriptType(StrEnum):
 class StructureError(BaseStrictModel):
     """Used for wrapping Pydantic errors, not part of content."""
 
-    field_name: Optional[tuple] = Field(None, alias="loc")
-    error_message: Optional[str] = Field(None, alias="msg")
-    error_type: Optional[str] = Field(None, alias="type")
+    path: Path
+    field_name: Tuple[str, ...] = Field(alias="loc")
+    error_message: str = Field(alias="msg")
+    error_type: str = Field(alias="type")
     ctx: Optional[dict] = None
+
+    def __str__(self):
+        field_name = ",".join(more_itertools.always_iterable(self.field_name))
+        if self.error_type == "assertion_error":
+            error_message = f"The field {field_name} is not required, but should not be None if it exists"
+        elif self.error_type == "value_error.extra":
+            error_message = f"The field {field_name} is extra and {self.error_message}"
+        elif self.error_type == "value_error.missing":
+            error_message = f"The field {field_name} is required but missing"
+        else:
+            error_message = self.error_message or ""
+        return f"Structure error ({self.error_type}) in field {field_name} of {self.path.name}: {error_message}"
 
 
 class _BaseIntegrationScript(BaseStrictModel):
     name: str
     deprecated: Optional[bool] = None
-    from_version: Optional[str] = Field(None, alias="fromversion")
-    to_version: Optional[str] = Field(None, alias="toversion")
     system: Optional[bool] = None
     tests: Optional[List[str]] = None
     auto_update_docker_image: Optional[bool] = Field(
@@ -110,9 +133,13 @@ class _BaseIntegrationScript(BaseStrictModel):
 
 BaseIntegrationScript = create_model(
     model_name="BaseIntegrationScript",
-    base_models=(_BaseIntegrationScript, NAME_DYNAMIC_MODEL, DEPRECATED_DYNAMIC_MODEL),
+    base_models=(
+        _BaseIntegrationScript,
+        NAME_DYNAMIC_MODEL,
+        DEPRECATED_DYNAMIC_MODEL,
+        BaseOptionalVersionYaml,
+    ),
 )
-
 
 REPUTATION = Literal[tuple(range(4))]  # type:ignore[misc]
 
@@ -125,8 +152,6 @@ class ExtractSettings(BaseStrictModel):
 
 
 class _StrictGenericIncidentType(BaseStrictModel):
-    id_: str = Field(..., alias="id")
-    version: int
     vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     locked: Optional[bool] = None
@@ -152,10 +177,10 @@ class _StrictGenericIncidentType(BaseStrictModel):
     reputation_calc: Optional[REPUTATION] = Field(None, alias="reputationCalc")  # type:ignore[valid-type]
     on_change_rep_alg: Optional[REPUTATION] = Field(None, alias="onChangeRepAlg")  # type:ignore[valid-type]
     detached: Optional[bool] = None
-    from_version: Optional[str] = Field(None, alias="fromVersion")
-    to_version: Optional[str] = Field(None, alias="toVersion")
     layout: Optional[str] = None
     extract_settings: Optional[ExtractSettings] = Field(None, alias="extractSettings")
+    id_: str = Field(..., alias="id")
+    version: int
 
 
 StrictGenericIncidentType = create_model(
@@ -164,5 +189,32 @@ StrictGenericIncidentType = create_model(
         _StrictGenericIncidentType,
         NAME_DYNAMIC_MODEL,
         ID_DYNAMIC_MODEL,
+        BaseOptionalVersionJson,
     ),
 )
+
+OPERATORS = Union["Filter", "Or", "And"]
+
+
+class Filter(BaseStrictModel):
+    SEARCH_FIELD: str
+    SEARCH_TYPE: str
+    SEARCH_VALUE: str
+
+
+class And(BaseStrictModel):
+    AND: Optional[List[OPERATORS]] = None
+
+
+class Or(BaseStrictModel):
+    OR: Optional[List[OPERATORS]] = None
+
+
+# Forward references to resolve circular dependencies
+Filter.update_forward_refs()
+And.update_forward_refs()
+Or.update_forward_refs()
+
+
+class AlertsFilter(BaseStrictModel):
+    filter: Optional[Union[Or, And]] = None

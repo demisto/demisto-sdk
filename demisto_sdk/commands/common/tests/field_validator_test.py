@@ -1,4 +1,3 @@
-import logging
 from typing import Dict, List
 from unittest.mock import patch
 
@@ -10,7 +9,6 @@ from demisto_sdk.commands.common.hook_validations.field_base_validator import (
     GroupFieldTypes,
 )
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from TestSuite.test_tools import str_in_call_args_list
 
 INDICATOR_GROUP_NUMBER = 2
 INCIDENT_GROUP_NUMBER = 0
@@ -64,8 +62,8 @@ class TestFieldValidator:
     ]
 
     @pytest.mark.parametrize("current_file, answer", INPUTS_NAMES)
-    def test_is_valid_name_sanity(self, current_file, answer, mocker):
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    def test_is_valid_name_sanity(self, current_file, answer, mocker, caplog):
+        caplog.set_level("ERROR")
 
         with patch.object(StructureValidator, "__init__", lambda a, b: None):
             structure = StructureValidator("")
@@ -81,7 +79,7 @@ class TestFieldValidator:
 
             validator.is_valid_name()
 
-            assert str_in_call_args_list(logger_error.call_args_list, "IF100") is answer
+            assert ("IF100" in caplog.text) is answer
 
     CONTENT_1 = {"content": True}
 

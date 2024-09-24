@@ -13,7 +13,6 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.native_image import NativeImageConfig
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
-from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
@@ -56,7 +55,7 @@ class Obj:
     object_id: str = "id1"
     is_powershell: bool = False
     docker_image: str = "dockerimage"
-    support_level: str = "xsoar"
+    support: str = "xsoar"
 
     @property
     def docker_images(self):
@@ -122,7 +121,12 @@ def test_config_files(mocker, repo: Repo, native_image_config):
         - make sure that the created hooks are pylint based only as its the only hook that should be split
     """
 
-    def devtest_side_effect(image_tag: str, is_powershell: bool, should_pull: bool):
+    def devtest_side_effect(
+        image_tag: str,
+        is_powershell: bool,
+        should_pull: bool,
+        should_install_mypy_additional_dependencies: bool,
+    ):
         return image_tag
 
     mocker.patch(
@@ -250,35 +254,6 @@ def test_handle_api_modules(mocker, git_repo: Repo):
         Path(integration.yml.path).relative_to(git_repo.path),
         integration.object.path.relative_to(git_repo.path),
     ) in files_to_run
-
-
-def test_mypy_hooks(mocker):
-    """
-    Testing mypy hook created successfully (the python version is correct)
-    """
-    mypy_hook = {
-        "args": [
-            "--ignore-missing-imports",
-            "--check-untyped-defs",
-            "--show-error-codes",
-            "--follow-imports=silent",
-            "--allow-redefinition",
-            "--python-version=3.10",
-        ],
-        "id": "mypy",
-    }
-    mocker.patch.object(
-        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
-    )
-
-    mypy_hook = create_hook(mypy_hook)
-    MypyHook(**mypy_hook).prepare_hook()
-    for hook, python_version in itertools.zip_longest(
-        mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
-    ):
-        assert hook["args"][-1] == f"--python-version={python_version}"
-        assert hook["name"] == f"mypy-py{python_version}"
-        assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
 
 
 @pytest.mark.parametrize("github_actions", [True, False])
@@ -550,7 +525,7 @@ class TestPreprocessFiles:
     ):
         """
         This UT verifies changes made to pre commit command to support collection of
-        untracked files when running the build on an external contribution PR.
+        staged (modified) files when running the build on an external contribution PR.
 
         Given:
             - A content build is running on external contribution PR, meaning:
@@ -574,11 +549,6 @@ class TestPreprocessFiles:
         mocker.patch(
             "git.repo.base.Repo._get_untracked_files",
             return_value=untracked_files,
-        )
-        mocker.patch.object(
-            pre_commit_command,
-            "get_untracked_files_in_content",
-            return_value=untracked_files_in_content,
         )
 
         output = preprocess_files(use_git=True)
@@ -643,7 +613,7 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {
         "2.7": {(Path("file1.py"), Obj())},
-        "3.8": {(Path("file2.py"), Obj(support_level="community"))},
+        "3.8": {(Path("file2.py"), Obj(support="community"))},
     }
     pre_commit_context = pre_commit_command.PreCommitContext(
         None,

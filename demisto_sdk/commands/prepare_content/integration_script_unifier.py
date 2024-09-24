@@ -131,7 +131,7 @@ class IntegrationScriptUnifier(Unifier):
                 yml_unified, custom, is_script_package
             )
 
-        logger.debug(f"[green]Created unified yml: {path.name}[/green]")
+        logger.debug(f"<green>Created unified yml: {path.name}</green>")
         return yml_unified
 
     @staticmethod
@@ -329,11 +329,12 @@ class IntegrationScriptUnifier(Unifier):
         script_code = IntegrationScriptUnifier.insert_module_code(
             script_code, imports_to_names, get_content_path(package_path)
         )
-        if pack_version := get_pack_metadata(file_path=str(package_path)).get(
-            "currentVersion", ""
-        ):
+        pack_metadata = get_pack_metadata(file_path=str(package_path))
+        pack_version = pack_metadata.get("currentVersion", "")
+        pack_name = pack_metadata.get("name", "")
+        if pack_name and pack_version:
             script_code = IntegrationScriptUnifier.insert_pack_version(
-                script_type, script_code, pack_version
+                script_type, script_code, pack_version, pack_name
             )
 
         if script_type == ".py":
@@ -477,13 +478,19 @@ class IntegrationScriptUnifier(Unifier):
 
     @staticmethod
     def insert_pack_version(
-        script_type: str, script_code: str, pack_version: str
+        script_type: str, script_code: str, pack_version: str, pack_name: str
     ) -> str:
         """
         Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
-        :param script_code: The integration code
-        :param pack_version: The pack version
-        :return: The integration script with the pack version appended if needed, otherwise returns the original script
+
+        Args:
+            script_type (str): The type of the script (e.g., ".js", ".ps1", ".py").
+            script_code (str): The integration code.
+            pack_version (str): The pack version.
+            pack_name (str): The pack name.
+
+        Returns:
+            str: The integration script with the pack version appended if needed, otherwise returns the original script.
         """
         if script_type == ".js":
             return (
@@ -491,12 +498,27 @@ class IntegrationScriptUnifier(Unifier):
                 if "// pack version:" in script_code
                 else f"// pack version: {pack_version}\n{script_code}"
             )
-        elif script_type in {".py", ".ps1"}:
+        elif script_type == ".ps1":
             return (
                 script_code
                 if "### pack version:" in script_code
                 else f"### pack version: {pack_version}\n{script_code}"
             )
+        elif script_type == ".py":
+            existing_pack_info_debug_log_re = (
+                r"demisto\.debug\('pack name = .*?, pack version = .*?'\)"
+            )
+            pack_info_debug_statement = f"demisto.debug('pack name = {pack_name}, pack version = {pack_version}')"
+
+            if re.search(existing_pack_info_debug_log_re, script_code):
+                script_code = re.sub(
+                    existing_pack_info_debug_log_re,
+                    pack_info_debug_statement,
+                    script_code,
+                )  # replace existing (edge case)
+            else:  # common case
+                script_code = f"{pack_info_debug_statement}\n{script_code}"
+            return script_code
         return script_code
 
     @staticmethod
@@ -692,7 +714,7 @@ class IntegrationScriptUnifier(Unifier):
             return f"[View Integration Documentation]({integration_doc_link})"
         else:
             logger.info(
-                f"[cyan]Did not find README in {package_path}, not adding integration doc link[/cyan]"
+                f"<cyan>Did not find README in {package_path}, not adding integration doc link</cyan>"
             )
             return ""
 

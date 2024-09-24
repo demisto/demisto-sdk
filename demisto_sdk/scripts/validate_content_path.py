@@ -11,7 +11,6 @@ from typing_extensions import Annotated
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DOC_FILES_DIR,
@@ -94,7 +93,6 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         LAYOUTS_DIR,
         CLASSIFIERS_DIR,
         MAPPERS_DIR,
-        CONNECTIONS_DIR,
         RELEASE_NOTES_DIR,
         DOC_FILES_DIR,
         JOBS_DIR,
@@ -178,6 +176,14 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
 
 class InvalidXSIAMReportFileName(InvalidPathException):
     message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
+
+
+class InvalidXSIAMDashboardFileName(InvalidPathException):
+    message = "Only .json and .png file extension are supported for XSIAM dashboard. File must be named  <pack_name>_<dashboard_name>.json."
+
+
+class InvalidXSIAMParsingRuleFileName(InvalidPathException):
+    message = "Only .yml and .xif file extension are supported for XSIAM Parsing Rule. File must be named as the parent folder name."
 
 
 class InvalidImageFileName(InvalidPathException):
@@ -300,6 +306,12 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidXSIAMReportFileName
 
+        if first_level_folder == XSIAM_DASHBOARDS_DIR and not (
+            path.stem.startswith(f"{parts_after_packs[0]}_")
+            and path.suffix in (".json", ".png")
+        ):
+            raise InvalidXSIAMDashboardFileName
+
         if (
             first_level_folder == DOC_FILES_DIR
             and path.suffix in SUPPORTED_IMAGE_FORMATS
@@ -326,6 +338,11 @@ def _validate(path: Path) -> None:
             )
         ):
             raise InvalidModelingRuleFileName
+
+        elif first_level_folder == PARSING_RULES_DIR and not (
+            path.stem == path.parent.name and path.suffix in {".yml", ".xif"}
+        ):
+            raise InvalidXSIAMParsingRuleFileName
 
 
 def _validate_image_file_name(image_name: str):
@@ -416,7 +433,7 @@ def validate(
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
     try:
         _validate(path)
-        logger.debug(f"[green]{path} is valid[/green]")
+        logger.debug(f"<green>{path} is valid</green>")
         return True
 
     except InvalidPathException as e:
@@ -523,13 +540,13 @@ def validate_all(
         ]
     )
     valid = (total := len(paths)) - invalid
-    logger.info(f"{total=},[green]{valid=}[/green],[red]{invalid=}[/red]")
+    logger.info(f"{total=},<green>{valid=}</green>,<red>{invalid=}</red>")
     if invalid:
         raise typer.Exit(1)
 
 
 def main():
-    logging_setup()
+    logging_setup(calling_function=Path(__file__).stem)
     app()
 
 

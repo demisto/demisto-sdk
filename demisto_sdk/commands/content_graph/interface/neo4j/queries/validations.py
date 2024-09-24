@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
 
+from more_itertools import first
 from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import (
@@ -20,35 +21,18 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 )
 
 
-def validate_unknown_content(
-    tx: Transaction,
-    file_paths: List[str],
-    raises_error: bool,
-    include_optional: bool = False,
-):
+def validate_unknown_content(tx: Transaction, file_paths: List[str]):
     """Query graph to return all ids used in the provided files that are missing from the repo.
 
     Args:
         tx: The Transaction to contact the graph with.
         file_paths: The file paths to check
-        raises_error: If True with include_optional=False, will only return the mandatory dependencies.
-                      If False with include_optional=False, will only return the non-mandatory dependencies.
-        include_optional: If True, will return both mandatory and non-mandatory dependencies.
-
     Return:
         All content ids used in the provided file paths that are missing from the repo.
     """
-    if include_optional:
-        query = f"""// Returns USES relationships to content items not in the repository
-        MATCH (content_item_from{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
+    query = f"""// Returns USES relationships to content items not in the repository
+        MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
         {f'WHERE content_item_from.path in {file_paths}' if file_paths else ''}
-        RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
-        """
-    else:
-        query = f"""// Returns USES relationships to content items not in the repository
-        MATCH (content_item_from{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
-        WHERE{' NOT' if raises_error else ''} NOT r.mandatorily
-        {f'AND content_item_from.path in {file_paths}' if file_paths else ''}
         RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
         """
     return {
@@ -308,3 +292,27 @@ def validate_duplicate_ids(
         (item.get("content_item"), item.get("duplicate_content_items"))
         for item in run_query(tx, query)
     ]
+
+
+def validate_test_playbook_in_use(
+    tx: Transaction, test_playbook_ids: List[str], test_playbooks_ids_to_skip
+) -> List[graph.Node]:
+    query = """
+MATCH (tp:TestPlaybook) WHERE
+"""
+    if test_playbook_ids:
+        query += f" tp.object_id IN {test_playbook_ids} AND"
+    query += f"""
+ NOT EXISTS {{ MATCH ()-[:TESTED_BY]->(tp) }}
+AND tp.deprecated = false
+AND NOT (tp.object_id IN {test_playbooks_ids_to_skip})
+MATCH (tp)-[:IN_PACK]->(p:Pack)
+WHERE p.support = "xsoar"
+AND p.deprecated = false
+RETURN collect(tp) AS content_items
+"""
+    # when there a test playbooks that not in use, the query return a list with one item
+    return first(
+        filter(None, (item.get("content_items") for item in run_query(tx, query))),
+        default=[],
+    )

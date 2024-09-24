@@ -8,6 +8,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.mapper import StrictMapper
 
 IGNORED_INCIDENT_TYPES = ["dbot_classification_incident_type_all"]
 
@@ -111,3 +112,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                     self.get_filters_and_transformers_from_complex_value(
                         incident_field_complex
                     )
+
+    @property
+    def strict_object(self):
+        return StrictMapper

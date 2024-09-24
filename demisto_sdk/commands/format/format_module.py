@@ -24,7 +24,6 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
 )
-from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_correlation_rule import CorrelationRuleYMLFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
@@ -78,7 +77,6 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "pythonfile": PythonFileFormat,
     "report": ReportJSONFormat,
     "testscript": ScriptYMLFormat,
-    "canvas-context-connections": ConnectionJSONFormat,
     "description": DescriptionFormat,
     "genericfield": GenericFieldJSONFormat,
     "generictype": GenericTypeJSONFormat,
@@ -295,7 +293,7 @@ def format_manager(
     logger.info("")  # Just adding a new line before summary
     for string, print_color in log_list:
         joined_string = "\n".join(string)
-        logger.info(f"[{print_color}]{joined_string}[/{print_color}]")
+        logger.info(f"<{print_color}>{joined_string}</{print_color}>")
 
     if error_list:
         return 1
@@ -332,11 +330,11 @@ def get_files_to_format_from_git(
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)
         logger.info(
-            f"[cyan]Found the following files to format:\n{detected_files_string}[/cyan]"
+            f"<cyan>Found the following files to format:\n{detected_files_string}</cyan>"
         )
 
     else:
-        logger.info("[red]Did not find any files to format[/red]")
+        logger.info("<red>Did not find any files to format</red>")
 
     return filtered_files
 
@@ -399,7 +397,7 @@ def run_format_on_file(
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
         logger.info(
-            f"[yellow]No updater_class was found for file type {file_type}[/yellow]"
+            f"<yellow>No updater_class was found for file type {file_type}</yellow>"
         )
         return format_output(input, 1, VALIDATE_RES_SKIPPED_CODE)
 
@@ -425,30 +423,30 @@ def format_output(
     skipped_list = []
     if format_res and validate_res:
         if validate_res == VALIDATE_RES_SKIPPED_CODE:
-            error_list.append(f"Format Status   on file: {input} - Failed")
+            error_list.append(f"Format Status on file: {input} - Failed")
             skipped_list.append(f"Validate Status on file: {input} - Skipped")
         elif validate_res == VALIDATE_RES_FAILED_CODE:
-            error_list.append(f"Format Status   on file: {input} - Failed")
+            error_list.append(f"Format Status on file: {input} - Failed")
         else:
-            error_list.append(f"Format Status   on file: {input} - Failed")
+            error_list.append(f"Format Status on file: {input} - Failed")
             error_list.append(f"Validate Status on file: {input} - Failed")
     elif format_res and not validate_res:
-        error_list.append(f"Format Status   on file: {input} - Failed")
+        error_list.append(f"Format Status on file: {input} - Failed")
         info_list.append(f"Validate Status on file: {input} - Success")
     elif not format_res and validate_res:
         if validate_res == VALIDATE_RES_SKIPPED_CODE:
-            info_list.append(f"Format Status   on file: {input} - Success")
+            info_list.append(f"Format Status on file: {input} - Success")
             skipped_list.append(f"Validate Status on file: {input} - Skipped")
         elif validate_res == VALIDATE_RES_FAILED_CODE:
-            info_list.append(f"Format Status   on file: {input} - Success")
+            info_list.append(f"Format Status on file: {input} - Success")
         else:
-            info_list.append(f"Format Status   on file: {input} - Success")
+            info_list.append(f"Format Status on file: {input} - Success")
             error_list.append(f"Validate Status on file: {input} - Failed")
             error_list.append(
                 f"For more information run: `demisto-sdk validate -i {input}`"
             )
     elif not format_res and not validate_res:
-        info_list.append(f"Format Status   on file: {input} - Success")
+        info_list.append(f"Format Status on file: {input} - Success")
         info_list.append(f"Validate Status on file: {input} - Success")
     return info_list, error_list, skipped_list
 

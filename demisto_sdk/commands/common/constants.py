@@ -19,7 +19,7 @@ NEO4J_DIR = PROJECT_DATA_DIR / "neo4j"
 
 LOG_FILE_NAME = "demisto_sdk_debug.log"
 
-NEO4J_DEFAULT_VERSION = "5.13.0"
+NEO4J_DEFAULT_VERSION = "5.22.0"
 
 # --- Environment Variables ---
 # General
@@ -55,7 +55,7 @@ DEMISTO_SDK_LOG_NOTIFY_PATH = "DEMISTO_SDK_LOG_NOTIFY_PATH"
 DEMISTO_SDK_LOG_FILE_SIZE = "DEMISTO_SDK_LOG_FILE_SIZE"
 DEMISTO_SDK_LOG_FILE_COUNT = "DEMISTO_SDK_LOG_FILE_COUNT"
 DEMISTO_SDK_LOG_NO_COLORS = "DEMISTO_SDK_LOG_NO_COLORS"
-
+DEMISTO_SDK_LOGGING_SET = "DEMISTO_SDK_LOGGING_SET"
 # Neo4j
 DEMISTO_SDK_NEO4J_VERSION = "DEMISTO_SDK_NEO4J_VERSION"
 DEMISTO_SDK_NEO4J_DATABASE_HTTP = "DEMISTO_SDK_NEO4J_DATABASE_HTTP"
@@ -88,7 +88,6 @@ GENERIC_DEFINITIONS_DIR = "GenericDefinitions"
 LAYOUTS_DIR = "Layouts"
 CLASSIFIERS_DIR = "Classifiers"
 MAPPERS_DIR = "Classifiers"
-CONNECTIONS_DIR = "Connections"
 PACKS_DIR = "Packs"
 TOOLS_DIR = "Tools"
 RELEASE_NOTES_DIR = "ReleaseNotes"
@@ -128,7 +127,6 @@ INCIDENT = "incident"  # prefix to identify any incident entity
 INCIDENT_TYPE = "incidenttype"
 INCIDENT_FIELD = "incidentfield"
 INDICATOR_FIELD = "indicatorfield"
-CONNECTION = "connection"
 CLASSIFIER = "classifier"
 DASHBOARD = "dashboard"
 REPORT = "report"
@@ -139,7 +137,6 @@ TOOL = "tools"
 BETA_INTEGRATION = "betaintegration"
 DOCUMENTATION = "doc"
 MAPPER = "classifier-mapper"
-CANVAS = "canvas"
 OLD_REPUTATION = "reputations.json"
 PACK_VERIFY_KEY = "content.pack.verify"
 XSOAR_CONFIG_FILE = "xsoar_config.json"
@@ -173,6 +170,17 @@ DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
+# Server Types
+XSOAR_SERVER_TYPE = "XSOAR"
+XSIAM_SERVER_TYPE = "XSIAM"
+XPANSE_SERVER_TYPE = "XPANSE"
+XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
+
+# Product Types
+XSOAR_PRODUCT_TYPE = "XSOAR"
+XSIAM_PRODUCT_TYPE = "XSIAM"
+XPANSE_PRODUCT_TYPE = "XPANSE"
+
 
 class FileType(StrEnum):
     INTEGRATION = "integration"
@@ -193,7 +201,6 @@ class FileType(StrEnum):
     CLASSIFIER = "classifier"
     WIDGET = "widget"
     REPORT = "report"
-    CONNECTION = "canvas-context-connections"
     README = "readme"
     RELEASE_NOTES = "releasenotes"
     RELEASE_NOTES_CONFIG = "releasenotesconfig"
@@ -276,7 +283,6 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.REPORT: "Reports",
     FileType.WIDGET: "Widgets",
     FileType.DASHBOARD: "Dashboards",
-    FileType.CONNECTION: "Connections",
     FileType.MAPPER: "Mappers",
     FileType.PRE_PROCESS_RULES: "PreProcess Rules",
     FileType.GENERIC_DEFINITION: "Objects",
@@ -316,7 +322,6 @@ ENTITY_TYPE_TO_DIR = {
     FileType.INCIDENT_TYPE.value: INCIDENT_TYPES_DIR,
     FileType.INDICATOR_FIELD.value: INDICATOR_FIELDS_DIR,
     FileType.INDICATOR_TYPE.value: INDICATOR_TYPES_DIR,
-    FileType.CONNECTION.value: CONNECTIONS_DIR,
     FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.DASHBOARD.value: DASHBOARDS_DIR,
     FileType.REPUTATION.value: INDICATOR_TYPES_DIR,
@@ -387,7 +392,6 @@ CONTENT_ENTITIES_DIRS = [
     INCIDENT_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     GENERIC_MODULES_DIR,
@@ -769,11 +773,6 @@ PACKS_CLASSIFIER_JSON_5_9_9_REGEX = rf"{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.jso
 _PACKS_MAPPER_BASE_REGEX = rf"{PACKS_CLASSIFIERS_DIR_REGEX}\/classifier-(?=mapper).*"
 PACKS_MAPPER_JSON_REGEX = rf"{_PACKS_MAPPER_BASE_REGEX}\.json"
 
-PACKS_CONNECTIONS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{CONNECTIONS_DIR}"
-PACKS_CONNECTION_JSON_REGEX = (
-    rf"{PACKS_CONNECTIONS_DIR_REGEX}\/canvas-context-connections.*\.json$"
-)
-
 PACKS_RELEASE_NOTES_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{RELEASE_NOTES_DIR}"
 
 PLAYBOOKS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{PLAYBOOKS_DIR}"
@@ -807,10 +806,6 @@ TEST_PLAYBOOK_REGEX = (
 )
 TEST_NOT_PLAYBOOK_REGEX = (
     rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!playbook).*-.*\.yml$"
-)
-
-CONNECTIONS_REGEX = (
-    rf"{CAN_START_WITH_DOT_SLASH}{CONNECTIONS_DIR}.*canvas-context-connections.*\.json$"
 )
 
 INDICATOR_TYPES_REPUTATIONS_REGEX = (
@@ -1073,10 +1068,6 @@ JSON_ALL_GENERIC_DEFINITIONS_REGEXES = [
 
 JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES = [PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX]
 
-JSON_ALL_CONNECTIONS_REGEXES = [
-    CONNECTIONS_REGEX,
-]
-
 JSON_ALL_REPORTS_REGEXES = [PACKS_REPORT_JSON_REGEX]
 
 JSON_ALL_JOB_REGEXES = [JOB_JSON_REGEX]
@@ -1126,7 +1117,6 @@ CHECKED_TYPES_REGEXES = [
     PACKS_REPORT_JSON_REGEX,
     PACKS_RELEASE_NOTES_REGEX,
     PACKS_TOOLS_REGEX,
-    CONNECTIONS_REGEX,
     JOB_JSON_REGEX,
     WIZARD_JSON_REGEX,
     # ReleaseNotes
@@ -1181,7 +1171,6 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
     INDICATOR_TYPES_DIR,
-    CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
     LISTS_DIR,
     JOBS_DIR,
@@ -1197,7 +1186,6 @@ PACKS_DIRECTORIES = [
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
     REPORTS_DIR,
-    CONNECTIONS_DIR,
     PLAYBOOKS_DIR,
     JOBS_DIR,
     WIZARDS_DIR,
@@ -1388,7 +1376,6 @@ SCHEMA_TO_REGEX = {
     "script": YML_SCRIPT_REGEXES,
     "widget": JSON_ALL_WIDGETS_REGEXES,
     "dashboard": JSON_ALL_DASHBOARDS_REGEXES,
-    "canvas-context-connections": JSON_ALL_CONNECTIONS_REGEXES,
     "classifier_5_9_9": JSON_ALL_CLASSIFIER_REGEXES_5_9_9,
     "classifier": JSON_ALL_CLASSIFIER_REGEXES,
     "mapper": JSON_ALL_MAPPER_REGEXES,
@@ -1622,6 +1609,7 @@ GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 FEATURE_BRANCHES = ["v4.5.0"]
 VERSION_REGEX = r"(\d{1,2}\.){2}\d{1,2}$"
 DOC_FILE_IMAGE_REGEX = r"[\.\./]*doc_files/[a-zA-Z0-9_-]+\.png"
+DOC_FILE_FULL_IMAGE_REGEX = r"!\[.*?\]\(((?!http).*?doc_files.*?)\)"
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"
@@ -1673,16 +1661,6 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
-        "must_be_one_of": {},
-    },
-    {
-        "name": "feedExpirationPolicy",
-        "must_equal": {
-            "display": "",
-            "type": 17,
-            "options": ["never", "interval", "indicatorType", "suddenDeath"],
-        },
-        "must_contain": {},
         "must_be_one_of": {},
     },
     {
@@ -1972,11 +1950,11 @@ MarketplaceVersionToMarketplaceName = {
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
-    MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.XSOAR_ON_PREM: "Tests/Marketplace/core_packs_list.json",
-    MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
-    MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
+    MarketplaceVersions.XSOAR: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_SAAS: "Config/core_packs_list.json",
+    MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
+    MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
+    MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
 }
 
 
@@ -2158,18 +2136,17 @@ MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 STRING_TO_BOOL_MAP = {
+    # should only have lowercase keys, see string_to_bool
+    "t": True,
     "y": True,
     "1": True,
     "yes": True,
     "true": True,
-    "True": True,
     "n": False,
+    "f": False,
     "0": False,
     "no": False,
     "false": False,
-    "False": False,
-    "t": True,
-    "f": False,
 }
 
 SCHEMA_FILE_VALID_ATTRIBUTES_TYPE = {"string", "int", "float", "datetime", "boolean"}
@@ -2224,3 +2201,7 @@ PACK_DEFAULT_MARKETPLACES: List = [
 INVALID_IMAGE_PATH_REGEX = (
     r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")"
 )
+
+# Test types:
+TEST_PLAYBOOKS = "TestPlaybooks"
+TEST_MODELING_RULES = "TestModelingRules"

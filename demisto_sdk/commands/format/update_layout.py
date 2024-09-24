@@ -81,7 +81,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n<blue>================= Updating file {self.source_file} =================</blue>"
             )
             if self.is_container:
                 self.layoutscontainer__run_format()
@@ -92,7 +92,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             return SUCCESS_RETURN_CODE
         except Exception as err:
             logger.debug(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE
 
@@ -191,16 +191,16 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
     def set_group_field(self):
         if self.data["group"] not in ("incident", "indicator", "case"):
             logger.info(
-                "[red]No group is specified for this layout, would you like me to update for you? [Y/n][/red]"
+                "<red>No group is specified for this layout, would you like me to update for you? [Y/n]</red>"
             )
             user_answer = input()
             # Checks if the user input is no
             if user_answer in ["n", "N", "No", "no"]:
-                logger.info("[red]Moving forward without updating group field[/red]")
+                logger.info("<red>Moving forward without updating group field</red>")
                 return
 
             logger.info(
-                "[yellow]Please specify the desired group: incident, indicator or case[/yellow]"
+                "<yellow>Please specify the desired group: incident, indicator or case</yellow>"
             )
             user_desired_group = input()
             if re.match(r"(^incident$)", user_desired_group, re.IGNORECASE):
@@ -210,7 +210,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             elif re.match(r"(^case$)", user_desired_group, re.IGNORECASE):
                 self.data["group"] = "case"
             else:
-                logger.info("[red]Group is not valid[/red]")
+                logger.info("<red>Group is not valid</red>")
 
     def layout__arguments_to_remove(self):
         """Finds diff between keys in file and schema of file type

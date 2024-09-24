@@ -1628,9 +1628,11 @@ class IntegrationValidator(ContentEntityValidator):
 
         invalid_display_names = []
         for parameter in parameters_display_name:
-            invalid_display_names.append(parameter) if parameter and not parameter[
-                0
-            ].isupper() or "_" in parameter else None
+            (
+                invalid_display_names.append(parameter)
+                if parameter and not parameter[0].isupper() or "_" in parameter
+                else None
+            )
 
         if invalid_display_names:
             (

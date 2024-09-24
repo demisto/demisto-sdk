@@ -1,4 +1,3 @@
-import logging
 import os
 import tempfile
 from pathlib import Path
@@ -19,6 +18,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
@@ -29,6 +29,7 @@ from demisto_sdk.commands.validate.config_reader import (
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
+    create_pack_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -58,7 +59,9 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
 )
-from TestSuite.test_tools import str_in_call_args_list
+from demisto_sdk.commands.validate.validators.PA_validators.PA114_pack_metadata_version_should_be_raised import (
+    PackMetadataVersionShouldBeRaisedValidator,
+)
 
 INTEGRATION = create_integration_object()
 INTEGRATION.path = Path(
@@ -442,6 +445,7 @@ def test_post_results(
     expected_error_call_count,
     expected_error_code_in_warnings,
     expected_error_code_in_errors,
+    caplog,
 ):
     """
     Given
@@ -457,22 +461,21 @@ def test_post_results(
         - Case 2: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'BA101' and the warning logger wasn't called.
         - Case 3: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'BA101' and the warning logger was called once with 'BC100'
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     validation_results = ResultWriter()
     validation_results.validation_results = results
     exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
     assert exit_code == expected_exit_code
-    assert logger_warning.call_count == expected_warnings_call_count
-    assert logger_error.call_count == expected_error_call_count
-    for expected_error_code_in_warning in expected_error_code_in_warnings:
-        assert str_in_call_args_list(
-            logger_warning.call_args_list, expected_error_code_in_warning
-        )
-    for expected_error_code_in_error in expected_error_code_in_errors:
-        assert str_in_call_args_list(
-            logger_error.call_args_list, expected_error_code_in_error
-        )
+
+    log_by_level = map_reduce(caplog.records, lambda log: log.levelno)
+    warnings = log_by_level.get(30, ())
+    assert len(warnings) == expected_warnings_call_count
+    for code in expected_error_code_in_warnings:
+        assert code in " ".join({log.message for log in warnings})
+
+    errors = log_by_level.get(40, ())
+    assert len(errors) == expected_error_call_count
+    for code in expected_error_code_in_errors:
+        assert code in " ".join({log.message for log in errors})
 
 
 @pytest.mark.parametrize(
@@ -891,3 +894,43 @@ def test_ignored_with_run_all(mocker):
     )
     validate_manager.objects_to_run = [integration, script]
     assert 0 == validate_manager.run_validations()
+
+
+def test_check_metadata_version_bump_on_content_changes(mocker, repo):
+    """
+    Given: pack with newly added integration.
+    When: Initializing ValidateManager using git.
+    Then: Ensure PackMetadataVersionShouldBeRaisedValidator is initialized and the external args are properly passed.
+    """
+    pack = create_pack_object(["currentVersion"], ["1.1.1"])
+    integration = create_integration_object()
+    pack.content_items.integration.extend(integration)
+    validation_results = ResultWriter()
+    config_reader = ConfigReader(explicitly_selected=["PA114"])
+    mocker.patch.object(
+        Initializer,
+        "get_files_using_git",
+        return_value=({BaseContent.from_path(Path(integration.path)), pack}, {}, {}),
+    )
+    mocker.patch.object(
+        BaseContent,
+        "from_path",
+        return_value=BaseContent.from_path(Path(pack.path), metadata_only=True),
+    )
+    initializer = Initializer(
+        prev_ver="some_prev_ver", execution_mode=ExecutionMode.USE_GIT
+    )
+
+    validate_manager = ValidateManager(
+        validation_results=validation_results,
+        config_reader=config_reader,
+        initializer=initializer,
+    )
+
+    version_bump_validator = None
+    for validator in validate_manager.validators:
+        if isinstance(validator, PackMetadataVersionShouldBeRaisedValidator):
+            version_bump_validator = validator
+
+    # Assert the PA114 validation will run
+    assert version_bump_validator

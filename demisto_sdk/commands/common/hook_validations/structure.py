@@ -3,7 +3,6 @@
 Module contains validation of schemas, ids and paths.
 """
 
-import logging
 import os
 import re
 import string
@@ -169,6 +168,7 @@ class StructureValidator(BaseValidator):
             return True
 
         logger.info(f"Validating scheme for {self.file_path}")
+        import logging  # noqa: TID251 # special case: controlling another logger
 
         try:
             # disabling massages of level ERROR and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid

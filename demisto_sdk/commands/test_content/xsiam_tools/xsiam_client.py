@@ -141,8 +141,7 @@ class XsiamApiClient(XsiamApiInterface):
         if not demisto_version:
             raise RuntimeError("Could not get the tenant's demisto version")
         logger.info(
-            f"[green]Demisto version of XSIAM tenant is {demisto_version}[/green]",
-            extra={"markup": True},
+            f"<green>Demisto version of XSIAM tenant is {demisto_version}</green>",
         )
         return Version(demisto_version)
 
@@ -239,9 +238,11 @@ class XsiamApiClient(XsiamApiInterface):
             endpoint = urljoin(self.base_url, "logs/v1/event")
             additional_headers = {
                 "authorization": self.collector_token,
-                "content-type": "application/json"
-                if data_format.casefold == "json"
-                else "text/plain",
+                "content-type": (
+                    "application/json"
+                    if data_format.casefold == "json"
+                    else "text/plain"
+                ),
                 "content-encoding": "gzip",
             }
             token_type = "collector_token"

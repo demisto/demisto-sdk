@@ -231,9 +231,11 @@ class DockerHubClient:
 
         raw_json_response = self.get_request(
             url,
-            headers={key: value for key, value in headers}
-            if headers
-            else {"Accept": "application/json"},
+            headers=(
+                {key: value for key, value in headers}
+                if headers
+                else {"Accept": "application/json"}
+            ),
             params=_params,
         )
 
@@ -282,14 +284,16 @@ class DockerHubClient:
 
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
-            headers={key: value for key, value in headers}
-            if headers
-            else None
-            or {
-                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                "application/vnd.docker.distribution.manifest.list.v2+json",
-                "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
-            },
+            headers=(
+                {key: value for key, value in headers}
+                if headers
+                else None
+                or {
+                    "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+                    "application/vnd.docker.distribution.manifest.list.v2+json",
+                    "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+                }
+            ),
             params={key: value for key, value in params} if params else None,
         )
 

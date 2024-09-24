@@ -46,6 +46,7 @@ import google
 import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
+from github import Github
 from google.cloud import secretmanager
 from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
@@ -108,7 +109,6 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
-    STRING_TO_BOOL_MAP,
     TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
@@ -140,7 +140,13 @@ from demisto_sdk.commands.common.handlers import (
     YAML_Handler,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.string_to_bool import (
+    # all files, except for the logger setup, import from tools, so we import it here (makes more sense than having all other files import from string_to_bool.py)
+    # See the comment in string_to_bool's implementation
+    string_to_bool,
+)
 
+DEMISTO_SDK_REPO = "demisto/demisto-sdk"
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
@@ -385,7 +391,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     if err:
         if exit_on_error:
             logger.info(
-                f"[red]Failed to run command {command}\nerror details:\n{err}[/red]"
+                f"<red>Failed to run command {command}\nerror details:\n{err}</red>"
             )
             sys.exit(1)
         else:
@@ -535,18 +541,18 @@ def get_remote_file_from_api(
         err_msg = err_msg.replace(gitlab_token, "XXX") if gitlab_token else err_msg
         if is_external_repository():
             logger.debug(
-                f'[yellow]You are working in a private repository: "{git_content_config.current_repository}".\n'
+                f'<yellow>You are working in a private repository: "{git_content_config.current_repository}".\n'
                 f"The github/gitlab token in your environment is undefined.\n"
                 f"Getting file from local repository instead. \n"
                 f"If you wish to get the file from the remote repository, \n"
                 f"Please define your github or gitlab token in your environment.\n"
-                f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n"
-                f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>[/yellow]"
+                f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=\\<TOKEN> or`\n"
+                f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=\\<TOKEN></yellow>"
             )
         logger.debug(
-            f'[yellow]Could not find the old entity file under "{git_path}".\n'
+            f'<yellow>Could not find the old entity file under "{git_path}".\n'
             "please make sure that you did not break backward compatibility.\n"
-            f"Reason: {err_msg}[/yellow]"
+            f"Reason: {err_msg}</yellow>"
         )
         return {}
 
@@ -1152,21 +1158,21 @@ def get_release_notes_file_path(file_path):
     :return: file_path: str - Validated release notes path.
     """
     if file_path is None:
-        logger.info("[yellow]Release notes were not found.[/yellow]")
+        logger.info("<yellow>Release notes were not found.</yellow>")
         return None
     else:
         if bool(re.search(r"\d{1,2}_\d{1,2}_\d{1,2}\.md", file_path)):
             return file_path
         else:
             logger.info(
-                f"[yellow]Unsupported file type found in ReleaseNotes directory - {file_path}[/yellow]"
+                f"<yellow>Unsupported file type found in ReleaseNotes directory - {file_path}</yellow>"
             )
             return None
 
 
 def get_latest_release_notes_text(rn_path):
     if rn_path is None:
-        logger.info("[yellow]Path to release notes not found.[/yellow]")
+        logger.info("<yellow>Path to release notes not found.</yellow>")
         rn = None
     else:
         try:
@@ -1175,7 +1181,7 @@ def get_latest_release_notes_text(rn_path):
 
             if not rn:
                 logger.info(
-                    f"[red]Release Notes may not be empty. Please fill out correctly. - {rn_path}[/red]"
+                    f"<red>Release Notes may not be empty. Please fill out correctly. - {rn_path}</red>"
                 )
                 return ""
         except OSError:
@@ -1487,7 +1493,7 @@ def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
             )
             return None
     logger.warning(
-        f"[red]Could not find pack-ignore file at path {_pack_ignore_file_path} for pack {pack_name}[/red]"
+        f"<red>Could not find pack-ignore file at path {_pack_ignore_file_path} for pack {pack_name}</red>"
     )
     return None
 
@@ -2044,12 +2050,9 @@ def is_external_repository() -> bool:
     """
     try:
         git_repo = GitUtil().repo
-        private_settings_path = os.path.join(
-            git_repo.working_dir, ".private-repo-settings"
-        )  # type: ignore
-        return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
         return True
+    return Path(git_repo.working_dir, ".private-repo-settings").exists()
 
 
 def is_external_repo() -> bool:
@@ -2147,7 +2150,10 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
             logger.info(
-                "[yellow]Please run demisto-sdk in content repository![/yellow]"
+                "Please run demisto-sdk in a content repository. <d>Set the DEMISTO_SDK_IGNORE_CONTENT_WARNING environment variable to suppress this warning.</d>"
+            )
+            os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = (
+                "true"  # temporary: variables set in runtime are automatically removed
             )
     return Path(".")
 
@@ -2611,7 +2617,7 @@ def open_id_set_file(id_set_path):
         with open(id_set_path) as id_set_file:
             id_set = json.load(id_set_file)
     except OSError:
-        logger.info("[yellow]Could not open id_set file[/yellow]")
+        logger.info("<yellow>Could not open id_set file</yellow>")
         raise
     finally:
         return id_set
@@ -3067,37 +3073,21 @@ def is_uuid(s: str) -> Optional[Match]:
     return re.match(UUID_REGEX, s)
 
 
-def get_release_note_entries(version="") -> list:
+def get_release_note_entries(tag_version: str) -> Optional[str]:
     """
-    Gets the release notes entries for the current version.
+    Retrieves the release notes entries for a specified version tag.
 
     Args:
-        version: The current demisto-sdk version.
+        tag_version (str): The version tag for which to retrieve the release notes.
 
-    Return:
-        list: A list of the release notes given from the CHANGELOG file.
+    Returns:
+        Optional[str]: The body of the release tag if found, otherwise None.
     """
-
-    changelog_file_content = (
-        get_remote_file(
-            full_file_path="CHANGELOG.md",
-            return_content=True,
-            git_content_config=GitContentConfig(repo_name="demisto/demisto-sdk"),
-        )
-        .decode("utf-8")
-        .split("\n")
-    )
-
-    if not version or "dev" in version:
-        version = "Unreleased"
-
-    if f"## {version}" not in changelog_file_content:
-        return []
-
-    result = changelog_file_content[changelog_file_content.index(f"## {version}") + 1 :]
-    result = result[: result.index("")]
-
-    return result
+    releases = Github(verify=False).get_repo(DEMISTO_SDK_REPO).get_releases()
+    for release in releases:
+        if release.tag_name == f"v{tag_version}":
+            return release.body
+    return None
 
 
 def get_current_usecases() -> list:
@@ -3122,8 +3112,8 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
         approved_tags_json, _ = get_dict_from_file("Config/approved_tags.json")
         if isinstance(approved_tags_json.get("approved_list"), list):
             logger.info(
-                "[yellow]You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
-                " to update it.[/yellow]"
+                "<yellow>You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
+                " to update it.</yellow>"
             )
             return {
                 "common": approved_tags_json.get("approved_list", []),
@@ -3274,7 +3264,7 @@ def get_current_repo() -> Tuple[str, str, str]:
             host = host.split("@")[1]
         return host, parsed_git.owner, parsed_git.repo
     except git.InvalidGitRepositoryError:
-        logger.info("[yellow]git repo is not found[/yellow]")
+        logger.info("<yellow>git repo is not found</yellow>")
         return "Unknown source", "", ""
 
 
@@ -3380,7 +3370,7 @@ def ProcessPoolHandler() -> ProcessPool:
         try:
             yield pool
         except Exception:
-            logger.info("[red]Gracefully release all resources due to Error...[/red]")
+            logger.info("<red>Gracefully release all resources due to Error...</red>")
             raise
         finally:
             pool.close()
@@ -3401,7 +3391,7 @@ def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
             result = future.result()
             done_fn(result)
         except Exception as e:
-            logger.info(f"[red]{e}[/red]")
+            logger.info(f"<red>{e}</red>")
             raise
 
 
@@ -3730,19 +3720,6 @@ def normalize_field_name(field: str) -> str:
     return field.replace("incident_", "").replace("indicator_", "")
 
 
-def string_to_bool(
-    input_: Any,
-    default_when_empty: Optional[bool] = None,
-) -> bool:
-    try:
-        return STRING_TO_BOOL_MAP[str(input_).lower()]
-    except (KeyError, TypeError):
-        if input_ in ("", None) and default_when_empty is not None:
-            return default_when_empty
-
-    raise ValueError(f"cannot convert {input_} to bool")
-
-
 def field_to_cli_name(field_name: str) -> str:
     """
     Returns the CLI name of an incident/indicator field by removing non letters/numbers
@@ -3888,7 +3865,7 @@ def get_api_module_dependencies_from_graph(
 
         if dependent_items:
             logger.info(
-                f"Found [cyan]{len(dependent_items)}[/cyan] content items that import the following modified API modules: {changed_api_modules}. "
+                f"Found <cyan>{len(dependent_items)}</cyan> content items that import the following modified API modules: {changed_api_modules}. "
             )
         return dependent_items
 
@@ -4015,9 +3992,11 @@ def strip_description(description):
     return (
         description.strip('"')
         if description.startswith('"') and description.endswith('"')
-        else description.strip("'")
-        if description.startswith("'") and description.endswith("'")
-        else description
+        else (
+            description.strip("'")
+            if description.startswith("'") and description.endswith("'")
+            else description
+        )
     )
 
 
@@ -4386,7 +4365,9 @@ def get_pack_latest_rn_version(pack_path: str) -> str:
         (str): The lastest version of RN.
     """
     list_of_files = glob.glob(pack_path + "/ReleaseNotes/*")
-    list_of_release_notes = [Path(file).name for file in list_of_files]
+    list_of_release_notes = [
+        Path(file).name for file in list_of_files if Path(file).suffix == ".md"
+    ]
     list_of_versions = [
         rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
     ]
@@ -4466,6 +4447,29 @@ def extract_image_paths_from_str(
     """
 
     return [image_path for image_path in re.findall(regex_str, text)]
+
+
+def get_full_image_paths_from_relative(
+    pack_name: str, image_paths: List[str]
+) -> List[Path]:
+    """
+        Args:
+            pack_name (str): Pack name to add to path
+            image_paths (List[Path]): List of images with a local path. For example: ![<title>](../doc_files/<image name>.png)
+    )
+
+        Returns:
+            List[Path]: A list of paths with the full path.
+    """
+
+    return [
+        (
+            Path(f"Packs/{pack_name}/{image_path.replace('../', '')}")
+            if "Packs" not in image_path
+            else Path(image_path)
+        )
+        for image_path in image_paths
+    ]
 
 
 def remove_nulls_from_dictionary(data):

@@ -4,7 +4,9 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import dateparser
+import google.auth
 import requests
+from google.auth.transport.requests import Request
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 

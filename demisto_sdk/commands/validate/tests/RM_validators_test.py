@@ -4,10 +4,6 @@ import more_itertools
 import pytest
 
 from demisto_sdk.commands.common.tools import find_pack_folder
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_doc_file_object,
@@ -62,7 +58,7 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM115_no_default_sec
 from demisto_sdk.commands.validate.validators.RM_validators.RM116_readme_not_to_short import (
     NotToShortReadmeValidator,
 )
-from TestSuite.repo import ChangeCWD, Repo
+from TestSuite.repo import ChangeCWD
 
 
 @pytest.mark.parametrize(
@@ -86,9 +82,9 @@ from TestSuite.repo import ChangeCWD, Repo
     ],
 )
 def test_IsContainCopyRightSectionValidator_obtain_invalid_content_items(
-    content_items: list[Pack],
-    expected_number_of_failures: Literal[0] | Literal[1],
-    expected_msgs: list[str],
+    content_items,
+    expected_number_of_failures,
+    expected_msgs,
 ):
     """
     Given
@@ -159,9 +155,9 @@ def test_IsContainCopyRightSectionValidator_obtain_invalid_content_items(
     ],
 )
 def test_empty_readme_validator(
-    content_items: list[Pack],
-    expected_number_of_failures: Literal[0] | Literal[1],
-    expected_msgs: list[str],
+    content_items,
+    expected_number_of_failures,
+    expected_msgs,
 ):
     """
     Given:
@@ -228,10 +224,7 @@ def test_empty_readme_validator(
         ),
     ],
 )
-def test_is_image_path_validator(
-    content_items: list[Integration] | list[Script] | list[Pack] | list[Playbook],
-    expected_number_of_failures: Literal[0] | Literal[1],
-):
+def test_is_image_path_validator(content_items, expected_number_of_failures):
     """
     Given:
         - A list of content items with their respective readme contents.
@@ -328,10 +321,10 @@ def test_is_image_path_validator(
     ],
 )
 def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
-    content_items: list[Playbook | Integration],
-    doc_files_name: list[str | None],
-    expected_number_of_failures: Literal[0] | Literal[5],
-    expected_msgs: list[str],
+    content_items,
+    doc_files_name,
+    expected_number_of_failures,
+    expected_msgs,
 ):
     with ChangeCWD(REPO.path):
         for content_item, file_name in zip(content_items, doc_files_name):
@@ -431,9 +424,7 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
     ],
 )
 def test_IsReadmeExistsValidator_obtain_invalid_content_items(
-    content_items: list[Playbook] | list[Script] | list[Integration],
-    expected_number_of_failures: Literal[1],
-    expected_msgs: list[str],
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given:
@@ -616,7 +607,7 @@ def test_ImagePathOnlyReadMeValidator_obtain_invalid_content_items_invalid_case(
     assert result[0].message == expected
 
 
-def test_VerifyTemplateInReadmeValidator_valid_case(repo: Repo):
+def test_VerifyTemplateInReadmeValidator_valid_case(repo):
     """
     Given
     content_items.
@@ -654,7 +645,7 @@ def test_VerifyTemplateInReadmeValidator_valid_case(repo: Repo):
         assert validator_result.message == expected_error_message
 
 
-def test_VerifyTemplateInReadmeValidator_invalid_case(repo: Repo):
+def test_VerifyTemplateInReadmeValidator_invalid_case(repo):
     """
     Given
     content_items.

@@ -132,7 +132,7 @@ class PreCommitContext:
         for repo in pre_commit_config.get("repos", []):
             new_hooks = []
             for hook in repo.get("hooks", []):
-                if not hook.get("log_file") and HOOK_LOG_PATH:
+                if (not hook.get("log_file")) and HOOK_LOG_PATH:
                     hook["log_file"] = f"{HOOK_LOG_PATH}/{hook['id']}.log"
                 if not self.run_docker_hooks and hook["id"].endswith("in-docker"):
                     continue

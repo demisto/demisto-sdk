@@ -127,7 +127,7 @@ class PreCommitContext:
             new_hooks = []
             for hook in repo.get("hooks", []):
                 if not hook.get("log_file"):
-                    hook["log_file"] = f".pre-commit/{hook['id']}.log"
+                    hook["log_file"] = f"./{hook['id']}.log"
                 if not self.run_docker_hooks and hook["id"].endswith("in-docker"):
                     continue
                 if (self.run_hook and self.run_hook in hook["id"]) or (

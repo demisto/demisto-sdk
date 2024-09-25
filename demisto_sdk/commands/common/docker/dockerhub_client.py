@@ -593,7 +593,7 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
     return registry or default_registry
 
 
-def get_gcloud_access_token() -> str | None:
+def get_gcloud_access_token() -> Optional[str]:
     """
     Retrieves a Google Cloud access token using environment credentials.
 

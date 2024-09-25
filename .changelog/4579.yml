@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue with the **update-release-notes** command where it was not properly detecting existing items in the release notes.
+- description: Fixed an issue where the **update-release-notes** command was not properly detecting existing items in the release notes.
   type: fix
 pr_number: 4579

@@ -5,22 +5,16 @@ repos:
   rev: v4.4.0
   hooks:
   - id: check-json
-    log_file: /src/.pre-commit/logs/check-json.log
   - id: check-yaml
-    log_file: .pre-commit/logs/check-yaml.log
   - id: check-ast
     min_py_version: '3.7'
-    log_file: .pre-commit/logs/check-ast.log
   - id: check-merge-conflict
-    log_file: .pre-commit/logs/check-merge-conflict.log
   - id: debug-statements
     language_version: python3
     min_py_version: '3.7'
-    log_file: .pre-commit/logs/debug-statements.log
   - id: name-tests-test
     min_py_version: '3.7'
     files: .+_test.py$
-    log_file: .pre-commit/logs/name-tests-test.log
 
 - repo: local
   hooks:
@@ -47,7 +41,6 @@ repos:
     copy_files:
     - Tests/scripts/dev_envs/pytest/conftest.py
     run_isolated: true
-    log_file: .pre-commit/logs/pytest-in-docker.log
 
   - id: pwsh-test-in-docker
     name: pwsh-test-in-docker
@@ -65,7 +58,6 @@ repos:
     - Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1
     - Tests/demistomock/demistomock.ps1
     run_isolated: true
-    log_file: .pre-commit/logs/pwsh-test-in-docker.log
 
   - id: validate
     name: validate
@@ -76,7 +68,6 @@ repos:
     pass_filenames: false
     language: system
     require_serial: true
-    log_file: .pre-commit/logs/validate.log
 
   - id: merge-pytest-reports
     name: merge-pytest-reports
@@ -86,4 +77,3 @@ repos:
     pass_filenames: false
     needs:
     - pytest-in-docker
-    log_file: .pre-commit/logs/merge-pytest-reports.log

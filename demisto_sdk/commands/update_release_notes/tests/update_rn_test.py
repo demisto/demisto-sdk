@@ -1529,7 +1529,9 @@ class TestRNUpdate:
         current_rn = "##### Integration Name\n- Added a new feature"
         content_name = "Integration Name"
 
-        result = update_rn.does_content_item_header_exist_in_rns(current_rn, content_name)
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
 
         assert result is True
 
@@ -1551,7 +1553,9 @@ class TestRNUpdate:
         current_rn = "##### Other Integration\n- Fixed a bug"
         content_name = "Integration Name"
 
-        result = update_rn.does_content_item_header_exist_in_rns(current_rn, content_name)
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
 
         assert result is False
 
@@ -1573,7 +1577,9 @@ class TestRNUpdate:
         current_rn = "#### Object Types\n- **Sample GenericType**"
         content_name = "Sample GenericType"
 
-        result = update_rn.does_content_item_header_exist_in_rns(current_rn, content_name)
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
 
         assert result is True
 
@@ -1595,7 +1601,9 @@ class TestRNUpdate:
         current_rn = "#### Playbooks\n\n##### New: Entity Enrichment - Generic v3\n\nNew: Enrich entities using one or more integrations."
         content_name = "Entity Enrichment - Generic v3"
 
-        result = update_rn.does_content_item_header_exist_in_rns(current_rn, content_name)
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
 
         assert result is True
 

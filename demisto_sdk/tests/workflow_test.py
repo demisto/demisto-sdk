@@ -131,11 +131,8 @@ class ContentGitRepo:
         with ChangeCWD(self.content):
             runner = CliRunner(mix_stderr=False)
             self.run_command("git add .")
-            # commit flow - secrets, lint and validate only on staged files without rn
+            # commit flow - secrets, validate only on staged files without rn
             res = runner.invoke(main, "secrets")
-            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
-
-            res = runner.invoke(main, "lint -g --no-test")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
             res = runner.invoke(

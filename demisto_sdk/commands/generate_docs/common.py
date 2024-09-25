@@ -19,15 +19,6 @@ class HEADER_TYPE:
     H3 = "###"
 
 
-class CONFIGURATION_SECTION_STEPS(Enum):
-    STEP_1 = "1. Navigate to **Settings** > **Integrations** > **Servers & Services**."
-    STEP_2_TEMPLATE = "2. Search for {}."
-    STEP_3 = (
-        "3. Click **Add instance** to create and configure a new integration instance."
-    )
-    STEP_4 = "4. Click **Test** to validate the URLs, token, and connection."
-
-
 def save_output(path, file_name, content):
     """
     Creates the output file in path.
@@ -144,18 +135,14 @@ def generate_table_section(
             section = [""]
         return section
 
-    (
-        section.extend([text, "    |", "    |"])
-        if numbered_section
-        else section.extend([text, "|", "|"])
-    )
+    section.extend([text, "|", "|"])
     header_index = len(section) - 2
     for key in data[0]:
         section[header_index] += f" **{key}** |"
         section[header_index + 1] += " --- |"
 
     for item in data:
-        tmp_item = "    |" if numbered_section else "|"
+        tmp_item = "|"
         escape_less_greater_signs = bool(
             {"First fetch time", "First fetch timestamp"}.intersection(item.keys())
         )  # instead of HTML escaping

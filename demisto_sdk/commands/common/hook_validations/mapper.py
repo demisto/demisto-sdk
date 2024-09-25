@@ -227,7 +227,7 @@ class MapperValidator(ContentEntityValidator):
 
         if not id_set_file:
             logger.info(
-                "[yellow]Skipping mapper incident field validation. Could not read id_set.json.[/yellow]"
+                "<yellow>Skipping mapper incident field validation. Could not read id_set.json.</yellow>"
             )
             return True
 

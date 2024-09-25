@@ -1,9 +1,10 @@
-from pathlib import Path
-
+import more_itertools
 import pytest
-
+from pathlib import PosixPath
+from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_doc_file_object,
     create_integration_object,
     create_pack_object,
     create_playbook_object,
@@ -11,6 +12,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_valid import (
     IsImagePathValidValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM102_is_missing_context_output import (
+    IsMissingContextOutputValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
@@ -33,11 +37,17 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_readme_imag
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM110_is_commands_in_readme import (
+    IsCommandsInReadmeValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_copy_right_section import (
     IsContainCopyRightSectionValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
     IsImageExistsInReadmeValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM116_missing_playbook_image import (
+    MissingPlaybookImageValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -234,7 +244,7 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
 
 
 @pytest.mark.parametrize(
-    "content_items, is_file_exist, expected_number_of_failures, expected_msgs",
+    "content_items, doc_files_name, expected_number_of_failures, expected_msgs",
     [
         (
             [
@@ -256,10 +266,14 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
                     pack_info={"name": "test2"},
                 ),
                 create_integration_object(
+                    readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.jpg)",
+                    pack_info={"name": "test2"},
+                ),
+                create_integration_object(
                     readme_content="", pack_info={"name": "test2"}
                 ),
             ],
-            True,
+            [None, "example.png", None, None, "example.png", "example.jpg", None],
             0,
             [],
         ),
@@ -273,26 +287,41 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
                     readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png)",
                     pack_info={"name": "test2"},
                 ),
+                create_playbook_object(
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png ), ",
+                    pack_info={"name": "test3"},
+                ),
+                create_integration_object(
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image]( ../doc_files/example.png)",
+                    pack_info={"name": "test4"},
+                ),
+                create_integration_object(
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.jpg)",
+                    pack_info={"name": "test5"},
+                ),
             ],
-            False,
-            2,
+            [None, None, "example.png", "example.png", None],
+            5,
             [
-                "The following images do not exist: Packs/test1/doc_files/example.png",
-                "The following images do not exist: Packs/test2/doc_files/example.png",
+                "The following images do not exist or have additional characters present in their declaration within the README: Packs/test1/doc_files/example.png",
+                "The following images do not exist or have additional characters present in their declaration within the README: Packs/test2/doc_files/example.png",
+                "The following images do not exist or have additional characters present in their declaration within the README: Packs/test3/doc_files/example.png",
+                "The following images do not exist or have additional characters present in their declaration within the README: Packs/test5/doc_files/example.jpg",
             ],
         ),
     ],
 )
 def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
-    mocker,
     content_items,
-    is_file_exist,
+    doc_files_name,
     expected_number_of_failures,
     expected_msgs,
 ):
-    mocker.patch.object(Path, "is_file", return_value=is_file_exist)
-
     with ChangeCWD(REPO.path):
+        for content_item, file_name in zip(content_items, doc_files_name):
+            if file_name:
+                create_doc_file_object(find_pack_folder(content_item.path), file_name)
+
         results = IsImageExistsInReadmeValidator().obtain_invalid_content_items(
             content_items
         )
@@ -636,3 +665,306 @@ def test_VerifyTemplateInReadmeValidator_invalid_case(repo):
         ),
     ]
     assert not IsTemplateInReadmeValidator().obtain_invalid_content_items(content_items)
+
+
+def test_get_command_context_path_from_readme_file_missing_from_yml():
+    """
+    Given a command name and README content, and missing commands from yml
+    When get_command_context_path_from_readme_file is called
+    Then it should return the expected set of context paths
+    """
+    readme_content = (
+        "### test-command\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`test-command`\n"
+        "#### Input\n\n"
+        "| **Argument Name** | **Description**                  | **Required** |\n"
+        "| ----------------- | -------------------------------- | ------------ |\n"
+        "| short_description | Short description of the ticket. | Optional     |\n\n\n"
+        " #### Context Output\n\n"
+        "| **Path**             | **Type** | **Description**       |\n"
+        "| -------------------- | -------- | --------------------- |\n"
+        "| Test.Path1 | string   | test. |\n"
+    )
+    integrations = [
+        create_integration_object(
+            paths=[
+                "script.commands",
+            ],
+            values=[[{"name": "test-command"}]],
+            readme_content=readme_content,
+        ),
+    ]
+    results = IsMissingContextOutputValidator().obtain_invalid_content_items(
+        integrations
+    )
+    assert (
+        results[0].message
+        == "Find discrepancy for the following commands:\ntest-command:\nThe following outputs are missing from yml: Test.Path1\n"
+    )
+
+
+def test_get_command_context_path_from_readme_file_missing_from_readme():
+    """
+    Given a command name and README content with missing context outputs
+    When get_command_context_path_from_readme_file is called
+    Then it should return the expected set of context paths and show missing from readme
+    """
+    readme_content = (
+        "### test-command\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`test-command`\n"
+        "#### Input\n\n"
+        "| **Argument Name** | **Description** | **Required** |\n"
+        "| ----------------- | --------------- | ------------ |\n"
+        "| arg1              | Test argument   | Optional     |\n\n\n"
+        " #### Context Output\n\n"
+        "| **Path**    | **Type** | **Description** |\n"
+        "| ----------- | -------- | --------------- |\n"
+        "| Test.Path1  | string   | test.           |\n"
+    )
+    yml_content = {
+        "script": {
+            "commands": [
+                {
+                    "name": "test-command",
+                    "outputs": [
+                        {"contextPath": "Test.Path1"},
+                        {"contextPath": "Test.Path2"},
+                    ],
+                }
+            ]
+        }
+    }
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[yml_content["script"]["commands"]],
+        readme_content=readme_content,
+    )
+    results = IsMissingContextOutputValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert (
+        results[0].message
+        == "Find discrepancy for the following commands:\ntest-command:\nThe following outputs are missing from readme: Test.Path2\n"
+    )
+
+
+def test_get_command_context_path_from_readme_file_no_discrepancies():
+    """
+    Given a command name and README content with matching context outputs in YML
+    When get_command_context_path_from_readme_file is called
+    Then it should return an empty list of results
+    """
+    readme_content = (
+        "### test-command\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`test-command`\n"
+        "#### Input\n\n"
+        "| **Argument Name** | **Description** | **Required** |\n"
+        "| ----------------- | --------------- | ------------ |\n"
+        "| arg1              | Test argument   | Optional     |\n\n\n"
+        " #### Context Output\n\n"
+        "| **Path**    | **Type** | **Description** |\n"
+        "| ----------- | -------- | --------------- |\n"
+        "| Test.Path1  | string   | test.           |\n"
+        "| Test.Path2  | string   | test.           |\n"
+    )
+    yml_content = {
+        "script": {
+            "commands": [
+                {
+                    "name": "test-command",
+                    "outputs": [
+                        {"contextPath": "Test.Path1"},
+                        {"contextPath": "Test.Path2"},
+                    ],
+                }
+            ]
+        }
+    }
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[yml_content["script"]["commands"]],
+        readme_content=readme_content,
+    )
+    results = IsMissingContextOutputValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_get_command_context_path_from_readme_file_multiple_commands():
+    """
+    Given multiple commands with discrepancies in context outputs
+    When get_command_context_path_from_readme_file is called
+    Then it should return the expected set of context paths for all commands
+    """
+    readme_content = (
+        "### command1\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`command1`\n"
+        "#### Context Output\n\n"
+        "| **Path**    | **Type** | **Description** |\n"
+        "| ----------- | -------- | --------------- |\n"
+        "| Test.Path1  | string   | test.           |\n"
+        "### command2\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`command2`\n"
+        "#### Context Output\n\n"
+        "| **Path**    | **Type** | **Description** |\n"
+        "| ----------- | -------- | --------------- |\n"
+        "| Test.Path2  | string   | test.           |\n"
+        "| Test.Path3  | string   | test.           |\n"
+    )
+    yml_content = {
+        "script": {
+            "commands": [
+                {
+                    "name": "command1",
+                    "outputs": [
+                        {"contextPath": "Test.Path1"},
+                        {"contextPath": "Test.Path2"},
+                    ],
+                },
+                {
+                    "name": "command2",
+                    "outputs": [
+                        {"contextPath": "Test.Path2"},
+                        {"contextPath": "Test.Path4"},
+                    ],
+                },
+            ]
+        }
+    }
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[yml_content["script"]["commands"]],
+        readme_content=readme_content,
+    )
+    results = IsMissingContextOutputValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert (
+        "command1:\nThe following outputs are missing from readme: Test.Path2\n"
+        in results[0].message
+    )
+    assert (
+        "command2:\nThe following outputs are missing from yml: Test.Path3\nThe following outputs are missing from readme: Test.Path4\n"
+        in results[0].message
+    )
+
+
+def test_IsCommandsInReadmeValidator_not_valid():
+    """
+    Given: An integration object with commands 'command1' and 'command2'
+    When: The README content is empty
+    Then: The IsCommandsInReadmeValidator should return a single result with a message
+          indicating that the commands are missing from the README file
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {"name": "command1"},
+                {"name": "command2"},
+            ]
+        ],
+        readme_content="",
+    )
+    results = IsCommandsInReadmeValidator().obtain_invalid_content_items([content_item])
+    assert more_itertools.one(results), "The validator should return a single result"
+    assert results[0].message == (
+        "The following commands appear in the YML file but not in the README file: command1, command2."
+    )
+
+
+def test_IsCommandsInReadmeValidator_valid():
+    """
+    Given: An integration object with commands 'command1' and 'command2'
+    When: The README content includes both command names
+    Then: The IsCommandsInReadmeValidator should not report any invalid content items
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {"name": "command1"},
+                {"name": "command2"},
+            ]
+        ],
+        readme_content="command1, command2",
+    )
+    assert not IsCommandsInReadmeValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    <<<<<< rm116
+def test_missing_playbook_image_validator_no_image():
+    """
+    Given
+    content_items.
+    - Playbook without an image
+    When
+    - Calling the MissingPlaybookImageValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure that the validator returns an error
+    """
+    content_items = [
+        create_playbook_object(),
+    ]
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
+    assert len(result) == 1
+
+
+def test_missing_playbook_image_validator_image_exists_wrong_path():
+    """
+    Given
+    content_items.
+    - Playbook with an image, but wrong path (the path doesn't include doc_files folder)
+    When
+    - Calling the MissingPlaybookImageValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure that the validator returns an error
+    """
+    content_items = [
+        create_playbook_object(),
+    ]
+    content_items[0].image.exist = True
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
+    assert len(result) == 1
+
+
+def test_missing_playbook_image_validator_image_exists_with_path():
+    """
+    Given
+    content_items.
+    - Playbook with an image and correct path
+    When
+    - Calling the MissingPlaybookImageValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure that the validator returns an empty list
+    """
+    content_items = [
+        create_playbook_object(),
+    ]
+    content_items[0].image.exist = True
+    content_items[0].image.file_path = PosixPath(
+        "/var/folders/sd/bk6skd0j1xz7l1g8d4dhfn7c0000gp/T/tmpjmydes4n/Packs/doc_files/Playbooks/playbook-0.png"
+    )
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
+    assert len(result) == 0

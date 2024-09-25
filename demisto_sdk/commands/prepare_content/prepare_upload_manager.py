@@ -85,10 +85,12 @@ class PrepareUploadManager:
             output,
             data=data,
             handler=content_item.handler,
-            indent=DEFAULT_JSON_INDENT
-            if isinstance(content_item.handler, JSON_Handler)
-            else DEFAULT_YAML_INDENT,
+            indent=(
+                DEFAULT_JSON_INDENT
+                if isinstance(content_item.handler, JSON_Handler)
+                else DEFAULT_YAML_INDENT
+            ),
         )
 
-        logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
+        logger.info(f"<green>Output saved in: {str(output.absolute())}</green>")
         return output

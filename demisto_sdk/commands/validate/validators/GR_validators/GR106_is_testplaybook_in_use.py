@@ -18,13 +18,13 @@ class IsTestPlaybookInUseValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR106"
     description = (
         "Checks that every test playbook is linked to at least one content item."
-        " (the content item has a 'tests:' key with the id of the test playbook)"
+        " (the content item has a 'tests:' key with the ID of the test playbook)"
     )
     rationale = (
         "In the demisto/content repo, unlinked test playbooks are not run in CI (for PRs) unless the test playbook itself is modified. Proper linkage of test playbooks ensures content quality. "
         "See  https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-the-playbook-to-your-project"
     )
-    error_message = "Test playbook '{}' is not linked to any content item. Make sure at least one integration, script or playbook mentions the test-playbook id under the `tests:` key."
+    error_message = "Test playbook '{}' is not linked to any content item. Make sure at least one integration, script or playbook mentions the test-playbook ID under the `tests:` key."
     related_field = "tests"
     is_auto_fixable = False
 
@@ -32,13 +32,15 @@ class IsTestPlaybookInUseValidator(BaseValidator[ContentTypes], ABC):
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
         conf_data = ConfJSON.from_path(CONTENT_PATH / "Tests/conf.json")
-        skipped_tests_keys = list(conf_data.skipped_tests.keys())
-
+        test_playbooks_ids_to_skip = list(
+            set(conf_data.skipped_tests.keys()) | set(conf_data.reputation_tests)
+        )
+        #  the collect test for reputation playbooks checks the reputation_tests field in conf.json and not the `tests` key in the yml
         test_playbook_ids_to_validate = (
-            [item.object_id for item in content_items] if not validate_all_files else []
+            [] if validate_all_files else [item.object_id for item in content_items]
         )
         invalid_content_items = self.graph.find_unused_test_playbook(
-            test_playbook_ids_to_validate, skipped_tests_keys
+            test_playbook_ids_to_validate, test_playbooks_ids_to_skip
         )
         return [
             ValidationResult(

@@ -15,7 +15,7 @@ ContentTypes = Playbook
 class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
     error_code = "RM116"
     description = "Verifies that a playbook image exists in the doc_files folder"
-    rationale = "It is recommended to have an image for every playbook for a better understanding and documentation"
+    rationale = "It is recommended to have an image for every playbook for better understanding and documentation"
     error_message = "No playbook image found, please add playbook image"
     related_field = ""
     is_auto_fixable = False

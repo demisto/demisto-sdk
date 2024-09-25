@@ -287,10 +287,15 @@ class ImageRelatedFile(PNGFiles):
             self.main_file_path.parent / f"{self.main_file_path.parts[-2]}_image.png",
         ]
         if self.main_file_path.suffix == ".json":
-            optional_paths_list.append(Path(str(self.main_file_path).replace(".json", "_image.png")))
+            optional_paths_list.append(
+                Path(str(self.main_file_path).replace(".json", "_image.png"))
+            )
         else:
-            optional_paths_list.append(Path(str(self.main_file_path).replace(".yml", ".png")),)
+            optional_paths_list.append(
+                Path(str(self.main_file_path).replace(".yml", ".png")),
+            )
         return optional_paths_list
+
 
 class AuthorImageRelatedFile(PNGFiles):
     file_type = RelatedFileType.AUTHOR_IMAGE

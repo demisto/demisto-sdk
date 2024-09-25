@@ -8,6 +8,10 @@ on:
     branches:
       - "**"
 
+env:
+  DEMISTO_SDK_LOG_FILE_SIZE: 10000000
+  DEMISTO_SDK_LOG_NO_COLORS: "true"
+
 concurrency:
   group: tests-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -72,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
     defaults:
       run:
@@ -117,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
     defaults:
       run:
@@ -156,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
     defaults:
       run:
@@ -330,7 +334,6 @@ jobs:
           source $(poetry env info --path)/bin/activate
           validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown --skip-suffix
 
-
   test-graph-commands:
     runs-on: ubuntu-latest
     name: Test Graph Commands
@@ -378,6 +381,7 @@ jobs:
     timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -395,6 +399,7 @@ jobs:
     timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -473,7 +478,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip'
+          cache: "pip"
 
       - name: pip intsall current project
         run: pip install .

@@ -1054,7 +1054,9 @@ def test_verify_no_default_sections_left(file_input, section):
     validation_result: list[ValidationResult] = (
         no_default_section_left_validator.obtain_invalid_content_items([content_item])
     )
-    section_error = f'Replace "{section}" with a suitable info.'
+    section_error = (
+        f'"{section}" exists in the readme, please replace with a suitable info.'
+    )
     assert section_error == validation_result[0].message
 
 

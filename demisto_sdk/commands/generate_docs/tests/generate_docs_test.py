@@ -1559,6 +1559,159 @@ yml_data_cases = [
             "display": "test",
             "configuration": [
                 {
+                    "name": "user_name",
+                    "additionalinfo": "Credentials",
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },  # case credentials parameter have no display
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | user_name | Credentials | True |",
+            "    | Password |  | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
+    ),
+    (
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "name": "user_name",
+                    "displaypassword": "Password",
+                    "additionalinfo": "Credentials",
+                    "hiddenusername": True,
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },  # case credentials parameter have hiddenusername
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | Password | Credentials | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
+    ),
+    (
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "name": "user_name",
+                    "display": "User Name",
+                    "additionalinfo": "Credentials",
+                    "hiddenpassword": True,
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },  # case credentials parameter have hiddenpassword
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | User Name | Credentials | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
+    ),
+    (
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "display": "User Name",
+                    "name": "user_anme",
+                    "additionalinfo": "The User Name",
+                    "required": True,
+                    "type": 0,
+                },
+                {
+                    "name": "user_name",
+                    "display": "UserName",
+                    "additionalinfo": "Credentials",
+                    "hiddenusername": True,
+                    "hiddenpassword": True,
+                    "type": 9,
+                },
+            ],
+        },  # case credentials parameter have hiddenusername and hiddenpassword
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | User Name | The User Name | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
+    ),
+    (
+        {
+            "name": "test",
+            "display": "test",
+            "displaypassword": "password",
+            "configuration": [
+                {
+                    "display": "User Name",
+                    "name": "user_anme",
+                    "additionalinfo": "The User Name",
+                    "required": True,
+                    "type": 0,
+                },
+                {
+                    "display": "Password",
+                    "name": "password",
+                    "additionalinfo": "The Password",
+                    "hidden": True,
+                    "type": 4,
+                },
+            ],
+        },  # case of hidden parameter
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | User Name | The User Name | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
+    ),
+    (
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
                     "display": "test1",
                     "name": "test1",
                     "additionalinfo": "More info",

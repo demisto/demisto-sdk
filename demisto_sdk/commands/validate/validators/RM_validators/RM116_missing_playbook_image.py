@@ -1,12 +1,11 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Playbook
@@ -20,8 +19,9 @@ class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = False
 
-    
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -30,9 +30,7 @@ class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                not content_item.image.exist or 'doc_files' not in str(content_item.image.file_path)
+                not content_item.image.exist
+                or "doc_files" not in str(content_item.image.file_path)
             )
         ]
-        
-
-    

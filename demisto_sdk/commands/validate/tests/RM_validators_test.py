@@ -1,6 +1,8 @@
+from pathlib import PosixPath
+
 import more_itertools
 import pytest
-from pathlib import PosixPath
+
 from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,

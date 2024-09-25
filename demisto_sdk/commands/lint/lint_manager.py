@@ -565,7 +565,7 @@ class LintManager:
             return 1, 0
         except Exception as e:
             msg = f"Stop demisto-sdk lint - {e}"
-            logger.debug(f"<yellow>{msg}</yellow>", exc_info=True)
+            logger.debug("{}", msg, exc_info=True)
             executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
             return 1, 0
 

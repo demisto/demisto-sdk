@@ -1,0 +1,4 @@
+changes:
+- description: Added support for `pre-commit` hooks to save logs as Gitlab CI artifacts.
+  type: internal
+pr_number: 4581

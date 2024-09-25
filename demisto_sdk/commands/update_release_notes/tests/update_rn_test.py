@@ -1511,6 +1511,94 @@ class TestRNUpdate:
 
         assert get_deprecated_rn(integration.path, FileType.INTEGRATION) == ""
 
+    def test_does_content_item_header_exist_in_rns_true(self):
+        """
+        Given:
+            A release notes string containing a content item header.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return True.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "##### Integration Name\n- Added a new feature"
+        content_name = "Integration Name"
+
+        result = update_rn.does_content_item_header_exist_in_rns(current_rn, content_name)
+
+        assert result is True
+
+    def test_does_content_item_header_exist_in_rns_false(self):
+        """
+        Given:
+            A release notes string not containing a specific content item header.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return False.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "##### Other Integration\n- Fixed a bug"
+        content_name = "Integration Name"
+
+        result = update_rn.does_content_item_header_exist_in_rns(current_rn, content_name)
+
+        assert result is False
+
+    def test_does_content_item_header_exist_in_rns_object_types(self):
+        """
+        Given:
+            A release notes string containing an Object Types section with a GenericType.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return True, matching the GenericType name.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "#### Object Types\n- **Sample GenericType**"
+        content_name = "Sample GenericType"
+
+        result = update_rn.does_content_item_header_exist_in_rns(current_rn, content_name)
+
+        assert result is True
+
+    def test_does_content_item_header_exist_in_rns_playbooks(self):
+        """
+        Given:
+            A release notes string containing a Playbooks section with a new playbook.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return True, matching the playbook name.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "#### Playbooks\n\n##### New: Entity Enrichment - Generic v3\n\nNew: Enrich entities using one or more integrations."
+        content_name = "Entity Enrichment - Generic v3"
+
+        result = update_rn.does_content_item_header_exist_in_rns(current_rn, content_name)
+
+        assert result is True
+
 
 def get_mock_yml_obj(path, file_type, deprecated) -> dict:
     new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)

@@ -910,7 +910,7 @@ def test_IsCommandsInReadmeValidator_valid():
         [content_item]
     )
 
-    <<<<<< rm116
+
 def test_missing_playbook_image_validator_no_image():
     """
     Given

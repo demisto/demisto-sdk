@@ -1,5 +1,3 @@
-from typing import Literal
-
 import more_itertools
 import pytest
 
@@ -931,18 +929,7 @@ def test_IsCommandsInReadmeValidator_valid():
         ("## Known Limitations\n\n----------\n", "Known Limitations"),
     ],
 )
-def test_unvalid_verify_no_empty_sections(
-    file_input: Literal["## Troubleshooting\n## OtherSection"]
-    | Literal["## Troubleshooting"]
-    | Literal["## Troubleshooting\n\n---\n## OtherSection"]
-    | Literal["## Use Cases\n\n----------\n## OtherSection"]
-    | Literal["## Additional Information\n\n## OtherSection"]
-    | Literal["## Known Limitations\n\n----------\n"],
-    missing_section: Literal["Troubleshooting"]
-    | Literal["Use Cases"]
-    | Literal["Additional Information"]
-    | Literal["Known Limitations"],
-):
+def test_unvalid_verify_no_empty_sections(file_input, missing_section):
     """
     Given
         - Empty sections in different forms

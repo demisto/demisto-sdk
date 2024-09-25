@@ -37,7 +37,6 @@ from demisto_sdk.commands.content_graph.objects import (
     XSIAMDashboard,
     XSIAMReport,
 )
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,

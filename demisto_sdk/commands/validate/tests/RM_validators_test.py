@@ -961,8 +961,8 @@ def test_unvalid_verify_no_empty_sections(
         - Ensure no empty sections from the SECTIONS list
     """
     content_item = create_integration_object(readme_content=file_input)
-    validation_result: list[ValidationResult] = EmptySectionsValidator().is_valid(
-        [content_item]
+    validation_result: list[ValidationResult] = (
+        EmptySectionsValidator().obtain_invalid_content_items([content_item])
     )
     section_error = f"The section/s: {missing_section} is/are empty\nplease elaborate or delete the section.\n"
     if validation_result:
@@ -981,8 +981,8 @@ def test_combined_unvalid_verify_no_empty_sections():
     file_input = "## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"
     content_item = create_integration_object(readme_content=file_input)
     empty_section_validator = EmptySectionsValidator()
-    validation_results: list[ValidationResult] = empty_section_validator.is_valid(
-        [content_item]
+    validation_results: list[ValidationResult] = (
+        empty_section_validator.obtain_invalid_content_items([content_item])
     )
     error = "The section/s: Troubleshooting, Additional Information is/are empty\nplease elaborate or delete the section.\n"
     assert error == validation_results[0].message
@@ -1009,8 +1009,8 @@ def test_valid_sections(file_input):
         - Ensure no empty sections from the SECTIONS list
     """
     content_item = create_integration_object(readme_content=file_input)
-    validation_result: list[ValidationResult] = EmptySectionsValidator().is_valid(
-        [content_item]
+    validation_result: list[ValidationResult] = (
+        EmptySectionsValidator().obtain_invalid_content_items([content_item])
     )
     assert not validation_result
 
@@ -1061,7 +1061,7 @@ def test_verify_no_default_sections_left(file_input, section):
     content_item = create_integration_object(readme_content=file_input)
     no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator()
     validation_result: list[ValidationResult] = (
-        no_default_section_left_validator.is_valid([content_item])
+        no_default_section_left_validator.obtain_invalid_content_items([content_item])
     )
     section_error = f'Replace "{section}" with a suitable info.'
     assert section_error == validation_result[0].message
@@ -1080,7 +1080,9 @@ def test_readme_ignore():
     readme_text = "getting started and learn how to build an integration"
     pack_content_item = create_pack_object(name="HelloWorld", readme_text=readme_text)
     no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator()
-    assert not no_default_section_left_validator.is_valid([pack_content_item])
+    assert not no_default_section_left_validator.obtain_invalid_content_items(
+        [pack_content_item]
+    )
 
 
 def test_invalid_short_file():
@@ -1097,5 +1099,7 @@ def test_invalid_short_file():
     not_to_short_readme_validator = NotToShortReadmeValidator()
     short_readme_error = """Your Pack README is too short (22 chars). Please move its content to the pack description or add more useful information to the Pack README. Pack README files are expected to include a few sentences about the pack and/or images."""
 
-    result: list[ValidationResult] = not_to_short_readme_validator.is_valid([test_pack])
+    result: list[ValidationResult] = (
+        not_to_short_readme_validator.obtain_invalid_content_items([test_pack])
+    )
     assert result[0].message == short_readme_error

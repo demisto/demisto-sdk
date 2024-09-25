@@ -32,7 +32,7 @@ PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
 PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
 ARTIFACTS_FOLDER = os.getenv("ARTIFACTS_FOLDER")
 HOOK_LOG_PATH = (
-    Path(ARTIFACTS_FOLDER) / "pre-commit" / "hook_logs" if ARTIFACTS_FOLDER else None
+    Path(ARTIFACTS_FOLDER) / "pre-commit" if ARTIFACTS_FOLDER else None
 )
 
 # This has to be relative to content path so the docker will be able to write to it

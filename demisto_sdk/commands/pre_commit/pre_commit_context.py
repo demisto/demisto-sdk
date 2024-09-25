@@ -30,7 +30,7 @@ DEFAULT_PRE_COMMIT_TEMPLATE_PATH = PATH / PRECOMMIT_TEMPLATE_NAME
 PRECOMMIT_FOLDER = CACHE_DIR / "pre-commit"
 PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
 PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
-HOOK_LOG_PATH = Path(os.getenv("ARTIFACTS_FOLDER", "./")) / "pre-commit" / "hook_logs"
+HOOK_LOG_PATH = Path(os.getenv("ARTIFACTS_FOLDER", "./")) / ".pre-commit" / "hook_logs"
 
 # This has to be relative to content path so the docker will be able to write to it
 PRE_COMMIT_FOLDER_SHARED = CONTENT_PATH / ".pre-commit"
@@ -131,7 +131,7 @@ class PreCommitContext:
             new_hooks = []
             for hook in repo.get("hooks", []):
                 if not hook.get("log_file"):
-                    hook["log_file"] = f"./{hook['id']}.log"
+                    hook["log_file"] = f"{HOOK_LOG_PATH}/{hook['id']}.log"
                 if not self.run_docker_hooks and hook["id"].endswith("in-docker"):
                     continue
                 if (self.run_hook and self.run_hook in hook["id"]) or (

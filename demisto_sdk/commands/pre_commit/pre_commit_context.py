@@ -30,7 +30,10 @@ DEFAULT_PRE_COMMIT_TEMPLATE_PATH = PATH / PRECOMMIT_TEMPLATE_NAME
 PRECOMMIT_FOLDER = CACHE_DIR / "pre-commit"
 PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
 PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
-HOOK_LOG_PATH = Path(os.getenv("ARTIFACTS_FOLDER", "./")) / ".pre-commit" / "hook_logs"
+ARTIFACTS_FOLDER = os.getenv("ARTIFACTS_FOLDER")
+HOOK_LOG_PATH = (
+    Path(ARTIFACTS_FOLDER) / "pre-commit" / "hook_logs" if ARTIFACTS_FOLDER else None
+)
 
 # This has to be relative to content path so the docker will be able to write to it
 PRE_COMMIT_FOLDER_SHARED = CONTENT_PATH / ".pre-commit"
@@ -63,9 +66,8 @@ class PreCommitContext:
         shutil.rmtree(PRE_COMMIT_FOLDER_SHARED, ignore_errors=True)
         PRECOMMIT_FOLDER.mkdir(parents=True)
         PRECOMMIT_CONFIG.mkdir()
-        HOOK_LOG_PATH.mkdir(
-            parents=True, exist_ok=True
-        )  # create a path for failed log hooks defined in the log_file attribute
+        if HOOK_LOG_PATH:
+            HOOK_LOG_PATH.mkdir(parents=True, exist_ok=True)
         self.precommit_template: dict = get_file_or_remote(
             self.pre_commit_template_path
         )

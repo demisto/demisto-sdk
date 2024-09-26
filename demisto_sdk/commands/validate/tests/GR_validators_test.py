@@ -501,31 +501,34 @@ def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
     assert len(results) == 3
 
 
-@pytest.mark.parametrize("pack_index, expected_len_results", [(0, 1), (1, 2), (2, 0)])
+@pytest.mark.parametrize("pack_index, expected_len_results", [(0, 1), (1,0), (2, 1),(3,1),(4,0)])
 def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
     repo_for_test: Repo, pack_index, expected_len_results
 ):
     """
     Given:
-        Given:
-        - A content graph interface with preloaded repository data:
-            - Pack 1: Exclusively uses unknown content.
-                -  Required dependencies - ('MyScript1' references 'does_not_exist')
-            - Pack 2: Utilizes a mix of 1 known and 2 unknown content items. The unknown content falls into 2 categories:
-                    - Optional dependencies - ('SampleClassifier' references 'Test type')
-                    - Test dependencies - ('TestPlaybookNoInUse' and 'SampleTestPlaybook' reference 'DeleteContext')
-            - Pack 3: Exclusively uses known content.
+        - A list of content objects from different packs in the repository.
     When:
-        - The GR103 validation is run on a specific pack to identify instances of unknown content usage.
+        - Validating the content items, one item at a time.
     Then:
-        - The validator should correctly identify the content items that are using unknown content.
-            When running on Pack 1 - there should be 1 results.
-            When running on Pack 2 - there should be 2 result.
-            When running on Pack 3 - there should be 0 results.
+        - The validator should accurately identify the content items that are referencing unknown content:
+        - Item 1: MyScript1 (references 'does_not_exist' - Required dependencies)
+        - Item 2: MyScript2 (no unknown references)
+        - Item 3: SampleTestPlaybook (references 'DeleteContext' - Required dependencies)
+        - Item 4: SampleClassifier (references 'Test type' - Optional dependencies)
+        - Item 5: MyScript3 (no unknown references)
     """
     graph_interface = repo_for_test.create_graph()
     BaseValidator.graph_interface = graph_interface
+    pack_objects = [
+        repo_for_test.packs[0].scripts[0],
+        repo_for_test.packs[1].scripts[0],
+        repo_for_test.packs[1].test_playbooks[0],
+        repo_for_test.packs[1].classifiers[0],
+        repo_for_test.packs[2].scripts[0],
+    ]
+
     results = IsUsingUnknownContentValidatorListFiles().obtain_invalid_content_items(
-        [repo_for_test.packs[pack_index]]
+       [pack_objects[pack_index].get_graph_object(graph_interface)]
     )
     assert len(results) == expected_len_results

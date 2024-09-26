@@ -100,11 +100,49 @@ def get_yml_objects(path: str, file_type) -> Tuple[Any, YAMLContentObject]:
 
     return old_yml_obj, new_yml_obj
 
+def sort_commands_and_arguments(data_dict):
+    for item in data_dict:
+        if 'arguments' in item and item['arguments']:
+            item['arguments'].sort(key=lambda arg: arg['name'])
+    data_dict.sort(key=lambda x: x['name'])
 
-def get_deprecated_rn(path: str, file_type):
+
+def get_commands_and_args_rn(old_yml, new_yml, file_type):
+    rn =''
+    if file_type == FileType.INTEGRATION:
+        index_new_commands = 0
+        old_commands = old_yml.get("script", {}).get("commands") or []
+        sort_commands_and_arguments(old_commands)
+        new_commands = new_yml.script.get("commands") or []
+        sort_commands_and_arguments(new_commands)
+        for old_command in old_commands:
+            new_command_name = new_commands[index_new_commands].get('name')
+            old_command_name = old_command.get('name')
+            if new_command_name > old_command_name:
+                rn += f'- Deleted the **{old_command_name}** command.\n'
+            elif new_command_name < old_command_name:
+                rn += f'- Added the **{new_command_name}** command which {new_commands[index_new_commands].get("description")}.\n'
+            else:
+                new_args = new_commands[index_new_commands].get('arguments')
+                old_args = old_commands[index_new_commands].get('arguments')
+                index_new_args = 0
+                for old_arg in old_args:
+                    new_arg_name = new_args[index_new_args].get('name')
+                    old_arg_name = old_arg.get('name')
+                    if new_arg_name > old_arg_name:
+                        rn += f'- Updated the **{new_command_name}** to not use the `{old_arg_name}` argument.\n'
+                    elif new_arg_name < old_arg_name:
+                        rn += f'- Updated the **{new_command_name}** to use the `{new_arg_name}` argument.\n'
+                    else:
+                        if new_args[index_new_args].get('deprecated') and not old_arg.get('deprecated'):
+                            rn += f'- Deprecated the `{old_arg_name}` argument inside the **{old_command_name}** command.\n'
+                    index_new_args += 1
+            index_new_commands += 1
+    return rn
+
+
+def get_deprecated_rn(old_yml, new_yml, file_type):
     """Generate rn for deprecated items"""
-    old_yml, new_yml = get_yml_objects(path, file_type)
-
     if not old_yml.get("deprecated") and new_yml.is_deprecated:
         description = (
             new_yml.get("comment")
@@ -125,7 +163,7 @@ def get_deprecated_rn(path: str, file_type):
     for command_name in new_commands:
         # if command is deprecated in new yml, and not in old yml
         if command_name not in old_commands:
-            rn += f"- Command ***{command_name}*** is deprecated. Use %%% instead.\n"
+            rn += f"- Deprecated ***{command_name}*** command. Use %%% instead.\n"
     return rn
 
 
@@ -772,6 +810,7 @@ class UpdateRN:
                         rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
                 rn_desc += "\n"
             else:
+                old_yml, new_yml = get_yml_objects(path, _type)
                 rn_desc = f"##### {content_name}\n\n"
                 if self.update_type == "documentation":
                     rn_desc += "- Documentation and metadata improvements.\n"
@@ -782,13 +821,14 @@ class UpdateRN:
                         FileType.SCRIPT,
                         FileType.PLAYBOOK,
                     ):
-                        deprecate_rn = get_deprecated_rn(path, _type)
+                        deprecate_rn = get_deprecated_rn(old_yml, new_yml, _type)
                     if deprecate_rn:
                         if text:
                             rn_desc += f"- {text}\n"
                         rn_desc += deprecate_rn
                     else:
                         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+                    rn_desc += get_commands_and_args_rn(old_yml, new_yml, _type)
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n"
@@ -1099,7 +1139,6 @@ def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]
     else:
         diff_lines = diff.splitlines()
         for diff_line in diff_lines:
-            logger.info(diff_line)
             if (
                 "dockerimage:" in diff_line
             ):  # search whether exists a line that notes that the Docker image was

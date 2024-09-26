@@ -35,14 +35,8 @@ class IsValidContextPathDepthModifiedValidatorModified(
                     old_content_item, content_item
                 )
                 if invalid_paths:
-                    results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message.format(
-                                "script", content_item.name, invalid_paths
-                            ),
-                            content_object=content_item,
-                        )
+                    message = self.error_message.format(
+                        "script", content_item.name, invalid_paths
                     )
             else:
                 invalid_paths_dict = self.check_integration_invalid_paths(
@@ -55,13 +49,13 @@ class IsValidContextPathDepthModifiedValidatorModified(
                             self.error_message.format("command", command, outputs)
                             + "\n"
                         )
-                    results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=message,
-                            content_object=content_item,
-                        )
-                    )
+            results.append(
+                ValidationResult(
+                    validator=self,
+                    message=message,
+                    content_object=content_item,
+                )
+            )
         return results
 
     def check_for_script_invalid_paths(
@@ -97,9 +91,9 @@ class IsValidContextPathDepthModifiedValidatorModified(
         old_command_paths = self.create_command_outputs_dict(old_content_item)
         new_command_paths = self.create_command_outputs_dict(content_item)
         for command_name, command_outputs in new_command_paths.items():
-            if old_command_outputs := old_command_paths.get(
-                command_name
-            ):  # add comments to explain
+            if (
+                old_command_outputs := old_command_paths.get(command_name)
+            ):  # if one the commands that were added is new we want to take all the context outputs for a check
                 changed_paths_dict[command_name] = command_outputs.difference(
                     old_command_outputs
                 )

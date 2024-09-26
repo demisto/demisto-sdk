@@ -650,7 +650,7 @@ def generate_setup_section(yaml_data: dict) -> List[str]:
     access_data: List[Dict] = []
 
     for conf in yaml_data["configuration"]:
-        if conf.get("hidden"):
+        if conf.get("hidden") is True:
             continue
         if conf["type"] == CREDENTIALS:
             add_access_data_of_type_credentials(access_data, conf)
@@ -922,7 +922,7 @@ def generate_single_command_section(
             ]
         )
         for arg in arguments:
-            if arg.get("hidden"):
+            if arg.get("hidden") and not any(key.startswith("hidden:") for key in arg):
                 continue
             description = arg.get("description", DEFAULT_ARG_DESCRIPTION)
             if not description:

@@ -517,6 +517,7 @@ class DockerHubClient:
 
 ### Google Artifactory functions ###
 
+
 def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     """
     Parses a DockerHub Google Artifact Registry internal base path into a base url for DockerHub proxy API calls.

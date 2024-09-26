@@ -289,7 +289,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
             )
-            logger.debug(f"{self._id_to_obj=}")
+            logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(

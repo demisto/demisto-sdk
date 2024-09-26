@@ -1,4 +1,0 @@
-changes:
-- description: Enhanced the **format** command logs by trimming whitespaces.
-  type: feature
-pr_number: 4529

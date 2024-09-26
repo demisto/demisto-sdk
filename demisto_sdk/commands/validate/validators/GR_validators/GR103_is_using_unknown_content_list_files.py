@@ -12,9 +12,7 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unkno
 )
 
 
-class IsUsingUnknownContentValidatorListFiles(
-    IsUsingUnknownContentValidator
-):
+class IsUsingUnknownContentValidatorListFiles(IsUsingUnknownContentValidator):
     expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
 
     def obtain_invalid_content_items(

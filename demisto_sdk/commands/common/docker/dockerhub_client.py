@@ -515,8 +515,7 @@ class DockerHubClient:
         ]
 
 
-""" Google Artifactory functions """
-
+### Google Artifactory functions ###
 
 def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     """

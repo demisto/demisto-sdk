@@ -1,4 +1,4 @@
 changes:
-- description: 4588
+- description: updating `mitmproxy` and `werkzeug` dependencies versions.
   type: internal
 pr_number: 4588

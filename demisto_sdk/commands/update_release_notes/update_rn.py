@@ -807,7 +807,7 @@ class UpdateRN:
             True if the content item header exists in the release notes, False otherwise.
         """
         for line in current_rn.replace("#####", "").replace("**", "").split("\n"):
-            if content_name == line.replace("-", "", 1).strip():
+            if content_name == re.sub(r"^-|New:", "", line.strip()).strip():
                 return True
         return False
 

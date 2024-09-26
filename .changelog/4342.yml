@@ -1,4 +1,0 @@
-changes:
-- description: Added the PA114 validation to the new **validate** command. The validation checks if the version in the `pack_metadata.json` file needs to be raised.
-  type: internal
-pr_number: 4342

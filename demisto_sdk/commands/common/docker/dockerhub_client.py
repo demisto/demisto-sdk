@@ -521,7 +521,7 @@ class DockerHubClient:
 def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     """
     Parses a DockerHub Google Artifact Registry internal base path into a base url for DockerHub proxy API calls.
-    See https://confluence-dc.paloaltonetworks.com/display/VisibilityApplication/Shared-Services+GCP+Services+-+GAR for more details.
+    See Confluence page: Shared-Services GCP Services - GAR.
 
     Args:
     base_path (str): The base path of the Google Artifact Registry in the format 'region-domain/project/repository'.

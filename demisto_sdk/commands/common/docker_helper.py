@@ -263,7 +263,6 @@ class DockerBase:
     @staticmethod
     @functools.lru_cache
     def version() -> Version:
-        logger.debug("version is called")
         version = init_global_docker_client().version()["Version"]
         try:
             return Version(version)

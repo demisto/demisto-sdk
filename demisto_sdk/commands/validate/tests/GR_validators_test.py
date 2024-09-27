@@ -501,7 +501,9 @@ def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
     assert len(results) == 3
 
 
-@pytest.mark.parametrize("pack_index, expected_len_results", [(0, 1), (1,0), (2, 1),(3,1),(4,0)])
+@pytest.mark.parametrize(
+    "pack_index, expected_len_results", [(0, 1), (1, 0), (2, 1), (3, 1), (4, 0)]
+)
 def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
     repo_for_test: Repo, pack_index, expected_len_results
 ):
@@ -514,7 +516,7 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
         - The validator should accurately identify the content items that are referencing unknown content:
         - Item 1: MyScript1 (references 'does_not_exist' - Required dependencies)
         - Item 2: MyScript2 (no unknown references)
-        - Item 3: SampleTestPlaybook (references 'DeleteContext' - Required dependencies)
+        - Item 3: SampleTestPlaybook (references 'DeleteContext' - Required dependencies for a 'test' item)
         - Item 4: SampleClassifier (references 'Test type' - Optional dependencies)
         - Item 5: MyScript3 (no unknown references)
     """
@@ -529,6 +531,6 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
     ]
 
     results = IsUsingUnknownContentValidatorListFiles().obtain_invalid_content_items(
-       [pack_objects[pack_index].get_graph_object(graph_interface)]
+        [pack_objects[pack_index].get_graph_object(graph_interface)]
     )
     assert len(results) == expected_len_results

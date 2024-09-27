@@ -502,10 +502,10 @@ def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
 
 
 @pytest.mark.parametrize(
-    "pack_index, expected_len_results", [(0, 1), (1, 0), (2, 1), (3, 1), (4, 0)]
+    "item_index, expected_len_results", [(0, 1), (1, 0), (2, 1), (3, 1), (4, 0)]
 )
 def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
-    repo_for_test: Repo, pack_index, expected_len_results
+    repo_for_test: Repo, item_index, expected_len_results
 ):
     """
     Given:
@@ -522,7 +522,7 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
     """
     graph_interface = repo_for_test.create_graph()
     BaseValidator.graph_interface = graph_interface
-    pack_objects = [
+    content_items = [
         repo_for_test.packs[0].scripts[0],
         repo_for_test.packs[1].scripts[0],
         repo_for_test.packs[1].test_playbooks[0],
@@ -531,6 +531,6 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
     ]
 
     results = IsUsingUnknownContentValidatorListFiles().obtain_invalid_content_items(
-        [pack_objects[pack_index].get_graph_object(graph_interface)]
+        [content_items[item_index].get_graph_object(graph_interface)]
     )
     assert len(results) == expected_len_results

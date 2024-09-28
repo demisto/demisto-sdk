@@ -297,9 +297,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def find_mandatory_hidden_packs_dependencies(
-        self, pack_ids: List[str]
-    ) -> List[BaseNode]:
+    def find_invalid_pack_dependencies(self, pack_ids: List[str]) -> List[BaseNode]:
         pass
 
     @abstractmethod

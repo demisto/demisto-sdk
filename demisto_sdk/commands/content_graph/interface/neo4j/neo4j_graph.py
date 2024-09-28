@@ -64,10 +64,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
-    validate_hidden_pack_dependencies,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
+    validate_packs_with_hidden_dependencies,
     validate_test_playbook_in_use,
     validate_toversion,
     validate_unknown_content,
@@ -480,7 +480,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def find_uses_paths_with_invalid_toversion(
         self, file_paths: List[str], for_supported_versions=False
     ) -> List[BaseNode]:
-        """Searches and retrievs content items who use content items with a higher toversion.
+        """Searches and retrieves content items who use content items with a higher toversion.
 
         Args:
             file_paths (List[str]): A list of content items' paths to check.
@@ -552,9 +552,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_mandatory_hidden_packs_dependencies(
-        self, pack_ids: List[str]
-    ) -> List[BaseNode]:
+    def find_invalid_pack_dependencies(self, pack_ids: List[str]) -> List[BaseNode]:
         """
         Retrieves all the packs that are dependent on hidden packs
 
@@ -566,7 +564,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
         """
         with self.driver.session() as session:
-            results = session.execute_read(validate_hidden_pack_dependencies, pack_ids)
+            results = session.execute_read(
+                validate_packs_with_hidden_dependencies, pack_ids
+            )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
@@ -613,13 +613,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             # For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
             session.execute_write(remove_content_private_nodes)
             session.execute_write(remove_server_nodes)
-
-    def find_invalid_pack_dep(self, packs_id: list[str]):
-         with self.driver.session() as session:
-            results = session.execute_read(
-                validate_pack_dep,
-                packs_id
-            )
 
     def import_graph(
         self,

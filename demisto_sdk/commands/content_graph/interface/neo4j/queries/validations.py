@@ -264,8 +264,9 @@ def validate_packs_with_hidden_dependencies(
     query = f"""
     // Returns DEPENDS_ON relationships to packs which are hidden
     MATCH (pack1:Pack {{hidden:FALSE}})-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:TRUE}}]->(hidden_pack:Pack {{hidden: TRUE}})
-    {f'(pack1.object_id in {pack_ids} OR hidden_pack.object_id in {pack_ids})' if pack_ids else ""}
-    NOT r.is_test
+    WHERE NOT r.is_test
+    {f' AND (pack1.object_id in {pack_ids} OR hidden_pack.object_id in {pack_ids})' if pack_ids else ""}
+
     RETURN pack1, collect(r) as relationships, collect(hidden_pack) as nodes_to
     """
     return {
@@ -319,14 +320,3 @@ RETURN collect(tp) AS content_items
         filter(None, (item.get("content_items") for item in run_query(tx, query))),
         default=[],
     )
-
-
-def validate_pack_dep_is_valid(tx: Transaction, packs_ids: list[str]):
-    """Returns the packs that use deprecated or non-supported dependencies"""
-    query = f"""
-MATCH (pack:Pack)-[r:DEPENDS_ON]->(dep:Pack)
-WHERE pack.object_id IN {packs_ids}
-AND (dep.deprecated = true OR dep.support = 'unsupported')
-RETURN pack, collect(r) as relationships, collect(dep) as nodes_to
-    """
-    return run_query(tx, query)

@@ -1,4 +1,0 @@
-changes:
-- description: Moved RM110 validation to the new format. Ensuring all commands are documented in the README.
-  type: feature
-pr_number: 4542

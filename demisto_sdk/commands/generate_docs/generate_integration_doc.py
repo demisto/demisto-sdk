@@ -711,7 +711,7 @@ def generate_setup_section(yaml_data: dict) -> List[str]:
 
     section.extend(
         generate_table_section(
-            access_data, "", horizontal_rule=False, numbered_section=True
+            access_data, "", horizontal_rule=False, numbered_section=False
         )
     )
 

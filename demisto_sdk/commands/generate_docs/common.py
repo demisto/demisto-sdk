@@ -134,14 +134,18 @@ def generate_table_section(
             section = [""]
         return section
 
-    section.extend([text, "|", "|"])
+    (
+        section.extend([text, "    |", "    |"])
+        if numbered_section
+        else section.extend([text, "|", "|"])
+    )
     header_index = len(section) - 2
     for key in data[0]:
         section[header_index] += f" **{key}** |"
         section[header_index + 1] += " --- |"
 
     for item in data:
-        tmp_item = "|"
+        tmp_item = "    |" if numbered_section else "|"
         escape_less_greater_signs = bool(
             {"First fetch time", "First fetch timestamp"}.intersection(item.keys())
         )  # instead of HTML escaping

@@ -1047,7 +1047,8 @@ class TestGenerateIntegrationDoc:
                 os.path.join(str(tmp_path), INTEGRATIONS_README_FILE_NAME)
             ) as real_file:
                 fake_data = fake_file.read()
-                assert fake_data == real_file.read()
+                real_file_read = real_file.read()
+                assert fake_data == real_file_read
                 assert (
                     "This integration was integrated and tested with version xx of"
                     not in fake_data
@@ -1173,7 +1174,7 @@ class TestGenerateIntegrationDoc:
         assert "#### Command example" in actual_doc
         assert "#### Context Example" in actual_doc
         assert (
-            actual_doc[1078]
+            actual_doc[1074]
             == "| allowed_input_type_param | Enum Found as the last part of Change.allowedInput[].update hypermedia URL.supported values include:change-management-ack,lets-encrypt-challenges-completed,post-verification-warnings-ack,pre-verification-warnings-ack. Possible values are: change-management-ack, lets-encrypt-challenges-completed, post-verification-warnings-ack, pre-verification-warnings-ack. Default is post-verification-warnings-ack. | Optional | "
         )
 
@@ -1263,19 +1264,19 @@ class TestGenerateIntegrationDoc:
             (tmp_path / INTEGRATIONS_README_FILE_NAME).read_text().splitlines()
         )
         assert (
-            actual_text[54]
+            actual_text[49]
             == f"| entry_id | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
         )
         assert (
-            actual_text[55]
+            actual_text[50]
             == f"| target | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
         )
         assert (
-            actual_text[73]
+            actual_text[68]
             == f"| file_path | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
         )
         assert (
-            actual_text[74]
+            actual_text[69]
             == f"| file_name | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
         )
 
@@ -1420,10 +1421,10 @@ yml_data_cases = [
         },  # case no param with additional info field
         [
             "",
-            "    | **Parameter** | **Required** |",
-            "    | --- | --- |",
-            "    | test1 | True |",
-            "    | test2 | True |",
+            "| **Parameter** | **Required** |",
+            "| --- | --- |",
+            "| test1 | True |",
+            "| test2 | True |",
             "",
         ],  # expected
     ),
@@ -1444,10 +1445,10 @@ yml_data_cases = [
         },  # case some params with additional info field
         [
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | test1 | More info | True |",
-            "    | test2 |  | True |",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| test1 | More info | True |",
+            "| test2 |  | True |",
             "",
         ],  # expected
     ),
@@ -1474,10 +1475,10 @@ yml_data_cases = [
         },  # case all params with additional info field
         [
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | test1 | More info | True |",
-            "    | test2 | Some more data | True |",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| test1 | More info | True |",
+            "| test2 | Some more data | True |",
             "",
         ],  # expected
     ),
@@ -1498,10 +1499,10 @@ yml_data_cases = [
         },  # case credentials parameter have displaypassword
         [
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | userName | Credentials | True |",
-            "    | password |  | True |",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| userName | Credentials | True |",
+            "| password |  | True |",
             "",
         ],  # expected
     ),
@@ -1521,10 +1522,10 @@ yml_data_cases = [
         },  # case credentials parameter have no displaypassword
         [
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | userName | Credentials | True |",
-            "    | Password |  | True |",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| userName | Credentials | True |",
+            "| Password |  | True |",
             "",
         ],  # expected
     ),
@@ -1558,11 +1559,11 @@ yml_data_cases = [
         },  # case some param with additional information, one that should take default, and one overriding default
         [
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | test1 | More info | True |",
-            "    | API key | The API Key to use for the connection. | True |",
-            "    | Proxy | non-default info. | True |",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| test1 | More info | True |",
+            "| API key | The API Key to use for the connection. | True |",
+            "| Proxy | non-default info. | True |",
             "",
         ],  # expected
     ),
@@ -2295,14 +2296,14 @@ class TestIntegrationDocUpdate:
         generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
         actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
-        assert actual[61] == "    | Debug logging enabled |  | False |"
+        assert actual[62] == "| Debug logging enabled |  | False |"
         assert (
-            actual[806]
+            actual[807]
             == "| limit | Maximum number of records to return. Default is 100. | Optional | "
         )
-        assert actual[807] == "| new_arg | New argument for testing. | Optional | "
-        assert actual[814] == "| Splunk.Test | String | Test output for Splunk | "
-        assert actual[1081:1102] == [
+        assert actual[808] == "| new_arg | New argument for testing. | Optional | "
+        assert actual[815] == "| Splunk.Test | String | Test output for Splunk | "
+        assert actual[1082:1103] == [
             "### splunk-test-cmd",
             "",
             "***",

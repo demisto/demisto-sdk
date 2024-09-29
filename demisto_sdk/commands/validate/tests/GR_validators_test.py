@@ -13,6 +13,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_list_files import (
     MarketplacesFieldValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR101_is_using_invalid_from_version_all_files import (
+    IsUsingInvalidFromVersionValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR101_is_using_invalid_from_version_list_files import (
+    IsUsingInvalidFromVersionValidatorListFiles,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_all_files import (
     IsUsingUnknownContentValidatorAllFiles,
 )
@@ -722,3 +728,105 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorAllFiles_is_invalid(
         []
     )
     assert len(validation_results) == 3
+
+
+@pytest.fixture
+def repo_with_one_pack_for_gr101(graph_repo: Repo):
+    # Repo which contains 1 pack
+
+    # Pack 1 - script uses another script (relationship)
+    pack_1 = graph_repo.create_pack("Pack1")
+    pack_1.create_script(name="FirstScript")
+    pack_1.create_script(
+        name="SecondScript",
+        code='demisto.execute_command("FirstScript", dArgs)',
+    )
+    return graph_repo
+
+
+def test_IsUsingInvalidFromVersionValidator_sanity_all_files(
+    repo_with_one_pack_for_gr101,
+):
+    """
+    Given:
+        - A content graph interface with preloaded repository data:
+            - Pack 1:
+                    - script 1 (which used by script 2)
+                    - script 2 (which uses script 1)
+    When:
+        - The GR101 validation is executed across the all files
+    Then:
+        - The validator should pass, everything is valid, sanity check
+    """
+    graph_interface = repo_with_one_pack_for_gr101.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingInvalidFromVersionValidatorAllFiles().obtain_invalid_content_items_using_graph(
+        content_items=[]
+    )
+    assert len(results) == 0
+
+
+def test_IsUsingInvalidFromVersionValidator_invalid(
+    repo_with_one_pack_for_gr101,
+):
+    """
+    Given:
+            - Pack 1:
+                    - script 1 (which used by script 2, but has fromversion=10.0.0 while script 2 has fromversion=0.0.0)
+                    - script 2 (which uses script 1)
+    When:
+        - The GR101 validation is executed across the second script
+    Then:
+        - The validator should fail due to target's fromversion higher than source's fromversion. (len(results) == 1)
+        - Ensure the error message as expected
+    """
+    repo_with_one_pack_for_gr101.packs[0].scripts[0].set_data(
+        **{"fromversion": "10.0.0"}
+    )  # This line fails the GR101
+    graph_interface = repo_with_one_pack_for_gr101.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingInvalidFromVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
+        content_items=[
+            repo_with_one_pack_for_gr101.packs[0]
+            .scripts[1]
+            .get_graph_object(graph_interface)
+        ]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Content item 'SecondScript' whose from_version is '0.0.0'"
+        " is using content items: 'FirstScript' whose from_version is higher"
+        " (should be <= 0.0.0)"
+    )
+
+
+def test_IsUsingInvalidFromVersionValidator_valid(
+    repo_with_one_pack_for_gr101,
+):
+    """
+    Given:
+            - Pack 1:
+                    - script 1 (which used by script 2, has fromversion=10.0.0)
+                    - script 2 (which uses script 1, has fromversion=11.0.0)
+    When:
+        - The GR101 validation is executed across the second script
+    Then:
+        - The validator should pass, since script 2 which uses script 1 has a higher fromversion, valid case
+    """
+    repo_with_one_pack_for_gr101.packs[0].scripts[0].set_data(
+        **{"fromversion": "10.0.0"}
+    )
+    repo_with_one_pack_for_gr101.packs[0].scripts[1].set_data(
+        **{"fromversion": "11.0.0"}
+    )
+    graph_interface = repo_with_one_pack_for_gr101.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingInvalidFromVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
+        content_items=[
+            repo_with_one_pack_for_gr101.packs[0]
+            .scripts[1]
+            .get_graph_object(graph_interface)
+        ]
+    )
+    assert len(results) == 0

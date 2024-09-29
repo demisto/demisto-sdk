@@ -757,3 +757,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             except Exception as e:
                 logger.error(f"Error when running query: {e}")
                 raise e
+
+
+class Neo4jContentGraphInterfaceSingleton:
+    # singleton implementation - used when calling the interface within a multi-threaded process, to ensure a single instance
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            logger.debug("Creating a new instance of Neo4jContentGraphInterface.")
+            cls._instance = Neo4jContentGraphInterface()
+        else:
+            logger.debug("Using the existing instance of Neo4jContentGraphInterface.")
+        return cls._instance

@@ -271,7 +271,7 @@ class XsiamApiClient(XsiamApiInterface):
     def start_xql_query(self, query: str):
         body = {"request_data": {"query": query}}
         endpoint = urljoin(self.base_url, "public_api/v1/xql/start_xql_query/")
-        logger.info(f"Starting xql query:\nendpoint={endpoint}\n{query=}")
+        logger.info("{}", f"Starting xql query:\nendpoint={endpoint}\n{query=}")   # noqa: PLE1205
         response = self._session.post(endpoint, json=body)
         logger.debug("Request completed to start xql query")
         data = response.json()
@@ -293,11 +293,11 @@ class XsiamApiClient(XsiamApiInterface):
             }
         )
         endpoint = urljoin(self.base_url, "public_api/v1/xql/get_query_results/")
-        logger.info(f"Getting xql query results: endpoint={endpoint}")
+        logger.info("{}",f"Getting xql query results: endpoint={endpoint}")  # noqa: PLE1205
         response = self._session.post(endpoint, data=payload, timeout=timeout)
         logger.debug("Request completed to get xql query results")
         data = response.json()
-        logger.debug(pformat(data))
+        logger.debug("{}", pformat(data))   # noqa: PLE1205
 
         if (
             response.status_code in range(200, 300)

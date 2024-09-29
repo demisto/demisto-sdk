@@ -1,0 +1,6 @@
+changes:
+- description: Moved GR107 validation to the new validate format. The validation ensures that deprecated content items are not used in other content items.
+  type: feature
+- description: The validation GR107 has been removed from the legacy validate command, to enhance performance.
+  type: breaking
+pr_number: 4561

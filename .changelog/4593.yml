@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where test upload didn't support relative image path upload test.
+  type: fix
+pr_number: 4593

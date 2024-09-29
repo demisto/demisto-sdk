@@ -566,7 +566,7 @@ def test_generate_commands_section():
     expected_section = [
         "## Commands",
         "",
-        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "You can execute these commands from the CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
         "",
         "### non-deprecated-cmd",
@@ -807,7 +807,7 @@ def test_generate_commands_with_permissions_section():
     expected_section = [
         "## Commands",
         "",
-        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "You can execute these commands from the CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command"
         ", a DBot message appears in the War Room with the command details.",
         "",
@@ -863,7 +863,7 @@ def test_generate_commands_with_permissions_section_command_doesnt_exist():
     expected_section = [
         "## Commands",
         "",
-        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "You can execute these commands from the CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
         "",
         "### non-deprecated-cmd",
@@ -1419,16 +1419,11 @@ yml_data_cases = [
             ],
         },  # case no param with additional info field
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
             "    | **Parameter** | **Required** |",
             "    | --- | --- |",
             "    | test1 | True |",
             "    | test2 | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
             "",
         ],  # expected
     ),
@@ -1448,16 +1443,11 @@ yml_data_cases = [
             ],
         },  # case some params with additional info field
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
             "    | **Parameter** | **Description** | **Required** |",
             "    | --- | --- | --- |",
             "    | test1 | More info | True |",
             "    | test2 |  | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
             "",
         ],  # expected
     ),
@@ -1483,16 +1473,11 @@ yml_data_cases = [
             ],
         },  # case all params with additional info field
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
             "    | **Parameter** | **Description** | **Required** |",
             "    | --- | --- | --- |",
             "    | test1 | More info | True |",
             "    | test2 | Some more data | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
             "",
         ],  # expected
     ),
@@ -1512,16 +1497,11 @@ yml_data_cases = [
             ],
         },  # case credentials parameter have displaypassword
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
             "    | **Parameter** | **Description** | **Required** |",
             "    | --- | --- | --- |",
             "    | userName | Credentials | True |",
             "    | password |  | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
             "",
         ],  # expected
     ),
@@ -1540,16 +1520,11 @@ yml_data_cases = [
             ],
         },  # case credentials parameter have no displaypassword
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
             "    | **Parameter** | **Description** | **Required** |",
             "    | --- | --- | --- |",
             "    | userName | Credentials | True |",
             "    | Password |  | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
             "",
         ],  # expected
     ),
@@ -1582,17 +1557,12 @@ yml_data_cases = [
             ],
         },  # case some param with additional information, one that should take default, and one overriding default
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
             "    | **Parameter** | **Description** | **Required** |",
             "    | --- | --- | --- |",
             "    | test1 | More info | True |",
             "    | API key | The API Key to use for the connection. | True |",
             "    | Proxy | non-default info. | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
             "",
         ],  # expected
     ),

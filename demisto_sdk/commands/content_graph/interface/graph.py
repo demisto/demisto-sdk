@@ -1,7 +1,7 @@
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -20,6 +20,12 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+
+class DeprecatedItemUsage(NamedTuple):
+    deprecated_item_id: str
+    deprecated_item_type: str
+    content_items_using_deprecated: List[BaseNode]
 
 
 class ContentGraphInterface(ABC):
@@ -194,7 +200,9 @@ class ContentGraphInterface(ABC):
     def clean_graph(self): ...
 
     @abstractmethod
-    def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+    def find_items_using_deprecated_items(
+        self, file_paths: List[str]
+    ) -> List[DeprecatedItemUsage]:
         pass
 
     @abstractmethod

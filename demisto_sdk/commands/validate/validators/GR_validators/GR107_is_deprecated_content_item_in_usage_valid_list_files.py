@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -37,9 +36,9 @@ from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
-    ValidationResult,
+from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
+from demisto_sdk.commands.validate.validators.GR_validators.GR107_is_deprecated_content_item_in_usage import (
+    IsDeprecatedContentItemInUsageValidator,
 )
 
 ContentTypes = Union[
@@ -78,43 +77,12 @@ ContentTypes = Union[
 ]
 
 
-class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
-    error_code = "GR103"
-    description = "Validates that there is no usage of unknown content items"
-    rationale = "Content items should only use existing content items."
-    error_message = "Content item '{0}' is using content items: {1} which cannot be found in the repository."
-    is_auto_fixable = False
+class IsDeprecatedContentItemInUsageValidatorListFiles(
+    IsDeprecatedContentItemInUsageValidator
+):
+    expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
 
-    def obtain_invalid_content_items_using_graph(
-        self, content_items: Iterable[ContentTypes], validate_all_files: bool = False
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        results: List[ValidationResult] = []
-        file_paths_to_validate = (
-            [
-                str(content_item.path.relative_to(CONTENT_PATH))
-                for content_item in content_items
-            ]
-            if not validate_all_files
-            else []
-        )
-        uses_unknown_content = self.graph.get_unknown_content_uses(
-            file_paths_to_validate
-        )
-
-        for content_item in uses_unknown_content:
-            names_of_unknown_items = [
-                relationship.content_item_to.object_id
-                or relationship.content_item_to.name
-                for relationship in content_item.uses
-            ]
-            results.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(
-                        content_item.name,
-                        ", ".join(f"'{name}'" for name in names_of_unknown_items),
-                    ),
-                    content_object=content_item,
-                )
-            )
-        return results
+        return self.obtain_invalid_content_items_using_graph(content_items, False)

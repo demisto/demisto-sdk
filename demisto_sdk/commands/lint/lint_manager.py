@@ -197,8 +197,8 @@ class LintManager:
             facts["content_repo"] = git_repo  # type: ignore
             logger.debug(f"Content path {git_repo.repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
-            logger.info(
-                "<yellow>You are running demisto-sdk lint not in content repository!<yellow>"
+            logger.warning(
+                "<yellow>You are running demisto-sdk lint not in content repository!</yellow>"
             )
             logger.warning(f"can't locate content repo {e}")
         # Get global requirements file
@@ -259,9 +259,9 @@ class LintManager:
                     "Docker engine not available and we are in content CI env. Can not run lint!!"
                 ) from ex
             facts["docker_engine"] = False
-            logger.info(
+            logger.warning(
                 "<yellow>Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
-                "test which require docker!<yellow>"
+                "test which require docker!</yellow>"
             )
             logger.info("can not communicate with Docker daemon")
         logger.debug("Docker daemon test passed")
@@ -565,7 +565,7 @@ class LintManager:
             return 1, 0
         except Exception as e:
             msg = f"Stop demisto-sdk lint - {e}"
-            logger.debug(f"<yellow>{msg}</yellow>", exc_info=True)
+            logger.debug("{}", msg, exc_info=True)  # noqa: PLE1205
             executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
             return 1, 0
 

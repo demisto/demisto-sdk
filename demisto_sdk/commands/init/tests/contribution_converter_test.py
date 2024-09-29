@@ -1601,10 +1601,7 @@ class TestReadmes:
             for line in list(differ.compare(original_readme, actual_readme))
             if line.startswith("+ ")
         ]
-        assert (
-            "+ | Debug logging enabled | Test configuration | False |"
-            in added_lines
-        )
+        assert "+ | Debug logging enabled | Test configuration | False |" in added_lines
         assert (
             "+ | limit | Maximum number of records to return. Default is 100. | Optional | "
             in added_lines

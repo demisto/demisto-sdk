@@ -1602,7 +1602,7 @@ class TestReadmes:
             if line.startswith("+ ")
         ]
         assert (
-            "+     | Debug logging enabled | Test configuration | False |"
+            "+ | Debug logging enabled | Test configuration | False |"
             in added_lines
         )
         assert (

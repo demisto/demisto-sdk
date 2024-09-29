@@ -15,9 +15,9 @@ ContentTypes = Pack
 
 class IsInvalidPacksDependenciesValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR108"
-    description = "Validates that non-hidden packs do not have mandatory dependencies on hidden packs."
-    rationale = "Hidden packs should not be critical dependencies to ensure proper pack management."
-    error_message = "Pack {dependent_pack} has mandatory dependencies on hidden pack(s): {hidden_packs}"
+    description = "Validates that non-hidden packs do not have a hidden packs as mandatory dependencies."
+    rationale = "Hidden packs are not available to install in the marketplace."
+    error_message = "Pack {dependent_pack} has hidden pack(s) {hidden_packs} in its mandatory dependencies"
     related_field = "dependencies"
     is_auto_fixable = False
 

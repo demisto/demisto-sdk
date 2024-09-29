@@ -600,7 +600,7 @@ def test_IsInvalidPacksDependenciesValidatorAllFiles_invalid(
     )
     assert (
         results[0].message
-        == "Pack Pack1 has mandatory dependencies on hidden pack(s): Pack2"
+        == "Pack Pack1 has hidden pack(s) Pack2 in its mandatory dependencies"
     )
 
 
@@ -623,7 +623,7 @@ def test_IsInvalidPacksDependenciesValidatorListFiles(repo_for_test_gr_108: Repo
     )
     assert (
         results[0].message
-        == "Pack Pack1 has mandatory dependencies on hidden pack(s): Pack2"
+        == "Pack Pack1 has hidden pack(s) Pack2 in its mandatory dependencies"
     )
 
     results = (

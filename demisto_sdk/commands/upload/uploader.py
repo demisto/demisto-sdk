@@ -133,7 +133,7 @@ class Uploader:
                             (
                                 "<red>This command will overwrite the following packs:",
                                 pack_names,
-                                f"All changes made in these content items on {product} will be lost.<red>",
+                                f"All changes made in these content items on {product} will be lost.</red>",
                             )
                         )
                     )
@@ -385,7 +385,7 @@ class Uploader:
                 )
                 logger.debug(
                     f"<red>This command will overwrite the following packs:\n{pack_names}.\n"
-                    f"Any changes made on {product} will be lost.<red>"
+                    f"Any changes made on {product} will be lost.</red>"
                 )
                 if not self.override_existing:
                     logger.info("<red>Are you sure you want to continue? y/[N]</red>")

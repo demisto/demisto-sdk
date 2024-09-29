@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.commands.create import (
@@ -681,46 +680,6 @@ def test_pack_ids_collection():
     expected_pack_ids = ["MicrosoftExchangeOnline"]
     with GraphValidator(update_graph=False, git_files=git_files) as graph_validator:
         assert graph_validator.pack_ids == expected_pack_ids
-
-
-def test_deprecated_usage__existing_content(repository: ContentDTO, caplog):
-    """
-    Given
-    - A content repo with item using deprecated commands in existing content.
-    When
-    - running the validation validate_deprecated_items_usage
-    Then
-    - validate warning is display but it's considered as valid
-    """
-
-    with GraphValidator(update_graph=False) as validator:
-        create_content_graph(validator.graph)
-        is_valid = validator.validate_deprecated_items_usage()
-
-    assert is_valid
-    assert (
-        "[GR107] - The Command 'deprecated-command' is deprecated but used in the following content item:"
-    ) in caplog.text
-    assert (
-        "[GR107] - The Integration 'DeprecatedIntegration' is deprecated but used in the following content item:"
-    ) in caplog.text
-
-
-def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
-    """
-    Given
-    - A content repo with the new item "SamplePlaybook" using a deprecated command.
-    When
-    - running the validation validate_deprecated_items_usage
-    Then
-    - validate the files considered as invalid.
-    """
-    mocker.patch.object(GitUtil, "added_files", return_value=[Path("SamplePlaybook")])
-    with GraphValidator(update_graph=False) as validator:
-        create_content_graph(validator.graph)
-        is_valid = validator.validate_deprecated_items_usage()
-
-    assert not is_valid
 
 
 @pytest.mark.parametrize(

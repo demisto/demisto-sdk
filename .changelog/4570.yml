@@ -1,4 +1,6 @@
 changes:
 - description: Moved GR101 validation to the new validate format. This validation checks whether the content item uses an item with a higher version (making it incompatible).
   type: feature
+- description: Removed the **validate** warnings when the higher version is lower is not supported by Cortex anymore.
+  type: feature
 pr_number: 4570

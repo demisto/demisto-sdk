@@ -80,7 +80,7 @@ ContentTypes = Union[
 
 class IsUsingInvalidToVersionValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR102"
-    description = "Validates that content items are not used in other content items which has a lower toversion."
+    description = "Validates that content items are not used in other content items which have a lower toversion."
     rationale = (
         "Prevent issues where used objects are not available due to a version mismatch."
     )

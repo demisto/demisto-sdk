@@ -88,7 +88,6 @@ class IsUsingInvalidToVersionValidator(BaseValidator[ContentTypes], ABC):
         "Content item '{0}' whose to_version is '{1}' is using content items:"
         " {2} whose to_version is lower than {3}"
     )
-    related_field = ""
     is_auto_fixable = False
 
     def obtain_invalid_content_items_using_graph(

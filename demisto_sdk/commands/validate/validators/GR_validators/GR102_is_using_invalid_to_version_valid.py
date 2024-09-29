@@ -86,7 +86,7 @@ class IsUsingInvalidToVersionValidator(BaseValidator[ContentTypes], ABC):
     )
     error_message = (
         "Content item '{0}' whose to_version is '{1}' is using content items:"
-        " {2} whose to_version is lower than {3}"
+        " {2} whose to_version is lower than {3}, making them incompatible"
     )
     is_auto_fixable = False
 

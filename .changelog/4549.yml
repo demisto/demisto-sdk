@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the GR106 validation would fail on test playbooks that are marked as reputation tests.
-  type: fix
-pr_number: 4549

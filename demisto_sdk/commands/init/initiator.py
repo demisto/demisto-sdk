@@ -524,7 +524,7 @@ class Initiator:
 
         self.create_pack_base_files()
         logger.info(
-            f"[green]Successfully created the pack {self.dir_name} in: {self.full_output_path}[/green]"
+            f"<green>Successfully created the pack {self.dir_name} in: {self.full_output_path}</green>"
         )
 
         metadata_path = os.path.join(self.full_output_path, "pack_metadata.json")
@@ -543,7 +543,7 @@ class Initiator:
             json.dump(pack_metadata, fp, indent=4)
 
             logger.info(
-                f"[green]Created pack metadata at path : {metadata_path}[/green]"
+                f"<green>Created pack metadata at path : {metadata_path}</green>"
             )
 
         create_integration = str(
@@ -834,7 +834,7 @@ class Initiator:
                     f.write("\n")
         except FileNotFoundError:
             logger.info(
-                "[yellow]Could not find the .secrets-ignore file - make sure your path is correct[/yellow]"
+                "<yellow>Could not find the .secrets-ignore file - make sure your path is correct</yellow>"
             )
 
     def verify_output_path_for_xsiam_content(self) -> bool:
@@ -846,7 +846,7 @@ class Initiator:
             return True
         if not self.output:
             logger.error(
-                "[red]An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.[/red]"
+                "<red>An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.</red>"
             )
             return False
         # Check if the output path matches either the Integrations directory or a subdirectory under Packs
@@ -855,7 +855,7 @@ class Initiator:
         )
         if not valid_output_path:
             logger.error(
-                "[red]The output directory is invalid - make sure the name looks like one of the following: Packs/**/Integrations [/red]"
+                "<red>The output directory is invalid - make sure the name looks like one of the following: Packs/**/Integrations </red>"
             )
             return False
         return True
@@ -934,8 +934,8 @@ class Initiator:
             if secrets:
                 new_line = "\n"
                 logger.info(
-                    f"\n[green]The following secrets were detected:\n"
-                    f"{new_line.join(secret for secret in secrets)}[/green]"
+                    f"\n<green>The following secrets were detected:\n"
+                    f"{new_line.join(secret for secret in secrets)}</green>"
                 )
 
                 ignore_secrets = input(
@@ -945,7 +945,7 @@ class Initiator:
                     self.ignore_secrets(secrets)
 
         logger.info(
-            f"[green]Finished creating integration: {self.full_output_path}.[/green]"
+            f"<green>Finished creating integration: {self.full_output_path}.</green>"
         )
 
         return True
@@ -995,8 +995,8 @@ class Initiator:
         if secrets:
             new_line = "\n"
             logger.info(
-                f"\n[green]The following secrets were detected in the pack:\n"
-                f"{new_line.join(secret for secret in secrets)}[/green]"
+                f"\n<green>The following secrets were detected in the pack:\n"
+                f"{new_line.join(secret for secret in secrets)}</green>"
             )
 
             ignore_secrets = input(
@@ -1005,7 +1005,7 @@ class Initiator:
             if ignore_secrets in ["y", "yes"]:
                 self.ignore_secrets(secrets)
 
-        logger.info(f"[green]Finished creating script: {self.full_output_path}[/green]")
+        logger.info(f"<green>Finished creating script: {self.full_output_path}</green>")
 
         return True
 
@@ -1102,7 +1102,7 @@ class Initiator:
         ):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
             logger.info(
-                "[yellow]The version is not provided or is lower than the supported version; the value will be set to the default version. [/yellow]"
+                "<yellow>The version is not provided or is lower than the supported version; the value will be set to the default version. </yellow>"
             )
         with open(yml_path, "w") as f:
             yaml.dump(yml_dict, f)
@@ -1178,7 +1178,7 @@ class Initiator:
         ):
             yml_dict["fromversion"] = compared_version
             logger.info(
-                "[yellow]The selected version is lower than the supported version; the value will be set to the default version. [/yellow]"
+                "<yellow>The selected version is lower than the supported version; the value will be set to the default version. </yellow>"
             )
 
         if integration:
@@ -1324,7 +1324,7 @@ class Initiator:
                 os.mkdir(self.full_output_path)
 
             else:
-                logger.info(f"[red]Pack not created in {self.full_output_path}[/red]")
+                logger.info(f"<red>Pack not created in {self.full_output_path}</red>")
                 return False
 
         return True
@@ -1476,7 +1476,7 @@ class Initiator:
                     f.write(file_content)
             except Exception:
                 logger.info(
-                    f"[yellow]Could not fetch remote template - {path}. Using local templates instead.[/yellow]"
+                    f"<yellow>Could not fetch remote template - {path}. Using local templates instead.</yellow>"
                 )
                 return False
 

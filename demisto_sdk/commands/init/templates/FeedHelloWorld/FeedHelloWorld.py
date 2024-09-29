@@ -108,7 +108,7 @@ artifacts, such as ``demisto.debug()`` or the ``CommandResults`` class and the
 ``Common.*`` classes.
 
 Every feed integration should have these three base commands:
-``<product-prefix>-get-indicators`` - where <product-prefix> is replaced by the name
+``\\<product-prefix>-get-indicators`` - where \\<product-prefix> is replaced by the name
 of the Product or Vendor source providing the feed. So for example, if you were
 developing a feed integration for Microsoft Intune this command might be called
 msintune-get-indicators. This command should fetch a limited number of indicators

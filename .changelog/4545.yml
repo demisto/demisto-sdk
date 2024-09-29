@@ -1,4 +1,0 @@
-changes:
-- description: Moved GR105 validation to the new format. Ensuring that each content item has a unique ID.
-  type: feature
-pr_number: 4545

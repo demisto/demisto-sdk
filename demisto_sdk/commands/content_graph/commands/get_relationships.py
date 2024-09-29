@@ -6,10 +6,7 @@ from tabulate import tabulate
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import (
-    logger,
-    logging_setup,
-)
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.common import (
@@ -153,9 +150,10 @@ def get_relationships(
     Returns relationships of a given content object.
     """
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
+        calling_function=__name__,
     )
     if relationship == RelationshipType.HAS_COMMAND:
         raise ValueError(
@@ -217,7 +215,7 @@ def get_relationships_by_path(
     for record in sources + targets:
         log_record(record, relationship)
         format_record_for_outputs(record, relationship)
-    logger.info("[cyan]====== SUMMARY ======[/cyan]")
+    logger.info("<cyan>====== SUMMARY ======</cyan>")
     if retrieve_sources:
         logger.info(f"Sources:\n{to_tabulate(sources)}\n")
     if retrieve_targets:
@@ -237,9 +235,9 @@ def log_record(
             else ""
         )
         logger.debug(
-            f"[yellow]Found a {relationship} path{mandatorily}"
+            f"<yellow>Found a {relationship} path{mandatorily}"
             f"{' from ' if is_source else ' to '}"
-            f"{record['filepath']}[/yellow]\n"
+            f"{record['filepath']}</yellow>\n"
             f"{path_to_str(relationship, path['path'])}\n"
         )
 
@@ -249,13 +247,13 @@ def path_to_str(
     path: list,
 ) -> str:
     def node_to_str(node_data: dict) -> str:
-        name = f"[cyan]{node_data['name']}[/cyan]"
-        content_type = f"[lightblue]{node_data['content_type']}[/lightblue]"
+        name = f"<cyan>{node_data['name']}</cyan>"
+        content_type = f"<lightblue>{node_data['content_type']}</lightblue>"
         path = node_data["path"]
         return f"• ({name}:{content_type} {{path: {path}}})\n"
 
     def rel_to_str(rel: RelationshipType, props: dict) -> str:
-        return f"   └─ [[purple]{rel}[/purple]]{props or ''} ↴\n"
+        return f"   └─ [<purple>{rel}</purple>]{props or ''} ↴\n"
 
     path_str = ""
     for idx, path_element in enumerate(path):

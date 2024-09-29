@@ -23,7 +23,7 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             - Running create-id-set command
 
         When
-            - some items should be excluded from the id set duo to mismatch in the marketplaces
+            - some items should be excluded from the id set due to mismatch in the marketplaces
 
         Then
             - Ensure create-id-set passes.

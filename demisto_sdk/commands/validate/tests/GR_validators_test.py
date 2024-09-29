@@ -889,7 +889,8 @@ def test_IsUsingInvalidToVersionValidatorListFiles_invalid(
     assert len(results) == 1
     assert (
         results[0].message
-        == "Content item 'SecondScript' whose to_version is '99.99.99' is using content items: 'FirstScript' whose to_version is lower than 99.99.99"
+        == "Content item 'SecondScript' whose to_version is '99.99.99' is using content items:"
+        " 'FirstScript' whose to_version is lower than 99.99.99, making them incompatible"
     )
 
 

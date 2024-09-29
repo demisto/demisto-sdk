@@ -1,6 +1,4 @@
 changes:
-- description: GR108
+- description: Moved GR108 validation to the new validate format. The validation ensures that non-hidden packs do not have mandatory dependencies on hidden packs.
   type: feature
-- description: PA116 will GR108
-  type: breaking
 pr_number: 4590

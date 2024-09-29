@@ -542,7 +542,7 @@ def repo_test_from_version(graph_repo: Repo):
     # Repo which contains 1 pack
 
     # Pack 1 - script uses another script (relationship)
-    pack_1 = graph_repo.create_pack("Pack2")
+    pack_1 = graph_repo.create_pack("Pack1")
     pack_1.create_script(name="FirstScript")
     pack_1.create_script(
         name="SecondScript",

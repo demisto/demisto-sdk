@@ -164,10 +164,16 @@ CASE_LAYOUT = "caselayout"
 
 # Marketplaces
 
-DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = "marketplace-dist"
-DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
-DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
-DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = os.getenv("GCS_MARKET_BUCKET", "marketplace-dist")
+DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = os.getenv(
+    "GCS_MARKET_V2_BUCKET", "marketplace-v2-dist"
+)
+DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = os.getenv(
+    "GCS_MARKET_XPANSE_BUCKET", "xpanse-dist"
+)
+DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = os.getenv(
+    "GCS_MARKET_XSOAR_SAAS_BUCKET", "marketplace-saas-dist"
+)
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
 # Server Types

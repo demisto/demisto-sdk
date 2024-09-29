@@ -1,6 +1,0 @@
-changes:
-- description: Moved GR103 validation to the new validate format. The validation ensures that content items use other content items only if they exist in the repository. Additionally, removed this validation from the old format to improve performance.
-  type: feature
-- description: The validation GR103 has been removed from the old format to enhance performance.
-  type: breaking
-pr_number: 4522

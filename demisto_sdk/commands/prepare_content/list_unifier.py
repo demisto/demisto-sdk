@@ -34,7 +34,7 @@ class ListUnifier(Unifier):
         json_unified = ListUnifier.insert_data_to_json(
             json_unified, file_content_data_path
         )
-        logger.debug(f"[green]Created unified json: {path.name}[/green]")
+        logger.debug(f"<green>Created unified json: {path.name}</green>")
         return json_unified
 
     @staticmethod

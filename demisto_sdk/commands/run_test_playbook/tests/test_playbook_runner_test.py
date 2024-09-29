@@ -1,8 +1,7 @@
-import logging
-
 import click
 import demisto_client
 import pytest
+from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 
 from demisto_sdk.__main__ import run_test_playbook
@@ -14,11 +13,7 @@ from demisto_sdk.tests.constants_test import (
     TEST_PLAYBOOK,
     VALID_PACK,
 )
-from TestSuite.test_tools import (
-    ChangeCWD,
-    count_str_in_call_args_list,
-    str_in_call_args_list,
-)
+from TestSuite.test_tools import ChangeCWD
 
 WAITING_MESSAGE = "Waiting for the test playbook to finish running.."
 LINK_MESSAGE = "To see the test playbook run in real-time please go to :"
@@ -28,7 +23,8 @@ FAILED_MESSAGE = "The test playbook finished running with status: FAILED"
 
 class TestTestPlaybookRunner:
     @pytest.mark.parametrize(
-        argnames="tpb_result, res", argvalues=[("failed", 1), ("success", 0)]
+        argnames="tpb_result, res",
+        argvalues=[("failed", 1), ("success", 0)],
     )
     def test_run_specific_test_playbook(self, mocker, tpb_result, res):
         """
@@ -41,6 +37,7 @@ class TestTestPlaybookRunner:
         """
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
+        mocker.patch.object(TestPlaybookRunner, "upload_tpb")
         mocker.patch.object(
             TestPlaybookRunner,
             "create_incident_with_test_playbook",
@@ -51,18 +48,17 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        result = click.Context(command=run_test_playbook).invoke(
-            run_test_playbook, test_playbook_path=TEST_PLAYBOOK
-        )
-        assert result == res
+        with pytest.raises(click.exceptions.Exit) as e:
+            click.Context(command=run_test_playbook).invoke(
+                run_test_playbook, test_playbook_path=TEST_PLAYBOOK
+            )
+        assert e.value.exit_code == res
 
     @pytest.mark.parametrize(
         argnames="tpb_result, res, message",
         argvalues=[("failed", 1, FAILED_MESSAGE), ("success", 0, SUCCESS_MESSAGE)],
     )
-    def test_run_pack_test_playbooks(
-        self, mocker, tpb_result, res, message, monkeypatch
-    ):
+    def test_run_pack_test_playbooks(self, mocker, tpb_result, res, message):
         """
         Given:
             - run all pack test playbooks with result as True or False
@@ -72,10 +68,10 @@ class TestTestPlaybookRunner:
             - validate the results is aas expected
             - validate the num of tpb is as expected (4 tpb in Azure Pack)
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
+
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
+        mocker.patch.object(TestPlaybookRunner, "upload_tpb")
         mocker.patch.object(
             TestPlaybookRunner,
             "create_incident_with_test_playbook",
@@ -86,18 +82,22 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        result = click.Context(command=run_test_playbook).invoke(
-            run_test_playbook, test_playbook_path=VALID_PACK
-        )
-        assert result == res
-
-        assert count_str_in_call_args_list(logger_info.call_args_list, message) == 2
+        with pytest.raises(click.exceptions.Exit) as e:
+            click.Context(command=run_test_playbook).invoke(
+                run_test_playbook, test_playbook_path=TEST_PLAYBOOK
+            )
+        assert e.value.exit_code == res
 
     @pytest.mark.parametrize(
-        argnames="tpb_result, res, message",
-        argvalues=[("failed", 1, FAILED_MESSAGE), ("success", 0, SUCCESS_MESSAGE)],
+        argnames="tpb_result, expected_exit_code, message",
+        argvalues=[
+            ("failed", 1, FAILED_MESSAGE),
+            ("success", 0, SUCCESS_MESSAGE),
+        ],
     )
-    def test_run_repo_test_playbooks(self, mocker, tpb_result, res, message, capsys):
+    def test_run_repo_test_playbooks(
+        self, mocker, tpb_result: str, expected_exit_code: int, message: str
+    ):
         """
         Given:
             - run all repo test playbook with result as True or False
@@ -107,11 +107,11 @@ class TestTestPlaybookRunner:
             - validate the results is aas expected
             - validate the num of tpb is as expected (7 tpb in CONTENT_REPO_EXAMPLE_ROOT)
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
             mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
             mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
+            mocker.patch.object(TestPlaybookRunner, "upload_tpb")
             mocker.patch.object(
                 TestPlaybookRunner,
                 "create_incident_with_test_playbook",
@@ -122,12 +122,11 @@ class TestTestPlaybookRunner:
                 "get_test_playbook_results_dict",
                 return_value={"state": tpb_result},
             )
-            result = click.Context(command=run_test_playbook).invoke(
-                run_test_playbook, all=True, test_playbook_path=""
+            result = CliRunner(mix_stderr=False).invoke(
+                run_test_playbook, ["--all", "-tpb", "", "-t", "5"]
             )
-            assert result == res
-
-            assert count_str_in_call_args_list(logger_info.call_args_list, message) == 6
+            assert result.exit_code == expected_exit_code
+            assert result.output.count(message) == 6
 
     @pytest.mark.parametrize(
         argnames="input_tpb, exit_code, err",
@@ -145,6 +144,8 @@ class TestTestPlaybookRunner:
         """
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
+        mocker.patch.object(TestPlaybookRunner, "upload_tpb")
+
         mocker.patch.object(
             TestPlaybookRunner,
             "create_incident_with_test_playbook",
@@ -168,12 +169,12 @@ class TestTestPlaybookRunner:
     @pytest.mark.parametrize(
         argnames="input_tpb, exit_code, err",
         argvalues=[
-            ("", 1, "Error: Missing option '-tpb' / '--test-playbook-path'."),
-            ("BlaBla", 1, "Error: Given input path: BlaBla does not exist"),
+            ("", 1, "Missing option '-tpb' / '--test-playbook-path'."),
+            ("BlaBla", 1, "Given input path: BlaBla does not exist"),
         ],
     )
     def test_failed_run_test_playbook_manager(
-        self, mocker, input_tpb, exit_code, err, monkeypatch
+        self, mocker, input_tpb, exit_code, err, caplog
     ):
         """
         Given:
@@ -184,8 +185,6 @@ class TestTestPlaybookRunner:
             - validate the error code is as expected.
             - validate the Error message when the argument is missing
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(
@@ -205,17 +204,14 @@ class TestTestPlaybookRunner:
         assert error_code == exit_code
 
         if err:
-            assert str_in_call_args_list(
-                logger_info.call_args_list,
-                err,
-            )
+            assert err in caplog.text
 
     @pytest.mark.parametrize(
         argnames="playbook_id, tpb_results, exit_code",
         argvalues=[(VALID_PACK, "success", 0), (TEST_PLAYBOOK, "success", 0)],
     )
     def test_run_test_playbook_by_id(
-        self, mocker, playbook_id, tpb_results, exit_code, monkeypatch
+        self, mocker, playbook_id, tpb_results, exit_code, caplog
     ):
         """
         Given:
@@ -226,11 +222,11 @@ class TestTestPlaybookRunner:
             - validate the error code is as expected.
             - validate all the message is as expected.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
+        mocker.patch.object(TestPlaybookRunner, "upload_tpb")
+
         mocker.patch.object(
             TestPlaybookRunner,
             "create_incident_with_test_playbook",
@@ -249,30 +245,16 @@ class TestTestPlaybookRunner:
         res = test_playbook_runner.run_test_playbook_by_id(playbook_id)
 
         assert res == exit_code
-
-        assert all(
-            [
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    WAITING_MESSAGE,
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    LINK_MESSAGE,
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    SUCCESS_MESSAGE,
-                ),
-            ],
-        )
+        assert WAITING_MESSAGE in caplog.text
+        assert LINK_MESSAGE in caplog.text
+        assert SUCCESS_MESSAGE in caplog.text
 
     @pytest.mark.parametrize(
         argnames="playbook_id, tpb_results, exit_code",
         argvalues=[("VALID_PACK", "failed", 1), ("TEST_PLAYBOOK", "failed", 1)],
     )
     def test_failed_run_test_playbook_by_id(
-        self, mocker, playbook_id, tpb_results, exit_code, monkeypatch
+        self, mocker, playbook_id, tpb_results, exit_code, caplog
     ):
         """
         Given:
@@ -283,11 +265,11 @@ class TestTestPlaybookRunner:
             - validate the error code is as expected.
             - validate the all the messages is as expected.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
+        mocker.patch.object(TestPlaybookRunner, "upload_tpb")
+
         mocker.patch.object(
             TestPlaybookRunner,
             "create_incident_with_test_playbook",
@@ -299,27 +281,13 @@ class TestTestPlaybookRunner:
             return_value={"state": tpb_results},
         )
 
-        self.test_playbook_input = TEST_PLAYBOOK
-        test_playbook_runner = TestPlaybookRunner(
-            test_playbook_path=self.test_playbook_input
+        assert (
+            TestPlaybookRunner(
+                test_playbook_path=TEST_PLAYBOOK
+            ).run_test_playbook_by_id(playbook_id)
+            == exit_code
         )
-        res = test_playbook_runner.run_test_playbook_by_id(playbook_id)
 
-        assert res == exit_code
-
-        assert all(
-            [
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    WAITING_MESSAGE,
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    LINK_MESSAGE,
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list,
-                    FAILED_MESSAGE,
-                ),
-            ],
-        )
+        assert WAITING_MESSAGE in caplog.text
+        assert LINK_MESSAGE in caplog.text
+        assert FAILED_MESSAGE in caplog.text

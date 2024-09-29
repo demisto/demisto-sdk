@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.logger import logger
 
 
 def print_template_examples():
-    logger.info("\n[cyan]General Pointers About Release Notes:[/cyan]")
+    logger.info("\n<cyan>General Pointers About Release Notes:</cyan>")
     logger.info(
         " - The release notes need to be in simple language and informative. "
         "Think about what is the impact on the user and what they should know about this version."
@@ -39,7 +39,7 @@ def print_template_examples():
         " - Parameters/arguments/functions/outputs names - "
         "should be wrapped with one star - *entity_name*"
     )
-    logger.info("\n[cyan]Enhancements examples:[/cyan]")
+    logger.info("\n<cyan>Enhancements examples:</cyan>")
     logger.info("\n - You can now filter an event by attribute data fields.")
     logger.info(
         "\n - Added support for the *extend-context* argument in the ***ua-parse*** command."
@@ -52,7 +52,7 @@ def print_template_examples():
     logger.info(
         "\n - Improved implementation of the default value for the *fetch_time* parameter."
     )
-    logger.info("\n\n[cyan]Bug fixes examples:[/cyan]")
+    logger.info("\n\n<cyan>Bug fixes examples:</cyan>")
     logger.info(
         "\n - Fixed an issue where mirrored investigations contained mismatched user names."
     )
@@ -63,15 +63,15 @@ def print_template_examples():
         "\n - Fixed an issue in which the ***qradar-delete-reference-set-value*** command failed to "
         'delete reference sets with the "\\" character in their names.'
     )
-    logger.info("\n\n[cyan]Docker Updates:[/cyan]")
+    logger.info("\n\n<cyan>Docker Updates:</cyan>")
     logger.info("\n - Updated the Docker image to: *demisto/python3:3.9.1.15759*.")
-    logger.info("\n\n[cyan]General Changes:[/cyan]")
+    logger.info("\n\n<cyan>General Changes:</cyan>")
     logger.info(
-        "[yellow]Note: Use these if the change has no visible impact on the user, "
-        "but please try to refrain from using these if possible![/yellow]"
+        "<yellow>Note: Use these if the change has no visible impact on the user, "
+        "but please try to refrain from using these if possible!</yellow>"
     )
     logger.info("\n - Documentation and metadata improvements.")
-    logger.info("\n\n[cyan]Deprecation examples:[/cyan]")
+    logger.info("\n\n<cyan>Deprecation examples:</cyan>")
     logger.info(
         "\n - Deprecated. The playbook uses an unsupported scraping API. Use Proofpoint Protection Server "
         "v2 playbook instead."
@@ -79,23 +79,23 @@ def print_template_examples():
     logger.info(
         "\n - Deprecated the *ipname* argument from the ***checkpoint-block-ip*** command."
     )
-    logger.info("\n\n[cyan]Out of beta examples:[/cyan]")
+    logger.info("\n\n<cyan>Out of beta examples:</cyan>")
     logger.info("\n - SaaS Security is now generally available.")
-    logger.info("\n\n[cyan]The available template prefixes are:[/cyan]\n")
+    logger.info("\n\n<cyan>The available template prefixes are:</cyan>\n")
     logger.info(
-        f"[green] {pprint.pformat(ReleaseNotesChecker.RN_PREFIX_TEMPLATES)[1:-1]}[/green]"
+        f"<green> {pprint.pformat(ReleaseNotesChecker.RN_PREFIX_TEMPLATES)[1:-1]}</green>"
     )
-    logger.info("\n\n[cyan]The available template suffixes are:[/cyan]\n")
+    logger.info("\n\n<cyan>The available template suffixes are:</cyan>\n")
     logger.info(
-        f"[green] {pprint.pformat(ReleaseNotesChecker.RN_SUFFIX_TEMPLATES)[1:-1]}[/green]"
+        f"<green> {pprint.pformat(ReleaseNotesChecker.RN_SUFFIX_TEMPLATES)[1:-1]}</green>"
     )
-    logger.info("\n\n[cyan]The available full line templates are:[/cyan]\n")
+    logger.info("\n\n<cyan>The available full line templates are:</cyan>\n")
     logger.info(
-        f"[green] {pprint.pformat(ReleaseNotesChecker.RN_FULL_LINE_TEMPLATES)[1:-1]}[/green]"
+        f"<green> {pprint.pformat(ReleaseNotesChecker.RN_FULL_LINE_TEMPLATES)[1:-1]}</green>"
     )
-    logger.info("\n\n[cyan]The BANNED line templates are:[/cyan]\n")
+    logger.info("\n\n<cyan>The BANNED line templates are:</cyan>\n")
     logger.info(
-        f"[red] {pprint.pformat(ReleaseNotesChecker.BANNED_TEMPLATES)[1:-1]}[/red]"
+        f"<red> {pprint.pformat(ReleaseNotesChecker.BANNED_TEMPLATES)[1:-1]}</red>"
     )
     logger.info(
         "\n\nFor additional information see: https://xsoar.pan.dev/docs/documentation/release-notes"
@@ -205,9 +205,9 @@ class ReleaseNotesChecker:
     def print_notes(self):
         """Print the review about the RN"""
         for line in self.notes:
-            logger.info(f'\n[red] - Notes for the line: "{line}"[/red]')
+            logger.info(f'\n<red> - Notes for the line: "{line}"</red>')
             for note in self.notes[line]:
-                logger.info(f"[red]   - {note}[/red]")
+                logger.info(f"<red>   - {note}</red>")
 
     def check_rn(self) -> bool:
         """Check if an RN file is up to our standards"""
@@ -267,12 +267,12 @@ class ReleaseNotesChecker:
             self.print_notes()
             if show_template_message:
                 logger.info(
-                    "\n[red] For more information about templates run: `demisto-sdk doc-review --templates` "
-                    "or view our documentation at: https://xsoar.pan.dev/docs/documentation/release-notes[/red]"
+                    "\n<red> For more information about templates run: `demisto-sdk doc-review --templates` "
+                    "or view our documentation at: https://xsoar.pan.dev/docs/documentation/release-notes</red>"
                 )
             return False
         else:
             logger.info(
-                f"[green] - Release notes {self.file_path} match a known template.[/green]"
+                f"<green> - Release notes {self.file_path} match a known template.</green>"
             )
             return True

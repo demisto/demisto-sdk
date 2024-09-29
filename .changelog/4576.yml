@@ -1,0 +1,4 @@
+changes:
+- description: Enhanced the Graph interface to support multi-threaded environments.
+  type: feature
+pr_number: 4576

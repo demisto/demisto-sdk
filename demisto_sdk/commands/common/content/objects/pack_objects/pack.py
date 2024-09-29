@@ -1,4 +1,3 @@
-import logging
 import subprocess
 from typing import Any, Dict, Iterator, Optional, Union
 
@@ -454,13 +453,10 @@ class Pack:
             else {}
         )
 
-    def sign_pack(
-        self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path
-    ):
+    def sign_pack(self, dumped_pack_dir: Path, sign_directory: Path):
         """Signs pack folder and creates signature file.
 
         Args:
-            logger (logging.Logger): System logger already initialized.
             dumped_pack_dir (Path): Path to the updated pack to sign.
             sign_directory (Path): Path to the signDirectory executable file.
 

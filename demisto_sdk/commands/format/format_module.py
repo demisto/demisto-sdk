@@ -293,7 +293,7 @@ def format_manager(
     logger.info("")  # Just adding a new line before summary
     for string, print_color in log_list:
         joined_string = "\n".join(string)
-        logger.info(f"[{print_color}]{joined_string}[/{print_color}]")
+        logger.info(f"<{print_color}>{joined_string}</{print_color}>")
 
     if error_list:
         return 1
@@ -330,11 +330,11 @@ def get_files_to_format_from_git(
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)
         logger.info(
-            f"[cyan]Found the following files to format:\n{detected_files_string}[/cyan]"
+            f"<cyan>Found the following files to format:\n{detected_files_string}</cyan>"
         )
 
     else:
-        logger.info("[red]Did not find any files to format[/red]")
+        logger.info("<red>Did not find any files to format</red>")
 
     return filtered_files
 
@@ -397,7 +397,7 @@ def run_format_on_file(
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
         logger.info(
-            f"[yellow]No updater_class was found for file type {file_type}[/yellow]"
+            f"<yellow>No updater_class was found for file type {file_type}</yellow>"
         )
         return format_output(input, 1, VALIDATE_RES_SKIPPED_CODE)
 

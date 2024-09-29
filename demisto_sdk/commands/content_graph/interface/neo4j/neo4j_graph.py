@@ -285,12 +285,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             nodes (List[graph.Node]): list of nodes to add
         """
-        nodes = filter(lambda node: node.element_id not in self._id_to_obj, nodes)
+        nodes = tuple(
+            filter(lambda node: node.element_id not in self._id_to_obj, nodes)
+        )
         if not nodes:
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
-                self._id_to_obj,
             )
+            logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(
@@ -774,3 +776,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             except Exception as e:
                 logger.error(f"Error when running query: {e}")
                 raise e
+
+
+class Neo4jContentGraphInterfaceSingleton:
+    # singleton implementation - used when calling the interface within a multi-threaded process, to ensure a single instance
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            logger.debug("Creating a new instance of Neo4jContentGraphInterface.")
+            cls._instance = Neo4jContentGraphInterface()
+        else:
+            logger.debug("Using the existing instance of Neo4jContentGraphInterface.")
+        return cls._instance

@@ -1543,7 +1543,9 @@ ALLOWED_IGNORE_ERRORS = (
         "LO107",
         "IN107",
         "DB100",
+        "GR101",
         "GR103",
+        "GR107",  # temporary see CIAC-11781
         "IN150",
         "IN161",
     ]
@@ -2684,7 +2686,7 @@ class Errors:
             "For more information, refer to the following documentation: "
             "https://xsoar.pan.dev/docs/documentation/release-notes"
         )
-        return f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
+        return f'Did not find content items headers under "{content_type}" - might be due to invalid format.\n{error}'
 
     @staticmethod
     @error_code_decorator

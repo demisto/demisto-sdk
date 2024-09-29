@@ -80,7 +80,7 @@ class JsonSplitter:
 
     def split_dashboard(self):
         logger.debug(
-            f"[cyan]Starting dashboard extraction from generic module {self.json_data.get('name')}[/cyan]"
+            f"<cyan>Starting dashboard extraction from generic module {self.json_data.get('name')}</cyan>"
         )
         self.create_output_dirs()
         self.create_dashboards()

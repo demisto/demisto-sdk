@@ -265,7 +265,9 @@ class IntegrationDocUpdateManager:
                 old_config_start_line = doc_text_lines.index(first_line)
                 old_config_end_line = doc_text_lines.index(last_line)
 
-                doc_text_lines[old_config_start_line: old_config_end_line + 1] = new_configuration_section
+                doc_text_lines[old_config_start_line : old_config_end_line + 1] = (
+                    new_configuration_section
+                )
 
             self.output_doc = "\n".join(doc_text_lines)
         except ValueError as e:

@@ -1,7 +1,6 @@
 import html
 import os.path
 import re
-from enum import Enum
 from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json

@@ -19,7 +19,10 @@ from demisto_sdk.commands.content_graph.common import (
     Neo4jRelationshipResult,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.graph import (
+    ContentGraphInterface,
+    DeprecatedItemUsage,
+)
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
     Neo4jImportHandler,
 )
@@ -289,7 +292,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
             )
-            logger.debug(f"{self._id_to_obj=}")
+            logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(
@@ -497,17 +500,33 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+    def find_items_using_deprecated_items(
+        self, file_paths: List[str]
+    ) -> List[DeprecatedItemUsage]:
         """Searches for content items who use content items which are deprecated.
 
         Args:
             file_paths (List[str]): A list of content items' paths to check.
                 If not given, runs the query over all content items.
         Returns:
-            List[dict]: A list of dicts with the deprecated item and all the items used it.
+            List[DeprecatedItemUsage]: A list of DeprecatedItemUsage with the deprecated item and all the items used it.
         """
         with self.driver.session() as session:
-            return session.execute_read(get_items_using_deprecated, file_paths)
+            deprecated_usage = session.execute_read(
+                get_items_using_deprecated, file_paths
+            )
+        all_related_nodes = [node for _, _, nodes in deprecated_usage for node in nodes]
+        self._add_nodes_to_mapping(all_related_nodes)
+        return [
+            DeprecatedItemUsage(
+                deprecated_item_id=dep_content,
+                deprecated_item_type=dep_type,
+                content_items_using_deprecated=[
+                    self._id_to_obj[node.element_id] for node in nodes
+                ],
+            )
+            for dep_content, dep_type, nodes in deprecated_usage
+        ]
 
     def find_uses_paths_with_invalid_marketplaces(
         self, pack_ids: List[str]
@@ -757,3 +776,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             except Exception as e:
                 logger.error(f"Error when running query: {e}")
                 raise e
+
+
+class Neo4jContentGraphInterfaceSingleton:
+    # singleton implementation - used when calling the interface within a multi-threaded process, to ensure a single instance
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            logger.debug("Creating a new instance of Neo4jContentGraphInterface.")
+            cls._instance = Neo4jContentGraphInterface()
+        else:
+            logger.debug("Using the existing instance of Neo4jContentGraphInterface.")
+        return cls._instance

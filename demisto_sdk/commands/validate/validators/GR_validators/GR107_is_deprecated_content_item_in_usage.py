@@ -78,43 +78,39 @@ ContentTypes = Union[
 ]
 
 
-class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
-    error_code = "GR103"
-    description = "Validates that there is no usage of unknown content items"
-    rationale = "Content items should only use existing content items."
-    error_message = "Content item '{0}' is using content items: {1} which cannot be found in the repository."
+class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
+    error_code = "GR107"
+    description = (
+        "Validates that deprecated content items are not used in other content items."
+    )
+    rationale = "Using deprecated content items can lead to unexpected behavior and should be avoided."
+    error_message = "The {deprecated_item_type} '{deprecated_item}' is deprecated but used in the following content item: {using_deprecated_item}."
+    related_field = "deprecated"
     is_auto_fixable = False
 
     def obtain_invalid_content_items_using_graph(
-        self, content_items: Iterable[ContentTypes], validate_all_files: bool = False
+        self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        results: List[ValidationResult] = []
-        file_paths_to_validate = (
-            [
+        content_item_paths: List = (
+            []
+            if validate_all_files
+            else [
                 str(content_item.path.relative_to(CONTENT_PATH))
                 for content_item in content_items
             ]
-            if not validate_all_files
-            else []
         )
-        uses_unknown_content = self.graph.get_unknown_content_uses(
-            file_paths_to_validate
-        )
-
-        for content_item in uses_unknown_content:
-            names_of_unknown_items = [
-                relationship.content_item_to.object_id
-                or relationship.content_item_to.name
-                for relationship in content_item.uses
-            ]
-            results.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(
-                        content_item.name,
-                        ", ".join(f"'{name}'" for name in names_of_unknown_items),
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    deprecated_item_type=item.deprecated_item_type,
+                    deprecated_item=item.deprecated_item_id,
+                    using_deprecated_item=str(
+                        item_using_deprecated.path.relative_to(CONTENT_PATH)
                     ),
-                    content_object=content_item,
-                )
+                ),
+                content_object=item_using_deprecated,
             )
-        return results
+            for item in self.graph.find_items_using_deprecated_items(content_item_paths)
+            for item_using_deprecated in item.content_items_using_deprecated
+        ]

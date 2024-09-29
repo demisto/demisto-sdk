@@ -105,7 +105,7 @@ class ReleaseNotesValidator(BaseValidator):
                 content_type_sections_str
             )
             if not content_type_sections_ls:
-                #  Did not find content items headers under content type - might be duo to invalid format.
+                #  Did not find content items headers under content type - might be due to invalid format.
                 #  Will raise error in rn_valid_header_format.
                 headers[content_type] = []
             for content_type_section in content_type_sections_ls:

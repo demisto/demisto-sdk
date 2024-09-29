@@ -1,4 +1,0 @@
-changes:
-- description: Deprecated. Removing the canvas-context-connections.yml schema's file.
-  type: internal
-pr_number: 4546

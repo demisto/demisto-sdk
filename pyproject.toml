@@ -14,7 +14,7 @@ exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.31.11"
+version = "1.32.1"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -104,6 +104,7 @@ uv = "^0.1.5"
 toml = "^0.10.2"
 werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
 loguru = "^0.7.2"
+pygithub = "^2.2.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]
@@ -122,7 +123,6 @@ ipykernel = "^6.16.1"
 ruff = "^0.6.6"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
-pygithub = "^2.2.0"
 pytest-loguru = "^0.4.0"
 
 [tool.poetry.group.types.dependencies]

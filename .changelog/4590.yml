@@ -1,4 +1,4 @@
 changes:
-- description: Moved GR108 validation to the new validate format. The validation ensures that non-hidden packs do not have mandatory dependencies on hidden packs.
+- description: Moved GR108 validation to the new validate format. The validation ensures that non-hidden packs do not depend on hidden packs.
   type: feature
 pr_number: 4590

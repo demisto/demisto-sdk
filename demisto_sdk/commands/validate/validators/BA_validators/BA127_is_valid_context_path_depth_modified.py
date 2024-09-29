@@ -29,6 +29,7 @@ class IsValidContextPathDepthModifiedValidatorModified(
         for content_item in content_items:
             if content_item.support != XSOAR_SUPPORT:
                 continue
+            message = ""
             old_content_item = content_item.old_base_content_object
             if isinstance(content_item, Script):
                 invalid_paths = self.check_for_script_invalid_paths(
@@ -49,23 +50,24 @@ class IsValidContextPathDepthModifiedValidatorModified(
                             self.error_message.format("command", command, outputs)
                             + "\n"
                         )
-            results.append(
-                ValidationResult(
-                    validator=self,
-                    message=message,
-                    content_object=content_item,
+            if message:
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=message,
+                        content_object=content_item,
+                    )
                 )
-            )
         return results
 
     def check_for_script_invalid_paths(
         self, old_content_item: BaseContent | None, content_item: BaseContent | None
     ) -> str:
-        """Validate that all outputs entry has contextPath key for a given command.
+        """Checking for invalid outputs.
 
         Args:
-            old_content_item (Iterable[ContentTypes]: The original version before change of the content item that was changed
-            content_item (Iterable[ContentTypes]: The content item after the change
+            old_content_item (script): The original version before change of the content item that was changed
+            content_item (script)]: The content item after the change
 
         Returns:
              String of contextPaths that were changed
@@ -78,7 +80,7 @@ class IsValidContextPathDepthModifiedValidatorModified(
     def check_integration_invalid_paths(
         self, old_content_item: BaseContent | None, content_item: BaseContent | None
     ) -> dict:
-        """Validate that all outputs entry has contextPath key for a given command.
+        """Checking for invalid outputs.
 
         Args:
             old_content_item (Iterable[ContentTypes]: The original version before change of the content item that was changed

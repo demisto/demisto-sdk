@@ -32,7 +32,7 @@ class NoDefaultSectionsLeftReadmeValidator(BaseValidator[ContentTypes]):
     3. Default description belonging to one of the examples integrations"""
     error_message = "The following default sentences {0} still exist in the readme, please replace with a suitable info."
     related_field = "readme"
-    rationale = "Ensure no default auto generated sections do not remain empty. For better documentation standards and quality."
+    rationale = "Ensure no default auto generated sections remain empty. For better documentation standards and quality."
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
 

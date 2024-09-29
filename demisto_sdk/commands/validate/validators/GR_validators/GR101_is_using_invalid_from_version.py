@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.tools import get_all_content_objects_paths_in_dir
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects import (
     CaseField,
     CaseLayout,
@@ -88,7 +88,6 @@ class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
         "Content item '{0}' whose from_version is '{1}' is using content items:"
         " {2} whose from_version is higher (should be <= {3})"
     )
-    related_field = ""
     is_auto_fixable = False
 
     def obtain_invalid_content_items_using_graph(
@@ -97,9 +96,10 @@ class IsUsingInvalidFromVersionValidator(BaseValidator[ContentTypes], ABC):
         file_paths_to_validate = (
             []
             if validate_all_files
-            else get_all_content_objects_paths_in_dir(
-                str(content_item.path) for content_item in content_items
-            )
+            else [
+                str(content_item.path.relative_to(CONTENT_PATH))
+                for content_item in content_items
+            ]
         )
 
         invalid_content_items = self.graph.find_uses_paths_with_invalid_fromversion(

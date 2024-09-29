@@ -13,8 +13,11 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_list_files import (
     MarketplacesFieldValidatorListFiles,
 )
-from demisto_sdk.commands.validate.validators.GR_validators.GR101_is_using_invalid_from_version import (
-    IsUsingInvalidFromVersionValidator,
+from demisto_sdk.commands.validate.validators.GR_validators.GR101_is_using_invalid_from_version_all_files import (
+    IsUsingInvalidFromVersionValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR101_is_using_invalid_from_version_list_files import (
+    IsUsingInvalidFromVersionValidatorListFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_all_files import (
     IsUsingUnknownContentValidatorAllFiles,
@@ -536,51 +539,14 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
 
 @pytest.fixture
 def repo_test_from_version(graph_repo: Repo):
-    # Repo which contains two packs
+    # Repo which contains 1 pack
 
-    # Pack 1 - playbook uses an integration (relationship)
-    pack_1 = graph_repo.create_pack("Pack1")
-    playbook_using_deprecate_commands = {
-        "id": "UsingDeprecatedCommand",
-        "name": "UsingDeprecatedCommand",
-        "tasks": {
-            "0": {
-                "id": "0",
-                "taskid": "1",
-                "task": {
-                    "id": "1",
-                    "script": "|||test-command",
-                },
-                "1": {
-                    "id": "1",
-                    "taskid": "2",
-                    "task": {
-                        "id": "2",
-                        "script": "|||UsingDeprecatedScript",
-                    },
-                },
-            }
-        },
-    }
-    pack_1.create_playbook(
-        "UsingDeprecatedCommand", yml=playbook_using_deprecate_commands
-    )
-    integration = pack_1.create_integration("MyIntegration")
-    integration.set_commands(["test-command"])
-    integration.set_data(**{"script.commands[0].deprecated": "false"})
-    dependencies = {
-        "dependencies": {
-            "Pack2": {"mandatory": True, "display_name": "Pack2"},
-        }
-    }
-    pack_1.pack_metadata.update({"dependencies": dependencies})
-
-    # Pack 2 - script uses another script (relationship)
-    pack_2 = graph_repo.create_pack("Pack2")
-    pack_2.create_script(name="DeprecatedScript").set_data(**{"deprecated": "true"})
-    pack_2.create_script(
-        name="UsingDeprecatedScript",
-        code='demisto.execute_command("DeprecatedScript", dArgs)',
+    # Pack 1 - script uses another script (relationship)
+    pack_1 = graph_repo.create_pack("Pack2")
+    pack_1.create_script(name="FirstScript")
+    pack_1.create_script(
+        name="SecondScript",
+        code='demisto.execute_command("FirstScript", dArgs)',
     )
     return graph_repo
 
@@ -592,9 +558,6 @@ def test_IsUsingInvalidFromVersionValidator_sanity_all_files(
     Given:
         - A content graph interface with preloaded repository data:
             - Pack 1:
-                - playbook (which uses a command from the integration)
-                - integration (which contains a command, used by the playbook)
-            - Pack 2:
                     - script 1 (which used by script 2)
                     - script 2 (which uses script 1)
     When:
@@ -604,10 +567,8 @@ def test_IsUsingInvalidFromVersionValidator_sanity_all_files(
     """
     graph_interface = repo_test_from_version.create_graph()
     BaseValidator.graph_interface = graph_interface
-    results = (
-        IsUsingInvalidFromVersionValidator().obtain_invalid_content_items_using_graph(
-            content_items=[]
-        )
+    results = IsUsingInvalidFromVersionValidatorAllFiles().obtain_invalid_content_items_using_graph(
+        content_items=[]
     )
     assert len(results) == 0
 
@@ -617,11 +578,7 @@ def test_IsUsingInvalidFromVersionValidator_invalid(
 ):
     """
     Given:
-        - A content graph interface with preloaded repository data:
             - Pack 1:
-                - playbook (which uses a command from the integration)
-                - integration (which contains a command, used by the playbook)
-            - Pack 2:
                     - script 1 (which used by script 2, but has fromversion=10.0.0 while script 2 has fromversion=0.0.0)
                     - script 2 (which uses script 1)
     When:
@@ -630,21 +587,21 @@ def test_IsUsingInvalidFromVersionValidator_invalid(
         - The validator should fail due to target's fromversion higher than source's fromversion. (len(results) == 1)
         - Ensure the error message as expected
     """
-    repo_test_from_version.packs[1].scripts[0].set_data(
+    repo_test_from_version.packs[0].scripts[0].set_data(
         **{"fromversion": "10.0.0"}
     )  # This line fails the GR101
     graph_interface = repo_test_from_version.create_graph()
     BaseValidator.graph_interface = graph_interface
-    results = (
-        IsUsingInvalidFromVersionValidator().obtain_invalid_content_items_using_graph(
-            content_items=[repo_test_from_version.packs[1].scripts[1]]
-        )
+    results = IsUsingInvalidFromVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
+        content_items=[
+            repo_test_from_version.packs[0].scripts[1].get_graph_object(graph_interface)
+        ]
     )
     assert len(results) == 1
     assert (
         results[0].message
-        == "Content item 'UsingDeprecatedScript' whose from_version is '0.0.0'"
-        " is using content items: 'DeprecatedScript' whose from_version is higher"
+        == "Content item 'SecondScript' whose from_version is '0.0.0'"
+        " is using content items: 'FirstScript' whose from_version is higher"
         " (should be <= 0.0.0)"
     )
 
@@ -654,11 +611,7 @@ def test_IsUsingInvalidFromVersionValidator_valid(
 ):
     """
     Given:
-        - A content graph interface with preloaded repository data:
             - Pack 1:
-                - playbook (which uses a command from the integration)
-                - integration (which contains a command, used by the playbook)
-            - Pack 2:
                     - script 1 (which used by script 2, has fromversion=10.0.0)
                     - script 2 (which uses script 1, has fromversion=11.0.0)
     When:
@@ -666,13 +619,13 @@ def test_IsUsingInvalidFromVersionValidator_valid(
     Then:
         - The validator should pass, since script 2 which uses script 1 has a higher fromversion, valid case
     """
-    repo_test_from_version.packs[1].scripts[0].set_data(**{"fromversion": "10.0.0"})
-    repo_test_from_version.packs[1].scripts[1].set_data(**{"fromversion": "11.0.0"})
+    repo_test_from_version.packs[0].scripts[0].set_data(**{"fromversion": "10.0.0"})
+    repo_test_from_version.packs[0].scripts[1].set_data(**{"fromversion": "11.0.0"})
     graph_interface = repo_test_from_version.create_graph()
     BaseValidator.graph_interface = graph_interface
-    results = (
-        IsUsingInvalidFromVersionValidator().obtain_invalid_content_items_using_graph(
-            content_items=[repo_test_from_version.packs[1].scripts[1]]
-        )
+    results = IsUsingInvalidFromVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
+        content_items=[
+            repo_test_from_version.packs[0].scripts[1].get_graph_object(graph_interface)
+        ]
     )
     assert len(results) == 0

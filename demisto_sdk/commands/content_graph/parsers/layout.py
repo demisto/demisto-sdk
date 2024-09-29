@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+from demisto_sdk.commands.content_graph.strict_objects.layout import StrictLayout
 
 
 class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
@@ -27,7 +28,9 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
         self.kind = self.json_data.get("kind")
         self.tabs = self.json_data.get("tabs")
         self.definition_id = self.json_data.get("definitionId")
-        self.group = self.json_data.get("group")
+        self.group = self.json_data.get("group") or (
+            "incident" if self.definition_id == "ThreatIntelReport" else ""
+        )
 
         self.edit: bool = bool(self.json_data.get("edit"))
         self.indicators_details: bool = bool(self.json_data.get("indicatorsDetails"))
@@ -97,3 +100,7 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
 
         get_values(self.json_data)
         return values
+
+    @property
+    def strict_object(self):
+        return StrictLayout

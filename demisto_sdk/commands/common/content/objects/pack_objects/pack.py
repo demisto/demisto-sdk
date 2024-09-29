@@ -1,4 +1,3 @@
-import logging
 import subprocess
 from typing import Any, Dict, Iterator, Optional, Union
 
@@ -7,7 +6,6 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEPRECATED_DESC_REGEX,
@@ -49,7 +47,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     AuthorImage,
     Classifier,
     ClassifierMapper,
-    Connection,
     Contributors,
     CorrelationRule,
     Dashboard,
@@ -255,12 +252,6 @@ class Pack:
         )
 
     @property
-    def connections(self) -> Iterator[Connection]:
-        return self._content_files_list_generator_factory(
-            dir_name=CONNECTIONS_DIR, suffix="json"
-        )
-
-    @property
     def test_playbooks(self) -> Iterator[Union[Playbook, Script]]:
         return self._content_files_list_generator_factory(
             dir_name=TEST_PLAYBOOKS_DIR, suffix="yml"
@@ -339,6 +330,10 @@ class Pack:
         return self._content_files_list_generator_factory(
             dir_name=MODELING_RULES_DIR, suffix="yml"
         )
+
+    @property
+    def modeling_rules_count(self) -> int:
+        return len(tuple(self.modeling_rules))
 
     @property
     def correlation_rules(self) -> Iterator[CorrelationRule]:
@@ -458,13 +453,10 @@ class Pack:
             else {}
         )
 
-    def sign_pack(
-        self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path
-    ):
+    def sign_pack(self, dumped_pack_dir: Path, sign_directory: Path):
         """Signs pack folder and creates signature file.
 
         Args:
-            logger (logging.Logger): System logger already initialized.
             dumped_pack_dir (Path): Path to the updated pack to sign.
             sign_directory (Path): Path to the signDirectory executable file.
 
@@ -488,12 +480,17 @@ class Pack:
 
     def _are_integrations_or_scripts_or_playbooks_exist(self) -> int:
         """
-        Checks whether an integration/script/playbook exist in the pack.
+        Checks whether an integration/script/playbook/modeling_rules exist in the pack.
 
         Returns:
             int: number > 0 if there is at least one integration/script/playbook in the pack, 0 if not.
         """
-        return self.integrations_count or self.scripts_count or self.playbooks_count
+        return (
+            self.integrations_count
+            or self.scripts_count
+            or self.playbooks_count
+            or self.modeling_rules_count
+        )
 
     def is_deprecated(self) -> bool:
         """
@@ -539,6 +536,10 @@ class Pack:
                 and (
                     self.scripts_count
                     == _get_deprecated_content_entities_count(self.scripts)
+                )
+                and (
+                    self.modeling_rules_count
+                    == _get_deprecated_content_entities_count(self.modeling_rules)
                 )
             )
         # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be deprecated.

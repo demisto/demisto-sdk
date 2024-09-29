@@ -50,6 +50,7 @@ from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
 )
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
+from demisto_sdk.commands.content_graph.parsers.related_files import ImageRelatedFile
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.file import File
 from TestSuite.repo import Repo
@@ -179,6 +180,24 @@ def create_playbook_object(
     return Playbook.from_orm(parser)
 
 
+def create_doc_file_object(
+    pack_path: Path, image_name: Optional[str] = "example.png"
+) -> ImageRelatedFile:
+    """Creating a doc file object.
+
+    Args:
+        pack_path: The path to the pack the doc file should be created in.
+        image_name: The image name to create.
+    Returns:
+        The doc file object.
+    """
+    doc_path = pack_path / "doc_files" / image_name
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(doc_path, "wb") as f:
+        f.write(b"")
+    return ImageRelatedFile(doc_path)
+
+
 def create_modeling_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
@@ -273,6 +292,7 @@ def create_pack_object(
     playbooks: int = 0,
     name: Optional[str] = None,
     release_note_content: Optional[str] = None,
+    bc_release_note_content: Optional[List[Dict[str, str]]] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -300,6 +320,21 @@ def create_pack_object(
         (
             pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".md")
         ).write_text(release_note_content)
+
+    if bc_release_note_content is not None:
+        if (version := Version(json_content.get("version", "1.0.0"))) == Version(
+            "1.0.0"
+        ):
+            raise ValueError(
+                "Can't write release notes for v1.0.0, set version to another value"
+            )
+        json_object = json.dumps(bc_release_note_content, indent=4)
+
+        with open(
+            pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".json"),
+            "w",
+        ) as outfile:
+            outfile.write(json_object)
 
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)

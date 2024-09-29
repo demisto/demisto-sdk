@@ -373,9 +373,11 @@ def configure_vscode_launch(
                         "name": "PowerShell: Debug Integration",
                         "type": "PowerShell",
                         "request": "launch",
-                        "script": f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
-                        if devcontainer
-                        else str(integration_script.path.with_suffix(".ps1")),
+                        "script": (
+                            f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
+                            if devcontainer
+                            else str(integration_script.path.with_suffix(".ps1"))
+                        ),
                         "cwd": "${workspaceFolder}",
                     }
                 ],
@@ -420,9 +422,11 @@ def configure_vscode_launch(
                         "name": "Python: Debug Integration locally",
                         "type": "debugpy",
                         "request": "launch",
-                        "program": f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
-                        if devcontainer
-                        else str(integration_script.path.with_suffix(".py")),
+                        "program": (
+                            f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
+                            if devcontainer
+                            else str(integration_script.path.with_suffix(".py"))
+                        ),
                         "console": "integratedTerminal",
                         "cwd": "${workspaceFolder}",
                         "justMyCode": False,

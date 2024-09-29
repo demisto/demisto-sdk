@@ -1,7 +1,10 @@
-import logging
+import logging  # noqa: TID251 # special case: parallel logger
 import os
 import sys
-from logging.handlers import QueueHandler, QueueListener
+from logging.handlers import (  # noqa: TID251 # special case: parallel logger
+    QueueHandler,
+    QueueListener,
+)
 from pathlib import Path
 from queue import Queue
 from threading import Lock, current_thread

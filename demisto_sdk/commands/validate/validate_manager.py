@@ -1,6 +1,7 @@
 from pathlib import Path
-from typing import List, Set
+from typing import List, Optional, Set
 
+from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
@@ -29,6 +30,7 @@ class ValidateManager:
         file_path=None,
         allow_autofix=False,
         ignore_support_level=False,
+        ignore: Optional[List[str]] = None,
     ):
         self.ignore_support_level = ignore_support_level
         self.file_path = file_path
@@ -43,11 +45,10 @@ class ValidateManager:
             self.invalid_items,
         ) = self.initializer.gather_objects_to_run_on()
         self.committed_only = self.initializer.committed_only
-        self.configured_validations: ConfiguredValidations = (
-            self.config_reader.gather_validations_from_conf(
-                execution_mode=self.initializer.execution_mode,
-                ignore_support_level=self.ignore_support_level,
-            )
+        self.configured_validations: ConfiguredValidations = self.config_reader.read(
+            ignore_support_level=ignore_support_level,
+            mode=self.initializer.execution_mode,
+            codes_to_ignore=ignore,
         )
         self.validators = self.filter_validators()
 
@@ -78,6 +79,16 @@ class ValidateManager:
                         filtered_content_objects_for_validator
                     )
                 )  # type: ignore
+                if (
+                    validator.expected_execution_mode == [ExecutionMode.ALL_FILES]
+                    and self.initializer.execution_mode == ExecutionMode.ALL_FILES
+                ):
+                    validation_results = [
+                        validation_result
+                        for validation_result in validation_results
+                        if validation_result.content_object
+                        in filtered_content_objects_for_validator
+                    ]
                 try:
                     if self.allow_autofix and validator.is_auto_fixable:
                         for validation_result in validation_results:
@@ -108,7 +119,7 @@ class ValidateManager:
             BaseValidator.graph_interface.close()
         self.add_invalid_content_items()
         return self.validation_results.post_results(
-            only_throw_warning=self.configured_validations.only_throw_warnings
+            only_throw_warning=self.configured_validations.warning
         )
 
     def filter_validators(self) -> List[BaseValidator]:
@@ -122,7 +133,7 @@ class ValidateManager:
         return [
             validator
             for validator in get_all_validators()
-            if validator.error_code in self.configured_validations.validations_to_run
+            if validator.error_code in self.configured_validations.select
         ]
 
     def add_invalid_content_items(self):

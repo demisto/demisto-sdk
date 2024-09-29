@@ -89,7 +89,7 @@ class LayoutsDirConvertManager(AbstractDirConvertManager):
         convert_result = layout_converter.convert_dir()
         if not convert_result:
             logger.info(
-                f"[green]Converted Layouts successfully in pack: {str(self.pack.path)}[/green]"
+                f"<green>Converted Layouts successfully in pack: {str(self.pack.path)}</green>"
             )
         return convert_result
 
@@ -108,7 +108,7 @@ class ClassifiersDirConvertManager(AbstractDirConvertManager):
             convert_result = classifier_converter.convert_dir()
             if not convert_result:
                 logger.info(
-                    f"[green]Converted Classifiers successfully in pack: {str(self.pack.path)}[/green]"
+                    f"<green>Converted Classifiers successfully in pack: {str(self.pack.path)}</green>"
                 )
             return convert_result
         else:

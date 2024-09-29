@@ -41,7 +41,9 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):  # type: ign
         docker_client (docker.DockerClient): The docker client to use
     """
     try:
-        containers = docker_client.containers.list(filters={"name": "neo4j-content"})
+        containers = docker_client.containers.list(
+            all=True, filters={"name": "neo4j-content"}
+        )
         if containers:
             container = containers[0]
         else:

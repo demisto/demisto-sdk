@@ -33,12 +33,11 @@ class EmptySectionsValidator(BaseValidator[ContentTypes]):
         "The section/s: {0} is/are empty\nplease elaborate or delete the section.\n"
     )
     related_field = "readme"
-    rationale = """Ensure that no default section is left empty with just headings"""
+    rationale = """Ensure that no default section is left empty with just headings."""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
-    empty_sections: List[str] = []
 
-    def verify_no_empty_sections(self, content_item: ContentTypes) -> bool:
+    def verify_no_empty_sections(self, content_item: ContentTypes) -> list:
         """Check that if the following headlines exists, they are not empty:
             1. Troubleshooting
             2. Use Cases
@@ -47,7 +46,7 @@ class EmptySectionsValidator(BaseValidator[ContentTypes]):
         Returns:
             bool: True If all req ok else False
         """
-        self.empty_sections = []
+        empty_sections = []
         for section in SECTIONS:
             found_section = re.findall(
                 rf"(## {section}\n*)(-*\s*\n\n?)?(\s*.*)",
@@ -62,12 +61,9 @@ class EmptySectionsValidator(BaseValidator[ContentTypes]):
             if not line_after_headline or line_after_headline.startswith("##"):
                 # assuming that a sub headline is part of the section
                 if not line_after_headline.startswith("###"):
-                    self.empty_sections.append(section)
+                    empty_sections.append(section)
 
-        if self.empty_sections:
-            return True
-
-        return False
+        return empty_sections
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -75,9 +71,9 @@ class EmptySectionsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(", ".join(self.empty_sections)),
+                message=self.error_message.format(", ".join(empty_sections)),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (self.verify_no_empty_sections(content_item))
+            if (empty_sections := self.verify_no_empty_sections(content_item))
         ]

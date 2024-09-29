@@ -22,18 +22,13 @@ class NotToShortReadmeValidator(BaseValidator[ContentTypes]):
     rationale = "Ensure better documentation."
     related_file_type = [RelatedFileType.README]
 
-    def verify_readme_is_not_too_short(self, content_item: ContentTypes):
-        readme_size = 0
-        readme_size = len(content_item.readme.file_content)
-        return readme_size
-
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(readme_size, content_item.path),
+                message=self.error_message.format(readme_size),
                 content_object=content_item,
             )
             for content_item in content_items

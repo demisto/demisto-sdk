@@ -30,13 +30,9 @@ class NoDefaultSectionsLeftReadmeValidator(BaseValidator[ContentTypes]):
     1. 'FILL IN REQUIRED PERMISSIONS HERE'.
     2. unexplicit version number - such as "version xx of".
     3. Default description belonging to one of the examples integrations"""
-    error_message = "{0} exists in the readme, please replace with a suitable info."
+    error_message = "The following default sentences {0} still exist in the readme, please replace with a suitable info."
     related_field = "readme"
-    rationale = """Check that there are no default leftovers such as:
-            1. 'FILL IN REQUIRED PERMISSIONS HERE'.
-            2. unexplicit version number - such as "version xx of".
-            3. Default description belonging to one of the examples integrations`
-            """
+    rationale = "Ensure no default auto generated sections do not remain empty. For better documentation standards and quality."
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
 

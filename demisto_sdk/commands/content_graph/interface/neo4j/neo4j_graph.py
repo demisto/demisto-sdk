@@ -67,10 +67,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
-    validate_hidden_pack_dependencies,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
+    validate_packs_with_hidden_mandatory_dependencies,
     validate_test_playbook_in_use,
     validate_toversion,
     validate_unknown_content,
@@ -483,7 +483,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def find_uses_paths_with_invalid_toversion(
         self, file_paths: List[str], for_supported_versions=False
     ) -> List[BaseNode]:
-        """Searches and retrievs content items who use content items with a higher toversion.
+        """Searches and retrieves content items who use content items with a higher toversion.
 
         Args:
             file_paths (List[str]): A list of content items' paths to check.
@@ -571,21 +571,22 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_mandatory_hidden_packs_dependencies(
+    def find_packs_with_invalid_dependencies(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
         """
         Retrieves all the packs that are dependent on hidden packs
 
         Args:
-            pack_ids (List[str]): A list of content items pack_ids to check.
-
+            pack_ids (List[str]): List of pack IDs to check for invalid dependencies.
         Returns:
-            List[BaseNode]: Packs which depend on hidden packs in case exist.
+            List[BaseNode]: Packs which depend on hidden packs, if any exist.
 
         """
         with self.driver.session() as session:
-            results = session.execute_read(validate_hidden_pack_dependencies, pack_ids)
+            results = session.execute_read(
+                validate_packs_with_hidden_mandatory_dependencies, pack_ids
+            )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]

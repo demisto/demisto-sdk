@@ -267,7 +267,6 @@ def validate_packs_with_hidden_mandatory_dependencies(
     Returns:
         Dict[str, Neo4jRelationshipResult]: Dictionary of packs with hidden dependencies.
     """
-    # TODO {{mandatorily:TRUE}}
     pack_filter = (
         f" AND (pack.object_id in {pack_ids} OR hidden_pack.object_id in {pack_ids})"
         if pack_ids
@@ -275,7 +274,7 @@ def validate_packs_with_hidden_mandatory_dependencies(
     )
     query = f"""
     // Returns DEPENDS_ON relationships to packs which are hidden
-    MATCH (pack:Pack {{hidden:FALSE}})-[r:{RelationshipType.DEPENDS_ON}]->(hidden_pack:Pack {{hidden: TRUE}})
+    MATCH (pack:Pack {{hidden:FALSE}})-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:TRUE}}]->(hidden_pack:Pack {{hidden: TRUE}})
     WHERE NOT r.is_test {pack_filter}
     RETURN pack, collect(r) as relationships, collect(hidden_pack) as nodes_to
     """

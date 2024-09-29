@@ -15,11 +15,9 @@ ContentTypes = Pack
 
 class IsInvalidPacksDependenciesValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR108"
-    description = (
-        "Validates that hidden packs are not mandatory dependencies for other packs."
-    )
+    description = "Validates that non-hidden packs do not have mandatory dependencies on hidden packs."
     rationale = "Hidden packs should not be critical dependencies to ensure proper pack management."
-    error_message = "Pack {dependent_pack} depends on hidden pack(s): {hidden_packs}"
+    error_message = "Pack {dependent_pack} has mandatory dependencies on hidden pack(s): {hidden_packs}"
     related_field = "dependencies"
     is_auto_fixable = False
 
@@ -29,26 +27,29 @@ class IsInvalidPacksDependenciesValidator(BaseValidator[ContentTypes], ABC):
         pack_ids = (
             [] if validate_all_files else [pack.object_id for pack in content_items]
         )
-        validation_results = []
-        dependent_packs = self.graph.find_invalid_pack_dependencies(pack_ids=pack_ids)
-        pack_to_hidden_packs = defaultdict(set)
 
-        for pack in dependent_packs:
-            for relationship in pack.depends_on:
-                hidden_pack = relationship.content_item_to
-                pack_to_hidden_packs[pack].add(hidden_pack.object_id)
+        # Find packs with dependencies on hidden packs
+        packs_with_invalid_dependencies = (
+            self.graph.find_packs_with_invalid_dependencies(pack_ids=pack_ids)
+        )
+        dependent_pack_to_hidden_packs = defaultdict(set)
 
-        for dependent_pack, hidden_pack_ids in pack_to_hidden_packs.items():
-            error_message = self.error_message.format(
-                dependent_pack=dependent_pack.object_id,
-                hidden_packs=", ".join(hidden_pack_ids),
-            )
-            validation_results.append(
-                ValidationResult(
-                    validator=self,
-                    message=error_message,
-                    content_object=dependent_pack,
+        # Collect hidden pack dependencies for each dependent pack
+        for dependent_pack in packs_with_invalid_dependencies:
+            for dependency in dependent_pack.depends_on:
+                hidden_pack = dependency.content_item_to
+                dependent_pack_to_hidden_packs[dependent_pack].add(
+                    hidden_pack.object_id
                 )
-            )
 
-        return validation_results
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    dependent_pack=dependent_pack.object_id,
+                    hidden_packs=", ".join(hidden_pack_ids),
+                ),
+                content_object=dependent_pack,
+            )
+            for dependent_pack, hidden_pack_ids in dependent_pack_to_hidden_packs.items()
+        ]

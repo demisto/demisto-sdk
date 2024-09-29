@@ -333,7 +333,7 @@ class GraphValidator(BaseValidator):
         """
         is_valid = True
 
-        if dependant_packs := self.graph.find_invalid_pack_dependencies(
+        if dependant_packs := self.graph.find_packs_with_invalid_dependencies(
             pack_ids=self.pack_ids
         ):
             hidden_pack_id_to_dependant_pack_ids: dict = defaultdict(set)

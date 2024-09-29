@@ -297,7 +297,9 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def find_invalid_pack_dependencies(self, pack_ids: List[str]) -> List[BaseNode]:
+    def find_packs_with_invalid_dependencies(
+        self, pack_ids: List[str]
+    ) -> List[BaseNode]:
         pass
 
     @abstractmethod

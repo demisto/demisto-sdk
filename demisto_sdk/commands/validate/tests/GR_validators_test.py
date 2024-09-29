@@ -37,6 +37,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplayboo
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_list_files import (
     IsTestPlaybookInUseValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_packs_dependencies_valid_all_files import (
+    IsInvalidPacksDependenciesValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_packs_dependencies_valid_list_files import (
+    IsInvalidPacksDependenciesValidatorListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -529,3 +535,94 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
         [repo_for_test.packs[pack_index]]
     )
     assert len(results) == expected_len_results
+
+
+@pytest.fixture
+def repo_for_test_gr_108(graph_repo: Repo):
+    """
+    Creates a test repository with three packs for testing GR108 validator.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack1: Contains a playbook that uses a command from Pack2.
+             Has a mandatory dependency on Pack2.
+    - Pack2: A hidden pack containing an integration with two commands.
+    - Pack3: An empty pack for additional testing scenarios.
+    """
+    playbook_using_pack2_command = {
+        "id": "UsingPack2Command",
+        "name": "UsingPack2Command",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "MyIntegration1|||test-command-1",
+                    "brand": "MyIntegration1",
+                    "iscommand": "true",
+                },
+            }
+        },
+    }
+    # Pack 1: playbook uses command from pack 2
+    pack_1 = graph_repo.create_pack("Pack1")
+
+    pack_1.create_playbook("UsingPack2Command", yml=playbook_using_pack2_command)
+
+    # Define Pack2 as a mandatory dependency for Pack1
+    pack_1.pack_metadata.update({"dependencies": {"Pack2": {"mandatory": True}}})
+
+    # Pack 2: hidden
+    pack_2 = graph_repo.create_pack("Pack2")
+    integration = pack_2.create_integration("MyIntegration1")
+    integration.set_commands(["test-command-1", "test-command-2"])
+    pack_2.pack_metadata.update({"hidden": "true"})
+    # Pack3
+    graph_repo.create_pack("Pack3")
+    return graph_repo
+
+
+def test_IsInvalidPacksDependenciesValidatorAllFiles_invalid(
+    repo_for_test_gr_108: Repo,
+):
+    """
+    Given:
+        A test repository with Pack1 depending on the hidden Pack2.
+    When:
+        Running the IsInvalidPacksDependenciesValidatorAllFiles validator.
+    Then:
+        The validator should return a result indicating that Pack1 depends on the hidden Pack2.
+    """
+    graph_interface = repo_for_test_gr_108.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsInvalidPacksDependenciesValidatorAllFiles().obtain_invalid_content_items([])
+    )
+    assert results[0].message == "Pack Pack1 depends on hidden pack(s): Pack2"
+
+
+def test_IsInvalidPacksDependenciesValidatorListFiles(repo_for_test_gr_108: Repo):
+    """
+    Given:
+        A test repository with Pack1 depending on the hidden Pack2, and Pack3 with no dependencies.
+    When:
+        Running the IsInvalidPacksDependenciesValidatorListFiles validator on specific packs.
+    Then:
+        1. For Pack1: The validator should return a result indicating that Pack1 depends on the hidden Pack2.
+        2. For Pack3: The validator should not return any results (no invalid dependencies).
+    """
+    graph_interface = repo_for_test_gr_108.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsInvalidPacksDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_gr_108.packs[0]]
+        )
+    )
+    assert results[0].message == "Pack Pack1 depends on hidden pack(s): Pack2"
+
+    results = (
+        IsInvalidPacksDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_gr_108.packs[2]]
+        )
+    )
+    assert not results

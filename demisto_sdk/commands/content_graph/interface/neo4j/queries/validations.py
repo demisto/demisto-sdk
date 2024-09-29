@@ -261,9 +261,10 @@ def validate_packs_with_hidden_dependencies(
     Finds non-hidden packs that have mandatory dependencies on hidden packs.
     Excludes test relationships and deprecated packs.
     """
+    # TODO {{mandatorily:TRUE}}
     query = f"""
     // Returns DEPENDS_ON relationships to packs which are hidden
-    MATCH (pack1:Pack {{hidden:FALSE}})-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:TRUE}}]->(hidden_pack:Pack {{hidden: TRUE}})
+    MATCH (pack1:Pack {{hidden:FALSE}})-[r:{RelationshipType.DEPENDS_ON}]->(hidden_pack:Pack {{hidden: TRUE}})
     WHERE NOT r.is_test
     {f' AND (pack1.object_id in {pack_ids} OR hidden_pack.object_id in {pack_ids})' if pack_ids else ""}
 

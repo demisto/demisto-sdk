@@ -538,7 +538,7 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
 
 
 @pytest.fixture
-def repo_test_from_version(graph_repo: Repo):
+def repo_with_one_pack_for_gr101(graph_repo: Repo):
     # Repo which contains 1 pack
 
     # Pack 1 - script uses another script (relationship)
@@ -552,7 +552,7 @@ def repo_test_from_version(graph_repo: Repo):
 
 
 def test_IsUsingInvalidFromVersionValidator_sanity_all_files(
-    repo_test_from_version: Repo,
+    repo_with_one_pack_for_gr101,
 ):
     """
     Given:
@@ -565,7 +565,7 @@ def test_IsUsingInvalidFromVersionValidator_sanity_all_files(
     Then:
         - The validator should pass, everything is valid, sanity check
     """
-    graph_interface = repo_test_from_version.create_graph()
+    graph_interface = repo_with_one_pack_for_gr101.create_graph()
     BaseValidator.graph_interface = graph_interface
     results = IsUsingInvalidFromVersionValidatorAllFiles().obtain_invalid_content_items_using_graph(
         content_items=[]
@@ -574,7 +574,7 @@ def test_IsUsingInvalidFromVersionValidator_sanity_all_files(
 
 
 def test_IsUsingInvalidFromVersionValidator_invalid(
-    repo_test_from_version: Repo,
+    repo_with_one_pack_for_gr101,
 ):
     """
     Given:
@@ -587,14 +587,16 @@ def test_IsUsingInvalidFromVersionValidator_invalid(
         - The validator should fail due to target's fromversion higher than source's fromversion. (len(results) == 1)
         - Ensure the error message as expected
     """
-    repo_test_from_version.packs[0].scripts[0].set_data(
+    repo_with_one_pack_for_gr101.packs[0].scripts[0].set_data(
         **{"fromversion": "10.0.0"}
     )  # This line fails the GR101
-    graph_interface = repo_test_from_version.create_graph()
+    graph_interface = repo_with_one_pack_for_gr101.create_graph()
     BaseValidator.graph_interface = graph_interface
     results = IsUsingInvalidFromVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
         content_items=[
-            repo_test_from_version.packs[0].scripts[1].get_graph_object(graph_interface)
+            repo_with_one_pack_for_gr101.packs[0]
+            .scripts[1]
+            .get_graph_object(graph_interface)
         ]
     )
     assert len(results) == 1
@@ -607,7 +609,7 @@ def test_IsUsingInvalidFromVersionValidator_invalid(
 
 
 def test_IsUsingInvalidFromVersionValidator_valid(
-    repo_test_from_version: Repo,
+    repo_with_one_pack_for_gr101,
 ):
     """
     Given:
@@ -619,13 +621,19 @@ def test_IsUsingInvalidFromVersionValidator_valid(
     Then:
         - The validator should pass, since script 2 which uses script 1 has a higher fromversion, valid case
     """
-    repo_test_from_version.packs[0].scripts[0].set_data(**{"fromversion": "10.0.0"})
-    repo_test_from_version.packs[0].scripts[1].set_data(**{"fromversion": "11.0.0"})
-    graph_interface = repo_test_from_version.create_graph()
+    repo_with_one_pack_for_gr101.packs[0].scripts[0].set_data(
+        **{"fromversion": "10.0.0"}
+    )
+    repo_with_one_pack_for_gr101.packs[0].scripts[1].set_data(
+        **{"fromversion": "11.0.0"}
+    )
+    graph_interface = repo_with_one_pack_for_gr101.create_graph()
     BaseValidator.graph_interface = graph_interface
     results = IsUsingInvalidFromVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
         content_items=[
-            repo_test_from_version.packs[0].scripts[1].get_graph_object(graph_interface)
+            repo_with_one_pack_for_gr101.packs[0]
+            .scripts[1]
+            .get_graph_object(graph_interface)
         ]
     )
     assert len(results) == 0

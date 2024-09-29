@@ -1,0 +1,4 @@
+changes:
+- description: Add support in the schema for Xsiam custom hidden value.
+  type: feature
+pr_number: 4584

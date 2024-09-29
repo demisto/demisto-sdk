@@ -98,5 +98,5 @@ class SchemaValidator(BaseValidator[ContentTypes]):
             if self.is_invalid_schema(content_item)
         ]
 
-    def is_invalid_schema(self, content_item: ContentTypes ) -> bool:
+    def is_invalid_schema(self, content_item: ContentTypes) -> bool:
         return bool(content_item.structure_errors)

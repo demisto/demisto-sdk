@@ -18,10 +18,11 @@
 
 import astroid
 from pylint.checkers import BaseChecker
+from pylint.typing import MessageDefinitionTuple
 
 # -------------------------------------------- Messages ------------------------------------------------
 
-cert_partner_msg = {
+cert_partner_msg: dict[str, MessageDefinitionTuple] = {
     "E9001": (
         "Sys.exit use is found, Please use return instead.",
         "sys-exit-exists",

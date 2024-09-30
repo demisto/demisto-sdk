@@ -20,10 +20,11 @@ import os
 
 import astroid
 from pylint.checkers import BaseChecker
+from pylint.typing import MessageDefinitionTuple
 
 # -------------------------------------------- Messages for all linters ------------------------------------------------
 
-base_msg = {
+base_msg: dict[str, MessageDefinitionTuple] = {
     "E9002": (
         "Print is found, Please remove all prints from the code.",
         "print-exists",

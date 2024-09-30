@@ -20,10 +20,11 @@ import os
 
 import astroid
 from pylint.checkers import BaseChecker
+from pylint.typing import MessageDefinitionTuple
 
 # --------------------------------------------------- Messages --------------------------------------------------------
 
-xsoar_msg = {
+xsoar_msg: dict[str, MessageDefinitionTuple] = {
     "W9014": (
         "Function arguments are missing type annotations. Please add type annotations",
         "missing-arg-type-annoation",

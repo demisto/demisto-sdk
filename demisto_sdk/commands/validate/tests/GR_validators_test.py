@@ -61,10 +61,10 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_pac
 from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_packs_dependencies_valid_list_files import (
     IsInvalidPacksDependenciesValidatorListFiles,
 )
-from demisto_sdk.commands.validate.validators.GR_validators.GR999_is_core_pack_depend_on_non_core_packs_valid_all_files import (
+from demisto_sdk.commands.validate.validators.GR_validators.PA124_is_core_pack_depend_on_non_core_packs_valid_all_files import (
     IsCorePackDependOnNonCorePacksValidatorAllFiles,
 )
-from demisto_sdk.commands.validate.validators.GR_validators.GR999_is_core_pack_depend_on_non_core_packs_valid_list_files import (
+from demisto_sdk.commands.validate.validators.GR_validators.PA124_is_core_pack_depend_on_non_core_packs_valid_list_files import (
     IsCorePackDependOnNonCorePacksValidatorListFiles,
 )
 from TestSuite.repo import Repo

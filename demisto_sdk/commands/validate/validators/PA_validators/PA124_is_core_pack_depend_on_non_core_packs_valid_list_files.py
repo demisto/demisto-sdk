@@ -5,10 +5,10 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
-
-from demisto_sdk.commands.validate.validators.GR_validators.GR999_is_core_pack_depend_on_non_core_packs_valid import IsCorePackDependOnNonCorePacksValidator
+from demisto_sdk.commands.validate.validators.PA_validators.PA124_is_core_pack_depend_on_non_core_packs_valid import (
+    IsCorePackDependOnNonCorePacksValidator,
+)
 
 ContentTypes = Pack
 

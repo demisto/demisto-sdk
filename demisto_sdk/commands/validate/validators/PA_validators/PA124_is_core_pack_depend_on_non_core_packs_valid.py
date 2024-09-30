@@ -14,7 +14,7 @@ ContentTypes = Pack
 
 
 class IsCorePackDependOnNonCorePacksValidator(BaseValidator[ContentTypes], ABC):
-    error_code = "GR999"
+    error_code = "PA124"
     description = "Validates that core packs do not depend on non-core packs."
     rationale = "Core packs should be self-contained and not rely on non-core packs."
     error_message = "The core pack {core_pack} cannot depend on non-core packs: {dependencies_packs} - revert this change."

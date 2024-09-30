@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -13,9 +12,12 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA124_is_core_pack_d
 ContentTypes = Pack
 
 
-class IsCorePackDependOnNonCorePacksValidatorListFiles(IsCorePackDependOnNonCorePacksValidator):
+class IsCorePackDependOnNonCorePacksValidatorListFiles(
+    IsCorePackDependOnNonCorePacksValidator
+):
     expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
 
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return self.obtain_invalid_content_items_using_graph(content_items, False)
-        

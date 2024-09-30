@@ -1769,9 +1769,9 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
 
 
 @pytest.fixture
-def repo_for_test_gr_999(graph_repo: Repo, mocker: MockerFixture):
+def repo_for_test_pa_124(graph_repo: Repo, mocker: MockerFixture):
     """
-    Creates a test repository with three packs for testing GR999 validator.
+    Creates a test repository with three packs for testing PA124 validator.
 
     This fixture sets up a graph repository with the following structure:
     - CorePack: A core pack containing a playbook that uses a command from Pack2.
@@ -1783,7 +1783,7 @@ def repo_for_test_gr_999(graph_repo: Repo, mocker: MockerFixture):
     The fixture also mocks the core pack identification to ensure CorePack is recognized as a core pack.
     """
     mocker.patch(
-        "demisto_sdk.commands.validate.validators.GR_validators.GR999_is_core_pack_depend_on_non_core_packs_valid.get_marketplace_to_core_packs",
+        "demisto_sdk.commands.validate.validators.PA_validators.PA124_is_core_pack_depend_on_non_core_packs_valid.get_marketplace_to_core_packs",
         return_value={MarketplaceVersions.XSOAR: {"CorePack"}},
     )
     playbook_using_pack2_command = {
@@ -1821,12 +1821,12 @@ def repo_for_test_gr_999(graph_repo: Repo, mocker: MockerFixture):
 
 
 def test_IsCorePackDependOnNonCorePacksValidatorAllFiles_invalid(
-    repo_for_test_gr_999: Repo,
+    repo_for_test_pa_124: Repo,
 ):
     """
     Test the IsCorePackDependOnNonCorePacksValidatorAllFiles validator for invalid dependencies.
     Given:
-        - A test repository (repo_for_test_gr_999) with:
+        - A test repository (repo_for_test_pa_124) with:
             - A core pack "CorePack" that has a mandatory dependency on "Pack2"
             - "Pack2" which is not a core pack
             - "Pack3" as an additional pack
@@ -1839,7 +1839,7 @@ def test_IsCorePackDependOnNonCorePacksValidatorAllFiles_invalid(
           depends on the non-core pack Pack2
         - The error message should clearly state the violation and suggest reverting the change
     """
-    graph_interface = repo_for_test_gr_999.create_graph()
+    graph_interface = repo_for_test_pa_124.create_graph()
     BaseValidator.graph_interface = graph_interface
     results = (
         IsCorePackDependOnNonCorePacksValidatorAllFiles().obtain_invalid_content_items(
@@ -1852,11 +1852,11 @@ def test_IsCorePackDependOnNonCorePacksValidatorAllFiles_invalid(
     )
 
 
-def test_IsCorePackDependOnNonCorePacksValidatorListFiles(repo_for_test_gr_999: Repo):
+def test_IsCorePackDependOnNonCorePacksValidatorListFiles(repo_for_test_pa_124: Repo):
     """
     Test the IsCorePackDependOnNonCorePacksValidatorListFiles validator for specific packs.
     Given:
-        - A test repository (repo_for_test_gr_999) with:
+        - A test repository (repo_for_test_pa_124) with:
             - A core pack "CorePack" that has a mandatory dependency on "Pack2"
             - "Pack2" which is not a core pack
             - "Pack3" as an additional pack without dependencies
@@ -1869,11 +1869,11 @@ def test_IsCorePackDependOnNonCorePacksValidatorListFiles(repo_for_test_gr_999: 
         - For CorePack: The validator should return a result indicating the invalid dependency
         - For Pack3: The validator should not return any results (no invalid dependencies)
     """
-    graph_interface = repo_for_test_gr_999.create_graph()
+    graph_interface = repo_for_test_pa_124.create_graph()
     BaseValidator.graph_interface = graph_interface
     results = (
         IsCorePackDependOnNonCorePacksValidatorListFiles().obtain_invalid_content_items(
-            [repo_for_test_gr_999.packs[0]]
+            [repo_for_test_pa_124.packs[0]]
         )
     )
     assert (
@@ -1883,7 +1883,7 @@ def test_IsCorePackDependOnNonCorePacksValidatorListFiles(repo_for_test_gr_999: 
 
     results = (
         IsCorePackDependOnNonCorePacksValidatorListFiles().obtain_invalid_content_items(
-            [repo_for_test_gr_999.packs[2]]
+            [repo_for_test_pa_124.packs[2]]
         )
     )
     assert not results

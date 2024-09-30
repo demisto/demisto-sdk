@@ -1,0 +1,6 @@
+changes:
+- description: Moved GR102 validation to the new validate format. This validation checks whether a content item has to_version higher than another one it uses.
+  type: feature
+- description: Removed the **validate** warnings when the source's to_version is higher than the general default version.
+  type: feature
+pr_number: 4586

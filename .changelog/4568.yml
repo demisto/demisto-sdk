@@ -1,0 +1,4 @@
+changes:
+- description: Improved implementation of the GR103 validation.
+  type: internal
+pr_number: 4568

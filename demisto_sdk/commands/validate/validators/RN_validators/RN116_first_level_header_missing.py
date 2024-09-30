@@ -33,6 +33,7 @@ class FirstLevelHeaderMissingValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if not re.search(r"\s#{4}\s", f"\n{content_item.release_note.file_content}")
             and not re.search(
-                r"\s#{2}\s", f"\n{content_item.release_note.file_content}"
+                r"\s#{2}\s",
+                f"\n{content_item.release_note.file_content}",  # We look for a first level header by either #### or ## in case force flag was used.
             )
         ]

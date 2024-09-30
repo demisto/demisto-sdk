@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -28,6 +29,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.PA_validators.PA100_valid_tags_prefixes import (
     ValidTagsPrefixesValidator,
 )
@@ -82,6 +84,12 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA120_is_valid_tags 
 from demisto_sdk.commands.validate.validators.PA_validators.PA121_is_price_changed import (
     IsPriceChangedValidator,
 )
+from demisto_sdk.commands.validate.validators.PA_validators.PA124_is_core_pack_depend_on_non_core_packs_valid_all_files import (
+    IsCorePackDependOnNonCorePacksValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA124_is_core_pack_depend_on_non_core_packs_valid_list_files import (
+    IsCorePackDependOnNonCorePacksValidatorListFiles,
+)
 from demisto_sdk.commands.validate.validators.PA_validators.PA125_is_valid_pack_name import (
     IsValidPackNameValidator,
 )
@@ -100,6 +108,7 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA131_is_default_dat
 from demisto_sdk.commands.validate.validators.PA_validators.PA132_is_valid_default_datasource import (
     IsValidDefaultDataSourceNameValidator,
 )
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -1757,3 +1766,124 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
                 error_message.format(old_version=old_version, pack=pack.name)
                 in result.message
             )
+
+
+@pytest.fixture
+def repo_for_test_gr_999(graph_repo: Repo, mocker: MockerFixture):
+    """
+    Creates a test repository with three packs for testing GR999 validator.
+
+    This fixture sets up a graph repository with the following structure:
+    - CorePack: A core pack containing a playbook that uses a command from Pack2.
+                Has a mandatory dependency on Pack2.
+    - Pack2: Contains an integration with two commands.
+             Serves as a mandatory dependency for CorePack.
+    - Pack3: An empty pack for additional testing scenarios.
+
+    The fixture also mocks the core pack identification to ensure CorePack is recognized as a core pack.
+    """
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators.GR999_is_core_pack_depend_on_non_core_packs_valid.get_marketplace_to_core_packs",
+        return_value={MarketplaceVersions.XSOAR: {"CorePack"}},
+    )
+    playbook_using_pack2_command = {
+        "id": "UsingPack2Command",
+        "name": "UsingPack2Command",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "MyIntegration1|||test-command-1",
+                    "brand": "MyIntegration1",
+                    "iscommand": "true",
+                },
+            }
+        },
+    }
+    # Core Pack 1: playbook uses command from pack 2
+    pack_1 = graph_repo.create_pack("CorePack")
+
+    pack_1.create_playbook("UsingCorePackCommand", yml=playbook_using_pack2_command)
+
+    # Define Pack2 as a mandatory dependency for CorePack
+    pack_1.pack_metadata.update({"dependencies": {"Pack2": {"mandatory": True}}})
+
+    # Pack 2: mandatory dependency for CorePack
+    pack_2 = graph_repo.create_pack("Pack2")
+    integration = pack_2.create_integration("MyIntegration1")
+    integration.set_commands(["test-command-1", "test-command-2"])
+
+    # Pack3
+    graph_repo.create_pack("Pack3")
+    return graph_repo
+
+
+def test_IsCorePackDependOnNonCorePacksValidatorAllFiles_invalid(
+    repo_for_test_gr_999: Repo,
+):
+    """
+    Test the IsCorePackDependOnNonCorePacksValidatorAllFiles validator for invalid dependencies.
+    Given:
+        - A test repository (repo_for_test_gr_999) with:
+            - A core pack "CorePack" that has a mandatory dependency on "Pack2"
+            - "Pack2" which is not a core pack
+            - "Pack3" as an additional pack
+
+    When:
+        - Running the IsCorePackDependOnNonCorePacksValidatorAllFiles validator
+
+    Then:
+        - The validator should return a result indicating that CorePack
+          depends on the non-core pack Pack2
+        - The error message should clearly state the violation and suggest reverting the change
+    """
+    graph_interface = repo_for_test_gr_999.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsCorePackDependOnNonCorePacksValidatorAllFiles().obtain_invalid_content_items(
+            []
+        )
+    )
+    assert (
+        results[0].message
+        == "The core pack CorePack cannot depend on non-core packs: Pack2 - revert this change."
+    )
+
+
+def test_IsCorePackDependOnNonCorePacksValidatorListFiles(repo_for_test_gr_999: Repo):
+    """
+    Test the IsCorePackDependOnNonCorePacksValidatorListFiles validator for specific packs.
+    Given:
+        - A test repository (repo_for_test_gr_999) with:
+            - A core pack "CorePack" that has a mandatory dependency on "Pack2"
+            - "Pack2" which is not a core pack
+            - "Pack3" as an additional pack without dependencies
+
+    When:
+        - Running the IsCorePackDependOnNonCorePacksValidatorListFiles validator on CorePack
+        - Running the same validator on Pack3
+
+    Then:
+        - For CorePack: The validator should return a result indicating the invalid dependency
+        - For Pack3: The validator should not return any results (no invalid dependencies)
+    """
+    graph_interface = repo_for_test_gr_999.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsCorePackDependOnNonCorePacksValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_gr_999.packs[0]]
+        )
+    )
+    assert (
+        results[0].message
+        == "The core pack CorePack cannot depend on non-core packs: Pack2 - revert this change."
+    )
+
+    results = (
+        IsCorePackDependOnNonCorePacksValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_gr_999.packs[2]]
+        )
+    )
+    assert not results

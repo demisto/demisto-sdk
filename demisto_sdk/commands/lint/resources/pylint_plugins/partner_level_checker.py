@@ -18,7 +18,6 @@
 
 import astroid
 from pylint.checkers import BaseChecker
-from pylint.interfaces import IAstroidChecker
 
 # --------------------------------------------------- Messages --------------------------------------------------------
 
@@ -43,7 +42,6 @@ partner_msg = {
 
 
 class PartnerChecker(BaseChecker):
-    __implements__ = IAstroidChecker
     name = "partner-checker"
     priority = -1
     msgs = partner_msg

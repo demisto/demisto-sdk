@@ -20,7 +20,6 @@ import os
 
 import astroid
 from pylint.checkers import BaseChecker
-from pylint.interfaces import IAstroidChecker
 
 # --------------------------------------------------- Messages --------------------------------------------------------
 
@@ -47,7 +46,6 @@ xsoar_msg = {
 
 
 class XsoarChecker(BaseChecker):
-    __implements__ = IAstroidChecker
     name = "xsoar-checker"
     priority = -1
     msgs = xsoar_msg

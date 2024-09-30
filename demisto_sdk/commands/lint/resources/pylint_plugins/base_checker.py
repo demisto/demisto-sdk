@@ -20,7 +20,6 @@ import os
 
 import astroid
 from pylint.checkers import BaseChecker
-from pylint.interfaces import IAstroidChecker
 
 # -------------------------------------------- Messages for all linters ------------------------------------------------
 
@@ -96,7 +95,6 @@ BUILD_IN_COMMANDS = [
 
 
 class CustomBaseChecker(BaseChecker):
-    __implements__ = IAstroidChecker
     name = "base-checker"
     priority = -1
     msgs = base_msg

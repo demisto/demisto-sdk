@@ -118,9 +118,7 @@ class PartnerChecker(BaseChecker):
 
             # Iterate over the children nodes of the main function node and search for Try/ TryFinally node.
             for child in node.get_children():
-                if isinstance(child, astroid.TryExcept) or isinstance(
-                    child, astroid.TryFinally
-                ):
+                if isinstance(child, astroid.ExceptHandler) or isinstance(child, astroid.Try):
                     try_except_exists = True
 
             if not try_except_exists:

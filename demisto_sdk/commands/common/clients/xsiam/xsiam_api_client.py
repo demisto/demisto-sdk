@@ -32,7 +32,7 @@ class XsiamClient(XsoarSaasClient):
             self.get_ioc_rules()
             return True
         except ApiException as error:
-            logger.debug(f"{self} is not {self.server_type} server, error: {error}")
+            logger.debug("{}", f"<cyan>{self} is not {self.server_type} server, error: {error}</cyan>")  # noqa: PLE1205
             return False
 
     @property

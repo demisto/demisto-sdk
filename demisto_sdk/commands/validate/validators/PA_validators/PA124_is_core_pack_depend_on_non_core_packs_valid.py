@@ -31,7 +31,7 @@ class IsCorePackDependOnNonCorePacksValidator(BaseValidator[ContentTypes], ABC):
         mp_to_core_packs = get_marketplace_to_core_packs()
         for marketplace, mp_core_packs in mp_to_core_packs.items():
             pack_ids_to_check = (
-                list(mp_core_packs.keys())
+                list(mp_core_packs)
                 if not pack_ids
                 else list(set(pack_ids).intersection(mp_core_packs))
             )

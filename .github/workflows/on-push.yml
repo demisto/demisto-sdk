@@ -237,7 +237,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Checkout Content
         uses: actions/checkout@v4

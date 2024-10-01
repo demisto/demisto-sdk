@@ -96,9 +96,7 @@ def test_get_token_ratelimit_with_username_password(
         {"token": "token_from_api", "issued_at": "1234", "expires_in": 300}
     ).encode("utf-8")
     mocker.patch.object(
-        dockerhub_client._session,
-        "get",
-        side_effect=[rate_limit_response, valid_response],
+        Session, "get", side_effect=[rate_limit_response, valid_response]
     )
     assert dockerhub_client.get_token(repo="test") == "token_from_api"
 

@@ -1,11 +1,11 @@
-import logging
+import logging  # noqa: TID251 # special case: parallel logging
 import os
 import re
-import subprocess
 import sys
 import time
 import urllib.parse
 import uuid
+from abc import abstractmethod
 from copy import deepcopy
 from datetime import datetime, timezone
 from math import ceil
@@ -29,12 +29,16 @@ from urllib3.exceptions import ReadTimeoutError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    FILTER_CONF,
+    TEST_PLAYBOOKS,
+    XPANSE_SERVER_TYPE,
+    XSIAM_SERVER_TYPE,
+    XSOAR_SAAS_SERVER_TYPE,
+    XSOAR_SERVER_TYPE,
     MarketplaceVersions,
     PB_Status,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.tools import get_demisto_version
+from demisto_sdk.commands.common.tools import get_demisto_version, get_json_file
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
 from demisto_sdk.commands.test_content.mock_server import (
@@ -61,11 +65,6 @@ DEFAULT_INTERVAL = 4
 MAX_RETRIES = 3
 RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
 
-SLACK_MEM_CHANNEL_ID = "CM55V7J8K"
-XSOAR_SERVER_TYPE = "XSOAR"
-XSIAM_SERVER_TYPE = "XSIAM"
-XPANSE_SERVER_TYPE = "XPANSE"
-XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
 
 MARKETPLACE_VERSIONS_TO_SERVER_TYPE = {
     MarketplaceVersions.XSOAR: {XSOAR_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE},
@@ -86,44 +85,9 @@ __all__ = [
     "TestPlaybook",
     "TestResults",
     "ServerContext",
+    "OnPremServerContext",
+    "CloudServerContext",
 ]
-
-
-class IntegrationConfiguration:
-    def __init__(self, integration_configuration):
-        self.raw_dict = integration_configuration
-        self.name: str = integration_configuration.get("name", "")
-        self.instance_name: str = integration_configuration.get(
-            "instance_name", self.name
-        )
-        self.is_byoi: bool = integration_configuration.get("byoi", True)
-        self.should_validate_test_module: bool = integration_configuration.get(
-            "validate_test", True
-        )
-        self.has_integration: bool = integration_configuration.get(
-            "has_integration", True
-        )
-        self.params: dict = integration_configuration.get("params", {})
-
-    def __str__(self):
-        return json.dumps(self.raw_dict)
-
-    def __repr__(self):
-        return str(self)
-
-
-class SecretConf:
-    def __init__(self, secret_conf: dict):
-        """
-        Args:
-            secret_conf: The contents of the content-test-conf conf.json file.
-        """
-        self.server_username = secret_conf["username"]
-        self.server_password = secret_conf["userPassword"]
-        self.integrations = [
-            IntegrationConfiguration(integration_configuration=configuration)
-            for configuration in secret_conf["integrations"]
-        ]
 
 
 class TestConfiguration:
@@ -210,48 +174,35 @@ class TestConfiguration:
         return str(self.raw_dict)
 
 
-class Conf:
-    def __init__(self, conf: dict):
-        """
-        Args:
-            conf: The contents of the content conf.json file.
-        """
-        self.default_timeout: int = conf.get("testTimeout", 30)
-        self.tests: list = [
-            TestConfiguration(test_configuration, self.default_timeout)
-            for test_configuration in conf.get("tests", [])
-        ]
-        self.skipped_tests: Dict[str, str] = conf.get("skipped_tests")  # type: ignore
-        self.skipped_integrations: Dict[str, str] = conf.get("skipped_integrations")  # type: ignore
-        self.skipped_integrations_set = set(self.skipped_integrations.keys())
-        self.unmockable_integrations: Dict[str, str] = conf.get("unmockable_integrations")  # type: ignore
-        self.parallel_integrations: List[str] = conf["parallel_integrations"]
-        self.docker_thresholds = conf.get("docker_thresholds", {}).get("images", {})
-
-
 class TestPlaybook:
-    def __init__(self, build_context, test_configuration: TestConfiguration):
+    def __init__(
+        self, build_context, test_configuration: TestConfiguration, server_context
+    ):
         """
         This class has all the info related to a test playbook during test execution
         Args:
             build_context (BuildContext): The build context to use in the build
             test_configuration: The configuration from content conf.json file
+            server_context (ServerContext): The ServerContext instance in which the TestPlaybook instance is created in
         """
+        self.start_time = datetime.now(timezone.utc)
         self.build_context = build_context
+        self.server_context = server_context
+
         self.configuration: TestConfiguration = test_configuration
         self.is_mockable: bool = (
-            self.configuration.playbook_id not in build_context.unmockable_test_ids
+            self.configuration.playbook_id not in server_context.unmockable_test_ids
         )
         self.test_suite = TestSuite(self.configuration.playbook_id)
-        self.start_time = datetime.now(timezone.utc)
         self.test_suite_system_out: List[str] = []
         self.test_suite_system_err: List[str] = []
         self.integrations: List[Integration] = [
             Integration(
-                self.build_context,
-                integration_name,
-                self.configuration.test_instance_names,
-                self,
+                build_context=self.build_context,
+                integration_name=integration_name,
+                potential_integration_instance_names=self.configuration.test_instance_names,
+                playbook=self,
+                server_context=self.server_context,
             )
             for integration_name in self.configuration.test_integrations
         ]
@@ -291,7 +242,7 @@ class TestPlaybook:
         self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
         self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
         self.test_suite.add_property(
-            "is_saas_server_type", self.build_context.is_saas_server_type
+            "is_saas_server_type", str(self.build_context.is_saas_server_type)
         )
         self.test_suite.add_property("server_type", self.build_context.server_type)
         self.test_suite.add_property("product_type", self.build_context.product_type)
@@ -303,30 +254,34 @@ class TestPlaybook:
             "server_version", self.build_context.server_version
         )
         self.test_suite.add_property(
-            "xsiam_servers_path", self.build_context.xsiam_servers_path
+            "cloud_servers_path", self.build_context.cloud_servers_path
         )
-        self.test_suite.add_property("xsiam_ui_path", self.build_context.xsiam_ui_path)
+        self.test_suite.add_property("cloud_ui_path", self.server_context.cloud_ui_path)
         self.test_suite.add_property(
             "instances_ips", ",".join(self.build_context.instances_ips)
         )
 
         self.test_suite.add_property(
-            "playbook.is_mockable", self.is_mockable  # type:ignore[arg-type]
+            "playbook.is_mockable",
+            self.is_mockable,  # type:ignore[arg-type]
         )
         self.test_suite.add_property(
-            "is_mockable", self.configuration.is_mockable  # type:ignore[arg-type]
+            "is_mockable",
+            self.configuration.is_mockable,  # type:ignore[arg-type]
         )
         self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
         self.test_suite.add_property("from_version", self.configuration.from_version)
         self.test_suite.add_property("to_version", self.configuration.to_version)
-        self.test_suite.add_property("nightly_test", self.configuration.nightly_test)
+        self.test_suite.add_property(
+            "nightly_test", str(self.configuration.nightly_test)
+        )
         self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
         self.test_suite.add_property(
             "memory_threshold",
             self.configuration.memory_threshold,
         )
         self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
-        self.test_suite.add_property("timeout", self.configuration.timeout)
+        self.test_suite.add_property("timeout", str(self.configuration.timeout))
         self.test_suite.add_property(
             "playbook.test_instance_names",
             ",".join(self.configuration.test_instance_names),
@@ -372,17 +327,18 @@ class TestPlaybook:
             """
             Checks if there are a list of filtered tests that the playbook is in them.
             """
+
             if (
-                not self.build_context.filtered_tests
+                not self.server_context.filtered_tests
                 or self.configuration.playbook_id
-                not in self.build_context.filtered_tests
+                not in self.server_context.filtered_tests
             ):
                 msg = f"Skipping {self} because it's not in filtered tests"
                 self.log_debug(msg)
                 self.close_test_suite([Skipped(msg)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "not in filtered tests"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    "not in filtered tests"
+                )
                 return False
             return True
 
@@ -393,13 +349,13 @@ class TestPlaybook:
             if self.configuration.nightly_test and not self.build_context.is_nightly:
                 log_message = f"Skipping {self} because it's a nightly test in a non nightly build"
                 self.close_test_suite([Skipped(log_message)])
-                if self.configuration.playbook_id in self.build_context.filtered_tests:
+                if self.configuration.playbook_id in self.server_context.filtered_tests:
                     self.log_warning(log_message)
                 else:
                     self.log_debug(log_message)
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "nightly test in a non nightly build"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    "nightly test in a non nightly build"
+                )
                 return True
             return False
 
@@ -410,7 +366,7 @@ class TestPlaybook:
             ):
                 return False
             log_message = f"Skipping test {self} because it's in skipped test list"
-            if self.configuration.playbook_id in self.build_context.filtered_tests:
+            if self.configuration.playbook_id in self.server_context.filtered_tests:
                 # Add warning log, as the playbook is supposed to run according to the filters, but it's skipped
                 self.log_warning(log_message)
             else:
@@ -434,9 +390,9 @@ class TestPlaybook:
                 )
                 self.log_warning(log_message)
                 self.close_test_suite([Skipped(log_message)])
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    f"(test versions: {self.configuration.from_version}-{self.configuration.to_version})"
+                )
                 return True
             return False
 
@@ -451,11 +407,10 @@ class TestPlaybook:
                 )
                 results: List[Result] = []
                 for integration in skipped_integrations:
-
                     if (
-                        self.build_context.filtered_tests
+                        self.server_context.filtered_tests
                         and self.configuration.playbook_id
-                        in self.build_context.filtered_tests
+                        in self.server_context.filtered_tests
                     ):
                         # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
                         msg = (
@@ -470,9 +425,9 @@ class TestPlaybook:
                         self.log_warning(log_message)
                         results.append(Skipped(msg))
 
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = f'The integrations:{",".join(skipped_integrations)} are skipped'
+                skipped_tests_collected[self.configuration.playbook_id] = (
+                    f'The integrations:{",".join(skipped_integrations)} are skipped'
+                )
                 self.test_suite.add_property(
                     "skipped_integrations", ",".join(skipped_integrations)
                 )
@@ -483,7 +438,7 @@ class TestPlaybook:
 
         def marketplaces_match_server_type() -> bool:
             """
-            Checks if the test has a marketplace value, and if so- if it matches the server machine we are on.
+            Checks if the test has a marketplace value, and if so- it matches the server machine we are on.
             A test playbook might have several entries, each with a different marketplace. This might cause the test playbook to
             be in the filtered tests list, even when the provided entry is not be the one that runs with the current sever
             machine marketplace. This function checks that the entry provided is the exact one that needs to run.
@@ -496,7 +451,7 @@ class TestPlaybook:
                 )
 
             if not test_server_types:
-                return True  # test doesn't have a marketplace value so it runs on all machines
+                return True  # test doesn't have a marketplace value, so it runs on all machines
 
             instance_names_log_message = (
                 f" for instance names: {', '.join(self.configuration.test_instance_names)}"
@@ -516,14 +471,14 @@ class TestPlaybook:
                 f"which is not compatible with the current server marketplace value"
             )
             self.close_test_suite([Skipped(log_message)])
-            if self.configuration.playbook_id in self.build_context.filtered_tests:
+            if self.configuration.playbook_id in self.server_context.filtered_tests:
                 self.log_warning(log_message)
             else:
                 self.log_debug(log_message)
-            skipped_tests_collected[
-                self.configuration.playbook_id
-            ] = f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
-            return False  # test has a marketplace value that doesn't matched the build server marketplace
+            skipped_tests_collected[self.configuration.playbook_id] = (
+                f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
+            )
+            return False  # test has a marketplace value that doesn't match the build server marketplace
 
         return (
             in_filtered_tests()
@@ -552,7 +507,6 @@ class TestPlaybook:
     def configure_integrations(
         self,
         client: DefaultApi,
-        server_context: "ServerContext",
         instance_configuration: dict,
     ) -> bool:
         """
@@ -560,7 +514,6 @@ class TestPlaybook:
         Args:
             instance_configuration: The instance configuration to use for the integrations
             client: The demisto_client to use
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
 
         Returns:
             True if all integrations was configured else False
@@ -571,7 +524,6 @@ class TestPlaybook:
                 client,
                 self.configuration.playbook_id,
                 self.is_mockable,
-                server_context,
                 instance_configuration,
             )
             if not instance_created:
@@ -585,7 +537,7 @@ class TestPlaybook:
             configured_integrations.append(integration)
         return True
 
-    def disable_integrations(self, client: DefaultApi, server_context: "ServerContext"):
+    def disable_integrations(self, client: DefaultApi):
         """
         Disables all integrations that the playbook uses
         Clears server configurations set for the integration if there are such
@@ -593,24 +545,20 @@ class TestPlaybook:
 
         Args:
             client: The demisto_client to use
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
         """
         for integration in self.integrations:
             integration.disable_integration_instance(client)
         updated_keys = False
         if not self.build_context.is_saas_server_type:
-            updated_keys = self._set_prev_server_keys(client, server_context)
+            updated_keys = self._set_prev_server_keys(client)
         if updated_keys:
-            server_context.reset_containers()
+            self.server_context.reset_containers()
 
-    def _set_prev_server_keys(
-        self, client: DefaultApi, server_context: "ServerContext"
-    ) -> bool:
+    def _set_prev_server_keys(self, client: DefaultApi) -> bool:
         """Sets previous stored system (server) config, if existed
 
         Args:
             client (DefaultApi): The demisto_client to use
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
 
         Returns:
              bool: Whether server configurations were updated to indicate if reset containers is required
@@ -622,14 +570,14 @@ class TestPlaybook:
                 and "server_keys" not in integration.configuration.params
             ):
                 continue
-            if server_context.prev_system_conf:
+            if self.server_context.prev_system_conf:
                 update_server_configuration(
                     client=client,
-                    server_configuration=server_context.prev_system_conf,
+                    server_configuration=self.server_context.prev_system_conf,
                     error_msg="Failed to set server keys",
                     logging_manager=self.build_context.logging_module,
                 )
-                server_context.prev_system_conf = {}
+                self.server_context.prev_system_conf = {}
                 updated = True
             else:
                 self.log_error(
@@ -817,45 +765,50 @@ class TestPlaybook:
 
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
+        # --------------------------- overall build configuration -------------------------------
+
         self.server_type = kwargs["server_type"]
-        self.product_type = kwargs["product_type"]
         self.is_saas_server_type = self.server_type in [
             XSIAM_SERVER_TYPE,
             XSOAR_SAAS_SERVER_TYPE,
         ]
-        self.logging_module: ParallelLoggingManager = logging_module
-        self.server = kwargs["server"]
-        self.xsiam_machine = kwargs.get("xsiam_machine")
-        self.xsiam_servers_path = kwargs.get("xsiam_servers_path")
-        self.conf, self.secret_conf = self._load_conf_files(
-            kwargs["conf"], kwargs["secret"]
-        )
-        if self.is_saas_server_type:
-            with open(kwargs.get("xsiam_servers_api_keys_path")) as json_file:  # type: ignore[arg-type]
-                xsiam_servers_api_keys = json.loads(json_file.read())
-            self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
-            self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
-            self.api_key = xsiam_servers_api_keys.get(self.xsiam_machine)
-            self.auth_id = self.env_json[0].get("x-xdr-auth-id")
-            self.xsiam_ui_path = self.env_json[0].get("ui_url")
-        else:
-            self.api_key = kwargs["api_key"]
-            self.env_json = self._load_env_results_json()
-            self.xsiam_conf = None
-            self.auth_id = None
-            self.xsiam_ui_path = None
         self.is_nightly = kwargs["nightly"]
         self.slack_client = SlackClient(kwargs["slack"])
-        self.circleci_token = kwargs["circleci"]
         self.build_number = kwargs["build_number"]
         self.build_name = kwargs["branch_name"]
         self.isAMI = False if self.is_saas_server_type else kwargs["is_ami"]
         self.memCheck = kwargs["mem_check"]
         self.server_version = kwargs["server_version"]  # AMI Role
+        self.server = kwargs["server"]
         self.is_local_run = self.server is not None
-        self.server_numeric_version = self._get_server_numeric_version()
-        self.instances_ips = self._get_instances_ips()
-        self.filtered_tests = self._extract_filtered_tests()
+        self.product_type = kwargs["product_type"]
+        self.logging_module: ParallelLoggingManager = logging_module
+
+        # --------------------------- Machine preparation -------------------------------
+
+        self.cloud_machines = (
+            kwargs.get("cloud_machine_ids", "").split(",")
+            if kwargs.get("cloud_machine_ids")
+            else []
+        )
+        self.cloud_servers_path = kwargs.get("cloud_servers_path")
+        self.use_retries_mechanism = kwargs.get("use_retries", False)
+        self.conf, self.secret_conf = self._load_conf_files(
+            kwargs["conf"], kwargs["secret"]
+        )
+
+        if self.is_saas_server_type:
+            cloud_conf = get_json_file(self.cloud_servers_path)
+            self.env_json = {
+                machine: cloud_conf.get(machine, {}) for machine in self.cloud_machines
+            }
+            self.api_key = get_json_file(kwargs.get("cloud_servers_api_keys"))
+        else:
+            self.env_json = self._load_env_results_json()
+            self.api_key = kwargs["api_key"]
+
+        # --------------------------- Testing preparation -------------------------------
+
         self.tests_data_keeper = TestResults(
             self.conf.unmockable_integrations,
             kwargs["artifacts_path"],
@@ -863,193 +816,40 @@ class BuildContext:
             kwargs.get("artifacts_bucket"),
         )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
-        self.unmockable_test_ids: Set[str] = set()
-        (
-            self.mockable_tests_to_run,
-            self.unmockable_tests_to_run,
-        ) = self._get_tests_to_run()
-        self.test_retries_queue: Queue = Queue()
-        self.slack_user_id = self._retrieve_slack_user_id()
-        self.all_integrations_configurations = self._get_all_integration_config(
-            self.instances_ips
-        )
+        self.machine_assignment_json = get_json_file(kwargs["machine_assignment"])
 
-    def _get_all_integration_config(self, instances_ips: list) -> Optional[list]:
-        """
-        Gets all integration configuration as it exists on the demisto server
-        because if all packs are installed the data returned from this request is very heavy, and we want to avoid
-        running it in multiple threads.
-        Args:
-            instances_ips: the instances urls
-        Returns:
-            A dict containing the configuration for the integration if found, else empty list
-        """
-        if not self.is_nightly:
-            return []
-        url = instances_ips[0]
-        server_url = url if self.is_saas_server_type else f"https://{url}"
-        return self.get_all_installed_integrations_configurations(server_url)
+        # --------------------------- Machine preparation logic -------------------------------
 
-    def get_all_installed_integrations_configurations(
-        self, server_url: str, timeout: int = 180, sleep_interval: int = 5
-    ) -> list:
-        """
-        Gets all integration configuration as it exists on the demisto server
-        Args:
-            server_url: The url of the server to create integration in.
-            timeout: The timeout to wait for the incident to be created.
-            sleep_interval: The interval to sleep between each poll.
+        self.instances_ips = self._get_instances_ips()
+        self.server_numeric_version = self._get_server_numeric_version()
+        self.servers = self.create_servers()
 
-        Returns:
-            A dict containing the configuration for the integration if found else empty list
+    def create_servers(self):
         """
-        if self.is_saas_server_type:
-            # In XSIAM or XSOAR SAAS - We don't use demisto username
-            os.environ.pop("DEMISTO_USERNAME", None)
-        tmp_client = demisto_client.configure(
-            base_url=server_url,
-            auth_id=self.auth_id,
-            api_key=self.api_key,
-            verify_ssl=False,
-        )
-        self.logging_module.debug("Getting all integrations instances")
-
-        end_time = time.time() + timeout
-        while True:
-            try:
-                response, _, _ = demisto_client.generic_request_func(
-                    self=tmp_client,
-                    path="/settings/integration/search",
-                    method="POST",
-                    body={},
-                    response_type="object",
+        Create servers object based on build type.
+        """
+        return (
+            [
+                CloudServerContext(
+                    self,
+                    server_private_ip=self.env_json.get(machine, {}).get(
+                        "base_url", ""
+                    ),
+                    cloud_machine=machine,
+                    use_retries_mechanism=self.use_retries_mechanism,
                 )
-                if "configurations" in response:
-                    return response["configurations"]
-            except ApiException:
-                self.logging_module.exception(
-                    "failed to get all integrations configuration"
-                )
-            if time.time() > end_time:
-                self.logging_module.error(
-                    "Timeout - failed to get all integration configuration."
-                )
-                return []
-
-            time.sleep(sleep_interval)
-
-    def _generate_tests_queue(self, tests_to_run: List[TestConfiguration]) -> Queue:
-        """
-        Generates a queue containing test playbooks to run
-        Args:
-            tests_to_run: A list containing playbook names
-        """
-        queue: Queue = Queue()
-        for test in tests_to_run:
-            playbook = TestPlaybook(self, test)
-            if playbook.should_test_run():
-                queue.put(playbook)
-        return queue
-
-    def _get_tests_to_run(self) -> Tuple[Queue, Queue]:
-        """
-        Gets tests to run in the current build and updates the unmockable tests ids set
-        Returns:
-            - A queue with mockable TestPlaybook instances to run in the current build
-            - A queue with unmockable TestPlaybook instances to run in the current build
-        """
-        all_tests = self._get_all_tests()
-        # In XSIAM or XSOAR SAAS - Set all tests to unmockable.
-        unmockable_tests = []
-        if self.server or not self.isAMI or self.is_saas_server_type:
-            unmockable_tests = all_tests
-            self.unmockable_test_ids = {test.playbook_id for test in all_tests}
-        elif self.isAMI:
-            unmockable_tests = self.conf_unmockable_tests
-            self.unmockable_test_ids = {
-                test.playbook_id for test in self.conf_unmockable_tests
-            }
-        self.logging_module.debug(
-            f"Unmockable tests selected: {pformat(self.unmockable_test_ids)}"
-        )
-        mockable_tests = [
-            test
-            for test in all_tests
-            if test.playbook_id not in self.unmockable_test_ids
-        ]
-        self.logging_module.debug(
-            f"Mockable tests selected: {pformat([test.playbook_id for test in mockable_tests])}"
-        )
-        mockable_tests_queue = self._generate_tests_queue(mockable_tests)
-        unmockable_tests_queue = self._generate_tests_queue(unmockable_tests)
-        return mockable_tests_queue, unmockable_tests_queue
-
-    @staticmethod
-    def _extract_filtered_tests() -> list:
-        """
-        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
-        in the current build
-        Returns:
-            A list of playbook IDs that should be run in the current build
-        """
-        with open(FILTER_CONF) as filter_file:
-            filtered_tests = [line.strip("\n") for line in filter_file.readlines()]
-
-        return filtered_tests
-
-    def _get_unmockable_tests_from_conf(self) -> list:
-        """
-        Extracts the unmockable test playbook by looking at all playbooks that has unmockable integrations
-        Returns:
-            A with unmockable playbook names
-        """
-        unmockable_integrations = self.conf.unmockable_integrations
-        tests = self.conf.tests
-        unmockable_tests = []
-        for test_record in tests:
-            test_name = test_record.playbook_id
-            unmockable_integrations_used = [
-                integration_name
-                for integration_name in test_record.test_integrations
-                if integration_name in unmockable_integrations
+                for machine in self.machine_assignment_json
             ]
-            if (
-                test_name
-                and (not test_record.test_integrations or unmockable_integrations_used)
-                or not self.isAMI
-            ):
-                unmockable_tests.append(test_record)
-                # In case a test has both - an unmockable integration and is configured with is_mockable=False -
-                # it will be added twice if we don't continue.
-                continue
-            if test_record.is_mockable is False:
-                unmockable_tests.append(test_record)
-        return unmockable_tests
-
-    @staticmethod
-    def _get_used_integrations(test_configuration: dict) -> list:
-        """
-        Gets the integration used in a test playbook configurations
-        Args:
-            test_configuration: A test configuration from content conf.json file.
-
-        Returns:
-            A list with integration names
-        """
-        tested_integrations = test_configuration.get("integrations", [])
-        if isinstance(tested_integrations, list):
-            return tested_integrations
-        else:
-            return [tested_integrations]
-
-    def _get_all_tests(self) -> List[TestConfiguration]:
-        """
-        Gets a list of all playbooks configured in content conf.json
-        Returns:
-            A list with playbook names
-        """
-        tests_records = self.conf.tests
-        return [test for test in tests_records if test.playbook_id]
+            if self.is_saas_server_type
+            else [
+                OnPremServerContext(
+                    self,
+                    server_private_ip=server_ip,
+                    use_retries_mechanism=self.use_retries_mechanism,
+                )
+                for server_ip in self.instances_ips
+            ]
+        )
 
     def _get_instances_ips(self) -> List[str]:
         """
@@ -1060,22 +860,12 @@ class BuildContext:
         if self.server:
             return [self.server]
         if self.is_saas_server_type:
-            return [env.get("base_url") for env in self.env_json]
+            return [env.get("base_url") for env in self.env_json.values()]
         return [
             env.get("InstanceDNS")
             for env in self.env_json
             if env.get("Role") == self.server_version
         ]
-
-    @staticmethod
-    def _parse_tests_list_arg(tests_list: str):
-        """
-        Parses the test list arguments if present.
-
-        :param tests_list: CSV string of tests to run.
-        :return: List of tests if there are any, otherwise empty list.
-        """
-        return tests_list.split(",") if tests_list else []
 
     @staticmethod
     def _load_env_results_json():
@@ -1133,15 +923,6 @@ class BuildContext:
         return server_numeric_version
 
     @staticmethod
-    def _load_xsiam_file(xsiam_servers_path):
-        conf = None
-        if xsiam_servers_path:
-            with open(xsiam_servers_path) as data_file:
-                conf = json.load(data_file)
-
-        return conf
-
-    @staticmethod
     def _load_conf_files(conf_path, secret_conf_path):
         with open(conf_path) as data_file:
             conf = Conf(json.load(data_file))
@@ -1152,13 +933,6 @@ class BuildContext:
                 secret_conf = SecretConf(json.load(data_file))
 
         return conf, secret_conf
-
-    def _get_user_name_from_circle(self):
-        url = f"https://circleci.com/api/v1.1/project/github/demisto/content/{self.build_number}"
-        res = self._http_request(url, params_dict={"circle-token": self.circleci_token})
-
-        user_details = res.get("user", {})
-        return user_details.get("name", "")
 
     @staticmethod
     def _http_request(url, params_dict=None):
@@ -1172,27 +946,664 @@ class BuildContext:
 
         return res.json()
 
-    def _retrieve_slack_user_id(self):
+    # --------------------------- Testing logic -------------------------------
+
+    def _get_unmockable_tests_from_conf(self) -> list:
         """
-        Gets the user id of the circle user who triggered the current build
+        Extracts the unmockable test playbook by looking at all playbooks that has unmockable integrations
+        Returns:
+            A with unmockable playbook names
         """
-        user_id = ""
-        try:
-            user_name = (
-                os.getenv("GITLAB_USER_LOGIN") or self._get_user_name_from_circle()
+        unmockable_integrations = self.conf.unmockable_integrations
+        tests = self.conf.tests
+        unmockable_tests = []
+        for test_record in tests:
+            test_name = test_record.playbook_id
+            unmockable_integrations_used = [
+                integration_name
+                for integration_name in test_record.test_integrations
+                if integration_name in unmockable_integrations
+            ]
+            if (
+                test_name
+                and (not test_record.test_integrations or unmockable_integrations_used)
+                or not self.isAMI
+            ):
+                unmockable_tests.append(test_record)
+                # In case a test has both - an unmockable integration and is configured with is_mockable=False -
+                # it will be added twice if we don't continue.
+                continue
+            if test_record.is_mockable is False:
+                unmockable_tests.append(test_record)
+
+        return unmockable_tests
+
+
+class ServerContext:
+    def __init__(
+        self,
+        build_context: BuildContext,
+        server_private_ip: str,
+        use_retries_mechanism: bool = True,
+    ):
+        # --------------------------- Overall build configuration -------------------------------
+
+        self.auth_id = None
+        self.api_key = None
+        self.server_ip = server_private_ip
+        self.server_url: str = ""
+        self.build_context = build_context
+        self.proxy: Optional[MITMProxy] = None
+        self.cloud_ui_path = None
+        self.client: Optional[DefaultApi] = None
+        self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
+        self.executed_tests: Set[str] = set()
+        self.executed_in_current_round: Set[str] = set()
+        self.prev_system_conf: dict = {}
+
+        # --------------------------- Testing preparation -------------------------------
+
+        self.use_retries_mechanism: bool = use_retries_mechanism
+        self.unmockable_test_ids: Set[str] = set()
+        self.filtered_tests: List[str] = []
+        self.test_retries_queue: Queue = Queue()
+        self.all_integrations_configurations: Optional[List] = []
+        self.mockable_tests_to_run: Queue = Queue()
+        self.unmockable_tests_to_run: Queue = Queue()
+
+    def _execute_unmockable_tests(self):
+        """
+        Iterates the mockable tests queue and executes them as long as there are tests to execute
+        """
+        self._execute_tests(self.unmockable_tests_to_run)
+
+    def _execute_tests(self, queue: Queue):
+        """
+        Iterates the tests queue and executes them as long as there are tests to execute.
+        Before the tests execution starts we will reset the containers to make sure the proxy configuration is correct
+        - We need it before the mockable tests because the server starts the python2 default container when it starts,
+            and it has no proxy configurations.
+        - We need it before the unmockable tests because at that point all containers will have the proxy configured,
+            and we want to clean those configurations when testing unmockable playbooks
+        Args:
+            queue: The queue to fetch tests to execute from
+        """
+        self.reset_containers()
+        while queue.unfinished_tasks:
+            try:
+                test_playbook: TestPlaybook = queue.get(block=False)
+                self._reset_tests_round_if_necessary(test_playbook, queue)
+            except Empty:
+                continue
+            self.configure_new_client()
+            if TestContext(
+                self.build_context, test_playbook, self.client, self
+            ).execute_test(self.proxy):
+                self.executed_tests.add(test_playbook.configuration.playbook_id)
+            else:
+                queue.put(test_playbook)
+            queue.task_done()
+
+    def _execute_mockable_tests(self):
+        """
+        Iterates the mockable tests queue and executes them as long as there are tests to execute
+        """
+        if self.proxy:
+            self.proxy.configure_proxy_in_demisto(
+                proxy=f"{self.proxy.ami.internal_ip}:{self.proxy.PROXY_PORT}",
+                username=self.build_context.secret_conf.server_username,
+                password=self.build_context.secret_conf.server_password,
+                server=self.server_url,
             )
-            res = self.slack_client.api_call("users.list")
+        self._execute_tests(self.mockable_tests_to_run)
+        if self.proxy:
+            self.proxy.configure_proxy_in_demisto(
+                proxy="",
+                username=self.build_context.secret_conf.server_username,
+                password=self.build_context.secret_conf.server_password,
+                server=self.server_url,
+            )
 
-            user_list = res.get("members", [])  # type: ignore
-            for user in user_list:
-                profile = user.get("profile", {})
-                name = profile.get("real_name_normalized", "")
-                if name == user_name:
-                    user_id = user.get("id", "")
-        except Exception as exc:
-            logging.debug(f"failed to retrieve the slack user ID.\nError: {exc}")
+    def _execute_failed_tests(self):
+        self._execute_tests(self.test_retries_queue)
 
-        return user_id
+    def _reset_tests_round_if_necessary(
+        self, test_playbook: TestPlaybook, queue_: Queue
+    ):
+        """
+        Checks if the string representation of the current test configuration is already in
+        the executed_in_current_round set.
+        If it is- it means we have already executed this test, and we have reached a round and there are tests that
+        were not able to be locked by this execution.
+        In that case we want to start a new round monitoring by emptying the 'executed_in_current_round' set and sleep
+        in order to let the tests be unlocked
+        Since this operation can be performed by multiple threads - this operation is protected by the queue's lock
+        Args:
+            test_playbook: Test playbook to check if has been executed in the current round
+            queue_: The queue from which the current tests are executed
+        """
+        queue_.mutex.acquire()
+        if str(test_playbook.configuration) in self.executed_in_current_round:
+            self.build_context.logging_module.info(
+                "all tests in the queue were executed, sleeping for 30 seconds to let locked tests get unlocked."
+            )
+            self.executed_in_current_round = {str(test_playbook.configuration)}
+            queue_.mutex.release()
+            time.sleep(30)
+            return
+        else:
+            self.executed_in_current_round.add(str(test_playbook.configuration))
+        queue_.mutex.release()
+
+    def configure_new_client(self):
+        if self.client:
+            self.client.api_client.pool.close()
+            self.client.api_client.pool.terminate()
+            del self.client
+        self.client = demisto_client.configure(
+            base_url=self.server_url,
+            api_key=self.api_key,
+            auth_id=self.auth_id,
+            verify_ssl=False,
+        )
+
+    @abstractmethod
+    def reset_containers(self):
+        pass
+
+    @abstractmethod
+    def execute_tests(self):
+        pass
+
+    @abstractmethod
+    def _get_all_integration_config(self) -> Optional[list]:
+        """
+        Gets all integration configuration as it exists on the demisto server
+        because if all packs are installed the data returned from this request is very heavy, and we want to avoid
+        running it in multiple threads.
+
+        Returns:
+            A dict containing the configuration for the integration if found, else empty list
+        """
+        pass
+
+    def get_all_installed_integrations_configurations(
+        self, server_url: str, timeout: int = 180, sleep_interval: int = 5
+    ) -> list:
+        """
+        Gets all integration configuration as it exists on the demisto server
+        Args:
+            server_url: The url of the server to create integration in.
+            timeout: The timeout to wait for the incident to be created.
+            sleep_interval: The interval to sleep between each poll.
+
+        Returns:
+            A dict containing the configuration for the integration if found else empty list
+        """
+        tmp_client = demisto_client.configure(
+            base_url=server_url,
+            auth_id=self.auth_id,
+            api_key=self.api_key,
+            verify_ssl=False,
+        )
+        self.build_context.logging_module.debug("Getting all integrations instances")
+
+        end_time = time.time() + timeout
+        while True:
+            try:
+                response, _, _ = demisto_client.generic_request_func(
+                    self=tmp_client,
+                    path="/settings/integration/search",
+                    method="POST",
+                    body={},
+                    response_type="object",
+                )
+                if "configurations" in response:
+                    return response["configurations"]
+            except ApiException:
+                self.build_context.logging_module.exception(
+                    "failed to get all integrations configuration"
+                )
+            if time.time() > end_time:
+                self.build_context.logging_module.error(
+                    "Timeout - failed to get all integration configuration."
+                )
+                return []
+
+            time.sleep(sleep_interval)
+
+    def _get_all_tests(self) -> List[TestConfiguration]:
+        """
+        Gets a list of all playbooks configured in content conf.json
+        Returns:
+            A list with playbook names
+        """
+        tests_records = self.build_context.conf.tests
+        return [test for test in tests_records if test.playbook_id]
+
+    def _generate_tests_queue(self, tests_to_run: List[TestConfiguration]) -> Queue:
+        """
+        Generates a queue containing test playbooks to run
+        Args:
+            tests_to_run: A list containing playbook names
+        """
+        queue: Queue = Queue()
+        for test in tests_to_run:
+            playbook = TestPlaybook(
+                build_context=self.build_context,
+                test_configuration=test,
+                server_context=self,
+            )
+            if playbook.should_test_run():
+                queue.put(playbook)
+        return queue
+
+    @abstractmethod
+    def _get_tests_to_run(self) -> Tuple[Queue, Queue]:
+        """
+        Gets tests to run in the current build and updates the unmockable tests ids set
+        Returns:
+            - A queue with mockable TestPlaybook instances to run in the current build
+            - A queue with unmockable TestPlaybook instances to run in the current build
+        """
+        pass
+
+
+class CloudServerContext(ServerContext):
+    def __init__(
+        self,
+        build_context: BuildContext,
+        server_private_ip: str,
+        cloud_machine: str,
+        use_retries_mechanism: bool = True,
+    ):
+        super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.machine = cloud_machine
+        self.server_url = self.server_ip
+        self.api_key = self.build_context.api_key.get(cloud_machine, {}).get("api-key")
+        self.auth_id = self.build_context.api_key.get(cloud_machine, {}).get(
+            "x-xdr-auth-id"
+        )
+        os.environ.pop(
+            "DEMISTO_USERNAME", None
+        )  # we use client without demisto username
+        self.configure_new_client()
+        if self.build_context.server_type == XSIAM_SERVER_TYPE:
+            self.check_if_can_create_manual_alerts()
+        self.cloud_ui_path = self.build_context.env_json.get(cloud_machine, {}).get(
+            "ui_url"
+        )
+        self.filtered_tests = (
+            self.build_context.machine_assignment_json.get(cloud_machine, {})
+            .get("tests", {})
+            .get(TEST_PLAYBOOKS, [])
+        )
+        (
+            self.mockable_tests_to_run,
+            self.unmockable_tests_to_run,
+        ) = self._get_tests_to_run()
+        self.all_integrations_configurations = self._get_all_integration_config()
+
+    def reset_containers(self):
+        self.build_context.logging_module.info(
+            "Skip reset containers - this API is not supported.", real_time=True
+        )
+        return
+
+    def _get_all_integration_config(self) -> Optional[list]:
+        """
+        Gets all integration configuration as it exists on the demisto server
+        because if all packs are installed the data returned from this request is very heavy, and we want to avoid
+        running it in multiple threads.
+
+        Returns:
+            A dict containing the configuration for the integration if found, else empty list
+        """
+        if not self.build_context.is_nightly:
+            return []
+
+        # In XSIAM or XSOAR SAAS - We don't use demisto username
+        os.environ.pop("DEMISTO_USERNAME", None)
+        return self.get_all_installed_integrations_configurations(self.server_url)
+
+    def _get_tests_to_run(self) -> Tuple[Queue, Queue]:
+        """
+        Gets tests to run in the current build and updates the unmockable tests ids set
+        Returns:
+            - A queue with mockable TestPlaybook instances to run in the current build
+            - A queue with unmockable TestPlaybook instances to run in the current build
+        """
+        all_tests = self._get_all_tests()
+
+        # In XSIAM or XSOAR SAAS - Set all tests to unmockable.
+        unmockable_tests = all_tests
+        self.unmockable_test_ids = {test.playbook_id for test in all_tests}
+
+        self.build_context.logging_module.debug(
+            f"Unmockable tests selected: {pformat(self.unmockable_test_ids)}"
+        )
+
+        mockable_tests_queue = self._generate_tests_queue([])
+        unmockable_tests_queue = self._generate_tests_queue(unmockable_tests)
+        return mockable_tests_queue, unmockable_tests_queue
+
+    def check_if_can_create_manual_alerts(self):
+        """
+        In XSIAM we can't create a new incident/alert using API call.
+        We need a correlation rule in order to create an alert.
+        We want to create an alert manually, when we send an API call to XSIAM server to create a new alert.
+        Server check which integration sent a new alert, if the request was sent manually and not from integration it
+        sets "sourceBrand" header to be "Manual". XSIAM Server looks for a correlation rule for such sourceBrand,
+        and if there is no such correlation rule, no alert will be created.
+        If there is a correlation rule for "Manual" integration the alert will be created.
+
+        If this step fails please create an integration with id and name "Manual", set isFetch: true for such
+        integration and make sure that the corresponding correlation rule is created.
+        """
+        body = {
+            "query": 'id:"Manual"',
+        }
+        try:
+            response, status_code, headers = demisto_client.generic_request_func(
+                self=self.client,
+                method="POST",
+                path="/settings/integration/search",
+                body=body,
+                response_type="object",
+            )
+            if status_code != requests.codes.ok:
+                self.build_context.logging_module.error(
+                    f"Failed to get integrations configuration response:{pformat(response)}, "
+                    f"status code:{status_code} headers:{headers}"
+                )
+                return
+
+            all_configurations = response["configurations"]
+            for instance in all_configurations:
+                if instance.get("id") == "Manual":
+                    self.build_context.logging_module.info(
+                        "Server is able to create manual alerts "
+                        '("Manual" integration exists).'
+                    )
+                    return
+        except ApiException:
+            self.build_context.logging_module.exception(
+                "Failed to get integrations configuration."
+            )
+
+        self.build_context.logging_module.warning(
+            'No "Manual" integration found in XSIAM instance. '
+            "Adding it in order to create Manual Correlation Rule."
+        )
+        self.create_manual_integration()
+
+    def create_manual_integration(self):
+        manual_integration = {
+            "name": "Manual",
+            "version": 1,
+            "display": "Manual",
+            "category": "Utilities",
+            "description": "This integration creates Manual Correlation Rule.",
+            "configuration": [],
+            "integrationScript": {
+                "script": "",
+                "commands": [],
+                "type": "python",
+                "isFetch": True,
+                "subtype": "python3",
+            },
+        }
+
+        try:
+            response, status_code, headers = demisto_client.generic_request_func(
+                self=self.client,
+                method="PUT",
+                path="/settings/integration-conf",
+                body=manual_integration,
+                response_type="object",
+            )
+            if status_code not in {requests.codes.ok, requests.codes.no_content}:
+                self.build_context.logging_module.error(
+                    f"Failed to get integrations configuration - response:{pformat(response)}, "
+                    f"status code:{status_code} headers:{headers}"
+                )
+
+        except ApiException:
+            self.build_context.logging_module.exception(
+                'No "Manual" integration found in XSIAM instance. '
+                "Please add it in order to create Manual Correlation Rule."
+            )
+
+    def execute_tests(self):
+        try:
+            self.build_context.logging_module.info(
+                f"Starts tests with server url - {get_ui_url(self.server_url)}",
+                real_time=True,
+            )
+            self.build_context.logging_module.info(
+                f"Running the following tests: {self.filtered_tests}",
+                real_time=True,
+            )
+            self._execute_mockable_tests()
+            self.build_context.logging_module.info(
+                "Running mock-disabled tests", real_time=True
+            )
+            self.configure_new_client()
+            self._execute_unmockable_tests()
+            if self.use_retries_mechanism:
+                self.build_context.logging_module.info(
+                    "Running failed tests", real_time=True
+                )
+                self._execute_failed_tests()
+            self.build_context.logging_module.info(
+                f"Finished tests with server url - " f"{get_ui_url(self.server_url)}",
+                real_time=True,
+            )
+
+            self.build_context.logging_module.debug(
+                f"Tests executed on server {self.server_ip}:\n"
+                f"{pformat(self.executed_tests)}"
+            )
+        except Exception:
+            self.build_context.logging_module.exception("~~ Thread failed ~~")
+            raise
+        finally:
+            self.build_context.logging_module.execute_logs()
+
+
+class OnPremServerContext(ServerContext):
+    def __init__(
+        self,
+        build_context: BuildContext,
+        server_private_ip: str,
+        use_retries_mechanism: bool = True,
+    ):
+        super().__init__(build_context, server_private_ip, use_retries_mechanism)
+        self.machine = self.server_ip
+        self.server_url = f"https://{self.server_ip}"
+        self.api_key = build_context.api_key
+        self.configure_new_client()
+
+        self.proxy = MITMProxy(
+            server_private_ip,
+            self.build_context.logging_module,
+            build_number=self.build_context.build_number,
+            branch_name=self.build_context.build_name,
+        )
+        self.filtered_tests = (
+            self.build_context.machine_assignment_json.get("xsoar-machine", {})
+            .get("tests", {})
+            .get(TEST_PLAYBOOKS, [])
+        )
+        (
+            self.mockable_tests_to_run,
+            self.unmockable_tests_to_run,
+        ) = self._get_tests_to_run()
+        self.all_integrations_configurations = self._get_all_integration_config()
+
+    def reset_containers(self):
+        self.build_context.logging_module.info("Resetting containers\n", real_time=True)
+
+        response, status_code, headers = demisto_client.generic_request_func(
+            self=self.client, method="POST", path="/containers/reset"
+        )
+        if status_code != requests.codes.ok:
+            self.build_context.logging_module.critical(
+                f"Request to reset containers failed - response:{pformat(response)}, "
+                f"status code:{status_code} headers:{headers}",
+                real_time=True,
+            )
+            sys.exit(1)
+        time.sleep(10)
+
+    def _get_all_integration_config(self) -> Optional[list]:
+        """
+        Gets all integration configuration as it exists on the demisto server
+        because if all packs are installed the data returned from this request is very heavy, and we want to avoid
+        running it in multiple threads.
+
+        Returns:
+            A dict containing the configuration for the integration if found, else empty list
+        """
+        if not self.build_context.is_nightly:
+            return []
+
+        return self.get_all_installed_integrations_configurations(self.server_url)
+
+    def _get_tests_to_run(self) -> Tuple[Queue, Queue]:
+        """
+        Gets tests to run in the current build and updates the unmockable tests ids set
+        Returns:
+            - A queue with mockable TestPlaybook instances to run in the current build
+            - A queue with unmockable TestPlaybook instances to run in the current build
+        """
+        all_tests = self._get_all_tests()
+        # In XSIAM or XSOAR SAAS - Set all tests to unmockable.
+        unmockable_tests = []
+        if self.build_context.server or not self.build_context.isAMI:
+            unmockable_tests = all_tests
+            self.unmockable_test_ids = {test.playbook_id for test in all_tests}
+        elif self.build_context.isAMI:
+            unmockable_tests = self.build_context.conf_unmockable_tests
+            self.unmockable_test_ids = {
+                test.playbook_id for test in self.build_context.conf_unmockable_tests
+            }
+        self.build_context.logging_module.debug(
+            f"Unmockable tests selected: {pformat(self.unmockable_test_ids)}"
+        )
+        mockable_tests = [
+            test
+            for test in all_tests
+            if test.playbook_id not in self.unmockable_test_ids
+        ]
+        self.build_context.logging_module.debug(
+            f"Mockable tests selected: {pformat([test.playbook_id for test in mockable_tests])}"
+        )
+        mockable_tests_queue = self._generate_tests_queue(mockable_tests)
+        unmockable_tests_queue = self._generate_tests_queue(unmockable_tests)
+        return mockable_tests_queue, unmockable_tests_queue
+
+    def execute_tests(self):
+        try:
+            self.build_context.logging_module.info(
+                f"Starts tests with server url - {get_ui_url(self.server_url)}",
+                real_time=True,
+            )
+            self.build_context.logging_module.info(
+                f"Running the following tests: {self.filtered_tests}",
+                real_time=True,
+            )
+            self._execute_mockable_tests()
+            self.build_context.logging_module.info(
+                "Running mock-disabled tests", real_time=True
+            )
+            self.configure_new_client()
+            self._execute_unmockable_tests()
+            if self.use_retries_mechanism:
+                self.build_context.logging_module.info(
+                    "Running failed tests", real_time=True
+                )
+                self._execute_failed_tests()
+            self.build_context.logging_module.info(
+                f"Finished tests with server url - " f"{get_ui_url(self.server_url)}",
+                real_time=True,
+            )
+
+            self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
+
+            if (
+                self.build_context.isAMI
+                and self.proxy
+                and self.proxy.should_update_mock_repo
+            ):
+                self.proxy.push_mock_files()
+            self.build_context.logging_module.debug(
+                f"Tests executed on server {self.server_ip}:\n"
+                f"{pformat(self.executed_tests)}"
+            )
+        except Exception:
+            self.build_context.logging_module.exception("~~ Thread failed ~~")
+            raise
+        finally:
+            self.build_context.logging_module.execute_logs()
+
+
+class IntegrationConfiguration:
+    def __init__(self, integration_configuration):
+        self.raw_dict = integration_configuration
+        self.name: str = integration_configuration.get("name", "")
+        self.instance_name: str = integration_configuration.get(
+            "instance_name", self.name
+        )
+        self.is_byoi: bool = integration_configuration.get("byoi", True)
+        self.should_validate_test_module: bool = integration_configuration.get(
+            "validate_test", True
+        )
+        self.has_integration: bool = integration_configuration.get(
+            "has_integration", True
+        )
+        self.params: dict = integration_configuration.get("params", {})
+
+    def __str__(self):
+        return json.dumps(self.raw_dict)
+
+    def __repr__(self):
+        return str(self)
+
+
+class SecretConf:
+    def __init__(self, secret_conf: dict):
+        """
+        Args:
+            secret_conf: The contents of the content-test-conf conf.json file.
+        """
+        self.server_username = secret_conf["username"]
+        self.server_password = secret_conf["userPassword"]
+        self.integrations = [
+            IntegrationConfiguration(integration_configuration=configuration)
+            for configuration in secret_conf["integrations"]
+        ]
+
+
+class Conf:
+    def __init__(self, conf: dict):
+        """
+        Args:
+            conf: The contents of the content conf.json file.
+        """
+        self.default_timeout: int = conf.get("testTimeout", 30)
+        self.tests: list = [
+            TestConfiguration(test_configuration, self.default_timeout)
+            for test_configuration in conf.get("tests", [])
+        ]
+        self.skipped_tests: Dict[str, str] = conf.get("skipped_tests")  # type: ignore
+        self.skipped_integrations: Dict[str, str] = conf.get("skipped_integrations")  # type: ignore
+        self.skipped_integrations_set = set(self.skipped_integrations.keys())
+        self.unmockable_integrations: Dict[str, str] = conf.get(
+            "unmockable_integrations"
+        )  # type: ignore
+        self.parallel_integrations: List[str] = conf["parallel_integrations"]
+        self.docker_thresholds = conf.get("docker_thresholds", {}).get("images", {})
 
 
 class TestResults:
@@ -1391,6 +1802,7 @@ class Integration:
         integration_name: str,
         potential_integration_instance_names: list,
         playbook: TestPlaybook,
+        server_context: ServerContext,
     ):
         """
         An integration class that should represent the integrations during the build
@@ -1400,15 +1812,18 @@ class Integration:
             potential_integration_instance_names: A list of instance names, one of those names should be the actual reason,
             but we won't know for sure until we will try to filter it with conf.json.
             playbook: The playbook that triggered the integration configuration.
+            server_context (ServerContext): The ServerContext instance in which the Integration instance is created in
+
         """
         self.playbook = playbook
         self.build_context = build_context
+        self.server_context = server_context
         self.name = integration_name
         self.instance_names = potential_integration_instance_names
         self.instance_name = ""
-        self.configuration: Optional[
-            IntegrationConfiguration
-        ] = IntegrationConfiguration({"name": self.name, "params": {}})
+        self.configuration: Optional[IntegrationConfiguration] = (
+            IntegrationConfiguration({"name": self.name, "params": {}})
+        )
         self.docker_image: list = []
         self.integration_configuration_from_server: dict = {}
         self.integration_type: str = ""
@@ -1469,10 +1884,10 @@ class Integration:
                 if self.build_context.is_saas_server_type
                 else "https://localhost",
                 "creds_apikey": {
-                    "identifier": str(self.build_context.auth_id)
+                    "identifier": str(self.server_context.auth_id)
                     if self.build_context.is_saas_server_type
                     else "",
-                    "password": self.build_context.api_key,
+                    "password": self.server_context.api_key,
                 },
                 "auth_method": "Standard",
                 "insecure": True,
@@ -1518,15 +1933,15 @@ class Integration:
         Returns:
             A dict containing the configuration for the integration if found, else None
         """
-        if self.build_context.all_integrations_configurations:
+        if self.server_context.all_integrations_configurations:
             match_configurations = [
                 x
-                for x in self.build_context.all_integrations_configurations
+                for x in self.server_context.all_integrations_configurations
                 if x["name"] == self.name
             ]
         else:
             all_configurations = (
-                self.build_context.get_all_installed_integrations_configurations(
+                self.server_context.get_all_installed_integrations_configurations(
                     server_url
                 )
             )
@@ -1588,19 +2003,18 @@ class Integration:
                 )
                 self.delete_integration_instance(client, instance.get("id"))
 
-    def _set_server_keys(self, client: DefaultApi, server_context: "ServerContext"):
+    def _set_server_keys(self, client: DefaultApi):
         """In case the params of the test has 'server_keys' key:
             Resets containers
             Adds server configuration keys using the demisto_client.
 
         Args:
             client (demisto_client): The configured client to use.
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
         """
         if "server_keys" not in self.configuration.params:  # type: ignore
             return
 
-        server_context.reset_containers()
+        self.server_context.reset_containers()
 
         self.playbook.log_debug(f"Setting server keys for integration: {self}")
 
@@ -1615,7 +2029,7 @@ class Integration:
             error_msg="Failed to set server keys",
             logging_manager=self.build_context.logging_module,
         )
-        server_context.prev_system_conf = prev_system_conf
+        self.server_context.prev_system_conf = prev_system_conf
 
     def create_module(
         self,
@@ -1670,7 +2084,6 @@ class Integration:
         client: DefaultApi,
         playbook_id: str,
         is_mockable: bool,
-        server_context: "ServerContext",
         instance_configuration: dict,
     ) -> bool:
         """
@@ -1680,7 +2093,6 @@ class Integration:
             client: The demisto_client instance to use.
             playbook_id: The playbook id for which the instance should be created.
             is_mockable: Indicates whether the integration should be configured with proxy=True or not.
-            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in.
 
         Returns:
             The integration configuration as it exists on the server after it was configured
@@ -1708,7 +2120,7 @@ class Integration:
 
         self.playbook.log_info(
             f"Configuring instance for {self} (instance name: {instance_name}, "  # type: ignore
-            f'validate "test-module": {self.configuration.should_validate_test_module})'  # type:ignore[union-attr]
+            f'validate "test-module": {self.configuration.should_validate_test_module})'
         )
 
         # define module instance:
@@ -1720,7 +2132,7 @@ class Integration:
 
         # set server keys
         if not self.build_context.is_saas_server_type:
-            self._set_server_keys(client, server_context)
+            self._set_server_keys(client)
 
         # set module params
         for param_conf in module_configuration:
@@ -1982,7 +2394,6 @@ class TestContext:
                 response_type="object",
             )
         except ApiException as err:
-
             self.playbook.log_debug(f"{err=}", real_time=True)
             self.playbook.log_debug(f"{err.status=}", real_time=True)
             if err.status == 401:
@@ -2255,7 +2666,7 @@ class TestContext:
             instance_configuration = self.playbook.configuration.instance_configuration
 
             if not self.playbook.configure_integrations(
-                self.client, self.server_context, instance_configuration
+                self.client, instance_configuration
             ):
                 return PB_Status.CONFIGURATION_FAILED
 
@@ -2263,7 +2674,7 @@ class TestContext:
                 self.client
             )
             if not test_module_result:
-                self.playbook.disable_integrations(self.client, self.server_context)
+                self.playbook.disable_integrations(self.client)
                 return PB_Status.FAILED
 
             external_playbook_configuration = (
@@ -2301,15 +2712,20 @@ class TestContext:
             )
 
             server_url = get_ui_url(self.client.api_client.configuration.host)
-            if self.build_context.is_saas_server_type:
-                self.playbook.log_info(
-                    f"Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId="
+
+            if self.build_context.server_type == XSOAR_SAAS_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}WorkPlan/{investigation_id}"
+                )
+            elif self.build_context.server_type == XSIAM_SERVER_TYPE:
+                investigation_url = (
+                    f"{self.server_context.cloud_ui_path}incident-view/alerts_and_insights?caseId="
                     f"{investigation_id}&action:openAlertDetails={investigation_id}-work_plan"
                 )
             else:
-                self.playbook.log_info(
-                    f"Investigation URL: {server_url}/#/WorkPlan/{investigation_id}"
-                )
+                investigation_url = f"{server_url}/#/WorkPlan/{investigation_id}"
+
+            self.playbook.log_info(f"Investigation URL: {investigation_url}")
             playbook_state = self._poll_for_playbook_state()
             self.playbook.log_info(
                 f"Got incident: {investigation_id} status: {playbook_state}."
@@ -2325,7 +2741,7 @@ class TestContext:
                     server_version=server_version,
                 )
 
-            self.playbook.disable_integrations(self.client, self.server_context)
+            self.playbook.disable_integrations(self.client)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:
@@ -2403,24 +2819,6 @@ class TestContext:
                 "mrkdwn": "true",
             },
         )
-
-    def _notify_failed_test(self):
-        text = (
-            f"{self.build_context.build_name} - {self.playbook} Failed\n"
-            f"for more details browse into the following link\n"
-            f"{get_ui_url(self.client.api_client.configuration.host)}"
-        )
-        text += f"/#/WorkPlan/{self.incident_id}" if self.incident_id else ""
-        if self.build_context.slack_user_id:
-            self.build_context.slack_client.api_call(
-                "chat.postMessage",
-                json={
-                    "channel": self.build_context.slack_user_id,
-                    "username": "Content CircleCI",
-                    "as_user": "False",
-                    "text": text,
-                },
-            )
 
     def _add_to_succeeded_playbooks(self):
         """
@@ -2501,52 +2899,6 @@ class TestContext:
             "playbook_name_to_add", playbook_name_to_add
         )
         self.playbook.close_test_suite([Failure(err)])
-
-    @staticmethod
-    def _get_circle_memory_data() -> Tuple[str, str]:
-        """
-        Checks how many bytes are currently in use in the circle build instance
-        Returns:
-            The number of bytes in use
-        """
-        process = subprocess.Popen(
-            ["cat", "/sys/fs/cgroup/memory/memory.usage_in_bytes"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        stdout, stderr = process.communicate()
-        return stdout.decode(), stderr.decode()
-
-    @staticmethod
-    def _get_circle_processes_data() -> Tuple[str, str]:
-        """
-        Returns some data about the processes currently running in the circle build instance
-        """
-        process = subprocess.Popen(
-            ["ps", "aux"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
-        stdout, stderr = process.communicate()
-        return stdout.decode(), stderr.decode()
-
-    def _send_circle_memory_and_pid_stats_on_slack(self):
-        """
-        Sends a Slack messages with the number of bytes currently in use and the number of processes currently in use
-        """
-        if (
-            self.build_context.is_nightly
-            and self.build_context.memCheck
-            and not self.build_context.is_local_run
-        ):
-            stdout, stderr = self._get_circle_memory_data()
-            text = stderr or f"Memory Usage: {stdout}"
-            self._send_slack_message(
-                SLACK_MEM_CHANNEL_ID, text, "Content CircleCI", "False"
-            )
-            stdout, stderr = self._get_circle_processes_data()
-            text = stderr or stdout
-            self._send_slack_message(
-                SLACK_MEM_CHANNEL_ID, text, "Content CircleCI", "False"
-            )
 
     def _incident_and_docker_test(self) -> str:
         """
@@ -2693,7 +3045,7 @@ class TestContext:
                 f"Using the retries mechanism for test {self}.\n"
                 f"Test-Playbook was executed {number_of_executions} times, more executions are needed."
             )
-            self.build_context.test_retries_queue.put(self.playbook)
+            self.server_context.test_retries_queue.put(self.playbook)
             return PB_Status.IN_PROGRESS
 
         else:  # number_of_executions == MAX_RETRIES:
@@ -2771,7 +3123,6 @@ class TestContext:
         if updated_status == PB_Status.COMPLETED:
             self._add_to_succeeded_playbooks()
         elif updated_status == PB_Status.FAILED:
-            self._notify_failed_test()
             self._add_to_failed_playbooks(is_second_playback_run=is_second_playback_run)
         return updated_status
 
@@ -2862,10 +3213,10 @@ class TestContext:
         Returns:
             True if the test was executed by the instance else False
         """
+        self.playbook.start_time = datetime.now(timezone.utc)
         try:
             if not self._is_runnable_on_current_server_instance():
                 return False
-            self._send_circle_memory_and_pid_stats_on_slack()
             return (
                 self._execute_mockable_test(proxy)  # type: ignore[arg-type]
                 if self.playbook.is_mockable
@@ -2893,287 +3244,3 @@ class TestContext:
 
     def __repr__(self):
         return str(self)
-
-
-class ServerContext:
-    def __init__(
-        self,
-        build_context: BuildContext,
-        server_private_ip: str,
-        use_retries_mechanism: bool = True,
-    ):
-        self.build_context = build_context
-        self.server_ip = server_private_ip
-        if self.build_context.is_saas_server_type:
-            self.server_url = server_private_ip
-            # we use client without demisto username
-            os.environ.pop("DEMISTO_USERNAME", None)
-        else:
-            self.server_url = f"https://{self.server_ip}"
-        self.client: Optional[DefaultApi] = None
-        self.configure_new_client()
-        # currently not supported on XSIAM (CIAC-514)
-        if self.build_context.is_saas_server_type:
-            # In XSIAM or XSOAR SAAS - We're running without proxy. This code won't be executed on SaaS servers.
-            self.proxy = None
-        else:
-            self.proxy = MITMProxy(
-                server_private_ip,
-                self.build_context.logging_module,
-                build_number=self.build_context.build_number,
-                branch_name=self.build_context.build_name,
-            )
-        self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
-        self.executed_tests: Set[str] = set()
-        self.executed_in_current_round: Set[str] = set()
-        self.prev_system_conf: dict = {}
-        self.use_retries_mechanism: bool = use_retries_mechanism
-        if self.build_context.is_saas_server_type:
-            self.check_if_can_create_manual_alerts()
-
-    def _execute_unmockable_tests(self):
-        """
-        Iterates the mockable tests queue and executes them as long as there are tests to execute
-        """
-        self._execute_tests(self.build_context.unmockable_tests_to_run)
-
-    def _execute_tests(self, queue: Queue):
-        """
-        Iterates the tests queue and executes them as long as there are tests to execute.
-        Before the tests execution starts we will reset the containers to make sure the proxy configuration is correct
-        - We need it before the mockable tests because the server starts the python2 default container when it starts,
-            and it has no proxy configurations.
-        - We need it before the unmockable tests because at that point all containers will have the proxy configured,
-            and we want to clean those configurations when testing unmockable playbooks
-        Args:
-            queue: The queue to fetch tests to execute from
-        """
-        self.reset_containers()
-        while queue.unfinished_tasks:
-            try:
-                test_playbook: TestPlaybook = queue.get(block=False)
-                self._reset_tests_round_if_necessary(test_playbook, queue)
-            except Empty:
-                continue
-            self.configure_new_client()
-            if TestContext(
-                self.build_context, test_playbook, self.client, self
-            ).execute_test(self.proxy):
-                self.executed_tests.add(test_playbook.configuration.playbook_id)
-            else:
-                queue.put(test_playbook)
-            queue.task_done()
-
-    def _execute_mockable_tests(self):
-        """
-        Iterates the mockable tests queue and executes them as long as there are tests to execute
-        """
-        if self.proxy:
-            self.proxy.configure_proxy_in_demisto(
-                proxy=f"{self.proxy.ami.internal_ip}:{self.proxy.PROXY_PORT}",
-                username=self.build_context.secret_conf.server_username,
-                password=self.build_context.secret_conf.server_password,
-                server=self.server_url,
-            )
-        self._execute_tests(self.build_context.mockable_tests_to_run)
-        if self.proxy:
-            self.proxy.configure_proxy_in_demisto(
-                proxy="",
-                username=self.build_context.secret_conf.server_username,
-                password=self.build_context.secret_conf.server_password,
-                server=self.server_url,
-            )
-
-    def _execute_failed_tests(self):
-        self._execute_tests(self.build_context.test_retries_queue)
-
-    def _reset_tests_round_if_necessary(
-        self, test_playbook: TestPlaybook, queue_: Queue
-    ):
-        """
-        Checks if the string representation of the current test configuration is already in
-        the executed_in_current_round set.
-        If it is- it means we have already executed this test, and we have reached a round and there are tests that
-        were not able to be locked by this execution.
-        In that case we want to start a new round monitoring by emptying the 'executed_in_current_round' set and sleep
-        in order to let the tests be unlocked
-        Since this operation can be performed by multiple threads - this operation is protected by the queue's lock
-        Args:
-            test_playbook: Test playbook to check if has been executed in the current round
-            queue_: The queue from which the current tests are executed
-        """
-        queue_.mutex.acquire()
-        if str(test_playbook.configuration) in self.executed_in_current_round:
-            self.build_context.logging_module.info(
-                "all tests in the queue were executed, sleeping for 30 seconds to let locked tests get unlocked."
-            )
-            self.executed_in_current_round = {str(test_playbook.configuration)}
-            queue_.mutex.release()
-            time.sleep(30)
-            return
-        else:
-            self.executed_in_current_round.add(str(test_playbook.configuration))
-        queue_.mutex.release()
-
-    def configure_new_client(self):
-        if self.client:
-            self.client.api_client.pool.close()
-            self.client.api_client.pool.terminate()
-            del self.client
-        self.client = demisto_client.configure(
-            base_url=self.server_url,
-            api_key=self.build_context.api_key,
-            auth_id=self.build_context.auth_id,
-            verify_ssl=False,
-        )
-
-    def reset_containers(self):
-        if self.build_context.is_saas_server_type:
-            self.build_context.logging_module.info(
-                "Skip reset containers - this API is not supported.", real_time=True
-            )
-            return
-
-        self.build_context.logging_module.info("Resetting containers\n", real_time=True)
-
-        response, status_code, headers = demisto_client.generic_request_func(
-            self=self.client, method="POST", path="/containers/reset"
-        )
-        if status_code != requests.codes.ok:
-            self.build_context.logging_module.critical(
-                f"Request to reset containers failed - response:{pformat(response)}, "
-                f"status code:{status_code} headers:{headers}",
-                real_time=True,
-            )
-            sys.exit(1)
-        time.sleep(10)
-
-    def execute_tests(self):
-        try:
-            self.build_context.logging_module.info(
-                f"Starts tests with server url - {get_ui_url(self.server_url)}",
-                real_time=True,
-            )
-            self._execute_mockable_tests()
-            self.build_context.logging_module.info(
-                "Running mock-disabled tests", real_time=True
-            )
-            self.configure_new_client()
-            self._execute_unmockable_tests()
-            if self.use_retries_mechanism:
-                self.build_context.logging_module.info(
-                    "Running failed tests", real_time=True
-                )
-                self._execute_failed_tests()
-            self.build_context.logging_module.info(
-                f"Finished tests with server url - " f"{get_ui_url(self.server_url)}",
-                real_time=True,
-            )
-            # no need in SaaS server type, no proxy.
-            if not self.build_context.is_saas_server_type:
-                self.build_context.tests_data_keeper.add_proxy_related_test_data(
-                    self.proxy
-                )
-
-            if (
-                self.build_context.isAMI
-                and self.proxy
-                and self.proxy.should_update_mock_repo
-            ):
-                self.proxy.push_mock_files()
-            self.build_context.logging_module.debug(
-                f"Tests executed on server {self.server_ip}:\n"
-                f"{pformat(self.executed_tests)}"
-            )
-        except Exception:
-            self.build_context.logging_module.exception("~~ Thread failed ~~")
-            raise
-        finally:
-            self.build_context.logging_module.execute_logs()
-
-    def check_if_can_create_manual_alerts(self):
-        """
-        In XSIAM we can't create a new incident/alert using API call.
-        We need a correlation rule in order to create an alert.
-        We want to create an alert manually, when we send an API call to XSIAM server to create a new alert.
-        Server check which integration sent a new alert, if the request was sent manually and not from integration it
-        sets "sourceBrand" header to be "Manual". XSIAM Server looks for a correlation rule for such sourceBrand,
-        and if there is no such correlation rule, no alert will be created.
-        If there is a correlation rule for "Manual" integration the alert will be created.
-
-        If this step fails please create an integration with id and name "Manual", set isFetch: true for such
-        integration and make sure that the corresponding correlation rule is created.
-        """
-        body = {
-            "query": 'id:"Manual"',
-        }
-        try:
-            response, status_code, headers = demisto_client.generic_request_func(
-                self=self.client,
-                method="POST",
-                path="/settings/integration/search",
-                body=body,
-                response_type="object",
-            )
-            if status_code != requests.codes.ok:
-                self.build_context.logging_module.error(
-                    f"Failed to get integrations configuration response:{pformat(response)}, "
-                    f"status code:{status_code} headers:{headers}"
-                )
-                return
-
-            all_configurations = response["configurations"]
-            for instance in all_configurations:
-                if instance.get("id") == "Manual":
-                    self.build_context.logging_module.info(
-                        "Server is able to create manual alerts "
-                        '("Manual" integration exists).'
-                    )
-                    return
-        except ApiException:
-            self.build_context.logging_module.exception(
-                "Failed to get integrations configuration."
-            )
-
-        self.build_context.logging_module.warning(
-            'No "Manual" integration found in XSIAM instance. '
-            "Adding it in order to create Manual Correlation Rule."
-        )
-        self.create_manual_integration()
-
-    def create_manual_integration(self):
-        manual_integration = {
-            "name": "Manual",
-            "version": 1,
-            "display": "Manual",
-            "category": "Utilities",
-            "description": "This integration creates Manual Correlation Rule.",
-            "configuration": [],
-            "integrationScript": {
-                "script": "",
-                "commands": [],
-                "type": "python",
-                "isFetch": True,
-                "subtype": "python3",
-            },
-        }
-
-        try:
-            response, status_code, headers = demisto_client.generic_request_func(
-                self=self.client,
-                method="PUT",
-                path="/settings/integration-conf",
-                body=manual_integration,
-                response_type="object",
-            )
-            if status_code not in {requests.codes.ok, requests.codes.no_content}:
-                self.build_context.logging_module.error(
-                    f"Failed to get integrations configuration - response:{pformat(response)}, "
-                    f"status code:{status_code} headers:{headers}"
-                )
-
-        except ApiException:
-            self.build_context.logging_module.exception(
-                'No "Manual" integration found in XSIAM instance. '
-                "Please add it in order to create Manual Correlation Rule."
-            )

@@ -1,0 +1,4 @@
+changes:
+- description: Moved PA124 validation to the new validate format. The validation ensures that core packs do not depend on non-core packs.
+  type: feature
+pr_number: 4596

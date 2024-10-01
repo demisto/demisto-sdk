@@ -1848,7 +1848,7 @@ def test_IsCorePackDependOnNonCorePacksValidatorAllFiles_invalid(
     )
     assert (
         results[0].message
-        == "The core pack CorePack cannot depend on non-core packs: Pack2 - revert this change."
+        == "The core pack CorePack cannot depend on non-core pack(s): Pack2."
     )
 
 
@@ -1878,7 +1878,7 @@ def test_IsCorePackDependOnNonCorePacksValidatorListFiles(repo_for_test_pa_124: 
     )
     assert (
         results[0].message
-        == "The core pack CorePack cannot depend on non-core packs: Pack2 - revert this change."
+        == "The core pack CorePack cannot depend on non-core pack(s): Pack2."
     )
 
     results = (

@@ -16,8 +16,8 @@ ContentTypes = Pack
 class IsCorePackDependOnNonCorePacksValidator(BaseValidator[ContentTypes], ABC):
     error_code = "PA124"
     description = "Validates that core packs do not depend on non-core packs."
-    rationale = "Core packs should be self-contained and not rely on non-core packs."
-    error_message = "The core pack {core_pack} cannot depend on non-core packs: {dependencies_packs} - revert this change."
+    rationale = "Core packs should be self-contained."
+    error_message = "The core pack {core_pack} cannot depend on non-core pack(s): {dependencies_packs}."
     related_field = "dependencies"
     is_auto_fixable = False
 
@@ -31,9 +31,9 @@ class IsCorePackDependOnNonCorePacksValidator(BaseValidator[ContentTypes], ABC):
         mp_to_core_packs = get_marketplace_to_core_packs()
         for marketplace, mp_core_packs in mp_to_core_packs.items():
             pack_ids_to_check = (
-                list(mp_core_packs)
+                list(mp_core_packs.keys())
                 if not pack_ids
-                else [pack_id for pack_id in pack_ids if pack_id in mp_core_packs]
+                else list(set(pack_ids).intersection(mp_core_packs))
             )
             for core_pack_node in self.graph.find_core_packs_depend_on_non_core_packs(
                 pack_ids_to_check, marketplace, list(mp_core_packs)

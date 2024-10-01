@@ -229,7 +229,7 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
     uploader.upload()
 
     assert len(uploader._successfully_uploaded_content_items) == 1
-    assert mocked_client_upload_method.called_once()
+    assert len(mocked_client_upload_method.call_args_list) == 1
 
 
 def test_upload_single_not_supported(mocker):

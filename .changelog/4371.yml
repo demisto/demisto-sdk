@@ -1,0 +1,4 @@
+changes:
+- description: Converted RM100 to the new validate format, The validation was split to 3 different validations RM100 - no empty sections, RM115 - no default sections, RM116 - readme not to short.
+  type: feature
+pr_number: 4371

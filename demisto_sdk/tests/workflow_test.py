@@ -55,7 +55,7 @@ class ContentGitRepo:
         self.tmpdir = tempfile.TemporaryDirectory()
         tmpdir = Path(self.tmpdir.name)
         self.content = tmpdir / "content"
-        logger.debug("Content dir path: %s " % content_git_repo)
+        logger.debug(f"Content dir path: {content_git_repo}")
         # In circleCI, the dir is already there
         if os.path.isdir(circle_content_dir):
             logger.debug("Found circle content dir, copying")

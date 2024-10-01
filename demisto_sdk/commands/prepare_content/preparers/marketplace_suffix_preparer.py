@@ -51,8 +51,7 @@ class MarketplaceSuffixPreparer:
                             clean_key = key[:-suffix_len]  # without suffix
                             if clean_key not in datum:
                                 logger.info(
-                                    "Deleting field %s as it has no counterpart without suffix",
-                                    key,
+                                    f"Deleting field {key} as it has no counterpart without suffix"
                                 )
                                 datum.pop(key, None)
                                 continue

@@ -333,7 +333,6 @@ def test_zipped_pack_upload_positive(
                         == METADATA_DISPLAYS[content_item]
                     )
 
-
     assert (
         "\n".join(
             (

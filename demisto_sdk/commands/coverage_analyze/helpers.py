@@ -205,7 +205,7 @@ class CoverageSummary:
                     return full_coverage_summary["files"]
             except FileNotFoundError:
                 logger.info(
-                    "No cache file found. creatig a cache dir at %s", self.cache_dir
+                    f"No cache file found. creatig a cache dir at {self.cache_dir}"
                 )
                 os.makedirs(self.cache_dir, exist_ok=True)
             except (json.JSONDecodeError, KeyError, ValueError) as exc:

@@ -1,4 +1,0 @@
-changes:
-- description: Upgrade the Neo4j version when working with the **content graph** in a local environment.
-  type: fix
-pr_number: 4571

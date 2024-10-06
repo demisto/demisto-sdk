@@ -298,8 +298,13 @@ class InvalidContentItemResult(BaseResult, BaseModel):
 
     @property
     def format_json_message(self):
+        try:
+            relative_file_path: str = str(self.path.relative_to(CONTENT_PATH))
+        except  ValueError:
+            relative_file_path = str(self.path)
+
         return {
-            "file path": str(self.path.relative_to(CONTENT_PATH)),
+            "file path": relative_file_path,
             "error code": self.error_code,
             "message": self.message,
         }

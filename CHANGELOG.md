@@ -1,4 +1,38 @@
 # Changelog
+## 1.32.2 (2024-10-06)
+### Breaking
+* The validation GR107 has been removed from the legacy validate command, to enhance performance. [#4561](https://github.com/demisto/demisto-sdk/pull/4561)
+
+### Feature
+* Add support in the schema for XSIAM custom hidden value. [#4584](https://github.com/demisto/demisto-sdk/pull/4584)
+* Moved GR107 validation to the new validate format. The validation ensures that deprecated content items are not used in other content items. [#4561](https://github.com/demisto/demisto-sdk/pull/4561)
+* Moved GR108 validation to the new validate format. The validation ensures that non-hidden packs do not depend on hidden packs. [#4590](https://github.com/demisto/demisto-sdk/pull/4590)
+* Enhanced the Graph interface to support multi-threaded environments. [#4576](https://github.com/demisto/demisto-sdk/pull/4576)
+* Moved GR101 validation to the new validate format. This validation checks whether the content item uses an item with a higher version (making it incompatible). [#4570](https://github.com/demisto/demisto-sdk/pull/4570)
+* Removed the **validate** warnings when the higher version is lower is not supported by Cortex anymore. [#4570](https://github.com/demisto/demisto-sdk/pull/4570)
+* Converted RM100 to the new validate format, The validation was split to 3 different validations RM100 - no empty sections, RM115 - no default sections, RM116 - readme not to short. [#4371](https://github.com/demisto/demisto-sdk/pull/4371)
+* Moved GR102 validation to the new validate format. This validation checks whether a content item has to_version higher than another one it uses. [#4586](https://github.com/demisto/demisto-sdk/pull/4586)
+* Removed the **validate** warnings when the source's to_version is higher than the general default version. [#4586](https://github.com/demisto/demisto-sdk/pull/4586)
+* Moved PA124 validation to the new validate format. The validation ensures that core packs do not depend on non-core packs. [#4596](https://github.com/demisto/demisto-sdk/pull/4596)
+
+### Fix
+* Fixed an issue where debug-logging in **upload** failed. [#4591](https://github.com/demisto/demisto-sdk/pull/4591)
+* Fixed an issue where debug-logging in **test-modeling-rules** failed. [#4591](https://github.com/demisto/demisto-sdk/pull/4591)
+* Fixed an issue where **lint** failed showing messages. [#4582](https://github.com/demisto/demisto-sdk/pull/4582)
+* Fixed an issue where **generate-docs** command used un-ordered dependency lists, which resulted in redundant git changes. [#4533](https://github.com/demisto/demisto-sdk/pull/4533)
+* Fixed an issue where debug-logging in **setup-env** failed. [#4597](https://github.com/demisto/demisto-sdk/pull/4597)
+* Fixed an issue where the **update-release-notes** command was not properly detecting existing items in the release notes. [#4579](https://github.com/demisto/demisto-sdk/pull/4579)
+* Upgrade the Neo4j version when working with the **content graph** in a local environment. [#4571](https://github.com/demisto/demisto-sdk/pull/4571)
+
+### Internal
+* Added support for GAR DockerHub proxy when running in a Gitlab CI environment. [#4528](https://github.com/demisto/demisto-sdk/pull/4528)
+* Fixed a typo in several demisto-sdk files. [#4587](https://github.com/demisto/demisto-sdk/pull/4587)
+* Added support for `pre-commit` hooks to save logs as Gitlab CI artifacts. [#4581](https://github.com/demisto/demisto-sdk/pull/4581)
+* Converted RN116 validation to the new validation format. The validation ensures that the RN contains a first level header. [#4575](https://github.com/demisto/demisto-sdk/pull/4575)
+* Upgrade pylint to 3.3.1 [#4594](https://github.com/demisto/demisto-sdk/pull/4594)
+* Improved implementation of the GR103 validation. [#4568](https://github.com/demisto/demisto-sdk/pull/4568)
+
+
 ## 1.32.1
 * Modified the `sdk-changelog` script, to include the release date for each version in the title. [#4553](https://github.com/demisto/demisto-sdk/pull/4553)
 * Modified the **xsoar-lint** command to show GitHub Annotations for _errors_, when the `GITHUB_ACTIONS` environment key is set. _Warnings_ are shown when the `DEMISTO_SDK_XSOAR_LINTER_WARNING_ANNOTATIONS` and `GITHUB_ACTIONS` are set. [#4400](https://github.com/demisto/demisto-sdk/pull/4400)

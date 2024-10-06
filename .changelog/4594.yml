@@ -1,4 +1,0 @@
-changes:
-- description: Upgrade pylint to 3.3.1
-  type: internal
-pr_number: 4594

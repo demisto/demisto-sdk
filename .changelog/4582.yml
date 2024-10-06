@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where **lint** failed showing messages.
-  type: fix
-pr_number: 4582

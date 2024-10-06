@@ -237,7 +237,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.11"  # CIAC-11940
 
       - name: Checkout Content
         uses: actions/checkout@v4

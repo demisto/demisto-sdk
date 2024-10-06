@@ -164,13 +164,6 @@ Note: Make sure to use the flag's full name and input `_` instead of a `-` if it
 
 Here are a few examples:
 
-- As a user, I would like to not use the `mypy` linter in my environment when using the `lint` command. In the `.demisto-sdk-conf` file I'll enter:
-
-   ```INI
-   [lint]
-   no_mypy=true
-   ```
-
 - As a user, I would like to include untracked git files in my validation when running the `validate` command. In the `.demisto-sdk-conf` file I'll enter:
 
    ```INI

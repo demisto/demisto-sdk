@@ -108,36 +108,69 @@ def sort_commands_and_arguments(data_dict):
 
 
 def get_commands_and_args_rn(old_yml, new_yml, file_type):
-    rn =''
+    rn = ''
     if file_type == FileType.INTEGRATION:
         index_new_commands = 0
-        old_commands = old_yml.get("script", {}).get("commands") or []
+        index_old_commands = 0
+        old_commands = old_yml.get("script", {}).get("commands", [])
         sort_commands_and_arguments(old_commands)
-        new_commands = new_yml.script.get("commands") or []
+        new_commands = new_yml.script.get("commands", [])
         sort_commands_and_arguments(new_commands)
-        for old_command in old_commands:
+        while index_old_commands < len(old_commands) and index_new_commands < len(new_commands):
             new_command_name = new_commands[index_new_commands].get('name')
-            old_command_name = old_command.get('name')
+            old_command_name = old_commands[index_old_commands].get('name')
             if new_command_name > old_command_name:
                 rn += f'- Deleted the **{old_command_name}** command.\n'
+                index_old_commands += 1
             elif new_command_name < old_command_name:
-                rn += f'- Added the **{new_command_name}** command which {new_commands[index_new_commands].get("description")}.\n'
+                rn += f'- Added the **{new_command_name}** command which {new_commands[index_new_commands].get("description", "")}.\n'
+                index_new_commands += 1
             else:
-                new_args = new_commands[index_new_commands].get('arguments')
-                old_args = old_commands[index_new_commands].get('arguments')
+                # Comparing arguments
+                new_args = new_commands[index_new_commands].get('arguments', [])
+                old_args = old_commands[index_old_commands].get('arguments', [])
                 index_new_args = 0
-                for old_arg in old_args:
+                index_old_args = 0
+
+                while index_old_args < len(old_args) and index_new_args < len(new_args):
                     new_arg_name = new_args[index_new_args].get('name')
-                    old_arg_name = old_arg.get('name')
+                    old_arg_name = old_args[index_old_args].get('name')
+
                     if new_arg_name > old_arg_name:
                         rn += f'- Updated the **{new_command_name}** to not use the `{old_arg_name}` argument.\n'
+                        index_old_args += 1
                     elif new_arg_name < old_arg_name:
                         rn += f'- Updated the **{new_command_name}** to use the `{new_arg_name}` argument.\n'
+                        index_new_args += 1
                     else:
-                        if new_args[index_new_args].get('deprecated') and not old_arg.get('deprecated'):
+                        if new_args[index_new_args].get('deprecated') and not old_args[index_old_args].get('deprecated'):
                             rn += f'- Deprecated the `{old_arg_name}` argument inside the **{old_command_name}** command.\n'
+                        index_new_args += 1
+                        index_old_args += 1
+
+                while index_old_args < len(old_args):
+                    old_arg_name = old_args[index_old_args].get('name')
+                    rn += f'- Updated the **{new_command_name}** to not use the `{old_arg_name}` argument.\n'
+                    index_old_args += 1
+
+                while index_new_args < len(new_args):
+                    new_arg_name = new_args[index_new_args].get('name')
+                    rn += f'- Updated the **{new_command_name}** to use the `{new_arg_name}` argument.\n'
                     index_new_args += 1
+
+                index_new_commands += 1
+                index_old_commands += 1
+
+        while index_old_commands < len(old_commands):
+            old_command_name = old_commands[index_old_commands].get('name')
+            rn += f'- Deleted the **{old_command_name}** command.\n'
+            index_old_commands += 1
+
+        while index_new_commands < len(new_commands):
+            new_command_name = new_commands[index_new_commands].get('name')
+            rn += f'- Added the **{new_command_name}** command which {new_commands[index_new_commands].get("description", "")}.\n'
             index_new_commands += 1
+
     return rn
 
 

@@ -3,7 +3,7 @@
 Generate Test Playbook from integration/script yml
 **Arguments**:
 * **-i, --input**
-   Specify integration/script yml path (must be a valid yml file)
+   Specify integration/script yml path.
 * **-o, --output**
    Specify output directory or path. If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, the output is saved under `.../Packs/<pack_name>/TestPlaybooks`. If no folder in the input hierarchy is named Packs, the output is saved in the current directory.
 * **-n, --name**

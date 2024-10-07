@@ -14,17 +14,15 @@ The yml/json file to extract from.
 * **-o, --output**
 The output dir to write the extracted code/description/image/json to.
 * **---no-demisto-mock**
-Don't add an import for demisto mock (only for yml files)
+Don't add an import for demisto mock (only for yml files).
 * **--no-common-server**
-Don't add an import for CommonServerPython or CommonServerPowerShell (only for yml files)
+Don't add an import for CommonServerPython or CommonServerPowerShell (only for yml files).
 * **--no-auto-create-dir**
 Don't auto create the directory if the target directory ends with
 *Integrations/*Scripts/*GenericModules/*Dashboards. The auto directory created will be named according to the
 Integration/Script name.
-* **--no-pipenv**
-Don't auto create pipenv for requirements installation. (only for yml files)
 * **--new-module-file**
-Create a new module file instead of editing the existing file. (only for json files)
+Create a new module file instead of editing the existing file (only for json files).
 
 **Examples**
 1. `demisto-sdk split -i Integrations/integration-MyInt.yml -o Integrations/MyInt`

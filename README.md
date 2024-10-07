@@ -76,15 +76,6 @@ In order to set Demisto SDK to work with a Cortex XSOAR 6.x instance, you need t
 
 ---
 
-### Content path
-
-The **demisto-sdk** is made to work with Cortex content, structured similar to the [official Cortex content repo](https://github.com/demisto/content).
-
-Demisto-SDK commands work best when called from the content directory or any of its subfolders.
-To run Demisto-SDK commands from other folders, you may set the `DEMISTO_SDK_CONTENT_PATH` environment variable.
-
-We recommend running all demisto-SDK commands from a folder with a git repo, or any of its subfolders. To suppress warnings about running commands outside a content repo folder, set the `DEMISTO_SDK_IGNORE_CONTENT_WARNING` environment variable.
-
 ### CLI usage
 
 You can use the SDK in the CLI as follows:
@@ -94,7 +85,17 @@ demisto-sdk <command> <args>
 ```
 
 For more information, run `demisto-sdk -h`.
+
 For more information on a specific command execute `demisto-sdk <command> -h`.
+
+### Content path
+
+The **demisto-sdk** is made to work with Cortex content, structured similar to the [official Cortex content repo](https://github.com/demisto/content).
+
+Demisto-SDK commands work best when called from the content directory or any of its subfolders.
+To run Demisto-SDK commands from other folders, you may set the `DEMISTO_SDK_CONTENT_PATH` environment variable.
+
+We recommend running all demisto-SDK commands from a folder with a git repo, or any of its subfolders. To suppress warnings about running commands outside a content repo folder, set the `DEMISTO_SDK_IGNORE_CONTENT_WARNING` environment variable.
 
 ### Version Check
 

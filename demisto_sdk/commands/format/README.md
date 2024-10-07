@@ -11,41 +11,42 @@ When done formatting, the **validate** command will run, to let you know of thin
 
 
 ### Arguments
-* **-i PATH_TO_FILE or PATH_TO_DIRECTORY, --input PATH_TO_FILE or PATH_TO_DIRECTORY**
+* **-i --input**
 
-    The path of the desired file to be formatted.
+    The path of the desired file to be formatted. If no input is specified, the format will be executed on all new/changed files.
 
-* **-o DESIRED_OUTPUT_PATH, --output DESIRED_OUTPUT_PATH**
+* **-o --output**
 
     The file path where the formatted file will be saved to. (Default will be to override origin file).
 
-* **-fv DESIRED_FROM_VERSION_KEY, --from-version DESIRED_FROM_VERSION_KEY**
+* **-fv --from-version**
 
-    The path where the formatted file will be saved to. (Default will be to override origin file).
+    Specify the fromversion key of the content item.
 
 * **-nv ,--no-validate**
 
-   When no validation on file is needed.
+   Set when validate on file is not wanted.
 
 * **-ud ,--update-docker**
 
-   Set if you want to update the docker image of the integration/script to the newest available tag.
-
-* **-ng ,--no-graph**
-
-  Skip formatting using graph.
+   Set if you want to update the docker image of the integration/script to the latest available tag.
 
 * **-v, --verbose**
 
    Verbose output
 
-* **-y, --assume-yes**
+* **-y/-n, --assume-yes/--assume-no**
 
-  Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively
+  Automatic yes/no to prompts; assume 'yes'/'no' as answer to all prompts and run non-interactively.
 
 * **-d, --deprecate**
 
   Set if you want to deprecate the integration/script/playbook
+* **-g --use-git** Use git to automatically recognize which files changed and run format on them.
+* **--prev-ver** Previous branch or SHA1 commit to run checks against.
+* **-iu --include-untracked** Whether to include untracked files in the formatting.
+* **-at --add-tests** Whether to answer manually to add tests configuration prompt when running interactively.
+* **-gr/-ngr -graph/--no-graph** Whether to use the content graph or not.
 
 ### Examples
 ```
@@ -99,12 +100,12 @@ Also validation will run as the output file is in content repo.
 
 * If fromversion key does not exist in current file:
     * If fromversion key exist in old file in content repo -> set fromverion key as in old file
-    * If fromversion key does not exist in old file -> set fromversion key to default 1.0.0
+    * If fromversion key does not exist in old file -> set fromversion key to default 6.10.0
 
 **If the source file name does not exist in content repo:**
 
 * If fromversion key exists already in current file -> fromversion key will not change.
-* If fromversion key does not exist in current file -> is not in file than it will set it to '5.0.0'
+* If fromversion key does not exist in current file -> is not in file than it will set it to '6.10.0'
 
 
 #### Run with fromVersion flag

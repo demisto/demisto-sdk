@@ -6,29 +6,29 @@ Create a pack, integration or script template.
 
 **Arguments**:
 * **-n, --name**
-The name given to the files and directories of new pack/integration/script being created
+The name given to the files and directories of new pack/integration/script being created.
 * **--id**
-The id used for the yml file of the integration/script
+The id used for the yml file of the integration or script.
 * **-o, --output**
-The output directory to which the created object will be saved
+The output directory to which the created object will be saved. The default one is the current working directory.
 * **--integration**
-Create an integration
+Create an integration.
 * **--script**
-Create a script
+Create a script.
 * **--pack**
-Create a pack
+Create a pack and its subdirectories.
 * **-t, --template**
 Create an Integration/Script based on a specific template.</br>
 Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.</br>
 Script template options: HelloWorldScript
-* **-a, --author_image** For pack only: The path of author image will be presented in marketplace
+* **-a, --author_image** The path of author image will be presented in marketplace
 under PUBLISHER section. File should be up to 4kb and in the dimensions of 120x50.
 * **--demisto_mock**
 Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.
 * **--common-server**
 Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.
 * **--xsiam**
-Create an Event Collector based on a template, and create matching sub directories.
+Create an Event Collector based on a template, and create matching subdirectories.
 
 **Notes**
 * If `integration` or `script` not set - the command will automatically create a pack, even if `pack` was not set.

@@ -23,20 +23,11 @@ unset XSIAM_AUTH_ID
 ```
 
 **Arguments**:
-* **-u, --url**
-                        URL to a Demisto instance.
-* **-p, --playbook_id**
-                        The ID of the playbook to run.
-* **-n, --no-wait**
-                        Trigger the playbook without waiting for it to finish its run.
-                        (default: False)
-* **-t, --timeout**
-                        Timeout for the command in seconds. The playbook will continue to run in Demisto.
-                        (default: 90)
-* **--insecure**
-                        Skip certificate validation.
-* **-w, --wait**
-                        Wait until the playbook run is finished and get a response.
+* **-u, --url** URL to a XSOAR instance. If not provided, the url will be taken from DEMISTO_BASE_URL environment variable.
+* **-p, --playbook_id** The ID of the playbook to run.
+* **-t, --timeout** Timeout to query for playbook's state. Relevant only if --wait has been passed.
+* **--insecure** Skip certificate validation.
+* **-w, --wait** Wait until the playbook run is finished and get a response.
 
 
 ### Examples

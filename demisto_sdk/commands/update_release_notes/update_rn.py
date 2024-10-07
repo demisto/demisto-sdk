@@ -100,78 +100,53 @@ def get_yml_objects(path: str, file_type) -> Tuple[Any, YAMLContentObject]:
 
     return old_yml_obj, new_yml_obj
 
-def sort_commands_and_arguments(data_dict):
-    for item in data_dict:
-        if 'arguments' in item and item['arguments']:
-            item['arguments'].sort(key=lambda arg: arg['name'])
-    data_dict.sort(key=lambda x: x['name'])
+def generate_command_diff(command_name, old_args, new_args):
+    rn = ''
+    old_arg_names = {arg['name']: arg for arg in old_args}
+    new_arg_names = {arg['name']: arg for arg in new_args}
+
+    # Arguments removed
+    for old_arg_name, old_arg in old_arg_names.items():
+        if old_arg_name not in new_arg_names:
+            rn += f'- Updated the **{command_name}** to not use the `{old_arg_name}` argument.\n'
+
+    # Arguments added or updated
+    for new_arg_name, new_arg in new_arg_names.items():
+        if new_arg_name not in old_arg_names:
+            rn += f'- Updated the **{command_name}** to use the `{new_arg_name}` argument.\n'
+        elif new_arg.get('deprecated') and not old_arg_names[new_arg_name].get('deprecated'):
+            rn += f'- Deprecated the `{new_arg_name}` argument inside the **{command_name}** command.\n'
+
+    return rn
+
+
+def get_commands_diff(old_commands, new_commands):
+    rn = ''
+    old_command_names = {command['name']: command for command in old_commands}
+    new_command_names = {command['name']: command for command in new_commands}
+
+    for old_command_name, old_command in old_command_names.items():
+        if old_command_name not in new_command_names:
+            rn += f'- Deleted the **{old_command_name}** command.\n'
+
+    for new_command_name, new_command in new_command_names.items():
+        if new_command_name not in old_command_names:
+            rn += f'- Added the **{new_command_name}** command which {new_command.get("description", "")}\n'
+        else:
+            old_command = old_command_names[new_command_name]
+            rn += generate_command_diff(new_command_name, old_command.get('arguments', []), new_command.get('arguments', []))
+
+    return rn
 
 
 def get_commands_and_args_rn(old_yml, new_yml, file_type):
-    rn = ''
-    if file_type == FileType.INTEGRATION:
-        index_new_commands = 0
-        index_old_commands = 0
-        old_commands = old_yml.get("script", {}).get("commands", [])
-        sort_commands_and_arguments(old_commands)
-        new_commands = new_yml.script.get("commands", [])
-        sort_commands_and_arguments(new_commands)
-        while index_old_commands < len(old_commands) and index_new_commands < len(new_commands):
-            new_command_name = new_commands[index_new_commands].get('name')
-            old_command_name = old_commands[index_old_commands].get('name')
-            if new_command_name > old_command_name:
-                rn += f'- Deleted the **{old_command_name}** command.\n'
-                index_old_commands += 1
-            elif new_command_name < old_command_name:
-                rn += f'- Added the **{new_command_name}** command which {new_commands[index_new_commands].get("description", "")}.\n'
-                index_new_commands += 1
-            else:
-                # Comparing arguments
-                new_args = new_commands[index_new_commands].get('arguments', [])
-                old_args = old_commands[index_old_commands].get('arguments', [])
-                index_new_args = 0
-                index_old_args = 0
+    if file_type != FileType.INTEGRATION:
+        return ''
 
-                while index_old_args < len(old_args) and index_new_args < len(new_args):
-                    new_arg_name = new_args[index_new_args].get('name')
-                    old_arg_name = old_args[index_old_args].get('name')
+    old_commands = old_yml.get("script", {}).get("commands", [])
+    new_commands = new_yml.script.get("commands", [])
 
-                    if new_arg_name > old_arg_name:
-                        rn += f'- Updated the **{new_command_name}** to not use the `{old_arg_name}` argument.\n'
-                        index_old_args += 1
-                    elif new_arg_name < old_arg_name:
-                        rn += f'- Updated the **{new_command_name}** to use the `{new_arg_name}` argument.\n'
-                        index_new_args += 1
-                    else:
-                        if new_args[index_new_args].get('deprecated') and not old_args[index_old_args].get('deprecated'):
-                            rn += f'- Deprecated the `{old_arg_name}` argument inside the **{old_command_name}** command.\n'
-                        index_new_args += 1
-                        index_old_args += 1
-
-                while index_old_args < len(old_args):
-                    old_arg_name = old_args[index_old_args].get('name')
-                    rn += f'- Updated the **{new_command_name}** to not use the `{old_arg_name}` argument.\n'
-                    index_old_args += 1
-
-                while index_new_args < len(new_args):
-                    new_arg_name = new_args[index_new_args].get('name')
-                    rn += f'- Updated the **{new_command_name}** to use the `{new_arg_name}` argument.\n'
-                    index_new_args += 1
-
-                index_new_commands += 1
-                index_old_commands += 1
-
-        while index_old_commands < len(old_commands):
-            old_command_name = old_commands[index_old_commands].get('name')
-            rn += f'- Deleted the **{old_command_name}** command.\n'
-            index_old_commands += 1
-
-        while index_new_commands < len(new_commands):
-            new_command_name = new_commands[index_new_commands].get('name')
-            rn += f'- Added the **{new_command_name}** command which {new_commands[index_new_commands].get("description", "")}.\n'
-            index_new_commands += 1
-
-    return rn
+    return get_commands_diff(old_commands, new_commands)
 
 
 def get_deprecated_rn(old_yml, new_yml, file_type):
@@ -385,8 +360,8 @@ class UpdateRN:
                 if not self.text:
                     logger.info(
                         f"\n[green]Next Steps:\n - Please review the "
-                        f"created release notes found at {rn_path} and document any changes you "
-                        f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
+                        f"created release notes found at {rn_path} and document any further changes you "
+                        f"made by replacing '%%UPDATE_RN%%' or adding new lines.\n - Commit "
                         f"the new release notes to your branch.\nFor information regarding proper"
                         f" format of the release notes, please refer to "
                         f"https://xsoar.pan.dev/docs/integrations/changelog[/green]"

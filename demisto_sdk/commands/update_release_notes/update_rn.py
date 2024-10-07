@@ -816,6 +816,12 @@ class UpdateRN:
                         or MarketplaceVersions.XSOAR.value in pack_marketplaces
                     ):
                         rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
+                elif _type == FileType.INTEGRATION:
+                    rn_desc += "\n- Added the following commands:\n"
+                    new_yml = CLASS_BY_FILE_TYPE[_type](path)
+                    new_commands = new_yml.script.get("commands", [])
+                    for command in new_commands:
+                        rn_desc += f"**{command.get('name')}**\n"
                 rn_desc += "\n"
             else:
                 old_yml, new_yml = get_yml_objects(path, _type)

@@ -573,7 +573,7 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
     logger.debug(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
     if IS_CONTENT_GITLAB_CI and DOCKER_IO:
         try:
-            logger.info(
+            logger.debug(
                 "Running in a GitLab CI environment with custom DOCKER_IO environment variable, Trying to prase a DockerHub Google Artifact Registry from DOCKER_IO environment variable."
             )
             if parsed_dockerhub_proxy_api_url := get_dockerhub_artifact_registry_url(
@@ -581,16 +581,16 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
             ):
                 return parsed_dockerhub_proxy_api_url
             else:
-                logger.info(
+                logger.warning(
                     "Could not parse a valid API URL from the DOCKER_IO environment variable."
                 )
-        except Exception as e:
-            logger.info(
-                f"Could not parse a valid API URL from the DOCKER_IO environment variable, Error: {str(e)} "
+        except Exception:
+            logger.exception(
+                f"Could not parse a valid API URL from the DOCKER_IO environment variable ({DOCKER_IO})"
             )
-
-    logger.info(f"using provided or default registry, {default_registry=}")
-    return registry or default_registry
+    result = registry or default_registry
+    logger.debug(f"using registry {result}")
+    return result
 
 
 def get_gcloud_access_token() -> Optional[str]:

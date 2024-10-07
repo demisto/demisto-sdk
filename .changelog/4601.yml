@@ -1,4 +1,4 @@
 changes:
-- description: Improved docker registry logs
+- description: Improved docker registry logs.
   type: fix
 pr_number: 4601

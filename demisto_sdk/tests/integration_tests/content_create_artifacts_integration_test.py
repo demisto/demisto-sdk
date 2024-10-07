@@ -1,5 +1,4 @@
 import os
-from tempfile import TemporaryDirectory
 
 import pytest
 from click.testing import CliRunner
@@ -79,7 +78,7 @@ def test_duplicate_file_failure(mock_git):
     assert result.exit_code == 1
 
 
-def test_specific_pack_creation(mocker, repo, tmp_path):
+def test_specific_pack_creation(repo, tmp_path: Path):
     """Test the -p flag for specific packs creation"""
     pack_1 = repo.setup_one_pack("Pack1")
     pack_1.pack_metadata.write_json(
@@ -96,14 +95,12 @@ def test_specific_pack_creation(mocker, repo, tmp_path):
     )
 
     with ChangeCWD(repo.path):
-        with TemporaryDirectory() as dir:
-            mocker.patch.object(os, "getenv", return_value=dir)
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [ARTIFACTS_CMD, "-a", tmp_path, "-p", "Pack1"])
-
-            assert result.exit_code == 0
-            assert Path.exists(tmp_path / "uploadable_packs" / "Pack1.zip")
-            assert not Path.exists(tmp_path / "uploadable_packs" / "Pack2.zip")
+        result = CliRunner(mix_stderr=False).invoke(
+            main, [ARTIFACTS_CMD, "-a", str(tmp_path), "-p", "Pack1"]
+        )
+        assert result.exit_code == 0, result.stderr
+        assert Path.exists(tmp_path / "uploadable_packs" / "Pack1.zip")
+        assert not Path.exists(tmp_path / "uploadable_packs" / "Pack2.zip")
 
 
 def test_create_packs_with_filter_by_id_set(repo):

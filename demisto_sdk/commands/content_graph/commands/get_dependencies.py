@@ -6,10 +6,7 @@ from tabulate import tabulate
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import (
-    logger,
-    logging_setup,
-)
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.commands.get_relationships import Direction
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
@@ -136,9 +133,10 @@ def get_dependencies(
     Returns pack's dependencies of a given content pack.
     """
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
+        calling_function=__name__,
     )
     with ContentGraphInterface() as graph:
         if not no_update_graph:
@@ -216,7 +214,7 @@ def get_dependencies_by_pack_path(
             include_tests,
         )
 
-    logger.info("[cyan]====== SUMMARY ======[/cyan]")
+    logger.info("<cyan>====== SUMMARY ======</cyan>")
     if retrieve_sources:
         logger.info(
             f"Sources Dependents:\n{to_tabulate(source_dependents, show_reasons)}\n"

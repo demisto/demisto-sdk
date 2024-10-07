@@ -1,4 +1,0 @@
-changes:
-- description: Move feed's expirationPolicy validation to a new validation - IN163.
-  type: feature
-pr_number: 4460

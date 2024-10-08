@@ -312,9 +312,7 @@ def verify_results(
             f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)}"
             f" test_data_event_id:{td_event_id}"
         )
-        logger.info(
-            f"<cyan>{msg}</cyan>",
-        )
+        logger.info("{}", f"<cyan>{msg}</cyan>")  # noqa: PLE1205
         result_test_case = TestCase(
             msg,
             classname=f"test_data_event_id:{td_event_id}",
@@ -358,7 +356,7 @@ def verify_results_against_test_data(
                 time_value, "." in expected_time_value, tenant_timezone
             )
         table_result = create_table(expected_values, result)
-        logger.info(f"\n{table_result}")
+        logger.info("{}", f"\n{table_result}")  # noqa: PLE1205
         for expected_key, expected_value in expected_values.items():
             if expected_value:
                 received_value = result.get(expected_key)
@@ -376,9 +374,7 @@ def verify_results_against_test_data(
                     f"before sanitization - received value:{received_value} received type: "
                     f"{get_type_pretty_name(received_value)}"
                 )
-                logger.debug(
-                    f"<cyan>{out}</cyan>",
-                )
+                logger.debug("{}", f"<cyan>{out}</cyan>")  # noqa: PLE1205
                 result_test_case_system_out.append(out)
                 if (
                     received_value_sanitized == expected_value
@@ -386,14 +382,15 @@ def verify_results_against_test_data(
                 ):
                     out = f"Value:{received_value_sanitized} and Type:{received_value_type_sanitized} Matched for key {expected_key}"
                     result_test_case_system_out.append(out)
-                    logger.debug(out)
+                    logger.debug("{}", out)  # noqa: PLE1205
                 else:
                     if received_value_type_sanitized == expected_value_type:
                         err = (
                             f"Expected value does not match for key {expected_key}: - expected: {expected_value} - "
                             f"received: {received_value_sanitized} Types match:{received_value_type_sanitized}"
                         )
-                        logger.error(
+                        logger.error(  # noqa: PLE1205
+                            "{}",
                             f'<red><bold>{expected_key}</bold> --- "{received_value_sanitized}" != "{expected_value}" '
                             f"Types match:{received_value_type_sanitized}</red>",
                         )
@@ -405,7 +402,8 @@ def verify_results_against_test_data(
                             f"received: {received_value_sanitized} expected type: {expected_value_type} "
                             f"received type: {received_value_type_sanitized}"
                         )
-                        logger.error(
+                        logger.error(  # noqa: PLE1205
+                            "{}",
                             f'<red><bold>{expected_key}</bold><red> --- "{received_value_sanitized}" != "{expected_value}"\n'
                             f' <bold>{expected_key}</bold><red> --- Received value type: "{received_value_type_sanitized}" '
                             f'!= Expected value type: "{expected_value_type}"</red>',
@@ -416,14 +414,13 @@ def verify_results_against_test_data(
                 err = f"No mapping for key {expected_key} - skipping checking match"
                 result_test_case_system_out.append(err)
                 result_test_case_results.append(Skipped(err))  # type:ignore[arg-type]
-                logger.debug(
+                logger.debug(  # noqa: PLE1205
+                    "{}",
                     f"<cyan>{err}</cyan>",
                 )
     else:
         err = f"No matching expected_values found for test_data_event_id={td_event_id} in test_data {test_data}"
-        logger.error(
-            f"<red>{err}</red>",
-        )
+        logger.error("{}", f"<red>{err}</red>")  # noqa: PLE1205
         result_test_case_results.append(Failure(err))
     result_test_case.system_err = "\n".join(result_test_case_system_err)
     result_test_case.system_out = "\n".join(result_test_case_system_out)
@@ -477,7 +474,7 @@ def validate_expected_values(
             ],
         )
         query_info = f"Query for dataset {rule.dataset}:\n{query}"
-        logger.debug(query_info)
+        logger.debug("{}", query_info)  # noqa: PLE1205
         validate_expected_values_test_case_system_out = [query_info]
         try:
             results = retrying_caller(xsiam_execute_query, xsiam_client, query)
@@ -540,9 +537,7 @@ def validate_schema_aligned_with_test_data(
                     event_val is None
                 ):  # if event_val is None, warn and continue looping.
                     info = f"{event_key=} is null on {event_log.test_data_event_id} event for {dataset=}, ignoring {event_key=}"
-                    logger.warning(
-                        f"<yellow>{info}</yellow>",
-                    )
+                    logger.warning("{}", f"<yellow>{info}</yellow>")  # noqa: PLE1205
                     results.append(Skipped(info))
                     # add the event key to the mapping to validate there isn't another key with a different type
                     test_data_mappings[event_key] = None
@@ -600,16 +595,12 @@ def validate_schema_aligned_with_test_data(
                 f"The following fields {missing_test_data_keys} are in schema for dataset {dataset}, but not "
                 "in test-data, make sure to remove them from the schema or add them to test-data if necessary"
             )
-            logger.warning(
-                f"<yellow>{skipped}</yellow>",
-            )
+            logger.warning(f"<yellow>{skipped}</yellow>")
             results.append(Skipped(skipped))
 
         if error_logs:
             for _log in error_logs:
-                logger.error(
-                    _log,
-                )
+                logger.error("{}", _log)  # noqa: PLE1205
         else:
             logger.info(
                 f"<green>Schema type mappings = Testdata type mappings for dataset {dataset}</green>",
@@ -674,16 +665,12 @@ def check_dataset_exists(
         )
         test_case_results.append(Error(err))
         if print_errors:
-            logger.error(
-                f"<red>{err}</red>",
-            )
+            logger.error("{}", f"<red>{err}</red>")  # noqa: PLE1205
     if not dataset_exist:
         err = f"<red>Dataset {dataset} does not exist</red>"
         test_case_results.append(Error(err))
         if print_errors:
-            logger.error(
-                f"<red>{err}</red>",
-            )
+            logger.error("{}", f"<red>{err}</red>")  # noqa: PLE1205
 
     duration = duration_since_start_time(start_time)
     logger.info(f"Processing Dataset {dataset} finished after {duration:.2f} seconds")
@@ -730,9 +717,7 @@ def push_test_data_to_tenant(
             if isinstance(event_log.event_data, dict)
             and event_log.dataset == rule.dataset
         ]
-        logger.info(
-            f"<cyan>Pushing test data for {rule.dataset} to tenant...</cyan>",
-        )
+        logger.info(f"<cyan>Pushing test data for {rule.dataset} to tenant...</cyan>")
         try:
             retrying_caller(xsiam_push_to_dataset, xsiam_client, events_test_data, rule)
         except requests.exceptions.RequestException:
@@ -745,9 +730,7 @@ def push_test_data_to_tenant(
             )
 
     if system_errors:
-        logger.error(
-            f"<red>{FAILURE_TO_PUSH_EXPLANATION}</red>",
-        )
+        logger.error(f"<red>{FAILURE_TO_PUSH_EXPLANATION}</red>")
         push_test_data_test_case.system_err = "\n".join(system_errors)
         push_test_data_test_case.result += [Failure(FAILURE_TO_PUSH_EXPLANATION)]
     else:
@@ -866,7 +849,7 @@ def verify_event_id_does_not_exist_on_tenant(
         retrying_caller (Retrying): The retrying caller object.
     """
     logger.info(
-        "<cyan>Verifying that the event IDs does not exist on the tenant</cyan>",
+        "<cyan>Verifying that the event IDs does not exist on the tenant</cyan>"
     )
     success_msg = "<green>The event IDs does not exists on the tenant</green>"
     error_msg = "The event id already exists in the tenant"
@@ -889,18 +872,12 @@ def verify_event_id_does_not_exist_on_tenant(
         try:
             result = retrying_caller(xsiam_execute_query, xsiam_client, query)
         except requests.exceptions.HTTPError:
-            logger.info(
-                success_msg,
-            )
+            logger.info("{}", success_msg)  # noqa: PLE1205
         else:
             if not result:
-                logger.info(
-                    success_msg,
-                )
+                logger.info("{}", success_msg)  # noqa: PLE1205
             else:
-                logger.error(
-                    error_msg,
-                )
+                logger.error("{}", error_msg)  # noqa: PLE1205
                 validate_event_id_does_not_exist_on_tenant_test_case.result += [
                     Error(error_msg)
                 ]

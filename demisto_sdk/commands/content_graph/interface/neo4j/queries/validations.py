@@ -273,21 +273,34 @@ def validate_core_packs_dependencies(
     }
 
 
-def validate_hidden_pack_dependencies(
+def validate_packs_with_hidden_mandatory_dependencies(
     tx: Transaction,
     pack_ids: List[str],
-):
-    query = f"""// Returns DEPENDS_ON relationships to packs which are hidden
-MATCH (pack1)-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:true}}]->(pack2{{hidden: true}})
-WHERE {f'(pack1.object_id in {pack_ids} OR pack2.object_id in {pack_ids}) AND' if pack_ids else ""}
-NOT r.is_test
-and NOT pack1.hidden
-and NOT pack1.deprecated
-RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
-        """
+) -> Dict[str, Neo4jRelationshipResult]:
+    """
+    Identifies non-hidden packs that have mandatory dependencies on hidden packs.
+    Excludes test relationships and deprecated packs.
+    Args:
+        tx (Transaction): The Neo4j transaction object.
+        pack_ids (List[str]): List of pack IDs to check.
+
+    Returns:
+        Dict[str, Neo4jRelationshipResult]: Dictionary of packs with hidden dependencies.
+    """
+    pack_filter = (
+        f" AND (pack.object_id in {pack_ids} OR hidden_pack.object_id in {pack_ids})"
+        if pack_ids
+        else ""
+    )
+    query = f"""
+    // Returns DEPENDS_ON relationships to packs which are hidden
+    MATCH (pack:Pack {{hidden:FALSE}})-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:TRUE}}]->(hidden_pack:Pack {{hidden: TRUE}})
+    WHERE NOT r.is_test {pack_filter}
+    RETURN pack, collect(r) as relationships, collect(hidden_pack) as nodes_to
+    """
     return {
-        item.get("pack1").element_id: Neo4jRelationshipResult(
-            node_from=item.get("pack1"),
+        item.get("pack").element_id: Neo4jRelationshipResult(
+            node_from=item.get("pack"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
         )

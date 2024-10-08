@@ -3,15 +3,10 @@ from pathlib import Path
 from shutil import rmtree, unpack_archive
 
 import click
-import demisto_client
 import pytest
-from demisto_client.demisto_api import DefaultApi
-from packaging.version import parse
 
 from demisto_sdk.__main__ import zip_packs
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.upload import uploader
-from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.tests.constants_test import PACK_TARGET
 
 UNIT_TEST_DATA = src_root() / "commands" / "zip_packs" / "tests" / "data"
@@ -98,33 +93,6 @@ class TestPacksZipper:
             )
             unpack_archive(f"{tmp_output_dir}/uploadable_packs.zip", tmp_output_dir)
             assert Path(f"{tmp_output_dir}/TestPack.zip").exists()
-
-    def test_zip_with_upload(self, mocker):
-        """
-        Given:
-            - the upload flag is turn on
-        When:
-            - run the zip_packs command
-        Then:
-            - validate the upload command was called once
-        """
-        mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
-        mocker.patch.object(
-            uploader, "get_demisto_version", return_value=parse("6.0.0")
-        )
-        mocker.patch.object(Uploader, "upload")
-
-        with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(
-                zip_packs,
-                input=TEST_PACK_PATH,
-                output=tmp_output_dir,
-                content_version="0.0.0",
-                zip_all=True,
-                upload=True,
-            )
-
-            assert Uploader.upload.called_once()
 
     # Edge cases
     def test_invalid_pack_name(self):

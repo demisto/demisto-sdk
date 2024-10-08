@@ -2695,7 +2695,8 @@ class TestIntegrationDocUpdate:
                 test_case["expected_first_line"],
                 test_case["expected_last_line"],
             )
-            for test_case in util_load_json("test_files/table_bounds_test_cases.json")
+            for test_case in
+            util_load_json("demisto_sdk/commands/generate_docs/tests/test_files/table_bounds_test_cases.json")
         ],
     )
     def test_find_table_bounds(

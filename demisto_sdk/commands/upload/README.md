@@ -49,39 +49,30 @@ Supported content entities:
 Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 ### Arguments
-* **-i <PATH_IN_CONTENT>, --input --<PATH_IN_CONTENT>**
+* **-i, --input**
 
-    Where PATH_IN_CONTENT is one of the following:
+    The path of file or a directory to upload. The following are supported:
     1. Pack
-    2. Directory inside a pack for example: Playbooks
+    2. Directory inside a pack for example: Integrations
     3. Directory containing an integration or a script data for example: HelloWorld
     4. Valid file that can be imported to Cortex XSOAR manually For example a playbook: HelloWorld.yml
-    5. Path to zipped pack (may located outside the Content directory)
+    5. Path to zipped pack (may locate outside the Content directory)
 
-* **-z, --zip**
+* **-z/-nz, --zip/--no-zip**
 
-    in case a pack was passed in the -i argument or using `--input-config-file` argument - zip the pack before upload.
-    Defauts to `true`.
+    Compress the pack to zip before upload, this flag is relevant only for packs.
 
-* **--nz, --no-zip**
+* **--keep-zip**
 
-    Will not zip the pack and will upload the content items, item by item as custom content.
-
-* **--keep-zip <DIRECTORY_FOR_THE_ZIP>**
-
-    in case a pack was passed in the -i argument and -z is used, DIRECTORY_FOR_THE_ZIP is where to store the zip after creation.
+    Directory where to store the zip after creation, this argument is relevant only for packs and in case the --zip flag is used.
 
 * **--override-existing**
 
-    If true, will skip the override confirmation prompt while uploading packs.
+    This value (True/False) determines if the user should be presented with a confirmation prompt when attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload command to be used within non-interactive shells.
 
 * **--insecure**
 
     Skip certificate validation
-
-* **-v, --verbose**
-
-    Verbose output - The argument -v is deprecated. Use --console-log-threshold or --file-log-threshold instead.
 
 * **--input-config-file**
 
@@ -89,7 +80,7 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 * **--skip-validation**
 
-    if true will skip all upload packs validations, use just when migrate existing custom content entities to custom content packs to override all the entities with the packs.
+    Only for upload zipped packs, if true will skip upload packs validation, use just when migrate existing custom content to packs.
 
 * **-x, --xsiam**
 
@@ -102,6 +93,15 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 * **--file-log-threshold**
 
     Minimum logging threshold for the file logger. Possible values: DEBUG, INFO, WARNING, ERROR.
+* **-tpb**
+
+    Adds the test playbook for upload when the -tpb flag is used. This flag is relevant only for packs.
+* **-mp, --marketplace**
+
+    The marketplace to which the content will be uploaded.
+* **--reattach**
+
+    Reattach the detached files in the XSOAR instance for the CI/CD Flow. If you set the --input-config-file flag, any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder will be re-attached.
 
 ### Examples
 ```

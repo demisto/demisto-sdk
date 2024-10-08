@@ -1523,16 +1523,16 @@ def format(ctx, **kwargs):
     type=PathsParamType(exists=True, resolve_path=True),
     help="The path of file or a directory to upload. The following are supported:\n"
     "- Pack\n"
-    "- A content entity directory that is inside a pack. For example: an Integrations "
-    "directory or a Layouts directory.\n"
-    "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
-    "helloWorld.yml",
+    "- Directory inside a pack. For example: Integrations\n"
+    "- Directory containing an integration or a script data for example: HelloWorld\n"
+    "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: helloWorld.yml"
+    "- Path to zipped pack (may locate outside the Content directory).",
     required=False,
 )
 @click.option(
     "--input-config-file",
     type=PathsParamType(exists=True, resolve_path=True),
-    help="The path to the config file to download all the custom packs from",
+    help="The path to the config file to download all the custom packs from.",
     required=False,
 )
 @click.option(
@@ -1551,7 +1551,7 @@ def format(ctx, **kwargs):
 @click.option(
     "-x",
     "--xsiam",
-    help="Upload the pack to XSIAM server. Must be used together with -z",
+    help="Upload the pack to XSIAM server. Must be used together with -z.",
     is_flag=True,
 )
 @click.option(
@@ -1612,34 +1612,35 @@ def upload(ctx, **kwargs):
 @click.option(
     "-o",
     "--output",
-    help="A path to a pack directory to download content to.",
+    help="A path to a pack directory to download custom content to.",
     required=False,
     multiple=False,
 )
 @click.option(
     "-i",
     "--input",
-    help="Name of a custom content item to download. The flag can be used multiple times to download multiple files.",
+    help="Custom content file name to be downloaded. Can be provided multiple times. "
+    "File names can be retrieved using the -lf flag.",
     required=False,
     multiple=True,
 )
 @click.option(
     "-r",
     "--regex",
-    help="Download all custom content items matching this RegEx pattern.",
+    help="Regex Pattern. When specified, download all the custom content files with a name that matches this regex pattern.",
     required=False,
 )
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-f",
     "--force",
-    help="If downloaded content already exists in the output directory, overwrite it. ",
+    help="Whether to override existing files or not.",
     is_flag=True,
 )
 @click.option(
     "-lf",
     "--list-files",
-    help="List all custom content items available to download and exit.",
+    help="List all custom content items available to download.",
     is_flag=True,
 )
 @click.option(
@@ -1654,7 +1655,7 @@ def upload(ctx, **kwargs):
     help="Format downloaded files.",
     is_flag=True,
 )
-@click.option("--system", help="Download system items", is_flag=True, default=False)
+@click.option("--system", help="Download system items.", is_flag=True, default=False)
 @click.option(
     "-it",
     "--item-type",
@@ -1687,7 +1688,7 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--auto-replace-uuids/--no-auto-replace-uuids",
-    help="Whether to replace UUID IDs (automatically assigned to custom content by the server) for downloaded custom content.",
+    help="If False, avoid UUID replacements when downloading using the download command. The default value is True.",
     default=True,
 )
 @click.pass_context
@@ -2229,7 +2230,7 @@ def init(ctx, **kwargs):
 )
 @click.option(
     "--insecure",
-    help="Skip certificate validation to run the commands in order to generate the docs.",
+    help="Skip certificate validation.",
     is_flag=True,
 )
 @click.option("--old-version", help="Path of the old integration version yml file.")
@@ -2245,7 +2246,7 @@ def init(ctx, **kwargs):
 @click.option(
     "-rt",
     "--readme-template",
-    help="The readme template that should be appended to the given README.md file",
+    help="The readme template that should be appended to the given README.md file.",
     type=click.Choice(["syslog", "xdrc", "http-collector"]),
 )
 @click.option(
@@ -2529,39 +2530,43 @@ def merge_id_sets(ctx, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The relative path of the content pack. For example Packs/Pack_Name",
+    help="The path of the content pack you wish to generate release notes for.",
 )
 @click.option(
     "-u",
     "--update-type",
-    help="The type of update being done. [major, minor, revision, documentation]",
+    help="The type of update being done.",
     type=click.Choice(["major", "minor", "revision", "documentation"]),
 )
 @click.option(
-    "-v", "--version", help="Bump to a specific version.", type=VersionParamType()
+    "-v",
+    "--version",
+    help="Bump to a specific version. Cannot be used with -u, --update_type flag.",
+    type=VersionParamType(),
 )
 @click.option(
     "-g",
     "--use-git",
-    help="Use git to identify the relevant changed files, will be used by default if '-i' is not set",
+    help="Use git to identify the relevant changed files, will be used by default if '-i' is not set.",
     is_flag=True,
 )
 @click.option(
     "-f",
     "--force",
-    help="Force update release notes for a pack (even if not required).",
+    help="Update the release notes of a pack even if no changes that require update were made.",
     is_flag=True,
 )
 @click.option(
     "--text",
-    help="Text to add to all of the release notes files.",
+    help="Text to add to all the release notes files.",
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
 )
 @click.option(
     "--pre_release",
-    help="Indicates that this change should be designated a pre-release version.",
+    help="Indicates that this update is for a pre-release version. "
+    "The currentVersion will change to reflect the pre-release version number.",
     is_flag=True,
 )
 @click.option(
@@ -2670,8 +2675,8 @@ def update_release_notes(ctx, **kwargs):
 @click.option(
     "-o",
     "--output-path",
-    help="The destination path for the packs dependencies json file. This argument is "
-    "only relevant for when using the '--all-packs-dependecies' flag.",
+    help="The destination path for the packs dependencies json file. "
+    "This argument only works when using either the --all-packs-dependencies or --get-dependent-on flags.",
     required=False,
 )
 @click.option(
@@ -2732,14 +2737,14 @@ def find_dependencies(ctx, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The Postman collection 2.1 JSON file",
+    help="The Postman collection 2.1 JSON file.",
     required=True,
     type=click.File(),
 )
 @click.option(
     "-o",
     "--output",
-    help="The output directory to save the config file or the integration.",
+    help="Directory to store the output in (default is current working directory).",
     type=click.Path(dir_okay=True, exists=True),
     default=Path("."),
     show_default=True,

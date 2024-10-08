@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json, get_yaml
+from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 
 # from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.generate_docs import common
@@ -62,12 +63,6 @@ TEST_FILES = os.path.join(
 )
 
 yaml = YAML_Handler()
-
-
-# Helper Functions
-def util_load_json(path):
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
 
 
 # common tests
@@ -2695,8 +2690,8 @@ class TestIntegrationDocUpdate:
                 test_case["expected_first_line"],
                 test_case["expected_last_line"],
             )
-            for test_case in util_load_json(
-                "demisto_sdk/commands/generate_docs/tests/test_files/table_bounds_test_cases.json"
+            for test_case in load_json(
+                "table_bounds_test_cases.json"
             )
         ],
     )

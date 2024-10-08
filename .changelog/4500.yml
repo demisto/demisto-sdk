@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where docker logs print excesses
+  type: fix
+pr_number: 4500

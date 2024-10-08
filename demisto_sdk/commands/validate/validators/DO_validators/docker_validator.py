@@ -18,6 +18,6 @@ class DockerValidator(BaseValidator[ContentTypes], ABC):
         support_level_dict: dict,
         running_execution_mode: Optional[ExecutionMode],
     ) -> bool:
-        return "apimodule" in (str(content_item.path)).lower() and super().should_run(
+        return "apimodule" not in (str(content_item.path)).lower() and super().should_run(
             content_item, ignorable_errors, support_level_dict, running_execution_mode
         )

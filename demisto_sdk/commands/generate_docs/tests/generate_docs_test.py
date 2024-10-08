@@ -2747,29 +2747,28 @@ class TestIntegrationDocUpdate:
         assert integration_doc_update_manager.output_doc == expected_output
         assert len(integration_doc_update_manager.update_errors) == 0
 
+    def test_table_not_found(self, mocker):
+        """Test when the parameter table is not found in the README."""
+        # Mock setup
+        integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
+        integration_doc_update_manager.update_errors = []
+        integration_doc_update_manager.output_doc = (
+            "Header\nSome random text\nNo table here."
+        )
+        mocker.patch(
+            "demisto_sdk.commands.generate_docs.generate_integration_doc.generate_setup_section",
+            return_value="",
+        )
+        # Patch the method to simulate no table found
+        mocker.patch.object(
+            IntegrationDocUpdateManager, "find_table_bounds", return_value=(None, None)
+        )
 
-def test_table_not_found(mocker):
-    """Test when the parameter table is not found in the README."""
-    # Mock setup
-    integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
-    integration_doc_update_manager.update_errors = []
-    integration_doc_update_manager.output_doc = (
-        "Header\nSome random text\nNo table here."
-    )
-    mocker.patch(
-        "demisto_sdk.commands.generate_docs.generate_integration_doc.generate_setup_section",
-        return_value="",
-    )
-    # Patch the method to simulate no table found
-    mocker.patch.object(
-        IntegrationDocUpdateManager, "find_table_bounds", return_value=(None, None)
-    )
+        # Run the function
+        integration_doc_update_manager._update_conf_section()
 
-    # Run the function
-    integration_doc_update_manager._update_conf_section()
-
-    # Check that the correct error is logged
-    assert (
-        "Unable to find configuration section line in README: Parameters table not found or incomplete in the "
-        "README."
-    ) in integration_doc_update_manager.update_errors
+        # Check that the correct error is logged
+        assert (
+            "Unable to find configuration section line in README: Parameters table not found or incomplete in the "
+            "README."
+        ) in integration_doc_update_manager.update_errors

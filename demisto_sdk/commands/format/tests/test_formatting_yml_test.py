@@ -400,7 +400,6 @@ class TestFormatting:
         )
         base_yml = PlaybookYMLFormat(source_path, path=schema_path)
         base_yml.add_description()
-        base_yml.update_playbook_task_name()
 
         assert (
             base_yml.data["tasks"]["29"]["task"]["name"]

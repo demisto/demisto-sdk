@@ -3354,24 +3354,33 @@ def convert(ctx, config, **kwargs):
 @click.option(
     "-o",
     "--output_dir",
-    help="Directory to store the output in (default is the input integration directory)",
+    help="Directory to store the output - the generated test file in in (default is the input integration directory)",
     required=False,
 )
-@click.option("-i", "--input_path", help="Valid integration file path.", required=True)
 @click.option(
-    "-d", "--use_demisto", help="Run commands at Demisto automatically.", is_flag=True
+    "-i", "--input_path", help="Path of the integration python file.", required=True
+)
+@click.option(
+    "-d",
+    "--use_demisto",
+    help="If passed, the XSOAR instance configured in the DEMISTO_BASE_URL and DEMISTO_API_KEY "
+    "environment variables will run the Integration commands and generate outputs which "
+    "will be used as mock outputs. If this flag is not passed, you will need to create the "
+    "mocks manually, at the outputs directory, with the name of the command.",
+    is_flag=True,
 )
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-e",
     "--examples",
-    help="Integrations: path for file containing command examples."
-    " Each command should be in a separate line.",
+    help="A path for a file containing Integration command examples. Each command example should be in a "
+    "separate line.\n A comma-separated list of examples, wrapped by quotes. If the file or the list contains "
+    "a command with more than one example, all of them will be used as different test cases.",
 )
 @click.option(
     "-a",
     "--append",
-    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT",
+    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT.",
     is_flag=True,
 )
 @click.pass_context
@@ -3442,7 +3451,7 @@ def error_code(ctx, config, **kwargs):
     "--output-path",
     type=click.Path(resolve_path=True, path_type=Path, dir_okay=True, file_okay=False),
     default=None,
-    help="Output folder to place the zip file of the graph exported CSVs files",
+    help="Output folder to place the zip file of the graph exported CSVs files.",
 )
 @click.option(
     "-mp",
@@ -3578,7 +3587,8 @@ def update_content_graph(
     type=PathsParamType(
         exists=True, resolve_path=True
     ),  # PathsParamType allows passing a list of paths
-    help="Paths to content integrations or script to setup the environment. If not provided, will configure the environment for the content repository.",
+    help="Paths to content integrations or script to setup the environment. "
+    "If not provided, will configure the environment for the content repository.",
 )
 @click.option(
     "--create-virtualenv",
@@ -3594,7 +3604,8 @@ def update_content_graph(
 )
 @click.option(
     "--secret-id",
-    help="Secret ID to use for the Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set.",
+    help="Secret ID to use for the Google Secret Manager instance. "
+    "Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set.",
     required=False,
 )
 @click.option(
@@ -3607,13 +3618,14 @@ def update_content_graph(
     required=False,
     is_flag=True,
     default=False,
-    help="Whether to run test-module on the configured XSOAR / XSIAM instance.",
+    help="Whether to run test-module on the configured XSOAR / XSIAM integration instance.",
 )
 @click.option(
     "--clean",
     is_flag=True,
     default=False,
-    help="Clean the repository of temporary files created by the 'lint' command.",
+    help="Clean the repo out of the temp CommonServerPython.py files, demistomock.py and other files "
+    "that were created by lint.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(

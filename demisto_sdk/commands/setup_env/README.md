@@ -21,8 +21,8 @@ demisto-sdk setup-env [OPTIONS] [FILE_PATHS]
 | --- | --- |
 | `-i`, `--input` | Paths to content integrations or script to setup the environment. If not provided, will configure the environment for the content repository. |
 | `--create-virtualenv` | Create a virtualenv for the environment. |
-| `--overwrite-virtualenv` | Overwrite existing virtualenvs. Use with the create-virtualenv flag. |
-| `-secret-id` | Secret ID, to use with Google Secret Manager instance. If not provided, will use the integration id. |
+| `--overwrite-virtualenv` | Overwrite existing virtualenvs. Relevant only if the 'create-virtualenv' flag is used.. |
+| `-secret-id` | Secret ID, to use with Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set. |
 | `--instance-name` | Instance name to configure in XSOAR/XSIAM. |
-| `--run-test-module` | Whether to run the test-module of the integration. |
+| `--run-test-module` | Whether to run test-module on the configured XSOAR / XSIAM integration instance. |
 | `--clean` | Clean the repo out of the temp `CommonServerPython.py` files, `demistomock.py` and other files that were created by `lint`. |

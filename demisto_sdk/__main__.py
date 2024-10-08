@@ -1135,12 +1135,6 @@ def secrets(ctx, config, file_paths: str, **kwargs):
 
 # ====================== lint ====================== #
 @main.command(hidden=True)
-@main.command(
-    context_settings=dict(
-        ignore_unknown_options=True,
-        allow_extra_args=True,
-    )
-)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",

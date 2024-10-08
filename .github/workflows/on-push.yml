@@ -477,7 +477,7 @@ jobs:
         with:
           enable-cache: true
           version: "latest"
-    
+
       - name: intsall using uv
         run: uv venv --python 3.11 && uv pip install .
 

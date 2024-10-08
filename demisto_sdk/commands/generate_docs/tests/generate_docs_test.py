@@ -2690,9 +2690,7 @@ class TestIntegrationDocUpdate:
                 test_case["expected_first_line"],
                 test_case["expected_last_line"],
             )
-            for test_case in load_json(
-                "table_bounds_test_cases.json"
-            )
+            for test_case in load_json("table_bounds_test_cases.json")
         ],
     )
     def test_find_table_bounds(

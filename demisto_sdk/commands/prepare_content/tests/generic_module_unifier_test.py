@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 
@@ -15,7 +14,6 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
 )
 from TestSuite.test_tools import (
     ChangeCWD,
-    str_in_call_args_list,
 )
 
 
@@ -94,7 +92,7 @@ def test_merge_generic_module_with_its_dashboards_positive(repo):
         assert unified_generic_module == UNIFIED_GENERIC_MODULE
 
 
-def test_merge_generic_module_with_its_dashboards_negative(repo, mocker, monkeypatch):
+def test_merge_generic_module_with_its_dashboards_negative(repo, caplog):
     """
     Given
     - A pack with a valid generic module, and no dashboard that it's id matches a dashboard in the generic module.
@@ -106,8 +104,6 @@ def test_merge_generic_module_with_its_dashboards_negative(repo, mocker, monkeyp
     - Ensure the module wasn't unified.
     - Ensure a suitable error message was printed.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
     pack.create_generic_module("generic-module", GENERIC_MODULE)
@@ -123,10 +119,9 @@ def test_merge_generic_module_with_its_dashboards_negative(repo, mocker, monkeyp
         unifier = GenericModuleUnifier(input=generic_module_path)
         non_unified_generic_module = unifier.merge_generic_module_with_its_dashboards()
         assert non_unified_generic_module == GENERIC_MODULE
-        assert str_in_call_args_list(
-            logger_info.call_args_list,
-            f"Dashboard {generic_module_dash_id} was not found in pack: PackName and therefore was not unified",
-        )
+        assert (
+            f"Dashboard {generic_module_dash_id} was not found in pack: PackName and therefore was not unified"
+        ) in caplog.text
 
 
 def test_save_unified_generic_module(repo):

@@ -1,3 +1,4 @@
+import more_itertools
 import pytest
 
 from demisto_sdk.commands.common.tools import find_pack_folder
@@ -9,8 +10,15 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
+from demisto_sdk.commands.validate.validators.RM_validators.RM100_no_empty_sections import (
+    EmptySectionsValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_valid import (
     IsImagePathValidValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM102_is_missing_context_output import (
+    IsMissingContextOutputValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
@@ -33,11 +41,20 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM108_is_readme_imag
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM110_is_commands_in_readme import (
+    IsCommandsInReadmeValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_copy_right_section import (
     IsContainCopyRightSectionValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
     IsImageExistsInReadmeValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM115_no_default_section_left import (
+    NoDefaultSectionsLeftReadmeValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM116_readme_not_to_short import (
+    NotToShortReadmeValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -655,3 +672,412 @@ def test_VerifyTemplateInReadmeValidator_invalid_case(repo):
         ),
     ]
     assert not IsTemplateInReadmeValidator().obtain_invalid_content_items(content_items)
+
+
+def test_get_command_context_path_from_readme_file_missing_from_yml():
+    """
+    Given a command name and README content, and missing commands from yml
+    When get_command_context_path_from_readme_file is called
+    Then it should return the expected set of context paths
+    """
+    readme_content = (
+        "### test-command\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`test-command`\n"
+        "#### Input\n\n"
+        "| **Argument Name** | **Description**                  | **Required** |\n"
+        "| ----------------- | -------------------------------- | ------------ |\n"
+        "| short_description | Short description of the ticket. | Optional     |\n\n\n"
+        " #### Context Output\n\n"
+        "| **Path**             | **Type** | **Description**       |\n"
+        "| -------------------- | -------- | --------------------- |\n"
+        "| Test.Path1 | string   | test. |\n"
+    )
+    integrations = [
+        create_integration_object(
+            paths=[
+                "script.commands",
+            ],
+            values=[[{"name": "test-command"}]],
+            readme_content=readme_content,
+        ),
+    ]
+    results = IsMissingContextOutputValidator().obtain_invalid_content_items(
+        integrations
+    )
+    assert (
+        results[0].message
+        == "Find discrepancy for the following commands:\ntest-command:\nThe following outputs are missing from yml: Test.Path1\n"
+    )
+
+
+def test_get_command_context_path_from_readme_file_missing_from_readme():
+    """
+    Given a command name and README content with missing context outputs
+    When get_command_context_path_from_readme_file is called
+    Then it should return the expected set of context paths and show missing from readme
+    """
+    readme_content = (
+        "### test-command\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`test-command`\n"
+        "#### Input\n\n"
+        "| **Argument Name** | **Description** | **Required** |\n"
+        "| ----------------- | --------------- | ------------ |\n"
+        "| arg1              | Test argument   | Optional     |\n\n\n"
+        " #### Context Output\n\n"
+        "| **Path**    | **Type** | **Description** |\n"
+        "| ----------- | -------- | --------------- |\n"
+        "| Test.Path1  | string   | test.           |\n"
+    )
+    yml_content = {
+        "script": {
+            "commands": [
+                {
+                    "name": "test-command",
+                    "outputs": [
+                        {"contextPath": "Test.Path1"},
+                        {"contextPath": "Test.Path2"},
+                    ],
+                }
+            ]
+        }
+    }
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[yml_content["script"]["commands"]],
+        readme_content=readme_content,
+    )
+    results = IsMissingContextOutputValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert (
+        results[0].message
+        == "Find discrepancy for the following commands:\ntest-command:\nThe following outputs are missing from readme: Test.Path2\n"
+    )
+
+
+def test_get_command_context_path_from_readme_file_no_discrepancies():
+    """
+    Given a command name and README content with matching context outputs in YML
+    When get_command_context_path_from_readme_file is called
+    Then it should return an empty list of results
+    """
+    readme_content = (
+        "### test-command\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`test-command`\n"
+        "#### Input\n\n"
+        "| **Argument Name** | **Description** | **Required** |\n"
+        "| ----------------- | --------------- | ------------ |\n"
+        "| arg1              | Test argument   | Optional     |\n\n\n"
+        " #### Context Output\n\n"
+        "| **Path**    | **Type** | **Description** |\n"
+        "| ----------- | -------- | --------------- |\n"
+        "| Test.Path1  | string   | test.           |\n"
+        "| Test.Path2  | string   | test.           |\n"
+    )
+    yml_content = {
+        "script": {
+            "commands": [
+                {
+                    "name": "test-command",
+                    "outputs": [
+                        {"contextPath": "Test.Path1"},
+                        {"contextPath": "Test.Path2"},
+                    ],
+                }
+            ]
+        }
+    }
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[yml_content["script"]["commands"]],
+        readme_content=readme_content,
+    )
+    results = IsMissingContextOutputValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_get_command_context_path_from_readme_file_multiple_commands():
+    """
+    Given multiple commands with discrepancies in context outputs
+    When get_command_context_path_from_readme_file is called
+    Then it should return the expected set of context paths for all commands
+    """
+    readme_content = (
+        "### command1\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`command1`\n"
+        "#### Context Output\n\n"
+        "| **Path**    | **Type** | **Description** |\n"
+        "| ----------- | -------- | --------------- |\n"
+        "| Test.Path1  | string   | test.           |\n"
+        "### command2\n"
+        "***\n"
+        "test.\n\n\n"
+        "#### Base Command\n\n"
+        "`command2`\n"
+        "#### Context Output\n\n"
+        "| **Path**    | **Type** | **Description** |\n"
+        "| ----------- | -------- | --------------- |\n"
+        "| Test.Path2  | string   | test.           |\n"
+        "| Test.Path3  | string   | test.           |\n"
+    )
+    yml_content = {
+        "script": {
+            "commands": [
+                {
+                    "name": "command1",
+                    "outputs": [
+                        {"contextPath": "Test.Path1"},
+                        {"contextPath": "Test.Path2"},
+                    ],
+                },
+                {
+                    "name": "command2",
+                    "outputs": [
+                        {"contextPath": "Test.Path2"},
+                        {"contextPath": "Test.Path4"},
+                    ],
+                },
+            ]
+        }
+    }
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[yml_content["script"]["commands"]],
+        readme_content=readme_content,
+    )
+    results = IsMissingContextOutputValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert (
+        "command1:\nThe following outputs are missing from readme: Test.Path2\n"
+        in results[0].message
+    )
+    assert (
+        "command2:\nThe following outputs are missing from yml: Test.Path3\nThe following outputs are missing from readme: Test.Path4\n"
+        in results[0].message
+    )
+
+
+def test_IsCommandsInReadmeValidator_not_valid():
+    """
+    Given: An integration object with commands 'command1' and 'command2'
+    When: The README content is empty
+    Then: The IsCommandsInReadmeValidator should return a single result with a message
+          indicating that the commands are missing from the README file
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {"name": "command1"},
+                {"name": "command2"},
+            ]
+        ],
+        readme_content="",
+    )
+    results = IsCommandsInReadmeValidator().obtain_invalid_content_items([content_item])
+    assert more_itertools.one(results), "The validator should return a single result"
+    assert results[0].message == (
+        "The following commands appear in the YML file but not in the README file: command1, command2."
+    )
+
+
+def test_IsCommandsInReadmeValidator_valid():
+    """
+    Given: An integration object with commands 'command1' and 'command2'
+    When: The README content includes both command names
+    Then: The IsCommandsInReadmeValidator should not report any invalid content items
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {"name": "command1"},
+                {"name": "command2"},
+            ]
+        ],
+        readme_content="command1, command2",
+    )
+    assert not IsCommandsInReadmeValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+
+@pytest.mark.parametrize(
+    "file_input, missing_section",
+    [
+        ("## Troubleshooting\n## OtherSection", "Troubleshooting"),
+        ("## Troubleshooting", "Troubleshooting"),
+        ("## Troubleshooting\n\n---\n## OtherSection", "Troubleshooting"),
+        ("## Use Cases\n\n----------\n## OtherSection", "Use Cases"),
+        ("## Additional Information\n\n## OtherSection", "Additional Information"),
+        ("## Known Limitations\n\n----------\n", "Known Limitations"),
+    ],
+)
+def test_unvalid_verify_no_empty_sections(file_input, missing_section):
+    """
+    Given
+        - Empty sections in different forms
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+    content_item = create_integration_object(readme_content=file_input)
+    validation_result: list[ValidationResult] = (
+        EmptySectionsValidator().obtain_invalid_content_items([content_item])
+    )
+    section_error = f"The section/s: {missing_section} is/are empty\nplease elaborate or delete the section.\n"
+    if validation_result:
+        assert validation_result[0].message == section_error
+
+
+def test_combined_unvalid_verify_no_empty_sections():
+    """
+    Given
+        - Couple of empty sections
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+    file_input = "## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"
+    content_item = create_integration_object(readme_content=file_input)
+    empty_section_validator = EmptySectionsValidator()
+    validation_results: list[ValidationResult] = (
+        empty_section_validator.obtain_invalid_content_items([content_item])
+    )
+    error = "The section/s: Troubleshooting, Additional Information is/are empty\nplease elaborate or delete the section.\n"
+    assert error == validation_results[0].message
+
+
+@pytest.mark.parametrize(
+    "file_input",
+    [
+        "## Troubleshooting\ninput",
+        "## Troubleshooting\n\n---\ninput",
+        "## Use Cases\n\n----------\ninput",
+        "## Additional Information\n\ninput",
+        "## Additional Information\n\n### OtherSection",
+        "## Known Limitations\n\n----------\ninput",
+    ],
+)
+def test_valid_sections(file_input):
+    """
+    Given
+        - Valid sections in different forms from SECTIONS
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+    content_item = create_integration_object(readme_content=file_input)
+    validation_result: list[ValidationResult] = (
+        EmptySectionsValidator().obtain_invalid_content_items([content_item])
+    )
+    assert not validation_result
+
+
+@pytest.mark.parametrize(
+    "file_input, section",
+    [
+        (
+            "##### Required Permissions\n**FILL IN REQUIRED PERMISSIONS HERE**\n##### Base Command",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "##### Required Permissions **FILL IN REQUIRED PERMISSIONS HERE**\n##### Base Command",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "This integration was integrated and tested with version xx of integration v2.",
+            "version xx",
+        ),
+        (
+            "##Dummy Integration\n this integration is for getting started and learn how to build an "
+            "integration. some extra text here",
+            "getting started and learn how to build an integration",
+        ),
+        (
+            "In this readme template all required notes should be replaced.\n# %%UPDATE%% <Product Name>",
+            "%%UPDATE%%",
+        ),
+    ],
+)
+def test_verify_no_default_sections_left(file_input, section):
+    """
+    Given
+        - Readme that contains sections that are created as default and need to be changed
+    When
+        - Run validate on README file
+    Then
+        - Ensure no default sections in the readme file
+    """
+    content_item = create_integration_object(readme_content=file_input)
+    no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator()
+    validation_result: list[ValidationResult] = (
+        no_default_section_left_validator.obtain_invalid_content_items([content_item])
+    )
+    section_error = f'The following default sentences "{section}" still exist in the readme, please replace with a suitable info.'
+    assert section_error == validation_result[0].message
+
+
+def test_readme_ignore():
+    """
+    Check that packs in ignore list are ignored.
+       Given
+            - A pack from the ignore list
+        When
+            - Run validate on README of ignored pack
+        Then
+            - Ensure validation ignored the pack
+    """
+    readme_text = "getting started and learn how to build an integration"
+    pack_content_item = create_pack_object(name="HelloWorld", readme_text=readme_text)
+    no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator()
+    assert not no_default_section_left_validator.obtain_invalid_content_items(
+        [pack_content_item]
+    )
+
+
+def test_invalid_short_file():
+    """
+    Given
+        - Non empty Readme with less than 30 chars.
+    When
+        - Running validate on README file
+    Then
+        - Ensure verify on Readme fails
+    """
+    short_readme = "This is a short readme"
+    test_pack = create_pack_object(readme_text=short_readme)
+    not_to_short_readme_validator = NotToShortReadmeValidator()
+    short_readme_error = """Your Pack README is too short (22 chars). Please move its content to the pack description or add more useful information to the Pack README. Pack README files are expected to include a few sentences about the pack and/or images."""
+
+    result: list[ValidationResult] = (
+        not_to_short_readme_validator.obtain_invalid_content_items([test_pack])
+    )
+    assert result[0].message == short_readme_error

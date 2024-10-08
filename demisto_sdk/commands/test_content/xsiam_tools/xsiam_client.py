@@ -141,8 +141,7 @@ class XsiamApiClient(XsiamApiInterface):
         if not demisto_version:
             raise RuntimeError("Could not get the tenant's demisto version")
         logger.info(
-            f"[green]Demisto version of XSIAM tenant is {demisto_version}[/green]",
-            extra={"markup": True},
+            f"<green>Demisto version of XSIAM tenant is {demisto_version}</green>",
         )
         return Version(demisto_version)
 
@@ -239,9 +238,11 @@ class XsiamApiClient(XsiamApiInterface):
             endpoint = urljoin(self.base_url, "logs/v1/event")
             additional_headers = {
                 "authorization": self.collector_token,
-                "content-type": "application/json"
-                if data_format.casefold == "json"
-                else "text/plain",
+                "content-type": (
+                    "application/json"
+                    if data_format.casefold == "json"
+                    else "text/plain"
+                ),
                 "content-encoding": "gzip",
             }
             token_type = "collector_token"
@@ -270,7 +271,7 @@ class XsiamApiClient(XsiamApiInterface):
     def start_xql_query(self, query: str):
         body = {"request_data": {"query": query}}
         endpoint = urljoin(self.base_url, "public_api/v1/xql/start_xql_query/")
-        logger.info(f"Starting xql query:\nendpoint={endpoint}\n{query=}")
+        logger.info("{}", f"Starting xql query:\nendpoint={endpoint}\n{query=}")  # noqa: PLE1205
         response = self._session.post(endpoint, json=body)
         logger.debug("Request completed to start xql query")
         data = response.json()
@@ -292,11 +293,11 @@ class XsiamApiClient(XsiamApiInterface):
             }
         )
         endpoint = urljoin(self.base_url, "public_api/v1/xql/get_query_results/")
-        logger.info(f"Getting xql query results: endpoint={endpoint}")
+        logger.info("{}", f"Getting xql query results: endpoint={endpoint}")  # noqa: PLE1205
         response = self._session.post(endpoint, data=payload, timeout=timeout)
         logger.debug("Request completed to get xql query results")
         data = response.json()
-        logger.debug(pformat(data))
+        logger.debug("{}", pformat(data))  # noqa: PLE1205
 
         if (
             response.status_code in range(200, 300)

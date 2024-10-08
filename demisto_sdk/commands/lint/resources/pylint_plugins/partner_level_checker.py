@@ -18,11 +18,11 @@
 
 import astroid
 from pylint.checkers import BaseChecker
-from pylint.interfaces import IAstroidChecker
+from pylint.typing import MessageDefinitionTuple
 
 # --------------------------------------------------- Messages --------------------------------------------------------
 
-partner_msg = {
+partner_msg: dict[str, MessageDefinitionTuple] = {
     "W9010": (
         "try and except statements were not found in main function. Please add them",
         "try-except-main-doesnt-exists",
@@ -43,7 +43,6 @@ partner_msg = {
 
 
 class PartnerChecker(BaseChecker):
-    __implements__ = IAstroidChecker
     name = "partner-checker"
     priority = -1
     msgs = partner_msg
@@ -120,8 +119,8 @@ class PartnerChecker(BaseChecker):
 
             # Iterate over the children nodes of the main function node and search for Try/ TryFinally node.
             for child in node.get_children():
-                if isinstance(child, astroid.TryExcept) or isinstance(
-                    child, astroid.TryFinally
+                if isinstance(child, astroid.ExceptHandler) or isinstance(
+                    child, astroid.Try
                 ):
                     try_except_exists = True
 

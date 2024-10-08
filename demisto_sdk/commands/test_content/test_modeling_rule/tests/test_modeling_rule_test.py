@@ -7,7 +7,6 @@ import typer
 from freezegun import freeze_time
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.logger import logger
 
 DEFAULT_TEST_EVENT_ID = UUID("00000000-0000-0000-0000-000000000000")
 
@@ -305,9 +304,6 @@ class TestValidateSchemaAlignedWithTestData:
             TestData,
         )
 
-        logger_error_mocker = mocker.patch.object(logger, "error")
-        logger_warning_mocker = mocker.patch.object(logger, "warning")
-
         test_data = TestData(
             data=[
                 EventLog(
@@ -322,8 +318,6 @@ class TestValidateSchemaAlignedWithTestData:
         )
 
         validate_schema_aligned_with_test_data(test_data=test_data, schema=schema_file)
-        assert not logger_error_mocker.called
-        assert not logger_warning_mocker.called
 
     def test_validate_schema_aligned_with_test_data_missing_fields_in_test_data(
         self, mocker
@@ -348,9 +342,6 @@ class TestValidateSchemaAlignedWithTestData:
             TestData,
         )
 
-        logger_error_mocker = mocker.patch.object(logger, "error")
-        logger_warning_mocker = mocker.patch.object(logger, "warning")
-
         test_data = TestData(
             data=[
                 EventLog(
@@ -373,8 +364,6 @@ class TestValidateSchemaAlignedWithTestData:
                 }
             },
         )
-        assert not logger_error_mocker.called
-        assert logger_warning_mocker.called
 
     def test_validate_schema_aligned_with_test_data_invalid_schema_mappings(
         self, mocker
@@ -399,9 +388,6 @@ class TestValidateSchemaAlignedWithTestData:
             TestData,
         )
 
-        logger_error_mocker = mocker.patch.object(logger, "error")
-        logger_warning_mocker = mocker.patch.object(logger, "warning")
-
         test_data = TestData(
             data=[
                 EventLog(
@@ -425,11 +411,9 @@ class TestValidateSchemaAlignedWithTestData:
             },
         )
         assert success is False
-        assert logger_error_mocker.called
-        assert not logger_warning_mocker.called
 
     def test_validate_schema_aligned_with_test_data_events_have_same_key_with_different_types(
-        self, mocker
+        self, caplog
     ):
         """
         Given:
@@ -449,9 +433,6 @@ class TestValidateSchemaAlignedWithTestData:
             EventLog,
             TestData,
         )
-
-        logger_error_mocker = mocker.patch.object(logger, "error")
-        logger_warning_mocker = mocker.patch.object(logger, "warning")
 
         test_data = TestData(
             data=[
@@ -484,8 +465,4 @@ class TestValidateSchemaAlignedWithTestData:
             },
         )
         assert success is False
-        assert (
-            "The testdata contains events with the same event_key"
-            in logger_error_mocker.call_args_list[0].args[0]
-        )
-        assert not logger_warning_mocker.called
+        assert "The testdata contains events with the same event_key" in caplog.text

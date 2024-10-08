@@ -1,4 +1,4 @@
-import logging
+import logging  # noqa: TID251 # special case: parallel logging
 import os
 import re
 import sys
@@ -2120,7 +2120,7 @@ class Integration:
 
         self.playbook.log_info(
             f"Configuring instance for {self} (instance name: {instance_name}, "  # type: ignore
-            f'validate "test-module": {self.configuration.should_validate_test_module})'
+            f'validate "test-module": {self.configuration.should_validate_test_module})'  # type:ignore[union-attr]
         )
 
         # define module instance:

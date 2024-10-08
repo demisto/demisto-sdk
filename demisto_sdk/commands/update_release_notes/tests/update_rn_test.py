@@ -78,7 +78,6 @@ class TestRNUpdate:
         """
         expected_result = (
             "\n#### Classifiers\n\n##### Hello World Classifier\n\n- %%UPDATE_RN%%\n"
-            "\n#### Connections\n\n##### Hello World Connection\n\n- %%UPDATE_RN%%\n"
             "\n#### Dashboards\n\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%\n"
             "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- %%UPDATE_RN%%\n"
             "\n#### Incident Types\n\n##### Hello World Incident Type\n\n- %%UPDATE_RN%%\n"
@@ -155,10 +154,6 @@ class TestRNUpdate:
                 "is_new_file": False,
             },
             ("Hello World Dashboard", FileType.DASHBOARD): {
-                "description": "",
-                "is_new_file": False,
-            },
-            ("Hello World Connection", FileType.CONNECTION): {
                 "description": "",
                 "is_new_file": False,
             },
@@ -348,7 +343,7 @@ class TestRNUpdate:
             - a dict of changed items
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
@@ -378,7 +373,7 @@ class TestRNUpdate:
             - a dict of changed items, with a documentation rn update
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
@@ -1516,6 +1511,102 @@ class TestRNUpdate:
 
         assert get_deprecated_rn(integration.path, FileType.INTEGRATION) == ""
 
+    def test_does_content_item_header_exist_in_rns_true(self):
+        """
+        Given:
+            A release notes string containing a content item header.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return True.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "##### Integration Name\n- Added a new feature"
+        content_name = "Integration Name"
+
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
+
+        assert result is True
+
+    def test_does_content_item_header_exist_in_rns_false(self):
+        """
+        Given:
+            A release notes string not containing a specific content item header.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return False.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "##### Other Integration\n- Fixed a bug"
+        content_name = "Integration Name"
+
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
+
+        assert result is False
+
+    def test_does_content_item_header_exist_in_rns_object_types(self):
+        """
+        Given:
+            A release notes string containing an Object Types section with a GenericType.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return True, matching the GenericType name.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "#### Object Types\n- **Sample GenericType**"
+        content_name = "Sample GenericType"
+
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
+
+        assert result is True
+
+    def test_does_content_item_header_exist_in_rns_playbooks(self):
+        """
+        Given:
+            A release notes string containing a Playbooks section with a new playbook.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return True, matching the playbook name.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "#### Playbooks\n\n##### New: Entity Enrichment - Generic v3\n\nNew: Enrich entities using one or more integrations."
+        content_name = "Entity Enrichment - Generic v3"
+
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
+
+        assert result is True
+
 
 def get_mock_yml_obj(path, file_type, deprecated) -> dict:
     new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)
@@ -1697,12 +1788,6 @@ class TestRNUpdateUnit:
             "Packs/VulnDB/Integrations/VulnDB/VulnDB.yml",
             FileType.INTEGRATION,
             ("VulnDB", FileType.INTEGRATION),
-        ),
-        (
-            "Packs/VulnDB",
-            "Packs/VulnDB/Connections/VulnDB/VulnDB.yml",
-            FileType.CONNECTION,
-            ("VulnDB", FileType.CONNECTION),
         ),
         (
             "Packs/VulnDB",

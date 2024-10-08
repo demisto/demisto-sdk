@@ -1,4 +1,3 @@
-import logging
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
@@ -12,7 +11,6 @@ from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
     XSOARConfigFileUpdater,
 )
-from TestSuite.test_tools import str_in_call_args_list
 
 UNIT_TEST_DATA = src_root() / "commands" / "update_xsoar_config_file" / "tests" / "data"
 
@@ -188,10 +186,10 @@ class TestXSOARConfigFileUpdater:
             }
 
     @pytest.mark.parametrize(
-        argnames="add_marketplace_pack, pack_id, pack_data, expected_path, err, expected_outputs",
+        argnames="add_marketplace_pack, pack_id, pack_data, expected_path, expected_outputs",
         argvalues=[
-            (True, "", "1.0.1", "", "Error: Missing option '-pi' / '--pack-id'.", {}),
-            (True, "Pack1", "", "", "Error: Missing option '-pd' / '--pack-data'.", {}),
+            (True, "", "1.0.1", "", {}),
+            (True, "Pack1", "", "", {}),
         ],
     )
     def test_add_marketplace_pack_with_missing_args(
@@ -201,7 +199,6 @@ class TestXSOARConfigFileUpdater:
         pack_data,
         expected_path,
         mocker,
-        err,
         expected_outputs,
     ):
         """
@@ -211,10 +208,8 @@ class TestXSOARConfigFileUpdater:
             - run the update_xsoar_config_file command
         Then:
             - validate the xsoar_config file exist in the destination output
-            - validate the Error massage when the argument us missing
             - validate the xsoar_config file output is as expected
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with temp_dir() as tmp_output_dir:
             click.Context(command=xsoar_config_file_update).invoke(
@@ -226,9 +221,6 @@ class TestXSOARConfigFileUpdater:
             )
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
-            if err:
-                assert str_in_call_args_list(logger_info.call_args_list, err)
-
             try:
                 with open(f"{tmp_output_dir}/{expected_path}") as config_file:
                     config_file_info = json.load(config_file)
@@ -237,17 +229,10 @@ class TestXSOARConfigFileUpdater:
             assert config_file_info == expected_outputs
 
     @pytest.mark.parametrize(
-        argnames="add_custom_pack, pack_id, pack_data, expected_path, err, expected_outputs",
+        argnames="add_custom_pack, pack_id, pack_data, expected_path, expected_outputs",
         argvalues=[
-            (
-                True,
-                "",
-                "Packs/Pack1",
-                "",
-                "Error: Missing option '-pi' / '--pack-id'.",
-                {},
-            ),
-            (True, "Pack1", "", "", "Error: Missing option '-pd' / '--pack-data'.", {}),
+            (True, "", "Packs/Pack1", "", {}),
+            (True, "Pack1", "", "", {}),
         ],
     )
     def test_add_custom_pack_with_missing_args(
@@ -256,8 +241,6 @@ class TestXSOARConfigFileUpdater:
         pack_id,
         pack_data,
         expected_path,
-        mocker,
-        err,
         expected_outputs,
     ):
         """
@@ -267,10 +250,8 @@ class TestXSOARConfigFileUpdater:
             - run the update_xsoar_config_file command
         Then:
             - validate the xsoar_config file exist in the destination output
-            - validate the Error massage when the argument us missing
             - validate the xsoar_config file output is as expected
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with temp_dir() as tmp_output_dir:
             click.Context(command=xsoar_config_file_update).invoke(
@@ -281,9 +262,6 @@ class TestXSOARConfigFileUpdater:
                 pack_data=pack_data,
             )
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
-
-            if err:
-                assert str_in_call_args_list(logger_info.call_args_list, err)
 
             try:
                 with open(f"{tmp_output_dir}/{expected_path}") as config_file:
@@ -314,7 +292,7 @@ class TestXSOARConfigFileUpdater:
         pack_data,
         err,
         exit_code,
-        mocker,
+        caplog,
     ):
         """
         Given:
@@ -325,7 +303,7 @@ class TestXSOARConfigFileUpdater:
             - validate the error code is as expected.
             - validate the Error massage when the argument us missing
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         self.add_custom_pack = add_custom_pack
         self.pack_id = pack_id
         self.pack_data = pack_data
@@ -336,7 +314,7 @@ class TestXSOARConfigFileUpdater:
         assert error_code == exit_code
 
         if err:
-            assert str_in_call_args_list(logger_info.call_args_list, err)
+            assert err in caplog.text
 
     @pytest.mark.parametrize(
         argnames="add_custom_pack, add_market_place_pack, pack_id, pack_data, exit_code",

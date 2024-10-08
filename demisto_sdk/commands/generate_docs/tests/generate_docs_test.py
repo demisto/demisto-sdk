@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_README_FILE_NAME,
 )
 from demisto_sdk.commands.common.files.text_file import TextFile
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.tools import get_json, get_yaml
 # from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.generate_docs import common
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+    IntegrationDocUpdateManager,
     append_or_replace_command_in_docs,
     disable_md_autolinks,
     generate_commands_section,
@@ -37,6 +38,8 @@ from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
+
+json = JSON_Handler()
 
 FILES_PATH = os.path.normpath(
     os.path.join(__file__, git_path(), "demisto_sdk", "tests", "test_files")
@@ -59,6 +62,13 @@ TEST_FILES = os.path.join(
 )
 
 yaml = YAML_Handler()
+
+
+# Helper Functions
+def util_load_json(path):
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
 
 # common tests
 
@@ -2676,3 +2686,99 @@ class TestIntegrationDocUpdate:
         assert actual
         assert "### splunk-results-1" not in actual
         assert "### splunk-results" in actual
+
+    @pytest.mark.parametrize(
+        "doc_text_lines, expected_first_line, expected_last_line",
+        [
+            (
+                test_case["doc_text_lines"],
+                test_case["expected_first_line"],
+                test_case["expected_last_line"],
+            )
+            for test_case in util_load_json("test_files/table_bounds_test_cases.json")
+        ],
+    )
+    def test_find_table_bounds(
+        self,
+        doc_text_lines: list[str],
+        expected_first_line: str,
+        expected_last_line: str,
+    ):
+        """
+        Parameterized test that checks different scenarios for find_table_bounds.
+
+        Args:
+            - doc_text_lines (List[str]): The lines of the README document being tested.
+            - expected_first_line (str or None): Expected first line of the table containing the parameter keyword.
+            - expected_last_line (str or None): Expected last line of the table.
+
+        Verifies:
+            - The actual first line of the detected table matches `expected_first_line`.
+            - The actual last line of the detected table matches `expected_last_line`.
+        """
+
+        integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
+
+        first_line, last_line = integration_doc_update_manager.find_table_bounds(
+            doc_text_lines
+        )
+
+        assert first_line == expected_first_line
+        assert last_line == expected_last_line
+
+    def test_valid_table_replacement(self, mocker: MockerFixture):
+        """Test if the configuration section is correctly replaced when a valid table is found."""
+        # Mock setup
+        integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
+        integration_doc_update_manager.update_errors = []
+        integration_doc_update_manager.output_doc = "Header\n| Parameter | Description |\n|-----------|-------------|\n| param1 | desc1 |"
+        integration_doc_update_manager.integration_diff.new_yaml_data = {
+            "param2": "desc2"
+        }
+
+        new_section = ["| Parameter | Description |", "| param2 | desc2 |"]
+        mocker.patch(
+            "demisto_sdk.commands.generate_docs.generate_integration_doc.generate_setup_section",
+            return_value=new_section,
+        )
+        mocker.patch.object(
+            IntegrationDocUpdateManager,
+            "find_table_bounds",
+            return_value=("| Parameter | Description |", "| param1 | desc1 |"),
+        )
+
+        # Run the function
+        integration_doc_update_manager._update_conf_section()
+
+        # Check the result
+        expected_output = "Header\n| Parameter | Description |\n| param2 | desc2 |"
+        assert integration_doc_update_manager.output_doc == expected_output
+        assert len(integration_doc_update_manager.update_errors) == 0
+
+
+def test_table_not_found(mocker):
+    """Test when the parameter table is not found in the README."""
+    # Mock setup
+    integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
+    integration_doc_update_manager.update_errors = []
+    integration_doc_update_manager.output_doc = (
+        "Header\nSome random text\nNo table here."
+    )
+    integration_doc_update_manager.integration_diff.new_yaml_data = {}
+    mocker.patch(
+        "demisto_sdk.commands.generate_docs.generate_integration_doc.generate_setup_section",
+        return_value="",
+    )
+    # Patch the method to simulate no table found
+    mocker.patch.object(
+        IntegrationDocUpdateManager, "find_table_bounds", return_value=(None, None)
+    )
+
+    # Run the function
+    integration_doc_update_manager._update_conf_section()
+
+    # Check that the correct error is logged
+    assert (
+        "Unable to find configuration section line in README: Parameters table not found or incomplete in the "
+        "README."
+    ) in integration_doc_update_manager.update_errors

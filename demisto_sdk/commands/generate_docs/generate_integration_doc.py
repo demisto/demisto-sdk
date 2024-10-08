@@ -210,7 +210,7 @@ class IntegrationDocUpdateManager:
         provided README text lines.
 
         This function looks for the first table that contains at least two columns
-        and checks if the first line of the table includes the keywords "parameter".
+        and checks if the first line of the table includes the keyword "parameter".
         If such a table is found, the function returns the first and last lines of the table.
         If no valid table is found, it returns None for both lines.
 
@@ -233,17 +233,20 @@ class IntegrationDocUpdateManager:
             if re.match(table_start_pattern, line):
                 if not inside_table:
                     first_line = line
-
                     if "parameter" not in first_line.lower():
                         return None, None
 
                     inside_table = True
+
+                last_line = line
+
             elif inside_table and not re.match(table_row_pattern, line):
-                # This means we have left the table, save the previous line as the last row
-                last_line = doc_text_lines[i - 1]
                 break
 
-        return first_line, last_line
+        if inside_table:
+            return first_line, last_line
+
+        return None, None
 
     def _update_conf_section(self):
         """
@@ -267,6 +270,10 @@ class IntegrationDocUpdateManager:
 
                 doc_text_lines[old_config_start_line : old_config_end_line + 1] = (
                     new_configuration_section
+                )
+            else:
+                raise ValueError(
+                    "Parameters table not found or incomplete in the README."
                 )
 
             self.output_doc = "\n".join(doc_text_lines)

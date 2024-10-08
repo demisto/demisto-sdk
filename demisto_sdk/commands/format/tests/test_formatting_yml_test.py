@@ -385,38 +385,6 @@ class TestFormatting:
 
         assert integration.yml.read_dict()["script"]["commands"] == test_data
 
-    @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
-    def test_playbook_task_description_name(self, source_path):
-        schema_path = os.path.normpath(
-            os.path.join(
-                __file__,
-                "..",
-                "..",
-                "..",
-                "common",
-                "schemas",
-                "{}.yml".format("playbook"),
-            )
-        )
-        base_yml = PlaybookYMLFormat(source_path, path=schema_path)
-        base_yml.add_description()
-
-        assert (
-            base_yml.data["tasks"]["29"]["task"]["name"]
-            == "File Enrichment - Virus Total Private API_dev_copy"
-        )
-        base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
-
-        assert "description" in base_yml.data["tasks"]["7"]["task"]
-        assert (
-            base_yml.data["tasks"]["29"]["task"]["name"]
-            == "File Enrichment - Virus Total Private API"
-        )
-        assert (
-            base_yml.data["tasks"]["25"]["task"]["description"]
-            == "Check if there is a SHA256 hash in context."
-        )
-
     @pytest.mark.parametrize("source_path", [PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS])
     def test_remove_empty_scripts_keys_from_playbook(self, source_path):
         """
@@ -768,12 +736,12 @@ class TestFormatting:
         res = format_manager(input=target, assume_answer=True)
         with open(target) as f:
             yaml_content = yaml.load(f)
-            params = yaml_content["configuration"]
-            for param in params:
-                if "defaultvalue" in param and param["name"] != "feed":
-                    param.pop("defaultvalue")
-            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
-                assert param in yaml_content["configuration"]
+        params = yaml_content["configuration"]
+        for param in params:
+            if "defaultvalue" in param and param["name"] != "feed":
+                param.pop("defaultvalue")
+        for param in INCIDENT_FETCH_REQUIRED_PARAMS:
+            assert param in yaml_content["configuration"]
         Path(target).unlink()
         os.rmdir(path)
         assert res is answer

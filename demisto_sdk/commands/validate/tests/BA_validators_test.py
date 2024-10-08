@@ -102,6 +102,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA125_customer_facin
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_context_path_depth import (
+    IsValidContextPathDepthValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
@@ -2145,3 +2148,228 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items__invalid_item(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_is_valid_context_path_depth_command():
+    """
+    Given
+    - One invalid integration with one command:
+        - One output has depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message is correct.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "ip",
+                            "description": "ip command",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [
+                                {
+                                    "name": "output_1",
+                                    "contextPath": "path_1.2.3.4.5.6",
+                                    "description": "description_1",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2",
+                                    "description": "description_2",
+                                },
+                            ],
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+        expected_msg = "The level of depth for context output path for command: ip In the yml should be less or equal to 5 check the following outputs:\npath_1.2.3.4.5.6\n"
+        result = IsValidContextPathDepthValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(result) == 1
+
+        if result:
+            assert result[0].message == expected_msg
+
+
+def test_is_valid_context_path_depth_script():
+    """
+    Given
+    - One invalid script :
+        - One output has depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message is correct.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_script_object(
+                paths=["outputs"],
+                values=[
+                    [
+                        {"contextPath": "File.EntryID", "description": "test_3"},
+                        {
+                            "contextPath": "test.test.1.2.3.4.5.6",
+                            "description": "test_4",
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+        expected_msg = "The level of depth for context output path for script: myScript In the yml should be less or equal to 5 check the following outputs:\ntest.test.1.2.3.4.5.6"
+        result = IsValidContextPathDepthValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(result) == 1
+
+        if result:
+            assert result[0].message == expected_msg
+
+
+def test_is_valid_context_path_depth_command_multiple_invalid_outputs():
+    """
+    Given
+    - One invalid integration with one command:
+        - multiple outputs have depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the paths exist in the error message that is returned
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "ip",
+                            "description": "ip command",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [
+                                {
+                                    "name": "output_1",
+                                    "contextPath": "path_1.2.3.4.5.6",
+                                    "description": "description_1",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2",
+                                    "description": "description_2",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2.3.4.5.6.7.8.9",
+                                    "description": "description_2",
+                                },
+                            ],
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
+        invalid_path_1 = "path_1.2.3.4.5.6"
+        invalid_path_2 = "path_2.3.4.5.6.7.8.9"
+        result = IsValidContextPathDepthValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(result) == 1
+
+        if result:
+            assert invalid_path_1 in result[0].message
+            assert invalid_path_2 in result[0].message
+
+
+def test_is_valid_context_path_depth_command_multiple_commands_with_invalid_outputs():
+    """
+    Given
+    - One invalid integration with two commands each has several outputs:
+        - two outputs for each command have depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the paths exist in the error message that is returned
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "ip",
+                            "description": "ip command",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [
+                                {
+                                    "name": "output_1",
+                                    "contextPath": "path_1.2.3.4.5.6",
+                                    "description": "description_1",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2",
+                                    "description": "description_2",
+                                },
+                                {
+                                    "name": "output_3",
+                                    "contextPath": "path_3.3.4.5.6.7.8.9",
+                                    "description": "description_3",
+                                },
+                            ],
+                        },
+                        {
+                            "name": "file",
+                            "description": "file command",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [
+                                {
+                                    "name": "output_1",
+                                    "contextPath": "path_10.11.12.13.14.15",
+                                    "description": "description_1",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2",
+                                    "description": "description_2",
+                                },
+                                {
+                                    "name": "output_3",
+                                    "contextPath": "path_12.13.14.15.16.17.18.19",
+                                    "description": "description_2",
+                                },
+                            ],
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+        invalid_path_ip_1 = "path_1.2.3.4.5.6"
+        invalid_path_ip_2 = "path_3.3.4.5.6.7.8.9"
+        invalid_path_file_1 = "path_10.11.12.13.14.15"
+        invalid_path_file_2 = "path_12.13.14.15.16.17.18.19"
+        result = IsValidContextPathDepthValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(result) == 1
+
+        if result:
+            assert invalid_path_ip_1 in result[0].message
+            assert invalid_path_ip_2 in result[0].message
+            assert invalid_path_file_1 in result[0].message
+            assert invalid_path_file_2 in result[0].message

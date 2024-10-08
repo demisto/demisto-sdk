@@ -1,9 +1,7 @@
 from collections import defaultdict
-from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import PACKS_DIR
-from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
@@ -64,11 +62,9 @@ class GraphValidator(BaseValidator):
             self.validate_marketplaces_fields(),
             self.validate_fromversion_fields(),
             self.validate_toversion_fields(),
-            self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
             self.validate_duplicate_ids(),
             self.validate_unique_script_name(),
-            self.validate_deprecated_items_usage(),
         )
         return all(is_valid)
 
@@ -244,94 +240,6 @@ class GraphValidator(BaseValidator):
 
         return is_valid
 
-    @error_codes("GR107")
-    def validate_deprecated_items_usage(self):
-        """Validates there are no items used deprecated items.
-        For existing content, a warning is raised.
-        """
-        is_valid = True
-        new_files = Content.git_util().added_files()
-        items: List[dict] = self.graph.find_items_using_deprecated_items(
-            self.file_paths
-        )
-        for item in items:
-            deprecated_command = item.get("deprecated_command")
-            deprecated_content = item.get("deprecated_content")
-
-            items_using_deprecated = item.get("object_using_deprecated") or []
-            for item_using_deprecated in items_using_deprecated:
-                item_using_deprecated_path = Path(item_using_deprecated)
-                error_message, error_code = Errors.deprecated_items_usage(
-                    deprecated_command or deprecated_content,
-                    str(item_using_deprecated_path.absolute()),
-                    item.get("deprecated_content_type"),
-                )
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    str(item_using_deprecated_path.absolute()),
-                    warning=(
-                        item_using_deprecated_path not in new_files
-                    ),  # we raise error only for new content
-                ):
-                    is_valid &= False
-        return is_valid
-
-    @error_codes("GR103")
-    def is_file_using_unknown_content(self):
-        """Validates that there is no usage of unknown content items.
-        The validation runs twice:
-        1. Cases where a warning should be raised - if the using content item is a test playbook/test script,
-            or if the dependency is optional.
-        2. Cases where an error should be raised - the complementary case.
-        """
-        is_valid = [
-            self._find_unknown_content_uses(raises_error=False),
-            self._find_unknown_content_uses(raises_error=True),
-        ]
-        if self.include_optional:
-            is_valid.append(
-                self._find_unknown_content_uses(
-                    raises_error=True, include_optional=True
-                )
-            )
-
-        return all(is_valid)
-
-    def _find_unknown_content_uses(
-        self, raises_error: bool, include_optional: bool = False
-    ) -> bool:
-        """Validates that there is no usage of unknown content items.
-        Note: if self.file_paths is empty, the validation runs on all files - in this case, returns a warning.
-        otherwise, returns an error iff raises_error is True.
-        """
-
-        is_valid = True
-
-        content_item: ContentItem
-        for content_item in self.graph.get_unknown_content_uses(
-            self.file_paths,
-            raises_error=raises_error,
-            include_optional=include_optional,
-        ):
-            unknown_content_names = {
-                f"'{relationship.content_item_to.object_id or relationship.content_item_to.name}'"  # type: ignore
-                for relationship in content_item.uses
-            }
-            error_message, error_code = Errors.using_unknown_content(
-                content_item.name, unknown_content_names
-            )
-
-            if self.handle_error(
-                error_message,
-                error_code,
-                content_item.path,
-                warning=not include_optional or not raises_error,
-            ):
-                is_valid = False
-
-        return is_valid
-
     @error_codes("GR104")
     def is_file_display_name_already_exists(self):
         """
@@ -389,7 +297,7 @@ class GraphValidator(BaseValidator):
         """
         is_valid = True
 
-        if dependant_packs := self.graph.find_mandatory_hidden_packs_dependencies(
+        if dependant_packs := self.graph.find_packs_with_invalid_dependencies(
             pack_ids=self.pack_ids
         ):
             hidden_pack_id_to_dependant_pack_ids: dict = defaultdict(set)

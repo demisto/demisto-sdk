@@ -1,4 +1,0 @@
-changes:
-- description: Added the GR106 validation to ensure every test playbook is linked to at least one content item.
-  type: feature
-pr_number: 4446

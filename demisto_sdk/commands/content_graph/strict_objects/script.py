@@ -90,7 +90,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
 
 
 StrictScript = create_model(
-    model_name="StrictIntegration",
+    model_name="StrictScript",
     base_models=(
         _StrictScript,
         COMMENT_DYNAMIC_MODEL,

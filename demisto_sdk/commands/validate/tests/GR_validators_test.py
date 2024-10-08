@@ -13,17 +13,53 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_list_files import (
     MarketplacesFieldValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR101_is_using_invalid_from_version_all_files import (
+    IsUsingInvalidFromVersionValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR101_is_using_invalid_from_version_list_files import (
+    IsUsingInvalidFromVersionValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR102_is_using_invalid_to_version_valid_all_files import (
+    IsUsingInvalidToVersionValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR102_is_using_invalid_to_version_valid_list_files import (
+    IsUsingInvalidToVersionValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_all_files import (
+    IsUsingUnknownContentValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_list_files import (
+    IsUsingUnknownContentValidatorListFiles,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_all_files import (
     IsPackDisplayNameAlreadyExistsValidatorAllFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_list_files import (
     IsPackDisplayNameAlreadyExistsValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR105_duplicate_content_id_all_files import (
+    DuplicateContentIdValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR105_duplicate_content_id_list_files import (
+    DuplicateContentIdValidatorListFiles,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_all_files import (
     IsTestPlaybookInUseValidatorAllFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_is_testplaybook_in_use_list_files import (
     IsTestPlaybookInUseValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR107_is_deprecated_content_item_in_usage_valid_all_files import (
+    IsDeprecatedContentItemInUsageValidatorAllFiles as GR107_IsDeprecatedContentItemInUsageValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR107_is_deprecated_content_item_in_usage_valid_list_files import (
+    IsDeprecatedContentItemInUsageValidatorListFiles as GR107_IsDeprecatedContentItemInUsageValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_packs_dependencies_valid_all_files import (
+    IsInvalidPacksDependenciesValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_packs_dependencies_valid_list_files import (
+    IsInvalidPacksDependenciesValidatorListFiles,
 )
 from TestSuite.repo import Repo
 
@@ -145,6 +181,7 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_2.create_classifier("SampleClassifier")
     sample_pack_2.create_test_playbook("SampleTestPlaybook")
     sample_pack_2.create_test_playbook("TestPlaybookNoInUse")
+    sample_pack_2.create_test_playbook("TestReputationPlaybook")
     sample_pack_2.create_test_playbook("TestPlaybookDeprecated").set_data(
         deprecated="true"
     )
@@ -153,6 +190,18 @@ def prepared_graph_repo(graph_repo: Repo):
     sample_pack_3.set_data(marketplaces=MP_XSOAR)
     sample_pack_3.create_script("SampleScriptTwo").set_data(marketplaces=MP_XSOAR)
 
+    sample_pack_4 = graph_repo.create_pack("SamplePack4")
+    sample_pack_4.set_data(marketplaces=MP_XSOAR_AND_V2)
+    sample_pack_4.create_integration(name="SampleIntegration")
+    # duplicate integration as in sample_pack for testing GR 105
+    assert sample_pack.integrations[0].name == "SampleIntegration", (
+        f"Expected integration name 'SampleIntegration', but found '{sample_pack.integrations[0].name}'."
+        "This assertion is crucial for testing GR105 see `test_DuplicateContentIdValidatorListFiles_integration_is_invalid` test,"
+        "which requires duplicate integration names in sample_pack and sample_pack_4."
+    )
+
+    sample_pack_4.create_widget(name="SampleWidget")
+    sample_pack.create_widget(name="SampleWidget")
     return graph_repo
 
 
@@ -266,6 +315,7 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
     - Ensure that the validator correctly identifies the playbook in use with no errors.
     - Ensure that the validator correctly identifies the playbook not in use and returns an appropriate error message.
     - Ensure that the validator correctly identifies the deprecated playbook with no errors.
+    - Ensure reputation test playbook is not test if they under the `reputation_tests` key in the conf.json.
     """
     mock_conf = ConfJSON.from_path("demisto_sdk/tests/test_files/conf.json")
     mocker.patch.object(ConfJSON, "from_path", return_value=mock_conf)
@@ -293,12 +343,12 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
         validation_results[0].message
         == (  # the test playbook not in use
             "Test playbook 'TestPlaybookNoInUse' is not linked to any content item."
-            " Make sure at least one integration, script or playbook mentions the test-playbook id under the `tests:` key."
+            " Make sure at least one integration, script or playbook mentions the test-playbook ID under the `tests:` key."
         )
     )
 
     playbook_deprecated = (
-        prepared_graph_repo.packs[1].test_playbooks[2].get_graph_object(graph_interface)
+        prepared_graph_repo.packs[1].test_playbooks[3].get_graph_object(graph_interface)
     )
     validation_results = (
         IsTestPlaybookInUseValidatorListFiles().obtain_invalid_content_items(
@@ -306,3 +356,673 @@ def test_IsTestPlaybookInUseValidatorAllFiles_is_valid(
         )
     )
     assert validation_results == []  # the test playbook is deprecated
+
+    reputation_playbook = (
+        prepared_graph_repo.packs[1].test_playbooks[2].get_graph_object(graph_interface)
+    )
+    validation_results = (
+        IsTestPlaybookInUseValidatorListFiles().obtain_invalid_content_items(
+            [reputation_playbook]
+        )
+    )
+    assert validation_results == []
+
+
+def test_DuplicateContentIdValidatorListFiles_is_valid(prepared_graph_repo: Repo):
+    """
+    Test case for the DuplicateContentIdValidatorListFiles validator.
+
+    This test ensures that the validator correctly identifies when there are no duplicate IDs
+    in the content items of the prepared graph repository.
+
+    When:
+    - Validating all pack objects in the prepared graph repository.
+
+    Then:
+    - The validator should return an empty list, indicating no duplicate IDs were found.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    pack_objects = [
+        pack.get_graph_object(graph_interface) for pack in prepared_graph_repo.packs
+    ]
+    validation_results = (
+        DuplicateContentIdValidatorListFiles().obtain_invalid_content_items(
+            pack_objects
+        )
+    )
+    assert validation_results == []
+
+
+def test_DuplicateContentIdValidatorListFiles_integration_is_invalid(
+    prepared_graph_repo: Repo,
+):
+    """
+    Test case for the DuplicateContentIdValidatorListFiles validator with duplicate integration IDs.
+
+    This test ensures that the validator correctly identifies duplicate IDs
+    in integration content items from different packs in the prepared graph repository.
+
+    When:
+    - Validating integration objects from two different packs.
+
+    Then:
+    - The validator should return validation results indicating duplicate IDs were found.
+    - The validation messages should correctly identify the duplicate 'SampleIntegration' ID
+      in both packs.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    pack_objects = [
+        prepared_graph_repo.packs[0].integrations[0].get_graph_object(graph_interface),
+        prepared_graph_repo.packs[3].integrations[0].get_graph_object(graph_interface),
+    ]
+    validation_results = (
+        DuplicateContentIdValidatorListFiles().obtain_invalid_content_items(
+            pack_objects
+        )
+    )
+    assert len(validation_results) == 2
+
+
+def test_DuplicateContentIdValidatorListFiles_widget_is_invalid(
+    prepared_graph_repo: Repo,
+):
+    """
+    Test case for the DuplicateContentIdValidatorListFiles validator with duplicate widget IDs.
+
+    This test ensures that the validator correctly identifies duplicate IDs
+    in widget content items from different packs in the prepared graph repository.
+
+    When:
+    - Validating widget objects from two different packs.
+
+    Then:
+    - The validator should return validation results indicating duplicate IDs were found.
+    - The validation messages should correctly identify the duplicate 'SampleWidget' ID
+      in both packs.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    pack_objects = [
+        prepared_graph_repo.packs[0].widgets[0].get_graph_object(graph_interface),
+        prepared_graph_repo.packs[3].widgets[0].get_graph_object(graph_interface),
+    ]
+    validation_results = (
+        DuplicateContentIdValidatorListFiles().obtain_invalid_content_items(
+            pack_objects
+        )
+    )
+    assert len(validation_results) == 2
+
+
+def test_DuplicateContentIdValidatorAllFiles_is_invalid(prepared_graph_repo: Repo):
+    """
+    Test case for the DuplicateContentIdValidatorAllFiles validator with duplicate IDs.
+
+    This test ensures that the validator correctly identifies duplicate IDs
+    in content items from different packs in the prepared graph repository.
+
+    When:
+    - Validating objects from all packs.
+
+    Then:
+    - The validator should return validation results indicating duplicate IDs were found.
+    - The validation messages should correctly identify the duplicate 'SampleIntegration' and 'SampleWidget' IDs
+      in different packs.
+    """
+    graph_interface = prepared_graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    validation_results = (
+        DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+    assert len(validation_results) == 4
+
+
+@pytest.fixture
+def repo_for_test(graph_repo):
+    # A repository with 3 packs:
+    pack_1 = graph_repo.create_pack("Pack1")
+    pack_1.create_script(
+        "MyScript1", code='demisto.execute_command("does_not_exist", dArgs)'
+    )
+    pack_2 = graph_repo.create_pack("pack2")
+    pack_2.create_test_playbook("SampleTestPlaybook")
+    pack_2.create_classifier("SampleClassifier")
+    pack_2.create_script(
+        "MyScript2", code='demisto.execute_command("MyScript1", dArgs)'
+    )
+
+    pack_3 = graph_repo.create_pack("Pack3")
+    pack_3.create_script(
+        "MyScript3", code='demisto.execute_command("MyScript1", dArgs)'
+    )
+    return graph_repo
+
+
+def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
+    repo_for_test: Repo,
+):
+    """
+    Given:
+        - A content graph interface with preloaded repository data:
+            - Pack 1: Exclusively uses unknown content.
+                -  Required dependencies - ('MyScript1' references 'does_not_exist')
+            - Pack 2: Utilizes a mix of 1 known and 2 unknown content items. The unknown content falls into 2 categories:
+                    - Optional dependencies - ('SampleClassifier' references 'Test type')
+                    - Test dependencies - ('TestPlaybookNoInUse' and 'SampleTestPlaybook' reference 'DeleteContext')
+            - Pack 3: Exclusively uses known content.
+    When:
+        - The GR103 validation is executed across the entire repository (-a) to detect instances of unknown content usage.
+    Then:
+        - The validator should accurately identify the content items that are referencing unknown content.
+    """
+    graph_interface = repo_for_test.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    assert len(results) == 3
+
+
+@pytest.mark.parametrize(
+    "item_index, expected_len_results", [(0, 1), (1, 0), (2, 1), (3, 1), (4, 0)]
+)
+def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
+    repo_for_test: Repo, item_index, expected_len_results
+):
+    """
+    Given:
+        - A list of content objects from different packs in the repository.
+    When:
+        - Validating the content items, one item at a time.
+    Then:
+        - The validator should accurately identify the content items that are referencing unknown content:
+        - Item 1: MyScript1 (references 'does_not_exist' - Required dependencies)
+        - Item 2: MyScript2 (no unknown references)
+        - Item 3: SampleTestPlaybook (references 'DeleteContext' - Required dependencies for a 'test' item)
+        - Item 4: SampleClassifier (references 'Test type' - Optional dependencies)
+        - Item 5: MyScript3 (no unknown references)
+    """
+    graph_interface = repo_for_test.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    content_items = [
+        repo_for_test.packs[0].scripts[0],
+        repo_for_test.packs[1].scripts[0],
+        repo_for_test.packs[1].test_playbooks[0],
+        repo_for_test.packs[1].classifiers[0],
+        repo_for_test.packs[2].scripts[0],
+    ]
+
+    results = IsUsingUnknownContentValidatorListFiles().obtain_invalid_content_items(
+        [content_items[item_index].get_graph_object(graph_interface)]
+    )
+    assert len(results) == expected_len_results
+
+
+@pytest.fixture
+def repo_for_test_gr_107(graph_repo: Repo):
+    playbook_dict_using_deprecate_commands = {
+        "id": "UsingDeprecatedCommand",
+        "name": "UsingDeprecatedCommand",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "|||test-command",
+                },
+            }
+        },
+    }
+    playbook_dict_using_deprecated_playbook = {
+        "id": "UsingDeprecatedPlaybook",
+        "name": "UsingDeprecatedPlaybook",
+        "tasks": {
+            "4": {
+                "id": "4",
+                "taskid": "1",
+                "type": "playbook",
+                "task": {
+                    "id": "1",
+                    "name": "DeprecatedPlaybook",
+                    "playbookName": "DeprecatedPlaybook",
+                },
+            }
+        },
+    }
+    pack_1 = graph_repo.create_pack("Pack1")
+    integration = pack_1.create_integration("MyIntegration")
+    integration.set_commands(["test-command"])
+    integration.set_data(**{"script.commands[0].deprecated": "true"})
+    pack_2 = graph_repo.create_pack("pack2")
+    pack_2.create_playbook(
+        "UsingDeprecatedCommand", yml=playbook_dict_using_deprecate_commands
+    )
+    pack_2.create_playbook(
+        name="DeprecatedPlaybook",
+        yml={
+            "deprecated": "true",
+            "id": "DeprecatedPlaybook",
+            "name": "DeprecatedPlaybook",
+        },
+    )
+    pack_2.create_playbook(
+        name="UsingDeprecatedPlaybook", yml=playbook_dict_using_deprecated_playbook
+    )
+    pack_2.create_script(name="DeprecatedScript").set_data(**{"deprecated": "true"})
+    pack_2.create_script(
+        name="UsingDeprecatedScript",
+        code='demisto.execute_command("DeprecatedScript", dArgs)',
+    )
+    pack_2.create_script(name="SampleScript")
+    return graph_repo
+
+
+@pytest.mark.parametrize(
+    "playbook_index, expected_validation_count",
+    [
+        pytest.param(0, 1, id="Playbook using deprecated command"),
+        pytest.param(2, 1, id="Playbook using deprecated playbook"),
+    ],
+)
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_invalid_playbook(
+    repo_for_test_gr_107: Repo, playbook_index: int, expected_validation_count: int
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for invalid cases.
+
+    Given:
+    - A repository with deprecated content items in use.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on specific playbooks.
+
+    Then:
+    - Verify that the validator correctly identifies the usage of deprecated content items.
+
+    Parameters:
+    - playbook_index: Index of the playbook to test in the pack.
+    - expected_validation_count: Expected number of validation results.
+    """
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1]
+        .playbooks[playbook_index]
+        .get_graph_object(graph_interface),
+    ]
+    validator = GR107_IsDeprecatedContentItemInUsageValidatorListFiles()
+    validation_results = validator.obtain_invalid_content_items(pack_objects)
+
+    assert len(validation_results) == expected_validation_count
+
+
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_invalid_script(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for an invalid script.
+
+    Given:
+    - A repository with a script that uses a deprecated content item.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific script.
+
+    Then:
+    - Verify that the validator correctly identifies the usage of the deprecated content item.
+    - Assert that the validation results contain exactly one item.
+    """
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].scripts[1].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 1
+
+
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for a valid script.
+
+    Given:
+    - A repository with a script that doesn't use any deprecated content items.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific script.
+
+    Then:
+    - Verify that the validator correctly identifies that no deprecated content items are used.
+    - Assert that the validation results are empty.
+    """
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].scripts[2].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 0
+
+
+def test_GR107_IsDeprecatedContentItemInUsageValidatorAllFiles_is_invalid(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorAllFiles validator for invalid cases across all files.
+
+    Given:
+    - A repository with multiple content items, some of which use deprecated content.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorAllFiles on the entire repository.
+
+    Then:
+    - Verify that the validator correctly identifies all instances of deprecated content usage.
+    - Assert that the validation results contain exactly three items.
+    """
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorAllFiles().obtain_invalid_content_items(
+        []
+    )
+    assert len(validation_results) == 3
+
+
+@pytest.fixture
+def repo_with_one_pack_for_gr101_gr102(graph_repo: Repo):
+    # Repo which contains 1 pack
+
+    # Pack 1 - script uses another script (relationship)
+    pack_1 = graph_repo.create_pack("Pack1")
+    pack_1.create_script(name="FirstScript")
+    pack_1.create_script(
+        name="SecondScript",
+        code='demisto.execute_command("FirstScript", dArgs)',
+    )
+    return graph_repo
+
+
+def test_IsUsingInvalidFromVersionValidator_sanity_all_files(
+    repo_with_one_pack_for_gr101_gr102,
+):
+    """
+    Given:
+        - A content graph interface with preloaded repository data:
+            - Pack 1:
+                    - script 1 (which used by script 2)
+                    - script 2 (which uses script 1)
+    When:
+        - The GR101 validation is executed across the all files
+    Then:
+        - The validator should pass, everything is valid, sanity check
+    """
+    graph_interface = repo_with_one_pack_for_gr101_gr102.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingInvalidFromVersionValidatorAllFiles().obtain_invalid_content_items_using_graph(
+        content_items=[]
+    )
+    assert len(results) == 0
+
+
+def test_IsUsingInvalidFromVersionValidator_invalid(
+    repo_with_one_pack_for_gr101_gr102,
+):
+    """
+    Given:
+            - Pack 1:
+                    - script 1 (which used by script 2, but has fromversion=10.0.0 while script 2 has fromversion=0.0.0)
+                    - script 2 (which uses script 1)
+    When:
+        - The GR101 validation is executed across the second script
+    Then:
+        - The validator should fail due to target's fromversion higher than source's fromversion. (len(results) == 1)
+        - Ensure the error message as expected
+    """
+    repo_with_one_pack_for_gr101_gr102.packs[0].scripts[0].set_data(
+        **{"fromversion": "10.0.0"}
+    )  # This line fails the GR101
+    graph_interface = repo_with_one_pack_for_gr101_gr102.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingInvalidFromVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
+        content_items=[
+            repo_with_one_pack_for_gr101_gr102.packs[0]
+            .scripts[1]
+            .get_graph_object(graph_interface)
+        ]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Content item 'SecondScript' whose from_version is '0.0.0'"
+        " is using content items: 'FirstScript' whose from_version is higher"
+        " (should be <= 0.0.0)"
+    )
+
+
+def test_IsUsingInvalidFromVersionValidator_valid(
+    repo_with_one_pack_for_gr101_gr102,
+):
+    """
+    Given:
+            - Pack 1:
+                    - script 1 (which used by script 2, has fromversion=10.0.0)
+                    - script 2 (which uses script 1, has fromversion=11.0.0)
+    When:
+        - The GR101 validation is executed across the second script
+    Then:
+        - The validator should pass, since script 2 which uses script 1 has a higher fromversion, valid case
+    """
+    repo_with_one_pack_for_gr101_gr102.packs[0].scripts[0].set_data(
+        **{"fromversion": "10.0.0"}
+    )
+    repo_with_one_pack_for_gr101_gr102.packs[0].scripts[1].set_data(
+        **{"fromversion": "11.0.0"}
+    )
+    graph_interface = repo_with_one_pack_for_gr101_gr102.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingInvalidFromVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
+        content_items=[
+            repo_with_one_pack_for_gr101_gr102.packs[0]
+            .scripts[1]
+            .get_graph_object(graph_interface)
+        ]
+    )
+    assert len(results) == 0
+
+
+def test_IsUsingInvalidToVersionValidatorAllFiles_sanity(
+    repo_with_one_pack_for_gr101_gr102,
+):
+    """
+    Given:
+        - A content graph interface with preloaded repository data:
+            - Pack 1:
+                    - script 1 (which used by script 2)
+                    - script 2 (which uses script 1)
+    When:
+        - The GR102 validation is executed across the all files
+    Then:
+        - The validator should pass, everything is valid, sanity check
+    """
+    graph_interface = repo_with_one_pack_for_gr101_gr102.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingInvalidToVersionValidatorAllFiles().obtain_invalid_content_items_using_graph(
+        content_items=[]
+    )
+    assert len(results) == 0
+
+
+def test_IsUsingInvalidToVersionValidatorListFiles_invalid(
+    repo_with_one_pack_for_gr101_gr102,
+):
+    """
+    Given:
+            - Pack 1:
+                    - script 1 (which used by script 2, but has toversion=10.0.0 while script 2 has toversion=0.0.0)
+                    - script 2 (which uses script 1)
+    When:
+        - The GR102 validation is executed across the second script
+    Then:
+        - The validator should fail due to source's toversion > target's toversion. (len(results) == 1)
+        - Ensure the error message as expected
+    """
+    repo_with_one_pack_for_gr101_gr102.packs[0].scripts[0].set_data(
+        **{"toversion": "10.0.0"}
+    )  # This line fails the GR102
+    graph_interface = repo_with_one_pack_for_gr101_gr102.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingInvalidToVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
+        content_items=[
+            repo_with_one_pack_for_gr101_gr102.packs[0]
+            .scripts[1]
+            .get_graph_object(graph_interface)
+        ]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Content item 'SecondScript' whose to_version is '99.99.99' is using content items:"
+        " 'FirstScript' whose to_version is lower than 99.99.99, making them incompatible"
+    )
+
+
+def test_IsUsingInvalidToVersionValidatorListFiles_valid(
+    repo_with_one_pack_for_gr101_gr102,
+):
+    """
+    Given:
+            - Pack 1:
+                    - script 1 (which used by script 2, has toversion=11.0.0)
+                    - script 2 (which uses script 1, has toversion=10.0.0)
+    When:
+        - The GR102 validation is executed across the second script
+    Then:
+        - The validator should pass, since script 2 which uses script 1 has a lower toversion, valid case
+    """
+    repo_with_one_pack_for_gr101_gr102.packs[0].scripts[0].set_data(
+        **{"toversion": "11.0.0"}
+    )
+    repo_with_one_pack_for_gr101_gr102.packs[0].scripts[1].set_data(
+        **{"toversion": "10.0.0"}
+    )
+    graph_interface = repo_with_one_pack_for_gr101_gr102.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingInvalidToVersionValidatorListFiles().obtain_invalid_content_items_using_graph(
+        content_items=[
+            repo_with_one_pack_for_gr101_gr102.packs[0]
+            .scripts[1]
+            .get_graph_object(graph_interface)
+        ]
+    )
+    assert len(results) == 0
+
+
+@pytest.fixture
+def repo_for_test_gr_108(graph_repo: Repo):
+    """
+    Creates a test repository with three packs for testing GR108 validator.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack1: Contains a playbook that uses a command from Pack2.
+             Has a mandatory dependency on Pack2.
+    - Pack2: A hidden pack containing an integration with two commands.
+    - Pack3: An empty pack for additional testing scenarios.
+    """
+    playbook_using_pack2_command = {
+        "id": "UsingPack2Command",
+        "name": "UsingPack2Command",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "MyIntegration1|||test-command-1",
+                    "brand": "MyIntegration1",
+                    "iscommand": "true",
+                },
+            }
+        },
+    }
+    # Pack 1: playbook uses command from pack 2
+    pack_1 = graph_repo.create_pack("Pack1")
+
+    pack_1.create_playbook("UsingPack2Command", yml=playbook_using_pack2_command)
+
+    # Define Pack2 as a mandatory dependency for Pack1
+    pack_1.pack_metadata.update({"dependencies": {"Pack2": {"mandatory": True}}})
+
+    # Pack 2: hidden
+    pack_2 = graph_repo.create_pack("Pack2")
+    integration = pack_2.create_integration("MyIntegration1")
+    integration.set_commands(["test-command-1", "test-command-2"])
+    pack_2.pack_metadata.update({"hidden": "true"})
+    # Pack3
+    graph_repo.create_pack("Pack3")
+    return graph_repo
+
+
+def test_IsInvalidPacksDependenciesValidatorAllFiles_invalid(
+    repo_for_test_gr_108: Repo,
+):
+    """
+    Given:
+        A test repository with Pack1 depending on the hidden Pack2.
+    When:
+        Running the IsInvalidPacksDependenciesValidatorAllFiles validator.
+    Then:
+        The validator should return a result indicating that Pack1 depends on the hidden Pack2.
+    """
+    graph_interface = repo_for_test_gr_108.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsInvalidPacksDependenciesValidatorAllFiles().obtain_invalid_content_items([])
+    )
+    assert (
+        results[0].message
+        == "Pack Pack1 has hidden pack(s) Pack2 in its mandatory dependencies"
+    )
+
+
+def test_IsInvalidPacksDependenciesValidatorListFiles(repo_for_test_gr_108: Repo):
+    """
+    Given:
+        A test repository with Pack1 depending on the hidden Pack2, and Pack3 with no dependencies.
+    When:
+        Running the IsInvalidPacksDependenciesValidatorListFiles validator on specific packs.
+    Then:
+        1. For Pack1: The validator should return a result indicating that Pack1 depends on the hidden Pack2.
+        2. For Pack3: The validator should not return any results (no invalid dependencies).
+    """
+    graph_interface = repo_for_test_gr_108.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsInvalidPacksDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_gr_108.packs[0]]
+        )
+    )
+    assert (
+        results[0].message
+        == "Pack Pack1 has hidden pack(s) Pack2 in its mandatory dependencies"
+    )
+
+    results = (
+        IsInvalidPacksDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_gr_108.packs[2]]
+        )
+    )
+    assert not results

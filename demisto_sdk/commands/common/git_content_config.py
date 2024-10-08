@@ -239,12 +239,12 @@ class GitContentConfig:
                 else GitCredentials.ENV_GITLAB_TOKEN_NAME
             )
             logger.info(
-                f"[yellow]Could not find the repository name on {provider} - defaulting to demisto/content[/yellow]"
+                f"<yellow>Could not find the repository name on {provider} - defaulting to demisto/content</yellow>"
             )
             logger.info(
-                f"[yellow]If you are using a private gitlab repo, "
+                f"<yellow>If you are using a private gitlab repo, "
                 f"configure one of the following environment variables: "
-                f"`{token_name}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`[/yellow] "
+                f"`{token_name}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`</yellow> "
             )
             GitContentConfig.NOTIFIED_PRIVATE_REPO = True
 
@@ -279,9 +279,11 @@ class GitContentConfig:
             r = requests.get(
                 f"https://api.{api_host}/repos/{repo_name}",
                 headers={
-                    "Authorization": f"Bearer {GitContentConfig.CREDENTIALS.github_token}"
-                    if GitContentConfig.CREDENTIALS.github_token
-                    else "",
+                    "Authorization": (
+                        f"Bearer {GitContentConfig.CREDENTIALS.github_token}"
+                        if GitContentConfig.CREDENTIALS.github_token
+                        else ""
+                    ),
                     "Accept": "application/vnd.github.VERSION.raw",
                 },
                 verify=False,

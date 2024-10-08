@@ -1,7 +1,7 @@
 exclude: demisto_sdk/tests/test_files/.*|.circleci/config.yml|demisto_sdk/commands/.*/tests/test_files/.*
 repos:
-- repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: v0.5.2
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.6.6
   hooks:
   - id: ruff
     args:
@@ -13,6 +13,7 @@ repos:
   rev: v0.23.1
   hooks:
     - id: toml-sort-fix
+      exclude: poetry.lock
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.4.0
   hooks:

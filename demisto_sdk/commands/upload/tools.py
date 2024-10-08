@@ -36,8 +36,9 @@ def parse_upload_response(response: Any, path: Path, content_type: "ContentType"
         )
         with contextlib.suppress(Exception):
             response_str = str(response)
-        logger.debug(
-            f"got the following response when uploading {content_type} {path}: {response_str}"
+        logger.debug(  # noqa: PLE1205
+            "{}",
+            f"got the following response when uploading {content_type} {path}: {response_str}",
         )
 
 

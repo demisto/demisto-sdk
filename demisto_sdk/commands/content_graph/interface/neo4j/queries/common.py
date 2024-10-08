@@ -1,4 +1,3 @@
-import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
@@ -131,12 +130,15 @@ def to_node_pattern(
 
 
 def run_query(tx: Transaction, query: str, **kwargs) -> Result:
+    start_time: datetime = datetime.now()
+    loggable_query = query.replace("<", "\\<")
+    logger.debug(f"Running query:\n{loggable_query}")
+
     try:
-        start_time: datetime = datetime.now()
-        logger.debug(f"Running query:\n{query}")
         result = tx.run(query, **kwargs)
-        logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
-        return result
-    except Exception as e:
-        logger.error(traceback.format_exc())
-        raise e
+    except Exception:
+        logger.exception("Query failed")
+        raise
+
+    logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
+    return result

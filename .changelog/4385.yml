@@ -1,4 +1,0 @@
-changes:
-- description: Added the `--ignore` flag to **validate**.
-  type: feature
-pr_number: 4385

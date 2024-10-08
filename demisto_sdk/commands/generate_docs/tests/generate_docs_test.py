@@ -2727,9 +2727,6 @@ class TestIntegrationDocUpdate:
         integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
         integration_doc_update_manager.update_errors = []
         integration_doc_update_manager.output_doc = "Header\n| Parameter | Description |\n|-----------|-------------|\n| param1 | desc1 |"
-        integration_doc_update_manager.integration_diff.new_yaml_data = {
-            "param2": "desc2"
-        }
 
         new_section = ["| Parameter | Description |", "| param2 | desc2 |"]
         mocker.patch(
@@ -2759,7 +2756,6 @@ def test_table_not_found(mocker):
     integration_doc_update_manager.output_doc = (
         "Header\nSome random text\nNo table here."
     )
-    integration_doc_update_manager.integration_diff.new_yaml_data = {}
     mocker.patch(
         "demisto_sdk.commands.generate_docs.generate_integration_doc.generate_setup_section",
         return_value="",

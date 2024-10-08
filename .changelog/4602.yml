@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where tasks calling playbooks were forced to have their names match the playbook ID. 
+  type: fix
+pr_number: 4602

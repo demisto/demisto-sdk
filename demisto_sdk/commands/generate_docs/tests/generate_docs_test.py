@@ -22,7 +22,6 @@ from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 # from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.generate_docs import common
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
-    IntegrationDocUpdateManager,
     append_or_replace_command_in_docs,
     disable_md_autolinks,
     generate_commands_section,
@@ -33,6 +32,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     get_command_examples,
     get_commands_sections,
     get_integration_commands,
+    IntegrationDocUpdateManager,
 )
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
@@ -2723,10 +2723,12 @@ class TestIntegrationDocUpdate:
 
     def test_valid_table_replacement(self, mocker: MockerFixture):
         """Test if the configuration section is correctly replaced when a valid table is found."""
+        from demisto_sdk.commands.generate_docs.generate_integration_doc import IntegrationDiffDetector
         # Mock setup
         integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
         integration_doc_update_manager.update_errors = []
         integration_doc_update_manager.output_doc = "Header\n| Parameter | Description |\n|-----------|-------------|\n| param1 | desc1 |"
+        integration_doc_update_manager.integration_diff = IntegrationDiffDetector("", "")
 
         new_section = ["| Parameter | Description |", "| param2 | desc2 |"]
         mocker.patch(
@@ -2749,12 +2751,15 @@ class TestIntegrationDocUpdate:
 
     def test_table_not_found(self, mocker):
         """Test when the parameter table is not found in the README."""
+        from demisto_sdk.commands.generate_docs.generate_integration_doc import IntegrationDiffDetector
         # Mock setup
         integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
         integration_doc_update_manager.update_errors = []
         integration_doc_update_manager.output_doc = (
             "Header\nSome random text\nNo table here."
         )
+        integration_doc_update_manager.integration_diff = IntegrationDiffDetector("", "")
+
         mocker.patch(
             "demisto_sdk.commands.generate_docs.generate_integration_doc.generate_setup_section",
             return_value="",

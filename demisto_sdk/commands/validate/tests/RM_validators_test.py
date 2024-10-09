@@ -74,7 +74,7 @@ from TestSuite.repo import ChangeCWD
             [create_pack_object(readme_text="Invalid readme\nBSD\nCopyright")],
             1,
             [
-                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines: 2, 3 of the README file. Copyright section cannot be part of pack readme."
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines: 2, 3. Copyright section cannot be part of pack readme."
             ],
         ),
     ],
@@ -487,7 +487,7 @@ def test_IsContainDemistoWordValidator_is_invalid():
             readme_text="Invalid readme contains the word demistomock\ndemisto \ndemisto \ndemisto.\n mockdemisto."
         )
     ]
-    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
+    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5 of the README file. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
     results = IsContainDemistoWordValidator().obtain_invalid_content_items(
         content_items
     )

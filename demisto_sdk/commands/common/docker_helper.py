@@ -385,15 +385,6 @@ class DockerBase:
         Args:
             image (str): The image to push
             log_prompt (str, optional): The log prompt to print. Defaults to "".
-        Raises:
-            requests.exceptions.ConnectionError: If a connection error occurs during the push attempt.
-            urllib3.exceptions.ReadTimeoutError: If a read timeout error occurs during the push attempt.
-            requests.exceptions.ReadTimeout: If a read timeout error occurs during the push attempt.
-
-        Logs:
-            Info: Logs the start of the push attempt, successful push, and detailed push output.
-            Warning: Logs any connection-related errors encountered during the push attempt.
-            Error: Logs if all attempts to push the image fail.
         """
         test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
 

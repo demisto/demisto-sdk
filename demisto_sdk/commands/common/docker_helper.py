@@ -396,7 +396,7 @@ class DockerBase:
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
-                logger.info(
+                logger.success(
                     f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
                 )
                 logger.debug(
@@ -409,11 +409,11 @@ class DockerBase:
                 requests.exceptions.ReadTimeout,
             ) as e:
                 logger.warning(
-                    f"{log_prompt} - Attempt {attempt + 1}: Failed to push image {image} to repository due to {type(e).__name__}.",
+                    f"{log_prompt} - Attempt {attempt + 1}: Failed to push image {test_image_name_to_push} to repository due to {type(e).__name__}",
                     exc_info=True,
                 )
-                logger.error(
-                    f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
+                logger.debug(
+                    f"{log_prompt} - Push details (after exception) for image {test_image_name_to_push}: {docker_push_output}"
                 )
 
     def create_image(

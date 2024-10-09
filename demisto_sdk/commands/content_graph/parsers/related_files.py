@@ -46,7 +46,7 @@ class RelatedFile(ABC):
         self.main_file_path: Path = main_file_path
         self.git_sha = git_sha
         self.exist: bool = False
-        self.file_path: Path = self.find_the_right_path(self.get_optional_paths())
+        self.path: Path = self.find_the_right_path(self.get_optional_paths())
 
     @property
     def git_status(self) -> Union[GitStatuses, None]:
@@ -56,7 +56,7 @@ class RelatedFile(ABC):
             remote, branch = git_util.handle_prev_ver(
                 self.git_sha  # type: ignore[arg-type]
             )
-            status = git_util._check_file_status(str(self.file_path), remote, branch)
+            status = git_util._check_file_status(str(self.path), remote, branch)
         return None if not status else GitStatuses(status)
 
     def find_the_right_path(self, file_paths: List[Path]) -> Path:
@@ -94,12 +94,12 @@ class TextFiles(RelatedFile):
             try:
                 if self.git_sha:
                     self.file_content_str = TextFile.read_from_git_path(
-                        path=self.file_path,
+                        path=self.path,
                         tag=self.git_sha,
                     )
                 else:
                     self.file_content_str = TextFile.read_from_local_path(
-                        path=self.file_path
+                        path=self.path
                     )
             except Exception as e:
                 logger.debug(f"Failed to get related text file, error: {e}")
@@ -236,11 +236,11 @@ class ImageFiles(RelatedFile):
 
 class PNGFiles(ImageFiles):
     def get_file_size(self):
-        return self.file_path.stat()
+        return self.path.stat()
 
     def load_image(self) -> Union[str, bytearray, memoryview]:
         encoded_image = ""
-        with open(self.file_path, "rb") as image:
+        with open(self.path, "rb") as image:
             image_data = image.read()
             encoded_image = base64.b64encode(image_data)  # type: ignore
             if isinstance(encoded_image, bytes):
@@ -251,7 +251,7 @@ class PNGFiles(ImageFiles):
 class SVGFiles(ImageFiles):
     def load_image(self) -> bytes:
         encoded_image = b""
-        with open(self.file_path, "rb") as image_file:
+        with open(self.path, "rb") as image_file:
             encoded_image = image_file.read()  # type: ignore
         return encoded_image
 

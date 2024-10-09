@@ -49,8 +49,8 @@ class PackFilesValidator(BaseValidator[ContentTypes]):
     def fix(self, content_item: ContentTypes) -> FixResult:
         for meta_file in find_related_files(content_item):
             if not meta_file.exist:
-                logger.debug(f"creating {type(meta_file)} {meta_file.file_path!s}")
-                meta_file.file_path.touch()
+                logger.debug(f"creating {type(meta_file)} {meta_file.path!s}")
+                meta_file.path.touch()
                 meta_file.exist = True
 
         return FixResult(

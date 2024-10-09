@@ -38,7 +38,7 @@ class IsValidDescriptionNameValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.description_file.file_path.name
+                    content_item.description_file.path.name
                 ),
                 content_object=content_item,
             )

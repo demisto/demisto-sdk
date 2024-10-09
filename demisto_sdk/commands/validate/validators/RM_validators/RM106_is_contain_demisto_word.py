@@ -38,7 +38,7 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(", ".join(lines_contain_demsito)),
-                content_object=content_item,
+                content_object=content_item.readme,
             )
             for content_item in content_items
             if (

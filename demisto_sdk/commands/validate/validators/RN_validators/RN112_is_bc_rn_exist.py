@@ -30,7 +30,7 @@ class IsBCRNExistValidator(BaseValidator[ContentTypes]):
         for content_item in content_items:
             if "breaking change" not in content_item.release_note.file_content:
                 continue
-            json_path = str(content_item.release_note.file_path).replace(".md", ".json")
+            json_path = str(content_item.release_note.path).replace(".md", ".json")
             if Path(json_path).exists():
                 if (
                     json_file_content := get_dict_from_file(path=json_path)[0]

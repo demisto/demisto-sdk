@@ -27,7 +27,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContentMetaclass,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFile, RelatedFileType
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
@@ -220,10 +220,10 @@ def get_all_validators_specific_validation(
 class BaseResult(BaseModel):
     validator: BaseValidator
     message: str
-    content_object: BaseContent
+    content_object: BaseContent | RelatedFile
 
     @property
-    def format_readable_message(self):
+    def format_readable_message(self) -> str:
         path: Path = self.content_object.path
         if path.is_absolute():
             path = path.relative_to(CONTENT_PATH)

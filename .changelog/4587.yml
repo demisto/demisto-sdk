@@ -1,4 +1,0 @@
-changes:
-- description: Fixed a typo in several demisto-sdk files.
-  type: internal
-pr_number: 4587

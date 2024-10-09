@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where docker logs print excesses
+- description: Fixed an issue where docker logged debug messages as info.
   type: fix
 pr_number: 4500

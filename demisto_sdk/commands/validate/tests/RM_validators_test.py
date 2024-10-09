@@ -74,7 +74,7 @@ from TestSuite.repo import ChangeCWD
             [create_pack_object(readme_text="Invalid readme\nBSD\nCopyright")],
             1,
             [
-                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines: 2, 3. Copyright section cannot be part of pack readme."
+                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines: 2, 3 of the README file. Copyright section cannot be part of pack readme."
             ],
         ),
     ],

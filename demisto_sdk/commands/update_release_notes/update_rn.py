@@ -100,7 +100,7 @@ def get_yml_objects(path: str, file_type) -> Tuple[Any, YAMLContentObject]:
 
     return old_yml_obj, new_yml_obj
 
-def generate_command_diff(command_name, old_args, new_args):
+def generate_arguments_diff(command_name, old_args, new_args):
     rn = ''
     old_arg_names = {arg['name']: arg for arg in old_args}
     new_arg_names = {arg['name']: arg for arg in new_args}
@@ -120,33 +120,41 @@ def generate_command_diff(command_name, old_args, new_args):
     return rn
 
 
-def get_commands_diff(old_commands, new_commands):
+def get_commands_updates(old_commands, new_commands):
     rn = ''
     old_command_names = {command['name']: command for command in old_commands}
     new_command_names = {command['name']: command for command in new_commands}
 
+    # Commands removed
     for old_command_name, old_command in old_command_names.items():
         if old_command_name not in new_command_names:
             rn += f'- Deleted the **{old_command_name}** command.\n'
 
+    # Commands added or updated
     for new_command_name, new_command in new_command_names.items():
         if new_command_name not in old_command_names:
             rn += f'- Added the **{new_command_name}** command which {new_command.get("description", "")}\n'
         else:
             old_command = old_command_names[new_command_name]
-            rn += generate_command_diff(new_command_name, old_command.get('arguments', []), new_command.get('arguments', []))
-
+            rn += generate_arguments_diff(new_command_name, old_command.get('arguments', []), new_command.get('arguments', []))
     return rn
 
-
-def get_commands_and_args_rn(old_yml, new_yml, file_type):
-    if file_type != FileType.INTEGRATION:
-        return ''
-
-    old_commands = old_yml.get("script", {}).get("commands", [])
-    new_commands = new_yml.script.get("commands", [])
-
-    return get_commands_diff(old_commands, new_commands)
+def generate_parameter_diff(old_parameter, new_parameter):
+    rn=''
+    for key, value in old_parameter:
+        
+    return rn
+    
+def get_configurations_updates(old_configurations, new_configurations):
+    rn = ''
+    new_configurations_dict = {new_configuration.get('name'):new_configuration for new_configuration in new_configurations}
+    old_configurations_dict = {old_configuration.get('name'):old_configuration for old_configuration in old_configurations}
+    for old_configuration_name, old_configuration in old_configurations_dict:
+        if old_configuration_name not in new_configurations_dict:
+            rn += f'- Deleted the **{old_configuration.get("display", "")}** parameter.\n'
+        else:
+            rn+= generate_parameter_diff(old_configuration, new_configurations_dict[old_configuration_name])
+    return rn
 
 
 def get_deprecated_rn(old_yml, new_yml, file_type):
@@ -361,7 +369,7 @@ class UpdateRN:
                     logger.info(
                         f"\n<green>Next Steps:\n - Please review the "
                         f"created release notes found at {rn_path} and document any changes you "
-                        f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
+                        f"made by replacing '%%UPDATE_RN%%' or deleting it.\n - Commit "
                         f"the new release notes to your branch.\nFor information regarding proper"
                         f" format of the release notes, please refer to "
                         f"https://xsoar.pan.dev/docs/integrations/changelog</green>"
@@ -841,8 +849,10 @@ class UpdateRN:
                             rn_desc += f"- {text}\n"
                         rn_desc += deprecate_rn
                     else:
+                        if _type == FileType.INTEGRATION:
+                            rn_desc += get_configurations_updates(old_yml.get("configuration", []), new_yml.get("configuration", []))
+                            rn_desc += get_commands_updates(old_yml.get("script", {}).get("commands", []), new_yml.script.get("commands", []))
                         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
-                    rn_desc += get_commands_and_args_rn(old_yml, new_yml, _type)
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n"

@@ -254,10 +254,10 @@ class BaseValidator:
                     f"<red>Please add the field {missing_field} to the path: {path_to_add} in the yml.</red>\n"
                 )
             else:
-                logger.info(f"<red>{suggested_fix}</red>\n")
+                logger.info("<red>{}</red>\n", suggested_fix)  # noqa: PLE1205
 
         else:
-            logger.error(f"<red>{formatted_error}</red>")
+            logger.error("<red>{}</red>", formatted_error)  # noqa: PLE1205
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)

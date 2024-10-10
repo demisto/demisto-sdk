@@ -232,18 +232,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                     task["task"].get("scriptName")
                 )
 
-    def update_playbook_task_name(self):
-        """Updates the name of the task to be the same as playbookName it is running."""
-        logger.debug("Updating name of tasks who calls other playbooks to their name")
-
-        for task_id, task in self.data.get("tasks", {}).items():
-            if task.get("type", "") == "playbook":
-                task_name = task.get("task").get(
-                    "playbookName", task.get("task").get("playbookId", "")
-                )
-                if task_name:
-                    task["task"]["name"] = task_name
-
     def remove_empty_fields_from_scripts(self):
         """Removes unnecessary empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator
         scripts"""
@@ -272,7 +260,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.remove_copy_and_dev_suffixes_from_subscripts()
             self.update_conf_json("playbook")
             self.delete_sourceplaybookid()
-            self.update_playbook_task_name()
             self.remove_empty_fields_from_scripts()
             super().run_format()
             return SUCCESS_RETURN_CODE

@@ -40,7 +40,7 @@ repos:
     args:
     - --lock
 - repo: https://github.com/pylint-dev/pylint/
-  rev: v3.2.7
+  rev: v3.3.0
   hooks:
     - id: pylint
       require_serial: true

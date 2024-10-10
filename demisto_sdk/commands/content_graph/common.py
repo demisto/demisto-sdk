@@ -445,8 +445,10 @@ def get_server_content_items(tag: Optional[str] = None) -> Dict[ContentType, lis
         Dict[ContentType, list]: A mapping of content types to the list of server content items.
     """
     from_remote = tag is not None or not SERVER_CONTENT_ITEMS_PATH.exists()
+    test = 'test'
     if not from_remote:
         json_data: dict = get_json(str(SERVER_CONTENT_ITEMS_PATH))
+        print(x)
     else:
         json_data = get_remote_file(
             str(SERVER_CONTENT_ITEMS_PATH),

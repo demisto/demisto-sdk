@@ -131,12 +131,12 @@ class TestValidateMyPyGlobalIgnore:
 
         assert result.exit_code == 1
 
-        actual_output = result.stdout.splitlines()
         assert (
             f"File '{py_file_path}' in line 1 sets global mypy ignore. Please remove it."
-            in actual_output[1]
+            in result.stdout
         )
 
+    @classmethod
     def test_mypy_ignore_add_global_no_whitespace_1(cls, tmp_path: Path):
         """
         Test the behavior of `prevent_mypy_global_ignore` when
@@ -161,10 +161,9 @@ class TestValidateMyPyGlobalIgnore:
 
         assert result.exit_code == 1
 
-        actual_output = result.stdout.splitlines()
         assert (
             f"File '{py_file_path}' in line 1 sets global mypy ignore. Please remove it."
-            in actual_output[1]
+            in result.stdout
         )
 
     @classmethod
@@ -192,10 +191,9 @@ class TestValidateMyPyGlobalIgnore:
 
         assert result.exit_code == 1
 
-        actual_output = result.stdout.splitlines()
         assert (
             f"File '{py_file_path}' in line 1 sets global mypy ignore. Please remove it."
-            in actual_output[1]
+            in result.stdout
         )
 
     @classmethod
@@ -223,10 +221,9 @@ class TestValidateMyPyGlobalIgnore:
 
         assert result.exit_code == 1
 
-        actual_output = result.stdout.splitlines()
         assert (
             f"File '{py_file_path}' in line 1 sets global mypy ignore. Please remove it."
-            in actual_output[1]
+            in result.stdout
         )
 
     @classmethod
@@ -252,10 +249,9 @@ class TestValidateMyPyGlobalIgnore:
         result = CliRunner().invoke(cls.func, [str(py_file_path)])
 
         assert result.exit_code == 1
-        actual_output = result.stdout.splitlines()
         assert (
             f"File '{py_file_path}' in line 2 sets global mypy ignore. Please remove it."
-            in actual_output[1]
+            in result.stdout
         )
 
     @classmethod
@@ -281,10 +277,9 @@ class TestValidateMyPyGlobalIgnore:
         result = CliRunner().invoke(cls.func, [str(py_file_path)])
 
         assert result.exit_code == 1
-        actual_output = result.stdout.splitlines()
         assert (
             f"File '{py_file_path}' in line 2 sets global mypy ignore. Please remove it."
-            in actual_output[1]
+            in result.stdout
         )
 
     @classmethod
@@ -312,10 +307,9 @@ class TestValidateMyPyGlobalIgnore:
         result = CliRunner().invoke(cls.func, [str(py_file_path)])
 
         assert result.exit_code == 1
-        actual_output = result.stdout.splitlines()
         assert (
             f"File '{py_file_path}' in line 2 sets global mypy ignore. Please remove it."
-            in actual_output[1]
+            in result.stdout
         )
 
     @classmethod
@@ -343,8 +337,7 @@ class TestValidateMyPyGlobalIgnore:
         result = CliRunner().invoke(cls.func, [str(py_file_path)])
 
         assert result.exit_code == 1
-        actual_output = result.stdout.splitlines()
         assert (
             f"File '{py_file_path}' in line 2 sets global mypy ignore. Please remove it."
-            in actual_output[1]
+            in result.stdout
         )

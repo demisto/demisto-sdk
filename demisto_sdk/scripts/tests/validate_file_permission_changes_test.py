@@ -61,11 +61,9 @@ class TestValidateFileChangePermissions:
         result = runner.invoke(cls.func, [str(file)])
 
         assert result.exit_code == 1
-        actual_output = result.stdout.splitlines()
-        assert actual_output
         assert (
-            f"\x1b[91mFile '{file}' has executable bits set. Please revert using command 'chmod -x {file}'\x1b[0m"
-            in actual_output
+            f"File '{file}' has executable bits set. Please revert using command 'chmod -x {file}'"
+            in result.stdout
         )
 
     @classmethod
@@ -99,9 +97,7 @@ class TestValidateFileChangePermissions:
         )
 
         assert result.exit_code == 1
-        actual_output = result.stdout.splitlines()
-        assert actual_output
         assert (
-            f"\x1b[91mFile '{executable_file}' has executable bits set. Please revert using command 'chmod -x {executable_file}'\x1b[0m"
-            in actual_output
+            f"File '{executable_file}' has executable bits set. Please revert using command 'chmod -x {executable_file}'"
+            in result.stdout
         )

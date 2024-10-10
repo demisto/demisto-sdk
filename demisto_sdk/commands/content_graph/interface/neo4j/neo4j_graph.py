@@ -19,7 +19,10 @@ from demisto_sdk.commands.content_graph.common import (
     Neo4jRelationshipResult,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.graph import (
+    ContentGraphInterface,
+    DeprecatedItemUsage,
+)
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
     Neo4jImportHandler,
 )
@@ -64,10 +67,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
-    validate_hidden_pack_dependencies,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
+    validate_packs_with_hidden_mandatory_dependencies,
     validate_test_playbook_in_use,
     validate_toversion,
     validate_unknown_content,
@@ -282,12 +285,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             nodes (List[graph.Node]): list of nodes to add
         """
-        nodes = filter(lambda node: node.element_id not in self._id_to_obj, nodes)
+        nodes = tuple(
+            filter(lambda node: node.element_id not in self._id_to_obj, nodes)
+        )
         if not nodes:
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
-                self._id_to_obj,
             )
+            logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(
@@ -478,7 +483,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def find_uses_paths_with_invalid_toversion(
         self, file_paths: List[str], for_supported_versions=False
     ) -> List[BaseNode]:
-        """Searches and retrievs content items who use content items with a higher toversion.
+        """Searches and retrieves content items who use content items with a higher toversion.
 
         Args:
             file_paths (List[str]): A list of content items' paths to check.
@@ -495,17 +500,33 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+    def find_items_using_deprecated_items(
+        self, file_paths: List[str]
+    ) -> List[DeprecatedItemUsage]:
         """Searches for content items who use content items which are deprecated.
 
         Args:
             file_paths (List[str]): A list of content items' paths to check.
                 If not given, runs the query over all content items.
         Returns:
-            List[dict]: A list of dicts with the deprecated item and all the items used it.
+            List[DeprecatedItemUsage]: A list of DeprecatedItemUsage with the deprecated item and all the items used it.
         """
         with self.driver.session() as session:
-            return session.execute_read(get_items_using_deprecated, file_paths)
+            deprecated_usage = session.execute_read(
+                get_items_using_deprecated, file_paths
+            )
+        all_related_nodes = [node for _, _, nodes in deprecated_usage for node in nodes]
+        self._add_nodes_to_mapping(all_related_nodes)
+        return [
+            DeprecatedItemUsage(
+                deprecated_item_id=dep_content,
+                deprecated_item_type=dep_type,
+                content_items_using_deprecated=[
+                    self._id_to_obj[node.element_id] for node in nodes
+                ],
+            )
+            for dep_content, dep_type, nodes in deprecated_usage
+        ]
 
     def find_uses_paths_with_invalid_marketplaces(
         self, pack_ids: List[str]
@@ -550,21 +571,22 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_mandatory_hidden_packs_dependencies(
+    def find_packs_with_invalid_dependencies(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
         """
         Retrieves all the packs that are dependent on hidden packs
 
         Args:
-            pack_ids (List[str]): A list of content items pack_ids to check.
-
+            pack_ids (List[str]): List of pack IDs to check for invalid dependencies.
         Returns:
-            List[BaseNode]: Packs which depend on hidden packs in case exist.
+            List[BaseNode]: Packs which depend on hidden packs, if any exist.
 
         """
         with self.driver.session() as session:
-            results = session.execute_read(validate_hidden_pack_dependencies, pack_ids)
+            results = session.execute_read(
+                validate_packs_with_hidden_mandatory_dependencies, pack_ids
+            )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
@@ -755,3 +777,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             except Exception as e:
                 logger.error(f"Error when running query: {e}")
                 raise e
+
+
+class Neo4jContentGraphInterfaceSingleton:
+    # singleton implementation - used when calling the interface within a multi-threaded process, to ensure a single instance
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            logger.debug("Creating a new instance of Neo4jContentGraphInterface.")
+            cls._instance = Neo4jContentGraphInterface()
+        else:
+            logger.debug("Using the existing instance of Neo4jContentGraphInterface.")
+        return cls._instance

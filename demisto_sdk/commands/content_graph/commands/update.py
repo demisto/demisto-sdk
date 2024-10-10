@@ -34,6 +34,8 @@ def should_update_graph(
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
 ):
+    changed_pack_ids = set()
+
     if content_graph_interface.commit:
         try:
             changed_pack_ids = git_util.get_all_changed_pack_ids(

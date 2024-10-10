@@ -38,6 +38,7 @@ class XsiamApiClientConfig(BaseModel):
         description="XSIAM HTTP Collector Token",
     )
 
+    @classmethod
     @validator("base_url", "api_key", "auth_id", always=True)
     def validate_client_config(cls, v, field: ModelField):
         if not v:
@@ -47,6 +48,7 @@ class XsiamApiClientConfig(BaseModel):
             )
         return v
 
+    @classmethod
     @validator("collector_token", always=True)
     def validate_client_config_token(cls, v, values, field: ModelField):
         if not v:
@@ -250,13 +252,15 @@ class XsiamApiClient(XsiamApiInterface):
         formatted_data = "\n".join([json.dumps(d) for d in data])
         compressed_data = gzip.compress(formatted_data.encode("utf-8"))
         response = self._session.post(
-            endpoint, data=compressed_data, headers=additional_headers
+            endpoint,  # pylint: disable=E0606
+            data=compressed_data,  # pylint: disable=E0606
+            headers=additional_headers,  # pylint: disable=E0606
         )
         try:
             data = response.json()
         except requests.exceptions.JSONDecodeError:  # type: ignore[attr-defined]
             error = response.text
-            err_msg = f"Failed to push using {token_type} - with status code {response.status_code}"
+            err_msg = f"Failed to push using {token_type} - with status code {response.status_code}"  # pylint: disable=E0606
             err_msg += f"\n{error}" if error else ""
             logger.error(err_msg)
             response.raise_for_status()

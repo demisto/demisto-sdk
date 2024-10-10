@@ -241,6 +241,7 @@ class DescriptionValidator(BaseValidator):
             True if 'Demisto' does not exist in the description content, and False if it does.
         """
         description_path = ""
+        description_content = ""
         yml_line_num = 0
         yml_or_file = ""
 

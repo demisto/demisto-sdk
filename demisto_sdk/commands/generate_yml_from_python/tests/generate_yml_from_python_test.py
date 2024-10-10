@@ -205,7 +205,7 @@ class TestImportDependencies:
 
             def some_func():
                 """Some func doc"""
-                datetime[3] = 5 #pylint: disable=E1136
+                datetime[3] = 5 #pylint: disable=E1137
                 print(f"func {datetime[3]}") #pylint: disable=E1136
 
         save_code_as_integration(code=code_snippet, integration=integration)

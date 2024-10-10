@@ -227,7 +227,7 @@ def external_repository(mocker) -> ContentDTO:
         side_effect=mock__create_content_dto,
     )
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
+    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:  # pylint: disable=E0102
         if not packs_to_update:
             return repository
         repo_copy = repository.copy()

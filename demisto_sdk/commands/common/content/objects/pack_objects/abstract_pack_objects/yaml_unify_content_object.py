@@ -175,9 +175,12 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             #   2. <original_file_name>_4_5.yml
             if self.docker_image_4_5:
                 # Split file as described above.
+                """
+                # this code used to be here, but _split_yaml_4_5_0 doesn't exist, and 4.5 is old enough, so it's left here for reference only
                 created_files.extend(
                     self._split_yaml_4_5_0(dest_dir)
-                )  # TODO doesn't exist
+                )
+                """
                 # Adding readme and changelog if requested.
                 created_files.extend(
                     super().dump(

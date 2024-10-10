@@ -141,19 +141,25 @@ def get_commands_updates(old_commands, new_commands):
 
 def generate_parameter_diff(old_parameter, new_parameter):
     rn=''
-    for key, value in old_parameter:
-        
+    if 'deprecated' in new_parameter and new_parameter.get('deprecated') and ('deprecated' not in old_parameter or not new_parameter.get('deprecated')):
+        rn += f'- Deprecated the **{new_parameter.get("display")}** parameter.\n'
+    elif 'required' in new_parameter  and new_parameter['required'] and ('required' not in old_parameter or not old_parameter['required']):
+        rn += f'- Updated the **{new_parameter.get("display")}** parameter to be required.\n'
     return rn
-    
+
 def get_configurations_updates(old_configurations, new_configurations):
     rn = ''
     new_configurations_dict = {new_configuration.get('name'):new_configuration for new_configuration in new_configurations}
     old_configurations_dict = {old_configuration.get('name'):old_configuration for old_configuration in old_configurations}
-    for old_configuration_name, old_configuration in old_configurations_dict:
+    for old_configuration_name, old_configuration in old_configurations_dict.items():
         if old_configuration_name not in new_configurations_dict:
             rn += f'- Deleted the **{old_configuration.get("display", "")}** parameter.\n'
+    for new_configuration_name, new_configuration in new_configurations_dict.items():
+        if new_configuration_name not in old_configurations_dict:
+            rn += f'- Added the **{new_configuration.get("display")}** parameter' \
+                f'{" which " + new_configuration.get("additionalinfo") + "." if new_configuration.get("additionalinfo") else "."}\n'
         else:
-            rn+= generate_parameter_diff(old_configuration, new_configurations_dict[old_configuration_name])
+            rn+= generate_parameter_diff(old_configurations_dict[new_configuration_name], new_configuration)
     return rn
 
 
@@ -832,7 +838,6 @@ class UpdateRN:
                         rn_desc += f"**{command.get('name')}**\n"
                 rn_desc += "\n"
             else:
-                old_yml, new_yml = get_yml_objects(path, _type)
                 rn_desc = f"##### {content_name}\n\n"
                 if self.update_type == "documentation":
                     rn_desc += "- Documentation and metadata improvements.\n"
@@ -843,6 +848,7 @@ class UpdateRN:
                         FileType.SCRIPT,
                         FileType.PLAYBOOK,
                     ):
+                        old_yml, new_yml = get_yml_objects(path, _type)
                         deprecate_rn = get_deprecated_rn(old_yml, new_yml, _type)
                     if deprecate_rn:
                         if text:

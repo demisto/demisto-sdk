@@ -412,9 +412,6 @@ class DockerBase:
                     f"{log_prompt} - Attempt {attempt + 1}: Failed to push image {test_image_name_to_push} to repository due to {type(e).__name__}",
                     exc_info=True,
                 )
-                logger.debug(
-                    f"{log_prompt} - Push details (after exception) for image {test_image_name_to_push}: {docker_push_output}"
-                )
 
     def create_image(
         self,

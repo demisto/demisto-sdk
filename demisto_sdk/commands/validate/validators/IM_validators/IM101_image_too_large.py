@@ -38,7 +38,7 @@ class ImageTooLargeValidator(BaseValidator[ContentTypes]):
         ]
 
     def is_image_valid(self, content_item: ContentTypes):
-        file_type = content_item.image.file_path.suffix
+        file_type = content_item.image.path.suffix
         if file_type == ".png":
             return content_item.image.get_file_size().st_size > IMAGE_MAX_SIZE
 

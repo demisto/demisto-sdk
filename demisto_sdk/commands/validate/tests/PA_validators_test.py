@@ -1663,18 +1663,18 @@ def test_PackFilesValidator_fix(file_attribute: str):
     pack = create_pack_object()
     meta_file: RelatedFile = getattr(pack, file_attribute)
 
-    meta_file.file_path.unlink()
+    meta_file.path.unlink()
     meta_file.exist = False
 
     assert not meta_file.exist  # sanity check
-    assert not meta_file.file_path.exists()  # sanity check
+    assert not meta_file.path.exists()  # sanity check
 
     assert PackFilesValidator().obtain_invalid_content_items(
         [pack]
     )  # invalid once deleted
     PackFilesValidator().fix(pack)
 
-    assert meta_file.file_path.exists()
+    assert meta_file.path.exists()
     assert meta_file.exist  # changed in the fix
 
 

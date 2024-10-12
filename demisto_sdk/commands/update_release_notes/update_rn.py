@@ -813,8 +813,22 @@ class UpdateRN:
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
-                if desc:
-                    rn_desc += f"- New: {desc}"
+                if desc and _type in (
+                        FileType.INTEGRATION,
+                        FileType.SCRIPT,
+                        FileType.PLAYBOOK,
+                    ):
+                    if desc == '%%UPDATE_RN%%':
+                        new_yml = CLASS_BY_FILE_TYPE[_type](path)
+                        rn_desc += f"- New: added a new {_type.lower()}- {new_yml.get('display', '')} which {new_yml.get('description', '')}"
+                        if _type == FileType.INTEGRATION:
+                            rn_desc += "\n- Added the following commands:\n"
+                            new_yml = CLASS_BY_FILE_TYPE[_type](path)
+                            new_commands = new_yml.script.get("commands", [])
+                            for command in new_commands:
+                                rn_desc += f"**{command.get('name')}**\n"
+                    else:
+                        rn_desc += f"- New: {desc}"
                 if _type in SIEM_ONLY_ENTITIES or content_name.replace(
                     " ", ""
                 ).lower().endswith(EVENT_COLLECTOR.lower()):
@@ -830,12 +844,6 @@ class UpdateRN:
                         or MarketplaceVersions.XSOAR.value in pack_marketplaces
                     ):
                         rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
-                elif _type == FileType.INTEGRATION:
-                    rn_desc += "\n- Added the following commands:\n"
-                    new_yml = CLASS_BY_FILE_TYPE[_type](path)
-                    new_commands = new_yml.script.get("commands", [])
-                    for command in new_commands:
-                        rn_desc += f"**{command.get('name')}**\n"
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"

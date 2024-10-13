@@ -20,7 +20,8 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
-    create_model, create_dynamic_model,
+    create_dynamic_model,
+    create_model,
 )
 
 

@@ -66,7 +66,7 @@ Configuration = create_model(
 )
 
 
-class IntegrationOutput(Output):
+class IntegrationOutput(Output):  # type:ignore[misc,valid-type]
     important: Optional[bool] = None  # not the Important class
     important_description: Optional[str] = Field(None, alias="importantDescription")
 

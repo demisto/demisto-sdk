@@ -10,12 +10,13 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
     Argument,
     BaseIntegrationScript,
     CommonFields,
     Important,
     Output,
-    ScriptType, HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
+    ScriptType,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     BaseStrictModel,
@@ -30,6 +31,7 @@ COMMENT_DYNAMIC_MODEL = create_dynamic_model(
     suffixes=[MarketplaceVersions.MarketplaceV2.value],
     include_without_suffix=True,
 )
+
 
 class SkipPrepare(StrEnum):
     SCRIPT_NAME = SKIP_PREPARE_SCRIPT_NAME
@@ -70,7 +72,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     script_target: Optional[int] = Field(None, alias="scripttarget")
     timeout: Optional[str] = None
     depends_on: dict = Field({}, alias="dependson")
-    outputs: Optional[List[Output]] = None
+    outputs: Optional[List[Output]] = None  # type:ignore[misc,valid-type]
     important: Optional[List[Important]] = None  # type:ignore[valid-type]
     docker_image: str = Field(None, alias="dockerimage")
     docker_image_45: str = Field(None, alias="dockerimage45")

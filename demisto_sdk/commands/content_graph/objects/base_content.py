@@ -331,6 +331,7 @@ class BaseContent(BaseNode):
             logger.error(
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"
             )
+            logger.error(f'{e.with_traceback()=}')
             return None
 
     @staticmethod

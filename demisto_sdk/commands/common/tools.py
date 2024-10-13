@@ -863,7 +863,12 @@ def get_file(
     file_path = Path(file_path)  # type: ignore[arg-type]
     if git_sha:
         if file_path.is_absolute():
-            file_path = file_path.relative_to(get_content_path())
+            try:
+                file_path = file_path.relative_to(get_content_path())
+            except Exception:
+                logger.info(f'get_file using absolute path {file_path}')
+
+        logger.debug(f'get_file trying to get_remote_file {file_path=} | {git_sha=}')
         return get_remote_file(
             str(file_path), tag=git_sha, return_content=return_content
         )

@@ -279,8 +279,13 @@ class InvalidContentItemResult(BaseResult, BaseModel):
     @property
     def format_readable_message(self):
         path: Path = self.path
-        if path.is_absolute():
-            path = path.relative_to(CONTENT_PATH)
+        path: Path = self.path
+        try:
+            if path.is_absolute():
+                path = path.relative_to(CONTENT_PATH)
+        except ValueError:
+            # Fallback to using the absolute path
+            path = path
         return f"{path}: [{self.error_code}] - {self.message}"
 
     @property

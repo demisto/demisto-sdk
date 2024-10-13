@@ -213,8 +213,13 @@ class BaseResult(BaseModel):
 
     @property
     def format_json_message(self):
+        try:
+            file_path = str(self.content_object.path.relative_to(CONTENT_PATH))
+        except Exception: # Fallback to absolute path.
+            file_path = str(self.content_object.path)
+            
         return {
-            "file path": str(self.content_object.path.relative_to(CONTENT_PATH)),
+            "file path": file_path,
             "error code": self.validator.error_code,
             "message": self.message,
         }
@@ -283,7 +288,7 @@ class InvalidContentItemResult(BaseResult, BaseModel):
         try:
             file_path = str(self.path.relative_to(CONTENT_PATH))
         except ValueError:
-            file_path = str(self.path)  # Use the absolute path as a fallback
+            file_path = str(self.path)  # Use the absolute path as a fallback.
         return {
             "file path": file_path,
             "error code": self.error_code,

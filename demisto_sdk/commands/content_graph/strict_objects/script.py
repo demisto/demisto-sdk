@@ -15,7 +15,7 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     CommonFields,
     Important,
     Output,
-    ScriptType,
+    ScriptType, HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     BaseStrictModel,
@@ -30,7 +30,6 @@ COMMENT_DYNAMIC_MODEL = create_dynamic_model(
     suffixes=[MarketplaceVersions.MarketplaceV2.value],
     include_without_suffix=True,
 )
-
 
 class SkipPrepare(StrEnum):
     SCRIPT_NAME = SKIP_PREPARE_SCRIPT_NAME
@@ -94,5 +93,6 @@ StrictScript = create_model(
     base_models=(
         _StrictScript,
         COMMENT_DYNAMIC_MODEL,
+        HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
     ),
 )

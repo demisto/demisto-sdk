@@ -341,13 +341,20 @@ class Initializer:
                 non_content_items,
             ) = self.get_files_using_git()
         elif self.execution_mode == ExecutionMode.SPECIFIC_FILES:
+            file_path = self.file_path.split(",")
+            logger.debug(f"gather_objects_to_run_on {file_path=}")
+            loaded_files = self.load_files(file_path)
+            logger.debug(f"gather_objects_to_run_on {loaded_files=}")
+            
             (
                 content_objects_to_run,
                 invalid_content_items,
                 non_content_items,
             ) = self.paths_to_basecontent_set(
-                set(self.load_files(self.file_path.split(",")))
+                set(loaded_files)
             )
+            
+            
         elif self.execution_mode == ExecutionMode.ALL_FILES:
             logger.info("Running validation on all files.")
             content_dto = ContentDTO.from_path()
@@ -468,19 +475,24 @@ class Initializer:
         related_files_main_items: Set[Path] = self.collect_related_files_main_items(
             files_set
         )
+        logger.info(f"paths_to_basecontent_set {related_files_main_items=}")
         for file_path in related_files_main_items:
+            logger.info(f"paths_to_basecontent_set Trying to parse {file_path=}")
             path: Path = Path(file_path)
             try:
                 temp_obj = BaseContent.from_path(
                     path, git_sha=None, raise_on_exception=True
                 )
                 if temp_obj is None:
+                    logger.info("paths_to_basecontent_set temp_obj is None.")
                     invalid_content_items.add(path)
                 else:
                     basecontent_with_path_set.add(temp_obj)
-            except NotAContentItemException:
+            except NotAContentItemException as e:
+                logger.error(e)
                 non_content_items.add(file_path)  # type: ignore[arg-type]
-            except InvalidContentItemException:
+            except InvalidContentItemException as e:
+                logger.error(e)
                 invalid_content_items.add(file_path)  # type: ignore[arg-type]
         return basecontent_with_path_set, invalid_content_items, non_content_items
 

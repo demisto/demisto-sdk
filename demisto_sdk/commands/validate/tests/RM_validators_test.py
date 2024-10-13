@@ -487,7 +487,7 @@ def test_IsContainDemistoWordValidator_is_invalid():
             readme_text="Invalid readme contains the word demistomock\ndemisto \ndemisto \ndemisto.\n mockdemisto."
         )
     ]
-    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
+    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5 of the README file. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
     results = IsContainDemistoWordValidator().obtain_invalid_content_items(
         content_items
     )

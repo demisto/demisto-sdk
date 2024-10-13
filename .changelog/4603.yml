@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where docker validation didn't run in new validate.
+  type: fix
+pr_number: 4603

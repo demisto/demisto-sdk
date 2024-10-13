@@ -1,0 +1,95 @@
+[
+  {
+    "doc_text_lines": [
+      "# Header",
+      "Some introduction text",
+      "| Parameter | Description |",
+      "|-----------|-------------|",
+      "| param1    | desc1       |",
+      "| param2    | desc2       |"
+    ],
+    "expected_first_line": "| Parameter | Description |",
+    "expected_last_line": "| param2    | desc2       |"
+  },
+  {
+    "doc_text_lines": [
+      "# Header",
+      "Some introduction text",
+      "| Key   | Value   |",
+      "|-------|---------|",
+      "| key1  | value1  |",
+      "| key2  | value2  |"
+    ],
+    "expected_first_line": null,
+    "expected_last_line": null
+  },
+  {
+    "doc_text_lines": [
+      "# Header",
+      "Some introduction text",
+      "This is just plain text without any tables."
+    ],
+    "expected_first_line": null,
+    "expected_last_line": null
+  },
+  {
+    "doc_text_lines": [
+      "# Header",
+      "Some introduction text",
+      "| Key   | Value   |",
+      "|-------|---------|",
+      "| key1  | value1  |",
+      "| key2  | value2  |",
+      "",
+      "| Parameter | Description |",
+      "|-----------|-------------|",
+      "| param1    | desc1       |",
+      "| param2    | desc2       |"
+    ],
+    "expected_first_line": null,
+    "expected_last_line": null
+  },
+  {
+    "doc_text_lines": [
+      "# Header",
+      "Some introduction text",
+      "| Parameter | Description | Required |",
+      "|-----------|-------------|----------|",
+      "| param1    | desc1       | yes      |",
+      "| param2    | desc2       | no       |"
+    ],
+    "expected_first_line": "| Parameter | Description | Required |",
+    "expected_last_line": "| param2    | desc2       | no       |"
+  },
+  {
+    "doc_text_lines": [
+      "# Header",
+      "Some introduction text",
+      "| Parameter | Description |",
+      "|-----------|-------------|",
+      "| param1    | desc1       |",
+      "| param2    | desc2       |",
+      "Some more text after the table.",
+      "Another line of text."
+    ],
+    "expected_first_line": "| Parameter | Description |",
+    "expected_last_line": "| param2    | desc2       |"
+  },
+  {
+    "doc_text_lines": [
+      "# Header",
+      "Some introduction text",
+      "| Key   | Value   |",
+      "|-------|---------|",
+      "| key1  | value1  |",
+      "| key2  | value2  |",
+      "",
+      "| Parameter | Description |",
+      "|-----------|-------------|",
+      "| param1    | desc1       |",
+      "| param2    | desc2       |"
+    ],
+    "expected_first_line": null,
+    "expected_last_line": null
+  }
+]

@@ -875,7 +875,7 @@ class OldValidateManager:
                 valid_in_conf = False
 
         # test playbooks and test scripts are using the same validation.
-        elif file_type in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
+        if file_type in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
             return self.validate_test_playbook(
                 structure_validator, pack_error_ignore_list
             )

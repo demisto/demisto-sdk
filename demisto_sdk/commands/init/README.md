@@ -8,7 +8,7 @@ Create a pack, integration or script template.
 * **-n, --name**
 The name given to the files and directories of new pack/integration/script being created.
 * **--id**
-The id used for the yml file of the integration or script.
+The ID used for the integration/script YAML file.
 * **-o, --output**
 The output directory to which the created object will be saved. The default one is the current working directory.
 * **--integration**

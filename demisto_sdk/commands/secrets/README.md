@@ -4,7 +4,7 @@
 
 **Arguments:**
 * **-i, --input**
-Specify file of to check secret on.
+Specify the file to check secret on.
 * **--post-commit**
 Whether the secretes validation is done after you committed your files.
 This will help the command to determine which files it should check in its
@@ -12,9 +12,8 @@ run. Before you commit the files it should not be used. Mostly for build
 validations. (default: False)
 * **-ie, --ignore-entropy**
 Ignore entropy algorithm that finds secret strings (passwords/api keys).
-* **-wl WHITELIST, --whitelist WHITELIST**
+* **-wl --whitelist**
 Full path to whitelist file, file name should be "secrets_white_list.json".
-(default: ./Tests/secrets_white_list.json)
 * **--prev-ver**
 The branch against which to run secrets validation.
 

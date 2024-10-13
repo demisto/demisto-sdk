@@ -1,6 +1,6 @@
 ## zip-packs
 
-Zip content packs to uploadable zip file.
+Zip content packs into a file that can be uploaded.
 
 **Use Cases**:
 This command is used in order to create a zip file, able to be uploaded to Cortex XSOAR via the
@@ -10,12 +10,12 @@ This command is used in order to create a zip file, able to be uploaded to Corte
 * **-i, --input**
   The packs to create artifacts for. Optional values are: `all` or csv list of pack names.
 * **-o, --output**
-  The path to the directory into which to write the zip files
-* **-v RELEASE_VERSION, --content-version RELEASE_VERSION**
+  The path to the directory into which to write the zip files.
+* **-v --content-version**
   The content version in CommonServerPython.
 * **-u, --upload**
   Upload the unified packs to the marketplace.
-* **---zip-all**
+* **--zip-all**
   Zip all the packs in one zip file.
 
 **Examples**:

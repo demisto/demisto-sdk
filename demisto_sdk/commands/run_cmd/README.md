@@ -27,37 +27,14 @@ This command is used in order to run integration or script commands of a remote 
 
 
 ### Arguments
-* **-q QUERY, --query QUERY**
-
-    The query to run
-
-* **--insecure**
-
-    Skip certificate validation
-
-* **-v, --verbose**
-
-    Verbose output
-
-* **--json-to-outputs**
-
-    Whether to run json_to_outputs command on the context output of the query. If the context output does not exists or the `-r` flag is used, will use the raw response of the query
-
-* **-p, --prefix**
-
-    Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, the base path for the outputs that the script generates
-
-* **-r, --raw-response**
-
-    Used with `json-to-outputs` flag. Use the raw response of the query for `json-to-outputs`
-
-* **-D, --debug**
-
-    Whether to enable the debug-mode feature or not, if you want to save the output file, please use the --debug-path option
-
-* **--debug-path [DEBUG_LOG]**
-
-    The path to save the debug file at, if not specified the debug file will be printed to the terminal
+* **-q --query** The query to run.
+* **--insecure** Skip certificate validation.
+* **-id --incident-id** The incident to run the query on, if not specified the playground will be used.
+* **--json-to-outputs** Whether to run json_to_outputs command on the context output of the query. If the context output does not exist or the `-r` flag is used, will use the raw response of the query.
+* **-p, --prefix** Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, the base path for the outputs that the script generates.
+* **-r, --raw-response** Used with `json-to-outputs` flag. Use the raw response of the query for `json-to-outputs`.
+* **-d, --debug** Whether to enable the debug-mode feature or not, if you want to save the output file, please use the --debug-path option.
+* **--debug-path**The path to save the debug file at, if not specified the debug file will be printed to the terminal.
 
 ### Examples
 Note that `!` is not mandatory, as we add it if needed. You can also use double quotes `"` or single quotes `'` to wrap the query.

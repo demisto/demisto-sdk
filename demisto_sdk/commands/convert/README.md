@@ -24,7 +24,7 @@ This command is used to convert entities such as Layouts/Classifiers between XSO
 
 * **-v, --version**
 
-    Version to convert the entities in the given input to.
+    Version the input to be compatible with.
 
 ### Examples
 ```

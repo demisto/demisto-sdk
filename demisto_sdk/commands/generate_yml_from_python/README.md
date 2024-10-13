@@ -8,8 +8,6 @@ The feature is supported from content Base pack version 1.20.0 and on.
 **Arguments**
 * **-i, --input**
    (Required) The path to the python code to generate from.
-* **-v, --verbose**
-   Flag for extended prints.
 * **-f, --force**
    Override existing yml file. If not used and yml file already exists, the script will not generate a new yml file.
 

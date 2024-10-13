@@ -13,13 +13,7 @@ Also supports generating unit tests for specific commands.
 * *-c, --commands*
   Specific commands name to generate unit test for (e.g. xdr-get-incidents).
 * *-o, --output_dir*
-  Directory to store the command output (generated test file) in (default is the input integration directory).
-* *-clt, --console_log_threshold*
-  Minimum logging threshold for the console logger.  [default: INFO]
-* *-flt --file_log_threshold*
-  Minimum logging threshold for the file logger. [default: DEBUG]
-* *-lp, --log_file_path*
-  Path to the log file. Default: ./demisto_sdk_debug.log. [default: ./demisto_sdk_debug.log]
+  Directory to store the command output - the generated test file in (default is the input integration directory).
 * *-e, --examples*
   One of the following:
   - A path for a file containing Integration command examples. Each command example should be in a separate line.
@@ -28,8 +22,8 @@ Also supports generating unit tests for specific commands.
 * *-d, --use_demisto*
   If passed, the XSOAR instance configured in the `DEMISTO_BASE_URL` and `DEMISTO_API_KEY` environment variables will run the Integration commands and generate outputs which will be used as mock outputs. **If this flag is not passed, you will need to create the mocks manually, at the outputs directory, with the name of the command.**
 * *--insecure*
-  Skip certificate validation when authorizing XSOAR.
-* *-a, --append* Append the generated unit tests to an existing file (only if already exists).
+  Skip certificate validation.
+* *-a, --append* Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT.
 
 
 **Notes**

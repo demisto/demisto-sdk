@@ -100,11 +100,71 @@ def get_yml_objects(path: str, file_type) -> Tuple[Any, YAMLContentObject]:
 
     return old_yml_obj, new_yml_obj
 
+def generate_arguments_diff(command_name, old_args, new_args):
+    rn = ''
+    old_arg_names = {arg['name']: arg for arg in old_args}
+    new_arg_names = {arg['name']: arg for arg in new_args}
 
-def get_deprecated_rn(path: str, file_type):
+    # Arguments removed
+    for old_arg_name, old_arg in old_arg_names.items():
+        if old_arg_name not in new_arg_names:
+            rn += f'- Updated the **{command_name}** to not use the `{old_arg_name}` argument.\n'
+
+    # Arguments added or updated
+    for new_arg_name, new_arg in new_arg_names.items():
+        if new_arg_name not in old_arg_names:
+            rn += f'- Updated the **{command_name}** to use the `{new_arg_name}` argument.\n'
+        elif new_arg.get('deprecated') and not old_arg_names[new_arg_name].get('deprecated'):
+            rn += f'- Deprecated the `{new_arg_name}` argument inside the **{command_name}** command.\n'
+
+    return rn
+
+
+def get_commands_updates(old_commands, new_commands):
+    rn = ''
+    old_command_names = {command['name']: command for command in old_commands}
+    new_command_names = {command['name']: command for command in new_commands}
+
+    # Commands removed
+    for old_command_name, old_command in old_command_names.items():
+        if old_command_name not in new_command_names:
+            rn += f'- Deleted the **{old_command_name}** command.\n'
+
+    # Commands added or updated
+    for new_command_name, new_command in new_command_names.items():
+        if new_command_name not in old_command_names:
+            rn += f'- Added the **{new_command_name}** command which {new_command.get("description", "")}\n'
+        else:
+            old_command = old_command_names[new_command_name]
+            rn += generate_arguments_diff(new_command_name, old_command.get('arguments', []), new_command.get('arguments', []))
+    return rn
+
+def generate_parameter_diff(old_parameter, new_parameter):
+    rn=''
+    if 'deprecated' in new_parameter and new_parameter.get('deprecated') and ('deprecated' not in old_parameter or not new_parameter.get('deprecated')):
+        rn += f'- Deprecated the **{new_parameter.get("display")}** parameter.\n'
+    elif 'required' in new_parameter  and new_parameter['required'] and ('required' not in old_parameter or not old_parameter['required']):
+        rn += f'- Updated the **{new_parameter.get("display")}** parameter to be required.\n'
+    return rn
+
+def get_configurations_updates(old_configurations, new_configurations):
+    rn = ''
+    new_configurations_dict = {new_configuration.get('name'):new_configuration for new_configuration in new_configurations}
+    old_configurations_dict = {old_configuration.get('name'):old_configuration for old_configuration in old_configurations}
+    for old_configuration_name, old_configuration in old_configurations_dict.items():
+        if old_configuration_name not in new_configurations_dict:
+            rn += f'- Deleted the **{old_configuration.get("display", "")}** parameter.\n'
+    for new_configuration_name, new_configuration in new_configurations_dict.items():
+        if new_configuration_name not in old_configurations_dict:
+            rn += f'- Added the **{new_configuration.get("display")}** parameter' \
+                f'{" which " + new_configuration.get("additionalinfo") + "." if new_configuration.get("additionalinfo") else "."}\n'
+        else:
+            rn+= generate_parameter_diff(old_configurations_dict[new_configuration_name], new_configuration)
+    return rn
+
+
+def get_deprecated_rn(old_yml, new_yml, file_type):
     """Generate rn for deprecated items"""
-    old_yml, new_yml = get_yml_objects(path, file_type)
-
     if not old_yml.get("deprecated") and new_yml.is_deprecated:
         description = (
             new_yml.get("comment")
@@ -125,7 +185,7 @@ def get_deprecated_rn(path: str, file_type):
     for command_name in new_commands:
         # if command is deprecated in new yml, and not in old yml
         if command_name not in old_commands:
-            rn += f"- Command ***{command_name}*** is deprecated. Use %%% instead.\n"
+            rn += f"- Deprecated ***{command_name}*** command. Use %%% instead.\n"
     return rn
 
 
@@ -315,7 +375,7 @@ class UpdateRN:
                     logger.info(
                         f"\n<green>Next Steps:\n - Please review the "
                         f"created release notes found at {rn_path} and document any changes you "
-                        f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
+                        f"made by replacing '%%UPDATE_RN%%' or deleting it.\n - Commit "
                         f"the new release notes to your branch.\nFor information regarding proper"
                         f" format of the release notes, please refer to "
                         f"https://xsoar.pan.dev/docs/integrations/changelog</green>"
@@ -753,8 +813,22 @@ class UpdateRN:
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
-                if desc:
-                    rn_desc += f"- New: {desc}"
+                if desc and _type in (
+                        FileType.INTEGRATION,
+                        FileType.SCRIPT,
+                        FileType.PLAYBOOK,
+                    ):
+                    if desc == '%%UPDATE_RN%%':
+                        new_yml = CLASS_BY_FILE_TYPE[_type](path)
+                        rn_desc += f"- New: added a new {_type.lower()}- {new_yml.get('display', '')} which {new_yml.get('description', '')}"
+                        if _type == FileType.INTEGRATION:
+                            rn_desc += "\n- Added the following commands:\n"
+                            new_yml = CLASS_BY_FILE_TYPE[_type](path)
+                            new_commands = new_yml.script.get("commands", [])
+                            for command in new_commands:
+                                rn_desc += f"**{command.get('name')}**\n"
+                    else:
+                        rn_desc += f"- New: {desc}"
                 if _type in SIEM_ONLY_ENTITIES or content_name.replace(
                     " ", ""
                 ).lower().endswith(EVENT_COLLECTOR.lower()):
@@ -782,12 +856,16 @@ class UpdateRN:
                         FileType.SCRIPT,
                         FileType.PLAYBOOK,
                     ):
-                        deprecate_rn = get_deprecated_rn(path, _type)
+                        old_yml, new_yml = get_yml_objects(path, _type)
+                        deprecate_rn = get_deprecated_rn(old_yml, new_yml, _type)
                     if deprecate_rn:
                         if text:
                             rn_desc += f"- {text}\n"
                         rn_desc += deprecate_rn
                     else:
+                        if _type == FileType.INTEGRATION:
+                            rn_desc += get_configurations_updates(old_yml.get("configuration", []), new_yml.get("configuration", []))
+                            rn_desc += get_commands_updates(old_yml.get("script", {}).get("commands", []), new_yml.script.get("commands", []))
                         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
 
         if docker_image:

@@ -488,6 +488,7 @@ def get_remote_file_from_api(
     Returns:
         bytes | Dict | List: raw response of the file or as a python object (list, dict)
     """
+    logger.debug(f'get_remote_file_from_api {full_file_path=} | {git_content_config.__dict__=} | {tag=} | {return_content=} | {encoding=}')
     if not git_content_config:
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:

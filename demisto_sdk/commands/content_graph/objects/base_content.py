@@ -54,6 +54,8 @@ if TYPE_CHECKING:
 CONTENT_TYPE_TO_MODEL: Dict[ContentType, Type["BaseContent"]] = {}
 json = JSON_Handler()
 
+object_setattr = object.__setattr__
+ROOT_KEY = '__root__'
 
 class BaseContentMetaclass(ModelMetaclass):
     def __new__(
@@ -278,6 +280,23 @@ class BaseContent(BaseNode):
         # Implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
 
+    @classmethod
+    def from_orm(cls: Type['Model'], obj:3 Any) -> 'Model':
+        logger.debug(f"from_orm starting >>")
+        if not cls.__config__.orm_mode:
+            raise ConfigError('You must have the config attribute orm_mode=True to use from_orm')
+        obj = {ROOT_KEY: obj} if cls.__custom_root_type__ else cls._decompose_class(obj)
+        m = cls.__new__(cls)
+        from pydantic.main import validate_model
+        values, fields_set, validation_error = validate_model(cls, obj)
+        if validation_error:
+            raise validation_error
+        object_setattr(m, '__dict__', values)
+        object_setattr(m, '__fields_set__', fields_set)
+        m._init_private_attributes()
+        logger.debug(f"from_orm finished <<")
+        return m
+    
     @staticmethod
     @lru_cache
     def from_path(

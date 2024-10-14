@@ -283,13 +283,20 @@ class BaseContent(BaseNode):
     @classmethod
     def from_orm(cls: Type['Model'], obj: Any) -> 'Model':
         logger.debug(f"from_orm starting >>")
+        logger.debug(f"from_orm got {cls=}")
+        logger.debug(f"from_orm  is {cls.__config__.orm_mode=}")
         if not cls.__config__.orm_mode:
             raise ConfigError('You must have the config attribute orm_mode=True to use from_orm')
         obj = {ROOT_KEY: obj} if cls.__custom_root_type__ else cls._decompose_class(obj)
+        logger.debug(f"from_orm {obj=}")
         m = cls.__new__(cls)
         from pydantic.main import validate_model
         values, fields_set, validation_error = validate_model(cls, obj)
+        
         if validation_error:
+            logger.debug(f"from_orm we got a validation error: {validation_error}")
+            for err in validation_error.errors():
+                logger.debug(f"from_orm Validation error: {err}")
             raise validation_error
         object_setattr(m, '__dict__', values)
         object_setattr(m, '__fields_set__', fields_set)
@@ -371,3 +378,6 @@ class UnknownContent(BaseNode):
     @property
     def identifier(self):
         return self.object_id or self.name
+
+
+validate_model

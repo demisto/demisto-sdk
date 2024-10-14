@@ -52,6 +52,13 @@ class _Argument(BaseStrictModel):
     hidden: Optional[bool] = None
 
 
+HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="hidden",
+    type_=Optional[bool],
+    default=None,
+    suffixes=[MarketplaceVersions.MarketplaceV2.value],
+)
+
 Argument = create_model(
     model_name="Argument",
     base_models=(
@@ -61,6 +68,7 @@ Argument = create_model(
         DESCRIPTION_DYNAMIC_MODEL,
         DEPRECATED_DYNAMIC_MODEL,
         DEFAULT_DYNAMIC_MODEL,
+        HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
     ),
 )
 
@@ -75,28 +83,11 @@ class BaseOptionalVersionJson(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toVersion")
 
 
-HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="hidden",
-    type_=Optional[bool],
-    default=None,
-    suffixes=[MarketplaceVersions.MarketplaceV2.value],
-)
-
-
-class _Output(BaseStrictModel):
+class Output(BaseStrictModel):
     content_path: Optional[str] = Field(None, alias="contentPath")
     context_path: Optional[str] = Field(None, alias="contextPath")
     description: str
     type: Optional[str] = None
-
-
-Output = create_model(
-    model_name="Output",
-    base_models=(
-        _Output,
-        HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
-    ),
-)
 
 
 class _Important(BaseModel):

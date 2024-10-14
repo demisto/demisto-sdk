@@ -296,16 +296,6 @@ class BaseContent(BaseNode):
         else:
             logger.debug(f'from_orm no model config')
 
-        if pre_root_validators := cls.__pre_root_validators:
-            logger.debug(f'from_orm {pre_root_validators=}')
-        else:
-            logger.debug(f'from_orm no pre_root_validators')
-
-        if post_root_validators := cls.__post_root_validators:
-            logger.debug(f'from_orm {post_root_validators=}')
-        else:
-            logger.debug(f'from_orm no post_root_validators')
-
         values, fields_set, validation_error = validate_model(cls, obj)
         if validation_error:
             logger.debug(f"from_orm we got a validation error: {validation_error}")

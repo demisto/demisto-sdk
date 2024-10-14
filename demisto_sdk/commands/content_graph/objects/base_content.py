@@ -18,7 +18,7 @@ from typing import (
 
 import demisto_client
 from packaging.version import Version
-from pydantic import BaseModel, DirectoryPath, Field
+from pydantic import BaseModel, DirectoryPath, Field, ConfigError
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (

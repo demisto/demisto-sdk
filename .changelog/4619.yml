@@ -1,0 +1,4 @@
+changes:
+- description: Moved RN111 validation to the new validate format - the validation ensure the docker documented in the yml file matches the on in the RN.
+  type: <breaking|feature|fix|internal>
+pr_number: 4619

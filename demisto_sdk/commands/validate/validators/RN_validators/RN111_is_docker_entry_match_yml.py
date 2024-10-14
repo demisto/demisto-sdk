@@ -35,9 +35,23 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (old_obj := content_item.old_base_content_object)
             and content_item.docker_image != old_obj.docker_image
-            and content_item.docker_image
-            != self.get_docker_image_entry(content_item.pack, content_item.name)
+            and (
+                docker_entry := self.get_docker_image_entry(
+                    content_item.pack.rn.file_content, content_item.name
+                )
+            )
+            and content_item.docker_image != docker_entry
         ]
 
-    def get_docker_image_entry(pack, content_item_name) -> str:
-        return ""
+    def get_docker_image_entry(self, rn: str, content_item_name: str) -> str:
+        rn_items = rn.split("##### ")
+        docker = "No docker entry found."
+        for item in rn_items:
+            if item.startswith(content_item_name):
+                for entry in item.split("- "):
+                    if entry.startswith("Updated the Docker image to: "):
+                        docker = entry.replace("Updated the Docker image to: ", "")[
+                            1:-2
+                        ]
+                        break
+        return docker

@@ -281,7 +281,7 @@ class BaseContent(BaseNode):
         raise NotImplementedError()
 
     @classmethod
-    def from_orm(cls: Type['Model'], obj:3 Any) -> 'Model':
+    def from_orm(cls: Type['Model'], obj: Any) -> 'Model':
         logger.debug(f"from_orm starting >>")
         if not cls.__config__.orm_mode:
             raise ConfigError('You must have the config attribute orm_mode=True to use from_orm')

@@ -172,3 +172,30 @@ def is_indicator_pb(playbook: Playbook):
         (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators"
         for i in playbook.data.get("inputs", {})
     )
+
+
+def get_categories_from_rn(rn: str) -> dict:
+    return get_information_from_rn(rn, "\n#### ")
+
+
+def get_entities_from_category(rn: str) -> dict:
+    return get_information_from_rn(rn, "\n##### ")
+
+
+def get_information_from_rn(rn: str, splitter: str) -> dict:
+    """
+        Extract the various categories from the release note according to the splitter
+        rn : the release notes
+        splitter: a string to split by
+    Return:
+        dict. dictionary where each entry is the category name in the release notes
+        and its value is the change for that category.
+    """
+    splitted_text = rn.split(splitter)
+    splitted_categories_dict = {}
+    for category in splitted_text:
+        if category:
+            splitted_categories_dict[category[0 : category.index("\n")]] = category[
+                category.index("\n") + 1 :
+            ]
+    return splitted_categories_dict

@@ -288,9 +288,24 @@ class BaseContent(BaseNode):
         if not cls.__config__.orm_mode:
             raise ConfigError('You must have the config attribute orm_mode=True to use from_orm')
         obj = {ROOT_KEY: obj} if cls.__custom_root_type__ else cls._decompose_class(obj)
-        logger.debug(f"from_orm {obj=}")
+        # logger.debug(f"from_orm {obj=}")
         m = cls.__new__(cls)
         from pydantic.main import validate_model
+        if model_config := cls.__config__:
+            logger.debug(f'from_orm {model_config=}')
+        else:
+            logger.debug(f'from_orm no model config')
+
+        if pre_root_validators := cls.__pre_root_validators:
+            logger.debug(f'from_orm {pre_root_validators=}')
+        else:
+            logger.debug(f'from_orm no pre_root_validators')
+
+        if post_root_validators := cls.__post_root_validators:
+            logger.debug(f'from_orm {post_root_validators=}')
+        else:
+            logger.debug(f'from_orm no post_root_validators')
+
         values, fields_set, validation_error = validate_model(cls, obj)
         if validation_error:
             logger.debug(f"from_orm we got a validation error: {validation_error}")

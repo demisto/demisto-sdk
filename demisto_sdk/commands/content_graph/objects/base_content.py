@@ -292,7 +292,6 @@ class BaseContent(BaseNode):
         m = cls.__new__(cls)
         from pydantic.main import validate_model
         values, fields_set, validation_error = validate_model(cls, obj)
-        
         if validation_error:
             logger.debug(f"from_orm we got a validation error: {validation_error}")
             for err in validation_error.errors():
@@ -378,6 +377,3 @@ class UnknownContent(BaseNode):
     @property
     def identifier(self):
         return self.object_id or self.name
-
-
-validate_model

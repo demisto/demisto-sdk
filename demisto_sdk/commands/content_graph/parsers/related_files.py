@@ -289,14 +289,19 @@ class ImageRelatedFile(PNGFiles):
             / "doc_files"
             / str(self.main_file_path.parts[-1])
             .replace(".yml", ".png")
-            .replace("playbook-", ""),  # In case the playbook's image is located under doc_files with the same name as the playbook.
-            self.main_file_path.parent / f"{self.main_file_path.parts[-2]}_image.png",  # In case of integration image where the image is located in the integration folder with the same name as the integration.
+            .replace(
+                "playbook-", ""
+            ),  # In case the playbook's image is located under doc_files folder with the same name as the playbook.
+            self.main_file_path.parent
+            / f"{self.main_file_path.parts[-2]}_image.png",  # In case of integration image where the image is located in the integration folder with the same name as the integration.
         ]
-        if self.main_file_path.suffix == ".json":  # when editing .yml files, we don't want to end up with the yml file as part of the optional paths.
+        if (
+            self.main_file_path.suffix == ".json"
+        ):  # when editing .yml files, we don't want to end up with the yml file as part of the optional paths.
             optional_paths_list.append(
                 Path(str(self.main_file_path).replace(".json", "_image.png"))
             )
-        else:    # when editing .json files, we don't want to end up with the json file as part of the optional paths.
+        else:  # when editing .json files, we don't want to end up with the json file as part of the optional paths.
             optional_paths_list.append(
                 Path(str(self.main_file_path).replace(".yml", ".png")),
             )

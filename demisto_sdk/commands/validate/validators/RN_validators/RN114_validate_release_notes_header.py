@@ -184,6 +184,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             - List of invalid header content items (str or None).
         """
         headers = self.extract_rn_headers(pack.release_note.file_content)
+        logger.debug('testing')
         pack_items_by_types = pack.content_items.items_by_type()
         if not pack_items_by_types:
             return [], []
@@ -192,6 +193,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             for header_type in headers
             if not self.validate_content_type_header(header_type)
         ]
+        logger.debug('testing')
         # removing invalid 1st header types
         valid_headers = {
             key: value

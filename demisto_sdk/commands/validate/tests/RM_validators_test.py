@@ -52,10 +52,11 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_cop
 from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
     IsImageExistsInReadmeValidator,
 )
-from demisto_sdk.commands.validate.validators.RM_validators.RM116_missing_playbook_image import (
-    MissingPlaybookImageValidator,
 from demisto_sdk.commands.validate.validators.RM_validators.RM115_no_default_section_left import (
     NoDefaultSectionsLeftReadmeValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM116_missing_playbook_image import (
+    MissingPlaybookImageValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM116_readme_not_to_short import (
     NotToShortReadmeValidator,
@@ -980,7 +981,7 @@ def test_missing_playbook_image_validator_image_exists_with_path():
     result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
     assert len(result) == 0
 
-  
+
 @pytest.mark.parametrize(
     "file_input, missing_section",
     [
@@ -1144,4 +1145,3 @@ def test_invalid_short_file():
         not_to_short_readme_validator.obtain_invalid_content_items([test_pack])
     )
     assert result[0].message == short_readme_error
-

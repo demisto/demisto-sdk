@@ -108,13 +108,17 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     }
 
 
-def get_items_using_deprecated(tx: Transaction, file_paths: List[str]):
+def get_items_using_deprecated(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, str, List[graph.Node]]]:
     return get_items_using_deprecated_commands(
         tx, file_paths
     ) + get_items_using_deprecated_content_items(tx, file_paths)
 
 
-def get_items_using_deprecated_commands(tx: Transaction, file_paths: List[str]):
+def get_items_using_deprecated_commands(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, str, List[graph.Node]]]:
     files_filter = (
         f"AND (p.path in {file_paths} OR i.path IN {file_paths})" if file_paths else ""
     )
@@ -125,11 +129,20 @@ WHERE elementId(i) <> elementId(i2)
 WITH p, c, i2
 WHERE i2 IS NULL
 {files_filter}
-RETURN c.object_id AS deprecated_command, c.content_type AS deprecated_content_type, collect(p.path) AS object_using_deprecated"""
-    return list(run_query(tx, command_query))
+RETURN c.object_id AS deprecated_command, c.content_type AS deprecated_content_type, collect(p) AS object_using_deprecated"""
+    return [
+        (
+            item.get("deprecated_command"),
+            item.get("deprecated_content_type"),
+            item.get("object_using_deprecated"),
+        )
+        for item in run_query(tx, command_query)
+    ]
 
 
-def get_items_using_deprecated_content_items(tx: Transaction, file_paths: List[str]):
+def get_items_using_deprecated_content_items(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, str, List[graph.Node]]]:
     files_filter = (
         f"AND (p.path IN {file_paths} OR d.path IN {file_paths})" if file_paths else ""
     )
@@ -140,9 +153,16 @@ OPTIONAL MATCH (p)-[:USES]->(c1:Command)<-[:HAS_COMMAND]-(d)
 WITH p, d, c1
 WHERE c1 IS NULL
 {files_filter}
-RETURN d.object_id AS deprecated_content, d.content_type AS deprecated_content_type, collect(p.path) AS object_using_deprecated
+RETURN d.object_id AS deprecated_content, d.content_type AS deprecated_content_type, collect(p) AS object_using_deprecated
     """
-    return list(run_query(tx, query))
+    return [
+        (
+            item.get("deprecated_content"),
+            item.get("deprecated_content_type"),
+            item.get("object_using_deprecated"),
+        )
+        for item in run_query(tx, query)
+    ]
 
 
 def validate_marketplaces(tx: Transaction, pack_ids: List[str]):
@@ -253,21 +273,34 @@ def validate_core_packs_dependencies(
     }
 
 
-def validate_hidden_pack_dependencies(
+def validate_packs_with_hidden_mandatory_dependencies(
     tx: Transaction,
     pack_ids: List[str],
-):
-    query = f"""// Returns DEPENDS_ON relationships to packs which are hidden
-MATCH (pack1)-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:true}}]->(pack2{{hidden: true}})
-WHERE {f'(pack1.object_id in {pack_ids} OR pack2.object_id in {pack_ids}) AND' if pack_ids else ""}
-NOT r.is_test
-and NOT pack1.hidden
-and NOT pack1.deprecated
-RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
-        """
+) -> Dict[str, Neo4jRelationshipResult]:
+    """
+    Identifies non-hidden packs that have mandatory dependencies on hidden packs.
+    Excludes test relationships and deprecated packs.
+    Args:
+        tx (Transaction): The Neo4j transaction object.
+        pack_ids (List[str]): List of pack IDs to check.
+
+    Returns:
+        Dict[str, Neo4jRelationshipResult]: Dictionary of packs with hidden dependencies.
+    """
+    pack_filter = (
+        f" AND (pack.object_id in {pack_ids} OR hidden_pack.object_id in {pack_ids})"
+        if pack_ids
+        else ""
+    )
+    query = f"""
+    // Returns DEPENDS_ON relationships to packs which are hidden
+    MATCH (pack:Pack {{hidden:FALSE}})-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:TRUE}}]->(hidden_pack:Pack {{hidden: TRUE}})
+    WHERE NOT r.is_test {pack_filter}
+    RETURN pack, collect(r) as relationships, collect(hidden_pack) as nodes_to
+    """
     return {
-        item.get("pack1").element_id: Neo4jRelationshipResult(
-            node_from=item.get("pack1"),
+        item.get("pack").element_id: Neo4jRelationshipResult(
+            node_from=item.get("pack"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
         )

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed the StrictScript pydantic object to contain the new field ***hidden:marketplacev2*** just as a field in Argument.
+  type: fix
+pr_number: 4615

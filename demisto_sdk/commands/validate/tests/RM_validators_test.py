@@ -12,6 +12,10 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
+from demisto_sdk.commands.validate.validators.RM_validators.RM100_no_empty_sections import (
+    EmptySectionsValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_valid import (
     IsImagePathValidValidator,
 )
@@ -50,6 +54,11 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exist
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM116_missing_playbook_image import (
     MissingPlaybookImageValidator,
+from demisto_sdk.commands.validate.validators.RM_validators.RM115_no_default_section_left import (
+    NoDefaultSectionsLeftReadmeValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM116_readme_not_to_short import (
+    NotToShortReadmeValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -482,7 +491,7 @@ def test_IsContainDemistoWordValidator_is_invalid():
             readme_text="Invalid readme contains the word demistomock\ndemisto \ndemisto \ndemisto.\n mockdemisto."
         )
     ]
-    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
+    expected_msg = "Invalid keyword 'demisto' was found in lines: 1, 2, 3, 4, 5 of the README file. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
     results = IsContainDemistoWordValidator().obtain_invalid_content_items(
         content_items
     )
@@ -970,3 +979,169 @@ def test_missing_playbook_image_validator_image_exists_with_path():
     )
     result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
     assert len(result) == 0
+
+  
+@pytest.mark.parametrize(
+    "file_input, missing_section",
+    [
+        ("## Troubleshooting\n## OtherSection", "Troubleshooting"),
+        ("## Troubleshooting", "Troubleshooting"),
+        ("## Troubleshooting\n\n---\n## OtherSection", "Troubleshooting"),
+        ("## Use Cases\n\n----------\n## OtherSection", "Use Cases"),
+        ("## Additional Information\n\n## OtherSection", "Additional Information"),
+        ("## Known Limitations\n\n----------\n", "Known Limitations"),
+    ],
+)
+def test_unvalid_verify_no_empty_sections(file_input, missing_section):
+    """
+    Given
+        - Empty sections in different forms
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+    content_item = create_integration_object(readme_content=file_input)
+    validation_result: list[ValidationResult] = (
+        EmptySectionsValidator().obtain_invalid_content_items([content_item])
+    )
+    section_error = f"The section/s: {missing_section} is/are empty\nplease elaborate or delete the section.\n"
+    if validation_result:
+        assert validation_result[0].message == section_error
+
+
+def test_combined_unvalid_verify_no_empty_sections():
+    """
+    Given
+        - Couple of empty sections
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+    file_input = "## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"
+    content_item = create_integration_object(readme_content=file_input)
+    empty_section_validator = EmptySectionsValidator()
+    validation_results: list[ValidationResult] = (
+        empty_section_validator.obtain_invalid_content_items([content_item])
+    )
+    error = "The section/s: Troubleshooting, Additional Information is/are empty\nplease elaborate or delete the section.\n"
+    assert error == validation_results[0].message
+
+
+@pytest.mark.parametrize(
+    "file_input",
+    [
+        "## Troubleshooting\ninput",
+        "## Troubleshooting\n\n---\ninput",
+        "## Use Cases\n\n----------\ninput",
+        "## Additional Information\n\ninput",
+        "## Additional Information\n\n### OtherSection",
+        "## Known Limitations\n\n----------\ninput",
+    ],
+)
+def test_valid_sections(file_input):
+    """
+    Given
+        - Valid sections in different forms from SECTIONS
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+    content_item = create_integration_object(readme_content=file_input)
+    validation_result: list[ValidationResult] = (
+        EmptySectionsValidator().obtain_invalid_content_items([content_item])
+    )
+    assert not validation_result
+
+
+@pytest.mark.parametrize(
+    "file_input, section",
+    [
+        (
+            "##### Required Permissions\n**FILL IN REQUIRED PERMISSIONS HERE**\n##### Base Command",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "##### Required Permissions **FILL IN REQUIRED PERMISSIONS HERE**\n##### Base Command",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
+            "FILL IN REQUIRED PERMISSIONS HERE",
+        ),
+        (
+            "This integration was integrated and tested with version xx of integration v2.",
+            "version xx",
+        ),
+        (
+            "##Dummy Integration\n this integration is for getting started and learn how to build an "
+            "integration. some extra text here",
+            "getting started and learn how to build an integration",
+        ),
+        (
+            "In this readme template all required notes should be replaced.\n# %%UPDATE%% <Product Name>",
+            "%%UPDATE%%",
+        ),
+    ],
+)
+def test_verify_no_default_sections_left(file_input, section):
+    """
+    Given
+        - Readme that contains sections that are created as default and need to be changed
+    When
+        - Run validate on README file
+    Then
+        - Ensure no default sections in the readme file
+    """
+    content_item = create_integration_object(readme_content=file_input)
+    no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator()
+    validation_result: list[ValidationResult] = (
+        no_default_section_left_validator.obtain_invalid_content_items([content_item])
+    )
+    section_error = f'The following default sentences "{section}" still exist in the readme, please replace with a suitable info.'
+    assert section_error == validation_result[0].message
+
+
+def test_readme_ignore():
+    """
+    Check that packs in ignore list are ignored.
+       Given
+            - A pack from the ignore list
+        When
+            - Run validate on README of ignored pack
+        Then
+            - Ensure validation ignored the pack
+    """
+    readme_text = "getting started and learn how to build an integration"
+    pack_content_item = create_pack_object(name="HelloWorld", readme_text=readme_text)
+    no_default_section_left_validator = NoDefaultSectionsLeftReadmeValidator()
+    assert not no_default_section_left_validator.obtain_invalid_content_items(
+        [pack_content_item]
+    )
+
+
+def test_invalid_short_file():
+    """
+    Given
+        - Non empty Readme with less than 30 chars.
+    When
+        - Running validate on README file
+    Then
+        - Ensure verify on Readme fails
+    """
+    short_readme = "This is a short readme"
+    test_pack = create_pack_object(readme_text=short_readme)
+    not_to_short_readme_validator = NotToShortReadmeValidator()
+    short_readme_error = """Your Pack README is too short (22 chars). Please move its content to the pack description or add more useful information to the Pack README. Pack README files are expected to include a few sentences about the pack and/or images."""
+
+    result: list[ValidationResult] = (
+        not_to_short_readme_validator.obtain_invalid_content_items([test_pack])
+    )
+    assert result[0].message == short_readme_error
+

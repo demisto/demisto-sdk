@@ -985,7 +985,7 @@ class TestEnsureUniquePackDirName:
         assert new_pack_dir_name != pack_name
         assert new_pack_dir_name == pack_name + "V2"
 
-    def mock_format_manager(*args):
+    def mock_format_manager(*args):  # pylint: disable=E0213
         return args
 
     @pytest.mark.parametrize("new_pack", [True, False])

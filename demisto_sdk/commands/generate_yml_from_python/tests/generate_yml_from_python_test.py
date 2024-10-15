@@ -20,6 +20,7 @@ from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import
 
 from TestSuite.integration import Integration
 
+#pylint: disable=E0602
 
 def dedent(code_line: str, spaces_num: int) -> str:
     """Dedent the code_line by spaces_num."""
@@ -204,8 +205,8 @@ class TestImportDependencies:
 
             def some_func():
                 """Some func doc"""
-                datetime[3] = 5
-                print(f"func {datetime[3]}")
+                datetime[3] = 5 #pylint: disable=E1137
+                print(f"func {datetime[3]}") #pylint: disable=E1136
 
         save_code_as_integration(code=code_snippet, integration=integration)
         with does_not_raise():
@@ -791,7 +792,7 @@ class TestCommandGeneration:
         SourceFileLoader(integration_name, integration_code_path).exec_module(
             integration
         )
-        client, command_name, outputs_prefix, execution = integration.funky_command(
+        client, command_name, outputs_prefix, execution = integration.funky_command( # pylint: disable=E1101
             "theClient"
         )
 

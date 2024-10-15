@@ -122,8 +122,8 @@ class GitContentConfig:
             repo_name = self.current_repository
         else:
             hostname = parsed_git.host
-            organization = parsed_git.owner
-            repo_name = parsed_git.repo
+            organization = parsed_git.owner  # pylint: disable=no-member
+            repo_name = parsed_git.repo  # pylint: disable=no-member
             if (
                 "@" in parsed_git.host
             ):  # the library sometimes returns hostname as <username>@<hostname>
@@ -161,7 +161,7 @@ class GitContentConfig:
             urls = GitUtil().repo.remote().urls
             for url in urls:
                 parsed_git = giturlparse.parse(url)
-                if parsed_git and parsed_git.host and parsed_git.repo:
+                if parsed_git and parsed_git.host and parsed_git.repo:  # pylint: disable=no-member
                     return parsed_git
             return None
         except Exception as e:

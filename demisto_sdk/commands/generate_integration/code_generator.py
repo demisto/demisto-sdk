@@ -290,6 +290,8 @@ class IntegrationGeneratorConfig:
                 code_arg_name = f"{code_arg_name}{NAME_FIX}"
 
             new_arg_type: Optional[str] = None
+            argument_default = None  # default
+
             if arg.type_ == "array":
                 argument_default: Optional[str] = ", []"
                 new_arg_type = "argToList"
@@ -297,8 +299,6 @@ class IntegrationGeneratorConfig:
                 new_arg_type = ARGUMENT_TYPES[arg.type_]
                 if new_arg_type == "bool":
                     new_arg_type = "argToBoolean"
-            else:
-                argument_default = None
 
             if arg.default_value:
                 argument_default = self.get_arg_default(arg)

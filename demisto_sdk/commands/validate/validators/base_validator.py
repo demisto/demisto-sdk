@@ -99,7 +99,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
 
     def get_content_types(self):
-        args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
+        args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore # pylint: disable=no-member
         if isinstance(args, (BaseContent, BaseContentMetaclass)):
             return args
         return get_args(args)

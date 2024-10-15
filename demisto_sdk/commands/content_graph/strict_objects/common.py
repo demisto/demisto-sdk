@@ -18,6 +18,7 @@ class BaseStrictModel(BaseModel, ABC):
 
         extra = Extra.forbid
 
+    @classmethod
     @validator("*", pre=True)
     def prevent_none(cls, value, field):
         """

@@ -56,6 +56,7 @@ class ContentItem(BaseContent):
     pack: Any = Field(None, exclude=True, repr=False)
     support: str = ""
 
+    @classmethod
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
@@ -76,6 +77,7 @@ class ContentItem(BaseContent):
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
 
+    @classmethod
     @validator("pack", always=True)
     def validate_pack(cls, v: Any, values) -> Optional["Pack"]:
         # Validate that we have the pack containing the content item.
@@ -85,6 +87,7 @@ class ContentItem(BaseContent):
             return v
         return cls.get_pack(values.get("relationships_data"), values.get("path"))
 
+    @classmethod
     @validator("support", always=True)
     def validate_support(cls, v: str, values) -> str:
         # Ensure the 'support' field is present.

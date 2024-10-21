@@ -5,7 +5,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true
-python_version = "3.9"
 show_error_codes = true
 follow_imports = "silent"
 pretty = true
@@ -39,7 +38,7 @@ exclude = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.9,<3.12"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"

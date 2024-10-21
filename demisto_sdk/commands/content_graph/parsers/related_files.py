@@ -278,16 +278,34 @@ class ImageRelatedFile(PNGFiles):
     file_type = RelatedFileType.IMAGE
 
     def get_optional_paths(self) -> List[Path]:
-        return [
+        """
+        Generate a list of optional paths for the content item's image.
+        The right path will be found later.
+        Returns:
+            List[Path]: the list of optional paths.
+        """
+        optional_paths_list = [
             self.main_file_path.parents[1]
             / "doc_files"
             / str(self.main_file_path.parts[-1])
             .replace(".yml", ".png")
-            .replace("playbook-", ""),
-            Path(str(self.main_file_path).replace(".yml", ".png")),
-            self.main_file_path.parent / f"{self.main_file_path.parts[-2]}_image.png",
-            Path(str(self.main_file_path).replace(".json", "_image.png")),
+            .replace(
+                "playbook-", ""
+            ),  # In case the playbook's image is located under doc_files folder with the same name as the playbook.
+            self.main_file_path.parent
+            / f"{self.main_file_path.parts[-2]}_image.png",  # In case of integration image where the image is located in the integration folder with the same name as the integration.
         ]
+        if (
+            self.main_file_path.suffix == ".json"
+        ):  # when editing .yml files, we don't want to end up with the yml file as part of the optional paths.
+            optional_paths_list.append(
+                Path(str(self.main_file_path).replace(".json", "_image.png"))
+            )
+        else:  # when editing .json files, we don't want to end up with the json file as part of the optional paths.
+            optional_paths_list.append(
+                Path(str(self.main_file_path).replace(".yml", ".png")),
+            )
+        return optional_paths_list
 
 
 class AuthorImageRelatedFile(PNGFiles):

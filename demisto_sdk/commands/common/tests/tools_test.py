@@ -190,6 +190,23 @@ class TestGenericFunctions:
     def test_get_file(self, file_path, func):
         assert func(file_path)
 
+    def test_get_file_failure_is_not_raised(self, mocker):
+        """
+        Given:
+            - Wrongly formatted yml file.
+        When:
+            - Getting the file using get_file with raise_on_error=False
+        Then:
+            - Assert no error is raised.
+        """
+        mocker.patch.object(Path, "exists", return_value=True)
+        mocker.patch.object(tools, "safe_read_unicode", return_value='description: "bla bla"nah')
+
+        try:
+            get_file(file_path="some_file.yml", raise_on_error=False)
+        except Exception as e:
+            assert False, f"Function get_file errored even though it should not raise error with error {e}"
+
     @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, _):
         """

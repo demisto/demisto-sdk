@@ -241,7 +241,7 @@ files = [
 @pytest.mark.parametrize(
     "file, python_version,support_level,long_running,exit_code,error_msgs,commands",
     files,
-    ids=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"],
+    ids=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"],
 )
 def test_xsoar_linter_errors(
     mocker,

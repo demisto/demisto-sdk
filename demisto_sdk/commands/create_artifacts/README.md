@@ -11,26 +11,25 @@ Generating the following artifacts:
    5. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine (under some conditions).
 
 **Arguments**:
-* **-a ARTIFACTS_PATH, --artifacts_path ARTIFACTS_PATH**
+* **-a --artifacts_path**
 Destination directory to create the artifacts.
 * **--zip/--no-zip**
 Zip content artifacts folders.
 * **--packs**
 Create only content_packs artifacts. Used for server version 5.5.0 and lower.
-* **-v RELEASE_VERSION, --content_version RELEASE_VERSION**
+* **-v --content_version**
 The content version in CommonServerPython.
-* **-s FILES_SUFFIX, --suffix FILES_SUFFIX**
-Suffix to add all yaml/json/yml files in the created artifacts.
-* **--cpus CPUS_NUMBER**
+* **-s --suffix** The suffix to add all yaml/json/yml files in the created artifacts.
+* **--cpus**
 Number of cpus/vcpus availble - only required when os not reflect number of cpus
 > CircleCI always show 32, but for example medium has 3.
-* **-idp ID_SET_PATH, --id_set_path ID_SET_PATH**
+* **-idp --id_set_path**
 The full path of id_set.json.
-* **-p CSV_PACKS_LIST, --pack-names CSV_PACKS_LIST**
+* **-p --pack-names**
 Packs to create artifacts for. Optional values are: `all` or csv list of packs. Default is set to `all`.
-* **-sd SIGN_DIRECTORY_PATH, --sign-directory SIGN_DIRECTORY_PATH**
+* **-sd --sign-directory**
 Path to the signDirectory executable file.
-* **-sk SIGNATURE_KEY, --signature-key SIGNATURE_KEY**
+* **-sk --signature-key**
 Base64 encoded signature key used for signing packs.
 * **-rt, --remove-test-playbooks**
 Should remove test playbooks from content packs or not.

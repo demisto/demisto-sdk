@@ -8,7 +8,7 @@ This command is used in order to create or update release notes for a new pack v
 In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote files will be fetched from the remote branch of the local repo.
 
 ### Arguments
-* **-i, --input <PACK_PATH>**
+* **-i, --input**
 
     The path of the content pack you wish to generate release notes for.
 
@@ -24,8 +24,7 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
 
 * **-g, --use-git**
 
-    Uses git to identify the relevant changed files and updates all release notes in every pack which has been changed.
-    Will be used by default if '-i' is not set. Please note that the `-u` argument will be applied to **all** changed packs.
+    Use git to identify the relevant changed files, will be used by default if '-i' is not set
 
 * **-f, --force**
 
@@ -33,7 +32,7 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
 
 * **--text**
 
-    Text to add to all of the release notes files.
+    Text to add to all the release notes files.
 
 * **--pre_release**
 
@@ -43,13 +42,14 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
 
     Previous branch or SHA1 commit to run checks against.
 
-* **-v, --version <DESIRED_VERSION>**
+* **-v, --version**
 
-    Bump to a specific version. Cannot be used with `-u, --update_type` flags.
+    Bump to a specific version. Cannot be used with `-u, --update_type` flag.
 
-* **-idp, --id-set-path**
+* **-bc, --breaking-changes**
 
-    The path of the id-set.json used for APIModule updates.
+    If new version contains breaking changes.
+
 
 ### Examples
 ```

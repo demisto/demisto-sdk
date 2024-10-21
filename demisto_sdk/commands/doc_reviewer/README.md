@@ -24,6 +24,10 @@ Whether to expand the base dictionary to include more words - will download 'bro
 Whether to print release notes templates.
 * **-rn**, **--release-notes**
 Will run only on release notes files.
+* **-xs**, **--xsoar-only**
+Run only on files from XSOAR-supported Packs.
+* **-pkw/-spkw**, **--use-packs-known-words/--skip-packs-known-words**
+Will find and load the known_words file from the pack. To use this option make sure you are running from the content directory.
 
 **Examples**
 1. `demisto-sdk doc-review -i ~/Integrations/integration-MyInt.yml --no-camel-case`

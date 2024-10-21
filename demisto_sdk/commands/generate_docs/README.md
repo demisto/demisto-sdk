@@ -17,11 +17,10 @@ For integration - Top use-cases. Number the steps by '*' (i.e. '\* foo. * bar.')
 * **-c, --command**
 A comma-separated command names to generate doc for, will ignore the rest of the commands. e.g xdr-get-incidents,xdr-update-incident
 * **-e, --examples**
-Path for a file containing examples. Each command should be in a separate line or a comma-separated list of commands.
-Comma-separated list of examples, wrapped by quotes.
-If the file or list contains a command with more than one example, all of them will be used.
+Integrations: Path for a file containing examples. Each command should be in a separate line or a comma-separated list of commands.
+Scripts: the script example surrounded by quotes. For example: -e '!ConvertFile entry_id=<entry_id>'
 * **-p, --permissions**
-Permissions in the documentation.
+Permissions needed.
 * **-cp, --command-permissions**
 Path for file containing commands permissions. Each command permissions should be in a separate line (i.e. 'command-name Administrator READ-WRITE').
 * **-l, --limitations**
@@ -34,10 +33,14 @@ Verbose output - mainly for debugging purposes.
 Path of the old integration version yml file.
 * **--skip-breaking-changes**
 Skip generating of breaking changes section.
-* **-ngr, --no-graph**
+* **-gr/-ngr, --graph/--no-graph**
 Whether to use the content graph or not.
 * **-f, --force**
 Whether to force the generation of documentation (rather than update when it exists in version control).
+* **--custom-image-path**
+A custom path to a playbook image. If not stated, a default link will be added to the file.
+* **-rt, --readme-template**
+The readme template that should be appended to the given README.md file. Possible values: "syslog", "xdrc", "http-collector".
 
 > [!NOTE]
 >

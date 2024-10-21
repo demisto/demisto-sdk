@@ -33,17 +33,17 @@ The download is one-directional, data goes from the server to the repo.
 If there are files that exist both in the output directory and are specified in the input, they will be ignored. To override this behavior such that existing files will be merged with their newer version, use the force flag.
 
 ### Arguments
-* **-o PACK_PATH, --output PACK_PATH**
+* **-o, --output**
 
-    The path of a package directory to download custom content to.
+    A path of a package directory to download custom content to.
 
-* **-i "file_name_1" ... -i "file_name_n", --input "file_name_1" ... --input "file_name_n"**
+* **-i, --input**
 
     Custom content file name to be downloaded. Can be provided multiple times. File names can be retrieved using the -lf flag.
 
 * **-lf, --list-files**
 
-    Prints a list of all custom content files available to be downloaded.
+    List all custom content items available to download.
 
 * **-a, --all-custom-content**
 
@@ -51,7 +51,7 @@ If there are files that exist both in the output directory and are specified in 
 
 * **-fmt, --run-format**
 
-    Whether to run demisto-sdk format on downloaded files or not.
+    Format downloaded files.
 
 * **-f, --force**
 
@@ -60,10 +60,6 @@ If there are files that exist both in the output directory and are specified in 
 * **--insecure**
 
     Skip certificate validation.
-
-* **-v, --verbose**
-
-    Verbose output.
 
 * **-r, --regex**
 
@@ -75,12 +71,14 @@ If there are files that exist both in the output directory and are specified in 
 
 * **--it, --item-type**
 
-    The items type to download, use just when downloading system items.
+    Type of the content item to download. Required and used only when downloading system items.
 
 * **--auto-replace-uuids/--no-auto-replace-uuids**
   If False, avoid UUID replacements when downloading using the download command. The default value is True.
+* **--init** Initialize the output directory with a pack structure.
+* **--keep-empty-folders** Keep empty folders when a pack structure is initialized.
 
-### Asumptions
+### Assumptions
 For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration `Test Integration_Full-Name`, will be under `~/.../Packs/TestPack/Integrations/TestIntegrationFullName/`.
 
 Integrations, Scripts and Playbooks directories that does not contain a yml file, will be overwritten automatically.

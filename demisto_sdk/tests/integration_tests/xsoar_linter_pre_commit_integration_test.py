@@ -238,7 +238,6 @@ files = [
 ]
 
 
-@pytest.mark.skipif(pytest.id == "11", reason="CIAC-12008")
 @pytest.mark.parametrize(
     "file, python_version,support_level,long_running,exit_code,error_msgs,commands",
     files,
@@ -272,6 +271,11 @@ def test_xsoar_linter_errors(
     - Ensure invalid files fail with the correct exit code.
     - Ensure invalid files fail with the correct error messages.
     """
+    if (
+        file == Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}")
+        and support_level == "community"
+    ):
+        pytest.skip("CIAC-12008")
     pack = git_repo.create_pack()
     pack.pack_metadata.update({"support": support_level})
 

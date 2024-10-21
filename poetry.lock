@@ -3439,8 +3439,7 @@ astroid = ">=3.3.4,<=3.4.0-dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = [
     {version = ">=0.2", markers = "python_version < \"3.11\""},
-    {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
-    {version = ">=0.3.6", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
+    {version = ">=0.3.6", markers = "python_version >= \"3.11\""},
 ]
 isort = ">=4.2.5,<5.13.0 || >5.13.0,<6"
 mccabe = ">=0.6,<0.8"
@@ -5421,5 +5420,5 @@ generate-unit-tests = ["klara"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.9,<3.13"
-content-hash = "432652c106ed2738f998d706e3537ec614ce8a2836c310fa74eb572bdbe9f641"
+python-versions = ">=3.9,<3.12"
+content-hash = "059e00c3fb6e45e08bd094ec2cb3ab8b0addbd0b06d2d133202e29b91112a8d7"

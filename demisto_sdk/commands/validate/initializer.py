@@ -630,9 +630,11 @@ class Initializer:
             Set[Path]: The set of the main paths obtained from the given paths set.
         """
         paths_set: Set[Path] = set()
+        logger.debug(f'collect_related_files_main_items {file_paths=}')
         for path in file_paths:
             path_str = str(path)
             if self.is_unrelated_path(path_str):
+                logger.debug(f'collect_related_files_main_items {path_str=} is unrelated.')
                 continue
             if f"/{INTEGRATIONS_DIR}/" in path_str or f"/{SCRIPTS_DIR}/" in path_str:
                 if path_str.endswith(".yml"):
@@ -660,7 +662,7 @@ class Initializer:
                 paths_set.add(self.obtain_metadata_path(path))
             else:
                 paths_set.add(path)
-
+        logger.debug(f'collect_related_files_main_items {paths_set=}')
         return paths_set
 
     def is_unrelated_path(self, path: str) -> bool:

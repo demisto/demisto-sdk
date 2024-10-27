@@ -343,13 +343,16 @@ class Initializer:
                 non_content_items,
             ) = self.get_files_using_git()
         elif self.execution_mode == ExecutionMode.SPECIFIC_FILES:
+            file_path = self.file_path.split(",")
+            logger.debug(f"gather_objects_to_run_on {file_path=}")
+            loaded_files = self.load_files(file_path)
+            logger.debug(f"gather_objects_to_run_on {loaded_files=}")
+
             (
                 content_objects_to_run,
                 invalid_content_items,
                 non_content_items,
-            ) = self.paths_to_basecontent_set(
-                set(self.load_files(self.file_path.split(",")))
-            )
+            ) = self.paths_to_basecontent_set(loaded_files)
         elif self.execution_mode == ExecutionMode.ALL_FILES:
             logger.info("Running validation on all files.")
             content_dto = ContentDTO.from_path()

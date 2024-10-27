@@ -46,12 +46,13 @@ class GitFileNotFoundError(FileNotFoundError):
 class GitUtil:
     # in order to use Repo class/static methods
     REPO_CLS = Repo
-
+    # TODO - LOOK HERE
     def __init__(
         self,
         path: Optional[Union[str, Path, Repo]] = None,
         search_parent_directories: bool = True,
     ):
+        logger.debug(f'GitUtil init')
         if isinstance(path, str):
             repo_path = Path(path)
         elif isinstance(path, self.REPO_CLS):

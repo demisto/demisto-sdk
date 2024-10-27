@@ -9,7 +9,6 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
     IsFromVersionSufficientValidator,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     FixResult,
     ValidationResult,
 )
@@ -23,7 +22,7 @@ INTEGRATION_FROM_VERSION_DICT = {
 
 
 class IsFromVersionSufficientIntegrationValidator(
-    IsFromVersionSufficientValidator, BaseValidator[ContentTypes]
+    IsFromVersionSufficientValidator[ContentTypes]
 ):
     error_message = "The integration is a {0} integration and therefore require a fromversion field of at least {1}, current version is: {2}."
 

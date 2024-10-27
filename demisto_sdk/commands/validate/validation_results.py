@@ -61,9 +61,9 @@ class ResultWriter:
             self.write_results_to_json_file()
         for result in self.validation_results:
             if only_throw_warning and result.validator.error_code in only_throw_warning:
-                logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
+                logger.warning(f"<yellow>{result.format_readable_message}</yellow>")
             else:
-                logger.error(f"[red]{result.format_readable_message}[/red]")
+                logger.error(f"<red>{result.format_readable_message}</red>")
                 exit_code = 1
         for fixing_result in self.fixing_results:
             fixed_objects_set.add(fixing_result.content_object)
@@ -72,15 +72,15 @@ class ResultWriter:
                 or fixing_result.validator.error_code not in only_throw_warning
             ):
                 exit_code = 1
-            logger.warning(f"[yellow]{fixing_result.format_readable_message}[/yellow]")
+            logger.warning(f"<yellow>{fixing_result.format_readable_message}</yellow>")
         for result in self.invalid_content_item_results:
-            logger.error(f"[red]{result.format_readable_message}[/red]")
+            logger.error(f"<red>{result.format_readable_message}</red>")
             exit_code = 1
         for result in self.validation_caught_exception_results:
-            logger.error(f"[red]{result.format_readable_message}[/red]")
+            logger.error(f"<red>{result.format_readable_message}</red>")
             exit_code = 1
         if not exit_code:
-            logger.info("[green]All validations passed.[/green]")
+            logger.info("<green>All validations passed.</green>")
         for fixed_object in fixed_objects_set:
             fixed_object.save()
         return exit_code

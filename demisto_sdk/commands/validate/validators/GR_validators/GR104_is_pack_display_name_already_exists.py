@@ -14,13 +14,12 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Pack
 
 
-class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
+class IsPackDisplayNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR104"
-    description = "Validate that there are no duplicate display names in the repo"
-    rationale = (
-        "We want to avoid the existance of duplicate display names"
-        " in order to make sure we don't confuse between content items."
+    description = (
+        "Validate that there are no duplicate display names of packs in the repo"
     )
+    rationale = "Prevent confusion between packs."
     error_message = (
         "Pack '{content_id}' has a duplicate display_name as: {pack_display_id}."
     )

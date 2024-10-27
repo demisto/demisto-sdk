@@ -131,7 +131,7 @@ class IntegrationScriptUnifier(Unifier):
                 yml_unified, custom, is_script_package
             )
 
-        logger.debug(f"[green]Created unified yml: {path.name}[/green]")
+        logger.debug(f"<green>Created unified yml: {path.name}</green>")
         return yml_unified
 
     @staticmethod
@@ -714,7 +714,7 @@ class IntegrationScriptUnifier(Unifier):
             return f"[View Integration Documentation]({integration_doc_link})"
         else:
             logger.info(
-                f"[cyan]Did not find README in {package_path}, not adding integration doc link[/cyan]"
+                f"<cyan>Did not find README in {package_path}, not adding integration doc link</cyan>"
             )
             return ""
 

@@ -11,6 +11,8 @@ chmod -R 775 /devwork
 . /etc/os-release
 
 INSTALL_SUCCESS=0
+pip config set global.disable-pip-version-check true
+
 pip install --no-cache-dir --progress-bar off -r /test-requirements.txt || INSTALL_SUCCESS=1
 
 # if installation fails, we need to install gcc to compile

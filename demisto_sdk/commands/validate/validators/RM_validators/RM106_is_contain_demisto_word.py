@@ -25,7 +25,7 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
     rationale = (
         "Ensure that the current name of the product is used rather than the old one."
     )
-    error_message = "Invalid keyword 'demisto' was found in lines: {0}. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
+    error_message = "Invalid keyword 'demisto' was found in lines: {0} of the README file. For more information about the README See https://xsoar.pan.dev/docs/documentation/readme_file."
     related_field = "readme"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
@@ -46,7 +46,13 @@ class IsContainDemistoWordValidator(BaseValidator[ContentTypes]):
                     phrases_to_search=["demisto"],
                     ignore_case=True,
                     text=content_item.readme.file_content,
-                    exceptionally_allowed_substrings=["/demisto/"],  # in URL
+                    exceptionally_allowed_substrings=[
+                        "/demisto/",
+                        "devdemisto",
+                        "demistodev",
+                        "@demisto",
+                        "-demisto",
+                    ],
                 )
             )
         ]

@@ -128,16 +128,16 @@ class BaseUpdateJSON(BaseUpdate):
             old_id = self.old_file.get("id")
             if current_id != old_id:
                 logger.info(
-                    f"[yellow]The modified JSON file corresponding to the path: {self.relative_content_path} contains an "
+                    f"<yellow>The modified JSON file corresponding to the path: {self.relative_content_path} contains an "
                     f"ID which does not match the ID in remote file. Changing the ID from {current_id} back "
-                    f"to {old_id}.[/yellow]"
+                    f"to {old_id}.</yellow>"
                 )
                 self.data["id"] = old_id
         else:
             logger.debug("Updating ID to be the same as JSON name")
             if field not in self.data:
                 logger.info(
-                    f"[red]Missing {field} field in file {self.source_file} - add this field manually[/red]"
+                    f"<red>Missing {field} field in file {self.source_file} - add this field manually</red>"
                 )
                 return None
             if "id" in self.data and is_uuid(
@@ -184,6 +184,6 @@ class BaseUpdateJSON(BaseUpdate):
                 )
             )
             logger.error(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE

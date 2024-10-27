@@ -1,4 +1,3 @@
-import logging
 import subprocess
 from typing import Any, Dict, Iterator, Optional, Union
 
@@ -7,7 +6,6 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEPRECATED_DESC_REGEX,
@@ -49,7 +47,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     AuthorImage,
     Classifier,
     ClassifierMapper,
-    Connection,
     Contributors,
     CorrelationRule,
     Dashboard,
@@ -255,12 +252,6 @@ class Pack:
         )
 
     @property
-    def connections(self) -> Iterator[Connection]:
-        return self._content_files_list_generator_factory(
-            dir_name=CONNECTIONS_DIR, suffix="json"
-        )
-
-    @property
     def test_playbooks(self) -> Iterator[Union[Playbook, Script]]:
         return self._content_files_list_generator_factory(
             dir_name=TEST_PLAYBOOKS_DIR, suffix="yml"
@@ -462,13 +453,10 @@ class Pack:
             else {}
         )
 
-    def sign_pack(
-        self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path
-    ):
+    def sign_pack(self, dumped_pack_dir: Path, sign_directory: Path):
         """Signs pack folder and creates signature file.
 
         Args:
-            logger (logging.Logger): System logger already initialized.
             dumped_pack_dir (Path): Path to the updated pack to sign.
             sign_directory (Path): Path to the signDirectory executable file.
 

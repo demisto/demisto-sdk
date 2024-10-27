@@ -42,7 +42,7 @@ class GenericTypeJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n<blue>================= Updating file {self.source_file} =================</blue>"
             )
             super().update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
@@ -54,7 +54,7 @@ class GenericTypeJSONFormat(BaseUpdateJSON):
             return SUCCESS_RETURN_CODE
         except Exception as err:
             logger.debug(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE
 

@@ -196,7 +196,7 @@ class BaseValidator:
                 self.check_file_flags(file_name, file_path)
             except FileNotFoundError:
                 logger.info(
-                    f"[yellow]File {file_path} not found, cannot check its flags (deprecated, etc)[/yellow]"
+                    f"<yellow>File {file_path} not found, cannot check its flags (deprecated, etc)</yellow>"
                 )
 
             rel_file_path = get_relative_path_from_packs_dir(file_path)
@@ -235,7 +235,7 @@ class BaseValidator:
             or warning
         ):
             if self.print_as_warnings or warning:
-                logger.warning(f"[yellow]{formatted_error_str()}[/yellow]")
+                logger.warning(f"<yellow>{formatted_error_str()}</yellow>")
                 self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(
                     error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS
@@ -244,20 +244,20 @@ class BaseValidator:
 
         formatted_error = formatted_error_str()
         if suggested_fix and not is_error_not_allowed_in_pack_ignore:
-            logger.error(f"[red]{formatted_error[:-1]}[/red]")
+            logger.error(f"<red>{formatted_error[:-1]}</red>")
             if error_code == "ST109":
-                logger.info("[red]Please add to the root of the yml.[/red]\n")
+                logger.info("<red>Please add to the root of the yml.</red>\n")
             elif error_code == "ST107":
                 missing_field = error_message.split(" ")[3]
                 path_to_add = error_message.split(":")[1]
                 logger.info(
-                    f"[red]Please add the field {missing_field} to the path: {path_to_add} in the yml.[/red]\n"
+                    f"<red>Please add the field {missing_field} to the path: {path_to_add} in the yml.</red>\n"
                 )
             else:
-                logger.info(f"[red]{suggested_fix}[/red]\n")
+                logger.info("<red>{}</red>\n", suggested_fix)  # noqa: PLE1205
 
         else:
-            logger.error(f"[red]{formatted_error}[/red]")
+            logger.error("<red>{}</red>", formatted_error)  # noqa: PLE1205
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)

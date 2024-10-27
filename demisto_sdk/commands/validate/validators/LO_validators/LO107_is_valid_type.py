@@ -23,7 +23,7 @@ INVALID_SECTIONS: List = [
     "todoTasks",
 ]
 
-INVALID_TABS: List = ["canvas", "evidenceBoard", "relatedIncidents"]
+INVALID_TABS: List = ["evidenceBoard", "relatedIncidents"]
 
 
 class IsValidTypeValidator(BaseValidator[ContentTypes]):

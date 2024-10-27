@@ -38,7 +38,7 @@ class CorrelationRuleYMLFormat(BaseUpdateYML):
     def run_format(self):
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n<blue>================= Updating file {self.source_file} =================</blue>"
             )
             super().set_fromVersion(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[
@@ -50,7 +50,7 @@ class CorrelationRuleYMLFormat(BaseUpdateYML):
             return SUCCESS_RETURN_CODE
         except Exception as err:
             logger.info(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE
 

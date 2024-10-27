@@ -11,7 +11,6 @@ from typing_extensions import Annotated
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DOC_FILES_DIR,
@@ -94,7 +93,6 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         LAYOUTS_DIR,
         CLASSIFIERS_DIR,
         MAPPERS_DIR,
-        CONNECTIONS_DIR,
         RELEASE_NOTES_DIR,
         DOC_FILES_DIR,
         JOBS_DIR,
@@ -435,7 +433,7 @@ def validate(
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
     try:
         _validate(path)
-        logger.debug(f"[green]{path} is valid[/green]")
+        logger.debug(f"<green>{path} is valid</green>")
         return True
 
     except InvalidPathException as e:
@@ -542,13 +540,13 @@ def validate_all(
         ]
     )
     valid = (total := len(paths)) - invalid
-    logger.info(f"{total=},[green]{valid=}[/green],[red]{invalid=}[/red]")
+    logger.info(f"{total=},<green>{valid=}</green>,<red>{invalid=}</red>")
     if invalid:
         raise typer.Exit(1)
 
 
 def main():
-    logging_setup()
+    logging_setup(calling_function=Path(__file__).stem)
     app()
 
 

@@ -13,7 +13,7 @@ class XDRCTemplateUnifier(Unifier):
     ) -> dict:
         logger.info(f"Unifying {path}...")
         data = XDRCTemplateUnifier._insert_yaml_template(path, data)
-        logger.info(f"[green]Successfully created a unified JSON in {path}[/green]")
+        logger.info(f"<green>Successfully created a unified JSON in {path}</green>")
         return data
 
     @staticmethod

@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 from pathlib import Path
@@ -7,7 +6,6 @@ from unittest.mock import patch
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.format import (
     update_dashboard,
     update_incidenttype,
@@ -21,7 +19,6 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
 )
-from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
@@ -40,7 +37,6 @@ from demisto_sdk.tests.constants_test import (
     CLASSIFIER_5_9_9_SCHEMA_PATH,
     CLASSIFIER_PATH,
     CLASSIFIER_SCHEMA_PATH,
-    CONNECTION_SCHEMA_PATH,
     DASHBOARD_PATH,
     DESTINATION_FORMAT_CLASSIFIER,
     DESTINATION_FORMAT_CLASSIFIER_5_9_9,
@@ -99,7 +95,6 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 @pytest.fixture()
@@ -202,7 +197,7 @@ class TestFormattingJson:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
 
-        monkeypatch.setattr("builtins.input", lambda _: "N")
+        monkeypatch.setattr("builtins.input", lambda: "N")
 
         res = format_manager(input=target, output=target, use_graph=False)
         shutil.rmtree(target, ignore_errors=True)
@@ -336,7 +331,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_ALL_CONFLICT)
     def test_format_autoextract_all_mode_conflict(
-        self, mocker, user_answer, expected, monkeypatch
+        self, mocker, user_answer, expected, caplog
     ):
         """
         Given
@@ -349,8 +344,6 @@ class TestFormattingIncidentTypes:
         - If the user selected 'All', he will get an warning message and the mode will not be changed.
         - If the user selected 'Specific', the mode will be changed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mock_dict = {
             "extractSettings": {
@@ -377,9 +370,8 @@ class TestFormattingIncidentTypes:
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "All":
-            assert str_in_call_args_list(
-                logger_info.call_args_list,
-                'Cannot set mode to "All" since there are specific types',
+            assert (
+                'Cannot set mode to "All" since there are specific types' in caplog.text
             )
 
     EXTRACTION_MODE_SPECIFIC_CONFLICT = [
@@ -389,7 +381,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_SPECIFIC_CONFLICT)
     def test_format_autoextract_specific_mode_conflict(
-        self, mocker, user_answer, expected, capsys, monkeypatch
+        self, mocker, user_answer, expected, caplog
     ):
         """
         Given
@@ -402,8 +394,6 @@ class TestFormattingIncidentTypes:
         - If the user selected 'Specific', the mode will be changed but he will get a warning that no specific types were found.
         - If the user selected 'All', the mode will be changed.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         mock_dict = {
             "extractSettings": {"mode": None, "fieldCliNameToExtractSettings": {}}
@@ -418,92 +408,13 @@ class TestFormattingIncidentTypes:
         )
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
-        stdout, _ = capsys.readouterr()
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "Specific":
-            assert str_in_call_args_list(
-                logger_info.call_args_list,
-                'Please notice that mode was set to "Specific" but there are no specific types',
+            assert (
+                'Please notice that mode was set to "Specific" but there are no specific types'
+                in caplog.text
             )
-
-
-def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
-    """
-    Given
-        - A connection json file with a key that's not exist in the schema
-    When
-        - Run format on it
-    Then
-        - Ensure the key is deleted from the connection file
-    """
-    with ChangeCWD(tmpdir):
-        connection_file_path = f"{tmpdir}canvas-context-connections.json"
-        connection_file_content = {
-            "canvasContextConnections": [
-                {
-                    "contextKey1": "MD5",
-                    "contextKey2": "SHA256",
-                    "connectionDescription": "Belongs to the same file",
-                    "parentContextKey": "File",
-                    "not_needed key": "not needed value",
-                }
-            ],
-            "fromVersion": "5.0.0",
-        }
-
-        with open(connection_file_path, "w") as file:
-            json.dump(connection_file_content, file)
-        connection_formatter = ConnectionJSONFormat(
-            input=connection_file_path,
-            output=connection_file_path,
-            path=CONNECTION_SCHEMA_PATH,
-        )
-        connection_formatter.assume_answer = True
-        monkeypatch.setattr("builtins.input", lambda _: "N")
-
-        connection_formatter.format_file()
-        with open(connection_file_path) as file:
-            formatted_connection = json.load(file)
-        for connection in formatted_connection["canvasContextConnections"]:
-            assert "not_needed key" not in connection
-
-
-def test_update_connection_updates_from_version(tmpdir):
-    """
-    Given
-        - A connection json file
-    When
-        - Run format on it with from version parameter
-    Then
-        - Ensure fromVersion is updated accordingly
-    """
-    with ChangeCWD(tmpdir):
-        connection_file_path = f"{tmpdir}canvas-context-connections.json"
-        connection_file_content = {
-            "canvasContextConnections": [
-                {
-                    "contextKey1": "MD5",
-                    "contextKey2": "SHA256",
-                    "connectionDescription": "Belongs to the same file",
-                    "parentContextKey": "File",
-                }
-            ],
-            "fromVersion": "5.0.0",
-        }
-        with open(connection_file_path, "w") as file:
-            json.dump(connection_file_content, file)
-        connection_formatter = ConnectionJSONFormat(
-            input=connection_file_path,
-            output=connection_file_path,
-            from_version="6.0.0",
-            path=CONNECTION_SCHEMA_PATH,
-        )
-
-        connection_formatter.format_file()
-        with open(connection_file_path) as file:
-            formatted_connection = json.load(file)
-        assert formatted_connection["fromVersion"] == "6.0.0"
 
 
 def test_update_id_indicatortype_positive(mocker, tmpdir):
@@ -1518,15 +1429,12 @@ class TestFormattingReport:
         LayoutBaseFormat,
         ReportJSONFormat,
         WidgetJSONFormat,
-        ConnectionJSONFormat,
         ListsFormat,
         PreProcessRulesFormat,
     ]
 
     @pytest.mark.parametrize(argnames="format_object", argvalues=FORMAT_OBJECT)
-    def test_json_run_format_exception_handling(
-        self, format_object, mocker, monkeypatch
-    ):
+    def test_json_run_format_exception_handling(self, format_object, mocker, caplog):
         """
         Given
             - A JSON object formatter
@@ -1535,8 +1443,6 @@ class TestFormattingReport:
         Then
             - Ensure the error is printed.
         """
-        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-        monkeypatch.setenv("COLUMNS", "1000")
 
         formatter = format_object(input="my_file_path")
         mocker.patch.object(
@@ -1553,10 +1459,7 @@ class TestFormattingReport:
         )
 
         formatter.run_format()
-        assert str_in_call_args_list(
-            logger_debug.call_args_list,
-            "Failed to update file my_file_path. Error: MY ERROR",
-        )
+        assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
         """

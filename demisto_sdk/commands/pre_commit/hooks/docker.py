@@ -13,6 +13,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 import more_itertools
 from docker.errors import DockerException
 from packaging.version import Version
+from requests import Timeout
 
 from demisto_sdk.commands.common.constants import (
     TYPE_PWSH,
@@ -24,8 +25,11 @@ from demisto_sdk.commands.common.docker_helper import (
     DockerBase,
     docker_login,
     get_docker,
+    get_pip_requirements_from_file,
     init_global_docker_client,
 )
+from demisto_sdk.commands.common.files.errors import FileReadError
+from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
@@ -38,20 +42,56 @@ from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 
 NO_SPLIT = None
-USER_DEMITSO = "demisto"
 
 IMAGES_BATCH = int(os.getenv("IMAGES_BATCH") or 40)
 
 
+def get_mypy_requirements():
+    """
+    Retrieves the mypy requirements from a local file or from GitHub.
+
+    If the local `mypy-requirements.txt` file exists, it reads the requirements from the file.
+    Otherwise, it attempts to fetch the requirements from GitHub.
+
+    Returns:
+        List[str]: A list of requirements.
+
+    Raises:
+        RuntimeError: If the requirements cannot be read from GitHub.
+    """
+    mypy_requirements_path = Path(f"{CONTENT_PATH}/mypy-requirements.txt")
+    if mypy_requirements_path.exists():
+        requirements = get_pip_requirements_from_file(mypy_requirements_path)
+    else:
+        try:
+            requirements = TextFile.read_from_github_api(
+                "mypy-requirements.txt", verify_ssl=False
+            ).split("\n")
+            logger.debug("Retrieved mypy requirements from demisto/content repository.")
+        except (FileReadError, ConnectionError, Timeout) as e:
+            raise RuntimeError(
+                "Could not read mypy-requirements.txt from Github"
+            ) from e
+    # Remove comments and empty lines
+    return [
+        req.strip()
+        for req in requirements
+        if req.strip() and not req.strip().startswith("#")
+    ]
+
+
 @lru_cache()
-def get_docker_python_path() -> str:
+def get_docker_python_path(drop_site_packages: bool = False) -> str:
     """
     precommit by default mounts the content repo to source.
+    drop_site_packages is used for building MYPYPATH
     This means CommonServerPython's path is /src/Packs/Base/...CSP.py
     Returns: A PYTHONPATH formatted string
     """
     path_to_replace = str(Path(CONTENT_PATH).absolute())
     docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
+    if drop_site_packages:
+        docker_path = [p for p in docker_path if "site-packages" not in p]
     path = ":".join(docker_path)
     logger.debug(f"pythonpath in docker being set to {path}")
     return path
@@ -128,6 +168,7 @@ def devtest_image(
     image_tag: str,
     is_powershell: bool,
     should_pull: bool,
+    should_install_mypy_additional_dependencies: Optional[bool],
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -136,6 +177,7 @@ def devtest_image(
         image_tag: the base image tag
         is_powershell: if the image is a powershell based image
         should_pull: if true, don't pull images on background
+        should_install_mypy_additional_dependencies: if true the mypy types dependencies
     Returns: The build and pulled dev image
 
     """
@@ -146,6 +188,9 @@ def devtest_image(
         push=docker_login(docker_client=init_global_docker_client()),
         should_pull=False,
         log_prompt="DockerHook",
+        additional_requirements=get_mypy_requirements()
+        if should_install_mypy_additional_dependencies
+        else None,
     )
     if not errors:
         if not should_pull:
@@ -174,16 +219,19 @@ def devtest_image(
     raise DockerException(errors)
 
 
-def get_environment_flag(env: dict) -> str:
+def compose_docker_environment_variables(env: dict, mypy_path: bool = False) -> str:
     """
-    The env flag needed to run python scripts in docker
+    The env needed to run python scripts in docker
     """
-    env_flag = f'--env "PYTHONPATH={get_docker_python_path()}"'
-    for key, value in env.items():
-        env_flag += f' --env "{key}={value}"'
+    env_vars = {"PYTHONPATH": get_docker_python_path(), **env}
+
+    if mypy_path:
+        env_vars["MYPYPATH"] = get_docker_python_path(drop_site_packages=True)
+
     if os.getenv("GITHUB_ACTIONS"):
-        env_flag += " --env GITHUB_ACTIONS=true"
-    return env_flag
+        env_vars["GITHUB_ACTIONS"] = "true"
+
+    return " ".join(f' --env "{key}={value}"' for key, value in env_vars.items())
 
 
 def _split_by_objects(
@@ -205,7 +253,7 @@ def _split_by_objects(
     object_to_files: Dict[
         Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
     ] = defaultdict(set)
-    config_name, config_filename = config_arg if config_arg else ("", "")
+    config_filename = (config_arg or ("", ""))[1]
     for file, obj in files_with_objects:
         if run_isolated or (
             config_arg and (obj.path.parent / config_filename).exists()
@@ -261,8 +309,17 @@ class DockerHook(Hook):
             run_isolated,
         )
         is_image_powershell = any(obj.is_powershell for _, obj in files_with_objects)
-
-        dev_image = devtest_image(image, is_image_powershell, self.context.dry_run)
+        mypy_additional_dependencies = self.base_hook.get(
+            "name", ""
+        ).startswith(  # see CIAC-11832
+            "mypy-in-docker"
+        )
+        dev_image = devtest_image(
+            image,
+            is_image_powershell,
+            self.context.dry_run,
+            mypy_additional_dependencies,
+        )
         hooks = self.generate_hooks(dev_image, image, object_to_files, config_arg)
         logger.debug(f"Generated {len(hooks)} hooks for image {image}")
         return hooks
@@ -365,6 +422,7 @@ class DockerHook(Hook):
             All the hooks to be appended for this image
         """
         new_hook = deepcopy(self.base_hook)
+
         new_hook["id"] = f"{new_hook.get('id')}-{image}"
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
@@ -376,7 +434,7 @@ class DockerHook(Hook):
             quiet = False
         docker_extra_args = self._get_property("pass_docker_extra_args", "")
         new_hook["entry"] = (
-            f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} {dev_image}'
+            f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {compose_docker_environment_variables(env,mypy_path=new_hook["name"].startswith("mypy-in-docker"))} {"--quiet" if quiet else ""} {dev_image}'
         )
         ret_hooks = []
         for (
@@ -385,7 +443,14 @@ class DockerHook(Hook):
         ) in object_to_files_with_objects.items():
             change_working_directory = False
             files = {file for file, _ in files_with_objects}
+            objects_ = [object_ for _, object_ in files_with_objects]
             hook = deepcopy(new_hook)
+            if new_hook["name"].startswith("mypy-in-docker"):  # see CIAC-11832
+                for obj in objects_:
+                    python_version = Version(obj.python_version)
+                    hook["args"].append(
+                        f"--python-version={python_version.major}.{python_version.minor}"
+                    )  # mypy expects only the major and minor version (e.g., 3.10)
             if integration_script is not None:
                 change_working_directory = (
                     True  # isolate container, so run in the same directory

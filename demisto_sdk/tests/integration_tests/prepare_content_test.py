@@ -1,4 +1,3 @@
-import os
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -116,14 +115,12 @@ class TestPrepareContentIntegration:
         }
         integration = pack.create_integration(name, yml=yml, description=description)
         with ChangeCWD(pack.repo_path):
-            with TemporaryDirectory() as dir:
-                mocker.patch.object(os, "getenv", return_value=dir)
-                runner = CliRunner(mix_stderr=False)
-                result = runner.invoke(
-                    main,
-                    [PREPARE_CONTENT_CMD, "-i", f"{integration.path}"],
-                    catch_exceptions=True,
-                )
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(
+                main,
+                [PREPARE_CONTENT_CMD, "-i", f"{integration.path}"],
+                catch_exceptions=True,
+            )
 
         unified_integration = get_file(Path(integration.path) / "integration-test.yml")
         assert result.exit_code == 0
@@ -133,7 +130,7 @@ class TestPrepareContentIntegration:
         )
 
 
-def test_pack_prepare_content(mocker, git_repo):
+def test_pack_prepare_content(mocker, git_repo, monkeypatch):
     """
     Given:
         - A pack with a pack metadata where some fields are set
@@ -150,7 +147,7 @@ def test_pack_prepare_content(mocker, git_repo):
     pack.set_data(hybrid=True, price=3)
     with ChangeCWD(pack.repo_path):
         with TemporaryDirectory() as dir:
-            mocker.patch.object(os, "getenv", return_value=dir)
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,

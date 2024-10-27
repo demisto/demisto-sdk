@@ -1,4 +1,3 @@
-import logging
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
@@ -11,7 +10,6 @@ from demisto_sdk.commands.common.content import Pack
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool,
     Classifier,
-    Connection,
     Contributors,
     Dashboard,
     DocFile,
@@ -33,7 +31,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import src_root
-from TestSuite.test_tools import str_in_call_args_list
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
@@ -68,7 +65,6 @@ def temp_dir():
         ("playbooks", (Playbook,), 3),
         ("incident_fields", (IncidentField,), 3),
         ("incident_types", (IncidentType,), 3),
-        ("connections", (Connection,), 3),
         ("indicator_fields", (IndicatorField,), 1),
         ("indicator_types", (IndicatorType,), 3),
         ("reports", (Report,), 3),
@@ -106,7 +102,7 @@ def test_detection(attribute: str, content_type: type):
     assert isinstance(pack.__getattribute__(attribute), content_type)
 
 
-def test_sign_pack_exception_thrown(repo, mocker, monkeypatch):
+def test_sign_pack_exception_thrown(repo, mocker, caplog):
     """
     When:
         - Signing a pack.
@@ -123,22 +119,23 @@ def test_sign_pack_exception_thrown(repo, mocker, monkeypatch):
 
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    caplog.set_level("ERROR")
     mocker.patch.object(subprocess, "Popen", autospec=True)
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("Pack1")
     content_object_pack = Pack(pack.path)
     signer_path = Path("./signer")
 
-    content_object_pack.sign_pack(logger, content_object_pack.path, signer_path)
-    assert str_in_call_args_list(
-        logger_error.call_args_list,
-        "Error while trying to sign pack Pack1.\n not enough values to unpack (expected 2, got 0)",
+    content_object_pack.sign_pack(content_object_pack.path, signer_path)
+    assert (
+        "Error while trying to sign pack Pack1.\n not enough values to unpack (expected 2, got 0)"
+        in caplog.text
     )
 
 
-def test_sign_pack_error_from_subprocess(repo, mocker, fake_process, monkeypatch):
+def test_sign_pack_error_from_subprocess(
+    caplog: pytest.LogCaptureFixture, repo, mocker, fake_process, monkeypatch
+):
     """
     When:
         - Signing a pack.
@@ -152,8 +149,7 @@ def test_sign_pack_error_from_subprocess(repo, mocker, fake_process, monkeypatch
     """
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
+    caplog.set_level("ERROR")
 
     pack = repo.create_pack("Pack1")
     content_object_pack = Pack(pack.path)
@@ -163,14 +159,12 @@ def test_sign_pack_error_from_subprocess(repo, mocker, fake_process, monkeypatch
         f"{signer_path} {pack.path} keyfile base64", stderr=["error"]
     )
 
-    content_object_pack.sign_pack(logger, content_object_pack.path, signer_path)
+    content_object_pack.sign_pack(content_object_pack.path, signer_path)
 
-    assert str_in_call_args_list(
-        logger_error.call_args_list, "Failed to sign pack for Pack1 - b'error\\n'"
-    )
+    assert "Failed to sign pack for Pack1 - b'error\\n'" in caplog.text
 
 
-def test_sign_pack_success(repo, mocker, fake_process, monkeypatch):
+def test_sign_pack_success(repo, mocker, fake_process, monkeypatch, caplog):
     """
     When:
         - Signing a pack.
@@ -182,14 +176,11 @@ def test_sign_pack_success(repo, mocker, fake_process, monkeypatch):
         - Verify that success is written to the logger.
 
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
     pack_class.logger = logger
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("Pack1")
     content_object_pack = Pack(pack.path)
@@ -199,9 +190,6 @@ def test_sign_pack_success(repo, mocker, fake_process, monkeypatch):
         f"{signer_path} {pack.path} keyfile base64", stdout=["success"]
     )
 
-    content_object_pack.sign_pack(logger, content_object_pack.path, signer_path)
+    content_object_pack.sign_pack(content_object_pack.path, signer_path)
 
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        f"Signed {content_object_pack.path.name} pack successfully",
-    )
+    assert f"Signed {content_object_pack.path.name} pack successfully" in caplog.text

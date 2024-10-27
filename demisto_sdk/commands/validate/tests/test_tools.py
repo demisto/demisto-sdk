@@ -292,6 +292,7 @@ def create_pack_object(
     playbooks: int = 0,
     name: Optional[str] = None,
     release_note_content: Optional[str] = None,
+    bc_release_note_content: Optional[List[Dict[str, str]]] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -319,6 +320,21 @@ def create_pack_object(
         (
             pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".md")
         ).write_text(release_note_content)
+
+    if bc_release_note_content is not None:
+        if (version := Version(json_content.get("version", "1.0.0"))) == Version(
+            "1.0.0"
+        ):
+            raise ValueError(
+                "Can't write release notes for v1.0.0, set version to another value"
+            )
+        json_object = json.dumps(bc_release_note_content, indent=4)
+
+        with open(
+            pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".json"),
+            "w",
+        ) as outfile:
+            outfile.write(json_object)
 
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)

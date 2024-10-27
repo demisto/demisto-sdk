@@ -16,8 +16,14 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN105_multiple_rns_a
 from demisto_sdk.commands.validate.validators.RN_validators.RN108_is_rn_added_to_new_pack import (
     IsRNAddedToNewPackValidator,
 )
+from demisto_sdk.commands.validate.validators.RN_validators.RN112_is_bc_rn_exist import (
+    IsBCRNExistValidator,
+)
 from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
     ReleaseNoteHeaderValidator,
+)
+from demisto_sdk.commands.validate.validators.RN_validators.RN116_first_level_header_missing import (
+    FirstLevelHeaderMissingValidator,
 )
 
 
@@ -254,3 +260,125 @@ def test_MultipleRNsAddedValidator_obtain_invalid_content_items():
     pack.release_note.all_rns.append("2.0.6.md")
     results = validator.obtain_invalid_content_items(content_items=[pack])
     assert expected_error == results[0].message
+
+
+def test_IsBCRNExistValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - 4 Pack content items with rns.
+        - Case 1: A pack with 1 new RN without BC entry.
+        - Case 2: A pack with 1 new RN with a BC entry, but no json bc file.
+        - Case 3: A pack with 1 new RN with a BC entry, and a json bc file without breakingChanges entry.
+        - Case 4: A pack with 1 new RN with a BC entry, and a json bc file with breakingChanges entry.
+
+    When:
+    - Calling the IsBCRNExistValidator is_valid function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail.
+        - Case 3: Should fail.
+        - Case 1: Shouldn't fail.
+    """
+    content_items = [
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="some change",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="breaking change",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="breaking change",
+            bc_release_note_content=[{"test": "no breaking change content"}],
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="breaking change",
+            bc_release_note_content=[
+                {"breakingChanges": "some breaking change content"}
+            ],
+        ),
+    ]
+    results = IsBCRNExistValidator().obtain_invalid_content_items(
+        content_items=content_items
+    )
+    expected_msgs = [
+        f"The release notes contain information about breaking changes but missing a breaking change file, make sure to add one as {str(content_items[1].release_note.file_path).replace('.md', '.json')} and that the file contains the 'breakingChanges' entry.",
+        f"The release notes contain information about breaking changes but missing a breaking change file, make sure to add one as {str(content_items[2].release_note.file_path).replace('.md', '.json')} and that the file contains the 'breakingChanges' entry.",
+    ]
+
+    assert len(results) == 2
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_FirstLevelHeaderMissingValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - content_items list with 5 packs, each with RN with different content.
+        - Case 1: RN with first and second level header.
+        - Case 2: RN with only first level header.
+        - Case 3: RN with only second level header.
+        - Case 4: RN without first and second level headers.
+        - Case 5: RN with force flag header.
+
+    When:
+    - Calling the FirstLevelHeaderMissingValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail anything.
+        - Case 2: Shouldn't fail anything.
+        - Case 3: Should fail.
+        - Case 4: Should fail.
+        - Case 5: Shouldn't fail anything.
+    """
+    content_items = [
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="#### Scripts\n##### script_name\n- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="#### Scripts\n- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="##### script_name\n- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="## script_name\n- Some description.",
+        ),
+    ]
+    validator = FirstLevelHeaderMissingValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+    assert len(results) == 2
+    expected_msgs = [
+        f'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{content_items[2].path.parts[-1]}."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+        f'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{content_items[3].path.parts[-1]}."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+    ]
+    assert all(
+        [res_msg in expected_msgs for res_msg in [result.message for result in results]]
+    )

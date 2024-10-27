@@ -157,6 +157,12 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN161_is_siem_integr
 from demisto_sdk.commands.validate.validators.IN_validators.IN162_is_partner_collector_has_xsoar_support_level import (
     IsPartnerCollectorHasXsoarSupportLevelValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN163_is_valid_feed_expiration_policy import (
+    BAD_TYPE_OR_DISPLAY,
+    MISSING_SUDDEN_DEATH_ERROR_MESSAGE,
+    REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE,
+    IsValidFeedExpirationPolicyValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 INVALID_HIDDEN_PARAM_INTEGRATIONS = [
@@ -4172,7 +4178,7 @@ def test_IsMissingReputationOutputValidator_obtain_invalid_content_items(
             ],
             2,
             [
-                "The integration is a feed integration with malformed params: The param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'options' must be equal '['A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable', 'E - Unreliable', 'F - Reliability cannot be judged']'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.\nThe param 'feedExpirationPolicy' should be in the following structure: \n\tThe field 'display' must be equal ''.\n\tThe field 'type' must be equal '17'.\n\tThe field 'options' must be equal '['never', 'interval', 'indicatorType', 'suddenDeath']'.",
+                "The integration is a feed integration with malformed params: The param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'options' must be equal '['A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable', 'E - Unreliable', 'F - Reliability cannot be judged']'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.",
                 "The integration is a feed integration with malformed params: The param 'feed' should be in the following structure: \n\tThe field 'defaultvalue' must be equal 'true'.\n\tThe field 'display' must be equal 'Fetch indicators'.\n\tThe field 'type' must be equal '8'.\nThe param 'feedReputation' should be in the following structure: \n\tThe field 'display' must be equal 'Indicator Reputation'.\n\tThe field 'type' must be equal '18'.\n\tThe field 'options' must be equal '['None', 'Good', 'Suspicious', 'Bad']'.\n\tThe field 'additionalinfo' must appear and contain 'Indicators from this integration instance will be marked with this reputation'.\nThe param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'options' must be equal '['A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable', 'E - Unreliable', 'F - Reliability cannot be judged']'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.",
             ],
         ),
@@ -4196,7 +4202,7 @@ def test_IsValidFeedIntegrationValidator_obtain_invalid_content_items(
     Then
         - Make sure the validation fail when it needs to and the right error message is returned.
         - Case 1: Should pass all.
-        - Case 2: Should fail and mention only the format of feedReliability and feedExpirationPolicy in the first msg and feed, feedReputation, and feedReliability in the second msg.
+        - Case 2: Should fail and mention only the format of feedReliability in the first msg and feed, feedReputation, and feedReliability in the second msg.
     """
     results = IsValidFeedIntegrationValidator().obtain_invalid_content_items(
         content_items
@@ -5793,3 +5799,172 @@ def test_IsValidDbotValidator_obtain_invalid_content_items(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IsValidFeedExpirationPolicy_no_display_parameter():
+    """
+    Given:
+    - A feed integration with no display parameter under expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should fail.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "options": ["never", "interval", "indicatorType", "suddenDeath"],
+                }
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 1
+    assert validation_results[0].message == (
+        IsValidFeedExpirationPolicyValidator.error_message + " " + BAD_TYPE_OR_DISPLAY
+    )
+
+
+def test_IsValidFeedExpirationPolicy_incremental_feed_with_suddenDeath():
+    """
+    Given:
+    - An incremental feed, that cannot be changed, with suddenDeath as an option for expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should fail.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedIncremental",
+                    "hidden": True,
+                    "type": 8,
+                    "defaultvalue": True,
+                },
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "display": "",
+                    "options": ["never", "interval", "indicatorType", "suddenDeath"],
+                },
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 1
+    assert validation_results[0].message == (
+        IsValidFeedExpirationPolicyValidator.error_message
+        + " "
+        + REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE
+    )
+
+
+def test_IsValidFeedExpirationPolicy_incremental_feed_no_suddenDeath():
+    """
+    Given:
+    - An incremental feed, that cannot be changed, without suddenDeath as an option for expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should pass.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedIncremental",
+                    "hidden": True,
+                    "type": 8,
+                    "defaultvalue": True,
+                },
+                {
+                    "name": "feedExpirationPolicy",
+                    "display": "",
+                    "type": 17,
+                    "options": ["never", "interval", "indicatorType"],
+                },
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 0
+
+
+def test_IsValidFeedExpirationPolicy_fully_fetched_feed_no_suddenDeath():
+    """
+    Given:
+    - A fully fetched feed, without suddenDeath as an option for expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should fail.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "display": "",
+                    "options": ["never", "interval", "indicatorType"],
+                }
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 1
+    assert validation_results[0].message == (
+        IsValidFeedExpirationPolicyValidator.error_message
+        + " "
+        + MISSING_SUDDEN_DEATH_ERROR_MESSAGE
+    )
+
+
+def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
+    """
+    Given:
+    - A fully fetched feed, with suddenDeath as an option for expirationPolicy.
+    When:
+    - Calling the IsValidFeedExpirationPolicy obtain_invalid_content_items function.
+    Then:
+    - Should pass.
+    """
+    feed = create_integration_object(
+        paths=["script.feed", "configuration"],
+        values=[
+            True,
+            [
+                {
+                    "name": "feedExpirationPolicy",
+                    "type": 17,
+                    "display": "",
+                    "options": ["never", "interval", "indicatorType", "suddenDeath"],
+                }
+            ],
+        ],
+    )
+    validation_results = (
+        IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
+    )
+    assert len(validation_results) == 0

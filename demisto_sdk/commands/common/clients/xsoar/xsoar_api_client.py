@@ -1300,7 +1300,9 @@ class XsoarClient:
             f"is {playbook_state}",
             expected_states=expected_states,
             timeout=timeout,
-            reason=f"{self.get_incident_playbook_failure(incident_id)}"
-            if playbook_state == InvestigationPlaybookState.FAILED
-            else None,
+            reason=(
+                f"{self.get_incident_playbook_failure(incident_id)}"
+                if playbook_state == InvestigationPlaybookState.FAILED
+                else None
+            ),
         )

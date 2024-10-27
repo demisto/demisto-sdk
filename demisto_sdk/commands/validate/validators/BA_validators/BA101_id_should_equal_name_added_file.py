@@ -9,7 +9,6 @@ from demisto_sdk.commands.content_graph.objects.incident_type import IncidentTyp
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
-from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 
 ContentTypes = Union[
     Dashboard,
@@ -18,5 +17,5 @@ ContentTypes = Union[
 ]
 
 
-class IDNameAddedFileValidator(IDNameValidator, BaseValidator[ContentTypes]):
+class IDNameAddedFileValidator(IDNameValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.ADDED]

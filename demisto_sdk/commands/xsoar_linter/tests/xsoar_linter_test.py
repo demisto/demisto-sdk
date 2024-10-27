@@ -118,6 +118,9 @@ def test_build_xsoar_linter_env_var(integration_script, expected_env):
                 [
                     "/Packs/TestName/Integrations/TestName/TestName.py:327:8: E9002 deserialize_protection_groups: Print is found, Please remove all prints from the code."
                 ],
+                [
+                    "/Packs/TestName/Integrations/TestName/TestName.py:327:10: W9009 return-outputs-exists: Do not use return_outputs function. Please return CommandResults object instead."
+                ],
                 "/Packs/TestName/Integrations/TestName/TestName.py:327:8: E9002 deserialize_protection_groups: Print is found, Please remove all prints from the code.\n"
                 "/Packs/TestName/Integrations/TestName/TestName.py:327:10: W9009 return-outputs-exists: Do not use return_outputs function. Please return CommandResults object instead.",
             ),
@@ -127,6 +130,9 @@ def test_build_xsoar_linter_env_var(integration_script, expected_env):
             ProcessResults(
                 0,
                 [],
+                [
+                    "/Packs/TestName/Integrations/TestName/TestName.py:327:10: W9009 return-outputs-exists: Do not use return_outputs function. Please return CommandResults object instead."
+                ],
                 "/Packs/TestName/Integrations/TestName/TestName.py:327:10: W9009 return-outputs-exists: Do not use return_outputs function. Please return CommandResults object instead.",
             ),
         ),

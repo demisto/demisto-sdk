@@ -19,8 +19,8 @@ class ConvertManager:
         """
         if self.MIN_VERSION_SUPPORTED > self.server_version:
             logger.error(
-                f"[red]Version requested: {str(self.server_version)} should be higher or equal to "
-                f"{str(self.MIN_VERSION_SUPPORTED)}[/red]"
+                f"<red>Version requested: {str(self.server_version)} should be higher or equal to "
+                f"{str(self.MIN_VERSION_SUPPORTED)}</red>"
             )
             return 1
         pack = self.create_pack_object()
@@ -35,18 +35,18 @@ class ConvertManager:
         ]
         if not relevant_dir_converters:
             logger.error(
-                f"[red]No entities were found to convert. Please validate your input path is "
-                f"valid: {self.input_path}[/red]"
+                f"<red>No entities were found to convert. Please validate your input path is "
+                f"valid: {self.input_path}</red>"
             )
             return 1
         exit_code = 0
         for dir_converter in relevant_dir_converters:
             exit_code = max(dir_converter.convert(), exit_code)
         if exit_code:
-            logger.error("[red]Error occurred during convert command.[/red]")
+            logger.error("<red>Error occurred during convert command.</red>")
         else:
             logger.info(
-                f"[green]Finished convert for given path successfully:\n{self.input_path}[/green]"
+                f"<green>Finished convert for given path successfully:\n{self.input_path}</green>"
             )
         return exit_code
 

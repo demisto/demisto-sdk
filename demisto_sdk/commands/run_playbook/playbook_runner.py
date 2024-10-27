@@ -59,7 +59,7 @@ class PlaybookRunner:
             return 1
 
         logger.info(
-            f"[green]The playbook: {self.playbook_id} was triggered successfully.[/green]"
+            f"<green>The playbook: {self.playbook_id} was triggered successfully.</green>"
         )
 
         incident_id = incident.id
@@ -92,16 +92,16 @@ class PlaybookRunner:
             playbook_state = playbook_state_raw_response.get("state")
             if playbook_state == InvestigationPlaybookState.FAILED:
                 logger.error(
-                    f"[red]The playbook finished running with status: {InvestigationPlaybookState.FAILED}"
+                    f"<red>The playbook finished running with status: {InvestigationPlaybookState.FAILED}"
                 )
             else:
                 logger.info(
-                    f"[green]The playbook {self.playbook_id} has completed its run successfully[/green]"
+                    f"<green>The playbook {self.playbook_id} has completed its run successfully</green>"
                 )
 
         else:
             logger.info(
-                f"[green]playbook execution results can be found in {work_plan_link}[/green]"
+                f"<green>playbook execution results can be found in {work_plan_link}</green>"
             )
 
         return 0

@@ -60,7 +60,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         logger.debug("Adding descriptions for the playbook and to relevant tasks")
         if "description" not in set(self.data.keys()):
             logger.info(
-                "[red]No description is specified for this playbook, would you like to add a description? [Y/n][/red]"
+                "<red>No description is specified for this playbook, would you like to add a description? [Y/n]</red>"
             )
             user_answer = (
                 "y"
@@ -82,7 +82,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                     self.data["description"] = user_description
                 else:
                     logger.info(
-                        "[red]Invalid input, would you like to add a description? [Y/n][/red]"
+                        "<red>Invalid input, would you like to add a description? [Y/n]</red>"
                     )
                     user_answer = ""
 
@@ -232,18 +232,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                     task["task"].get("scriptName")
                 )
 
-    def update_playbook_task_name(self):
-        """Updates the name of the task to be the same as playbookName it is running."""
-        logger.debug("Updating name of tasks who calls other playbooks to their name")
-
-        for task_id, task in self.data.get("tasks", {}).items():
-            if task.get("type", "") == "playbook":
-                task_name = task.get("task").get(
-                    "playbookName", task.get("task").get("playbookId", "")
-                )
-                if task_name:
-                    task["task"]["name"] = task_name
-
     def remove_empty_fields_from_scripts(self):
         """Removes unnecessary empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator
         scripts"""
@@ -265,20 +253,19 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n<blue>================= Updating file {self.source_file} =================</blue>"
             )
             self.update_tests()
             self.remove_copy_and_dev_suffixes_from_subplaybook()
             self.remove_copy_and_dev_suffixes_from_subscripts()
             self.update_conf_json("playbook")
             self.delete_sourceplaybookid()
-            self.update_playbook_task_name()
             self.remove_empty_fields_from_scripts()
             super().run_format()
             return SUCCESS_RETURN_CODE
         except Exception as err:
             logger.info(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE
 
@@ -300,11 +287,11 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n<blue>================= Updating file {self.source_file} =================</blue>"
             )
             return super().run_format()
         except Exception as err:
             logger.info(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE

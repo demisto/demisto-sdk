@@ -5,7 +5,7 @@ import pytest
 
 from demisto_sdk.commands.common.constants import LISTS_DIR
 from demisto_sdk.commands.common.tools import pascal_case
-from demisto_sdk.commands.prepare_content.list_unifier import ListUnifier, logger
+from demisto_sdk.commands.prepare_content.list_unifier import ListUnifier
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LIST as list_obj,
 )
@@ -93,7 +93,7 @@ def test_insert_data_to_json(tmpdir):
     assert json_unified["data"] == "data"
 
 
-def test_insert_data_to_json_with_warning(mocker, tmpdir):
+def test_insert_data_to_json_with_warning(mocker, tmpdir, caplog):
     """
     Given:
         - A list with data section filled with something else than a dash(-) or blank.
@@ -103,7 +103,6 @@ def test_insert_data_to_json_with_warning(mocker, tmpdir):
         - Ensure the data section is filled with the data from the data file.
         - Ensure a warning is printed.
     """
-    mock_warning = mocker.patch.object(logger, "warning")
     list_dir_path = Path(tmpdir) / "Lists" / "TestList"
     list_dir_path.mkdir(parents=True, exist_ok=True)
     (list_dir_path / "_data.txt").write_text("data")
@@ -114,8 +113,7 @@ def test_insert_data_to_json_with_warning(mocker, tmpdir):
         json_list, list_dir_path / "_data.txt"
     )
     assert json_unified["data"] == "data"
-    assert mock_warning.call_count == 1
-    mock_warning.assert_called_with(
+    assert (
         f"data section is not empty in {list_dir_path}/{list_dir_path.name}.json file. "
         f"It should be blank or a dash(-)."
-    )
+    ) in caplog.text

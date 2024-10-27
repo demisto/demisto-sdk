@@ -9,17 +9,15 @@ from demisto_sdk.commands.common.constants import (
     HTML_IMAGE_LINK_REGEX,
     URL_IMAGE_LINK_REGEX,
 )
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    ContentTypes,
     ValidationResult,
 )
 
-ContentTypes = ContentItem
 
-
-class RelativeImagePathValidator(BaseValidator, ABC):
+class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
     error_code = "RM108"
     description = (
         "This validation verifies that images in the readme and description files are"

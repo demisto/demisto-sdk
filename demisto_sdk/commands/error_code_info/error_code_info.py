@@ -51,7 +51,7 @@ def parse_legacy_function_parameters(sig: inspect.Signature):
 def print_legacy_error_information(func_name, error_data, func, sig: inspect.Signature):
     parameters = parse_legacy_function_parameters(sig)
 
-    logger.info("[green]## Error Code Info ##[/green]")
+    logger.info("<green>## Error Code Info ##</green>")
     logger.info(
         TEMPLATE.format(
             code=error_data["code"],
@@ -73,7 +73,7 @@ def find_legacy_error(error_code):
 def generate_legacy_error_code_information(error_code):
     func_name, error_data = find_legacy_error(error_code)
     if not func_name:
-        logger.info("[red]No such error[/red]")
+        logger.info("<red>No such error</red>")
         return 1
 
     func = getattr(errors.Errors, func_name)

@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open
 
@@ -80,9 +79,6 @@ class TestTimeStampReplacer:
         master_mock = mocker.MagicMock()
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.load(master_mock)
-        python_version = sys.version_info
-        if python_version.major == 3 and python_version.minor == 7:
-            pytest.skip("The current mock syntax is supported only in python 3.8+")
         assert master_mock.add_option.call_count == 4
         for call in master_mock.add_option.mock_calls:
             assert (

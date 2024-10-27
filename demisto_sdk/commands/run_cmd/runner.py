@@ -72,18 +72,18 @@ class Runner:
             log_ids = self._run_query(investigation_id)
         except DemistoRunTimeError as err:
             log_ids = None
-            logger.info(f"[red]{err}[/red]")
+            logger.info(f"<red>{err}</red>")
 
         if self.debug:
             if not log_ids:
-                logger.info("[yellow]Entry with debug log not found[/yellow]")
+                logger.info("<yellow>Entry with debug log not found</yellow>")
             else:
                 self._export_debug_log(log_ids)
 
         if self.json2outputs:
             if not self.prefix:
                 logger.info(
-                    "[red]A prefix for the outputs is needed for this command. Please provide one[/red]"
+                    "<red>A prefix for the outputs is needed for this command. Please provide one</red>"
                 )
                 return 1
             else:
@@ -100,7 +100,7 @@ class Runner:
                         json_to_outputs(command, json=file_path, prefix=self.prefix)
                 else:
                     logger.info(
-                        "[red]Could not extract raw output as JSON from command[/red]"
+                        "<red>Could not extract raw output as JSON from command</red>"
                     )
                     return 1
 
@@ -175,11 +175,11 @@ class Runner:
         for entry in answer:
             # answer should have entries with `contents` - the readable output of the command
             if entry.parent_content:
-                logger.info("[yellow]### Command:[/yellow]")
+                logger.info("<yellow>### Command:</yellow>")
             if entry.contents:
-                logger.info("[yellow]## Readable Output[/yellow]")
+                logger.info("<yellow>## Readable Output</yellow>")
                 if entry.type == self.ERROR_ENTRY_TYPE:
-                    logger.info(f"[red]{entry.contents}[/red]\n")
+                    logger.info(f"<red>{entry.contents}</red>\n")
                 else:
                     logger.info(f"{entry.contents}\n")
 
@@ -203,18 +203,18 @@ class Runner:
                         for line in log_info:
                             output_file.write(line.encode("utf-8"))
             logger.info(
-                f"[green]Debug Log successfully exported to {self.debug_path}[/green]"
+                f"<green>Debug Log successfully exported to {self.debug_path}</green>"
             )
         else:
-            logger.info("[yellow]## Detailed Log[/yellow]")
+            logger.info("<yellow>## Detailed Log</yellow>")
             for log_id in log_ids:
                 result = self.client.download_file(log_id)
                 with open(result, "r+") as log_info:
                     for line in log_info:
                         if self.SECTIONS_HEADER_REGEX.match(line):
-                            logger.info(f"[yellow]{line}[/yello]")
+                            logger.info(f"<yellow>{line}</yellow>")
                         elif self.FULL_LOG_REGEX.match(line):
-                            logger.info("[yellow]Full Integration Log:[/yellow]")
+                            logger.info("<yellow>Full Integration Log:</yellow>")
                         else:
                             logger.info(line)
 
@@ -284,7 +284,7 @@ class Runner:
                                     pass
                             output_file.write(line.encode("utf-8"))
             logger.info(
-                f"[green]Debug Log successfully exported to {self.debug_path}[/green]"
+                f"<green>Debug Log successfully exported to {self.debug_path}</green>"
             )
             return temp_dict
 

@@ -73,21 +73,21 @@ def generate_ai_descriptions_flow(kwargs):
 def validate_inputs_examples(input_path):
     if not input_path:
         logger.info(
-            "[red]To use the generate_integration_context version of this command please include an `input` argument[/red]"
+            "<red>To use the generate_integration_context version of this command please include an `input` argument</red>"
         )
         return 1
 
     if input_path and not Path(input_path).is_file():
-        logger.info(f"[red]Input file {input_path} was not found.[/red]")
+        logger.info(f"<red>Input file {input_path} was not found.</red>")
         return 1
 
     if not input_path.lower().endswith(".yml"):
-        logger.info(f"[red]Input {input_path} is not a valid yml file.[/red]")
+        logger.info(f"<red>Input {input_path} is not a valid yml file.</red>")
         return 1
 
     file_type = find_type(input_path, ignore_sub_categories=True)
     if file_type is not FileType.INTEGRATION:
-        logger.info("[red]File is not an Integration.[/red]")
+        logger.info("<red>File is not an Integration.</red>")
         return 1
 
 

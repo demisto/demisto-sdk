@@ -32,7 +32,10 @@ class XsiamClient(XsoarSaasClient):
             self.get_ioc_rules()
             return True
         except ApiException as error:
-            logger.debug(f"{self} is not {self.server_type} server, error: {error}")
+            logger.debug(  # noqa: PLE1205
+                "{}",
+                f"<cyan>{self} is not {self.server_type} server, error: {error}</cyan>",
+            )
             return False
 
     @property
@@ -86,9 +89,11 @@ class XsiamClient(XsoarSaasClient):
             endpoint = urljoin(self.server_config.base_api_url, "logs/v1/event")
             additional_headers = {
                 "authorization": self.server_config.collector_token,
-                "content-type": "application/json"
-                if data_format.casefold == "json"
-                else "text/plain",
+                "content-type": (
+                    "application/json"
+                    if data_format.casefold == "json"
+                    else "text/plain"
+                ),
                 "content-encoding": "gzip",
             }
             token_type = "collector_token"

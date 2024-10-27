@@ -38,7 +38,7 @@ def test_format_with_update_docker_flag(mocker, monkeypatch):
     Check when run demisto-sdk format execute with -ud (update docker) from repo which does not have a mdx server,
     (but has a node), that the run ends without any exception.
     """
-    monkeypatch.setenv("COLUMNS", "1000")
+
     from demisto_sdk.commands.common.git_util import GitUtil
     from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
     from demisto_sdk.commands.format.format_module import format_manager

@@ -259,7 +259,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n<blue>================= Updating file {self.source_file} =================</blue>"
             )
             self.handle_hidden_marketplace_params()
             super().update_yml(
@@ -287,7 +287,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             return SUCCESS_RETURN_CODE
         except Exception as err:
             logger.info(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE
 

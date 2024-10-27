@@ -1,6 +1,5 @@
 import base64
 import glob
-import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from xml.etree.ElementTree import ParseError
@@ -19,9 +18,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml, os, re
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class ImageValidator(BaseValidator):

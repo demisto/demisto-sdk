@@ -1,5 +1,3 @@
-import logging
-
 import pytest
 
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
@@ -103,7 +101,7 @@ class TestUpdateRNManager:
     @pytest.mark.parametrize(
         "user_input, git_changed_packs", create_release_notes_params
     )
-    def test_create_release_notes(self, mocker, user_input, git_changed_packs):
+    def test_create_release_notes(self, mocker, user_input, git_changed_packs, caplog):
         """
         Given:
             - case 1: a path was given by the user in order to update.
@@ -118,7 +116,6 @@ class TestUpdateRNManager:
         """
         mng = UpdateReleaseNotesManager(user_input=user_input)
         mng.changed_packs_from_git = git_changed_packs
-        err = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mock_func = mocker.patch.object(
             UpdateReleaseNotesManager, "create_pack_release_notes"
         )
@@ -130,7 +127,7 @@ class TestUpdateRNManager:
         else:
             assert (
                 "No changes that require release notes were detected."
-                in err.call_args[0][0]
+                in caplog.records[0].message
             )
 
     def test_create_pack_release_notes_pack_success(self, mocker):
@@ -151,7 +148,7 @@ class TestUpdateRNManager:
         )
         assert mock_func.call_count == 1
 
-    def test_create_pack_release_notes_pack_fail(self, mocker):
+    def test_create_pack_release_notes_pack_fail(self, caplog):
         """
         Given:
             - a pack which is not in the modified files set.
@@ -161,11 +158,10 @@ class TestUpdateRNManager:
             - a warning should be printed which says that no RN is needed here.
         """
         mng = UpdateReleaseNotesManager()
-        err = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mng.create_pack_release_notes(
             "test1", {"Packs/test2", "Packs/test3"}, set(), set()
         )
-        assert "Either no changes were found in test1" in err.call_args[0][0]
+        assert "Either no changes were found in test1" in caplog.records[0].message
 
     def test_manage_rn_update_fail(self):
         """

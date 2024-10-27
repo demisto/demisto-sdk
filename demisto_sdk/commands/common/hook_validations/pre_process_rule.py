@@ -49,7 +49,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
             )
         else:
             logger.info(
-                "[yellow]Skipping PreProcessRule id_set validations. Could not read id_set.json.[/yellow]"
+                "<yellow>Skipping PreProcessRule id_set validations. Could not read id_set.json.</yellow>"
             )
 
         return all(validations)

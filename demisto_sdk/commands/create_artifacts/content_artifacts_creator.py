@@ -88,7 +88,6 @@ EX_FAIL = 1
 
 XSOAR_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.CLASSIFIER,
-    FileType.CONNECTION,
     FileType.INCIDENT_FIELD,
     FileType.INCIDENT_TYPE,
     FileType.INDICATOR_FIELD,
@@ -119,7 +118,6 @@ XSOAR_MARKETPLACE_ITEMS_TO_DUMP = [
 ]
 XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.CLASSIFIER,
-    FileType.CONNECTION,
     FileType.INCIDENT_FIELD,
     FileType.INCIDENT_TYPE,
     FileType.INDICATOR_FIELD,
@@ -1003,11 +1001,6 @@ def handle_classifier(
         pack_report += dump_pack_conditionally(artifact_manager, classifier)
 
 
-def handle_connection(pack, pack_report, artifact_manager, **kwargs):
-    for connection in pack.connections:
-        pack_report += dump_pack_conditionally(artifact_manager, connection)
-
-
 def handle_incident_type(
     content_items_handler, pack, pack_report, artifact_manager, **kwargs
 ):
@@ -1230,7 +1223,7 @@ def handle_metadata(
         if artifact_manager.id_set_path and not artifact_manager.filter_by_id_set:
             # Dependencies can only be done when id_set file is given.
             pack.metadata.handle_dependencies(
-                pack.path.name, artifact_manager.id_set_path, logger
+                pack.path.name, artifact_manager.id_set_path
             )
         else:
             logger.warning(
@@ -1283,7 +1276,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     global logger
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
-    pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
+    pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path)
     pack.filter_items_by_id_set = artifact_manager.filter_by_id_set
     pack.pack_info_from_id_set = artifact_manager.packs_section_from_id_set
     content_items_handler = ContentItemsHandler(
@@ -1294,7 +1287,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     content_items_to_handler = {
         FileType.RELEASE_NOTES: handle_release_notes,
         FileType.RELEASE_NOTES_CONFIG: handle_release_note_config,
-        FileType.CONNECTION: handle_connection,
         FileType.TEST_PLAYBOOK: handle_test_playbook,
         FileType.SCRIPT: handle_script,
         FileType.INCIDENT_FIELD: handle_incident_field,
@@ -1794,7 +1786,6 @@ def sign_packs(artifact_manager: ArtifactsManager):
                         pool.schedule(
                             pack.sign_pack,
                             args=(
-                                logger,
                                 dumped_pack_dir,
                                 artifact_manager.signDirectory,
                             ),
@@ -1811,7 +1802,6 @@ def sign_packs(artifact_manager: ArtifactsManager):
                             pool.schedule(
                                 pack.sign_pack,
                                 args=(
-                                    logger,
                                     dumped_pack_dir,
                                     artifact_manager.signDirectory,
                                 ),

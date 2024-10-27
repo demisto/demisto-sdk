@@ -7,10 +7,9 @@ from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.lint import linter
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD
 
 
 def initiate_linter(
@@ -290,7 +289,7 @@ class TestDockerImagesCollection:
         ],
     )
     def test_docker_images_key_not_exists_in_yml(
-        self, mocker, pack, docker_image_flag, exp_versioned_native_image_name
+        self, mocker, pack, docker_image_flag, exp_versioned_native_image_name, caplog
     ):
         """
         This test checks that for integration that doesn't have the 'dockerimage' key in it's YML, if a native image
@@ -309,7 +308,6 @@ class TestDockerImagesCollection:
         """
         # Mock:
         mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
-        log = mocker.patch.object(logger, "info")
 
         # Crete integration to test on:
         integration_name = "TestIntegration"
@@ -330,11 +328,11 @@ class TestDockerImagesCollection:
         assert (
             f"Skipping checks on docker for {exp_versioned_native_image_name} - TestIntegration is not supported"
             f" by the requested native image: {exp_versioned_native_image_name}"
-            in log.call_args_list[-2][0][0]
+            in caplog.text
         )
         assert (
             f"{integration_name} - Facts - No docker images to run on - "
-            f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+            f"Skipping run lint in host as well." in caplog.text
         )
 
     def test_invalid_docker_image_as_docker_image_flag(self, mocker, pack):
@@ -436,7 +434,7 @@ class TestDockerImagesCollection:
         ],
     )
     def test_integration_not_supported_by_requested_native_image(
-        self, mocker, pack, docker_image_flag, exp_versioned_native_image_name
+        self, mocker, pack, docker_image_flag, exp_versioned_native_image_name, caplog
     ):
         """
         This test checks that if a docker image flag of a native image was given (native:ga, native:maintenance,
@@ -460,7 +458,6 @@ class TestDockerImagesCollection:
         """
         # Mock:
         mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
-        log = mocker.patch.object(logger, "info")
 
         # Crete integration to test on:
         integration_name = "TestIntegration"
@@ -504,14 +501,14 @@ class TestDockerImagesCollection:
             assert (
                 f"Skipping checks on docker for {exp_versioned_native_image_name} - TestIntegration is not supported"
                 f" by the requested native image: {exp_versioned_native_image_name}"
-                in log.call_args_list[-2][0][0]
+                in caplog.text
             )
             assert (
                 f"{integration_name} - Facts - No docker images to run on - "
-                f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+                f"Skipping run lint in host as well." in caplog.text
             )
 
-    def test_wrong_native_docker_image_flag(self, mocker, pack):
+    def test_wrong_native_docker_image_flag(self, mocker, pack, caplog):
         """
         This test checks that if a native docker image flag with a wrong suffix was given, a suitable
         exception is raised.
@@ -524,9 +521,6 @@ class TestDockerImagesCollection:
         Then
             - Ensure that the a suitable exception is raised.
         """
-        # Mock:
-        log = mocker.patch.object(logger, "error")
-
         # Crete integration to test on:
         integration_name = "TestIntegration"
         test_integration = pack.create_integration(name=integration_name)
@@ -552,12 +546,12 @@ class TestDockerImagesCollection:
         assert runner._facts["images"] == []
         assert str(e.value) == expected_err_msg
         assert (
-            log.call_args_list[0][0][0]
-            == f"Skipping checks on docker for '{docker_image_flag}' - {expected_err_msg}"
+            f"Skipping checks on docker for '{docker_image_flag}' - {expected_err_msg}"
+            in caplog.text
         )
 
     def test_docker_image_flag_version_not_exists_in_native_config_file(
-        self, mocker, repo
+        self, mocker, repo, caplog
     ):
         """
         This test checks that if a native docker image flag was given, and the flag doesn't have a mapped native
@@ -617,7 +611,6 @@ class TestDockerImagesCollection:
         )
 
         mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
-        log = mocker.patch.object(logger, "info")
 
         # Create integration to test on:
         integration_name = "TestIntegration"
@@ -636,17 +629,15 @@ class TestDockerImagesCollection:
 
         # Verify docker images:
         assert runner._facts["images"] == []
-        assert str_in_call_args_list(
-            log.call_args_list,
+        assert (
             f"Skipping checks on docker for '{docker_image_flag}' - The requested native image:"
             f" '{docker_image_flag}' is not supported. For supported native image versions please see:"
-            f" 'Tests/docker_native_image_config.json'",
-        )
-        assert str_in_call_args_list(
-            log.call_args_list,
+            f" 'Tests/docker_native_image_config.json'"
+        ) in caplog.text
+        assert (
             f"{integration_name} - Facts - No docker images to run on - "
-            f"Skipping run lint in host as well.",
-        )
+            f"Skipping run lint in host as well."
+        ) in caplog.text
 
 
 class TestTestsCollection:

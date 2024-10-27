@@ -12,14 +12,11 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
-from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
-)
 
 ContentTypes = Union[Integration, Layout, Mapper, Playbook, Script, Wizard, Job]
 
 
-class IDNameAllStatusesValidator(IDNameValidator, BaseValidator[ContentTypes]):
+class IDNameAllStatusesValidator(IDNameValidator[ContentTypes]):
     """
     This class is for cases where the IDNameValidator need to run on all cases (no matter what git status)
     """

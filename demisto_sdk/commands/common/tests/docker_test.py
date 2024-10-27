@@ -1,4 +1,3 @@
-import logging
 import os
 from unittest import mock
 
@@ -8,7 +7,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD
 
 RETURN_ERROR_TARGET = "GetDockerImageLatestTag.return_error"
 DEPRECATED_IMAGES_URL = "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json"
@@ -198,7 +197,7 @@ class TestDockerImage:
             docker_image="blah/blah:1.2.3.4"
         )
 
-    def test_parse_docker_image_error(self, mocker):
+    def test_parse_docker_image_error(self, mocker, caplog):
         """
         Given: a mock for docker_image_validator which should fail on DO102, DO104, and DO107 and that the pack isn't xsoar supported.
 
@@ -209,7 +208,8 @@ class TestDockerImage:
         docker_image_validator = mock_docker_image_validator(
             is_pack_xsoar_supported=False
         )
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+        caplog.set_level("WARNING")
+
         expected_errors = ["DO104", "DO107", "DO102"]
         docker_image_validator.docker_image_latest_tag = ""
         docker_image_validator.code_type = "Python"
@@ -222,7 +222,7 @@ class TestDockerImage:
             docker_image_name="", yml_docker_image="test/python:1.3-alpine"
         )
         for error in expected_errors:
-            assert str_in_call_args_list(logger_info.call_args_list, error)
+            assert error in caplog.text
         assert docker_image_validator.is_valid
 
     # disable-secrets-detection-end
@@ -385,9 +385,7 @@ class TestDockerImage:
 
         assert docker_image_validator.is_docker_image_valid() is True
 
-    def test_non_existing_docker(self, integration, requests_mock, mocker, monkeypatch):
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
+    def test_non_existing_docker(self, integration, requests_mock, mocker, caplog):
         docker_image = "demisto/nonexistingdocker:1.4.0"
         integration.yml.write_dict(
             {
@@ -418,12 +416,8 @@ class TestDockerImage:
             validator = DockerImageValidator(integration.yml.path, True, True)
             assert validator.is_docker_image_valid() is False
             assert validator.is_valid is False
-            assert all(
-                [
-                    str_in_call_args_list(logger_error.call_args_list, error),
-                    str_in_call_args_list(logger_error.call_args_list, code),
-                ]
-            )
+            assert error in caplog.text
+            assert code in caplog.text
 
     @pytest.mark.parametrize(
         "native_image",

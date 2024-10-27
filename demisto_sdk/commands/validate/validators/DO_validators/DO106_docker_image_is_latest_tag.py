@@ -15,15 +15,17 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
     FixResult,
     ValidationResult,
+)
+from demisto_sdk.commands.validate.validators.DO_validators.docker_validator import (
+    DockerValidator,
 )
 
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
+class DockerImageTagIsNotOutdated(DockerValidator[ContentTypes]):
     error_code = "DO106"
     description = "Validate that the given content-item's docker image isn't outdated."
     rationale = "Updated Docker images ensure that the code doesn't use outdated dependencies, including bug fixes and fixed vulnerabilities."

@@ -411,7 +411,7 @@ def append_or_replace_command_in_docs(
     errs = list()
     if re.findall(regexp, old_docs, flags=re.DOTALL):
         new_docs = re.sub(regexp, new_doc_section, old_docs, flags=re.DOTALL)
-        logger.info("[green]New command docs has been replaced in README.md.[/green]")
+        logger.info("<green>New command docs has been replaced in README.md.</green>")
     else:
         if command_name in old_docs:
             errs.append(
@@ -423,7 +423,7 @@ def append_or_replace_command_in_docs(
             # Remove trailing '\n'
             old_docs = old_docs[:-1]
         new_docs = f"{old_docs}\n{new_doc_section}"
-        logger.info("[green]New command docs has been added to the README.md.[/green]")
+        logger.info("<green>New command docs has been added to the README.md.</green>")
     return new_docs, errs
 
 
@@ -531,7 +531,7 @@ def generate_integration_doc(
                 errors.extend(update_errors)
         else:
             docs: list = []
-            docs.extend(add_lines(yml_data.get("description")))
+            docs.extend(add_lines(yml_data.get("description", "")))
             if not is_contribution:
                 docs.extend(
                     [
@@ -607,12 +607,12 @@ def generate_integration_doc(
         save_output(output, INTEGRATIONS_README_FILE_NAME, doc_text)
 
         if errors:
-            logger.info(f"[yellow]Found {len(errors)} possible errors:[/yellow]")
+            logger.info(f"Found {len(errors)} possible errors:")
             for error in errors:
-                logger.info(f"\t- {error}")
+                logger.error(f"\t- {error}")
 
     except Exception as ex:
-        logger.info(f"[red]Error: {str(ex)}[/red]")
+        logger.info(f"<red>Error: {str(ex)}</red>")
         raise
 
 
@@ -844,7 +844,7 @@ def generate_commands_section(
             command_dict = list(filter(lambda cmd: cmd["name"] == command, commands))[0]
         except IndexError:
             err = f"Could not find the command `{command}` in the .yml file."
-            logger.info("[red]{err}[/red]")
+            logger.info("<red>{err}</red>")
             raise IndexError(err)
         return generate_single_command_section(
             command_dict, example_dict, command_permissions_dict
@@ -1179,7 +1179,7 @@ def get_command_examples(commands_examples_input, specific_commands):
             command_examples = examples_file.read().splitlines()
     else:
         logger.info(
-            "[yellow]failed to open commands file, using commands as comma seperated list[/yellow]"
+            "<yellow>failed to open commands file, using commands as comma seperated list</yellow>"
         )
         command_examples = commands_examples_input.split(",")
 
@@ -1274,9 +1274,11 @@ def add_access_data_of_type_credentials(
     access_data.append(
         {
             "Parameter": credentials_conf.get("displaypassword", "Password"),
-            "Description": ""
-            if display_name
-            else string_escape_md(credentials_conf.get("additionalinfo", "")),
+            "Description": (
+                ""
+                if display_name
+                else string_escape_md(credentials_conf.get("additionalinfo", ""))
+            ),
             "Required": credentials_conf.get("required", ""),
         }
     )

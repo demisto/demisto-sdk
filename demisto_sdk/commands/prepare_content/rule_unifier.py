@@ -24,7 +24,7 @@ class RuleUnifier(Unifier):
         RuleUnifier._insert_rules(path, data)
         RuleUnifier._insert_schema(path, data)
         RuleUnifier._insert_samples(path, data)
-        logger.info(f"[green]Successfully created unified YAML in {path}[/green]")
+        logger.info(f"<green>Successfully created unified YAML in {path}</green>")
         return data
 
     @staticmethod

@@ -1,4 +1,3 @@
-import logging
 from os import listdir
 from pathlib import Path
 
@@ -6,7 +5,6 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from TestSuite.test_tools import str_in_call_args_list
 
 INIT_CMD = "init"
 
@@ -23,7 +21,6 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
     - Ensure pack metadata is created successfully.
     - Ensure integration directory contain all files.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_name = "SuperPack"
     fill_pack_metadata = "Y"
@@ -77,7 +74,7 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
 
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 f"Successfully created the pack SuperPack in: {tmp_pack_path}",
                 f"Created pack metadata at path : {tmp_pack_metadata_path}",
@@ -134,7 +131,6 @@ def test_integration_init_integration_positive_no_inline_pack_name(
     - Ensure pack metadata is created successfully.
     - Ensure integration directory contain all files.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_name = "SuperPack"
     fill_pack_metadata = "Y"
@@ -190,7 +186,7 @@ def test_integration_init_integration_positive_no_inline_pack_name(
     assert result.exit_code == 0
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 f"Successfully created the pack SuperPack in: {tmp_pack_path}",
                 f"Created pack metadata at path : {tmp_pack_metadata_path}",

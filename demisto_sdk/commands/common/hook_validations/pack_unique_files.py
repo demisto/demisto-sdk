@@ -884,7 +884,7 @@ class PackUniqueFilesValidator(BaseValidator):
         # if running on master branch in private repo - do not run the test
         if current_repo.get_current_git_branch_or_hash() == DEMISTO_GIT_PRIMARY_BRANCH:
             logger.debug(
-                "[yellow]Running on master branch - skipping price change validation[/yellow]"
+                "<yellow>Running on master branch - skipping price change validation</yellow>"
             )
             return None
         try:
@@ -904,7 +904,7 @@ class PackUniqueFilesValidator(BaseValidator):
         # if there was no past version
         if not old_meta_file_content:
             logger.debug(
-                "[yellow]Unable to find previous pack_metadata.json file - skipping price change validation[/yellow]"
+                "<yellow>Unable to find previous pack_metadata.json file - skipping price change validation</yellow>"
             )
             return None
 
@@ -978,7 +978,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_pack_dependencies(self):
         try:
             logger.info(
-                f"\n[cyan]Running pack dependencies validation on {self.pack}[/cyan]\n"
+                f"\n<cyan>Running pack dependencies validation on {self.pack}</cyan>\n"
             )
             core_pack_list = get_core_pack_list()
 
@@ -993,20 +993,20 @@ class PackUniqueFilesValidator(BaseValidator):
             )
 
             if not first_level_dependencies:
-                logger.debug("[yellow]No first level dependencies found[/yellow]")
+                logger.debug("<yellow>No first level dependencies found</yellow>")
                 return True
 
             for core_pack in core_pack_list:
                 first_level_dependencies.pop(core_pack, None)
             if not first_level_dependencies:
                 logger.debug(
-                    "[yellow]Found first level dependencies only on core packs[/yellow]"
+                    "<yellow>Found first level dependencies only on core packs</yellow>"
                 )
                 return True
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)
-            logger.info(f"[bold]Found dependencies result for {self.pack} pack:[/bold]")
-            logger.info(f"[bold]{dependency_result}[/bold]")
+            logger.info(f"<bold>Found dependencies result for {self.pack} pack:</bold>")
+            logger.info(f"<bold>{dependency_result}</bold>")
 
             if self.pack in core_pack_list:
                 if not self.validate_core_pack_dependencies(first_level_dependencies):

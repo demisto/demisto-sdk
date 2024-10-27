@@ -41,7 +41,7 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n<blue>================= Updating file {self.source_file} =================</blue>"
             )
             super().update_json()
             self.format_auto_extract_mode()
@@ -51,7 +51,7 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
             return SUCCESS_RETURN_CODE
         except Exception as err:
             logger.debug(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE
 
@@ -79,10 +79,10 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
                     and auto_extract_settings["fieldCliNameToExtractSettings"]
                 ):
                     logger.info(
-                        '[yellow]Cannot set mode to "All" since there are specific types under the '
+                        '<yellow>Cannot set mode to "All" since there are specific types under the '
                         "fieldCliNameToExtractSettings, "
                         'If you want the mode to be "All" you should delete them manually and run this '
-                        "command again.[/yellow]"
+                        "command again.</yellow>"
                     )
                     return
                 if (
@@ -92,8 +92,8 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
                     ]
                 ):
                     logger.info(
-                        '[yellow]Please notice that mode was set to "Specific" but there are no specific types under '
-                        "fieldCliNameToExtractSettings[/yellow]"
+                        '<yellow>Please notice that mode was set to "Specific" but there are no specific types under '
+                        "fieldCliNameToExtractSettings</yellow>"
                     )
                 self.data["extractSettings"]["mode"] = user_input
 

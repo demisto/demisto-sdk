@@ -70,15 +70,15 @@ class ReadmeFormat(BaseUpdate):
             return None
         else:
             logger.info(
-                f"[red]Should https:// be added to the following address? [Y/n]\n {readme_url.get_url()}[/red]"
+                f"<red>Should https:// be added to the following address? [Y/n]\n {readme_url.get_url()}</red>"
             )
             user_answer = input()
             if user_answer.lower()[0] == "y":
                 new_address = f"https://{old_url}"
             else:
                 logger.info(
-                    "[red]Would you like to change the relative address to something else?\n"
-                    " Enter the new address or leave empty to skip:[/red]"
+                    "<red>Would you like to change the relative address to something else?\n"
+                    " Enter the new address or leave empty to skip:</red>"
                 )
                 user_answer = input()
                 if user_answer and user_answer.lower() not in ["n", "no"]:
@@ -97,7 +97,7 @@ class ReadmeFormat(BaseUpdate):
 
         if relative_urls:
             logger.info(
-                "[red]Relative urls were found and are not supported within README.[/red]"
+                "<red>Relative urls were found and are not supported within README.</red>"
             )
         for url in relative_urls:
             new_address = self.get_new_url_from_user(url)
@@ -115,7 +115,7 @@ class ReadmeFormat(BaseUpdate):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n<blue>================= Updating file {self.source_file} =================</blue>"
             )
             self.relative_url_format()
             self.fix_lint_markdown()
@@ -123,7 +123,7 @@ class ReadmeFormat(BaseUpdate):
             return SUCCESS_RETURN_CODE
         except Exception as err:
             logger.info(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )
             return ERROR_RETURN_CODE
 
@@ -146,8 +146,8 @@ class ReadmeFormat(BaseUpdate):
                 )
                 if response.validations:
                     logger.info(
-                        f"[yellow]Markdown lint was not able to fix the following "
-                        f"markdown validations for file {self.source_file}.\n{response.validations}[/yellow]"
+                        f"<yellow>Markdown lint was not able to fix the following "
+                        f"markdown validations for file {self.source_file}.\n{response.validations}</yellow>"
                     )
                 if response.fixed_text and response.fixed_text != self.readme_content:
                     logger.info(f"Received markdown fixes for file {self.source_file}")

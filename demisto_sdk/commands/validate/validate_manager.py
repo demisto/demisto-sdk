@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional, Set
 
+from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
@@ -78,6 +79,16 @@ class ValidateManager:
                         filtered_content_objects_for_validator
                     )
                 )  # type: ignore
+                if (
+                    validator.expected_execution_mode == [ExecutionMode.ALL_FILES]
+                    and self.initializer.execution_mode == ExecutionMode.ALL_FILES
+                ):
+                    validation_results = [
+                        validation_result
+                        for validation_result in validation_results
+                        if validation_result.content_object
+                        in filtered_content_objects_for_validator
+                    ]
                 try:
                     if self.allow_autofix and validator.is_auto_fixable:
                         for validation_result in validation_results:

@@ -110,10 +110,7 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
             results.append(
                 ValidationResult(
                     validator=self,
-                    message=self.error_message.format(
-                        content_item.name,
-                        ", ".join(f"'{name}'" for name in names_of_unknown_items),
-                    ),
+                    message=self.error_message.format(content_item.name,", ".join(f"'{name}'" for name in names_of_unknown_items),),
                     content_object=content_item,
                 )
             )

@@ -1,11 +1,10 @@
 ## Update Release Notes
 
-**Automatically identify and create a release notes template for changed items.**
+Automatically generates release notes for a given pack and updates the `pack_metadata.json` version for changed items.
 
-### Use Cases
-This command is used in order to create or update release notes for a new pack version. The command will also automatically bump the `currentVersion` found in the `pack_metadata.json` file.
+This command creates a new release notes file under the ReleaseNotes directory in the given pack in the form of X_Y_Z.md where X_Y_Z is the new pack version. The command automatically bumps the `currentVersion` found in the `pack_metadata.json` file. After running this command, add the newly created release notes file to GitHub and add your notes under their respective headlines.
 
-In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote files will be fetched from the remote branch of the local repo.
+For a private repository and an unconfigured DEMISTO_SDK_GITHUB_TOKEN, remote files are fetched from the remote branch of the local repo.
 
 ### Arguments
 * **-i, --input**
@@ -55,25 +54,25 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
 ```
 demisto-sdk update-release-notes -i Packs/HelloWorld -u minor
 ```
-This will create a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **minor** increment.
+Creates a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **minor** increment.
 <br/><br/>
 ```
 demisto-sdk update-release-notes -i Packs/HelloWorld -u major
 ```
-This will create a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **major** increment.
+Creates a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **major** increment.
 <br/><br/>
 ```
 demisto-sdk update-release-notes -i Packs/HelloWorld -u revision
 ```
-This will create a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **revision** increment.
+Creates a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **revision** increment.
 <br/><br/>
 ```
 demisto-sdk update-release-notes -g -u revision
 ```
-This will create a new markdown file in the `ReleaseNotes` folder for **all** changed packs and bump the `currentVersion` for **all** changed packs with a **revision** increment.
+Creates a new markdown file in the `ReleaseNotes` folder for **all** changed packs and bump the `currentVersion` for **all** changed packs with a **revision** increment.
 <br/><br/>
 
 ```
 demisto-sdk update-release-notes -i Packs/HelloWorld -u revision --pre_release
 ```
-This will create a new markdown file in the `ReleaseNotes` folder for the HellWorld pack and bump the `currentVersion` with a **revision** increment as well as append `pre_release` to the `currentVersion`.
+Creates a new markdown file in the `ReleaseNotes` folder for the HellWorld pack and bump the `currentVersion` with a **revision** increment as well as append `pre_release` to the `currentVersion`.

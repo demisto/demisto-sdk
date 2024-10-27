@@ -1,29 +1,24 @@
 ## generate-outputs
-Generate outputs for an integration.
-Previously `json-to-outputs` and `generate-context` combined.
-
-**Use-Cases**
-This command is used to generate context paths automatically from an example file directly into an integration yml file.
-Also supports converting JSON format to demisto entry context yaml format.
+Generates outputs for an integration.
+This command generates context paths automatically from an example file directly into an integration YAML file.
+Also supports converting JSON format to Cortex XSOAR entry context YAML format.
 
 **Arguments**:
 * *-c, --command*
-  Specific command name (e.g. xdr-get-incidents)
+  לCommand name (e.g. xdr-get-incidents)
 * *-j, --json*
   A JSON file path. If not specified then script will wait for user input in the terminal.
 * *-p, --prefix*
   Output prefix like Jira.Ticket, VirusTotal.IP. the base path for the outputs that the script generates.
 * *-o, --output*
-  Output file path, if not specified then will print to stdout
-* *-v, --verbose*
-  Verbose output - mainly for debugging purposes
+  Output file path, if not specified then will print to stdout.
 * *--interactive*
   If passed, then for each output field will ask user interactively to enter the description. By default, the interactive mode is disabled.
 * *-d, --descriptions*
   A JSON or a path to a JSON file, mapping field names to their descriptions. If not specified, the script prompt the user to input the JSON content.
 * **-i, --input**
   Path of the yml file (outputs are inserted here in-place) - used for context from examples.
-  * **-e, --examples**
+* **-e, --examples**
   Integrations: path for file containing command examples. Each command should be in a separate line.
   Scripts: the script example surrounded by quotes. For example: -e '!ConvertFile entry_id=<entry_id>'
 * **--insecure**

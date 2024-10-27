@@ -1083,7 +1083,7 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     )
 )
 @click.help_option("-h", "--help")
-@click.option("-i", "--input", help="Specify the file to check secret on.")
+@click.option("-i", "--input", help="Specify a file to check secret for.")
 @click.option(
     "--post-commit",
     is_flag=True,
@@ -1404,11 +1404,14 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-o",
     "--output",
-    help="The file path where the formatted file will be saved to. (Default will be to override origin file).",
+    help="Specifies where the formatted file should be saved to. If not used, the default is to overwrite the "
+    "origin file..",
     type=click.Path(resolve_path=True),
 )
 @click.option(
-    "-fv", "--from-version", help="Specify the fromversion key of the content item."
+    "-fv",
+    "--from-version",
+    help="Specifies the minimum version that this content item or content pack is compatible with.",
 )
 @click.option(
     "-nv",
@@ -1419,7 +1422,7 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-ud",
     "--update-docker",
-    help="Set if you want to update the docker image of the integration/script to the latest available tag.",
+    help="Updates the Docker image of the integration/script to the newest available tag.",
     is_flag=True,
 )
 @click.option(
@@ -1432,7 +1435,7 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-d",
     "--deprecate",
-    help="Set if you want to deprecate the integration/script/playbook.",
+    help="Deprecates the integration/script/playbook.",
     is_flag=True,
 )
 @click.option(
@@ -1630,11 +1633,11 @@ def upload(ctx, **kwargs):
     help="Regex Pattern. When specified, download all the custom content files with a name that matches this regex pattern.",
     required=False,
 )
-@click.option("--insecure", help="Skip certificate validation", is_flag=True)
+@click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.option(
     "-f",
     "--force",
-    help="Whether to override existing files or not.",
+    help="Whether to override existing files.",
     is_flag=True,
 )
 @click.option(
@@ -1652,14 +1655,14 @@ def upload(ctx, **kwargs):
 @click.option(
     "-fmt",
     "--run-format",
-    help="Format downloaded files.",
+    help="Whether to run Demisto SDK formatting on downloaded files.",
     is_flag=True,
 )
 @click.option("--system", help="Download system items.", is_flag=True, default=False)
 @click.option(
     "-it",
     "--item-type",
-    help="Type of the content item to download. Required and used only when downloading system items.",
+    help="Type of the content item to download, use only when downloading system items.",
     type=click.Choice(
         [
             "IncidentType",
@@ -1929,7 +1932,7 @@ def run_test_playbook(ctx, **kwargs):
 @click.option(
     "-c",
     "--command",
-    help="Specific command name (e.g. xdr-get-incidents)",
+    help="Command name (e.g. xdr-get-incidents)",
     required=False,
 )
 @click.option(
@@ -2181,20 +2184,21 @@ def init(ctx, **kwargs):
 @click.option(
     "-o",
     "--output",
-    help="The output dir to write the documentation file into,"
-    " documentation file name is README.md. If not specified, will be in the yml dir.",
+    help="The output directory to write the documentation file to. Documentation file name is README.md. "
+    "If not specified, written to the YAML directory.",
     required=False,
 )
 @click.option(
     "-uc",
     "--use_cases",
-    help="For integration - Top use-cases. Number the steps by '*' (i.e. '* foo. * bar.')",
+    help="For integrations - provide a list of use-cases that should appear in the generated docs. "
+    "Create an unordered list by using * before each use-case (i.e. '* foo. * bar.')",
     required=False,
 )
 @click.option(
     "-c",
     "--command",
-    help="A comma-separated command names to generate doc for, will ignore the rest of the commands."
+    help="A comma-separated list of command names to generate documentation for. The rest of the commands are ignored."
     "e.g xdr-get-incidents,xdr-update-incident",
     required=False,
 )
@@ -2210,7 +2214,7 @@ def init(ctx, **kwargs):
     "-p",
     "--permissions",
     type=click.Choice(["none", "general", "per-command"]),
-    help="Permissions needed.",
+    help="The needed permissions.",
     required=True,
     default="none",
 )
@@ -2225,7 +2229,7 @@ def init(ctx, **kwargs):
 @click.option(
     "-l",
     "--limitations",
-    help="Known limitations. Number the steps by '*' (i.e. '* foo. * bar.')",
+    help="Known limitations. Create an unordered list by using * before each use-case. (i.e. '* foo. * bar.')",
     required=False,
 )
 @click.option(
@@ -2233,11 +2237,11 @@ def init(ctx, **kwargs):
     help="Skip certificate validation.",
     is_flag=True,
 )
-@click.option("--old-version", help="Path of the old integration version yml file.")
+@click.option("--old-version", help="Path of the old integration version YML file.")
 @click.option(
     "--skip-breaking-changes",
     is_flag=True,
-    help="Skip generating of breaking changes section.",
+    help="SDo not generate the breaking changes section.",
 )
 @click.option(
     "--custom-image-path",
@@ -2252,7 +2256,7 @@ def init(ctx, **kwargs):
 @click.option(
     "-gr/-ngr",
     "--graph/--no-graph",
-    help="Whether to use the content graph or not.",
+    help="Whether to use the content graph",
     is_flag=True,
     default=True,
 )

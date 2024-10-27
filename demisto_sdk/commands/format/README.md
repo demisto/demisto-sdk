@@ -1,13 +1,8 @@
 ## Format
 
-**Format Integration/Script/Playbook/IncidentField/IncidentType/IndicatorField/IndicatorType/Layout/Dashboard
-        files according to Demisto's standard.**
-
-### Use Cases
-This command is used in order to keep your new or modified files with Demisto's standard. This is useful especially
-when developing a new Integration/Script/Playbook/IncidentField/IncidentType/IndicatorField/IndicatorType/Layout/Dashboard,
-and you want to make sure you are keeping up with our standards.
-When done formatting, the **validate** command will run, to let you know of things the formatter could not fix.
+This command formats new or modified files to align with the Cortex standard.
+This is useful when developing a new integration, script, playbook, incident field, incident type, indicator field, indicator type, layout, or dashboard.
+When formatting is complete, the `validate` command runs and notifies you of any issues the formatter could not fix.
 
 
 ### Arguments
@@ -17,11 +12,11 @@ When done formatting, the **validate** command will run, to let you know of thin
 
 * **-o --output**
 
-    The file path where the formatted file will be saved to. (Default will be to override origin file).
+    Specifies where the formatted file should be saved to. If not used, the default is to overwrite the origin file.
 
 * **-fv --from-version**
 
-    Specify the fromversion key of the content item.
+    Specifies the minimum version that this content item or content pack is compatible with.
 
 * **-nv ,--no-validate**
 
@@ -29,19 +24,13 @@ When done formatting, the **validate** command will run, to let you know of thin
 
 * **-ud ,--update-docker**
 
-   Set if you want to update the docker image of the integration/script to the latest available tag.
-
-* **-v, --verbose**
-
-   Verbose output
+   Updates the Docker image of the integration/script to the newest available tag.
 
 * **-y/-n, --assume-yes/--assume-no**
 
   Automatic yes/no to prompts; assume 'yes'/'no' as answer to all prompts and run non-interactively.
 
-* **-d, --deprecate**
-
-  Set if you want to deprecate the integration/script/playbook
+* **-d, --deprecate** Deprecates the integration/script/playbook.
 * **-g --use-git** Use git to automatically recognize which files changed and run format on them.
 * **--prev-ver** Previous branch or SHA1 commit to run checks against.
 * **-iu --include-untracked** Whether to include untracked files in the formatting.
@@ -52,40 +41,40 @@ When done formatting, the **validate** command will run, to let you know of thin
 ```
 demisto-sdk format
 ```
-This will check your branch changes and will run only on them.
+Check your branch changes and runs only on them.
 <br/><br/>
 
 ```
 demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml
 ```
-This will go through the integration file, format it, and override the original file with the necessary changes.
+Goes through the integration file, format it, and override the original file with the necessary changes.
 <br/><br/>
 
 ```
 demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml -o Integrations/Pwned-V2/formatted-Pwned-V2.yml
 ```
-This will go through the integration file, format it, and save it to a new file
+Goes through the integration file, format it, and save it to a new file
 (Integrations/Pwned-V2/formatted-Pwned-V2.yml) with the necessary changes, while keeping the origin file as it was.
 <br/><br/>
 
 ```
 demisto-sdk format -i Packs/CortexXDR --from-version 10.10.10
 ```
-This will format all json/yml files under the Pack CortexXDR.
-This will also set the fromversion key in all files to '10.10.10'
+Format all JSON/YML files under the Pack CortexXDR.
+This also set the fromversion key in all files to '10.10.10'
 <br/><br/>
 
 ```
 demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml
 ```
-This will format the given yml file, however validation will not ran as this file is not part of content repo.
+Format the given YML file, however validation will not run as this file is not part of content repository.
 <br/><br/>
 
 ```
 demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml -o Integrations/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml
 ```
-This will format the given yml file and save it in content repo under the specified file path.
-Also validation will run as the output file is in content repo.
+Formats the given YML file and save it in content repository under the specified file path.
+Also, validation will run as the output file is in the content repository.
 <br/><br/>
 
 

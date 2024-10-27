@@ -1,8 +1,6 @@
 ## init
 Create a pack, integration or script template.
 
-**Use-Cases**
-* This command is used to ease the initial creation of a pack, integration or a script.
 
 **Arguments**:
 * **-n, --name**
@@ -55,29 +53,29 @@ The pack/integration/script will be created in your current working directory.
 
 `demisto-sdk init -n My_Pack`
 
-This will create a new pack named "My_Pack" under the "Packs" directory in content repo.
+Creates a new pack named "My_Pack" under the "Packs" directory in content repository.
 
 
 `demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`
 
-This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory.
+Creates a new integration template named MyNewIntegration within "path/to/my/dir" directory.
 
 
 `demisto-sdk init --script --id "My Script ID" -n MyScript`
 
-This will create a named "MyScript" under the "Scripts" directory and the yml file will have the id "My Script ID".
+Creates a named "MyScript" under the "Scripts" directory and the yml file will have the id "My Script ID".
 
 
 `demisto-sdk init --pack -n My_Pack -a path/yourAuthorImage.png`
 
-This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add an author image that
+Creates a new pack named "My_Pack" under the "Packs" directory in content repo, and add an author image that
 will be presented under PUBLISHER section in marketplace. Image file will be created under pack root directory.
 
 `demisto-sdk init --pack -n My_Pack --xsiam`
 
-This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add the relevant empty XSIAM directories under "My_Pack" directory.
+Creates a new pack named "My_Pack" under the "Packs" directory in content repo, and add the relevant empty XSIAM directories under "My_Pack" directory.
 
 `demisto-sdk init --integration -n MyNewIntegration -o path/Packs/My_Pack/Integration --xsiam`
 
-This will create a new integration named MyNewIntegrationEventCollector within "path/Packs/My_Pack/Integration" directory,
+Creates a new integration named MyNewIntegrationEventCollector within "path/Packs/My_Pack/Integration" directory,
 In addition, this will create the relevant folders and files for parsing rules and modeling rules under My_Pack.

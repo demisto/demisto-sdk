@@ -1,13 +1,14 @@
 # Setup Environment
 
-The Command sets up a content environment and an integration/script environment. The command will configure VSCode and XSOAR/XSIAM instances for development and testing.
+The Command sets up a content environment and an integration/script environment.
+The command will configure VSCode and XSOAR/XSIAM instances for development and testing.
 
 ## Notes
 
-* This command will download integration parameters from Google Secret Manager, if the enviornment variable **DEMISTO_SDK_GCP_PROJECT_ID** is set to the GCP project ID.
-* It will also create a virtual environment in the .venv folder if **--create-virtualenv** is passed.
-* It will configure VSCode debugging and linting for the provided file paths or content repo.
-* It will create a XSOAR/XSIAM instance and configure it for testing with the provided file paths or content repo, if a secret was found in Google Secret Manager.
+- The setup-env command downloads integration parameters from Google Secret Manager, if the environment variable DEMISTO_SDK_GCP_PROJECT_ID is set to the GCP project ID.
+- The setup-env command creates a virtual environment in the .venv folder if the --create-virtualenv argument is included.
+- The setup-env command configures VSCode debugging and linting for the provided file paths or content repository.
+- If the --instance-name argument is included, the setup-env command creates an integration instance in your Cortex XSOAR or Cortex XSIAM tenant, with the provided file paths or content repository, if a secret was found in Google Secret Manager.
 
 ## Usage
 

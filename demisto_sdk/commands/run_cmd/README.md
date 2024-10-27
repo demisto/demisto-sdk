@@ -41,36 +41,36 @@ Note that `!` is not mandatory, as we add it if needed. You can also use double 
 ```
 demisto-sdk run -q 'ip ip="8.8.8.8"'
 ```
-This will run the query `!ip ip="8.8.8.8"` on the playground of the Cortex XSOAR instance and print the output.
+Runs the query `!ip ip="8.8.8.8"` on the playground of the Cortex XSOAR instance and print the output.
 <br/><br/>
 
 ```
 demisto-sdk run -q "panorama-list-address-groups"
 ```
-This will run the query `!panorama-list-address-groups` on the playground of the Cortex XSOAR instance and print the output.
+Runs the query `!panorama-list-address-groups` on the playground of the Cortex XSOAR instance and print the output.
 <br/><br/>
 
 ```
 demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"'
 ```
-This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Cortex XSOAR instance and print the output.
+Runs the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Cortex XSOAR instance and print the output.
 <br/><br/>
 ```
 demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -k
 ```
-This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Cortex XSOAR instance without a certificate validation, and print the output.
+Runs the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Cortex XSOAR instance without a certificate validation, and print the output.
 <br/><br/>
 ```
 demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -v
 ```
-This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Cortex XSOAR instance, print the output and additional meta-data.
+Runs the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Cortex XSOAR instance, print the output and additional meta-data.
 <br/><br/>
 ```
 demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D
 ```
-This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Cortex XSOAR instance, print the output, retrieve the debug log file and pretty print it.
+Runs the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Cortex XSOAR instance, print the output, retrieve the debug log file and pretty print it.
 <br/><br/>
 ```
 demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D --debug-path output.log
 ```
-This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Cortex XSOAR instance, print the output and creates `output.log` file that contains the command debug logs.
+Runs the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Cortex XSOAR instance, print the output and creates `output.log` file that contains the command debug logs.

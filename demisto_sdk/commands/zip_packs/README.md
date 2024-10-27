@@ -1,10 +1,6 @@
 ## zip-packs
 
-Zip content packs into a file that can be uploaded.
-
-**Use Cases**:
-This command is used in order to create a zip file, able to be uploaded to Cortex XSOAR via the
-"Upload pack" button in Cortex XSOAR's marketplace or directly with the -u flag in this command.
+Creates a zip file that can be uploaded to Cortex XSOAR via the Upload pack button in the Cortex XSOAR Marketplace or directly with the -u flag in this command.
 
 **Arguments**:
 * **-i, --input**
@@ -20,8 +16,8 @@ This command is used in order to create a zip file, able to be uploaded to Corte
 
 **Examples**:
 `demisto-sdk zip-packs -i Campaign -o "DestinationDir"`
-This will zip the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory.
+Zips the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory.
 
 `demisto-sdk zip-packs -i Campaign -o "DestinationDir" -u`
-This will zip the "Campaign" pack into uploadable_packs.zip file in the "DestinationDir" directory
+Zips the "Campaign" pack into uploadable_packs.zip file in the "DestinationDir" directory
 and will upload the created uploadable_packs.zip to the marketplace.

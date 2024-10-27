@@ -139,16 +139,16 @@ types-dateparser = "^1.1.4.20240106"
 types-python-dateutil = "^2.9.0.20240316"
 
 [tool.poetry.scripts]
-demisto-sdk = "demisto_sdk.__main__:main"
-sdk-changelog = "demisto_sdk.scripts.changelog.changelog:main"
-merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
-merge-pytest-reports = "demisto_sdk.scripts.merge_pytest_reports:main"
-validate-content-path = "demisto_sdk.scripts.validate_content_path:main"
-validate-conf-json = "demisto_sdk.scripts.validate_conf_json:main"
-init-validation = "demisto_sdk.scripts.init_validation_script:main"
-validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
-validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission_changes:main"
-prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
+demisto-sdk = "demisto_sdk.__main__:app"
+#sdk-changelog = "demisto_sdk.scripts.changelog.changelog:main"
+#merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
+#merge-pytest-reports = "demisto_sdk.scripts.merge_pytest_reports:main"
+#validate-content-path = "demisto_sdk.scripts.validate_content_path:main"
+#validate-conf-json = "demisto_sdk.scripts.validate_conf_json:main"
+#init-validation = "demisto_sdk.scripts.init_validation_script:main"
+#validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
+#validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission_changes:main"
+#prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
 
 [tool.ruff]
 exclude = [
@@ -182,7 +182,7 @@ select = [
   "PTH110",
   "PTH119"
 ]
-logger-objects = ["demisto_sdk.commands.common.logger.logger"]
+#logger-objects = ["demisto_sdk.commands.common.logger.logger"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 

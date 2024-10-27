@@ -5,7 +5,7 @@ from shutil import rmtree, unpack_archive
 import click
 import pytest
 
-from demisto_sdk.__main__ import zip_packs
+from demisto_sdk.__main__original import zip_packs
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.tests.constants_test import PACK_TARGET
 

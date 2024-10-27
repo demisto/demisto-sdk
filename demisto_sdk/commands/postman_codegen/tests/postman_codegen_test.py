@@ -8,7 +8,7 @@ import pytest
 from click.testing import CliRunner
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__original import main
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path

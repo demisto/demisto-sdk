@@ -7,7 +7,7 @@ from typing import List
 import pytest
 from click.testing import CliRunner, Result
 
-from demisto_sdk import __main__
+from demisto_sdk import __main__original
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (
     find_type,

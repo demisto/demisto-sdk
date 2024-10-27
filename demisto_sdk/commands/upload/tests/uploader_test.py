@@ -16,7 +16,7 @@ from demisto_client.demisto_api.rest import ApiException
 from more_itertools import first_true
 from packaging.version import Version
 
-from demisto_sdk.__main__ import main, upload
+from demisto_sdk.__main__original import main, upload
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )

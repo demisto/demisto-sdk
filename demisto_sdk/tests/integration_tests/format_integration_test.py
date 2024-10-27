@@ -4,7 +4,7 @@ from typing import List
 import pytest
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__original import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,

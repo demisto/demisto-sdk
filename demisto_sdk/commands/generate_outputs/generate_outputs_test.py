@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
 
-import demisto_sdk.__main__ as main
+import demisto_sdk.__main__original as main
 
 
 @pytest.mark.parametrize(

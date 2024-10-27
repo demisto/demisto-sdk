@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__original import main
 
 
 @pytest.mark.parametrize("error_code", ["BA102"])

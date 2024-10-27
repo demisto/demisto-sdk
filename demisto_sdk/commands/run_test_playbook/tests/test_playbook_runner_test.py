@@ -4,7 +4,7 @@ import pytest
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 
-from demisto_sdk.__main__ import run_test_playbook
+from demisto_sdk.__main__original import run_test_playbook
 from demisto_sdk.commands.run_test_playbook.test_playbook_runner import (
     TestPlaybookRunner,
 )

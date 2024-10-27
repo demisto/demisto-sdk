@@ -5,7 +5,7 @@ import pytest
 from click.testing import CliRunner
 from urllib3.response import HTTPResponse
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__original import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.download.tests.downloader_test import Environment
 

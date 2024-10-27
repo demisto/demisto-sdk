@@ -18,7 +18,7 @@ from typing import (
 
 import demisto_client
 from packaging.version import Version
-from pydantic import BaseModel, DirectoryPath, Field
+from pydantic import BaseModel, DirectoryPath, Field, ConfigError
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
@@ -54,6 +54,8 @@ if TYPE_CHECKING:
 CONTENT_TYPE_TO_MODEL: Dict[ContentType, Type["BaseContent"]] = {}
 json = JSON_Handler()
 
+object_setattr = object.__setattr__
+ROOT_KEY = '__root__'
 
 class BaseContentMetaclass(ModelMetaclass):
     def __new__(
@@ -278,6 +280,34 @@ class BaseContent(BaseNode):
         # Implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
 
+    @classmethod
+    def from_orm(cls: Type['Model'], obj: Any) -> 'Model':
+        logger.debug(f"from_orm starting >>")
+        logger.debug(f"from_orm got {cls=}")
+        logger.debug(f"from_orm  is {cls.__config__.orm_mode=}")
+        if not cls.__config__.orm_mode:
+            raise ConfigError('You must have the config attribute orm_mode=True to use from_orm')
+        obj = {ROOT_KEY: obj} if cls.__custom_root_type__ else cls._decompose_class(obj)
+        # logger.debug(f"from_orm {obj=}")
+        m = cls.__new__(cls)
+        from pydantic.main import validate_model
+        if model_config := cls.__config__:
+            logger.debug(f'from_orm {model_config=}')
+        else:
+            logger.debug(f'from_orm no model config')
+
+        values, fields_set, validation_error = validate_model(cls, obj)
+        if validation_error:
+            logger.debug(f"from_orm we got a validation error: {validation_error}")
+            for err in validation_error.errors():
+                logger.debug(f"from_orm Validation error: {err}")
+            raise validation_error
+        object_setattr(m, '__dict__', values)
+        object_setattr(m, '__fields_set__', fields_set)
+        m._init_private_attributes()
+        logger.debug(f"from_orm finished <<")
+        return m
+    
     @staticmethod
     @lru_cache
     def from_path(
@@ -326,6 +356,7 @@ class BaseContent(BaseNode):
             logger.exception(
                 f"Could not parse content item from path {path} using {content_item_parser}"
             )
+            logger.error(f"An error occurred: {e}", exc_info=True)
             return None
 
     @staticmethod

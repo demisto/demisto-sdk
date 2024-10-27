@@ -62,7 +62,6 @@
 * Deprecated. Removed the canvas-context-connections.yml schema's file. [#4546](https://github.com/demisto/demisto-sdk/pull/4546)
 * Fixed an issue where the **run-test-playbook** command (used internally) reported incorrect results. [#4514](https://github.com/demisto/demisto-sdk/pull/4514)
 
-
 ## 1.31.11
 * Fixed an issue in RM114 where **validate** would not catch problematic images when their file type was not `png` or when their declaration within the README had additional characters present in it. [#4512](https://github.com/demisto/demisto-sdk/pull/4512)
 * Fixed an issue where the default validations would not run properly. [#4532](https://github.com/demisto/demisto-sdk/pull/4532)

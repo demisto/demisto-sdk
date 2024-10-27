@@ -494,6 +494,7 @@ def get_remote_file_from_api(
     Returns:
         bytes | Dict | List: raw response of the file or as a python object (list, dict)
     """
+    logger.debug(f'get_remote_file_from_api {full_file_path=} | {git_content_config.__dict__=} | {tag=} | {return_content=} | {encoding=}')
     if not git_content_config:
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
@@ -869,7 +870,12 @@ def get_file(
     file_path = Path(file_path)  # type: ignore[arg-type]
     if git_sha:
         if file_path.is_absolute():
-            file_path = file_path.relative_to(get_content_path())
+            try:
+                file_path = file_path.relative_to(get_content_path())
+            except Exception:
+                logger.info(f'get_file using absolute path {file_path}')
+
+        logger.debug(f'get_file trying to get_remote_file {file_path=} | {git_sha=}')
         return get_remote_file(
             str(file_path), tag=git_sha, return_content=return_content
         )

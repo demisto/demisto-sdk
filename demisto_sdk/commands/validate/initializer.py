@@ -353,7 +353,7 @@ class Initializer:
             ) = self.paths_to_basecontent_set(
                 set(loaded_files)
             )
-            
+            logger.debug(f'{content_objects_to_run=}\n|\n{invalid_content_items=}\n|\n{non_content_items=}')
             
         elif self.execution_mode == ExecutionMode.ALL_FILES:
             logger.info("Running validation on all files.")

@@ -2124,6 +2124,7 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
     Returns:
         str: Absolute content path
     """
+    logger.debug(f'get_content_path')
     # ValueError can be suppressed since as default, the environment variable or git.Repo can be used to find the content path.
     with contextlib.suppress(ValueError):
         if relative_path:

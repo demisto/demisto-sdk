@@ -563,12 +563,16 @@ def pre_commit_manager(
         skipped_hooks.remove("format")
     if secrets and "secrets" in skipped_hooks:
         skipped_hooks.remove("secrets")
+    logger.debug(f'pre_commit_manager {skipped_hooks=}')
 
+    logger.debug(f'pre_commit_manager {pre_commit_template_path=}')
     if not pre_commit_template_path:
         if PRECOMMIT_TEMPLATE_PATH.exists():
             pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
         else:
             pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
+    logger.debug(f'pre_commit_manager {pre_commit_template_path=}')
+
     if pre_commit_template_path and not pre_commit_template_path.exists():
         logger.error(
             f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"

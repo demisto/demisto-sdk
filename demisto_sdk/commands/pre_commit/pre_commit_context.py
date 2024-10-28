@@ -25,6 +25,7 @@ IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 PRECOMMIT_TEMPLATE_NAME = ".pre-commit-config_template.yaml"
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
 PATH = Path(__file__).parents[0].resolve()
+logger.debug(f'RESOLVE PATH: {PATH=}')
 DEFAULT_PRE_COMMIT_TEMPLATE_PATH = PATH / PRECOMMIT_TEMPLATE_NAME
 
 PRECOMMIT_FOLDER = CACHE_DIR / "pre-commit"

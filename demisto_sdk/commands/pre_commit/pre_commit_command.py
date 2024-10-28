@@ -69,7 +69,7 @@ class PreCommitRunner:
             pre_commit_context: pre-commit context object.
         """
         hooks = pre_commit_context.hooks
-
+        logger.debug(f'prepare_hooks {hooks=}')
         custom_hooks_to_classes = {
             "pycln": PyclnHook,
             "ruff": RuffHook,
@@ -78,39 +78,47 @@ class PreCommitRunner:
             "format": ValidateFormatHook,
             "mypy": MypyHook,
         }
-
-        for hook_id in hooks.copy():
-            if hook_id in custom_hooks_to_classes:
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
-                    custom_hooks_to_classes[
-                        hook_id
-                    ](**hooks.pop(hook_id), context=pre_commit_context).prepare_hook()
-                )
-            elif hook_id.endswith("in-docker"):
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
-                    DockerHook(
+        try:
+            for hook_id in hooks.copy():
+                logger.debug(f'prepare_hooks {hook_id=}')
+                if hook_id in custom_hooks_to_classes:
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                        custom_hooks_to_classes[
+                            hook_id
+                        ](**hooks.pop(hook_id), context=pre_commit_context).prepare_hook()
+                    )
+                elif hook_id.endswith("in-docker"):
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
+                        DockerHook(
+                            **hooks.pop(hook_id), context=pre_commit_context
+                        ).prepare_hook()
+                    )
+                else:
+                    # this is used to handle the mode property correctly even for non-custom hooks which do not require
+                    # special preparation
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
                         **hooks.pop(hook_id), context=pre_commit_context
                     ).prepare_hook()
-                )
-            else:
-                # this is used to handle the mode property correctly even for non-custom hooks which do not require
-                # special preparation
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
 
-            logger.debug(f"Prepared hook {hook_id} successfully")
+                logger.debug(f"Prepared hook {hook_id} successfully")
 
-        # get the hooks again because we want to get all the hooks, including the once that already prepared
-        hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
-        system_hooks = [
-            hook_id
-            for hook_id, hook in hooks.items()
-            if hook["hook"].get("language") == "system"
-        ]
-        for hook_id in system_hooks.copy():
-            SystemHook(**hooks[hook_id], context=pre_commit_context).prepare_hook()
-            logger.debug(f"Prepared system hook {hook_id} successfully")
+        except Exception as e:
+            logger.exception(f"Error preparing hook {hook_id}: {e}")
+
+        try:
+            # get the hooks again because we want to get all the hooks, including the once that are already prepared.
+            hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
+            system_hooks = [
+                hook_id
+                for hook_id, hook in hooks.items()
+                if hook["hook"].get("language") == "system"
+            ]
+            for hook_id in system_hooks.copy():
+                SystemHook(**hooks[hook_id], context=pre_commit_context).prepare_hook()
+                logger.debug(f"Prepared system hook {hook_id} successfully")
+
+        except Exception as e:
+            logger.exception(f"Error preparing hook {hook_id}: {e}")
 
     @staticmethod
     def run_hook(

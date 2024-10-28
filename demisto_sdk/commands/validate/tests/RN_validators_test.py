@@ -467,8 +467,8 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 2
     expected_msgs = [
-        "Found a docker entry mismatch in the release note compare to the yml.\n The docker image in rn: demisto/python3:3.9.7.24076, docker image in yml demisto/python3:3.9.7.24071 - please make sure the dockers match.",
-        "Found a docker entry mismatch in the release note compare to the yml.\n The docker image in rn: No docker entry found, docker image in yml demisto/python3:3.9.7.24076 - please make sure the dockers match.",
+        "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: demisto/python3:3.9.7.24076, docker image in yml demisto/python3:3.9.7.24071 - please make sure the dockers match.",
+        "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: No docker entry found, docker image in yml demisto/python3:3.9.7.24076 - please make sure the dockers match.",
     ]
     assert all(
         [res_msg in expected_msgs for res_msg in [result.message for result in results]]

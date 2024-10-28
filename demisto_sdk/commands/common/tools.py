@@ -901,7 +901,7 @@ def get_file(
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
             return json.loads(result) if isinstance(result, str) else result
     except Exception:
-        error_message = f"{file_path} has a structure issue of file type {type_of_file}"
+        error_message = f"{file_path} is not a valid {type_of_file}"
         logger.error("<red>{}</red>", error_message)  # noqa: PLE1205
         logger.debug("{}", error_message, exc_info=True)  # noqa: PLE1205
         if raise_on_error:

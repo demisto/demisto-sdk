@@ -1,3 +1,5 @@
+from pathlib import PosixPath
+
 import more_itertools
 import pytest
 
@@ -52,6 +54,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exist
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM115_no_default_section_left import (
     NoDefaultSectionsLeftReadmeValidator,
+)
+from demisto_sdk.commands.validate.validators.RM_validators.RM116_missing_playbook_image import (
+    MissingPlaybookImageValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM116_readme_not_to_short import (
     NotToShortReadmeValidator,
@@ -916,6 +921,65 @@ def test_IsCommandsInReadmeValidator_valid():
     assert not IsCommandsInReadmeValidator().obtain_invalid_content_items(
         [content_item]
     )
+
+
+def test_missing_playbook_image_validator_no_image():
+    """
+    Given
+    content_items.
+    - Playbook without an image
+    When
+    - Calling the MissingPlaybookImageValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure that the validator returns an error
+    """
+    content_items = [
+        create_playbook_object(),
+    ]
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
+    assert len(result) == 1
+
+
+def test_missing_playbook_image_validator_image_exists_wrong_path():
+    """
+    Given
+    content_items.
+    - Playbook with an image, but wrong path (the path doesn't include doc_files folder)
+    When
+    - Calling the MissingPlaybookImageValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure that the validator returns an error
+    """
+    content_items = [
+        create_playbook_object(),
+    ]
+    content_items[0].image.exist = True
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
+    assert len(result) == 1
+
+
+def test_missing_playbook_image_validator_image_exists_with_path():
+    """
+    Given
+    content_items.
+    - Playbook with an image and correct path
+    When
+    - Calling the MissingPlaybookImageValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure that the validator returns an empty list
+    """
+    content_items = [
+        create_playbook_object(),
+    ]
+    content_items[0].image.exist = True
+    content_items[0].image.file_path = PosixPath(
+        "/var/folders/sd/bk6skd0j1xz7l1g8d4dhfn7c0000gp/T/tmpjmydes4n/Packs/doc_files/Playbooks/playbook-0.png"
+    )
+    result = MissingPlaybookImageValidator().obtain_invalid_content_items(content_items)
+    assert len(result) == 0
 
 
 @pytest.mark.parametrize(

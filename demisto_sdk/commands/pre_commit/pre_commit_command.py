@@ -103,7 +103,7 @@ class PreCommitRunner:
                 logger.debug(f"Prepared hook {hook_id} successfully")
 
         except Exception as e:
-            logger.exception(f"Error preparing hook {hook_id}: {e}")
+            logger.error(f"Error preparing hook {hook_id}: {e}")
 
         try:
             # get the hooks again because we want to get all the hooks, including the once that are already prepared.
@@ -118,7 +118,7 @@ class PreCommitRunner:
                 logger.debug(f"Prepared system hook {hook_id} successfully")
 
         except Exception as e:
-            logger.exception(f"Error preparing hook {hook_id}: {e}")
+            logger.error(f"Error preparing hook {hook_id}: {e}")
 
     @staticmethod
     def run_hook(

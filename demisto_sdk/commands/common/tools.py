@@ -883,6 +883,7 @@ def get_file(
     try:
         file_content = safe_read_unicode(file_path.read_bytes())
         if return_content:
+            logger.debug(f'get_file {return_content=}')
             return file_content
     except IOError as e:
         logger.error(f"Could not read file '{file_path}': {e}")
@@ -893,7 +894,8 @@ def get_file(
             replaced = StringIO(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
-            return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
+            return yaml.safe_load(replaced)
+            # return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         elif type_of_file.lstrip(".") in {"svg"}:
             return ET.fromstring(file_content)
         else:

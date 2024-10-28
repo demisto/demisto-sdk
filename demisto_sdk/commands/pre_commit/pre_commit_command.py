@@ -650,16 +650,21 @@ def preprocess_files(
     Returns:
         Set[Path]: The set of files to run pre-commit on.
     """
-    git_util = GitUtil()
-    staged_files = git_util._get_staged_files()
-    all_git_files = git_util.get_all_files().union(staged_files)
     contribution_flow = os.getenv("CONTRIB_BRANCH")
     if input_files:
         raw_files = set(input_files)
-    elif staged_only:
-        raw_files = staged_files
-    elif use_git:
-        raw_files = git_util._get_all_changed_files(prev_version)
+    elif staged_only or use_git or all_files:
+        git_util = GitUtil()
+        staged_files = git_util._get_staged_files()
+
+        if staged_only:
+            raw_files = staged_files
+        elif use_git:
+            raw_files = git_util._get_all_changed_files(prev_version)
+        elif all_files:
+            all_git_files = git_util.get_all_files().union(staged_files)
+            raw_files = all_git_files
+
         if not commited_only:
             raw_files = raw_files.union(staged_files)
         if contribution_flow:
@@ -674,8 +679,6 @@ def preprocess_files(
                 "\n[cyan]CONTRIB_BRANCH environment variable found, running pre-commit in contribution flow "
                 "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
             )
-    elif all_files:
-        raw_files = all_git_files
     else:
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."
@@ -687,10 +690,15 @@ def preprocess_files(
             files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
             files_to_run.update(add_related_files(file))
+
     # convert to relative file to content path
     relative_paths = {
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file
         for file in files_to_run
     }
-    # filter out files that are not in the content git repo (e.g in .gitignore)
-    return relative_paths & all_git_files
+    if not input_files:
+        return relative_paths
+    else:
+        # filter out files that are not in the content git repo (e.g in .gitignore)
+        return relative_paths & all_git_files
+    

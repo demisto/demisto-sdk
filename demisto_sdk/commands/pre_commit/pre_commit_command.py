@@ -524,10 +524,13 @@ def pre_commit_manager(
         staged_only (bool, optional): Whether to run on staged files only. Defaults to False.
         commited_only (bool, optional): Whether to run on commited files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
+        prev_version (str, optional): Previous version to compare to. Defaults to None.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         mode (str): The mode to run pre-commit in. Defaults to empty str.
         skip_hooks (Optional[List[str]], optional): List of hooks to skip. Defaults to None.
-        force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.
+        validate (bool, optional): Whether to run the validate hook. Defaults to False.
+        format (bool, optional): Whether to run the format hook. Defaults to False.
+        secrets (bool, optional): Whether to run the secrets hook. Defaults to False.
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
         dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
@@ -711,6 +714,7 @@ def preprocess_files(
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file
         for file in files_to_run
     }
+    logger.info(f'Found {len(relative_paths)} files to run pre-commit on: {", ".join(str(p) for p in relative_paths)}')
     if all_git_files:
         # filter out files that are not in the content git repo (e.g in .gitignore)
         return relative_paths & all_git_files

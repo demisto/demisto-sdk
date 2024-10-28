@@ -651,6 +651,9 @@ def preprocess_files(
         Set[Path]: The set of files to run pre-commit on.
     """
     contribution_flow = os.getenv("CONTRIB_BRANCH")
+    git_util = None
+    all_git_files = set()
+
     if input_files:
         raw_files = set(input_files)
     elif staged_only or use_git or all_files:
@@ -696,9 +699,8 @@ def preprocess_files(
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file
         for file in files_to_run
     }
-    if not input_files:
-        return relative_paths
-    else:
+    if all_git_files:
         # filter out files that are not in the content git repo (e.g in .gitignore)
         return relative_paths & all_git_files
-    
+    else:
+        return relative_paths

@@ -65,6 +65,8 @@ class PreCommitContext:
         self.precommit_template: dict = get_file_or_remote(
             self.pre_commit_template_path
         )
+        logger.debug(f'__post_init__ {self.precommit_template}')
+
         remote_config_file = get_remote_file(str(self.pre_commit_template_path))
         if remote_config_file and remote_config_file != self.precommit_template:
             logger.info(

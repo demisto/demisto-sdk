@@ -18,7 +18,7 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
     error_code = "RN111"
     description = "Validate that the docker image version mentioned in the RN is indeed the one in the mentioned in the yml file."
     rationale = "We want to make sure we don't document wrong information."
-    error_message = "Found a docker entry mismatch in the release note compare to the yml.\n The docker image in rn: {0}, docker image in yml {1} - please make sure the dockers match."
+    error_message = "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: {0}, docker image in yml {1} - please make sure the dockers match."
     related_field = "docker_image"
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.RELEASE_NOTE]

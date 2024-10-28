@@ -1,0 +1,4 @@
+changes:
+- description: fixed an issue where the SDK failed detecting malformed files.
+  type: fix
+pr_number: 4631

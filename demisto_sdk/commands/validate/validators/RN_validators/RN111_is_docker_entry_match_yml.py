@@ -18,9 +18,9 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
     error_code = "RN111"
     description = "Validate that the docker image version mentioned in the RN is indeed the one in the mentioned in the yml file."
     rationale = "We want to make sure we don't document wrong information."
-    error_message = "The docker image that appears in the RN ({0}) is different from the one that appears in the yml, please make sure the files match."
+    error_message = "Found a docker entry mismatch in the release note compare to the yml.\n The docker image in rn: {0}, docker image in yml {1} - please make sure the dockers match."
     related_field = "docker_image"
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.RELEASE_NOTE]
 
     def obtain_invalid_content_items(
@@ -29,15 +29,17 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(
+                    docker_entry, content_item.docker_image
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
             if (old_obj := content_item.old_base_content_object)
-            and content_item.docker_image != old_obj.docker_image
+            and content_item.docker_image != old_obj.docker_image  # type:ignore[attr-defined]
             and (
                 docker_entry := self.get_docker_image_entry(
-                    content_item.pack.rn.file_content, content_item.name
+                    content_item.pack.release_note.file_content, content_item.name
                 )
             )
             and content_item.docker_image != docker_entry
@@ -45,7 +47,7 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
 
     def get_docker_image_entry(self, rn: str, content_item_name: str) -> str:
         rn_items = rn.split("##### ")
-        docker = "No docker entry found."
+        docker = "No docker entry found"
         for item in rn_items:
             if item.startswith(content_item_name):
                 for entry in item.split("- "):

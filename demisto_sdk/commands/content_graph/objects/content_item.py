@@ -135,7 +135,9 @@ class ContentItem(BaseContent):
     def ignored_errors(self) -> List[str]:
         if ignored_errors := self.get_ignored_errors(self.path.name):
             return ignored_errors
-        file_path = get_relative_path(self.path, get_content_path())
+        content_path = get_content_path()
+        logger.debug(f'ignored_errors {content_path=}')
+        file_path = get_relative_path(self.path, content_path)
         return self.get_ignored_errors(file_path)
 
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:

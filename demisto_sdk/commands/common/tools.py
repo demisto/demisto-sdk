@@ -894,8 +894,7 @@ def get_file(
             replaced = StringIO(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
-            return yaml.safe_load(replaced)
-            # return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
+            return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         elif type_of_file.lstrip(".") in {"svg"}:
             return ET.fromstring(file_content)
         else:

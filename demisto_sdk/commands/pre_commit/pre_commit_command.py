@@ -582,7 +582,7 @@ def pre_commit_manager(
             pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
         else:
             pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
-    logger.debug(f'pre_commit_manager {pre_commit_template_path=}')
+    logger.debug(f'pre_commit_manager [{os.getcwd()=}] | {os.listdir()=} | {pre_commit_template_path=}')
 
     if pre_commit_template_path and not pre_commit_template_path.exists():
         logger.error(

@@ -62,7 +62,6 @@ class ValidateManager:
         logger.info("Starting validate items.")
         for validator in self.validators:
             logger.debug(f"Starting execution for {validator.error_code} validator.")
-            logger.debug(f"run_validations {self.objects_to_run=}")
             if filtered_content_objects_for_validator := list(
                 filter(
                     lambda content_object: validator.should_run(

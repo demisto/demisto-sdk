@@ -345,7 +345,7 @@ class Initializer:
             logger.debug(f"gather_objects_to_run_on {file_path=}")
             loaded_files = self.load_files(file_path)
             logger.debug(f"gather_objects_to_run_on {loaded_files=}")
-            
+
             (
                 content_objects_to_run,
                 invalid_content_items,
@@ -353,8 +353,6 @@ class Initializer:
             ) = self.paths_to_basecontent_set(
                 set(loaded_files)
             )
-            logger.debug(f'{content_objects_to_run=}\n|\n{invalid_content_items=}\n|\n{non_content_items=}')
-            
         elif self.execution_mode == ExecutionMode.ALL_FILES:
             logger.info("Running validation on all files.")
             content_dto = ContentDTO.from_path()

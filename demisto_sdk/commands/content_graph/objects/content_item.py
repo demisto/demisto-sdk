@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersi
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    get_content_path,
     get_file,
     get_pack_name,
     get_relative_path,
@@ -134,13 +135,13 @@ class ContentItem(BaseContent):
     def ignored_errors(self) -> List[str]:
         if ignored_errors := self.get_ignored_errors(self.path.name):
             return ignored_errors
-        file_path = get_relative_path(self.path, CONTENT_PATH)
+        file_path = get_relative_path(self.path, get_content_path())
         return self.get_ignored_errors(file_path)
 
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
             return ignored_errors
-        file_path = get_relative_path(file_path, CONTENT_PATH)
+        file_path = get_relative_path(file_path, get_content_path())
         return self.get_ignored_errors(file_path)
 
     def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:

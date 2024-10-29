@@ -2125,7 +2125,7 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
     Returns:
         str: Absolute content path
     """
-    logger.debug(f'get_content_path')
+    logger.debug(f'get_content_path got {relative_path=}')
     # ValueError can be suppressed since as default, the environment variable or git.Repo can be used to find the content path.
     with contextlib.suppress(ValueError):
         if relative_path:
@@ -2135,6 +2135,7 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
                 else find_pack_folder(relative_path.absolute()).parent.parent
             )
     try:
+        logger.debug(f'get_content_path {os.getenv("DEMISTO_SDK_CONTENT_PATH")=}')
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
             git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
             logger.debug(f"Using content path: {content_path}")

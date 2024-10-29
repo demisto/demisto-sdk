@@ -1,0 +1,4 @@
+changes:
+- description: Reverted support for GAR DockerHub proxy when running in a Gitlab CI environment.
+  type: internal
+pr_number: 4628

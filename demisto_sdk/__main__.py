@@ -176,11 +176,10 @@
 
 # demisto_sdk/__main__.py
 
-# demisto_sdk/__main__.py
-
 import typer
-from demisto_sdk.commands.upload.upload_app import upload  # Import the upload function
+
 from demisto_sdk.commands.download.download_app import download
+from demisto_sdk.commands.upload.upload_app import upload  # Import the upload function
 
 app = typer.Typer()
 
@@ -189,6 +188,5 @@ app.command(name="upload")(upload)  # Registers the upload command
 app.command(name="download")(download)
 
 if __name__ == "__main__":
-    print("Running demisto-sdk CLI")  # Debug print
+    typer.echo("Running demisto-sdk CLI")  # Debug print
     app()  # Run the main app
-

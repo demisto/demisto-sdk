@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from demisto_sdk.commands.common.constants import ExecutionMode, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import is_abstract_class
+from demisto_sdk.commands.common.tools import is_abstract_class, get_content_path
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -208,7 +208,7 @@ class BaseResult(BaseModel):
     def format_readable_message(self):
         path: Path = self.content_object.path
         if path.is_absolute():
-            path = path.relative_to(CONTENT_PATH)
+            path = path.relative_to(x())
         return f"{str(path)}: [{self.validator.error_code}] - {self.message}"
 
     @property
@@ -282,7 +282,7 @@ class InvalidContentItemResult(BaseResult, BaseModel):
         path: Path = self.path
         try:
             if path.is_absolute():
-                path = path.relative_to(CONTENT_PATH)
+                path = path.relative_to(get_content_path())
         except ValueError:
             # Fallback to using the absolute path
             path = path

@@ -52,9 +52,6 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.logger import (
-    string_to_bool as string_to_bool_logger,
-)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import (
     PACK_IGNORE,
@@ -67,6 +64,9 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.logger import (
+    string_to_bool as string_to_bool_logger,
+)
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     TagParser,

@@ -200,12 +200,12 @@ class TestGenericFunctions:
             - Assert no error is raised.
         """
         mocker.patch.object(Path, "exists", return_value=True)
-        mocker.patch.object(tools, "safe_read_unicode", return_value='description: "bla bla"nah')
-
+        bad_yml_data = 'name: "some"\ndescription: "bla bla"nah\n'
+        mocker.patch.object(Path, "read_bytes", return_value=bad_yml_data.encode("utf-8"))
         try:
-            get_file(file_path="some_file.yml", raise_on_error=False)
+            get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)
         except Exception as e:
-            assert False, f"Function get_file errored even though it should not raise error with error {e}"
+            assert False, f"Function get_file errored even though it should not raise error with error: {e}"
 
     @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, _):

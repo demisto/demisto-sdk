@@ -232,9 +232,7 @@ def test_zipped_pack_upload_positive(
     mocker.patch.object(
         API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
     )
-    mocked_get_installed = mocker.patch.object(
-        API_CLIENT, "generic_request", return_value=({}, 200, None)
-    )
+    mocker.patch.object(API_CLIENT, "generic_request", return_value=({}, 200, None))
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
     mocker.patch.object(Path, "cwd", return_value=Path.cwd())
 
@@ -335,9 +333,6 @@ def test_zipped_pack_upload_positive(
                         == METADATA_DISPLAYS[content_item]
                     )
 
-    assert mocked_get_installed.called_once_with(
-        "/contentpacks/metadata/installed", "GET"
-    )
     assert (
         "\n".join(
             (

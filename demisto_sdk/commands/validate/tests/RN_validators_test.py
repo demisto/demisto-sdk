@@ -5,6 +5,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_old_file_pointers,
     create_pack_object,
+    create_script_object,
     create_trigger_object,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
@@ -16,11 +17,17 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN105_multiple_rns_a
 from demisto_sdk.commands.validate.validators.RN_validators.RN108_is_rn_added_to_new_pack import (
     IsRNAddedToNewPackValidator,
 )
+from demisto_sdk.commands.validate.validators.RN_validators.RN111_is_docker_entry_match_yml import (
+    IsDockerEntryMatchYmlValidator,
+)
 from demisto_sdk.commands.validate.validators.RN_validators.RN112_is_bc_rn_exist import (
     IsBCRNExistValidator,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
     ReleaseNoteHeaderValidator,
+)
+from demisto_sdk.commands.validate.validators.RN_validators.RN116_first_level_header_missing import (
+    FirstLevelHeaderMissingValidator,
 )
 
 
@@ -318,4 +325,151 @@ def test_IsBCRNExistValidator_obtain_invalid_content_items():
             result.message == expected_msg
             for result, expected_msg in zip(results, expected_msgs)
         ]
+    )
+
+
+def test_FirstLevelHeaderMissingValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - content_items list with 5 packs, each with RN with different content.
+        - Case 1: RN with first and second level header.
+        - Case 2: RN with only first level header.
+        - Case 3: RN with only second level header.
+        - Case 4: RN without first and second level headers.
+        - Case 5: RN with force flag header.
+
+    When:
+    - Calling the FirstLevelHeaderMissingValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail anything.
+        - Case 2: Shouldn't fail anything.
+        - Case 3: Should fail.
+        - Case 4: Should fail.
+        - Case 5: Shouldn't fail anything.
+    """
+    content_items = [
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="#### Scripts\n##### script_name\n- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="#### Scripts\n- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="##### script_name\n- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="- Some description.",
+        ),
+        create_pack_object(
+            paths=["version"],
+            values=["2.0.5"],
+            release_note_content="## script_name\n- Some description.",
+        ),
+    ]
+    validator = FirstLevelHeaderMissingValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+    assert len(results) == 2
+    expected_msgs = [
+        f'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{content_items[2].path.parts[-1]}."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+        f'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{content_items[3].path.parts[-1]}."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+    ]
+    assert all(
+        [res_msg in expected_msgs for res_msg in [result.message for result in results]]
+    )
+
+
+def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - content_items list with 5 packs, each with RN with different content.
+        - Case 1: An integration with modified docker where the docker image entry doesn't match the version in the rn.
+        - Case 2: An integration without docker modification.
+        - Case 3: A script with modified docker where the docker image entry in the rn match the on in the yml.
+        - Case 4: A script with modified docker where no docker image entry appear in the rn.
+
+    When:
+    - Calling the IsDockerEntryMatchYmlValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail anything.
+        - Case 3: Shouldn't fail anything.
+        - Case 4: Should fail.
+    """
+    integration_1 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    old_integration_1 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24070"]
+    )
+    pack_1 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content=f"#### Integration\n##### {integration_1.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
+    )
+    integration_2 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    old_integration_2 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    pack_2 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content=f"#### Integration\n##### {integration_2.name}\n- entry not related to docker update.",
+    )
+    script_1 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    old_script_1 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    pack_3 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content=f"#### Scripts\n##### {script_1.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
+    )
+    script_2 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    old_script_2 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    pack_4 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content=f"#### Scripts\n##### {script_2.name}\n- Entry not related to docker image update.",
+    )
+    integration_1.pack = pack_1
+    integration_2.pack = pack_2
+    script_1.pack = pack_3
+    script_2.pack = pack_4
+    content_items = [integration_1, integration_2, script_1, script_2]
+    old_content_items = [
+        old_integration_1,
+        old_integration_2,
+        old_script_1,
+        old_script_2,
+    ]
+    create_old_file_pointers(content_items, old_content_items)
+    validator = IsDockerEntryMatchYmlValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+    assert len(results) == 2
+    expected_msgs = [
+        "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: demisto/python3:3.9.7.24076, docker image in yml demisto/python3:3.9.7.24071 - please make sure the dockers match.",
+        "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: No docker entry found, docker image in yml demisto/python3:3.9.7.24076 - please make sure the dockers match.",
+    ]
+    assert all(
+        [res_msg in expected_msgs for res_msg in [result.message for result in results]]
     )

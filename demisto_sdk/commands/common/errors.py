@@ -705,10 +705,6 @@ ERROR_CODE: Dict = {
         "code": "IN160",
         "related_field": "deprecated",
     },
-    "invalid_siem_marketplaces_entry": {
-        "code": "IN161",
-        "related_field": "display",
-    },
     "partner_collector_does_not_have_xsoar_support_level": {
         "code": "IN162",
         "related_field": "",
@@ -1452,10 +1448,6 @@ ERROR_CODE: Dict = {
         "code": "GR106",
         "related_field": "",
     },
-    "deprecated_items_usage": {
-        "code": "GR107",
-        "related_field": "",
-    },
     "hidden_pack_not_mandatory_dependency": {
         "code": "GR108",
         "ui_applicable": False,
@@ -2095,14 +2087,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_siem_marketplaces_entry():
-        return (
-            "The marketplaces field of this XSIAM integration is incorrect.\n"
-            'This field should have only the "marketplacev2" value.'
-        )
-
-    @staticmethod
-    @error_code_decorator
     def invalid_defaultvalue_for_checkbox_field(name: str):
         return (
             f"The defaultvalue checkbox of the {name} field is invalid. "
@@ -2690,7 +2674,7 @@ class Errors:
             "For more information, refer to the following documentation: "
             "https://xsoar.pan.dev/docs/documentation/release-notes"
         )
-        return f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
+        return f'Did not find content items headers under "{content_type}" - might be due to invalid format.\n{error}'
 
     @staticmethod
     @error_code_decorator
@@ -4266,18 +4250,6 @@ class Errors:
         return (
             f"Content item '{content_name}' whose to_version is '{toversion}' uses the content items: "
             f"'{', '.join(content_items)}' whose to_version is lower (must be equal to, or more than ..)"
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def deprecated_items_usage(
-        deprecated_item: str,
-        using_deprecated_item: str,
-        deprecated_item_type: str,
-    ):
-        return (
-            f"The {deprecated_item_type} '{deprecated_item}' is deprecated but used in the following content item: "
-            f"{using_deprecated_item}."
         )
 
     @staticmethod

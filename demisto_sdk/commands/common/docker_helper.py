@@ -75,6 +75,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_pass = os.getenv(
             "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
         )
+        logger.debug(f"init_global_docker_client | {docker_user=}, {docker_pass=}")
         if docker_user and docker_pass:
             logger.debug(f"{log_prompt} - logging in to docker registry")
             try:
@@ -104,6 +105,7 @@ def docker_login(docker_client) -> bool:
     Returns:
         bool: True if logged in successfully.
     """
+    logger.debug("docker_helper | docker_login")
     docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
     if docker_user and docker_pass:
@@ -200,6 +202,7 @@ class DockerBase:
         """
         Get a local docker image, or pull it when unavailable.
         """
+        logger.debug(f"version is called with image={image}")
         docker_client = init_global_docker_client(log_prompt="pull_image")
         try:
             return docker_client.images.get(image)
@@ -299,30 +302,36 @@ class DockerBase:
 
         return container
 
-    def push_image(self, image: str, log_prompt: str = ""):
+    def push_image(self, image: str, log_prompt: str = "") -> None:
         """This pushes the test image to dockerhub if the DOCKERHUB env variables are set
-
         Args:
             image (str): The image to push
             log_prompt (str, optional): The log prompt to print. Defaults to "".
         """
-        for _ in range(2):
+        test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
+
+        logger.info(
+            f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository."
+        )
+        for attempt in range(2):
             try:
-                test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
-                logger.info(
-                    f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
+                logger.success(
+                    f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
+                )
+                logger.debug(
+                    f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
                 break
             except (
                 requests.exceptions.ConnectionError,
                 urllib3.exceptions.ReadTimeoutError,
                 requests.exceptions.ReadTimeout,
-            ):
+            ) as e:
                 logger.warning(
-                    f"{log_prompt} - Unable to push image {image} to repository",
+                    f"{log_prompt} - Attempt {attempt + 1}: Failed to push image {test_image_name_to_push} to repository due to {type(e).__name__}",
                     exc_info=True,
                 )
 
@@ -349,6 +358,9 @@ class DockerBase:
             2. running the installation scripts
             3. committing the docker changes (installed packages) to a new local image
         """
+        logger.debug(
+            f"create_image is called with base_image={base_image}, image={image}"
+        )
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
         )
@@ -383,7 +395,11 @@ class DockerBase:
     @staticmethod
     def get_image_registry(image: str) -> str:
         if DOCKER_REGISTRY_URL not in image:
+            logger.debug(
+                f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}"
+            )
             return f"{DOCKER_REGISTRY_URL}/{image}"
+        logger.debug(f"get_image_registry | returned: {image}")
         return image
 
     def get_or_create_test_image(
@@ -405,7 +421,6 @@ class DockerBase:
         Returns:
             The test image name and errors to create it if any
         """
-
         errors = ""
         if (
             not python_version
@@ -533,6 +548,7 @@ def get_docker():
 
 
 def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
+    logger.debug("docker_helper | _get_python_version_from_tag_by_regex")
     if match := DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
 
@@ -542,7 +558,6 @@ def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
 @retry(times=5, exceptions=(RuntimeError, RequestException))
 def _get_docker_hub_token(repo: str) -> str:
     auth = None
-
     # If the user has credentials for docker hub, use them to get the token
     if (docker_user := os.getenv("DOCKERHUB_USER")) and (
         docker_pass := os.getenv("DOCKERHUB_PASSWORD")

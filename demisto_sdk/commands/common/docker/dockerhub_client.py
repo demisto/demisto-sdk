@@ -100,9 +100,7 @@ class DockerHubClient:
         try:
             response.raise_for_status()
         except RequestException as _error:
-            logger.warning(
-                f"Error when trying to get dockerhub token, error\n:{_error}"
-            )
+            logger.debug(f"Error when trying to get dockerhub token, error\n:{_error}")
             if (
                 _error.response is not None
                 and (
@@ -196,6 +194,7 @@ class DockerHubClient:
             params: query parameters
             results_key: the key to retrieve the results in case its a list
         """
+        logger.debug("dockerhub_client | do_docker_hub_get_request")
         if url_suffix:
             if not url_suffix.startswith("/"):
                 url_suffix = f"/{url_suffix}"
@@ -256,6 +255,7 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
+        logger.debug("dockerhub_client | do_registry_get_request")
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
 

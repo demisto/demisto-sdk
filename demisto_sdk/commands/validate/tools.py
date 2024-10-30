@@ -1,9 +1,13 @@
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.hook_validations.release_notes import (
+    CONTENT_ITEM_SECTION_REGEX,
+    CONTENT_TYPE_SECTION_REGEX,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_approved_tags_from_branch,
@@ -172,3 +176,62 @@ def is_indicator_pb(playbook: Playbook):
         (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators"
         for i in playbook.data.get("inputs", {})
     )
+
+
+def extract_rn_headers(rn_content) -> Dict[str, List[str]]:
+    """
+        Extracts the headers from the release notes file.
+    Args:
+        None.
+    Return:
+        A dictionary representation of the release notes file that maps content types' headers to their corresponding content items' headers.
+    """
+    headers: Dict = {}
+    # Get all sections from the release notes using regex
+    rn_sections = CONTENT_TYPE_SECTION_REGEX.findall(rn_content)
+    for section in rn_sections:
+        section = filter_nones(ls=section)
+        content_type = section[0]
+        content_type_sections_str = section[1]
+        content_type_sections_ls = CONTENT_ITEM_SECTION_REGEX.findall(
+            content_type_sections_str
+        )
+        if not content_type_sections_ls:
+            #  Did not find content items headers under content type - might be due to invalid format.
+            #  Will raise error in rn_valid_header_format.
+            headers[content_type] = []
+        for content_type_section in content_type_sections_ls:
+            content_type_section = filter_nones(ls=content_type_section)
+            if content_type_section:
+                header = content_type_section[0]
+                if headers.get(content_type):
+                    headers[content_type].append(header)
+                else:
+                    headers[content_type] = [header]
+    return headers
+
+
+def filter_nones(ls: Union[List, Tuple]) -> List:
+    """
+        Filters out None values from a list or tuple.
+    Args:
+        ls: (List | Tuple) - This list or tuple to filter.
+    Return:
+        List filtered from None values.
+    """
+    return list(filter(lambda x: x, ls))
+
+
+def filter_rn_headers(headers: Dict) -> None:
+    """
+        Filters out the headers from the release notes file, removing add-ons such as "New" and "**".
+    Args:
+        headers: (Dict) - The release notes headers to filter, the structure is content type -> headers.(e.g. Integrations -> [header1, header2])
+    Return:
+        None.
+    """
+    for content_type, content_items in headers.items():
+        content_items = filter_nones(ls=content_items)
+        headers[content_type] = [
+            item.replace("New:", "").strip() for item in content_items
+        ]

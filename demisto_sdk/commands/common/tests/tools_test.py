@@ -203,16 +203,20 @@ class TestGenericFunctions:
             Path, "read_bytes", return_value=bad_yml_data.encode("utf-8")
         )
 
-        import demisto_sdk.commands.common.logger as sdk_logger
+        def raise_loguru_exp(log_line):
+            if "<file>" in log_line:
+                raise Exception('Tag "<file>" does not correspond to any known color directive.')
 
-        sdk_logger.logger.remove()
-        sdk_logger.logger.add(sys.stderr, colorize=True)
+        # Mock problematic logger behaviour since it does not reproduce on Github actions.
+        # Since Github actions do not allow colors, the exception is usually raised locally only.
+        # To verify, you can delete this line and run the test locally and compare with the Github action.
+        mocker.patch(
+            "demisto_sdk.commands.common.tools.logger.error", side_effect=raise_loguru_exp
+        )
         try:
             get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)
         except Exception as e:
-            sdk_logger.logger.remove()
             assert False, f"Function get_file raised an error: {e}"
-        sdk_logger.logger.remove()
 
     @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, _):

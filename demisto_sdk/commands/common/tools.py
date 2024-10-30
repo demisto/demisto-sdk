@@ -2138,6 +2138,7 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
         content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH")
         logger.debug(f'get_content_path {content_path=}')
         if content_path:
+            logger.debug(f'$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ IN HERE')
             git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
             logger.debug(f"Using content path: {content_path}")
         else:

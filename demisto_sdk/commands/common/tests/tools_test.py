@@ -52,6 +52,9 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.logger import (
+    string_to_bool as string_to_bool_logger,
+)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import (
     PACK_IGNORE,
@@ -2717,30 +2720,18 @@ def test_get_display_name(data, answer, tmpdir):
     ),
 )
 def test_string_to_bool_true(value: Tuple[str, ...], expected_result: bool):
-    from demisto_sdk.commands.common.logger import (
-        string_to_bool as string_to_bool_logger,
-    )
-
     assert string_to_bool(value) is expected_result
     assert string_to_bool_logger(value) is expected_result
 
 
 @pytest.mark.parametrize("value", ("", None))
 def test_string_to_bool_default_true(value: str):
-    from demisto_sdk.commands.common.logger import (
-        string_to_bool as string_to_bool_logger,
-    )
-
     assert string_to_bool(value, True)
     assert string_to_bool_logger(value, True)
 
 
 @pytest.mark.parametrize("value", ("", " ", "כן", None, "None"))
 def test_string_to_bool_error(value: str):
-    from demisto_sdk.commands.common.logger import (
-        string_to_bool as string_to_bool_logger,
-    )
-
     with pytest.raises(ValueError):
         string_to_bool(value)
     with pytest.raises(ValueError):

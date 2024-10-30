@@ -2,6 +2,7 @@ import glob
 import os
 import shutil
 from configparser import ConfigParser
+from io import IOBase
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Callable, List, Optional, Tuple, Union
@@ -199,27 +200,16 @@ class TestGenericFunctions:
         Then:
             - Assert no error is raised.
         """
-        override_no_colors = False
-        if "DEMISTO_SDK_LOG_NO_COLORS" in os.environ:
-            old_no_colors_option = os.environ["DEMISTO_SDK_LOG_NO_COLORS"]
-            override_no_colors = True
-            os.environ["DEMISTO_SDK_LOG_NO_COLORS"] = "false"
-
         mocker.patch.object(Path, "exists", return_value=True)
         bad_yml_data = 'name: "some"\ndescription: "bla bla"nah\n'
         mocker.patch.object(
             Path, "read_bytes", return_value=bad_yml_data.encode("utf-8")
         )
+        mocker.patch.object(IOBase, "isatty", return_value=True)
         try:
             get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)
         except Exception as e:
-            if override_no_colors:
-                os.environ["DEMISTO_SDK_LOG_NO_COLORS"] = old_no_colors_option
-
-            assert False, f"Function get_file errored even though it should not raise error with error: {e}"
-
-        if override_no_colors:
-            os.environ["DEMISTO_SDK_LOG_NO_COLORS"] = old_no_colors_option
+            assert False, f"Function get_file raised an error: {e}"
 
     @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, _):

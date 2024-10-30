@@ -206,6 +206,8 @@ class TestGenericFunctions:
             Path, "read_bytes", return_value=bad_yml_data.encode("utf-8")
         )
         mocker.patch.object(IOBase, "isatty", return_value=True)
+        from demisto_sdk.commands.common.tools import get_file
+
         try:
             get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)
         except Exception as e:

@@ -901,10 +901,8 @@ def get_file(
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
             return json.loads(result) if isinstance(result, str) else result
     except Exception as e:
-        # Substitute in the file path. This is to ensure the logger doesn't fail on this tag.
-        new_err_text = re.sub(r"<file>", str(file_path), str(e))
         logger.error(
-            f"{file_path} has a structure issue of file type {type_of_file}\n{new_err_text}"
+            f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
         if raise_on_error:
             raise

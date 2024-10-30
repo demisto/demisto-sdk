@@ -208,7 +208,7 @@ class BaseResult(BaseModel):
     def format_readable_message(self):
         path: Path = self.content_object.path
         if path.is_absolute():
-            path = path.relative_to(x())
+            path = path.relative_to(get_content_path())
         return f"{str(path)}: [{self.validator.error_code}] - {self.message}"
 
     @property

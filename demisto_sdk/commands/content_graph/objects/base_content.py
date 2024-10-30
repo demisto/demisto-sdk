@@ -295,7 +295,8 @@ class BaseContent(BaseNode):
             logger.debug(f'from_orm {model_config=}')
         else:
             logger.debug(f'from_orm no model config')
-
+        logger.debug(f'from_orm {cls.__name__=}')
+        logger.debug(f'from_orm {cls=}')
         values, fields_set, validation_error = validate_model(cls, obj)
         if validation_error:
             logger.debug(f"from_orm we got a validation error: {validation_error}")

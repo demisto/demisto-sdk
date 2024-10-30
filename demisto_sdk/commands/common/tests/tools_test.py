@@ -202,7 +202,7 @@ class TestGenericFunctions:
         override_pycharm_hosted = False
         if "PYCHARM_HOSTED" not in os.environ:
             override_pycharm_hosted = True
-            os.environ["PYCHARM_HOSTED"] = '1'
+            os.environ["PYCHARM_HOSTED"] = "1"
 
         mocker.patch.object(Path, "exists", return_value=True)
         bad_yml_data = 'name: "some"\ndescription: "bla bla"nah\n'

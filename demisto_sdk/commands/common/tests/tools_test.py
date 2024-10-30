@@ -199,6 +199,11 @@ class TestGenericFunctions:
         Then:
             - Assert no error is raised.
         """
+        override_pycharm_hosted = False
+        if "PYCHARM_HOSTED" not in os.environ:
+            override_pycharm_hosted = True
+            os.environ["PYCHARM_HOSTED"] = '1'
+
         mocker.patch.object(Path, "exists", return_value=True)
         bad_yml_data = 'name: "some"\ndescription: "bla bla"nah\n'
         mocker.patch.object(
@@ -207,7 +212,13 @@ class TestGenericFunctions:
         try:
             get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)
         except Exception as e:
+            if override_pycharm_hosted:
+                os.environ.pop("PYCHARM_HOSTED", None)
+
             assert False, f"Function get_file errored even though it should not raise error with error: {e}"
+
+        if override_pycharm_hosted:
+            os.environ.pop("PYCHARM_HOSTED", None)
 
     @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, _):

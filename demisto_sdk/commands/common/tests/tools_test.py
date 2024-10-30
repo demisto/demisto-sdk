@@ -2,7 +2,7 @@ import glob
 import os
 import shutil
 from configparser import ConfigParser
-from io import IOBase
+import sys
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Callable, List, Optional, Tuple, Union
@@ -65,9 +65,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.logger import (
-    string_to_bool as string_to_bool_logger,
-)
+
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     TagParser,
@@ -205,8 +203,11 @@ class TestGenericFunctions:
         mocker.patch.object(
             Path, "read_bytes", return_value=bad_yml_data.encode("utf-8")
         )
-        mocker.patch.object(IOBase, "isatty", return_value=True)
-        from demisto_sdk.commands.common.tools import get_file
+
+        import loguru
+
+        loguru.logger.remove()
+        loguru.logger.add(sys.stderr, colorize=True)
 
         try:
             get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)
@@ -2710,18 +2711,27 @@ def test_get_display_name(data, answer, tmpdir):
     ),
 )
 def test_string_to_bool_true(value: Tuple[str, ...], expected_result: bool):
+    from demisto_sdk.commands.common.logger import (
+        string_to_bool as string_to_bool_logger,
+    )
     assert string_to_bool(value) is expected_result
     assert string_to_bool_logger(value) is expected_result
 
 
 @pytest.mark.parametrize("value", ("", None))
 def test_string_to_bool_default_true(value: str):
+    from demisto_sdk.commands.common.logger import (
+        string_to_bool as string_to_bool_logger,
+    )
     assert string_to_bool(value, True)
     assert string_to_bool_logger(value, True)
 
 
 @pytest.mark.parametrize("value", ("", " ", "כן", None, "None"))
 def test_string_to_bool_error(value: str):
+    from demisto_sdk.commands.common.logger import (
+        string_to_bool as string_to_bool_logger,
+    )
     with pytest.raises(ValueError):
         string_to_bool(value)
     with pytest.raises(ValueError):

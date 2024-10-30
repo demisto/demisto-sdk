@@ -1,7 +1,6 @@
 import glob
 import os
 import shutil
-import sys
 from configparser import ConfigParser
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -205,13 +204,16 @@ class TestGenericFunctions:
 
         def raise_loguru_exp(log_line):
             if "<file>" in log_line:
-                raise Exception('Tag "<file>" does not correspond to any known color directive.')
+                raise Exception(
+                    'Tag "<file>" does not correspond to any known color directive.'
+                )
 
         # Mock problematic logger behaviour since it does not reproduce on Github actions.
         # Since Github actions do not allow colors, the exception is usually raised locally only.
         # To verify, you can delete this line and run the test locally and compare with the Github action.
         mocker.patch(
-            "demisto_sdk.commands.common.tools.logger.error", side_effect=raise_loguru_exp
+            "demisto_sdk.commands.common.tools.logger.error",
+            side_effect=raise_loguru_exp,
         )
         try:
             get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)

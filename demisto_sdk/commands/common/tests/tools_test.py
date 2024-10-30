@@ -199,10 +199,11 @@ class TestGenericFunctions:
         Then:
             - Assert no error is raised.
         """
-        override_pycharm_hosted = False
-        if "PYCHARM_HOSTED" not in os.environ:
-            override_pycharm_hosted = True
-            os.environ["PYCHARM_HOSTED"] = "1"
+        override_no_colors = False
+        if "DEMISTO_SDK_LOG_NO_COLORS" in os.environ:
+            old_no_colors_option = os.environ["DEMISTO_SDK_LOG_NO_COLORS"]
+            override_no_colors = True
+            os.environ["DEMISTO_SDK_LOG_NO_COLORS"] = "false"
 
         mocker.patch.object(Path, "exists", return_value=True)
         bad_yml_data = 'name: "some"\ndescription: "bla bla"nah\n'
@@ -212,13 +213,13 @@ class TestGenericFunctions:
         try:
             get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)
         except Exception as e:
-            if override_pycharm_hosted:
-                os.environ.pop("PYCHARM_HOSTED", None)
+            if override_no_colors:
+                os.environ["DEMISTO_SDK_LOG_NO_COLORS"] = old_no_colors_option
 
             assert False, f"Function get_file errored even though it should not raise error with error: {e}"
 
-        if override_pycharm_hosted:
-            os.environ.pop("PYCHARM_HOSTED", None)
+        if override_no_colors:
+            os.environ["DEMISTO_SDK_LOG_NO_COLORS"] = old_no_colors_option
 
     @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, _):

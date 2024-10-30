@@ -35,14 +35,6 @@ from demisto_sdk.commands.validate.tools import (
     filter_rn_headers,
 )
 
-CONTENT_TYPE_SECTION_REGEX = re.compile(
-    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
-)
-CONTENT_ITEM_SECTION_REGEX = re.compile(
-    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$",
-    re.M,
-)
-
 
 class ReleaseNotesValidator(BaseValidator):
     """Release notes validator is designed to ensure the existence and correctness of the release notes in content repo.

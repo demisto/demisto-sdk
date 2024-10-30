@@ -3,11 +3,11 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.hook_validations.release_notes import (
+from demisto_sdk.commands.common.constants import (
     CONTENT_ITEM_SECTION_REGEX,
     CONTENT_TYPE_SECTION_REGEX,
 )
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_approved_tags_from_branch,

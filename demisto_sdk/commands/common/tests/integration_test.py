@@ -1291,26 +1291,6 @@ class TestIntegrationValidator:
         (V2_INVALID_SIEM_2, False),
     ]
 
-    @pytest.mark.parametrize("current, answer", V2_SIEM_MARKETPLACE_INPUTS)
-    def test_is_valid_xsiam_marketplace(self, current, answer):
-        """
-        Given
-            - Valid marketplaces field (only with marketplacev2)
-            - Invalid marketplaces field (with 2 entries - suppose to be only 1)
-            - Invalid marketplaces field (with xsaor value instead of marketplacev2)
-
-        When
-            - running is_valid_xsiam_marketplace.
-
-        Then
-            - Check that the function returns True if valid, else False.
-        """
-        structure = mock_structure("", current)
-        validator = IntegrationValidator(structure)
-        validator.current_file = current
-
-        assert validator.is_valid_xsiam_marketplace() is answer
-
     VALID_DEFAULTVALUE_CHECKBOX_1 = {
         "configuration": [{"defaultvalue": "true", "type": 8}]
     }

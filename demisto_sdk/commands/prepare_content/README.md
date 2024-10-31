@@ -5,13 +5,19 @@ NOTE: The prepare-content command replaces the unify command.
 
 **Arguments**
 * **-i, --input**
-  The path to the directory of a pack or a content item in which the files reside
+  Comma-separated list of paths to directories or files to unify.
 * **-o, --output**
   The path to the directory into which to write result.
 * **-f, --force**
   Forcefully overwrites the file if it exists.
 * **-c, --custom**
   Adds a custom label to the name/display/id of the unified yml (only for integrations/scripts).
+* **-a -- all** Run prepare-content on all content packs. If no output path is given, will dump the result in the current working path.
+* **-g --graph** Whether to use the content graph.
+* **--skip-update** Whether to skip updating the content graph (used only when graph is true).
+* **-ini --ignore-native-image** Whether to ignore the addition of the nativeimage key to the yml of a script/integration.
+* **-mp --marketplace** The marketplace content items are created for, that determines usage of marketplace unique text. Default is the XSOAR marketplace.
+
 
     **Examples**:
        <br/><br/>

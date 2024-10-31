@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
 
-from demisto_sdk.__main__original import main
+from demisto_sdk.__main__ import main
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from TestSuite.test_tools import ChangeCWD
 

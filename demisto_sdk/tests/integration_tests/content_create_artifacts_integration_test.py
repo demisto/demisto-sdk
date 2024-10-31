@@ -4,7 +4,7 @@ import pytest
 from click.testing import CliRunner
 from wcmatch.pathlib import Path
 
-from demisto_sdk.__main__original import main
+from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import (

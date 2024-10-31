@@ -1,6 +1,6 @@
 from click.testing import CliRunner
 
-from demisto_sdk.__main__original import main
+from demisto_sdk.__main__ import main
 from TestSuite.test_tools import (
     ChangeCWD,
 )

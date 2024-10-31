@@ -2,10 +2,16 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import RN_HEADER_BY_FILE_TYPE, GitStatuses
+from demisto_sdk.commands.common.constants import (
+    CONTENT_TYPE_SECTION_REGEX,
+    RN_HEADER_BY_FILE_TYPE,
+    GitStatuses,
+)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.tools import extract_rn_headers, filter_rn_headers
+from demisto_sdk.commands.validate.tools import (
+    filter_nones,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -16,9 +22,9 @@ ContentTypes = Pack
 
 class IsValidContentTypeHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN113"
-    description = ""
-    rationale = ""
-    error_message = 'The following content types header(s) "{0}" are either an invalid content type or does not exist in the "{pack_name}" pack.\nPlease use "demisto-sdk update-release-notes -i Packs/{1}"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+    description = "Validate that the rn's first level headers are valid content types."
+    rationale = "Ensure we don't document false information."
+    error_message = 'The following content type header(s) "{0}" are invalid.\nPlease use "demisto-sdk update-release-notes -i Packs/{1}"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
     related_field = "Release notes"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
@@ -27,23 +33,29 @@ class IsValidContentTypeHeaderValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        results = []
         rn_valid_headers = RN_HEADER_BY_FILE_TYPE.values()
-        for content_item in content_items:
-            headers = extract_rn_headers(content_item.release_note.file_content)
-            filter_rn_headers(headers=headers)
-            invalid_headers = [
-                content_type
-                for content_type in rn_valid_headers
-                if content_type not in rn_valid_headers
-            ]
-            results.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(
-                        ", ".join(invalid_headers), content_item.name
-                    ),
-                    content_object=content_item,
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(", ".join(invalid_headers)),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (
+                rn_sections := CONTENT_TYPE_SECTION_REGEX.findall(
+                    content_item.release_note.file_content
                 )
             )
-        return results
+            and (
+                rn_first_level_headers := [
+                    filter_nones(ls=section)[0] for section in rn_sections
+                ]
+            )
+            and (
+                invalid_headers := [
+                    rn_first_level_header
+                    for rn_first_level_header in rn_first_level_headers
+                    if rn_first_level_header not in rn_valid_headers
+                ]
+            )
+        ]

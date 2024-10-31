@@ -23,6 +23,9 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN111_is_docker_entr
 from demisto_sdk.commands.validate.validators.RN_validators.RN112_is_bc_rn_exist import (
     IsBCRNExistValidator,
 )
+from demisto_sdk.commands.validate.validators.RN_validators.RN113_is_valid_content_type_header import (
+    IsValidContentTypeHeaderValidator,
+)
 from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
     ReleaseNoteHeaderValidator,
 )
@@ -469,6 +472,50 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
     expected_msgs = [
         "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: demisto/python3:3.9.7.24076, docker image in yml demisto/python3:3.9.7.24071 - please make sure the dockers match.",
         "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: No docker entry found, docker image in yml demisto/python3:3.9.7.24076 - please make sure the dockers match.",
+    ]
+    assert all(
+        [res_msg in expected_msgs for res_msg in [result.message for result in results]]
+    )
+
+
+def test_IsValidContentTypeHeaderValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - content_items list with 5 packs, each with RN with different content.
+        - Case 1: RN with 2 invalid content type headers.
+        - Case 2: RN with 1 invalid and 1 valid content type headers.
+        - Case 3: RN with 2 valid content type headers.
+    When:
+    - Calling the IsValidContentTypeHeaderValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Should fail.
+        - Case 3: Shouldn't fail anything.
+    """
+    pack_1 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### FakeContentType_1\n##### FakeContentItem_1\nFake comment.\n#### FakeContentType_2\n##### FakeContentItem_1\nFake comment.",
+    )
+    pack_2 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### FakeContentType_1\n##### FakeContentItem_1\nFake comment.\n#### Integrations\n##### Test integration\ntest.",
+    )
+    pack_3 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Scripts\n##### Test script\ntest.\n#### Integrations\n##### Test integration\ntest.",
+    )
+    content_items = [pack_1, pack_2, pack_3]
+    validator = IsValidContentTypeHeaderValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+    assert len(results) == 2
+    expected_msgs = [
+        'The following content type header(s) "FakeContentType_1, FakeContentType_2" are invalid.\nPlease use "demisto-sdk update-release-notes -i Packs/HelloWorld"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+        'The following content type header(s) "FakeContentType_1" are invalid.\nPlease use "demisto-sdk update-release-notes -i Packs/HelloWorld"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
     ]
     assert all(
         [res_msg in expected_msgs for res_msg in [result.message for result in results]]

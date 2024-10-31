@@ -9,7 +9,7 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_FILE_NAME
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
@@ -132,14 +132,14 @@ class ContentGitRepo:
             runner = CliRunner(mix_stderr=False)
             self.run_command("git add .")
             # commit flow - secrets, lint and validate only on staged files without rn
-            res = runner.invoke(main, "secrets")
+            res = runner.invoke(app, "secrets")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
-            res = runner.invoke(main, "lint -g --no-test")
+            res = runner.invoke(app, "lint -g --no-test")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
             res = runner.invoke(
-                main,
+                app,
                 "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
                 "--no-docker-checks --debug-git --allow-skipped --run-old-validate --skip-new-validate",
             )
@@ -148,7 +148,7 @@ class ContentGitRepo:
 
             # build flow - validate on all changed files
             res = runner.invoke(
-                main,
+                app,
                 "validate -g --skip-pack-dependencies --no-docker-checks --debug-git "
                 "--allow-skipped --run-old-validate --skip-new-validate",
             )
@@ -156,7 +156,7 @@ class ContentGitRepo:
 
             # local run - validation with untracked files
             res = runner.invoke(
-                main,
+                app,
                 "validate -g --skip-pack-dependencies --no-docker-checks --debug-git -iu "
                 "--allow-skipped --run-old-validate --skip-new-validate",
             )
@@ -246,7 +246,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     monkeypatch.chdir(content_repo.content)
     runner = CliRunner(mix_stderr=False)
     res = runner.invoke(
-        main,
+        app,
         f"init -a {author_image_abs_path} --pack --name Sample",
         input="\n".join(["y", "Sample", "description", "1", "1", "", "n", "6.0.0"]),
     )
@@ -270,12 +270,12 @@ def init_integration(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     hello_world_path = content_repo.content / "Packs" / "HelloWorld" / "Integrations"
     monkeypatch.chdir(hello_world_path)
     res = runner.invoke(
-        main, "init --integration -n Sample", input="\n".join(["y", "6.0.0", "1"])
+        app, "init --integration -n Sample", input="\n".join(["y", "6.0.0", "1"])
     )
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
     content_repo.run_command("git add .")
     monkeypatch.chdir(content_repo.content)
-    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    res = runner.invoke(app, "update-release-notes -i Packs/HelloWorld -u revision")
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
     try:
         content_repo.update_rn()
@@ -303,7 +303,7 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     yaml.dump(script, open("./HelloWorldScript.yml", "w"))
     content_repo.run_command("git add .")
     monkeypatch.chdir(content_repo.content)
-    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    res = runner.invoke(app, "update-release-notes -i Packs/HelloWorld -u revision")
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
     content_repo.run_command("git add .")
     # Get the newest rn file and modify it.
@@ -333,7 +333,7 @@ def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch
         f"git mv {curr_incident_field} {hello_world_incidentfields_path / 'incidentfield-new.json'}"
     )
     runner = CliRunner(mix_stderr=False)
-    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    res = runner.invoke(app, "update-release-notes -i Packs/HelloWorld -u revision")
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
     try:
         content_repo.update_rn()

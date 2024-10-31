@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -49,7 +49,7 @@ class TestGenericModuleUnifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [UNIFY_CMD, "-i", generic_module_path, "-mp", "marketplacev2"],
                 catch_exceptions=False,
             )
@@ -79,7 +79,7 @@ class TestParsingRuleUnifier:
 
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [UNIFY_CMD, "-i", pack.parsing_rules[0].path, "-o", tmpdir],
             catch_exceptions=False,
         )
@@ -120,7 +120,7 @@ class TestParsingRuleUnifier:
 
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [UNIFY_CMD, "-i", pack.parsing_rules[0].path, "-o", tmpdir],
             catch_exceptions=False,
         )
@@ -153,7 +153,7 @@ class TestModelingRuleUnifier:
 
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [UNIFY_CMD, "-i", pack.modeling_rules[0].path, "-o", tmpdir],
             catch_exceptions=False,
         )
@@ -192,7 +192,7 @@ class TestIntegrationScriptUnifier:
                 runner = CliRunner(mix_stderr=False)
                 if flag:
                     runner.invoke(
-                        main,
+                        app,
                         [
                             UNIFY_CMD,
                             "-i",
@@ -205,7 +205,7 @@ class TestIntegrationScriptUnifier:
                     )
                 else:
                     runner.invoke(
-                        main,
+                        app,
                         [
                             UNIFY_CMD,
                             "-i",
@@ -247,7 +247,7 @@ class TestIntegrationScriptUnifier:
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            runner.invoke(main, [UNIFY_CMD, "-i", f"{script.path}", "-c", "Test"])
+            runner.invoke(app, [UNIFY_CMD, "-i", f"{script.path}", "-c", "Test"])
             with open(
                 os.path.join(script.path, "script-dummy-script.yml")
             ) as unified_yml:
@@ -275,7 +275,7 @@ class TestIntegrationScriptUnifier:
                 monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
                 monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
                 runner = CliRunner(mix_stderr=False)
-                runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}", "-ini"])
+                runner.invoke(app, [UNIFY_CMD, "-i", f"{integration.path}", "-ini"])
 
                 with open(
                     os.path.join(integration.path, "integration-dummy-integration.yml")
@@ -300,7 +300,7 @@ class TestIntegrationScriptUnifier:
 
         with ChangeCWD(pack.repo_path):
             CliRunner(mix_stderr=False).invoke(
-                main, [UNIFY_CMD, "-i", f"{script.path}", "-ini"]
+                app, [UNIFY_CMD, "-i", f"{script.path}", "-ini"]
             )
             with open(
                 os.path.join(script.path, "script-dummy-script.yml")
@@ -341,7 +341,7 @@ class TestLayoutUnifer:
         with ChangeCWD(REPO.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]
+                app, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]
             )
 
             assert result.exit_code == 0

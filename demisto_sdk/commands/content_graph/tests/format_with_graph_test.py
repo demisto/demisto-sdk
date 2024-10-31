@@ -4,7 +4,7 @@ from typing import List
 import pytest
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
@@ -330,7 +330,7 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
     with ChangeCWD(repo.path):
         runner = CliRunner()
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -385,7 +385,7 @@ def test_format_layout_with_graph_remove_unknown_content(mocker, repository, rep
     with ChangeCWD(repo.path):
         runner = CliRunner()
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"]
+            app, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"]
         )
     assert result.exit_code == 0
     assert not result.exception
@@ -454,7 +454,7 @@ def test_format_incident_field_graph_fix_aliases_marketplace(
     with ChangeCWD(repo.path):
         runner = CliRunner()
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y", "-nv"]
+            app, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y", "-nv"]
         )
 
     assert result.exit_code == 0

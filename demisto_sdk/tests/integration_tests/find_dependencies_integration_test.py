@@ -3,7 +3,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from TestSuite.test_tools import ChangeCWD
 
 FIND_DEPENDENCIES_CMD = "find-dependencies"
@@ -76,7 +76,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             mocker.patch.object(uis, "cpu_count", return_value=1)
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     FIND_DEPENDENCIES_CMD,
                     "-i",
@@ -146,7 +146,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     FIND_DEPENDENCIES_CMD,
                     "-i",
@@ -202,7 +202,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     FIND_DEPENDENCIES_CMD,
                     "-i",
@@ -268,7 +268,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     FIND_DEPENDENCIES_CMD,
                     "-i",
@@ -294,6 +294,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             runner = CliRunner(mix_stderr=False)
             pack.create_integration()
             path = os.path.join("Packs", Path(pack.path).name, "Integrations")
-            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, "-i", path])
+            result = runner.invoke(app, [FIND_DEPENDENCIES_CMD, "-i", path])
             assert result.exit_code == 1
             assert "must be formatted as 'Packs/<some pack name>" in result.output

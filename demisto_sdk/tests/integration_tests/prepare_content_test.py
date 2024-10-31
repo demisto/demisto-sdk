@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import SUPPORT_LEVEL_HEADER
 from demisto_sdk.commands.common.tools import get_file
 from TestSuite.pack import Pack
@@ -37,7 +37,7 @@ class TestPrepareContent:
 
             # Verify that passing both -a and -i raises an exception.
             result = runner.invoke(
-                main,
+                app,
                 [PREPARE_CONTENT_CMD, "-i", f"{integration.path}", "-a"],
                 catch_exceptions=True,
             )
@@ -48,7 +48,7 @@ class TestPrepareContent:
 
             # Verify that not passing either of -a and -i raises an exception.
             result = runner.invoke(
-                main,
+                app,
                 [PREPARE_CONTENT_CMD, "-o", "output-path"],
                 catch_exceptions=True,
             )
@@ -59,7 +59,7 @@ class TestPrepareContent:
 
             # Verify that specifying an output path of a file and passing multiple inputs raises an exception
             result = runner.invoke(
-                main,
+                app,
                 [
                     PREPARE_CONTENT_CMD,
                     "-i",
@@ -117,7 +117,7 @@ class TestPrepareContentIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [PREPARE_CONTENT_CMD, "-i", f"{integration.path}"],
                 catch_exceptions=True,
             )
@@ -150,7 +150,7 @@ def test_pack_prepare_content(mocker, git_repo, monkeypatch):
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [PREPARE_CONTENT_CMD, "-i", f"{pack.path}"],
                 catch_exceptions=True,
             )

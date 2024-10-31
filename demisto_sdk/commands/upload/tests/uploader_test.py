@@ -16,7 +16,7 @@ from demisto_client.demisto_api.rest import ApiException
 from more_itertools import first_true
 from packaging.version import Version
 
-from demisto_sdk.__main__ import main, upload
+from demisto_sdk.__main__ import app, upload
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
@@ -792,7 +792,7 @@ class TestZippedPackUpload:
         """
         invalid_zip_path = "not_exist_dir/not_exist_zip"
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, ["upload", "-i", invalid_zip_path, "--insecure"])
+        result = runner.invoke(app, ["upload", "-i", invalid_zip_path, "--insecure"])
         assert result.exit_code == 2
         assert isinstance(result.exception, SystemExit)
         assert (

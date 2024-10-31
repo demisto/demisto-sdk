@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 
 
 @pytest.mark.parametrize("error_code", ["BA102"])
@@ -18,7 +18,7 @@ def test_error_code_info_end_to_end(mocker, error_code):
     """
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, ["error-code", "-i", error_code])
+    result = runner.invoke(app, ["error-code", "-i", error_code])
     assert result.exit_code == 0
     assert not result.exception
     assert result.output
@@ -26,7 +26,7 @@ def test_error_code_info_end_to_end(mocker, error_code):
 
 def test_error_code_info_sanity(mocker, monkeypatch):
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, ["error-code", "-i", "BA100"])
+    result = runner.invoke(app, ["error-code", "-i", "BA100"])
 
     assert all(
         [
@@ -43,7 +43,7 @@ def test_error_code_info_refactored_validate(mocker, monkeypatch):
     )
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, ["error-code", "-i", "DO106"])
+    result = runner.invoke(app, ["error-code", "-i", "DO106"])
 
     assert all(
         [
@@ -60,7 +60,7 @@ def test_error_code_info_refactored_validate(mocker, monkeypatch):
 
 def test_error_code_info_failure(mocker, monkeypatch):
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, ["error-code", "-i", "KELLER"])
+    result = runner.invoke(app, ["error-code", "-i", "KELLER"])
 
     assert "No such error" in result.output
     assert result.exit_code == 1

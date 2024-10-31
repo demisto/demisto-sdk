@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from TestSuite.test_tools import ChangeCWD
 
@@ -40,7 +40,7 @@ def test_integration_secrets_incident_field_positive(mocker, repo):
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SECRETS_CMD, "-wl", repo.secrets.path])
+        result = runner.invoke(app, [SECRETS_CMD, "-wl", repo.secrets.path])
     assert all(
         [
             current_str in result.output
@@ -81,7 +81,7 @@ def test_integration_secrets_integration_negative(mocker, repo):
     )
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SECRETS_CMD, "-wl", repo.secrets.path])
+        result = runner.invoke(app, [SECRETS_CMD, "-wl", repo.secrets.path])
     assert all(
         [
             current_str in result.output
@@ -125,7 +125,7 @@ def test_integration_secrets_integration_positive(mocker, repo):
     )
     with ChangeCWD(integration.repo_path):
         result = CliRunner(mix_stderr=False).invoke(
-            main, [SECRETS_CMD, "-wl", repo.secrets.path], catch_exceptions=False
+            app, [SECRETS_CMD, "-wl", repo.secrets.path], catch_exceptions=False
         )
     assert result.exit_code == 0
     assert "no secrets were found" in result.output
@@ -159,7 +159,7 @@ def test_integration_secrets_integration_global_whitelist_positive_using_git(
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
+        result = runner.invoke(app, [SECRETS_CMD], catch_exceptions=False)
     assert result.exit_code == 0
     assert "no secrets were found" in result.output
 
@@ -193,7 +193,7 @@ def test_integration_secrets_integration_with_regex_expression(mocker, pack):
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [SECRETS_CMD, "--input", integration.code.rel_path],
             catch_exceptions=False,
         )
@@ -224,7 +224,7 @@ def test_integration_secrets_integration_positive_with_input_option(mocker, repo
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         result = CliRunner(mix_stderr=False).invoke(
-            main, [SECRETS_CMD, "--input", integration.code.rel_path]
+            app, [SECRETS_CMD, "--input", integration.code.rel_path]
         )
     assert ("Finished validating secrets, no secrets were found") in result.output
 
@@ -250,7 +250,7 @@ def test_integration_secrets_integration_negative_with_input_option(mocker, repo
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         result = CliRunner(mix_stderr=False).invoke(
-            main, [SECRETS_CMD, "--input", integration.code.rel_path]
+            app, [SECRETS_CMD, "--input", integration.code.rel_path]
         )
     assert "Secrets were found in the following files" in result.output
 
@@ -278,7 +278,7 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         result = CliRunner().invoke(
-            main,
+            app,
             [
                 SECRETS_CMD,
                 "--input",
@@ -300,7 +300,7 @@ def test_secrets_for_file_name_with_space_in_it(mocker, repo):
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         result = CliRunner().invoke(
-            main,
+            app,
             [
                 SECRETS_CMD,
                 "--input",

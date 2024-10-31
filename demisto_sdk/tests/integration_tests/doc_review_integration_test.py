@@ -1,6 +1,6 @@
 from click.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from TestSuite.test_tools import (
     ChangeCWD,
 )
@@ -28,7 +28,7 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [DOC_REVIEW, "-i", integration.path], catch_exceptions=False
+            app, [DOC_REVIEW, "-i", integration.path], catch_exceptions=False
         )
         assert all(
             [
@@ -68,7 +68,7 @@ def test_spell_integration_invalid(repo):
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [DOC_REVIEW, "-i", integration.yml.path], catch_exceptions=False
+            app, [DOC_REVIEW, "-i", integration.yml.path], catch_exceptions=False
         )
         assert "No misspelled words found " not in result.output
         assert "Words that might be misspelled were found in" in result.output
@@ -102,7 +102,7 @@ def test_spell_script_invalid(repo, mocker, monkeypatch):
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [DOC_REVIEW, "-i", script.yml.path], catch_exceptions=False
+            app, [DOC_REVIEW, "-i", script.yml.path], catch_exceptions=False
         )
     assert "No misspelled words found " not in result.output
     assert "Words that might be misspelled were found in" in result.output
@@ -138,7 +138,7 @@ def test_spell_playbook_invalid(repo, mocker, monkeypatch):
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [DOC_REVIEW, "-i", playbook.yml.path], catch_exceptions=False
+            app, [DOC_REVIEW, "-i", playbook.yml.path], catch_exceptions=False
         )
         assert "No misspelled words found " not in result.output
         assert "Words that might be misspelled were found in" in result.output
@@ -171,7 +171,7 @@ def test_spell_readme_invalid(repo, mocker, monkeypatch):
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [DOC_REVIEW, "-i", integration.readme.path], catch_exceptions=False
+            app, [DOC_REVIEW, "-i", integration.readme.path], catch_exceptions=False
         )
         assert all(
             [
@@ -224,7 +224,7 @@ def test_review_release_notes_valid(repo, mocker, monkeypatch):
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False
+            app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False
         )
         assert all(
             [
@@ -266,7 +266,7 @@ def test_review_release_notes_invalid(repo, mocker, monkeypatch):
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False
+            app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False
         )
 
         assert all(
@@ -301,7 +301,7 @@ def test_templates_print(repo, mocker, monkeypatch):
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [DOC_REVIEW, "--templates"], catch_exceptions=False
+            app, [DOC_REVIEW, "--templates"], catch_exceptions=False
         )
         assert "General Pointers About Release Notes:" in result.output
         assert "Checking spelling on" not in result.output

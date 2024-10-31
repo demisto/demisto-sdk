@@ -4624,3 +4624,14 @@ def pascalToSpace(s):
     # split and join: to remove double spacing caused by previous workaround
     s = " ".join(s.split())
     return s
+
+
+def filter_none_values(ls: Union[List, Tuple]) -> List:
+    """
+        Filters out None values from a list or tuple.
+    Args:
+        ls: (List | Tuple) - This list or tuple to filter.
+    Return:
+        List filtered from None values.
+    """
+    return list(filter(lambda x: x, ls))

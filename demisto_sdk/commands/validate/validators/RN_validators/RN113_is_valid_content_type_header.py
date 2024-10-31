@@ -7,11 +7,11 @@ from demisto_sdk.commands.common.constants import (
     RN_HEADER_BY_FILE_TYPE,
     GitStatuses,
 )
+from demisto_sdk.commands.common.tools import (
+    filter_none_values,
+)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.tools import (
-    filter_nones,
-)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -22,7 +22,7 @@ ContentTypes = Pack
 
 class IsValidContentTypeHeaderValidator(BaseValidator[ContentTypes]):
     error_code = "RN113"
-    description = "Validate that the rn's first level headers are valid content types."
+    description = "Validate that the release note's first level headers which split the release notes by content types are valid content types."
     rationale = "Ensure we don't document false information."
     error_message = 'The following content type header(s) "{0}" are invalid.\nPlease use "demisto-sdk update-release-notes -i Packs/{1}"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
     related_field = "Release notes"
@@ -50,7 +50,7 @@ class IsValidContentTypeHeaderValidator(BaseValidator[ContentTypes]):
             )
             and (
                 rn_first_level_headers := [
-                    filter_nones(ls=section)[0] for section in rn_sections
+                    filter_none_values(ls=section)[0] for section in rn_sections
                 ]
             )
             and (

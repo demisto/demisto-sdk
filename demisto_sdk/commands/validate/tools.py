@@ -1,7 +1,7 @@
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -172,14 +172,3 @@ def is_indicator_pb(playbook: Playbook):
         (i.get("playbookInputQuery") or {}).get("queryEntity") == "indicators"
         for i in playbook.data.get("inputs", {})
     )
-
-
-def filter_nones(ls: Union[List, Tuple]) -> List:
-    """
-        Filters out None values from a list or tuple.
-    Args:
-        ls: (List | Tuple) - This list or tuple to filter.
-    Return:
-        List filtered from None values.
-    """
-    return list(filter(lambda x: x, ls))

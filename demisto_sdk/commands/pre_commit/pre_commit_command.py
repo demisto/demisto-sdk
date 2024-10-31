@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     write_dict,
+    get_content_path
 )
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -192,7 +193,7 @@ class PreCommitRunner:
                 )
             ),
             env=precommit_env,
-            cwd=CONTENT_PATH,
+            cwd=get_content_path(),
             stdout=stdout,
             stderr=stdout,
             universal_newlines=True,
@@ -314,7 +315,7 @@ class PreCommitRunner:
         precommit_env["MYPYPATH"] = ":".join(
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
-        precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
+        precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(get_content_path())
         precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
         precommit_env["PRE_COMMIT_COLOR"] = "always"
 
@@ -711,7 +712,7 @@ def preprocess_files(
 
     # convert to relative file to content path
     relative_paths = {
-        file.relative_to(CONTENT_PATH) if file.is_absolute() else file
+        file.relative_to(get_content_path()) if file.is_absolute() else file
         for file in files_to_run
     }
     logger.info(f'Found {len(relative_paths)} files to run pre-commit on: {", ".join(str(p) for p in relative_paths)}')

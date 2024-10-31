@@ -1,70 +1,130 @@
 import os
 import sys
-import git
 from pathlib import Path
 
+import git
 import typer
 
-from demisto_sdk.commands.common.constants import ExecutionMode
-from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline, is_external_repository
+from demisto_sdk.commands.common.constants import (
+    SDK_OFFLINE_ERROR_MESSAGE,
+    ExecutionMode,
+)
+from demisto_sdk.commands.common.tools import (
+    is_external_repository,
+    is_sdk_defined_working_offline,
+)
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
+from demisto_sdk.config import get_config
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
+validate_app = typer.Typer()
 
-@main.command(
+
+@validate_app.command(
     context_settings=dict(
         ignore_unknown_options=True,
         allow_extra_args=True,
     )
 )
 def validate(
-        ctx: typer.Context,
-        config: ConfigType,
-        file_paths: list[Path] = typer.Argument(..., exists=True, resolve_path=True),
-        no_conf_json: bool = typer.Option(False, help="Skip conf.json validation."),
-        id_set: bool = typer.Option(False, help="Perform validations using the id_set file."),
-        id_set_path: Path = typer.Option(None, help="Path of the id-set.json used for validations."),
-        graph: bool = typer.Option(False, help="Perform validations on content graph."),
-        prev_ver: str = typer.Option(None, help="Previous branch or SHA1 commit to run checks against."),
-        no_backward_comp: bool = typer.Option(False, help="Whether to check backward compatibility."),
-        use_git: bool = typer.Option(False, help="Validate changes using git."),
-        post_commit: bool = typer.Option(False, help="Run validation only on committed changed files."),
-        staged: bool = typer.Option(False, help="Ignore unstaged files."),
-        include_untracked: bool = typer.Option(False, help="Whether to include untracked files in the validation."),
-        validate_all: bool = typer.Option(False, help="Run all validation on all files."),
-        input: list[Path] = typer.Option(None, help="Path of the content pack/file to validate."),
-        skip_pack_release_notes: bool = typer.Option(False, help="Skip validation of pack release notes."),
-        print_ignored_errors: bool = typer.Option(False, help="Print ignored errors as warnings."),
-        print_ignored_files: bool = typer.Option(False, help="Print ignored files."),
-        no_docker_checks: bool = typer.Option(False, help="Whether to run docker image validation."),
-        silence_init_prints: bool = typer.Option(False, help="Skip the initialization prints."),
-        skip_pack_dependencies: bool = typer.Option(False, help="Skip validation of pack dependencies."),
-        create_id_set: bool = typer.Option(False, help="Whether to create the id_set.json file."),
-        json_file: Path = typer.Option(None, help="The JSON file path to output command results."),
-        skip_schema_check: bool = typer.Option(False, help="Whether to skip the file schema check."),
-        debug_git: bool = typer.Option(False, help="Whether to print debug logs for git statuses."),
-        print_pykwalify: bool = typer.Option(False, help="Whether to print the pykwalify log errors."),
-        quiet_bc_validation: bool = typer.Option(False,
-                                                 help="Set backward compatibility validation errors as warnings."),
-        allow_skipped: bool = typer.Option(False, help="Don't fail on skipped integrations."),
-        no_multiprocessing: bool = typer.Option(False, help="Run validate all without multiprocessing."),
-        run_specific_validations: str = typer.Option(None, help="Comma separated list of validations to run."),
-        category_to_run: str = typer.Option(None, help="Run specific validations by stating category."),
-        fix: bool = typer.Option(False, help="Whether to autofix failing validations."),
-        config_path: str = typer.Option(None, help="Path for a config file to run."),
-        ignore_support_level: bool = typer.Option(False, help="Skip validations based on support level."),
-        run_old_validate: bool = typer.Option(False, help="Whether to run the old validate flow."),
-        skip_new_validate: bool = typer.Option(False, help="Whether to skip the new validate flow."),
-        ignore: list[str] = typer.Option(None, help="An error code to not run. Can be repeated.")
+    ctx: typer.Context,
+    file_paths: list[Path] = typer.Argument(..., exists=True, resolve_path=True),
+    no_conf_json: bool = typer.Option(False, help="Skip conf.json validation."),
+    id_set: bool = typer.Option(
+        False, help="Perform validations using the id_set file."
+    ),
+    id_set_path: Path = typer.Option(
+        None, help="Path of the id-set.json used for validations."
+    ),
+    graph: bool = typer.Option(False, help="Perform validations on content graph."),
+    prev_ver: str = typer.Option(
+        None, help="Previous branch or SHA1 commit to run checks against."
+    ),
+    no_backward_comp: bool = typer.Option(
+        False, help="Whether to check backward compatibility."
+    ),
+    use_git: bool = typer.Option(False, help="Validate changes using git."),
+    post_commit: bool = typer.Option(
+        False, help="Run validation only on committed changed files."
+    ),
+    staged: bool = typer.Option(False, help="Ignore unstaged files."),
+    include_untracked: bool = typer.Option(
+        False, help="Whether to include untracked files in the validation."
+    ),
+    validate_all: bool = typer.Option(False, help="Run all validation on all files."),
+    input: list[Path] = typer.Option(
+        None, help="Path of the content pack/file to validate."
+    ),
+    skip_pack_release_notes: bool = typer.Option(
+        False, help="Skip validation of pack release notes."
+    ),
+    print_ignored_errors: bool = typer.Option(
+        False, help="Print ignored errors as warnings."
+    ),
+    print_ignored_files: bool = typer.Option(False, help="Print ignored files."),
+    no_docker_checks: bool = typer.Option(
+        False, help="Whether to run docker image validation."
+    ),
+    silence_init_prints: bool = typer.Option(
+        False, help="Skip the initialization prints."
+    ),
+    skip_pack_dependencies: bool = typer.Option(
+        False, help="Skip validation of pack dependencies."
+    ),
+    create_id_set: bool = typer.Option(
+        False, help="Whether to create the id_set.json file."
+    ),
+    json_file: Path = typer.Option(
+        None, help="The JSON file path to output command results."
+    ),
+    skip_schema_check: bool = typer.Option(
+        False, help="Whether to skip the file schema check."
+    ),
+    debug_git: bool = typer.Option(
+        False, help="Whether to print debug logs for git statuses."
+    ),
+    print_pykwalify: bool = typer.Option(
+        False, help="Whether to print the pykwalify log errors."
+    ),
+    quiet_bc_validation: bool = typer.Option(
+        False, help="Set backward compatibility validation errors as warnings."
+    ),
+    allow_skipped: bool = typer.Option(
+        False, help="Don't fail on skipped integrations."
+    ),
+    no_multiprocessing: bool = typer.Option(
+        False, help="Run validate all without multiprocessing."
+    ),
+    run_specific_validations: str = typer.Option(
+        None, help="Comma separated list of validations to run."
+    ),
+    category_to_run: str = typer.Option(
+        None, help="Run specific validations by stating category."
+    ),
+    fix: bool = typer.Option(False, help="Whether to autofix failing validations."),
+    config_path: str = typer.Option(None, help="Path for a config file to run."),
+    ignore_support_level: bool = typer.Option(
+        False, help="Skip validations based on support level."
+    ),
+    run_old_validate: bool = typer.Option(
+        False, help="Whether to run the old validate flow."
+    ),
+    skip_new_validate: bool = typer.Option(
+        False, help="Whether to skip the new validate flow."
+    ),
+    ignore: list[str] = typer.Option(
+        None, help="An error code to not run. Can be repeated."
+    ),
 ):
     """Validate your content files. If no additional flags are given, will validate only committed files."""
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
+    config = get_config()
     if is_sdk_defined_working_offline():
-        typer.echo("SDK is offline. Exiting.", err=True)
+        typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)
         sys.exit(1)
 
     if file_paths and not input:
@@ -77,7 +137,9 @@ def validate(
     file_path = input
 
     if post_commit and staged:
-        typer.echo("Could not supply the staged flag with the post-commit flag", err=True)
+        typer.echo(
+            "Could not supply the staged flag with the post-commit flag", err=True
+        )
         sys.exit(1)
 
     try:
@@ -96,12 +158,12 @@ def validate(
 
         exit_code = 0
         run_new_validate = not skip_new_validate or (
-                (env_flag := os.getenv("SKIP_NEW_VALIDATE"))
-                and str(env_flag).lower() == "true"
+            (env_flag := os.getenv("SKIP_NEW_VALIDATE"))
+            and str(env_flag).lower() == "true"
         )
         run_old_validate = run_old_validate or (
-                (env_flag := os.getenv("RUN_OLD_VALIDATE"))
-                and str(env_flag).lower() == "true"
+            (env_flag := os.getenv("RUN_OLD_VALIDATE"))
+            and str(env_flag).lower() == "true"
         )
 
         if not run_new_validate:
@@ -116,7 +178,7 @@ def validate(
                         f"The following flag {new_validate_flag.replace('_', '-')} is related only to the new validate "
                         f"and is being called while not running the new validate flow, "
                         f"therefore the flag will be ignored.",
-                        err=True
+                        err=True,
                     )
 
         if not run_old_validate:
@@ -145,7 +207,7 @@ def validate(
                         f"The following flag {old_validate_flag.replace('_', '-')} is related only to the old validate "
                         f"and is being called while not running the old validate flow, "
                         f"therefore the flag will be ignored.",
-                        err=True
+                        err=True,
                     )
 
         if run_old_validate:
@@ -214,6 +276,11 @@ def validate(
         typer.echo(f"{e}", err=True)
         typer.echo(
             "\nYou may not be running `demisto-sdk validate` command in the content directory.\n"
-            "Please run the command from content directory", err=True
+            "Please run the command from content directory",
+            err=True,
         )
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    validate_app()

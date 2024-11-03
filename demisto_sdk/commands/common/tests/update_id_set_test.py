@@ -4012,6 +4012,26 @@ TEST_DICTS = [
 ]
 
 
+def test_get_filters_and_transformers_with_none_values():
+    """
+    Given
+    - complex value with None values for transformers and filters.
+
+    When
+    - parsing transformers and filters from the value.
+
+    Then
+    - both transformers and filters should default to empty lists without errors.
+    """
+
+    data_with_none = {
+        "transformers": None,
+        "filters": None,
+    }
+    transformers, filters = get_filters_and_transformers_from_complex_value(data_with_none)
+    assert transformers == []
+    assert filters == []
+
 @pytest.mark.parametrize("dict_to_test, expected_result", TEST_DICTS)
 def test_does_dict_have_alternative_key(dict_to_test, expected_result):
     result = does_dict_have_alternative_key(dict_to_test)

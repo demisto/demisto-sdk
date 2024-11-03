@@ -30,7 +30,11 @@ class IntegrationScriptParser(YAMLContentItemParser):
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(
-            {"object_id": "commonfields.id", "version": "commonfields.version"}
+            {
+                "object_id": "commonfields.id",
+                "version": "commonfields.version",
+                "tests": "tests",
+            }
         )
         return super().field_mapping
 
@@ -41,6 +45,11 @@ class IntegrationScriptParser(YAMLContentItemParser):
             or ""
         )
         return DockerImage(docker_image)
+
+    @cached_property
+    def tests(self) -> [List[str] | str]:
+        tests = get_value(self.yml_data, self.field_mapping.get("tests", ""), "") or ""
+        return tests
 
     @property
     def alt_docker_images(self) -> List[str]:

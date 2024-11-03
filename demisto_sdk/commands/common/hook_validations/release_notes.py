@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
 )
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+from demisto_sdk.commands.validate.tools import filter_rn_headers
 
 CONTENT_TYPE_SECTION_REGEX = re.compile(
     r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
@@ -132,20 +133,6 @@ class ReleaseNotesValidator(BaseValidator):
             ):
                 return False
         return True
-
-    def filter_rn_headers(self, headers: Dict) -> None:
-        """
-            Filters out the headers from the release notes file, removing add-ons such as "New" and "**".
-        Args:
-            headers: (Dict) - The release notes headers to filter, the structure is content type -> headers.(e.g. Integrations -> [header1, header2])
-        Return:
-            None.
-        """
-        for content_type, content_items in headers.items():
-            content_items = self.filter_nones(ls=content_items)
-            headers[content_type] = [
-                item.replace("New:", "").strip() for item in content_items
-            ]
 
     @error_codes("RN113")
     def validate_content_type_header(self, content_type: str) -> bool:
@@ -454,7 +441,7 @@ class ReleaseNotesValidator(BaseValidator):
         """
         headers = self.extract_rn_headers()
         validations = [self.validate_first_level_header_exists()]
-        self.filter_rn_headers(headers=headers)
+        filter_rn_headers(headers=headers)
         for content_type, content_items in headers.items():
             validations.append(
                 self.rn_valid_header_format(

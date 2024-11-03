@@ -45,7 +45,9 @@ def validate(
     no_backward_comp: bool = typer.Option(
         False, help="Whether to check backward compatibility."
     ),
-    use_git: bool = typer.Option(False, help="Validate changes using git."),
+    use_git: bool = typer.Option(
+        False, "-g", "--use-git", help="Validate changes using git."
+    ),
     post_commit: bool = typer.Option(
         False, help="Run validation only on committed changed files."
     ),
@@ -53,7 +55,9 @@ def validate(
     include_untracked: bool = typer.Option(
         False, help="Whether to include untracked files in the validation."
     ),
-    validate_all: bool = typer.Option(False, help="Run all validation on all files."),
+    validate_all: bool = typer.Option(
+        False, "-a", "--validate-all", help="Run all validation on all files."
+    ),
     input: list[Path] = typer.Option(
         None, help="Path of the content pack/file to validate."
     ),

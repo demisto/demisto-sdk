@@ -1,13 +1,16 @@
+import functools
 import json
 import os
 import platform
 from pathlib import Path
 
 import typer
+from click import get_current_context
 from dotenv import load_dotenv
 from pkg_resources import DistributionNotFound, get_distribution
 from typer.main import get_command
 
+from demisto_sdk import logging_setup
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import (
     convert_path_to_str,
@@ -66,6 +69,36 @@ from demisto_sdk.commands.validate.validate_setup import validate
 from demisto_sdk.commands.xsoar_linter.xsoar_linter_setup import xsoar_linter
 from demisto_sdk.commands.zip_packs.zip_packs_setup import zip_packs
 from demisto_sdk.config import get_config
+
+
+def logging_setup_decorator(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Use Click's get_current_context to retrieve the context
+        context = get_current_context()
+        if not context:
+            raise RuntimeError(
+                "No context found. Ensure the command is invoked properly."
+            )
+
+        # Extract global options from context.params
+        console_log_threshold = context.params.get("console_log_threshold", "INFO")
+        file_log_threshold = context.params.get("file_log_threshold", "DEBUG")
+        log_file_path = context.params.get("log_file_path")
+
+        # Set up logging
+        logging_setup(
+            console_threshold=console_log_threshold,
+            file_threshold=file_log_threshold,
+            path=log_file_path,
+            calling_function=func.__name__,
+        )
+
+        # Call the original function
+        return func(*args, **kwargs)
+
+    return wrapper
+
 
 app = typer.Typer(rich_markup_mode="markdown")
 
@@ -242,6 +275,7 @@ app.add_typer(
 )
 
 
+@logging_setup_decorator
 @app.callback(
     invoke_without_command=True,
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -259,7 +293,7 @@ def main(
     console_log_threshold: str = typer.Option(
         None,
         "--console-log-threshold",
-        help="Minimum logging threshold for console output.",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
     ),
     file_log_threshold: str = typer.Option(
         None, "--file-log-threshold", help="Minimum logging threshold for file output."
@@ -326,5 +360,5 @@ def show_release_notes():
 
 
 if __name__ == "__main__":
-    typer.echo("Running demisto-sdk CLI")
+    typer.echo("Running Demisto-SDK CLI")
     app()  # Run the main app

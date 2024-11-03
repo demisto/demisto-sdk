@@ -47,7 +47,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
         return DockerImage(docker_image)
 
     @cached_property
-    def tests(self) -> List[str] | str:
+    def tests(self) -> Any:
         tests = get_value(self.yml_data, self.field_mapping.get("tests", ""), "") or ""
         return tests
 

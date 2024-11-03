@@ -1,7 +1,7 @@
 import itertools
 import os
 import re
-from typing import Dict, List, Tuple, Union
+from typing import List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     CUSTOM_CONTENT_FILE_ENDINGS,
@@ -30,15 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
 )
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-from demisto_sdk.commands.validate.tools import filter_rn_headers
-
-CONTENT_TYPE_SECTION_REGEX = re.compile(
-    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
-)
-CONTENT_ITEM_SECTION_REGEX = re.compile(
-    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$",
-    re.M,
-)
+from demisto_sdk.commands.validate.tools import extract_rn_headers, filter_rn_headers
 
 
 class ReleaseNotesValidator(BaseValidator):
@@ -86,38 +78,6 @@ class ReleaseNotesValidator(BaseValidator):
             List filtered from None values.
         """
         return list(filter(lambda x: x, ls))
-
-    def extract_rn_headers(self) -> Dict[str, List[str]]:
-        """
-            Extracts the headers from the release notes file.
-        Args:
-            None.
-        Return:
-            A dictionary representation of the release notes file that maps content types' headers to their corresponding content items' headers.
-        """
-        headers: Dict = {}
-        # Get all sections from the release notes using regex
-        rn_sections = CONTENT_TYPE_SECTION_REGEX.findall(self.latest_release_notes)
-        for section in rn_sections:
-            section = self.filter_nones(ls=section)
-            content_type = section[0]
-            content_type_sections_str = section[1]
-            content_type_sections_ls = CONTENT_ITEM_SECTION_REGEX.findall(
-                content_type_sections_str
-            )
-            if not content_type_sections_ls:
-                #  Did not find content items headers under content type - might be due to invalid format.
-                #  Will raise error in rn_valid_header_format.
-                headers[content_type] = []
-            for content_type_section in content_type_sections_ls:
-                content_type_section = self.filter_nones(ls=content_type_section)
-                if content_type_section:
-                    header = content_type_section[0]
-                    if headers.get(content_type):
-                        headers[content_type].append(header)
-                    else:
-                        headers[content_type] = [header]
-        return headers
 
     @error_codes("RN115")
     def rn_valid_header_format(self, content_type: str, content_items: List) -> bool:
@@ -439,7 +399,7 @@ class ReleaseNotesValidator(BaseValidator):
         Return:
             True if the release notes headers are valid, False otherwise.
         """
-        headers = self.extract_rn_headers()
+        headers = extract_rn_headers(self.latest_release_notes)
         validations = [self.validate_first_level_header_exists()]
         filter_rn_headers(headers=headers)
         for content_type, content_items in headers.items():

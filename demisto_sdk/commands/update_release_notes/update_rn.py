@@ -3,6 +3,7 @@ This script is used to create a release notes template
 """
 
 import copy
+from enum import Enum
 import errno
 import os
 import re
@@ -29,9 +30,35 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Integration,
     Playbook,
     Script,
+    GenericModule,
+    GenericField,
+    GenericType,
+    Job,
+    ParsingRule,
+    ModelingRule,
+    CorrelationRule,
+    XSIAMDashboard,
+    XSIAMReport,
+    Trigger,
+    Wizard,
+    IndicatorType,
+    LayoutRule,
+    Layout,
+    LayoutsContainer,
+    IndicatorField,
+    IncidentField,
+    IncidentType,
+    Dashboard,
+    ClassifierMapper,
+    Classifier,
+    Widget,
+    Report
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
-    YAMLContentObject,
+    YAMLContentObject
+)
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
+    JSONContentObject
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -54,6 +81,35 @@ from demisto_sdk.commands.content_graph.commands.update import update_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
+JSON = {
+    FileType.XSIAM_DASHBOARD: XSIAMDashboard,
+    FileType.WIZARD: Wizard,
+    FileType.TRIGGER: Trigger,
+    FileType.INDICATOR_TYPE: IndicatorType,
+    FileType.GENERIC_TYPE: GenericType,
+    FileType.GENERIC_FIELD: GenericField,
+    FileType.INCIDENT_FIELD: IncidentField,
+    FileType.INDICATOR_FIELD: IndicatorField,
+    FileType.LAYOUTS_CONTAINER: LayoutsContainer,
+    FileType.DASHBOARD: Dashboard,
+    FileType.INCIDENT_TYPE: IncidentType,
+    FileType.MAPPER: ClassifierMapper,
+    FileType.CLASSIFIER: Classifier,
+    FileType.WIDGET: Widget,
+    FileType.REPORT: Report,
+    FileType.JOB: Job,
+    FileType.XSIAM_REPORT: XSIAMReport,
+    FileType.REPUTATION: IndicatorType
+}
+
+YML = {
+    FileType.PARSING_RULE: ParsingRule,
+    FileType.MODELING_RULE: ModelingRule,
+    FileType.CORRELATION_RULE: CorrelationRule,
+    FileType.INTEGRATION: Integration,
+    FileType.SCRIPT: Script,
+    FileType.PLAYBOOK: Playbook,
+}
 
 CLASS_BY_FILE_TYPE = {
     FileType.INTEGRATION: Integration,
@@ -61,6 +117,26 @@ CLASS_BY_FILE_TYPE = {
     FileType.PLAYBOOK: Playbook,
 }
 
+CONVERT_FOR_RN = {
+    FileType.INDICATOR_FIELD: 'Indicator Field',
+    FileType.INCIDENT_TYPE: 'Incident Type',
+    FileType.XSIAM_DASHBOARD: 'Xsiam Dashboard',
+    FileType.REPUTATION: 'Incident Type',
+    FileType.XSIAM_DASHBOARD: 'Xsiam Dashboard',
+    FileType.GENERIC_TYPE: 'Generic Type',
+    FileType.GENERIC_FIELD: 'Generic Field',
+    FileType.INCIDENT_FIELD: 'Incident Field',
+    FileType.INDICATOR_FIELD: 'Indicator Field',
+    FileType.LAYOUTS_CONTAINER: 'Layout Container',
+    FileType.XSIAM_REPORT: 'Xsiam Report',
+    FileType.PARSING_RULE: 'Parsing Rule',
+    FileType.MODELING_RULE: 'Modeling Rule',
+    FileType.CORRELATION_RULE: 'Correlation Rule',
+}
+class content_type(Enum):
+    PARAMETER = 'parameter'
+    COMMAND = 'command'
+    ARGUMENT = 'argument'
 
 def get_deprecated_comment_from_desc(description: str) -> str:
     """
@@ -84,6 +160,20 @@ def deprecated_commands(commands: list) -> set:
     """return a set of the deprecated commands only"""
     return {command.get("name") for command in commands if command.get("deprecated")}
 
+def get_json_objects(path: str, file_type) -> Tuple[Any, JSONContentObject]:
+    """
+    Generate Json files from master and from the current branch
+    Args:
+        path: The requested file path
+        file_type: the file type
+
+    Returns:
+        Two json objects, the first of the json at master (old json) and the second from the current branch (new json)
+    """
+    old_json_obj = get_remote_file(path)
+    new_json_obj = JSON[file_type](path)
+
+    return old_json_obj, new_json_obj
 
 def get_yml_objects(path: str, file_type) -> Tuple[Any, YAMLContentObject]:
     """
@@ -100,66 +190,48 @@ def get_yml_objects(path: str, file_type) -> Tuple[Any, YAMLContentObject]:
 
     return old_yml_obj, new_yml_obj
 
-def generate_arguments_diff(command_name, old_args, new_args):
+def deleted_content(old_content_dict, new_content_dict, type, parent_name):
     rn = ''
-    old_arg_names = {arg['name']: arg for arg in old_args}
-    new_arg_names = {arg['name']: arg for arg in new_args}
-
-    # Arguments removed
-    for old_arg_name, old_arg in old_arg_names.items():
-        if old_arg_name not in new_arg_names:
-            rn += f'- Updated the **{command_name}** to not use the `{old_arg_name}` argument.\n'
-
-    # Arguments added or updated
-    for new_arg_name, new_arg in new_arg_names.items():
-        if new_arg_name not in old_arg_names:
-            rn += f'- Updated the **{command_name}** to use the `{new_arg_name}` argument.\n'
-        elif new_arg.get('deprecated') and not old_arg_names[new_arg_name].get('deprecated'):
-            rn += f'- Deprecated the `{new_arg_name}` argument inside the **{command_name}** command.\n'
-
+    for old_content_name, old_content in old_content_dict.items():
+        if old_content_name not in new_content_dict:
+            if type == content_type.ARGUMENT and parent_name:
+                rn += f'- Breaking Changes: Updated the **{parent_name}** to not use the `{old_content_name}` argument.\n'
+            else:
+                rn += f'- Breaking Changes: Deleted the **{old_content.get("display", old_content_name)}** {type.value}.\n'
+            logger.info(f'Please add a breaking changes json file for deleting the {old_content.get("display", old_content_name)}** {type.value}')
     return rn
 
-
-def get_commands_updates(old_commands, new_commands):
+def added_or_updated_content(old_content_dict, new_content_dict, type, parent_name):
     rn = ''
-    old_command_names = {command['name']: command for command in old_commands}
-    new_command_names = {command['name']: command for command in new_commands}
-
-    # Commands removed
-    for old_command_name, old_command in old_command_names.items():
-        if old_command_name not in new_command_names:
-            rn += f'- Deleted the **{old_command_name}** command.\n'
-
-    # Commands added or updated
-    for new_command_name, new_command in new_command_names.items():
-        if new_command_name not in old_command_names:
-            rn += f'- Added the **{new_command_name}** command which {new_command.get("description", "")}\n'
+    for new_content_name, new_content in new_content_dict.items():
+        if new_content_name not in old_content_dict:
+            if type == content_type.ARGUMENT and parent_name:
+                rn += f'- Updated the **{parent_name}** to use the `{new_content_name}` argument.\n'
+            else:
+                content_info = new_content.get("additionalinfo", new_content.get("description"))
+                rn += f'- Added the **{new_content.get("display", new_content_name)}** {type.value}' \
+                    f'{(" which " + content_info.lower()) if content_info else "."}\n'
         else:
-            old_command = old_command_names[new_command_name]
-            rn += generate_arguments_diff(new_command_name, old_command.get('arguments', []), new_command.get('arguments', []))
+            old_content = old_content_dict[new_content_name]
+            if new_content.get('deprecated') and not old_content.get('deprecated'):
+                if type == content_type.COMMAND:
+                    rn += f'- Deprecated ***{new_content_name}*** {type.value}. Use %%% instead.\n'
+                elif type == content_type.ARGUMENT and parent_name:
+                    rn += f'- Deprecated the `{new_content_name}` {type.value} inside the **{parent_name}** command.\n'
+                else:
+                    rn += f'- Deprecated ***{new_content_name}*** {type.value}.\n'
+            if (type == content_type.PARAMETER or type == content_type.ARGUMENT) and new_content.get('required') and not old_content.get('required'):
+                rn += f'- Updated the **{new_content.get("display", new_content_name)}** {type.value} to be required.\n'
+            elif type == content_type.COMMAND:
+                rn+= find_diff(old_content.get('arguments', []), new_content.get('arguments', []), content_type.ARGUMENT, new_content_name)
     return rn
 
-def generate_parameter_diff(old_parameter, new_parameter):
-    rn=''
-    if 'deprecated' in new_parameter and new_parameter.get('deprecated') and ('deprecated' not in old_parameter or not new_parameter.get('deprecated')):
-        rn += f'- Deprecated the **{new_parameter.get("display")}** parameter.\n'
-    elif 'required' in new_parameter  and new_parameter['required'] and ('required' not in old_parameter or not old_parameter['required']):
-        rn += f'- Updated the **{new_parameter.get("display")}** parameter to be required.\n'
-    return rn
-
-def get_configurations_updates(old_configurations, new_configurations):
+def find_diff(old_content_info, new_content_info, type, parent_name=None):
     rn = ''
-    new_configurations_dict = {new_configuration.get('name'):new_configuration for new_configuration in new_configurations}
-    old_configurations_dict = {old_configuration.get('name'):old_configuration for old_configuration in old_configurations}
-    for old_configuration_name, old_configuration in old_configurations_dict.items():
-        if old_configuration_name not in new_configurations_dict:
-            rn += f'- Deleted the **{old_configuration.get("display", "")}** parameter.\n'
-    for new_configuration_name, new_configuration in new_configurations_dict.items():
-        if new_configuration_name not in old_configurations_dict:
-            rn += f'- Added the **{new_configuration.get("display")}** parameter' \
-                f'{" which " + new_configuration.get("additionalinfo") + "." if new_configuration.get("additionalinfo") else "."}\n'
-        else:
-            rn+= generate_parameter_diff(old_configurations_dict[new_configuration_name], new_configuration)
+    old_content_dict = {old_content.get('name'):old_content for old_content in old_content_info}
+    new_content_dict = {new_content.get('name'):new_content for new_content in new_content_info}
+    rn += deleted_content(old_content_dict, new_content_dict, type, parent_name)
+    rn += added_or_updated_content(old_content_dict, new_content_dict, type, parent_name)
     return rn
 
 
@@ -176,17 +248,6 @@ def get_deprecated_rn(old_yml, new_yml, file_type):
 
     if file_type != FileType.INTEGRATION:
         return ""
-
-    # look for deprecated commands
-    rn = ""
-    old_commands = deprecated_commands(old_yml.get("script", {}).get("commands") or [])
-    new_commands = deprecated_commands(new_yml.script.get("commands") or [])
-
-    for command_name in new_commands:
-        # if command is deprecated in new yml, and not in old yml
-        if command_name not in old_commands:
-            rn += f"- Deprecated ***{command_name}*** command. Use %%% instead.\n"
-    return rn
 
 
 class UpdateRN:
@@ -339,6 +400,7 @@ class UpdateRN:
                 "fromversion": get_from_version_at_update_rn(packfile),
                 "dockerimage": docker_image_name,
                 "path": packfile,
+                "name": get_content_item_name(packfile, file_type)
             }
         self.pack_metadata_only = (not changed_files) and self.pack_metadata_only
         return self.create_pack_rn(rn_path, changed_files, new_metadata, new_version)
@@ -759,6 +821,7 @@ class UpdateRN:
             from_version = data.get("fromversion", "")
             docker_image = data.get("dockerimage")
             path = data.get("path")
+            name = data.get("name")
             # Skipping the invalid files
             if not _type or content_name == "N/A":
                 continue
@@ -771,6 +834,7 @@ class UpdateRN:
                 docker_image=docker_image,
                 from_version=from_version,
                 path=path,
+                name=name
             )
 
             header = f"\n#### {RN_HEADER_BY_FILE_TYPE[_type]}\n\n"
@@ -791,6 +855,7 @@ class UpdateRN:
         docker_image: Optional[str] = "",
         from_version: str = "",
         path: str = "",
+        name : str = ""
     ) -> str:
         """Builds the release notes description.
 
@@ -813,22 +878,11 @@ class UpdateRN:
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
-                if desc and _type in (
-                        FileType.INTEGRATION,
-                        FileType.SCRIPT,
-                        FileType.PLAYBOOK,
-                    ):
-                    if desc == '%%UPDATE_RN%%':
-                        new_yml = CLASS_BY_FILE_TYPE[_type](path)
-                        rn_desc += f"- New: added a new {_type.lower()}- {new_yml.get('display', '')} which {new_yml.get('description', '')}"
-                        if _type == FileType.INTEGRATION:
-                            rn_desc += "\n- Added the following commands:\n"
-                            new_yml = CLASS_BY_FILE_TYPE[_type](path)
-                            new_commands = new_yml.script.get("commands", [])
-                            for command in new_commands:
-                                rn_desc += f"**{command.get('name')}**\n"
-                    else:
-                        rn_desc += f"- New: {desc}"
+                if _type in YML or _type in JSON:
+                    new_content_file = YML[_type](path) if _type in YML else JSON[_type](path)
+                    rn_desc += f"- New: added a new {CONVERT_FOR_RN.get(_type, _type.lower())} - {name} which {desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.'}"
+                else:
+                    rn_desc += f"- New: {desc}"
                 if _type in SIEM_ONLY_ENTITIES or content_name.replace(
                     " ", ""
                 ).lower().endswith(EVENT_COLLECTOR.lower()):
@@ -845,6 +899,12 @@ class UpdateRN:
                     ):
                         rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
                 rn_desc += "\n"
+                if _type == FileType.INTEGRATION:
+                    rn_desc += "\n- Added the following commands:\n"
+                    new_content_file = CLASS_BY_FILE_TYPE[_type](path)
+                    new_commands = new_content_file.script.get("commands", [])
+                    for command in new_commands:
+                        rn_desc += f"\t- ***{command.get('name')}***\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"
                 if self.update_type == "documentation":
@@ -856,16 +916,23 @@ class UpdateRN:
                         FileType.SCRIPT,
                         FileType.PLAYBOOK,
                     ):
-                        old_yml, new_yml = get_yml_objects(path, _type)
-                        deprecate_rn = get_deprecated_rn(old_yml, new_yml, _type)
+                        old_yml, new_content_file = get_yml_objects(path, _type)
+                        deprecate_rn = get_deprecated_rn(old_yml, new_content_file, _type)
                     if deprecate_rn:
                         if text:
                             rn_desc += f"- {text}\n"
                         rn_desc += deprecate_rn
                     else:
                         if _type == FileType.INTEGRATION:
-                            rn_desc += get_configurations_updates(old_yml.get("configuration", []), new_yml.get("configuration", []))
-                            rn_desc += get_commands_updates(old_yml.get("script", {}).get("commands", []), new_yml.script.get("commands", []))
+                            rn_desc += find_diff(old_yml.get("configuration", []), new_content_file.get("configuration", []), content_type.PARAMETER)
+                            rn_desc += find_diff(old_yml.get("script", {}).get("commands", []), new_content_file.script.get("commands", []), content_type.COMMAND)
+                        elif _type == FileType.SCRIPT:
+                            rn_desc += find_diff(old_yml.get("args"), new_content_file.get("args"), content_type.ARGUMENT)
+                        elif _type in JSON:
+                            old_json, new_json = get_json_objects(path, _type)
+                            if associated_types := new_json.get('associatedTypes'):
+                                pass
+                                # TODO
                         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
 
         if docker_image:
@@ -918,6 +985,7 @@ class UpdateRN:
             docker_image = data.get("dockerimage")
             rn_desc = ""
             path = data.get("path")
+            name = data.get("name")
             if _type is None:
                 continue
 
@@ -929,6 +997,7 @@ class UpdateRN:
                 is_new_file=is_new_file,
                 docker_image=docker_image,
                 path=path,
+                name=name
             )
             if _header_by_type and _header_by_type in current_rn_without_docker_images:
                 if self.does_content_item_header_exist_in_rns(
@@ -1055,6 +1124,36 @@ class UpdateRN:
         self.existing_rn_changed = True
         return updated_rn
 
+def get_content_item_name(path, file_type) -> str:
+    """Gets the content item name description.
+
+    :param
+        path: The file path
+        file_type: The file type
+
+    :rtype: ``str``
+    :return
+    The file description if exists otherwise returns %%UPDATE_RN%%
+    """
+    if not Path(path).is_file():
+        logger.info(
+            f'<yellow>Cannot get file description: "{path}" file does not exist</yellow>'
+        )
+        return ""
+    if file_type in JSON:
+        file = get_json(path)
+    elif file_type in YML:
+        file = get_yaml(path)
+    else:
+        return "%%UPDATE_CONTENT_ITEM_NAME%%"
+    name = ""
+    if file_type == FileType.TRIGGER:
+        name = file.get('trigger_name')
+    elif file_type == FileType.XSIAM_DASHBOARD:
+        name = file.get('dashboards_data', {})[0].get('name')
+    if file.get("display"):
+        name = file.get("display")
+    return name or file.get("name", "%%UPDATE_CONTENT_ITEM_NAME%%.")
 
 def get_file_description(path, file_type) -> str:
     """Gets the file description.
@@ -1073,34 +1172,19 @@ def get_file_description(path, file_type) -> str:
         )
         return ""
 
-    elif file_type in (
-        FileType.PLAYBOOK,
-        FileType.INTEGRATION,
-        FileType.CORRELATION_RULE,
-        FileType.MODELING_RULE,
-        FileType.PARSING_RULE,
-    ):
-        yml_file = get_yaml(path)
-        return yml_file.get("description", "")
-
-    elif file_type == FileType.SCRIPT:
-        yml_file = get_yaml(path)
-        return yml_file.get("comment", "")
-
-    elif file_type in (
-        FileType.CLASSIFIER,
-        FileType.REPORT,
-        FileType.WIDGET,
-        FileType.DASHBOARD,
-        FileType.JOB,
-        FileType.TRIGGER,
-        FileType.WIZARD,
-    ):
-        json_file = get_json(path)
-        return json_file.get("description", "")
-
-    return "%%UPDATE_RN%%"
-
+    if file_type in YML:
+        file = get_yaml(path)
+    elif file_type in JSON:
+        file = get_json(path)
+    else:
+        return "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%"
+    description = ''
+    if file_type == FileType.SCRIPT:
+        description = file.get("comment")
+    elif file_type == FileType.XSIAM_DASHBOARD:
+        description = file.get('dashboards_data', {})[0].get('description')
+    description = description or file.get("description", "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%")
+    return description if description.endswith(".") else f"{description}."
 
 def update_api_modules_dependents_rn(
     pre_release: bool,

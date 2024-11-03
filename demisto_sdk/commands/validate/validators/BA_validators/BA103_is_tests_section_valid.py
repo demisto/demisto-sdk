@@ -17,7 +17,7 @@ class IsTestsSectionValidValidator(BaseValidator[ContentTypes]):
     error_code = "BA103"
     description = 'Validate that the test section is either stating explicitly "No tests" or has a non-empty list of tests.'
     rationale = "Enforce a generic standard for making sure there are tests."
-    error_message = 'The following {0} tests section is malformed. It should either be a non empty list for tests or "No tests" in case there are no tests.'
+    error_message = 'The tests section of the following {0} is malformed. It should either be a non empty list for tests or "No tests" in case there are no tests.'
     related_field = "tests"
     is_auto_fixable = False
     expected_git_statuses = [

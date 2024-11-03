@@ -705,10 +705,6 @@ ERROR_CODE: Dict = {
         "code": "IN160",
         "related_field": "deprecated",
     },
-    "invalid_siem_marketplaces_entry": {
-        "code": "IN161",
-        "related_field": "display",
-    },
     "partner_collector_does_not_have_xsoar_support_level": {
         "code": "IN162",
         "related_field": "",
@@ -2087,14 +2083,6 @@ class Errors:
             f"The display name of this v{version_number} integration is incorrect , "
             f"should be **name** v{version_number}.\n"
             f"e.g: Kenna v{version_number}, Jira v{version_number}"
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_siem_marketplaces_entry():
-        return (
-            "The marketplaces field of this XSIAM integration is incorrect.\n"
-            'This field should have only the "marketplacev2" value.'
         )
 
     @staticmethod

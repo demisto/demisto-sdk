@@ -1332,6 +1332,9 @@ RELEASE_NOTES_REGEX = (
     re.escape(UNRELEASE_HEADER)
     + r"([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}"
 )
+CONTENT_TYPE_SECTION_REGEX = re.compile(
+    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
+)
 
 # pack contributors template
 CONTRIBUTORS_README_TEMPLATE = (

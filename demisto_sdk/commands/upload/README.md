@@ -27,9 +27,8 @@ In order to set Demisto SDK to work with Cortex XSOAR instance, you need to dele
 unset XSIAM_AUTH_ID
 ```
 
-### Use Cases
-This command is used in order to upload content entities to a remote Demisto instance.
-Supported content entities:
+### Supported content entities for upload:
+You can upload these content entities to a remote instance.
 - Integrations
 - Playbooks
 - Scripts
@@ -49,39 +48,30 @@ Supported content entities:
 Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 ### Arguments
-* **-i <PATH_IN_CONTENT>, --input --<PATH_IN_CONTENT>**
+* **-i, --input**
 
-    Where PATH_IN_CONTENT is one of the following:
+    The path of file or a directory to upload. The following are supported:
     1. Pack
-    2. Directory inside a pack for example: Playbooks
+    2. Directory inside a pack for example: Integrations
     3. Directory containing an integration or a script data for example: HelloWorld
     4. Valid file that can be imported to Cortex XSOAR manually For example a playbook: HelloWorld.yml
-    5. Path to zipped pack (may located outside the Content directory)
+    5. Path to zipped pack (may locate outside the Content directory)
 
-* **-z, --zip**
+* **-z/-nz, --zip/--no-zip**
 
-    in case a pack was passed in the -i argument or using `--input-config-file` argument - zip the pack before upload.
-    Defauts to `true`.
+    Compress the pack to zip before upload, this flag is relevant only for packs.
 
-* **--nz, --no-zip**
+* **--keep-zip**
 
-    Will not zip the pack and will upload the content items, item by item as custom content.
-
-* **--keep-zip <DIRECTORY_FOR_THE_ZIP>**
-
-    in case a pack was passed in the -i argument and -z is used, DIRECTORY_FOR_THE_ZIP is where to store the zip after creation.
+    Directory where to store the zip after creation, this argument is relevant only for packs and in case the --zip flag is used.
 
 * **--override-existing**
 
-    If true, will skip the override confirmation prompt while uploading packs.
+    This value (True/False) determines if the user should be presented with a confirmation prompt when attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload command to be used within non-interactive shells.
 
 * **--insecure**
 
     Skip certificate validation
-
-* **-v, --verbose**
-
-    Verbose output - The argument -v is deprecated. Use --console-log-threshold or --file-log-threshold instead.
 
 * **--input-config-file**
 
@@ -89,7 +79,7 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 * **--skip-validation**
 
-    if true will skip all upload packs validations, use just when migrate existing custom content entities to custom content packs to override all the entities with the packs.
+    Only for upload zipped packs, if true will skip upload packs validation, use just when migrate existing custom content to packs.
 
 * **-x, --xsiam**
 
@@ -102,68 +92,77 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 * **--file-log-threshold**
 
     Minimum logging threshold for the file logger. Possible values: DEBUG, INFO, WARNING, ERROR.
+* **-tpb**
+
+    Adds the test playbook for upload when the -tpb flag is used. This flag is relevant only for packs.
+* **-mp, --marketplace**
+
+    The marketplace to which the content will be uploaded.
+* **--reattach**
+
+    Reattach the detached files in the XSOAR instance for the CI/CD Flow. If you set the --input-config-file flag, any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder will be re-attached.
 
 ### Examples
 ```
 demisto-sdk upload -i Packs/HelloWorld/Integrations/HelloWorld/
 ```
-This will create a unified **integration** YML file and will upload it to the Cortex XSOAR instance.
+Creates a unified **integration** YML file and will upload it to the Cortex XSOAR instance.
 <br/><br/>
 ```
 demisto-sdk upload -i Packs/HelloWorld/Scripts/HelloWorldScript
 ```
-This will create a temporary unified file of the `HelloWorldScript` **script** which will be uploaded to the Cortex XSOAR instance.
+Creates a temporary unified file of the `HelloWorldScript` **script** which will be uploaded to the Cortex XSOAR instance.
 <br/><br/>
 
 ```
 demisto-sdk upload -i Packs/HelloWorld/Scripts
 ```
-This will iterate over the **scripts** folder under the `HelloWorld` pack and in turn will create a temporary unified file for each script and upload it to the Cortex XSOAR instance.
+Iterates over the **scripts** folder under the `HelloWorld` pack and in turn will create a temporary unified file for each script and upload it to the Cortex XSOAR instance.
 <br/><br/>
 
 ```
 demisto-sdk upload -i Packs/HelloWorld
 ```
-This will iterate over **all content entities** under the pack `HelloWorld` and will and in turn will upload each entity to the Cortex XSOAR instance.
+Iterates over **all content entities** under the pack `HelloWorld` and will and in turn will upload each entity to the Cortex XSOAR instance.
 <br/><br/>
 ```
 demisto-sdk upload -i Packs/HelloWorld -z
 ```
-This will zip the pack `HelloWorld` and will upload the zip file `uploadable_packs.zip` as a pack to the designated Cortex XSOAR Marketplace.
+Zips the pack `HelloWorld` and will upload the zip file `uploadable_packs.zip` as a pack to the designated Cortex XSOAR Marketplace.
 <br/><br/>
 ```
 demisto-sdk upload -i Packs/HelloWorld -z --keep-zip some/directory
 ```
-This will zip the pack `HelloWorld` in `some/directory/uploadable_packs.zip` directory and will upload the zip file as a pack to the designated Cortex XSOAR Marketplace.
+Zips the pack `HelloWorld` in `some/directory/uploadable_packs.zip` directory and will upload the zip file as a pack to the designated Cortex XSOAR Marketplace.
 <br/><br/>
 ```
 demisto-sdk upload -i path/to/HelloWorld.zip
 ```
-This will upload the zipped pack `HelloWorld.zip` to the Cortex XSOAR instance.
+Uploads the zipped pack `HelloWorld.zip` to the Cortex XSOAR instance.
 <br/><br/>
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml --insecure
 ```
-This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Cortex XSOAR instance, **without a certificate validation**.
+Uploads the integration YML file `integration-GoogleCloudTranslate.yml` to the Cortex XSOAR instance, **without a certificate validation**.
 <br/><br/>
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml --verbose
 ```
-This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Cortex XSOAR instance and **print the response returned from the API**.
+Uploads the integration YML file `integration-GoogleCloudTranslate.yml` to the Cortex XSOAR instance and **print the response returned from the API**.
 ```
 demisto-sdk upload --input-config-file demisto_sdk/commands/upload/tests/data/xsoar_config.json
 ```
-This will upload the custom packs from the config file, a custom pack can be zipped file or unzipped file.
+Uploads the custom packs from the config file, a custom pack can be zipped file or unzipped file.
 <br/><br/>
 ```
 demisto-sdk upload -i Packs/HelloWorld -z --skip-validation
 ```
-This will zip the pack `HelloWorld` and will upload without any validation the zip file `uploadable_packs.zip` as a pack to the designated Cortex XSOAR Marketplace.
+Zips the pack `HelloWorld` and will upload without any validation the zip file `uploadable_packs.zip` as a pack to the designated Cortex XSOAR Marketplace.
 This `skip validation` parameter is for migration from custom content entities to custom content packs.
 <br/><br/>
 
 ```
 demisto-sdk upload -i Packs/HelloWorld -z --xsiam
 ```
-This will zip the pack `HelloWorld` and will upload it to the XSIAM server Marketplace page.
+Zips the pack `HelloWorld` and will upload it to the XSIAM server Marketplace page.
 <br/><br/>

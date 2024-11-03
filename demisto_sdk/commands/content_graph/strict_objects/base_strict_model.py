@@ -20,6 +20,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
+    create_dynamic_model,
     create_model,
 )
 
@@ -51,6 +52,13 @@ class _Argument(BaseStrictModel):
     hidden: Optional[bool] = None
 
 
+HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="hidden",
+    type_=Optional[bool],
+    default=None,
+    suffixes=[MarketplaceVersions.MarketplaceV2.value],
+)
+
 Argument = create_model(
     model_name="Argument",
     base_models=(
@@ -60,6 +68,7 @@ Argument = create_model(
         DESCRIPTION_DYNAMIC_MODEL,
         DEPRECATED_DYNAMIC_MODEL,
         DEFAULT_DYNAMIC_MODEL,
+        HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
     ),
 )
 

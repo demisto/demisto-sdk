@@ -901,8 +901,10 @@ def get_file(
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
             return json.loads(result) if isinstance(result, str) else result
     except Exception as e:
+        # Substitute in the file path. This is to ensure the logger doesn't fail on this tag.
+        new_err_text = re.sub(r"<file>", str(file_path), str(e))
         logger.error(
-            f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
+            f"{file_path} has a structure issue of file type {type_of_file}\n{new_err_text}"
         )
         if raise_on_error:
             raise
@@ -4624,3 +4626,14 @@ def pascalToSpace(s):
     # split and join: to remove double spacing caused by previous workaround
     s = " ".join(s.split())
     return s
+
+
+def filter_none_values(ls: Union[List, Tuple]) -> List:
+    """
+        Filters out None values from a list or tuple.
+    Args:
+        ls: (List | Tuple) - This list or tuple to filter.
+    Return:
+        List filtered from None values.
+    """
+    return list(filter(lambda x: x, ls))

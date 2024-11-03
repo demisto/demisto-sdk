@@ -180,7 +180,7 @@ tests = ["mypy (>=0.800)", "pytest", "pytest-asyncio"]
 name = "astor"
 version = "0.8.1"
 description = "Read/rewrite/write Python ASTs"
-optional = true
+optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
 files = [
     {file = "astor-0.8.1-py2.py3-none-any.whl", hash = "sha256:070a54e890cefb5b3739d19f30f5a5ec840ffc9c50ffa7d23cc9fc1a38ebbfc5"},
@@ -5415,4 +5415,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "6a2ec009dccf44a98de8d5b5b6ef5c290d72cf26b5b6a8ff4e321b796d2d17f5"
+content-hash = "3eac7cf2404d8a58b71cfd94061680f62f88fa4f8d8a674c4cf438d6fce21385"

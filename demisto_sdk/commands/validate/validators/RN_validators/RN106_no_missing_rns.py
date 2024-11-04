@@ -37,7 +37,6 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
     expected_git_statuses = [
         GitStatuses.ADDED,
         GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
         GitStatuses.DELETED,
     ]
     related_file_type = [RelatedFileType.RELEASE_NOTE]
@@ -47,7 +46,7 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
         return bool(
             pack.pack_version
             and pack.pack_version > parse("1.0.0")
-            and not pack.release_note.file_content
+            and pack.release_note.git_status != GitStatuses.ADDED
         )
 
     def get_missing_rns_for_api_module_dependents(self, api_module: Script) -> set[str]:

@@ -1,4 +1,4 @@
-from functools import cached_property
+from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
@@ -19,9 +19,9 @@ if TYPE_CHECKING:
     # avoid circular imports
     from demisto_sdk.commands.content_graph.objects.script import Script
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -205,9 +205,25 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data["configuration"] = [param.dict(exclude_none=True) for param in self.params]
         write_dict(self.path, data, indent=4)
 
+    @validator("git_status", always=True)
+    def validate_git_status(
+        cls, v: Optional[GitStatuses], values: dict
+    ) -> Optional[GitStatuses]:
+        return (
+            v
+            or cls.get_description_file(
+                values.get("path"), values.get("git_sha")
+            ).git_status
+        )
+
+    @staticmethod
+    @lru_cache
+    def get_description_file(path: Path, git_sha: str) -> DescriptionRelatedFile:
+        return DescriptionRelatedFile(path, git_sha=git_sha)
+
     @cached_property
     def description_file(self) -> DescriptionRelatedFile:
-        return DescriptionRelatedFile(self.path, git_sha=self.git_sha)
+        return self.get_description_file(self.path, git_sha=self.git_sha)
 
     @cached_property
     def dark_svg(self) -> DarkSVGRelatedFile:

@@ -235,6 +235,37 @@ def find_diff(old_content_info, new_content_info, type, parent_name=None):
     return rn
 
 
+def create_rn_for_updated_content_item(path, _type, text):
+    rn_desc = ''
+    deprecate_rn = ''
+    if _type in YML:
+        old_content_file, new_content_file = get_yml_objects(path, _type)
+    if _type in (
+    FileType.INTEGRATION,
+    FileType.SCRIPT,
+    FileType.PLAYBOOK,
+    ):
+        deprecate_rn = get_deprecated_rn(old_content_file, new_content_file, _type)
+    if deprecate_rn:
+        if text:
+            rn_desc += f"- {text}\n"
+        rn_desc += deprecate_rn
+    else:
+        if _type == FileType.INTEGRATION:
+            rn_desc += find_diff(old_content_file.get("configuration", []), new_content_file.get("configuration", []), content_type.PARAMETER)
+            rn_desc += find_diff(old_content_file.get("script", {}).get("commands", []), new_content_file.script.get("commands", []), content_type.COMMAND)
+        elif _type == FileType.SCRIPT:
+            rn_desc += find_diff(old_content_file.get("args"), new_content_file.get("args"), content_type.ARGUMENT)
+        elif _type in JSON:
+            old_json_file, new_json_file = get_json_objects(path, _type)
+            if new_associated_types := new_json_file.get('associatedTypes'):
+                old_associated_types = old_json_file.get('associatedTypes')
+                
+                # TODO
+        rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+    return rn_desc
+
+
 def get_deprecated_rn(old_yml, new_yml, file_type):
     """Generate rn for deprecated items"""
     if not old_yml.get("deprecated") and new_yml.is_deprecated:
@@ -910,30 +941,8 @@ class UpdateRN:
                 if self.update_type == "documentation":
                     rn_desc += "- Documentation and metadata improvements.\n"
                 else:
-                    deprecate_rn = ""
-                    if _type in (
-                        FileType.INTEGRATION,
-                        FileType.SCRIPT,
-                        FileType.PLAYBOOK,
-                    ):
-                        old_yml, new_content_file = get_yml_objects(path, _type)
-                        deprecate_rn = get_deprecated_rn(old_yml, new_content_file, _type)
-                    if deprecate_rn:
-                        if text:
-                            rn_desc += f"- {text}\n"
-                        rn_desc += deprecate_rn
-                    else:
-                        if _type == FileType.INTEGRATION:
-                            rn_desc += find_diff(old_yml.get("configuration", []), new_content_file.get("configuration", []), content_type.PARAMETER)
-                            rn_desc += find_diff(old_yml.get("script", {}).get("commands", []), new_content_file.script.get("commands", []), content_type.COMMAND)
-                        elif _type == FileType.SCRIPT:
-                            rn_desc += find_diff(old_yml.get("args"), new_content_file.get("args"), content_type.ARGUMENT)
-                        elif _type in JSON:
-                            old_json, new_json = get_json_objects(path, _type)
-                            if associated_types := new_json.get('associatedTypes'):
-                                pass
-                                # TODO
-                        rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+                    create_rn_for_updated_content_item(path, _type, text)
+
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n"

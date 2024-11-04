@@ -11,9 +11,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.test_script import TestScript
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.test_content.TestContentClasses import TestPlaybook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -49,37 +49,44 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
             and pack.release_note.git_status != GitStatuses.ADDED
         )
 
-    def get_missing_rns_for_api_module_dependents(self, api_module: Script) -> set[str]:
+    def get_missing_rns_for_api_module_dependents(
+        self, api_module: Script
+    ) -> dict[str, Pack]:
         dependent_packs: list[Pack] = [
             dependency.in_pack
             for dependency in api_module.imported_by
             if dependency.in_pack
         ]
-        return set(
-            [
-                pack.object_id
-                for pack in dependent_packs
-                if self.is_pack_missing_rns(pack)
-            ]
-        )
+        return {
+            pack.object_id: pack
+            for pack in dependent_packs
+            if self.is_pack_missing_rns(pack)
+        }
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        results = set()
+        results: dict[str, Pack] = {}
         for content_item in content_items:
             if isinstance(content_item, (TestPlaybook, TestScript)):
                 continue
             if (
                 isinstance(content_item, Script)
-                and content_item.pack_id == API_MODULES_PACK
+                and content_item.in_pack
+                and content_item.in_pack.name == API_MODULES_PACK
             ):
-                results |= self.get_missing_rns_for_api_module_dependents(content_item)
+                results.update(
+                    self.get_missing_rns_for_api_module_dependents(content_item)
+                )
             elif content_item.in_pack and self.is_pack_missing_rns(
                 content_item.in_pack
             ):
-                results.add(content_item.pack_id)
+                results[content_item.pack_id] = content_item.in_pack
         return [
-            ValidationResult(validator=self, message=self.error_message.format(p))
-            for p in results
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(pack_id),
+                content_object=pack,
+            )
+            for pack_id, pack in results.items()
         ]

@@ -1,4 +1,15 @@
 # Changelog
+## 0.0.0 (2024-11-04)
+### Breaking
+* Moved CJ102 to the new validate format. The validation's error number is now BA103 and it ensure that the tests section is either a non-empty list or "No tests". [#4638](https://github.com/demisto/demisto-sdk/pull/4638)
+
+### Fix
+* Fixed an issue where getting a malformed file raised an non-indicative error. [#4625](https://github.com/demisto/demisto-sdk/pull/4625)
+
+### Internal
+* Moved RN113 to the new validate format. The validation ensures that all the first level headers in the release note are valid content types. [#4635](https://github.com/demisto/demisto-sdk/pull/4635)
+
+
 ## 1.32.3
 * Fixed an issue where integrations and scripts validations didn't run in builds. [#4609](https://github.com/demisto/demisto-sdk/pull/4609)
 * Added BA127 new validation. The validation checks that the level of depth of the context output path in the yml is lower or equal to 5 in XSOAR supported content items. [#4490](https://github.com/demisto/demisto-sdk/pull/4490)

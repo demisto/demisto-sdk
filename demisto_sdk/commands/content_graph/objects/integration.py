@@ -209,12 +209,15 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     def validate_git_status(
         cls, v: Optional[GitStatuses], values: dict
     ) -> Optional[GitStatuses]:
-        return (
-            v
-            or cls.get_description_file(
-                values.get("path"), values.get("git_sha")
-            ).git_status
-        )
+        try:
+            return (
+                v
+                or cls.get_description_file(
+                    values.get("path"), values.get("git_sha")
+                ).git_status
+            )
+        except ValueError:
+            return v
 
     @staticmethod
     @lru_cache

@@ -492,6 +492,7 @@ select = [
   "RN112",
   "RN113",
   "RN114",
+  "RN115",
   "RN116"
 ]
 warning = []

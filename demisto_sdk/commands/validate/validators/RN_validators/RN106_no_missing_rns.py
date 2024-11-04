@@ -76,7 +76,9 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
                 and content_item.pack_id == API_MODULES_PACK
             ):
                 results |= self.get_missing_rns_for_api_module_dependents(content_item)
-            if content_item.in_pack and self.is_pack_missing_rns(content_item.in_pack):
+            elif content_item.in_pack and self.is_pack_missing_rns(
+                content_item.in_pack
+            ):
                 results.add(content_item.pack_id)
         return [
             ValidationResult(validator=self, message=self.error_message.format(p))

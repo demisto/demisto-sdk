@@ -1,0 +1,4 @@
+changes:
+- description: Moved RN106 to the new validate format. The validation ensures there are no missing release notes.
+  type: internal
+pr_number: 4643

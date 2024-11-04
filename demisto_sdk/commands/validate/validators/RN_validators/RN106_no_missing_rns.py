@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from packaging.version import parse
+
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     GitStatuses,
@@ -22,7 +24,7 @@ ContentTypes = ContentItem
 
 class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
     error_code = "RN106"
-    description = "Validate that there are no missing RNs."
+    description = "Validate that there are no missing release notes."
     rationale = "Ensure that whenever there is an actual pack update, it is visible to customers."
     error_message = (
         f"Release notes were not found. Please run `demisto-sdk "
@@ -40,6 +42,14 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
     ]
     related_file_type = [RelatedFileType.RELEASE_NOTE]
 
+    @staticmethod
+    def is_pack_missing_rns(pack: Pack) -> bool:
+        return bool(
+            pack.pack_version
+            and pack.pack_version > parse("1.0.0")
+            and not pack.release_note.file_content
+        )
+
     def get_missing_rns_for_api_module_dependents(self, api_module: Script) -> set[str]:
         dependent_packs: list[Pack] = [
             dependency.in_pack
@@ -50,7 +60,7 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
             [
                 pack.object_id
                 for pack in dependent_packs
-                if not pack.release_note.file_content
+                if self.is_pack_missing_rns(pack)
             ]
         )
 
@@ -66,10 +76,7 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
                 and content_item.pack_id == API_MODULES_PACK
             ):
                 results |= self.get_missing_rns_for_api_module_dependents(content_item)
-            if (
-                content_item.in_pack
-                and not content_item.in_pack.release_note.file_content
-            ):
+            if content_item.in_pack and self.is_pack_missing_rns(content_item.in_pack):
                 results.add(content_item.pack_id)
         return [
             ValidationResult(validator=self, message=self.error_message.format(p))

@@ -1,4 +1,0 @@
-changes:
-- description: RM106 validation - updated the validation message to reflect the problem is in the README file.
-  type: internal
-pr_number: 4604

@@ -480,14 +480,14 @@ def get_filters_and_transformers_from_complex_value(
     all_transformers = set()
 
     # add the filters to all_filters set
-    filters = complex_value.get("filters", [])
+    filters = complex_value.get("filters") or []
     for tmp_filter in filters:
         if tmp_filter:
             operator = tmp_filter[0].get("operator")
             all_filters.add(operator)
 
     # add the transformers to all_transformers set
-    transformers = complex_value.get("transformers", [])
+    transformers = complex_value.get("transformers") or []
     for tmp_transformer in transformers:
         if tmp_transformer:
             operator = tmp_transformer.get("operator")

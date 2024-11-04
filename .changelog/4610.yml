@@ -1,4 +1,0 @@
-changes:
-- description: Added the ***hidden:marketplacev2*** field to the StrictScript pydantic object since it was recently added to the script schema.
-  type: feature
-pr_number: 4610

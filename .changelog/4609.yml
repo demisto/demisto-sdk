@@ -1,6 +1,0 @@
-changes:
-- description: Removed IN161 - invalid siem marketplace from the old validate.
-  type: fix
-- description: Fixed an issue where integrations and scripts validations didn't run in builds.
-  type: breaking
-pr_number: 4609

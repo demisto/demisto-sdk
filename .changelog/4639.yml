@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the **validate** and **create-id-set** commands would fail to process correctly when encountering null values in the filters or transformers fields.
+  type: fix
+pr_number: 4639

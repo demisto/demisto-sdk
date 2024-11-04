@@ -30,7 +30,10 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
 )
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-from demisto_sdk.commands.validate.tools import extract_rn_headers, filter_rn_headers
+from demisto_sdk.commands.validate.tools import (
+    extract_rn_headers,
+    filter_rn_headers_prefix,
+)
 
 
 class ReleaseNotesValidator(BaseValidator):
@@ -401,7 +404,7 @@ class ReleaseNotesValidator(BaseValidator):
         """
         headers = extract_rn_headers(self.latest_release_notes)
         validations = [self.validate_first_level_header_exists()]
-        filter_rn_headers(headers=headers)
+        filter_rn_headers_prefix(headers=headers)
         for content_type, content_items in headers.items():
             validations.append(
                 self.rn_valid_header_format(

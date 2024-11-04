@@ -39,6 +39,7 @@ from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
@@ -51,6 +52,7 @@ from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
 )
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.parsers.related_files import ImageRelatedFile
+from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.file import File
 from TestSuite.repo import Repo
@@ -178,6 +180,39 @@ def create_playbook_object(
     playbook.yml.update(yml_content)
     parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
     return Playbook.from_orm(parser)
+
+
+def create_test_playbook_object(
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+    readme_content: Optional[str] = None,
+) -> TestPlaybook:
+    """Creating a test playbook object with altered fields from a default test playbook yml structure.
+
+    Args:
+        paths (Optional[List[str]]): The keys to update.
+        values (Optional[List[Any]]): The values to update.
+        pack_info (Optional[List[str]]): The playbook's pack name.
+        readme_content (Optional[List[Any]]): The playbook's readme.
+    Returns:
+        The test playbook object.
+    """
+    yml_content = load_yaml("playbook.yml")
+    update_keys(yml_content, paths, values)
+    pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
+    additional_params = {}
+
+    if readme_content is not None:
+        additional_params["readme"] = readme_content
+
+    playbook = pack.create_test_playbook(**additional_params)
+    playbook.create_default_test_playbook(name="sample")
+    playbook.yml.update(yml_content)
+    parser = TestPlaybookParser(Path(playbook.path), list(MarketplaceVersions))
+    return TestPlaybook.from_orm(parser)
 
 
 def create_doc_file_object(

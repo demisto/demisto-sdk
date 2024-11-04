@@ -1,11 +1,14 @@
 import pytest
 
+from demisto_sdk.commands.content_graph.common import RelationshipType
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_incoming_mapper_object,
     create_integration_object,
     create_old_file_pointers,
     create_pack_object,
     create_script_object,
+    create_test_playbook_object,
     create_trigger_object,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
@@ -13,6 +16,9 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_not
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN105_multiple_rns_added import (
     MultipleRNsAddedValidator,
+)
+from demisto_sdk.commands.validate.validators.RN_validators.RN106_no_missing_rns import (
+    IsMissingReleaseNotes,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN108_is_rn_added_to_new_pack import (
     IsRNAddedToNewPackValidator,
@@ -520,3 +526,98 @@ def test_IsValidContentTypeHeaderValidator_obtain_invalid_content_items():
     assert all(
         [res_msg in expected_msgs for res_msg in [result.message for result in results]]
     )
+
+
+def test_IsMissingReleaseNotes():
+    """
+    Given:
+    - DummyPack1 with a changed integration, a release notes file exists
+    - DummyPack2 with a changed script, a release notes file does not exist
+    - DummyPack3 with a changed test playbook, a release notes file exist does not exist
+    When:
+    - Calling IsMissingReleaseNotes.obtain_invalid_content_items().
+    Then:
+    - Ensure only one validation error is returned for DummyPack2 with the changed script.
+
+    """
+    pack1 = create_pack_object(
+        paths=["object_id"],
+        values=["DummyPack1"],
+        release_note_content="this is a rn",
+    )
+    integ = create_integration_object(
+        paths=["pack"],
+        values=[pack1],
+    )
+    pack2 = create_pack_object(
+        paths=["object_id"],
+        values=["DummyPack2"],
+    )
+    script = create_script_object(
+        paths=["pack"],
+        values=[pack2],
+    )
+    pack3 = create_pack_object(
+        paths=["object_id"],
+        values=["DummyPack3"],
+    )
+    tpb = create_test_playbook_object(
+        paths=["pack"],
+        values=[pack3],
+    )
+    validator = IsMissingReleaseNotes()
+    results = validator.obtain_invalid_content_items([integ, script, tpb])
+    assert len(results) == 1
+    assert pack2.object_id in results[0].message
+
+
+@pytest.mark.parametrize("release_note", [None, "this is a rn"])
+def test_IsMissingReleaseNotes_missing_release_note_for_api_module_dependent(
+    release_note: str | None,
+):
+    """
+    Given:
+    - A change in an API module imported by an integration of DummyPack (the integration itself was not modified).
+        - Case 1: The dependent pack (DummyPack) does not have a release note.
+        - Case 2: The dependent pack (DummyPack) has a release note.
+    When:
+    - Calling IsMissingReleaseNotes.obtain_invalid_content_items().
+    Then:
+    - Case 1: Ensure only one validation error is returned with DummyPack mentioned within its message.
+    - Case 2: Ensure no validation results are returned.
+
+    """
+    pack1 = create_pack_object(
+        paths=["object_id"],
+        values=["DummyPack"],
+        release_note_content=release_note,
+    )
+    integ1 = create_integration_object(
+        paths=["pack"],
+        values=[pack1],
+    )
+    api_modules_pack = create_pack_object(
+        paths=["object_id"],
+        values=["ApiModules"],
+    )
+    api_module = create_script_object(
+        paths=["pack"],
+        values=[api_modules_pack],
+    )
+    integ1.add_relationship(
+        RelationshipType.IMPORTS,
+        RelationshipData(
+            relationship_type=RelationshipType.IMPORTS,
+            source_id=integ1.object_id,
+            target_id=api_module.object_id,
+            content_item_to=api_module,
+        ),
+    )
+    validator = IsMissingReleaseNotes()
+    results = validator.obtain_invalid_content_items([api_module])
+    if release_note:
+        assert len(results) == 1
+        assert pack1.object_id in results[0].message
+        assert api_modules_pack.object_id not in results[0].message
+    else:
+        assert not results

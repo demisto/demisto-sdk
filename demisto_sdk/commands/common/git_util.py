@@ -68,6 +68,8 @@ class GitUtil:
             raise InvalidGitRepositoryError(
                 f"Unable to find Repository from current {Path(repo_path).absolute()} - aborting"
             )
+        except Exception as e:
+            logger.error(f'{str(e)}|{e.with_traceback=}')
 
     @classmethod
     def from_content_path(cls, path: Optional[Path] = None) -> "GitUtil":

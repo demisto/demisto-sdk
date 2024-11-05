@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     GitStatuses,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -68,6 +69,7 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         results: dict[str, Pack] = {}
         for content_item in content_items:
+            logger.info(f"{content_item.path=}")
             if isinstance(content_item, (TestPlaybook, TestScript)):
                 continue
             if (

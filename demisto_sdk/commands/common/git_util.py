@@ -63,6 +63,8 @@ class GitUtil:
             logger.debug(f'GitUtil using {type(repo_path)=} | {repo_path=}')
             repo_path = Path(repo_path)
             logger.debug(f'GitUtil {repo_path.exists()=}')
+            if os.path.isdir(repo_path):
+                logger.debug(f'GitUtil {os.listdir(repo_path)=}')
             
             self.repo = Repo(
                 repo_path, search_parent_directories=search_parent_directories

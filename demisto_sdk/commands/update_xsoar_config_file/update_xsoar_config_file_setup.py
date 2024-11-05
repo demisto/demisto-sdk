@@ -4,12 +4,7 @@ from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file impo
     XSOARConfigFileUpdater,
 )
 
-xsoar_config_file_update_app = typer.Typer(
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True}
-)
 
-
-@xsoar_config_file_update_app.command()
 def xsoar_config_file_update(
     ctx: typer.Context,
     pack_id: str = typer.Option(
@@ -51,7 +46,3 @@ def xsoar_config_file_update(
         file_path=file_path,
     )
     return file_updater.update()
-
-
-if __name__ == "__main__":
-    xsoar_config_file_update_app()

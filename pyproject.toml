@@ -97,7 +97,6 @@ more-itertools = "^10.0.0"
 junitparser = "^3.1.0"
 google-cloud-secret-manager = "^2.18.3"
 json5 = "^0.9.14"
-klara = {version = "^0.6.3", optional = true}
 typing-extensions = "^4.1.1" # not a mypy types- dependency
 pre-commit = "^3.5.0"
 lxml = "^5.0.0"
@@ -107,6 +106,7 @@ werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
 loguru = "^0.7.2"
 pygithub = "^2.2.0"
 astor = "^0.8.1"
+klara = "^0.6.3"
 
 [tool.poetry.extras]
 build = ["gsutil"]

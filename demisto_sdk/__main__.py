@@ -1,16 +1,14 @@
-import functools
 import json
 import os
 import platform
 from pathlib import Path
+from click import get_current_context
 
 import typer
-from click import get_current_context
 from dotenv import load_dotenv
 from pkg_resources import DistributionNotFound, get_distribution
 from typer.main import get_command
 
-from demisto_sdk import logging_setup
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import (
     convert_path_to_str,
@@ -56,7 +54,7 @@ from demisto_sdk.commands.run_test_playbook.run_test_playbook_setup import (
     run_test_playbook,
 )
 from demisto_sdk.commands.secrets.secrets_setup import secrets
-from demisto_sdk.commands.setup_env.setup_env_setup import setup_env
+from demisto_sdk.commands.setup_env.setup_env_setup import setup_env_command
 from demisto_sdk.commands.split.split_setup import split
 from demisto_sdk.commands.update_release_notes.update_release_notes_setup import (
     update_release_notes,
@@ -68,37 +66,8 @@ from demisto_sdk.commands.upload.upload_setup import upload
 from demisto_sdk.commands.validate.validate_setup import validate
 from demisto_sdk.commands.xsoar_linter.xsoar_linter_setup import xsoar_linter
 from demisto_sdk.commands.zip_packs.zip_packs_setup import zip_packs
+from demisto_sdk.commands.test_content.test_content_setup import test_content
 from demisto_sdk.config import get_config
-
-
-def logging_setup_decorator(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        # Use Click's get_current_context to retrieve the context
-        context = get_current_context()
-        if not context:
-            raise RuntimeError(
-                "No context found. Ensure the command is invoked properly."
-            )
-
-        # Extract global options from context.params
-        console_log_threshold = context.params.get("console_log_threshold", "INFO")
-        file_log_threshold = context.params.get("file_log_threshold", "DEBUG")
-        log_file_path = context.params.get("log_file_path")
-
-        # Set up logging
-        logging_setup(
-            console_threshold=console_log_threshold,
-            file_threshold=file_log_threshold,
-            path=log_file_path,
-            calling_function=func.__name__,
-        )
-
-        # Call the original function
-        return func(*args, **kwargs)
-
-    return wrapper
-
 
 app = typer.Typer(rich_markup_mode="markdown")
 
@@ -240,7 +209,7 @@ app.command(
 app.command(
     name="setup-env",
     help="Creates a content environment and and integration/script environment.",
-)(setup_env)
+)(setup_env_command)
 app.command(
     name="update-release-notes",
     help="Automatically generates release notes for a given pack and updates the pack_metadata.json version for changed items.",
@@ -265,6 +234,9 @@ app.command(
 app.command(
     name="error-code", help="Quickly find relevant information regarding an error code."
 )(error_code)
+app.command(
+    name="test-content", help="Created incidents for selected test-playbooks and gives a report about the results.",
+    hidden=True)(test_content)
 app.command(name="export-api", help="Dumps the `demisto-sdk` API to a file.")(dump_api)
 app.add_typer(
     graph_cmd_group,
@@ -275,12 +247,12 @@ app.add_typer(
 )
 
 
-@logging_setup_decorator
 @app.callback(
     invoke_without_command=True,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 def main(
+    ctx: typer.Context,
     version: bool = typer.Option(
         False, "--version", "-v", help="Show the current version of demisto-sdk."
     ),

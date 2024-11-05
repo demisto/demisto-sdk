@@ -2,11 +2,7 @@ from pathlib import Path
 
 import typer
 
-# Initialize the Typer app
-upload_app = typer.Typer()
 
-
-@upload_app.command(help="Upload integration or pack to Demisto instance.")
 def upload(
     input_path: Path = typer.Option(
         ...,
@@ -136,7 +132,3 @@ def upload(
 
 def upload_content_entity(**kwargs):
     typer.echo(f"Uploading content with the following parameters: {kwargs}")
-
-
-if __name__ == "__main__":
-    upload_app()

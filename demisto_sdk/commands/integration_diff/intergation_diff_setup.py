@@ -2,13 +2,7 @@ import typer
 from demisto_sdk.commands.integration_diff.integration_diff_detector import IntegrationDiffDetector
 import sys
 
-integration_diff_app = typer.Typer()
 
-
-@integration_diff_app.command(
-    name="integration-diff",
-    help="Given two versions of an integration, check that everything in the old integration is covered in the new integration."
-)
 def integration_diff(
     new: str = typer.Option(..., "-n", "--new", help="The path to the new version of the integration"),
     old: str = typer.Option(..., "-o", "--old", help="The path to the old version of the integration"),
@@ -29,7 +23,3 @@ def integration_diff(
     if result:
         sys.exit(0)
     sys.exit(1)
-
-
-if __name__ == "__main__":
-    integration_diff_app()

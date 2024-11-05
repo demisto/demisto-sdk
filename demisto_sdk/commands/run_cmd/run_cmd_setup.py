@@ -2,10 +2,7 @@ import typer
 
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-run_app = typer.Typer()
 
-
-@run_app.command(name="run")
 def run(
     query: str = typer.Option(..., help="The query to run"),
     insecure: bool = typer.Option(False, help="Skip certificate validation"),
@@ -37,7 +34,3 @@ def run(
     update_command_args_from_config_file("run", kwargs)
     runner = Runner(**kwargs)
     return runner.run()
-
-
-if __name__ == "__main__":
-    run_app()

@@ -5,10 +5,7 @@ import typer
 from demisto_sdk.config import get_config
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-secrets_app = typer.Typer()
 
-
-@secrets_app.command()
 def secrets(
         ctx: typer.Context,
         input: str = typer.Option(None, help="Specify file to check secret on."),
@@ -57,7 +54,3 @@ def secrets(
         input_path=input,
     )
     return secrets_validator.run()
-
-
-if __name__ == "__main__":
-    secrets_app()

@@ -7,13 +7,7 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import postman_to_auto
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.config import get_config
 
-postman_codegen_app = typer.Typer()
 
-
-@postman_codegen_app.command(
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
-    help="""Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
-)
 def postman_codegen(
     input: Path = typer.Option(..., help="The Postman collection 2.1 JSON file"),
     output: Path = typer.Option(Path("."), help="The output directory to save the config file or the integration"),
@@ -49,7 +43,3 @@ def postman_codegen(
             typer.echo(f"<green>Package generated at {str(Path(output).absolute())} successfully</green>")
         else:
             typer.echo(f"<green>Integration generated at {str(yml_path.absolute())} successfully</green>")
-
-
-if __name__ == "__main__":
-    postman_codegen_app()

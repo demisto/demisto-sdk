@@ -757,7 +757,7 @@ test = ["pytest"]
 name = "configargparse"
 version = "1.7"
 description = "A drop-in replacement for argparse that allows options to also be set via config files and/or environment variables."
-optional = true
+optional = false
 python-versions = ">=3.5"
 files = [
     {file = "ConfigArgParse-1.7-py3-none-any.whl", hash = "sha256:d249da6591465c6c26df64a9f73d2536e743be2f244eb3ebe61114af2f94f86b"},
@@ -2129,7 +2129,7 @@ files = [
 name = "klara"
 version = "0.6.3"
 description = "Automatic test case generation and static analysis library"
-optional = true
+optional = false
 python-versions = ">=3.6.2,<4.0"
 files = [
     {file = "klara-0.6.3-py3-none-any.whl", hash = "sha256:9687fb2503e0d0ae1ecc789d88af46d4008522a89db5d542c9c993ee6d0875d2"},
@@ -4655,7 +4655,7 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 name = "typed-ast"
 version = "1.5.5"
 description = "a fork of Python 2 and 3 ast modules with type comment support"
-optional = true
+optional = false
 python-versions = ">=3.6"
 files = [
     {file = "typed_ast-1.5.5-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:4bc1efe0ce3ffb74784e06460f01a223ac1f6ab31c6bc0376a21184bf5aabe3b"},
@@ -5316,18 +5316,18 @@ multidict = ">=4.0"
 
 [[package]]
 name = "z3-solver"
-version = "4.13.2.0"
+version = "4.13.3.0"
 description = "an efficient SMT solver library"
-optional = true
+optional = false
 python-versions = "*"
 files = [
-    {file = "z3_solver-4.13.2.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:93456e4c462c4bf9c94371807548ffbbfe68aa7187f67b8c9ce19e82db7d3d27"},
-    {file = "z3_solver-4.13.2.0-py3-none-macosx_12_7_x86_64.whl", hash = "sha256:61f313649d3877c91f67cded2cbefe0f33fe47f194eb43bb302694b9e3dfae2c"},
-    {file = "z3_solver-4.13.2.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:18a67ba6f934350c352d9930ace9a69ba9f6d0c52aca5a8d2e2265ad57fca6bd"},
-    {file = "z3_solver-4.13.2.0-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:1ae47832194d7ae6db6b04c856261f1ce3cd1ed0457d30cbec165559149859f9"},
-    {file = "z3_solver-4.13.2.0-py3-none-win32.whl", hash = "sha256:ce5d7478c6d7e7649d5ea9ac4e06091f0e94ef5998e31c1ca35c3cec62037dbc"},
-    {file = "z3_solver-4.13.2.0-py3-none-win_amd64.whl", hash = "sha256:63cdae5e8144b27a6afaab2d21a0baf97ed452797bff01ef1f0cbe9608cdff01"},
-    {file = "z3_solver-4.13.2.0.tar.gz", hash = "sha256:8b02db03e028e8f3b8498fe65e45ce7348c2995e66427353a0a8ce84ed83d934"},
+    {file = "z3_solver-4.13.3.0-py3-none-macosx_13_0_arm64.whl", hash = "sha256:cae621cb47ebcf055f6a27285343d5c932f4c282b15c5d2840327e73e15a86a4"},
+    {file = "z3_solver-4.13.3.0-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:7900fbd1917164c938a20bea7845f7b95fcb431d0ade474d408f979196bccb8f"},
+    {file = "z3_solver-4.13.3.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:794843e4946ade1561e40a75ffc1163b45d36b493fd6cc269ad1d6a65bddb8e5"},
+    {file = "z3_solver-4.13.3.0-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:ab5057cb1f4680406a232d2c1d968daaf69fae10685baa0887b85ca8e938a5cf"},
+    {file = "z3_solver-4.13.3.0-py3-none-win32.whl", hash = "sha256:ba465489e9ab609f1cf0f232cbc102165b89a507347a6093c2ac3224cf161aa3"},
+    {file = "z3_solver-4.13.3.0-py3-none-win_amd64.whl", hash = "sha256:d55e4793fa48230af766c7f6f7f033198b2d9df150d89ec65b07fd7b87998897"},
+    {file = "z3_solver-4.13.3.0.tar.gz", hash = "sha256:4c27466455bac65d3c512f4bb4841ac79e05e121d3f98ddc99ac27ab4bc27e05"},
 ]
 
 [[package]]
@@ -5415,4 +5415,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "3eac7cf2404d8a58b71cfd94061680f62f88fa4f8d8a674c4cf438d6fce21385"
+content-hash = "2469720c0c0dff59d9bff9880b135b21190131d82a6aca36548c138f07d86d1a"

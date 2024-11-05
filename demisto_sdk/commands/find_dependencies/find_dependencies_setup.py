@@ -2,10 +2,7 @@ import typer
 from pathlib import Path
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
-find_dependencies_app = typer.Typer()
 
-
-@find_dependencies_app.command(context_settings={"ignore_unknown_options": True, "allow_extra_args": True})
 def find_dependencies(
         input: list[Path] = typer.Option(
             None,

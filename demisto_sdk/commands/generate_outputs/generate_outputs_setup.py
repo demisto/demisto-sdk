@@ -3,10 +3,7 @@ from pathlib import Path
 from typing import Optional
 from demisto_sdk.commands.generate_outputs.generate_outputs import run_generate_outputs
 
-generate_outputs_app = typer.Typer()
 
-
-@generate_outputs_app.command(help="Generates outputs (from JSON or examples).")
 def generate_outputs(
     command: Optional[str] = typer.Option(None, "-c", "--command", help="Specific command name (e.g., xdr-get-incidents)"),
     json: Optional[Path] = typer.Option(None, "-j", "--json", help="Valid JSON file path. If not specified, the script will wait for user input in the terminal."),

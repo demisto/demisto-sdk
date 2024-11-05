@@ -3,10 +3,7 @@ from typing import Optional
 
 import typer
 
-pre_commit_app = typer.Typer()
 
-
-@pre_commit_app.command()
 def pre_commit(
     input_files: Optional[list[Path]] = typer.Option(
         None,
@@ -86,21 +83,6 @@ def pre_commit(
         "list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.",
     ),
     run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
-    console_log_threshold: str = typer.Option(
-        "INFO",
-        "--console-log-threshold",
-        help="Minimum logging threshold for the console logger.",
-    ),
-    file_log_threshold: str = typer.Option(
-        "DEBUG",
-        "--file-log-threshold",
-        help="Minimum logging threshold for the file logger.",
-    ),
-    log_file_path: Optional[str] = typer.Option(
-        None,
-        "--log-file-path",
-        help="Path to save log files onto.",
-    ),
     pre_commit_template_path: Optional[Path] = typer.Option(
         None,
         "--template-path",
@@ -133,7 +115,3 @@ def pre_commit(
     )
     if return_code:
         raise typer.Exit(1)
-
-
-if __name__ == "__main__":
-    pre_commit_app()

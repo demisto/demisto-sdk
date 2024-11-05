@@ -1,17 +1,9 @@
 import typer
 import json
-import os
-import sys
 from pathlib import Path
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
-openapi_codegen_app = typer.Typer()
 
-
-@openapi_codegen_app.command(
-    name="openapi-codegen",
-    help="Generates a Cortex XSOAR integration from an OpenAPI specification file."
-)
 def openapi_codegen(
         input_file: Path = typer.Option(..., "-i", "--input-file", help="The swagger file to load in JSON format"),
         config_file: Path = typer.Option(None, "-cf", "--config-file",

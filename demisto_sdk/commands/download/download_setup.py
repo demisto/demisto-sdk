@@ -4,8 +4,6 @@ import typer
 from pathlib import Path
 from typing import List
 
-download_app = typer.Typer()
-
 
 class ItemType(str, Enum):
     incident_type = "IncidentType"
@@ -18,7 +16,6 @@ class ItemType(str, Enum):
     mapper = "Mapper"
 
 
-@download_app.command(help="Download custom content from a Cortex XSOAR / XSIAM instance.")
 def download(
     output: Path = typer.Option(
         None, "--output", "-o", help="A path to a pack directory to download content to."
@@ -55,7 +52,3 @@ def download(
     # Assuming kwargs need to be passed as a dict:
     kwargs = locals()
     Downloader(**kwargs).download()
-
-
-if __name__ == "__main__":
-    download_app()

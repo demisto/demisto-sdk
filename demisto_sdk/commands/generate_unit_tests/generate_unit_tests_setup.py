@@ -5,10 +5,7 @@ from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
     run_generate_unit_tests,
 )
 
-generate_unit_tests_app = typer.Typer()
 
-
-@generate_unit_tests_app.command(short_help="Generates unit tests for integration code.")
 def generate_unit_tests(
     ctx: typer.Context,
     input_path: Path = typer.Option(..., "-i", "--input-path", help="Valid integration file path."),

@@ -1,10 +1,6 @@
 import typer
 
-# Create a Typer app for the run_playbook command
-run_playbook_app = typer.Typer()
 
-
-@run_playbook_app.command()
 def run_playbook(
         playbook_id: str = typer.Option(
             ...,
@@ -54,7 +50,3 @@ def run_playbook(
     )
 
     playbook_runner.run_playbook()
-
-
-if __name__ == "__main__":
-    run_playbook_app()

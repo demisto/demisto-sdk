@@ -7,12 +7,7 @@ from demisto_sdk.commands.common.constants import SDK_OFFLINE_ERROR_MESSAGE
 from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-update_release_notes_app = typer.Typer()
 
-
-@update_release_notes_app.command(
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True}
-)
 def update_release_notes(
     input: str = typer.Option(
         None, help="The relative path of the content pack. For example Packs/Pack_Name"
@@ -90,7 +85,3 @@ def update_release_notes(
             f"<red>An error occurred while updating the release notes: {str(e)}</red>"
         )
         sys.exit(1)
-
-
-if __name__ == "__main__":
-    update_release_notes_app()

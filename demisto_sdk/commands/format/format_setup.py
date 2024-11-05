@@ -9,12 +9,7 @@ from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-format_app = typer.Typer()
 
-
-@format_app.command(
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True}
-)
 def format(
     ctx: typer.Context,
     input: str = typer.Option(
@@ -121,7 +116,3 @@ def format(
             id_set_path=str(id_set_path) if id_set_path else None,
             use_graph=graph,
         )
-
-
-if __name__ == "__main__":
-    format_app()

@@ -4,11 +4,8 @@ import typer
 
 from demisto_sdk.commands.setup_env.setup_environment import IDEType, setup_env
 
-setup_env_app = typer.Typer()
 
-
-@setup_env_app.command(short_help="Setup integration environments")
-def setup_env(
+def setup_env_command(
     ide: str = typer.Option(
         "auto-detect",
         help="IDE type to configure the environment for. If not specified, "
@@ -77,7 +74,3 @@ def setup_env(
         test_module=run_test_module,
         clean=clean,
     )
-
-
-if __name__ == "__main__":
-    setup_env_app()

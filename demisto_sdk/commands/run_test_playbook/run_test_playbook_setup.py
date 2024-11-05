@@ -2,10 +2,7 @@ import typer
 
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-run_test_playbook_app = typer.Typer(name="run-test-playbook")
 
-
-@run_test_playbook_app.command()
 def run_test_playbook(
     test_playbook_path: str = typer.Option(
         None,
@@ -50,7 +47,3 @@ def run_test_playbook(
     update_command_args_from_config_file("run-test-playbook", kwargs)
     test_playbook_runner = TestPlaybookRunner(**kwargs)
     raise typer.Exit(test_playbook_runner.manage_and_run_test_playbooks())
-
-
-if __name__ == "__main__":
-    run_test_playbook_app()

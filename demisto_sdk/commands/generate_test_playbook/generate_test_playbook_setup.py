@@ -11,9 +11,7 @@ import sys
 
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-generate_test_playbook_app = typer.Typer()
 
-@generate_test_playbook_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def generate_test_playbook(
     ctx: typer.Context,
     input: Path = typer.Option(..., "-i", "--input", help="Specify integration/script yml path"),

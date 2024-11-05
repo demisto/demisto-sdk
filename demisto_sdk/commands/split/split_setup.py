@@ -7,10 +7,7 @@ from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.config import get_config
 
-split_app = typer.Typer()
 
-
-@split_app.command()
 def split(
     input: Path = typer.Option(..., help="The yml/json file to extract from"),
     output: Path = typer.Option(None, help="The output dir to write the extracted code/description/image/json to."),

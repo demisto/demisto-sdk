@@ -14,10 +14,7 @@ from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
 )
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-prepare_content_app = typer.Typer()
 
-
-@prepare_content_app.command(name="prepare-content")
 def prepare_content(
     input: str = typer.Option(
         None, help="Comma-separated list of paths to directories or files to unify."
@@ -111,7 +108,3 @@ def prepare_content(
         else:
             PrepareUploadManager.prepare_for_upload(**locals())
     return
-
-
-if __name__ == "__main__":
-    prepare_content_app()

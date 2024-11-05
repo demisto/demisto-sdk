@@ -4,13 +4,7 @@ from pathlib import Path
 from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-init_app = typer.Typer()
 
-
-@init_app.command(
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
-    help="Initialize a new Pack, Integration, or Script."
-)
 def init(
     ctx: typer.Context,
     name: str = typer.Option(None, "-n", "--name", help="The name of the directory and file you want to create"),

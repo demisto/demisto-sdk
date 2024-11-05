@@ -2,15 +2,7 @@ import typer
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 import sys
 
-doc_reviewer_app = typer.Typer()
 
-
-@doc_reviewer_app.command(
-    context_settings=dict(
-        ignore_unknown_options=True,
-        allow_extra_args=True,
-    )
-)
 def doc_review(
     ctx: typer.Context,
     input: list[str] = typer.Option(None, "-i", "--input", help="The path to the file to check"),
@@ -45,7 +37,3 @@ def doc_review(
     if result:
         sys.exit(0)
     sys.exit(1)
-
-
-if __name__ == "__main__":
-    doc_reviewer_app()

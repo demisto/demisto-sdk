@@ -19,10 +19,7 @@ from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-generate_docs_app = typer.Typer()
 
-
-@generate_docs_app.command(context_settings={"ignore_unknown_options": True, "allow_extra_args": True})
 def generate_docs(
     ctx: typer.Context,
     input: str = typer.Option(..., "-i", "--input", help="Path of the yml file."),
@@ -143,7 +140,3 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     except Exception:
         typer.echo(f"Failed generating docs for {input_path}", err=True)
         sys.exit(1)
-
-
-if __name__ == "__main__":
-    generate_docs_app()

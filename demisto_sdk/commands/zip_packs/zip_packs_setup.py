@@ -5,10 +5,7 @@ import typer
 from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-zip_packs_app = typer.Typer()
 
-
-@zip_packs_app.command()
 def zip_packs(
     input: List[str] = typer.Option(..., help="The packs to be zipped as a list of pack paths."),
     output: str = typer.Option(..., help="The destination directory to create the packs.", resolve_path=True),
@@ -46,7 +43,3 @@ def zip_packs(
         ).upload()
 
     return EX_SUCCESS if zip_path is not None else EX_FAIL
-
-
-if __name__ == "__main__":
-    zip_packs_app()

@@ -19,15 +19,9 @@ from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.config import get_config
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-validate_app = typer.Typer()
+DEFAULT_CONFIG_PATH = "https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/default_config.toml"
 
 
-@validate_app.command(
-    context_settings=dict(
-        ignore_unknown_options=True,
-        allow_extra_args=True,
-    )
-)
 def validate(
     ctx: typer.Context,
     file_paths: list[Path] = typer.Argument(..., exists=True, resolve_path=True),
@@ -59,7 +53,7 @@ def validate(
         False, "-a", "--validate-all", help="Run all validation on all files."
     ),
     input: list[Path] = typer.Option(
-        None, help="Path of the content pack/file to validate."
+        None, "-i", "--input", help="Path of the content pack/file to validate."
     ),
     skip_pack_release_notes: bool = typer.Option(
         False, help="Skip validation of pack release notes."
@@ -122,9 +116,23 @@ def validate(
         None, help="An error code to not run. Can be repeated."
     ),
 ):
+    typer.echo("Debug: Starting validation...")
+    typer.echo(f"Debug: Received file paths: {file_paths}")
     """Validate your content files. If no additional flags are given, will validate only committed files."""
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+    typer.echo(f"file_paths: {file_paths}")
+    typer.echo(f"use_git: {use_git}")
+
+    # If no config_path is provided, set to default
+    if config_path is None:
+        config_path = DEFAULT_CONFIG_PATH
+
+    # If no file_paths are provided, set defaults for use_git and post_commit
+    if not file_paths:
+        use_git = True
+        post_commit = True
 
     config = get_config()
     if is_sdk_defined_working_offline():
@@ -148,6 +156,7 @@ def validate(
 
     try:
         is_external_repo = is_external_repository()
+        # Determine execution mode based on provided flags
         if validate_all:
             execution_mode = ExecutionMode.ALL_FILES
         elif use_git:
@@ -155,10 +164,9 @@ def validate(
         elif file_path:
             execution_mode = ExecutionMode.SPECIFIC_FILES
         else:
-            execution_mode = ExecutionMode.USE_GIT
-            # default validate to -g --post-commit
-            use_git = True
-            post_commit = True
+            # If neither condition is satisfied, exit gracefully
+            typer.echo("No files specified and git validation is disabled.", err=True)
+            sys.exit(1)
 
         exit_code = 0
         run_new_validate = not skip_new_validate or (
@@ -284,7 +292,3 @@ def validate(
             err=True,
         )
         sys.exit(1)
-
-
-if __name__ == "__main__":
-    validate_app()

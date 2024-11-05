@@ -60,7 +60,10 @@ class GitUtil:
             repo_path = path or Path.cwd()
 
         try:
-            logger.debug(f'GitUtil using {repo_path=}')
+            logger.debug(f'GitUtil using {type(repo_path)=} | {repo_path=}')
+            repo_path = Path(repo_path)
+            logger.debug(f'GitUtil {repo_path.exists()=}')
+            
             self.repo = Repo(
                 repo_path, search_parent_directories=search_parent_directories
             )

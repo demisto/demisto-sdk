@@ -1,5 +1,7 @@
 import os
+import pprint
 import re
+import traceback
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Sequence, Set, Tuple, Union
@@ -41,8 +43,6 @@ class GitFileNotFoundError(FileNotFoundError):
         super().__init__(
             f"file {path} could not be found in commit/branch {commit_or_branch}"
         )
-
-
 class GitUtil:
     # in order to use Repo class/static methods
     REPO_CLS = Repo
@@ -55,7 +55,7 @@ class GitUtil:
         if isinstance(path, str):
             repo_path = Path(path)
         elif isinstance(path, self.REPO_CLS):
-            repo_path = path.working_dir  # type: ignore
+            repo_path = Path(path.working_dir)  # Ensure it's a Path object
         else:
             repo_path = path or Path.cwd()
 
@@ -63,18 +63,22 @@ class GitUtil:
             logger.debug(f'GitUtil using {type(repo_path)=} | {repo_path=}')
             repo_path = Path(repo_path)
             logger.debug(f'GitUtil {repo_path.exists()=}')
-            if os.path.isdir(repo_path):
-                logger.debug(f'GitUtil {os.listdir(repo_path)=}')
-            
+            if repo_path.is_dir():
+                logger.debug(f'GitUtil {list(repo_path.iterdir())=}')
+            logger.debug(f'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            logger.debug(f'{pprint.pformat(dict(os.environ))}')
+            logger.debug(f'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             self.repo = Repo(
                 repo_path, search_parent_directories=search_parent_directories
             )
         except InvalidGitRepositoryError:
             raise InvalidGitRepositoryError(
-                f"Unable to find Repository from current {Path(repo_path).absolute()} - aborting"
+                f"Unable to find Repository from current {repo_path.absolute()} - aborting"
             )
         except Exception as e:
-            logger.error(f'{str(e)}|{e.with_traceback=}')
+            logger.error(f'Exception occurred: {str(e)}')
+            logger.error(traceback.format_exc())
+            raise  # Re-raise the exception if necessary
 
     @classmethod
     def from_content_path(cls, path: Optional[Path] = None) -> "GitUtil":

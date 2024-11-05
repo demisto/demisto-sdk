@@ -177,6 +177,7 @@ class PreCommitRunner:
         """
         if command is None:
             command = ["run", "-a"]
+        logger.debug(f'_run_pre_commit_process running command: {command} | {path=}')
         return subprocess.run(
             list(
                 filter(
@@ -193,7 +194,8 @@ class PreCommitRunner:
                 )
             ),
             env=precommit_env,
-            cwd=get_content_path(),
+            cwd=CONTENT_PATH,
+            # cwd=get_content_path(),
             stdout=stdout,
             stderr=stdout,
             universal_newlines=True,
@@ -227,6 +229,12 @@ class PreCommitRunner:
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
         del pre_commit_context
+        
+        # LOG THE CONTENT OF 'PRECOMMIT_CONFIG_MAIN_PATH'
+        with open(PRECOMMIT_CONFIG_MAIN_PATH, 'r') as f:
+            logger.debug(f'∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞')
+            logger.debug(f"Pre-commit config: {f.read()}")
+            logger.debug(f'∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞')
         # install dependencies of all hooks in advance
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
@@ -236,6 +244,7 @@ class PreCommitRunner:
         )
 
         num_processes = cpu_count()
+        logger.debug(f'demisto-sdk run {num_processes=}')
         all_hooks_exit_codes = []
         for (
             original_hook_id,

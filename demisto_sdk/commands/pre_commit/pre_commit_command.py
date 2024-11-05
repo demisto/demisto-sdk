@@ -178,8 +178,8 @@ class PreCommitRunner:
         if command is None:
             command = ["run", "-a"]
         logger.debug(f'_run_pre_commit_process running command: {command} | {path=}')
-        return subprocess.run(
-            list(
+        logger.debug(f'_run_pre_commit_process {precommit_env=}')
+        commands = list(
                 filter(
                     None,
                     [
@@ -192,14 +192,25 @@ class PreCommitRunner:
                         "-v" if verbose and "run" in command else "",
                     ],
                 )
-            ),
+            )
+        logger.debug(f'_run_pre_commit_process {commands=}')
+        logger.debug(f'_run_pre_commit_process {CONTENT_PATH=}')
+        
+        result = subprocess.run(
+            commands,
             env=precommit_env,
             cwd=CONTENT_PATH,
             # cwd=get_content_path(),
-            stdout=stdout,
-            stderr=stdout,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             universal_newlines=True,
         )
+        if result.returncode != 0:
+            logger.error(f'Pre-commit command failed with return code {result.returncode}')
+            logger.error(f'Stdout: {result.stdout}')
+            logger.error(f'Stderr: {result.stderr}')
+        
+        return result
 
     @staticmethod
     def run(
@@ -242,9 +253,10 @@ class PreCommitRunner:
             verbose,
             command=["install-hooks"],
         )
-
+        logger.debug('ff finished installing hooks')
         num_processes = cpu_count()
         logger.debug(f'demisto-sdk run {num_processes=}')
+
         all_hooks_exit_codes = []
         for (
             original_hook_id,

@@ -28,10 +28,10 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
     description = "Validate that there are no missing release notes."
     rationale = "Ensure that whenever there is an actual pack update, it is visible to customers."
     error_message = (
-        f"Release notes were not found. Please run `demisto-sdk "
-        f"update-release-notes -i Packs/{0} -u (major|minor|revision|documentation)` to "
-        f"generate release notes according to the new standard. You can refer to the documentation "
-        f"found here: https://xsoar.pan.dev/docs/integrations/changelog for more information."
+        "Release notes were not found. Please run `demisto-sdk "
+        "update-release-notes -i Packs/{0} -u (major|minor|revision|documentation)` to "
+        "generate release notes according to the new standard. You can refer to the documentation "
+        "found here: https://xsoar.pan.dev/docs/integrations/changelog for more information."
     )
     related_field = "release notes"
     is_auto_fixable = False
@@ -44,11 +44,15 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
 
     @staticmethod
     def is_pack_missing_rns(pack: Pack) -> bool:
-        return bool(
-            pack.pack_version
-            and pack.pack_version > parse("1.0.0")
-            and pack.release_note.git_status != GitStatuses.ADDED
+        is_pack_update = pack.pack_version is not None and pack.pack_version > parse(
+            "1.0.0"
         )
+        no_new_release_note = pack.release_note.git_status != GitStatuses.ADDED
+        logger.info(f"{pack.object_id} = {pack.pack_version}")
+        logger.info(
+            f"{pack.release_note.latest_rn_version} = {pack.release_note.git_status}"
+        )
+        return is_pack_update and no_new_release_note
 
     def get_missing_rns_for_api_module_dependents(
         self, api_module: Script
@@ -58,6 +62,7 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
             for dependency in api_module.imported_by
             if dependency.in_pack
         ]
+        logger.info(f"api module: {[p.object_id for p in dependent_packs]}")
         return {
             pack.object_id: pack
             for pack in dependent_packs

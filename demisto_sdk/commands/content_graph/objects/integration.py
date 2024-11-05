@@ -210,12 +210,16 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         cls, v: Optional[GitStatuses], values: dict
     ) -> Optional[GitStatuses]:
         try:
-            return (
-                v
-                or cls.get_description_file(
-                    values.get("path"), values.get("git_sha")
-                ).git_status
+            desc_file = cls.get_description_file(
+                values.get("path"), values.get("git_sha")
             )
+            if (
+                values.get("path")
+                == "Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml"
+            ):
+                logger.info(f"{v=}, {desc_file.git_status=}")
+            res = v or desc_file.git_status
+            return res
         except ValueError:
             return v
 

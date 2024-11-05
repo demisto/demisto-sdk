@@ -201,7 +201,7 @@ class PreCommitRunner:
         logger.debug(f'_run_pre_commit_process {CONTENT_PATH=}')
         content_path = os.getenv('DEMISTO_SDK_CONTENT_PATH') or CONTENT_PATH
         logger.debug(f'_run_pre_commit_process {content_path=}')
-        
+
         if not os.path.isdir(content_path):
             raise NotADirectoryError(f"The specified path {content_path} is not a directory.")
         else:
@@ -212,16 +212,15 @@ class PreCommitRunner:
             commands,
             env=precommit_env,
             cwd=content_path,
-            # cwd=get_content_path(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stdout=stdout,
+            stderr=stdout,
             universal_newlines=True,
         )
 
         if result.returncode != 0:
-            logger.error(f'Pre-commit command failed with return code {result.returncode}')
-            logger.error(f'Stdout: {result.stdout}')
-            logger.error(f'Stderr: {result.stderr}')
+            logger.debug(f'Pre-commit command failed with return code {result.returncode}')
+            logger.debug(f'Stdout: {result.stdout}')
+            logger.debug(f'Stderr: {result.stderr}')
         return result
 
     @staticmethod

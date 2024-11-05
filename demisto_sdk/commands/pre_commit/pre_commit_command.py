@@ -195,11 +195,11 @@ class PreCommitRunner:
             )
         logger.debug(f'_run_pre_commit_process {commands=}')
         logger.debug(f'_run_pre_commit_process {CONTENT_PATH=}')
-        
+        content_path = os.getenv('DEMISTO_SDK_CONTENT_PATH') or CONTENT_PATH
         result = subprocess.run(
             commands,
             env=precommit_env,
-            cwd=CONTENT_PATH,
+            cwd=content_path,
             # cwd=get_content_path(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

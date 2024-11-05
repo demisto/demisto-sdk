@@ -178,7 +178,11 @@ class PreCommitRunner:
         if command is None:
             command = ["run", "-a"]
         logger.debug(f'_run_pre_commit_process running command: {command} | {path=}')
+        logger.debug(f'_run_pre_commit_process {os.getcwd()=}')
         logger.debug(f'_run_pre_commit_process {precommit_env=}')
+        result = subprocess.run(['git', 'ls-files'], capture_output=True, text=True)
+        tracked_files = result.stdout.strip().split('\n')
+        logger.debug(f'_run_pre_commit_process {tracked_files=}')
         commands = list(
                 filter(
                     None,
@@ -196,6 +200,14 @@ class PreCommitRunner:
         logger.debug(f'_run_pre_commit_process {commands=}')
         logger.debug(f'_run_pre_commit_process {CONTENT_PATH=}')
         content_path = os.getenv('DEMISTO_SDK_CONTENT_PATH') or CONTENT_PATH
+        logger.debug(f'_run_pre_commit_process {content_path=}')
+        
+        if not os.path.isdir(content_path):
+            raise NotADirectoryError(f"The specified path {content_path} is not a directory.")
+        else:
+            logger.debug(f'_run_pre_commit_process files and dirs in {content_path}: {os.listdir(content_path)}')
+
+
         result = subprocess.run(
             commands,
             env=precommit_env,
@@ -205,6 +217,7 @@ class PreCommitRunner:
             stderr=subprocess.PIPE,
             universal_newlines=True,
         )
+
         if result.returncode != 0:
             logger.error(f'Pre-commit command failed with return code {result.returncode}')
             logger.error(f'Stdout: {result.stdout}')
@@ -245,7 +258,7 @@ class PreCommitRunner:
             logger.debug(f'∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞')
             logger.debug(f"Pre-commit config: {f.read()}")
             logger.debug(f'∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞')
-        # install dependencies of all hooks in advance
+        # # install dependencies of all hooks in advance
         # PreCommitRunner._run_pre_commit_process(
         #     PRECOMMIT_CONFIG_MAIN_PATH,
         #     precommit_env,

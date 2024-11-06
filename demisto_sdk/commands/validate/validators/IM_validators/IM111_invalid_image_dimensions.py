@@ -17,10 +17,8 @@ ContentTypes = Integration
 
 
 def is_image_dimensions_valid(content_item: ContentTypes) -> bool:
-    if content_item.image.file_path.suffix == "png":
-        return (IMAGE_WIDTH, IMAGE_HEIGHT) == imagesize.get(
-            content_item.image.file_path
-        )
+    if content_item.image.path.suffix == "png":
+        return (IMAGE_WIDTH, IMAGE_HEIGHT) == imagesize.get(content_item.image.path)
     return True
 
 

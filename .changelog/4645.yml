@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where exception stack traces wouldn't always be shown in logs, when creating a test docker image.
+  type: fix
+pr_number: 4645

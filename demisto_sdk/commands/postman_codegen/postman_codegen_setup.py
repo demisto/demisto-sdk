@@ -5,7 +5,7 @@ import typer
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.postman_codegen.postman_codegen import postman_to_autogen_configuration
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.config import get_config
+from demisto_sdk.commands.common.configuration import sdk
 
 
 def postman_codegen(
@@ -17,7 +17,7 @@ def postman_codegen(
     config_out: bool = typer.Option(False, help="Used for advanced integration customization. Generates a config JSON file instead of integration."),
     package: bool = typer.Option(False, help="Generated integration will be split to package format instead of a YML file.")
 ):
-    config = get_config()
+
     postman_config = postman_to_autogen_configuration(
         collection=json.load(open(input)),  # Open the file directly
         name=name,
@@ -34,7 +34,7 @@ def postman_codegen(
         yml_path = postman_config.generate_integration_package(output, is_unified=True)
         if package:
             yml_splitter = YmlSplitter(
-                configuration=config.configuration,
+                configuration=sdk.configuration,
                 file_type=FileType.INTEGRATION,
                 input=str(yml_path),
                 output=str(output),

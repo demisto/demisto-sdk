@@ -2,7 +2,6 @@ import json
 import os
 import platform
 from pathlib import Path
-from click import get_current_context
 
 import typer
 from dotenv import load_dotenv
@@ -67,18 +66,11 @@ from demisto_sdk.commands.validate.validate_setup import validate
 from demisto_sdk.commands.xsoar_linter.xsoar_linter_setup import xsoar_linter
 from demisto_sdk.commands.zip_packs.zip_packs_setup import zip_packs
 from demisto_sdk.commands.test_content.test_content_setup import test_content
-from demisto_sdk.config import get_config
+from demisto_sdk.commands.common.configuration import sdk
+
 
 app = typer.Typer(rich_markup_mode="markdown")
 
-export_app = typer.Typer(
-    name="dump-api", context_settings={"help_option_names": ["-h", "--help"]}
-)
-
-
-@export_app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
-)
 def dump_api(
     ctx: typer.Context,
     output_path: Path = typer.Option(
@@ -246,7 +238,6 @@ app.add_typer(
     "content and the relationships between content packs, including dependencies.",
 )
 
-
 @app.callback(
     invoke_without_command=True,
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -262,19 +253,18 @@ def main(
         "-rn",
         help="Show the release notes for the current version.",
     ),
-    console_log_threshold: str = typer.Option(
-        None,
-        "--console-log-threshold",
-        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
-    ),
-    file_log_threshold: str = typer.Option(
-        None, "--file-log-threshold", help="Minimum logging threshold for file output."
-    ),
-    log_file_path: str = typer.Option(
-        None, "--log-file-path", help="Path to save log files."
-    ),
+    # console_log_threshold: str = typer.Option(
+    #     None,
+    #     "--console-log-threshold",
+    #     help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    # ),
+    # file_log_threshold: str = typer.Option(
+    #     None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    # ),
+    # log_file_path: str = typer.Option(
+    #     None, "--log-file-path", help="Path to save log files."
+    # ),
 ):
-    config_instance = get_config()
     load_dotenv(Path(os.getcwd()) / ".env", override=True)
 
     if platform.system() == "Windows":

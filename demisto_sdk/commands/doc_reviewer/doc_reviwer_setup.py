@@ -1,6 +1,7 @@
 import typer
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 import sys
+from demisto_sdk.commands.common.configuration import sdk
 
 
 def doc_review(

@@ -3,6 +3,7 @@ from enum import Enum
 import typer
 from pathlib import Path
 from typing import List
+from demisto_sdk.commands.common.configuration import sdk
 
 
 class ItemType(str, Enum):

@@ -334,7 +334,7 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
                     # "DEBUG",
                 ],
             )
-
+    # print(result)
     assert result.exit_code == 0  # Check if command succeeded
     assert not result.exception  # Ensure no exceptions occurred
 

@@ -13,6 +13,7 @@ from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
 from demisto_sdk.utils.utils import update_command_args_from_config_file
+from demisto_sdk.commands.common.configuration import sdk
 
 
 def prepare_content(

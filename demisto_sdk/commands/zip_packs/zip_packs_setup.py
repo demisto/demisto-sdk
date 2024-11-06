@@ -4,6 +4,7 @@ import typer
 
 from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
 from demisto_sdk.utils.utils import update_command_args_from_config_file
+from demisto_sdk.commands.common.configuration import sdk
 
 
 def zip_packs(
@@ -21,12 +22,11 @@ def zip_packs(
         PacksZipper,
     )
 
-    # Update command args from config file if needed
     update_command_args_from_config_file("zip-packs", locals())
 
     should_upload = upload
     zip_all = zip_all or should_upload
-    marketplace = parse_marketplace_kwargs(locals())  # Replace with appropriate function if needed
+    marketplace = parse_marketplace_kwargs(locals())
 
     packs_zipper = PacksZipper(
         zip_all=zip_all,

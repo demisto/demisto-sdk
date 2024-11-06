@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.config import get_config
+from demisto_sdk.commands.common.configuration import sdk
 
 
 def split(
@@ -19,8 +19,6 @@ def split(
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files (To a package format - https://demisto.pan.dev/docs/package-dir).
     """
-
-    config = get_config()
 
     file_type: FileType = find_type(str(input), ignore_sub_categories=True)
     if file_type not in [
@@ -44,7 +42,7 @@ def split(
     ]:
         yml_splitter = YmlSplitter(
             input=str(input),
-            configuration=config.configuration,
+            configuration=sdk.configuration,
             file_type=file_type.value,
             no_demisto_mock=no_demisto_mock,
             no_common_server=no_common_server,

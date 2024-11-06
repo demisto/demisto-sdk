@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 import git
 import typer
@@ -16,15 +17,13 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
-from demisto_sdk.config import get_config
+from demisto_sdk.commands.common.configuration import sdk
 from demisto_sdk.utils.utils import update_command_args_from_config_file
-
-DEFAULT_CONFIG_PATH = "https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/default_config.toml"
 
 
 def validate(
     ctx: typer.Context,
-    file_paths: list[Path] = typer.Argument(..., exists=True, resolve_path=True),
+    file_paths: Optional[list[Path]] = typer.Argument(None, exists=True, resolve_path=True),
     no_conf_json: bool = typer.Option(False, help="Skip conf.json validation."),
     id_set: bool = typer.Option(
         False, help="Perform validations using the id_set file."
@@ -116,25 +115,15 @@ def validate(
         None, help="An error code to not run. Can be repeated."
     ),
 ):
-    typer.echo("Debug: Starting validation...")
-    typer.echo(f"Debug: Received file paths: {file_paths}")
     """Validate your content files. If no additional flags are given, will validate only committed files."""
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
-
-    typer.echo(f"file_paths: {file_paths}")
-    typer.echo(f"use_git: {use_git}")
-
-    # If no config_path is provided, set to default
-    if config_path is None:
-        config_path = DEFAULT_CONFIG_PATH
 
     # If no file_paths are provided, set defaults for use_git and post_commit
     if not file_paths:
         use_git = True
         post_commit = True
 
-    config = get_config()
     if is_sdk_defined_working_offline():
         typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)
         sys.exit(1)
@@ -144,7 +133,7 @@ def validate(
 
     run_with_mp = not no_multiprocessing
     update_command_args_from_config_file("validate", locals())
-    sys.path.append(config.configuration.env_dir)
+    sys.path.append(sdk.configuration.env_dir)
 
     file_path = input
 

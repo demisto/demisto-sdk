@@ -223,9 +223,7 @@ def test_review_release_notes_valid(repo, mocker, monkeypatch):
     rn = pack.create_release_notes(version="1.1.0", content=valid_rn)
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
-            app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False
-        )
+        result = runner.invoke(app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
         assert all(
             [
                 current_str in result.output
@@ -265,9 +263,7 @@ def test_review_release_notes_invalid(repo, mocker, monkeypatch):
     rn = pack.create_release_notes(version="1.1.0", content=valid_rn)
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
-            app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False
-        )
+        result = runner.invoke(app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
 
         assert all(
             [
@@ -300,8 +296,6 @@ def test_templates_print(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
-            app, [DOC_REVIEW, "--templates"], catch_exceptions=False
-        )
+        result = runner.invoke(app, [DOC_REVIEW, "--templates"], catch_exceptions=False)
         assert "General Pointers About Release Notes:" in result.output
         assert "Checking spelling on" not in result.output

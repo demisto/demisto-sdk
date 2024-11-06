@@ -55,6 +55,7 @@ from demisto_sdk.commands.run_test_playbook.run_test_playbook_setup import (
 from demisto_sdk.commands.secrets.secrets_setup import secrets
 from demisto_sdk.commands.setup_env.setup_env_setup import setup_env_command
 from demisto_sdk.commands.split.split_setup import split
+from demisto_sdk.commands.test_content.test_content_setup import test_content
 from demisto_sdk.commands.update_release_notes.update_release_notes_setup import (
     update_release_notes,
 )
@@ -65,11 +66,9 @@ from demisto_sdk.commands.upload.upload_setup import upload
 from demisto_sdk.commands.validate.validate_setup import validate
 from demisto_sdk.commands.xsoar_linter.xsoar_linter_setup import xsoar_linter
 from demisto_sdk.commands.zip_packs.zip_packs_setup import zip_packs
-from demisto_sdk.commands.test_content.test_content_setup import test_content
-from demisto_sdk.commands.common.configuration import sdk
-
 
 app = typer.Typer(rich_markup_mode="markdown")
+
 
 def dump_api(
     ctx: typer.Context,
@@ -227,8 +226,10 @@ app.command(
     name="error-code", help="Quickly find relevant information regarding an error code."
 )(error_code)
 app.command(
-    name="test-content", help="Created incidents for selected test-playbooks and gives a report about the results.",
-    hidden=True)(test_content)
+    name="test-content",
+    help="Created incidents for selected test-playbooks and gives a report about the results.",
+    hidden=True,
+)(test_content)
 app.command(name="export-api", help="Dumps the `demisto-sdk` API to a file.")(dump_api)
 app.add_typer(
     graph_cmd_group,
@@ -237,6 +238,7 @@ app.add_typer(
     "database representation of the content repository, enabling you to visualize the metadata of "
     "content and the relationships between content packs, including dependencies.",
 )
+
 
 @app.callback(
     invoke_without_command=True,

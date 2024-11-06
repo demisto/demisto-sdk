@@ -25,8 +25,9 @@ class DemistoSDK:
     """
 
     def __init__(self):
-        if not hasattr(self, 'configuration'):
+        if not hasattr(self, "configuration"):
             self.configuration = Configuration()
+
 
 # Create a single instance of DemistoSDK
 sdk = DemistoSDK()

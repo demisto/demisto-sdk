@@ -1,5 +1,6 @@
-import typer
 from pathlib import Path
+
+import typer
 
 from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
 from demisto_sdk.utils.utils import update_command_args_from_config_file
@@ -7,17 +8,56 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 def init(
     ctx: typer.Context,
-    name: str = typer.Option(None, "-n", "--name", help="The name of the directory and file you want to create"),
-    id: str = typer.Option(None, "--id", help="The id used in the yml file of the integration or script"),
-    output: Path = typer.Option(None, "-o", "--output", help="The output directory to write the object into."),
-    integration: bool = typer.Option(False, "--integration", help="Create an Integration based on BaseIntegration template"),
-    script: bool = typer.Option(False, "--script", help="Create a Script based on BaseScript example"),
-    xsiam: bool = typer.Option(False, "--xsiam", help="Create an Event Collector based on a template, with matching subdirectories"),
-    pack: bool = typer.Option(False, "--pack", help="Create a pack and its subdirectories"),
-    template: str = typer.Option(None, "-t", "--template", help="Create an Integration/Script based on a specific template"),
-    author_image: Path = typer.Option(None, "-a", "--author-image", help="Path to 'Author_image.png' (up to 4kb, 120x50)"),
-    demisto_mock: bool = typer.Option(False, "--demisto_mock", help="Copy the demistomock (for Script/Integration in a Pack)"),
-    common_server: bool = typer.Option(False, "--common-server", help="Copy CommonServerPython (for Script/Integration in a Pack)"),
+    name: str = typer.Option(
+        None,
+        "-n",
+        "--name",
+        help="The name of the directory and file you want to create",
+    ),
+    id: str = typer.Option(
+        None, "--id", help="The id used in the yml file of the integration or script"
+    ),
+    output: Path = typer.Option(
+        None, "-o", "--output", help="The output directory to write the object into."
+    ),
+    integration: bool = typer.Option(
+        False,
+        "--integration",
+        help="Create an Integration based on BaseIntegration template",
+    ),
+    script: bool = typer.Option(
+        False, "--script", help="Create a Script based on BaseScript example"
+    ),
+    xsiam: bool = typer.Option(
+        False,
+        "--xsiam",
+        help="Create an Event Collector based on a template, with matching subdirectories",
+    ),
+    pack: bool = typer.Option(
+        False, "--pack", help="Create a pack and its subdirectories"
+    ),
+    template: str = typer.Option(
+        None,
+        "-t",
+        "--template",
+        help="Create an Integration/Script based on a specific template",
+    ),
+    author_image: Path = typer.Option(
+        None,
+        "-a",
+        "--author-image",
+        help="Path to 'Author_image.png' (up to 4kb, 120x50)",
+    ),
+    demisto_mock: bool = typer.Option(
+        False,
+        "--demisto_mock",
+        help="Copy the demistomock (for Script/Integration in a Pack)",
+    ),
+    common_server: bool = typer.Option(
+        False,
+        "--common-server",
+        help="Copy CommonServerPython (for Script/Integration in a Pack)",
+    ),
 ):
     """
     Initialize a new Pack, Integration, or Script.

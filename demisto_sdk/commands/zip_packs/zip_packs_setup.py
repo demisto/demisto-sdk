@@ -1,17 +1,25 @@
 from pathlib import Path
 from typing import List
+
 import typer
 
 from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
 from demisto_sdk.utils.utils import update_command_args_from_config_file
-from demisto_sdk.commands.common.configuration import sdk
 
 
 def zip_packs(
-    input: List[str] = typer.Option(..., help="The packs to be zipped as a list of pack paths."),
-    output: str = typer.Option(..., help="The destination directory to create the packs.", resolve_path=True),
-    content_version: str = typer.Option("0.0.0", help="The content version in CommonServerPython."),
-    upload: bool = typer.Option(False, help="Upload the unified packs to the marketplace."),
+    input: List[str] = typer.Option(
+        ..., help="The packs to be zipped as a list of pack paths."
+    ),
+    output: str = typer.Option(
+        ..., help="The destination directory to create the packs.", resolve_path=True
+    ),
+    content_version: str = typer.Option(
+        "0.0.0", help="The content version in CommonServerPython."
+    ),
+    upload: bool = typer.Option(
+        False, help="Upload the unified packs to the marketplace."
+    ),
     zip_all: bool = typer.Option(False, help="Zip all the packs in one zip file."),
 ):
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
@@ -33,7 +41,7 @@ def zip_packs(
         pack_paths=input,
         output=output,
         quiet_mode=zip_all,
-        content_version=content_version
+        content_version=content_version,
     )
     zip_path, unified_pack_names = packs_zipper.zip_packs()
 

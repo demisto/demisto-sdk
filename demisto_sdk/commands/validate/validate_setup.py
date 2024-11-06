@@ -6,6 +6,7 @@ from typing import Optional
 import git
 import typer
 
+from demisto_sdk.commands.common.configuration import sdk
 from demisto_sdk.commands.common.constants import (
     SDK_OFFLINE_ERROR_MESSAGE,
     ExecutionMode,
@@ -17,13 +18,14 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
-from demisto_sdk.commands.common.configuration import sdk
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 def validate(
     ctx: typer.Context,
-    file_paths: Optional[list[Path]] = typer.Argument(None, exists=True, resolve_path=True),
+    file_paths: Optional[list[Path]] = typer.Argument(
+        None, exists=True, resolve_path=True
+    ),
     no_conf_json: bool = typer.Option(False, help="Skip conf.json validation."),
     id_set: bool = typer.Option(
         False, help="Perform validations using the id_set file."

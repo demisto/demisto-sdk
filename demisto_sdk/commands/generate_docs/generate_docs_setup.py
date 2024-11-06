@@ -1,8 +1,12 @@
-import typer
-from pathlib import Path
 import copy
 import sys
-from typing import Dict, Any
+from pathlib import Path
+from typing import Any, Dict
+
+import typer
+
+from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_integration_doc,
 )
@@ -15,28 +19,88 @@ from demisto_sdk.commands.generate_docs.generate_readme_template import (
 from demisto_sdk.commands.generate_docs.generate_script_doc import (
     generate_script_doc,
 )
-from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 def generate_docs(
     ctx: typer.Context,
     input: str = typer.Option(..., "-i", "--input", help="Path of the yml file."),
-    output: str = typer.Option(None, "-o", "--output", help="Output directory to write the documentation file into, documentation file name is README.md. If not specified, will be in the yml dir."),
-    use_cases: str = typer.Option(None, "-uc", "--use_cases", help="Top use-cases. Number the steps by '*' (e.g., '* foo. * bar.')"),
-    command: str = typer.Option(None, "-c", "--command", help="Comma-separated command names to generate docs for (e.g., xdr-get-incidents,xdr-update-incident)"),
-    examples: str = typer.Option(None, "-e", "--examples", help="Path for file containing command examples, each command in a separate line."),
-    permissions: str = typer.Option("none", "-p", "--permissions", help="Permissions needed.", case_sensitive=False),
-    command_permissions: str = typer.Option(None, "-cp", "--command-permissions", help="Path for file containing commands permissions, each on a separate line."),
-    limitations: str = typer.Option(None, "-l", "--limitations", help="Known limitations, numbered by '*' (e.g., '* foo. * bar.')"),
-    insecure: bool = typer.Option(False, "--insecure", help="Skip certificate validation for commands in order to generate docs."),
-    old_version: str = typer.Option(None, "--old-version", help="Path of the old integration version yml file."),
-    skip_breaking_changes: bool = typer.Option(False, "--skip-breaking-changes", help="Skip generating breaking changes section."),
-    custom_image_path: str = typer.Option(None, "--custom-image-path", help="Custom path to a playbook image. If not provided, a default link will be added."),
-    readme_template: str = typer.Option(None, "-rt", "--readme-template", help="The readme template to append to README.md file", case_sensitive=False),
-    graph: bool = typer.Option(True, "-gr/-ngr", "--graph/--no-graph", help="Whether to use the content graph or not."),
-    force: bool = typer.Option(False, "-f", "--force", help="Force documentation generation (updates if it exists in version control)")
+    output: str = typer.Option(
+        None,
+        "-o",
+        "--output",
+        help="Output directory to write the documentation file into, documentation file name is README.md. If not specified, will be in the yml dir.",
+    ),
+    use_cases: str = typer.Option(
+        None,
+        "-uc",
+        "--use_cases",
+        help="Top use-cases. Number the steps by '*' (e.g., '* foo. * bar.')",
+    ),
+    command: str = typer.Option(
+        None,
+        "-c",
+        "--command",
+        help="Comma-separated command names to generate docs for (e.g., xdr-get-incidents,xdr-update-incident)",
+    ),
+    examples: str = typer.Option(
+        None,
+        "-e",
+        "--examples",
+        help="Path for file containing command examples, each command in a separate line.",
+    ),
+    permissions: str = typer.Option(
+        "none", "-p", "--permissions", help="Permissions needed.", case_sensitive=False
+    ),
+    command_permissions: str = typer.Option(
+        None,
+        "-cp",
+        "--command-permissions",
+        help="Path for file containing commands permissions, each on a separate line.",
+    ),
+    limitations: str = typer.Option(
+        None,
+        "-l",
+        "--limitations",
+        help="Known limitations, numbered by '*' (e.g., '* foo. * bar.')",
+    ),
+    insecure: bool = typer.Option(
+        False,
+        "--insecure",
+        help="Skip certificate validation for commands in order to generate docs.",
+    ),
+    old_version: str = typer.Option(
+        None, "--old-version", help="Path of the old integration version yml file."
+    ),
+    skip_breaking_changes: bool = typer.Option(
+        False,
+        "--skip-breaking-changes",
+        help="Skip generating breaking changes section.",
+    ),
+    custom_image_path: str = typer.Option(
+        None,
+        "--custom-image-path",
+        help="Custom path to a playbook image. If not provided, a default link will be added.",
+    ),
+    readme_template: str = typer.Option(
+        None,
+        "-rt",
+        "--readme-template",
+        help="The readme template to append to README.md file",
+        case_sensitive=False,
+    ),
+    graph: bool = typer.Option(
+        True,
+        "-gr/-ngr",
+        "--graph/--no-graph",
+        help="Whether to use the content graph or not.",
+    ),
+    force: bool = typer.Option(
+        False,
+        "-f",
+        "--force",
+        help="Force documentation generation (updates if it exists in version control)",
+    ),
 ):
     """Generate documentation for integration, playbook, or script from a YAML file."""
     try:
@@ -46,11 +110,15 @@ def generate_docs(
             raise Exception(f"<red>Input {input_path_str} does not exist.</red>")
 
         if (output_path := ctx.params.get("output")) and not Path(output_path).is_dir():
-            raise Exception(f"<red>Output directory {output_path} is not a directory.</red>")
+            raise Exception(
+                f"<red>Output directory {output_path} is not a directory.</red>"
+            )
 
         if input_path.is_file():
             if input_path.suffix.lower() not in {".yml", ".md"}:
-                raise Exception(f"<red>Input {input_path} is not a valid yml or readme file.</red>")
+                raise Exception(
+                    f"<red>Input {input_path} is not a valid yml or readme file.</red>"
+                )
             _generate_docs_for_file(ctx.params)
 
         elif input_path.is_dir() and input_path.name == "Playbooks":
@@ -60,7 +128,9 @@ def generate_docs(
                 _generate_docs_for_file(file_kwargs)
 
         else:
-            raise Exception(f"<red>Input {input_path} is neither a valid yml file, a 'Playbooks' folder, nor a readme file.</red>")
+            raise Exception(
+                f"<red>Input {input_path} is neither a valid yml file, a 'Playbooks' folder, nor a readme file.</red>"
+            )
 
         return 0
 
@@ -87,8 +157,15 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
 
     try:
         file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
-        if file_type not in {FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.README}:
-            raise Exception("<red>File is not an Integration, Script, Playbook, or README.</red>")
+        if file_type not in {
+            FileType.INTEGRATION,
+            FileType.SCRIPT,
+            FileType.PLAYBOOK,
+            FileType.README,
+        }:
+            raise Exception(
+                "<red>File is not an Integration, Script, Playbook, or README.</red>"
+            )
 
         if file_type == FileType.INTEGRATION:
             typer.echo(f"Generating {file_type.value.lower()} documentation")

@@ -2,8 +2,8 @@ import sys
 
 import typer
 
-from demisto_sdk.commands.error_code_info.error_code_info import print_error_info
 from demisto_sdk.commands.common.configuration import sdk
+from demisto_sdk.commands.error_code_info.error_code_info import print_error_info
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 

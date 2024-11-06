@@ -313,16 +313,22 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
     pack_graph_object = _get_pack_by_id(repository, "SamplePack")
     mapper_graph_object = pack_graph_object.content_items.mapper[0]
     mapper_path = str(mapper_graph_object.path)
-    mocker.patch("demisto_sdk.commands.format.format_module.ContentGraphInterface", return_value=interface)
-    mocker.patch("demisto_sdk.commands.format.format_module.update_content_graph", return_value=interface)
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
+        return_value=interface,
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.update_content_graph",
+        return_value=interface,
+    )
 
-    click_command = get_command(app)
+    typer_command = get_command(app)
 
     with ChangeCWD(repo.path):
-        with typer.Context(click_command) as ctx:
+        with typer.Context(typer_command):
             runner = CliRunner()
             result = runner.invoke(
-                click_command,
+                typer_command,
                 [
                     FORMAT_CMD,
                     "-i",
@@ -334,7 +340,6 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
                     # "DEBUG",
                 ],
             )
-    # print(result)
     assert result.exit_code == 0  # Check if command succeeded
     assert not result.exception  # Ensure no exceptions occurred
 
@@ -374,12 +379,12 @@ def test_format_layout_with_graph_remove_unknown_content(mocker, repository, rep
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    click_command = get_command(app)
+    typer_command = get_command(app)
     with ChangeCWD(repo.path):
-        with typer.Context(click_command) as ctx:
+        with typer.Context(typer_command):
             runner = CliRunner()
             result = runner.invoke(
-                click_command, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"]
+                typer_command, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"]
             )
     assert result.exit_code == 0
     assert not result.exception
@@ -445,13 +450,21 @@ def test_format_incident_field_graph_fix_aliases_marketplace(
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    click_command = get_command(app)
+    typer_command = get_command(app)
     try:
         with ChangeCWD(repo.path):
-            with typer.Context(click_command) as ctx:
+            with typer.Context(typer_command):
                 runner = CliRunner()
                 result = runner.invoke(
-                    click_command, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y", "-nv"]
+                    typer_command,
+                    [
+                        FORMAT_CMD,
+                        "-i",
+                        original_incident_field_path,
+                        "-at",
+                        "-y",
+                        "-nv",
+                    ],
                 )
     except Exception as e:
         print(f"Error invoking command: {e}")

@@ -3,8 +3,10 @@ from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 
 import pytest
+import typer
 from click.testing import CliRunner
 from git import GitCommandError
+from typer.main import get_command
 
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common import tools
@@ -204,18 +206,20 @@ class TestPackUniqueFilesValidator:
         )
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
+        typer_command = get_command(app)
         with ChangeCWD(repo.path):
-            result = CliRunner(mix_stderr=False).invoke(
-                app,
-                [
-                    VALIDATE_CMD,
-                    "-i",
-                    str(pack.path),
-                    "--run-old-validate",
-                    "--skip-new-validate",
-                ],
-                catch_exceptions=False,
-            )
+            with typer.Context(typer_command):
+                result = CliRunner(mix_stderr=False).invoke(
+                    typer_command,
+                    [
+                        VALIDATE_CMD,
+                        "-i",
+                        str(pack.path),
+                        "--run-old-validate",
+                        "--skip-new-validate",
+                    ],
+                    catch_exceptions=False,
+                )
         assert "Contributed packs must include email or url" in result.output
 
     @pytest.mark.parametrize(

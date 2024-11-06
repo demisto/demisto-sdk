@@ -1,23 +1,40 @@
-from pathlib import Path
 import json
+from pathlib import Path
+
 import typer
 
-from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.postman_codegen.postman_codegen import postman_to_autogen_configuration
-from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.common.configuration import sdk
+from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.postman_codegen.postman_codegen import (
+    postman_to_autogen_configuration,
+)
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 
 def postman_codegen(
     input: Path = typer.Option(..., help="The Postman collection 2.1 JSON file"),
-    output: Path = typer.Option(Path("."), help="The output directory to save the config file or the integration"),
+    output: Path = typer.Option(
+        Path("."),
+        help="The output directory to save the config file or the integration",
+    ),
     name: str = typer.Option(None, help="The output integration name"),
-    output_prefix: str = typer.Option(None, help="The global integration output prefix. By default it is the product name."),
-    command_prefix: str = typer.Option(None, help="The prefix for each command in the integration. By default is the product name in lower case"),
-    config_out: bool = typer.Option(False, help="Used for advanced integration customization. Generates a config JSON file instead of integration."),
-    package: bool = typer.Option(False, help="Generated integration will be split to package format instead of a YML file.")
+    output_prefix: str = typer.Option(
+        None,
+        help="The global integration output prefix. By default it is the product name.",
+    ),
+    command_prefix: str = typer.Option(
+        None,
+        help="The prefix for each command in the integration. By default is the product name in lower case",
+    ),
+    config_out: bool = typer.Option(
+        False,
+        help="Used for advanced integration customization. Generates a config JSON file instead of integration.",
+    ),
+    package: bool = typer.Option(
+        False,
+        help="Generated integration will be split to package format instead of a YML file.",
+    ),
 ):
-
     postman_config = postman_to_autogen_configuration(
         collection=json.load(open(input)),  # Open the file directly
         name=name,
@@ -40,6 +57,10 @@ def postman_codegen(
                 output=str(output),
             )
             yml_splitter.extract_to_package_format()
-            typer.echo(f"<green>Package generated at {str(Path(output).absolute())} successfully</green>")
+            typer.echo(
+                f"<green>Package generated at {str(Path(output).absolute())} successfully</green>"
+            )
         else:
-            typer.echo(f"<green>Integration generated at {str(yml_path.absolute())} successfully</green>")
+            typer.echo(
+                f"<green>Integration generated at {str(yml_path.absolute())} successfully</green>"
+            )

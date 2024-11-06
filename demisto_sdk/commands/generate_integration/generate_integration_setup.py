@@ -1,13 +1,23 @@
-import typer
 import json
 from pathlib import Path
-from demisto_sdk.commands.generate_integration.code_generator import IntegrationGeneratorConfig
+
+import typer
+
+from demisto_sdk.commands.generate_integration.code_generator import (
+    IntegrationGeneratorConfig,
+)
 
 
 def generate_integration(
-        input: Path = typer.Option(..., "-i", "--input",
-                                   help="Config JSON file path from postman-codegen or openapi-codegen"),
-        output: Path = typer.Option(Path("."), "-o", "--output", help="Directory to save the integration package"),
+    input: Path = typer.Option(
+        ...,
+        "-i",
+        "--input",
+        help="Config JSON file path from postman-codegen or openapi-codegen",
+    ),
+    output: Path = typer.Option(
+        Path("."), "-o", "--output", help="Directory to save the integration package"
+    ),
 ):
     # Open and load the JSON config file
     with input.open("r") as file:

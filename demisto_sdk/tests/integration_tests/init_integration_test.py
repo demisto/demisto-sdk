@@ -179,9 +179,7 @@ def test_integration_init_integration_positive_no_inline_pack_name(
     tmp_integration_path = tmp_pack_path / "Integrations" / integration_name
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(
-        app, [INIT_CMD, "-o", tmp_dir_path], input="\n".join(inputs)
-    )
+    result = runner.invoke(app, [INIT_CMD, "-o", tmp_dir_path], input="\n".join(inputs))
 
     assert result.exit_code == 0
     assert all(

@@ -1,26 +1,57 @@
-import typer
 import json
 from pathlib import Path
+
+import typer
+
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
 
 def openapi_codegen(
-        input_file: Path = typer.Option(..., "-i", "--input-file", help="The swagger file to load in JSON format"),
-        config_file: Path = typer.Option(None, "-cf", "--config-file",
-                                         help="The integration configuration file. Created in the first run."),
-        base_name: str = typer.Option(None, "-n", "--base-name",
-                                      help="The base filename to use for the generated files"),
-        output_dir: Path = typer.Option(Path("."), "-o", "--output-dir", help="Directory to store the output"),
-        command_prefix: str = typer.Option(None, "-pr", "--command-prefix",
-                                           help="Add a prefix to each command in the code"),
-        context_path: str = typer.Option(None, "-c", "--context-path", help="Context output path"),
-        unique_keys: str = typer.Option("", "-u", "--unique-keys",
-                                        help="Comma-separated unique keys for context paths (case sensitive)"),
-        root_objects: str = typer.Option("", "-r", "--root-objects",
-                                         help="Comma-separated JSON root objects in command outputs (case sensitive)"),
-        fix_code: bool = typer.Option(False, "-f", "--fix-code", help="Fix the python code using autopep8"),
-        use_default: bool = typer.Option(False, "-a", "--use-default",
-                                         help="Use the automatically generated integration configuration"),
+    input_file: Path = typer.Option(
+        ..., "-i", "--input-file", help="The swagger file to load in JSON format"
+    ),
+    config_file: Path = typer.Option(
+        None,
+        "-cf",
+        "--config-file",
+        help="The integration configuration file. Created in the first run.",
+    ),
+    base_name: str = typer.Option(
+        None,
+        "-n",
+        "--base-name",
+        help="The base filename to use for the generated files",
+    ),
+    output_dir: Path = typer.Option(
+        Path("."), "-o", "--output-dir", help="Directory to store the output"
+    ),
+    command_prefix: str = typer.Option(
+        None, "-pr", "--command-prefix", help="Add a prefix to each command in the code"
+    ),
+    context_path: str = typer.Option(
+        None, "-c", "--context-path", help="Context output path"
+    ),
+    unique_keys: str = typer.Option(
+        "",
+        "-u",
+        "--unique-keys",
+        help="Comma-separated unique keys for context paths (case sensitive)",
+    ),
+    root_objects: str = typer.Option(
+        "",
+        "-r",
+        "--root-objects",
+        help="Comma-separated JSON root objects in command outputs (case sensitive)",
+    ),
+    fix_code: bool = typer.Option(
+        False, "-f", "--fix-code", help="Fix the python code using autopep8"
+    ),
+    use_default: bool = typer.Option(
+        False,
+        "-a",
+        "--use-default",
+        help="Use the automatically generated integration configuration",
+    ),
 ):
     """
     Generates a Cortex XSOAR integration from an OpenAPI specification file. Creates a config file on first run; run again with modified config.
@@ -30,11 +61,16 @@ def openapi_codegen(
         try:
             output_dir.mkdir(parents=True)
         except Exception as err:
-            typer.secho(f"Error creating directory {output_dir} - {err}", fg=typer.colors.RED)
+            typer.secho(
+                f"Error creating directory {output_dir} - {err}", fg=typer.colors.RED
+            )
             raise typer.Exit(1)
 
     if not output_dir.is_dir():
-        typer.secho(f'The provided output "{output_dir}" is not a directory.', fg=typer.colors.RED)
+        typer.secho(
+            f'The provided output "{output_dir}" is not a directory.',
+            fg=typer.colors.RED,
+        )
         raise typer.Exit(1)
 
     # Set defaults
@@ -69,7 +105,9 @@ def openapi_codegen(
     if not config_file:
         integration.save_config(integration.configuration, output_dir)
         config_path = output_dir / f"{base_name}_config.json"
-        typer.secho(f"Created configuration file in {output_dir}", fg=typer.colors.GREEN)
+        typer.secho(
+            f"Created configuration file in {output_dir}", fg=typer.colors.GREEN
+        )
         if not use_default:
             command_to_run = (
                 f'demisto-sdk openapi-codegen -i "{input_file}" -cf "{config_path}" -n "{base_name}" '
@@ -84,13 +122,19 @@ def openapi_codegen(
 
             typer.secho(
                 f"Run the command again with the created configuration file (after review): {command_to_run}",
-                fg=typer.colors.YELLOW
+                fg=typer.colors.YELLOW,
             )
             raise typer.Exit(0)
 
     # Second run: save generated package
     if integration.save_package(output_dir):
-        typer.secho(f"Successfully saved integration code in {output_dir}", fg=typer.colors.GREEN)
+        typer.secho(
+            f"Successfully saved integration code in {output_dir}",
+            fg=typer.colors.GREEN,
+        )
     else:
-        typer.secho(f"There was an error creating the package in {output_dir}", fg=typer.colors.RED)
+        typer.secho(
+            f"There was an error creating the package in {output_dir}",
+            fg=typer.colors.RED,
+        )
         raise typer.Exit(1)

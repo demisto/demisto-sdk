@@ -175,7 +175,7 @@ class PreCommitRunner:
         stdout=None,
         command: Optional[List[str]] = None,
         json_output_path: Optional[Path] = None,
-    ) -> subprocess.CompletedProcess:
+    ) -> subprocess.CompletedProcess | None:
         """Runs a process of pre-commit
 
         Args:
@@ -197,21 +197,23 @@ class PreCommitRunner:
         result = subprocess.run(['git', 'ls-files'], capture_output=True, text=True)
         tracked_files = result.stdout.strip().split('\n')
         logger.debug(f'_run_pre_commit_process {tracked_files=}')
-        commands = list(
-                filter(
-                    None,
-                    [
-                        sys.executable,
-                        "-m",
-                        "pre_commit",
-                        *command,
-                        "-c",
-                        str(path),
-                        "-v" if verbose and "run" in command else "",
-                    ],
-                )
-            )
-        logger.debug(f'_run_pre_commit_process {commands=}')
+
+        
+        # commands = list(
+        #         filter(
+        #             None,
+        #             [
+        #                 sys.executable,
+        #                 "-m",
+        #                 "pre_commit",
+        #                 *command,
+        #                 "-c",
+        #                 str(path),
+        #                 "-v" if verbose and "run" in command else "",
+        #             ],
+        #         )
+        #     )
+        # logger.debug(f'_run_pre_commit_process {commands=}')
         logger.debug(f'_run_pre_commit_process {CONTENT_PATH=}')
         content_path = os.getenv('DEMISTO_SDK_CONTENT_PATH') or CONTENT_PATH
         logger.debug(f'_run_pre_commit_process {content_path=}')
@@ -220,28 +222,71 @@ class PreCommitRunner:
             raise NotADirectoryError(f"The specified path {content_path} is not a directory.")
         else:
             logger.debug(f'_run_pre_commit_process files and dirs in {content_path}: {os.listdir}')
-
-        result = subprocess.run(
-            commands,
-            env=precommit_env,
-            cwd=content_path,
-            stdout=stdout if not json_output_path else subprocess.PIPE,
-            stderr=stdout if not json_output_path else subprocess.PIPE,
-            universal_newlines=True,
-        )
+  
+        
+        # result = subprocess.run(
+        #     commands,
+        #     env=precommit_env,
+        #     cwd=content_path,
+        #     stdout=stdout if not json_output_path else subprocess.PIPE,
+        #     stderr=stdout if not json_output_path else subprocess.PIPE,
+        #     universal_newlines=True,
+        # )
         # Structure the output to be written as JSON.
-        if json_output_path:
-            output_data = {
-                "command": result.args,
-                "returncode": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-            }
+        # if json_output_path:
+        #     output_data = {
+        #         "command": result.args,
+        #         "returncode": result.returncode,
+        #         "stdout": result.stdout,
+        #         "stderr": result.stderr,
+        #     }
 
-            # Write the results to a JSON file if json_output_path is provided
-            with open(json_output_path, "w") as json_file:
-                json.dump(output_data, json_file, indent=4)
+        #     # Write the results to a JSON file if json_output_path is provided
+        #     with open(json_output_path, "w") as json_file:
+        #         json.dump(output_data, json_file, indent=4)
 
+        import argparse
+        from pre_commit.commands.run import run
+        from pre_commit.store import Store
+        from pathlib import Path
+
+
+        # Initialize the pre-commit store
+        store = Store(str(content_path))
+
+        # Create argparse.Namespace to pass arguments
+        args = argparse.Namespace(
+            all_files=True,        # Equivalent to --all-files (-a)
+            files=None,            # No specific files (we're running on all files)
+            hook=None,             # No specific hook ID (run all hooks)
+            hook_stage='manual',   # Default stage for manual invocation
+            from_ref=None,
+            to_ref=None,
+            commit_msg_filename=None,
+            prepare_commit_message_source=None,
+            commit_object_name=None,
+            pre_rebase_upstream=None,
+            pre_rebase_branch=None,
+            remote_name=None,
+            remote_url=None,
+            remote_branch=None,
+            local_branch=None,
+            checkout_type=None,
+            is_squash_merge=None,
+            rewrite_command=None,
+        )
+
+        # Path to your .pre-commit-config.yaml
+        config_file = path
+
+        # Run hooks on all files
+        exit_code = run(
+            args=args,
+            config_file=str(config_file),
+            store=store,
+        )
+
+        logger.debug(f'NEW PRE-COMMIT EXIT-CODE: {exit_code} ')
         return result
 
     @staticmethod

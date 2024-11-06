@@ -50,10 +50,10 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
             ):
                 return True
         if isinstance(content_item, ModelingRule):
-            if not (
-                content_item.git_status
-                or content_item.xif_file.git_status
-                or content_item.schema_file.git_status
+            if (
+                not content_item.git_status
+                and not content_item.xif_file.git_status
+                and not content_item.schema_file.git_status
             ):
                 return True
         if content_item.git_status == GitStatuses.RENAMED:
@@ -72,11 +72,12 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
         self, api_module: ContentItem
     ) -> dict[str, Pack]:
         try:
-            api_module_node: Script = self.graph.search(path=api_module.path)[0]
+            api_module_node: Script = self.graph.search(object_id=api_module.object_id)[
+                0
+            ]
         except IndexError:
-            raise Exception(
-                f"Unexpected: could not find {api_module.object_id} in graph"
-            )
+            logger.warning(f"Could not find {api_module.object_id} in graph")
+            return {}
         dependent_packs: list[Pack] = [
             dependency.in_pack
             for dependency in api_module_node.imported_by

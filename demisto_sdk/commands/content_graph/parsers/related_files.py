@@ -217,15 +217,10 @@ class DescriptionRelatedFile(TextFiles):
     file_type = RelatedFileType.DESCRIPTION_File
 
     def get_optional_paths(self) -> List[Path]:
-        try:
-            return [
-                self.main_file_path.parent
-                / f"{self.main_file_path.parts[-2]}_description.md"
-            ]
-        except IndexError:
-            raise ValueError(
-                f"Could not build _description.md path under {self.main_file_path}"
-            )
+        return [
+            self.main_file_path.parent
+            / f"{self.main_file_path.parts[-2]}_description.md"
+        ]
 
 
 class ImageFiles(RelatedFile):
@@ -265,29 +260,18 @@ class DarkSVGRelatedFile(RelatedFile):
     file_type = RelatedFileType.DARK_SVG
 
     def get_optional_paths(self) -> List[Path]:
-        try:
-            return [
-                self.main_file_path.parent / f"{self.main_file_path.parts[-2]}_dark.svg"
-            ]
-        except IndexError:
-            raise ValueError(
-                f"Could not build _dark.svg path under {self.main_file_path}"
-            )
+        return [
+            self.main_file_path.parent / f"{self.main_file_path.parts[-2]}_dark.svg"
+        ]
 
 
 class LightSVGRelatedFile(RelatedFile):
     file_type = RelatedFileType.LIGHT_SVG
 
     def get_optional_paths(self) -> List[Path]:
-        try:
-            return [
-                self.main_file_path.parent
-                / f"{self.main_file_path.parts[-2]}_light.svg"
-            ]
-        except IndexError:
-            raise ValueError(
-                f"Could not build _light.svg path under {self.main_file_path}"
-            )
+        return [
+            self.main_file_path.parent / f"{self.main_file_path.parts[-2]}_light.svg"
+        ]
 
 
 class ImageRelatedFile(PNGFiles):
@@ -300,33 +284,28 @@ class ImageRelatedFile(PNGFiles):
         Returns:
             List[Path]: the list of optional paths.
         """
-        try:
-            optional_paths_list = [
-                self.main_file_path.parents[1]
-                / "doc_files"
-                / str(self.main_file_path.parts[-1])
-                .replace(".yml", ".png")
-                .replace(
-                    "playbook-", ""
-                ),  # In case the playbook's image is located under doc_files folder with the same name as the playbook.
-                self.main_file_path.parent
-                / f"{self.main_file_path.parts[-2]}_image.png",  # In case of integration image where the image is located in the integration folder with the same name as the integration.
-            ]
-            if (
-                self.main_file_path.suffix == ".json"
-            ):  # when editing .yml files, we don't want to end up with the yml file as part of the optional paths.
-                optional_paths_list.append(
-                    Path(str(self.main_file_path).replace(".json", "_image.png"))
-                )
-            else:  # when editing .json files, we don't want to end up with the json file as part of the optional paths.
-                optional_paths_list.append(
-                    Path(str(self.main_file_path).replace(".yml", ".png")),
-                )
-            return optional_paths_list
-        except IndexError:
-            raise ValueError(
-                f"Could not build _image.png path under {self.main_file_path}"
+        optional_paths_list = [
+            self.main_file_path.parents[1]
+            / "doc_files"
+            / str(self.main_file_path.parts[-1])
+            .replace(".yml", ".png")
+            .replace(
+                "playbook-", ""
+            ),  # In case the playbook's image is located under doc_files folder with the same name as the playbook.
+            self.main_file_path.parent
+            / f"{self.main_file_path.parts[-2]}_image.png",  # In case of integration image where the image is located in the integration folder with the same name as the integration.
+        ]
+        if (
+            self.main_file_path.suffix == ".json"
+        ):  # when editing .yml files, we don't want to end up with the yml file as part of the optional paths.
+            optional_paths_list.append(
+                Path(str(self.main_file_path).replace(".json", "_image.png"))
             )
+        else:  # when editing .json files, we don't want to end up with the json file as part of the optional paths.
+            optional_paths_list.append(
+                Path(str(self.main_file_path).replace(".yml", ".png")),
+            )
+        return optional_paths_list
 
 
 class AuthorImageRelatedFile(PNGFiles):
@@ -346,28 +325,18 @@ class CodeRelatedFile(TextFiles):
         super().__init__(main_file_path, git_sha)
 
     def get_optional_paths(self) -> List[Path]:
-        try:
-            return [
-                self.main_file_path.parent
-                / f"{self.main_file_path.parts[-2]}{self.suffix}",
-                self.main_file_path,
-            ]
-        except IndexError:
-            raise ValueError(
-                f"Could not build code file path under {self.main_file_path}"
-            )
+        return [
+            self.main_file_path.parent
+            / f"{self.main_file_path.parts[-2]}{self.suffix}",
+            self.main_file_path,
+        ]
 
 
 class TestCodeRelatedFile(CodeRelatedFile):
     file_type = RelatedFileType.TEST_CODE_FILE
 
     def get_optional_paths(self) -> List[Path]:
-        try:
-            return [
-                self.main_file_path.parent
-                / f"{self.main_file_path.parts[-2]}_test{self.suffix}"
-            ]
-        except IndexError:
-            raise ValueError(
-                f"Could not build test code path under {self.main_file_path}"
-            )
+        return [
+            self.main_file_path.parent
+            / f"{self.main_file_path.parts[-2]}_test{self.suffix}"
+        ]

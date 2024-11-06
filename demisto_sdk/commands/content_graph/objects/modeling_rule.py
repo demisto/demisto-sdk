@@ -1,12 +1,10 @@
-from functools import cached_property, lru_cache
+from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
-from pydantic import validator
 from pydantic.fields import Field
 
 from demisto_sdk.commands.common.constants import (
-    GitStatuses,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -66,30 +64,10 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
                 return True
         return False
 
-    @validator("git_status", always=True)
-    def validate_git_status(
-        cls, v: Optional[GitStatuses], values: dict
-    ) -> Optional[GitStatuses]:
-        if v:
-            return v
-        xif_file = cls.get_xif_file(values.get("path"), values.get("git_sha"))
-        schema_file = cls.get_schema_file(values.get("path"), values.get("git_sha"))
-        return xif_file.git_status or schema_file.git_status
-
-    @staticmethod
-    @lru_cache
-    def get_xif_file(path: Path, git_sha: str) -> XifRelatedFile:
-        return XifRelatedFile(path, git_sha=git_sha)
-
     @cached_property
     def xif_file(self) -> XifRelatedFile:
-        return self.get_xif_file(self.path, git_sha=self.git_sha)
-
-    @staticmethod
-    @lru_cache
-    def get_schema_file(path: Path, git_sha: str) -> SchemaRelatedFile:
-        return SchemaRelatedFile(path, git_sha=git_sha)
+        return XifRelatedFile(self.path, git_sha=self.git_sha)
 
     @cached_property
     def schema_file(self) -> SchemaRelatedFile:
-        return self.get_schema_file(self.path, git_sha=self.git_sha)
+        return SchemaRelatedFile(self.path, git_sha=self.git_sha)

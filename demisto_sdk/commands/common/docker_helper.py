@@ -546,9 +546,8 @@ class DockerBase:
                     pip_requirements,
                     push=push,
                 )
-            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
-                errors = str(e)
-                logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
+            except (docker.errors.BuildError, docker.errors.APIError, Exception):
+                logger.exception(f"{log_prompt} - Build errors occurred: {errors}")
         return test_docker_image, errors
 
 

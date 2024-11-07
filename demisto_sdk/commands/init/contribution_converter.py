@@ -13,57 +13,57 @@ from string import punctuation
 from typing import Any, Dict, List, Optional, Tuple
 from zipfile import ZipFile
 
-from packaging.version import Version
+# from packaging.version import Version
 
-from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    AUTOMATION,
-    ENTITY_TYPE_TO_DIR,
-    INTEGRATION,
-    INTEGRATIONS_DIR,
-    MARKETPLACE_LIVE_DISCUSSIONS,
-    MARKETPLACES,
-    PACK_INITIAL_VERSION,
-    PACKS_README_FILE_NAME,
-    PLAYBOOKS_DIR,
-    SCRIPT,
-    SCRIPTS_DIR,
-    XSOAR_AUTHOR,
-    XSOAR_SUPPORT,
-    XSOAR_SUPPORT_URL,
-    ContentItems,
-    FileType,
-)
+# from demisto_sdk.commands.common.configuration import Configuration
+# from demisto_sdk.commands.common.constants import (
+#     AUTOMATION,
+#     ENTITY_TYPE_TO_DIR,
+#     INTEGRATION,
+#     INTEGRATIONS_DIR,
+#     MARKETPLACE_LIVE_DISCUSSIONS,
+#     MARKETPLACES,
+#     PACK_INITIAL_VERSION,
+#     PACKS_README_FILE_NAME,
+#     PLAYBOOKS_DIR,
+#     SCRIPT,
+#     SCRIPTS_DIR,
+#     XSOAR_AUTHOR,
+#     XSOAR_SUPPORT,
+#     XSOAR_SUPPORT_URL,
+#     ContentItems,
+#     FileType,
+# )
 
-# from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import (
-    capital_case,
-    find_type,
-    get_child_directories,
-    get_child_files,
-    get_content_path,
-    get_display_name,
-    get_pack_metadata,
-)
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.integration_script import (
-    IntegrationScript,
-)
-from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.commands.generate_docs.generate_integration_doc import (
-    generate_integration_doc,
-)
-from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
-    generate_playbook_doc,
-)
-from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
-from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.commands.update_release_notes.update_rn_manager import (
-    UpdateReleaseNotesManager,
-)
+# # from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+# from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+# from demisto_sdk.commands.common.handlers import YAML_Handler
+# from demisto_sdk.commands.common.logger import logger
+# from demisto_sdk.commands.common.tools import (
+#     capital_case,
+#     find_type,
+#     get_child_directories,
+#     get_child_files,
+#     get_content_path,
+#     get_display_name,
+#     get_pack_metadata,
+# )
+# from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+# from demisto_sdk.commands.content_graph.objects.integration_script import (
+#     IntegrationScript,
+# )
+# from demisto_sdk.commands.format.format_module import format_manager
+# from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+#     generate_integration_doc,
+# )
+# from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
+#     generate_playbook_doc,
+# )
+# from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
+# from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+# from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+#     UpdateReleaseNotesManager,
+# )
 
 
 def get_previous_nonempty_line(lines: List[str], index: int):

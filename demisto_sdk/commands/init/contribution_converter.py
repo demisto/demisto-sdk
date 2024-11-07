@@ -48,7 +48,7 @@ from zipfile import ZipFile
 #     get_display_name,
 #     get_pack_metadata,
 # )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+# from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )

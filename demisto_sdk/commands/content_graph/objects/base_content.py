@@ -28,10 +28,11 @@ from demisto_sdk.commands.common.constants import (
     GitStatuses,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+
+# from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import set_value, write_dict
+from demisto_sdk.commands.common.tools import get_content_path, set_value, write_dict
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     LazyProperty,
@@ -182,7 +183,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (
-                Path(json_dct["path"]).relative_to(CONTENT_PATH)
+                Path(json_dct["path"]).relative_to(get_content_path())
             ).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct

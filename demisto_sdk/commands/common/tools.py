@@ -2144,10 +2144,10 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
                 raise ValueError(f"Remote '{DEMISTO_GIT_UPSTREAM}' has no URLs configured.")
             else:
                 git_repo.git.show(f'{str(urls)}', '--oneline')
+                remote_url = urls[0]
 
 
-
-            remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
+            # remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
         except (ValueError, git.GitCommandError, Exception):
             if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
                 logger.warning(

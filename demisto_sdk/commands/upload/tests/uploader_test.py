@@ -10,11 +10,11 @@ from unittest.mock import MagicMock, patch
 import click
 import demisto_client
 import pytest
-from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from more_itertools import first_true
 from packaging.version import Version
+from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app, upload
 from demisto_sdk.commands.common.constants import (

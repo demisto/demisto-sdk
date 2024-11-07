@@ -5,8 +5,8 @@ from time import sleep
 
 import pytest
 import requests
-from click.testing import CliRunner
 from requests.adapters import HTTPAdapter
+from typer.testing import CliRunner
 from urllib3 import Retry
 
 from demisto_sdk.__main__ import app

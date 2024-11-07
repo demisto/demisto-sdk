@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.__main__ import app

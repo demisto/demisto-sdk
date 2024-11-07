@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
 from TestSuite.test_tools import ChangeCWD

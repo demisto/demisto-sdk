@@ -2,7 +2,6 @@ import json
 import os
 import platform
 from pathlib import Path
-from pyexpat.errors import messages
 
 import typer
 from dotenv import load_dotenv
@@ -31,7 +30,9 @@ from demisto_sdk.commands.generate_docs.generate_docs_setup import generate_docs
 from demisto_sdk.commands.generate_integration.generate_integration_setup import (
     generate_integration,
 )
-from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import generate_modeling_rules
+from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import (
+    generate_modeling_rules,
+)
 from demisto_sdk.commands.generate_outputs.generate_outputs_setup import (
     generate_outputs,
 )
@@ -58,7 +59,9 @@ from demisto_sdk.commands.secrets.secrets_setup import secrets
 from demisto_sdk.commands.setup_env.setup_env_setup import setup_env_command
 from demisto_sdk.commands.split.split_setup import split
 from demisto_sdk.commands.test_content.test_content_setup import test_content
-from demisto_sdk.commands.test_content.test_modeling_rule.modeling_rules_setup import modeling_rules_app
+from demisto_sdk.commands.test_content.test_modeling_rule.modeling_rules_setup import (
+    modeling_rules_app,
+)
 from demisto_sdk.commands.update_release_notes.update_release_notes_setup import (
     update_release_notes,
 )
@@ -242,7 +245,9 @@ app.add_typer(
     "content and the relationships between content packs, including dependencies.",
 )
 app.add_typer(modeling_rules_app, name="modeling-rules")
-app.command(name="generate-modeling-rules", help="Generated modeling-rules.")(generate_modeling_rules)
+app.command(name="generate-modeling-rules", help="Generated modeling-rules.")(
+    generate_modeling_rules
+)
 
 
 @app.callback(
@@ -311,7 +316,10 @@ def show_version():
     typer.echo(f"demisto-sdk version: {current_version}")
 
     if last_release and current_version != last_release:
-        message = typer.style(f"A newer version ({last_release}) is available. To update, run 'pip install --upgrade demisto-sdk'", fg=typer.colors.YELLOW)
+        message = typer.style(
+            f"A newer version ({last_release}) is available. To update, run 'pip install --upgrade demisto-sdk'",
+            fg=typer.colors.YELLOW,
+        )
         typer.echo(message)
 
 

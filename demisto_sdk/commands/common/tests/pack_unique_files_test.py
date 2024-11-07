@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 import typer
-from click.testing import CliRunner
 from git import GitCommandError
 from typer.main import get_command
+from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common import tools

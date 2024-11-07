@@ -5,8 +5,9 @@ from pathlib import Path
 from typing import List
 
 import pytest
-from click.testing import CliRunner, Result
+from typer.testing import CliRunner, Result
 
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -343,7 +344,7 @@ class TestDocReviewXSOAROnly:
 
         args: List[str] = self.default_args + cmd_args
 
-        return CliRunner().invoke(__main__.doc_review, args)
+        return CliRunner().invoke(app, ["doc-review", args])
 
     def test_valid_supported_pack(self, supported_pack: Pack):
         """
@@ -1417,5 +1418,5 @@ def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker)
         "demisto_sdk.commands.doc_reviewer.doc_reviewer.DocReviewer",
         return_value=mock_doc_reviewer,
     )
-    runner.invoke(__main__.doc_review, use_pack_known_words)
+    runner.invoke(app, ["doc-review", use_pack_known_words])
     assert m.call_args.kwargs.get("load_known_words_from_pack") == expected_param_value

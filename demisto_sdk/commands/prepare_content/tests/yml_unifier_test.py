@@ -9,7 +9,7 @@ from typing import List
 
 import pytest
 import requests
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import (

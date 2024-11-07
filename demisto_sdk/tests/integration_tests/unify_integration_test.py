@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE

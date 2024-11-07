@@ -2,8 +2,8 @@
 Integration tests for general demisto-sdk functionalities which are related to all SDK commands.
 """
 
-from click.testing import CliRunner
 from pytest import LogCaptureFixture
+from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common import tools

@@ -2,9 +2,7 @@ from pathlib import Path
 from typing import List
 
 import pytest
-import typer
-from click.testing import CliRunner
-from typer.main import get_command
+from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import (
@@ -321,26 +319,23 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-
-    typer_command = get_command(app)
-
     with ChangeCWD(repo.path):
-        with typer.Context(typer_command):
-            runner = CliRunner()
-            result = runner.invoke(
-                typer_command,
-                [
-                    FORMAT_CMD,
-                    "-i",
-                    mapper_path,
-                    "-at",
-                    "-y",
-                    "-nv",
-                ],
-            )
-    assert result.exit_code == 0  # Check if command succeeded
-    assert not result.exception  # Ensure no exceptions occurred
-
+        runner = CliRunner()
+        result = runner.invoke(
+            app,
+            [
+                FORMAT_CMD,
+                "-i",
+                mapper_path,
+                "-at",
+                "-y",
+                "-nv",
+                "--console-log-threshold",
+                "DEBUG",
+            ],
+        )
+    assert result.exit_code == 0
+    assert not result.exception
     fields = {"Unknown Incident Field"}
     assert (
         f"Removing the fields {fields} from the mapper {mapper_path} because they aren't in the content repo."
@@ -377,13 +372,9 @@ def test_format_layout_with_graph_remove_unknown_content(mocker, repository, rep
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    typer_command = get_command(app)
     with ChangeCWD(repo.path):
-        with typer.Context(typer_command):
-            runner = CliRunner()
-            result = runner.invoke(
-                typer_command, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"]
-            )
+        runner = CliRunner()
+        result = runner.invoke(app, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"])
     assert result.exit_code == 0
     assert not result.exception
     assert (
@@ -448,24 +439,11 @@ def test_format_incident_field_graph_fix_aliases_marketplace(
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    typer_command = get_command(app)
-    try:
-        with ChangeCWD(repo.path):
-            with typer.Context(typer_command):
-                runner = CliRunner()
-                result = runner.invoke(
-                    typer_command,
-                    [
-                        FORMAT_CMD,
-                        "-i",
-                        original_incident_field_path,
-                        "-at",
-                        "-y",
-                        "-nv",
-                    ],
-                )
-    except Exception as e:
-        print(f"Error invoking command: {e}")
+    with ChangeCWD(repo.path):
+        runner = CliRunner()
+        result = runner.invoke(
+            app, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y", "-nv"]
+        )
 
     assert result.exit_code == 0
     assert not result.exception

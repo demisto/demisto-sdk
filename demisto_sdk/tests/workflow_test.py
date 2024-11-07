@@ -7,7 +7,7 @@ from typing import Callable, Generator, Optional, Tuple
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_FILE_NAME

@@ -1,5 +1,5 @@
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 import demisto_sdk.__main__original as main
 

@@ -2,8 +2,9 @@ from pathlib import Path, PosixPath
 from typing import List
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
@@ -134,7 +135,7 @@ def test_integration_format_yml_with_no_test_positive(
     runner = CliRunner()
     with ChangeCWD(tmp_path):
         first_run_result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at", "-ngr"],
             input="Y",
         )
@@ -146,7 +147,7 @@ def test_integration_format_yml_with_no_test_positive(
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
     second_run_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", output_path, "-y", "-ngr"]
+        app, [FORMAT_CMD, "-i", output_path, "-y", "-ngr"]
     )
     assert second_run_result.exit_code == 0
     assert not second_run_result.exception
@@ -178,7 +179,7 @@ def test_integration_format_yml_with_no_test_negative(
     runner = CliRunner()
     with ChangeCWD(tmp_path):
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -221,7 +222,7 @@ def test_integration_format_yml_with_no_test_no_interactive_positive(
     # Running format in the first time
     with ChangeCWD(tmp_path):
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-y", "-ngr"]
+            app, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-y", "-ngr"]
         )
     assert not result.exception
     yml_content = get_dict_from_file(output_path)
@@ -269,7 +270,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
-        main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-y", "-ngr"]
+        app, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-y", "-ngr"]
     )
     assert not result.exception
     if file_type == "playbook":
@@ -324,7 +325,7 @@ def test_integration_format_configuring_conf_json_positive(
     # Running format in the first time
     with ChangeCWD(tmp_path):
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -344,7 +345,7 @@ def test_integration_format_configuring_conf_json_positive(
         _verify_conf_json_modified(test_playbooks, yml_title, conf_json_path)
     # Running format for the second time should raise no exception and should raise no prompt to the user
     result = runner.invoke(
-        main,
+        app,
         [
             FORMAT_CMD,
             "-i",
@@ -399,7 +400,7 @@ def test_integration_format_configuring_conf_json_negative(
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
-        main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-ngr"], input="N"
+        app, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-ngr"], input="N"
     )
     assert not result.exception
     assert "Skipping test playbooks configuration" in result.output
@@ -455,7 +456,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
 
     with ChangeCWD(tmp_path):
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -510,7 +511,7 @@ def test_format_on_valid_py(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-nv",
@@ -558,7 +559,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-nv",
@@ -606,7 +607,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-nv",
@@ -656,7 +657,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, monkeypatch):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         result = CliRunner(mix_stderr=False).invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-nv",
@@ -707,7 +708,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-nv",
@@ -768,7 +769,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     with ChangeCWD(Path(playbook.path).parent):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", "playbook.yml", "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -777,7 +778,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
 
         with ChangeCWD(repo.path):
             result = runner.invoke(
-                main,
+                app,
                 [
                     "validate",
                     "-i",
@@ -815,7 +816,7 @@ def test_format_integration_skipped_files(repo, mocker, monkeypatch):
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(pack.path), "-ngr"], catch_exceptions=False
+        app, [FORMAT_CMD, "-i", str(pack.path), "-ngr"], catch_exceptions=False
     )
 
     assert all(
@@ -850,7 +851,7 @@ def test_format_commonserver_skipped_files(repo, mocker):
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         [FORMAT_CMD, "-i", str(pack.path), "-ngr"],
         catch_exceptions=False,
     )
@@ -896,7 +897,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo, mocker, monkey
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "--assume-yes", "-ngr"],
     )
     assert "Success" in result.output
@@ -930,7 +931,7 @@ def test_format_playbook_without_fromversion_with_preset_flag(
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         [
             FORMAT_CMD,
             "-i",
@@ -972,7 +973,7 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "--from-version", "6.0.0", "-ngr"],
         input="y",
     )
@@ -1006,7 +1007,7 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "-ngr"],
         input="y",
     )
@@ -1039,7 +1040,7 @@ def test_format_playbook_copy_removed_from_name_and_id(repo, mocker, monkeypatch
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "-ngr"],
         input="y\n5.5.0",
     )
@@ -1079,7 +1080,7 @@ def test_format_playbook_no_input_specified(mocker, repo, monkeypatch):
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         [FORMAT_CMD, "-ngr"],
         input="y\n5.5.0",
     )
@@ -1137,7 +1138,7 @@ def test_format_incident_type_layout_id(repo, mocker):
     runner = CliRunner(mix_stderr=False)
     with ChangeCWD(repo.path):
         format_result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", str(pack.path), "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -1208,7 +1209,7 @@ def test_format_generic_field_wrong_values(
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", generic_field_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -1259,7 +1260,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", generic_field_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -1309,7 +1310,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", generic_type_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -1359,7 +1360,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", generic_type_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -1408,7 +1409,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", generic_module_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -1459,7 +1460,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", generic_module_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -1508,7 +1509,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", generic_definition_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -1561,7 +1562,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [FORMAT_CMD, "-i", generic_definition_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
@@ -1610,7 +1611,7 @@ class TestFormatWithoutAddTestsFlag:
         )
 
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -1648,7 +1649,7 @@ class TestFormatWithoutAddTestsFlag:
             IntegrationValidator, "is_valid_category", return_value=True
         )
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -1691,7 +1692,7 @@ class TestFormatWithoutAddTestsFlag:
         mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
 
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -1727,7 +1728,7 @@ class TestFormatWithoutAddTestsFlag:
         playbooks_path = playbook.yml.path
         playbook.yml.delete_key("tests")
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -1765,7 +1766,7 @@ class TestFormatWithoutAddTestsFlag:
         test_playbooks_path = test_playbook.yml.path
         test_playbook.yml.delete_key("tests")
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -1808,7 +1809,7 @@ class TestFormatWithoutAddTestsFlag:
         test_playbooks_path = test_playbook.yml.path
         test_playbook.yml.delete_key("tests")
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -1860,7 +1861,7 @@ class TestFormatWithoutAddTestsFlag:
         )
         layouts_path = layout.path
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -1905,7 +1906,7 @@ class TestFormatWithoutAddTestsFlag:
         )
         layouts_path = layout.path
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -1971,7 +1972,7 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     with ChangeCWD(repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -2044,7 +2045,7 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     with ChangeCWD(repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", f"{script_path}", "-d", "-ngr"], input="\n"
+            app, [FORMAT_CMD, "-i", f"{script_path}", "-d", "-ngr"], input="\n"
         )
 
     # Asserts
@@ -2097,7 +2098,7 @@ def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):
     )
 
     result = runner.invoke(
-        main, [FORMAT_CMD, "-i", incident_field.path, "-at", "-y", "-ngr"]
+        app, [FORMAT_CMD, "-i", incident_field.path, "-at", "-y", "-ngr"]
     )
     message = (
         f"Skipping formatting of marketplaces field of aliases for {incident_field.path}"
@@ -2146,7 +2147,7 @@ def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
     pack = repo.create_pack("PackName")
     mapper = pack.create_mapper(name="mapper", content=mapper_content)
 
-    result = runner.invoke(main, [FORMAT_CMD, "-i", mapper.path, "-at", "-y", "-ngr"])
+    result = runner.invoke(app, [FORMAT_CMD, "-i", mapper.path, "-at", "-y", "-ngr"])
     message = f"Skipping formatting of non-existent-fields for {mapper.path} as the no-graph argument was given."
     assert result.exit_code == 0
     assert not result.exception
@@ -2227,7 +2228,7 @@ def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
     layout = pack.create_layoutcontainer(name="Layout", content=layout_content)
 
     result = runner.invoke(
-        main, [FORMAT_CMD, "-i", layout.path, "-at", "-y", "-ngr"]
+        app, [FORMAT_CMD, "-i", layout.path, "-at", "-y", "-ngr"]
     )  # run format without the graph
     message = f"Skipping formatting of non-existent-fields for {layout.path} as the no-graph argument was given."
     assert result.exit_code == 0

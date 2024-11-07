@@ -1,7 +1,7 @@
 from os import listdir
 from pathlib import Path
 
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json

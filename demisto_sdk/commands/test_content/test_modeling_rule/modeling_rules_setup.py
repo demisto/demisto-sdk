@@ -1,6 +1,9 @@
 import typer
 
-from demisto_sdk.commands.test_content.test_modeling_rule import test_modeling_rule, init_test_data
+from demisto_sdk.commands.test_content.test_modeling_rule import (
+    init_test_data,
+    test_modeling_rule,
+)
 
 modeling_rules_app = typer.Typer(
     name="modeling-rules",

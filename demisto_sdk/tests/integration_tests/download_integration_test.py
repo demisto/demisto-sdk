@@ -2,7 +2,7 @@ from os.path import join
 from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 from urllib3.response import HTTPResponse
 
 from demisto_sdk.__main__ import app

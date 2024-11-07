@@ -6,9 +6,10 @@ from zipfile import ZipFile
 
 import demisto_client
 import pytest
-from click.testing import CliRunner
 from packaging.version import Version
+from typer.testing import CliRunner
 
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -77,7 +78,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     runner = CliRunner(mix_stderr=False)
     mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     result = runner.invoke(
-        main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--no-zip"]
+        app, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--no-zip"]
     )
     assert result.exit_code == 0
     assert (
@@ -103,7 +104,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
 def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, mocker):
     """
     Given
-    - Content pack named ExmaplePack to upload.
+    - Content pack named Example Pack to upload.
 
     When
     - Uploading the pack.
@@ -136,7 +137,7 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
     runner = CliRunner(mix_stderr=False)
     mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     result = runner.invoke(
-        main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--marketplace", "xsoar"]
+        app, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--marketplace", "xsoar"]
     )
     assert result.exit_code == 0
     assert (
@@ -242,7 +243,7 @@ def test_zipped_pack_upload_positive(
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
             monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
             result = runner.invoke(
-                main,
+                app,
                 [
                     UPLOAD_CMD,
                     "-i",
@@ -364,7 +365,7 @@ def test_integration_upload_path_does_not_exist(demisto_client_mock):
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/DoesNotExist"
     )
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
+    result = runner.invoke(app, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
     assert result.exit_code == 2
     assert isinstance(result.exception, SystemExit)
     assert (
@@ -396,7 +397,7 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
         return_value=Version("0"),
     )
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
+    result = runner.invoke(app, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 1
     assert (
         "Could not connect to the server. Try checking your connection configurations."
@@ -438,7 +439,7 @@ def test_upload_single_list(mocker, pack):
 
     with ChangeCWD(pack.repo_path):
         result = runner.invoke(
-            main,
+            app,
             [UPLOAD_CMD, "-i", _list_data.path],
         )
     assert result.exit_code == SUCCESS_RETURN_CODE
@@ -487,7 +488,7 @@ def test_upload_single_indicator_field(mocker, pack):
 
     with ChangeCWD(pack.repo_path):
         result = runner.invoke(
-            main,
+            app,
             [UPLOAD_CMD, "-i", indicator_field.path],
         )
     assert result.exit_code == SUCCESS_RETURN_CODE

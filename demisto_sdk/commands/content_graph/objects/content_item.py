@@ -128,9 +128,9 @@ class ContentItem(BaseContent):
             pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
         if not pack:
             if pack_name := get_pack_name(path):
-                content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH") or get_content_path()
+                content_path = get_content_path()
                 pack = BaseContent.from_path(
-                    Path(content_path) / PACKS_FOLDER / pack_name, metadata_only=True
+                    content_path / PACKS_FOLDER / pack_name, metadata_only=True
                 )  # type: ignore[assignment]
         return pack  # type: ignore[return-value]
 
@@ -139,7 +139,7 @@ class ContentItem(BaseContent):
         if ignored_errors := self.get_ignored_errors(self.path.name):
             return ignored_errors
         
-        content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH") or get_content_path()
+        content_path = get_content_path()
         file_path = get_relative_path(self.path, Path(content_path))
         return self.get_ignored_errors(file_path)
 
@@ -147,7 +147,7 @@ class ContentItem(BaseContent):
         if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
             return ignored_errors
 
-        content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH") or get_content_path()
+        content_path = get_content_path()
         file_path = get_relative_path(file_path, Path(content_path))
         return self.get_ignored_errors(file_path)
 

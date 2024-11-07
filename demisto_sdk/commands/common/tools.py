@@ -868,9 +868,7 @@ def get_file(
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
-    # get_content_path() initializes a git repo each time,
-    # which is redundant in case the content repo path is available through the designated env var.
-    content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH") or get_content_path()
+    content_path = get_content_path()
     if git_sha:
         if file_path.is_absolute():
             file_path = file_path.relative_to(content_path)

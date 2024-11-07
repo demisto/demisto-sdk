@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from abc import ABC
 from pathlib import Path
 from typing import (
@@ -15,9 +16,8 @@ from typing import (
 from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import ExecutionMode, GitStatuses
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import is_abstract_class
+from demisto_sdk.commands.common.tools import get_content_path, is_abstract_class
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -225,14 +225,15 @@ class BaseResult(BaseModel):
     @property
     def format_readable_message(self):
         path: Path = self.content_object.path
+        content_path = get_content_path()
         if path.is_absolute():
-            path = path.relative_to(CONTENT_PATH)
+            path = path.relative_to(content_path)
         return f"{str(path)}: [{self.validator.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
         return {
-            "file path": str(self.content_object.path.relative_to(CONTENT_PATH)),
+            "file path": str(self.content_object.path.relative_to(get_content_path())),
             "error code": self.validator.error_code,
             "message": self.message,
         }
@@ -292,14 +293,16 @@ class InvalidContentItemResult(BaseResult, BaseModel):
     @property
     def format_readable_message(self):
         path: Path = self.path
+        content_path = get_content_path()
         if path.is_absolute():
-            path = path.relative_to(CONTENT_PATH)
+            path = path.relative_to(content_path)
         return f"{path}: [{self.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
+        content_path = get_content_path()
         return {
-            "file path": str(self.path.relative_to(CONTENT_PATH)),
+            "file path": str(self.path.relative_to(content_path)),
             "error code": self.error_code,
             "message": self.message,
         }

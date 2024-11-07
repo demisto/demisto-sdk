@@ -1,5 +1,6 @@
 import os
 import re
+import traceback
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Sequence, Set, Tuple, Union
@@ -8,6 +9,7 @@ import click
 import gitdb
 from git import (
     InvalidGitRepositoryError,
+    NoSuchPathError,
     Repo,  # noqa: TID251: required to create GitUtil
 )
 from git.diff import Lit_change_type
@@ -60,6 +62,11 @@ class GitUtil:
             repo_path = path or Path.cwd()
 
         try:
+            repo_path = Path(repo_path)
+            logger.debug(f'GitUtil using {repo_path=} | {repo_path.exists()=}')
+            if repo_path.is_dir():
+                logger.debug(f'GitUtil {os.listdir(repo_path)=}')
+
             self.repo = Repo(
                 repo_path, search_parent_directories=search_parent_directories
             )
@@ -67,6 +74,8 @@ class GitUtil:
             raise InvalidGitRepositoryError(
                 f"Unable to find Repository from current {repo_path.absolute()} - aborting"
             )
+        except Exception as e:
+            logger.error(f'GitUtil failed initializing repo at {path=}. Error: {str(e)} | {traceback.format_exc()}')
 
     @classmethod
     def from_content_path(cls, path: Optional[Path] = None) -> "GitUtil":
@@ -1186,3 +1195,19 @@ class GitUtil:
             logger.debug(f"Staged file '{file_path}'")
         else:
             logger.error(f"File '{file_path}' doesn't exist. Not adding.")
+
+
+class GitRepoManager:
+    """Manages a single Git repository instance, ensuring it exists before use."""
+    _repo = None
+
+    @classmethod
+    def get_repo(cls, path: Optional[Path] = None, search_parent_directories: bool = False):
+        if cls._repo is None:
+            try:
+                cls._repo = GitUtil(path or Path.cwd(), search_parent_directories).repo
+                logger.debug(f"GitRepoManager repository initialized: {cls._repo.working_dir}")
+            except (InvalidGitRepositoryError, NoSuchPathError) as e:
+                logger.error(f"GitRepoManager Failed to initialize Git repository: {e}")
+                raise
+        return cls._repo

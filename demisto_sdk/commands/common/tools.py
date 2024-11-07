@@ -131,7 +131,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
-from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.git_util import GitRepoManager
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -494,6 +494,7 @@ def get_remote_file_from_api(
     Returns:
         bytes | Dict | List: raw response of the file or as a python object (list, dict)
     """
+    logger.debug(f'get_remote_file_from_api {full_file_path=}')
     if not git_content_config:
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
@@ -867,9 +868,12 @@ def get_file(
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
+    # get_content_path() initializes a git repo each time,
+    # which is redundant in case the content repo path is available through the designated env var.
+    content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH") or get_content_path()
     if git_sha:
         if file_path.is_absolute():
-            file_path = file_path.relative_to(get_content_path())
+            file_path = file_path.relative_to(content_path)
         return get_remote_file(
             str(file_path), tag=git_sha, return_content=return_content
         )
@@ -877,7 +881,7 @@ def get_file(
     type_of_file = file_path.suffix.lower()
 
     if not file_path.exists():
-        file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
+        file_path = Path(content_path) / file_path  # type: ignore[arg-type]
     if not file_path.exists():
         raise FileNotFoundError(file_path)
     try:
@@ -2125,13 +2129,11 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
                 relative_path.absolute().parent
                 if relative_path.name == "Packs"
                 else find_pack_folder(relative_path.absolute()).parent.parent
+
             )
+    content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH")
     try:
-        if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-            git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
-            logger.debug(f"Using content path: {content_path}")
-        else:
-            git_repo = GitUtil().repo
+        git_repo = GitRepoManager.get_repo(Path(content_path) if content_path else None)
 
         try:
             remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
@@ -2141,14 +2143,18 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
                     f"Could not find remote with name {DEMISTO_GIT_UPSTREAM} for repo {git_repo.working_dir}"
                 )
             remote_url = ""
+
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
+
         if not git_repo.working_dir:
             return Path.cwd()
+
         return Path(git_repo.working_dir)
+
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
             logger.info(

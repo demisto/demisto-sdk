@@ -1,3 +1,5 @@
+
+import os
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -25,6 +27,7 @@ from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersi
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    get_content_path,
     get_file,
     get_pack_name,
     get_relative_path,
@@ -125,8 +128,9 @@ class ContentItem(BaseContent):
             pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
         if not pack:
             if pack_name := get_pack_name(path):
+                content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH") or get_content_path()
                 pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
+                    Path(content_path) / PACKS_FOLDER / pack_name, metadata_only=True
                 )  # type: ignore[assignment]
         return pack  # type: ignore[return-value]
 
@@ -134,13 +138,17 @@ class ContentItem(BaseContent):
     def ignored_errors(self) -> List[str]:
         if ignored_errors := self.get_ignored_errors(self.path.name):
             return ignored_errors
-        file_path = get_relative_path(self.path, CONTENT_PATH)
+        
+        content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH") or get_content_path()
+        file_path = get_relative_path(self.path, Path(content_path))
         return self.get_ignored_errors(file_path)
 
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
             return ignored_errors
-        file_path = get_relative_path(file_path, CONTENT_PATH)
+
+        content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH") or get_content_path()
+        file_path = get_relative_path(file_path, Path(content_path))
         return self.get_ignored_errors(file_path)
 
     def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:

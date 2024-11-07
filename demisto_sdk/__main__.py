@@ -3303,12 +3303,7 @@ def generate_yml_from_python(ctx, **kwargs):
 
 
 # ====================== convert ====================== #
-@main.command(
-    context_settings=dict(
-        ignore_unknown_options=True,
-        allow_extra_args=True,
-    )
-)
+@main.command(hidden=True)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",

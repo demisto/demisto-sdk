@@ -2156,10 +2156,10 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
             remote_url = ""
 
         is_fork_repo = "content" in remote_url
-        is_external_repo = is_external_repository()
+        # is_external_repo = is_external_repository()
 
-        if not is_fork_repo and not is_external_repo:
-            raise git.InvalidGitRepositoryError
+        # if not is_fork_repo and not is_external_repo:
+            # raise git.InvalidGitRepositoryError
 
         if not git_repo.working_dir:
             return Path.cwd()

@@ -2134,8 +2134,21 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
         git_repo = GitRepoManager.get_repo(Path(content_path) if content_path else None)
 
         try:
+
+
+            remote = git_repo.remote(name=DEMISTO_GIT_UPSTREAM)
+            urls = list(remote.urls)
+
+            if not urls:
+                git_repo.git.status()
+                raise ValueError(f"Remote '{DEMISTO_GIT_UPSTREAM}' has no URLs configured.")
+            else:
+                git_repo.git.show(f'{str(urls)}', '--oneline')
+
+
+
             remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
-        except ValueError:
+        except (ValueError, git.GitCommandError, Exception):
             if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
                 logger.warning(
                     f"Could not find remote with name {DEMISTO_GIT_UPSTREAM} for repo {git_repo.working_dir}"

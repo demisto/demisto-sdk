@@ -48,22 +48,22 @@ from zipfile import ZipFile
 #     get_display_name,
 #     get_pack_metadata,
 # )
-# from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-# from demisto_sdk.commands.content_graph.objects.integration_script import (
-#     IntegrationScript,
-# )
-# from demisto_sdk.commands.format.format_module import format_manager
-# from demisto_sdk.commands.generate_docs.generate_integration_doc import (
-#     generate_integration_doc,
-# )
-# from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
-#     generate_playbook_doc,
-# )
-# from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
-# from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-# from demisto_sdk.commands.update_release_notes.update_rn_manager import (
-#     UpdateReleaseNotesManager,
-# )
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
+from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+    generate_integration_doc,
+)
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
+    generate_playbook_doc,
+)
+from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+    UpdateReleaseNotesManager,
+)
 
 
 def get_previous_nonempty_line(lines: List[str], index: int):

@@ -222,6 +222,8 @@ def update(
     ),
     output_path: Path = typer.Option(
         None,
+        "-o",
+        "--output_path",
         exists=True,
         dir_okay=True,
         file_okay=False,

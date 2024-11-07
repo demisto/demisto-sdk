@@ -336,8 +336,6 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
                     "-at",
                     "-y",
                     "-nv",
-                    # "--console-log-threshold",
-                    # "DEBUG",
                 ],
             )
     assert result.exit_code == 0  # Check if command succeeded

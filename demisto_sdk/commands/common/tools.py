@@ -131,7 +131,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
-from demisto_sdk.commands.common.git_util import GitRepoManager
+from demisto_sdk.commands.common.git_util import GitRepoManager, GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -363,7 +363,7 @@ def src_root() -> Path:
     Returns:
         Path: src root path.
     """
-    git_dir = GitUtil().repo.working_tree_dir
+    git_dir = GitRepoManager.get_repo().working_tree_dir
 
     return Path(git_dir) / "demisto_sdk"  # type: ignore
 
@@ -2053,7 +2053,7 @@ def is_external_repository() -> bool:
 
     """
     try:
-        git_repo = GitUtil().repo
+        git_repo = GitRepoManager.get_repo()
     except git.InvalidGitRepositoryError:
         return True
     return Path(git_repo.working_dir, ".private-repo-settings").exists()
@@ -2065,7 +2065,7 @@ def is_external_repo() -> bool:
 
     """
     try:
-        remote = GitUtil().repo.remote()
+        remote = GitRepoManager.get_repo().remote()
         return (
             not remote
             or (not (parsed_url := giturlparse.parse(remote.url)))
@@ -2248,7 +2248,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         str: relative path of file in content repo.
     """
     try:
-        git_repo = GitUtil().repo
+        git_repo = GitRepoManager.get_repo()
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
@@ -3263,7 +3263,7 @@ def extract_docker_image_from_text(text: str, with_no_tag: bool = False):
 
 def get_current_repo() -> Tuple[str, str, str]:
     try:
-        git_repo = GitUtil().repo
+        git_repo = GitRepoManager.get_repo()
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
         host = parsed_git.host
         if "@" in host:

@@ -122,7 +122,7 @@ def logging_setup(
         os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
 
     logger.debug(
-        f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
+        f"logger setup: {calling_function=}, {console_threshold=}, {file_threshold=}, {path=}, {initial=}"
     )
 
 

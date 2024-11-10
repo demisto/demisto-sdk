@@ -183,29 +183,28 @@ def handle_deprecated_args(input_args: Iterable[str]):
             f"Use {DEPRECATED_PARAMETERS[argument]} instead."
         )
 
+def get_context_arg(args):
+    # Typer typically passes the context as the first argument
+    for arg in args:
+        if isinstance(arg, typer.Context):
+            return arg
+    return None
 
-def logging_setup_decorator(func: Callable, *args, **kwargs):
-    def get_context_arg(args):
-        for arg in args:
-            if isinstance(arg, typer.Context):
-                return arg
-        print(  # noqa: T201
-            "Error: Cannot find the Context arg. Is the command configured correctly?"
-        )
-        return None
 
-    @functools.wraps(func)  # Preserve the original function's signature and metadata
+def logging_setup_decorator(func: Callable):
+    @functools.wraps(func)  # Preserve original function's signature
     def wrapper(*args, **kwargs):
-
+        # Try to find the context in the args
         context = get_context_arg(args)
-        # If the context is not found, log an error or handle gracefully
         if context is None:
             print("Warning: Could not find Typer context in args.")
+
         # Extracting options from the kwargs and calling logging setup
         console_threshold = kwargs.get("console_log_threshold", "INFO")
         file_threshold = kwargs.get("file_log_threshold", "DEBUG")
         log_file_path = kwargs.get("log_file_path", None)
 
+        # Setting up the logger
         logging_setup(
             console_threshold=console_threshold,
             file_threshold=file_threshold,
@@ -213,8 +212,9 @@ def logging_setup_decorator(func: Callable, *args, **kwargs):
             calling_function=func.__name__,
         )
 
-        # Handle deprecated arguments
-        handle_deprecated_args(get_context_arg(args).args)
+        # Handle deprecated arguments (only if context is found)
+        if context:
+            handle_deprecated_args(context.args)
 
         return func(*args, **kwargs)
 

@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where critical-logging in docker failed.
+- description: Fixed an issue where logging would fail when creating a Docker image.
   type: fix
 pr_number: 4648

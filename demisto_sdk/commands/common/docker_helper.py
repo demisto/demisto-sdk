@@ -477,7 +477,7 @@ class DockerBase:
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
                 logger.critical(  # noqa: PLE1205
-                    "{}", f"<cyan>{log_prompt} - Build errors occurred: {errors}</cyan>"
+                    "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
                 )
         return test_docker_image, errors
 

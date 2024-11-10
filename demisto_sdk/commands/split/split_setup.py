@@ -12,6 +12,7 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 @logging_setup_decorator
 def split(
+    ctx: typer.Context,
     input: Path = typer.Option(..., help="The yml/json file to extract from"),
     output: Path = typer.Option(
         None,

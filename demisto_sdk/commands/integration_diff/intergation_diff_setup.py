@@ -10,6 +10,7 @@ from demisto_sdk.commands.integration_diff.integration_diff_detector import (
 
 @logging_setup_decorator
 def integration_diff(
+    ctx: typer.Context,
     new: str = typer.Option(
         ..., "-n", "--new", help="The path to the new version of the integration"
     ),

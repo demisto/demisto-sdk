@@ -11,6 +11,7 @@ from demisto_sdk.commands.generate_integration.code_generator import (
 
 @logging_setup_decorator
 def generate_integration(
+    ctx: typer.Context,
     input: Path = typer.Option(
         ...,
         "-i",

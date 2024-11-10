@@ -9,6 +9,7 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 @logging_setup_decorator
 def zip_packs(
+    ctx: typer.Context,
     input: str = typer.Option(
         ..., help="The packs to be zipped as csv list of pack paths."
     ),

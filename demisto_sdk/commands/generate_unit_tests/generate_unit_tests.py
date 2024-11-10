@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List
 
 import astor
+import klara
 import autopep8
 from klara.contract import solver
 from klara.contract.solver import MANAGER, ContractSolver, nodes

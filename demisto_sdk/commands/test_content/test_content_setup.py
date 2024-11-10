@@ -8,6 +8,7 @@ from demisto_sdk.commands.test_content.execute_test_content import execute_test_
 
 @logging_setup_decorator
 def test_content(
+    ctx: typer.Context,
     artifacts_path: str = typer.Option(
         Path("./Tests"),
         help="Destination directory to create the artifacts.",

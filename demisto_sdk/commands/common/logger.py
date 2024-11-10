@@ -183,39 +183,31 @@ def handle_deprecated_args(input_args: Iterable[str]):
             f"Use {DEPRECATED_PARAMETERS[argument]} instead."
         )
 
-def get_context_arg(args):
-    # Typer typically passes the context as the first argument
-    for arg in args:
-        if isinstance(arg, typer.Context):
-            return arg
-    return None
-
 
 def logging_setup_decorator(func: Callable):
-    @functools.wraps(func)  # Preserve original function's signature
-    def wrapper(*args, **kwargs):
-        # Try to find the context in the args
-        context = get_context_arg(args)
-        if context is None:
-            print("Warning: Could not find Typer context in args.")
+    @functools.wraps(func)
+    def wrapper(ctx: typer.Context, *args, **kwargs):
+        # Setup logging based on options in kwargs
+        # Default logging options
+        if 'console_log_threshold' not in kwargs:
+            kwargs['console_log_threshold'] = "INFO"
+        if 'file_log_threshold' not in kwargs:
+            kwargs['file_log_threshold'] = "DEBUG"
+        if 'log_file_path' not in kwargs:
+            kwargs['log_file_path'] = None
 
-        # Extracting options from the kwargs and calling logging setup
-        console_threshold = kwargs.get("console_log_threshold", "INFO")
-        file_threshold = kwargs.get("file_log_threshold", "DEBUG")
-        log_file_path = kwargs.get("log_file_path", None)
-
-        # Setting up the logger
+        # Initialize logging
         logging_setup(
-            console_threshold=console_threshold,
-            file_threshold=file_threshold,
-            path=log_file_path,
+            console_threshold=kwargs['console_log_threshold'],
+            file_threshold=kwargs['file_log_threshold'],
+            path=kwargs['log_file_path'],
             calling_function=func.__name__,
         )
 
-        # Handle deprecated arguments (only if context is found)
-        if context:
-            handle_deprecated_args(context.args)
+        # Handle deprecated arguments directly from context args
+        handle_deprecated_args(ctx.args if ctx else [])
 
-        return func(*args, **kwargs)
+        # Run the wrapped function
+        return func(ctx, *args, **kwargs)
 
     return wrapper

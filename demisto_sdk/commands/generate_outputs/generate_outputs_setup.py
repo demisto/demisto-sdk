@@ -9,6 +9,7 @@ from demisto_sdk.commands.generate_outputs.generate_outputs import run_generate_
 
 @logging_setup_decorator
 def generate_outputs(
+    ctx: typer.Context,
     command: Optional[str] = typer.Option(
         None, "-c", "--command", help="Specific command name (e.g., xdr-get-incidents)"
     ),

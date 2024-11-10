@@ -4,7 +4,7 @@ from typing import List
 
 import typer
 
-from demisto_sdk.commands.common.logger import logging_setup_decorator
+from demisto_sdk.commands.common.logger import logging_setup_decorator, logger
 
 
 class ItemType(str, Enum):
@@ -20,6 +20,7 @@ class ItemType(str, Enum):
 
 @logging_setup_decorator
 def download(
+    ctx: typer.Context,
     output: Path = typer.Option(
         None,
         "--output",
@@ -100,12 +101,7 @@ def download(
     DEMISTO_BASE_URL environment variable should contain the server base URL.
     DEMISTO_API_KEY environment variable should contain a valid API Key for the server.
     """
-    typer.echo(
-        f"Downloading content with options: output={output}, input={input}, regex={regex}, insecure={insecure}"
-    )
-    # Placeholder: Replace with the actual download logic
     from demisto_sdk.commands.download.downloader import Downloader
 
-    # Assuming kwargs need to be passed as a dict:
     kwargs = locals()
     Downloader(**kwargs).download()

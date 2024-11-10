@@ -212,8 +212,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                     "--no-update",
                 ],
             )
-        assert "does not exist" in result.stderr
-        assert result.exit_code == 2
+        assert "Couldn't find any items for pack 'NotValidPack'" in result.output
 
     def test_integration_find_dependencies_with_dependency(
         self, repo, mocker, monkeypatch

@@ -11,6 +11,7 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 @logging_setup_decorator
 def update_release_notes(
+    ctx: typer.Context,
     input: str = typer.Option(
         None, help="The relative path of the content pack. For example Packs/Pack_Name"
     ),

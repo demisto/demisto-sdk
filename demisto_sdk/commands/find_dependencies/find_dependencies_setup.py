@@ -8,6 +8,7 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import PackDepende
 
 @logging_setup_decorator
 def find_dependencies(
+    ctx: typer.Context,
     input: list[Path] = typer.Option(
         None,
         "--input",

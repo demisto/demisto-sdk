@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.logger import logging_setup_decorator
 
 @logging_setup_decorator
 def upload(
+    ctx: typer.Context,
     input_path: Path = typer.Option(
         ...,
         "--input",

@@ -6,6 +6,7 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 @logging_setup_decorator
 def run_test_playbook(
+    ctx: typer.Context,
     test_playbook_path: str = typer.Option(
         None,
         help="Path to test playbook to run, can be a path to specific "

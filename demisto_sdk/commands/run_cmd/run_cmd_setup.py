@@ -19,6 +19,7 @@ class RunnerArgs(TypedDict):
 
 @logging_setup_decorator
 def run(
+    ctx: typer.Context,
     query: str = typer.Option(..., help="The query to run"),
     insecure: bool = typer.Option(False, help="Skip certificate validation"),
     incident_id: Optional[str] = typer.Option(

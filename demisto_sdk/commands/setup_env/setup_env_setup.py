@@ -9,6 +9,7 @@ from demisto_sdk.commands.setup_env.setup_environment import IDEType, setup_env
 
 @logging_setup_decorator
 def setup_env_command(
+    ctx: typer.Context,
     ide: str = typer.Option(
         "auto-detect",
         help="IDE type to configure the environment for. If not specified, "

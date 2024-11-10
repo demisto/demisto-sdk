@@ -9,6 +9,7 @@ from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegrat
 
 @logging_setup_decorator
 def openapi_codegen(
+    ctx: typer.Context,
     input_file: Path = typer.Option(
         ..., "-i", "--input-file", help="The swagger file to load in JSON format"
     ),

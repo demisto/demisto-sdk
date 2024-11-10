@@ -14,6 +14,7 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 @logging_setup_decorator
 def postman_codegen(
+    ctx: typer.Context,
     input: Path = typer.Option(..., help="The Postman collection 2.1 JSON file"),
     output: Path = typer.Option(
         Path("."),

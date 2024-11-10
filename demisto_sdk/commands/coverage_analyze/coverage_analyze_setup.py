@@ -10,6 +10,7 @@ from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
 @logging_setup_decorator
 def coverage_analyze(
+    ctx: typer.Context,
     input: str = typer.Option(
         os.path.join("coverage_report", ".coverage"),
         "-i",

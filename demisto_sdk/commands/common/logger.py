@@ -105,9 +105,9 @@ def logging_setup(
     diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", 'False'))
     colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, 'False'))
 
-    # logger = logger.opt(
-    #     colors=colorize
-    # )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
+    logger = logger.opt(
+        colors=colorize
+    )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
     # _add_console_logger(
     #     colorize=colorize, threshold=console_threshold, diagnose=diagnose
     # )

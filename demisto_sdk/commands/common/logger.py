@@ -34,11 +34,11 @@ logger = loguru.logger  # all SDK modules should import from this file, not from
 logger.disable(None)  # enabled at setup_logging()
 
 
-def _setup_neo4j_logger():
-    import logging  # noqa: TID251 # special case, to control the neo4j logging
+# def _setup_neo4j_logger():
+#     import logging  # noqa: TID251 # special case, to control the neo4j logging
 
-    neo4j_log = logging.getLogger("neo4j")
-    neo4j_log.setLevel(logging.CRITICAL)
+#     neo4j_log = logging.getLogger("neo4j")
+#     neo4j_log.setLevel(logging.CRITICAL)
 
 
 def calculate_log_size() -> int:
@@ -98,12 +98,12 @@ def logging_setup(
     In the initial set up there is NO file logging (only console)
     """
     global logger
-    _setup_neo4j_logger()
+    # _setup_neo4j_logger()
 
     logger.remove(None)  # Removes all pre-existing handlers
 
-    diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", False))
-    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), False)
+    diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", 'False'))
+    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, 'False'))
 
     logger = logger.opt(
         colors=colorize

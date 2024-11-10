@@ -287,12 +287,10 @@ class XsiamClient(XsoarSaasClient):
     def get_playbook_data(self, playbook_id: int) -> dict:
         playbook_endpoint = f"/playbook/{playbook_id}"
 
-        res = requests.get(url=f'{self.base_url}/public_api/v1{playbook_endpoint}',
-                            headers=self._xdr_client.headers, json=body)
-        return self._process_response(res.content, res.status_code, 200)
+        response, status_code, _ = self._xsoar_client.generic_request(playbook_endpoint, method='GET', accept='application/json')
+        return self._process_response(response, status_code, 200)
 
     def update_playbook_input(self, playbook_id: str, new_inputs: dict):
         saving_inputs_path = f"/playbook/inputs/{playbook_id}"
-        res = requests.post(url=f'{self.base_url}/public_api/v1{saving_inputs_path}',
-                            headers=self._xdr_client.headers, json={"inputs":new_inputs})
-        return self._process_response(res.content, res.status_code, 200)
+        response, status_code, _ = self._xsoar_client.generic_request(saving_inputs_path, method='POST', body={"inputs":new_inputs})
+        return self._process_response(response, status_code, 200)

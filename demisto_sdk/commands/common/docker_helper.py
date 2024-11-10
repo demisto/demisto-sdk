@@ -453,6 +453,7 @@ class DockerBase:
             # if we use a custom registry, we need to have to pull the image and we can't use dockerhub api
             should_pull = True
         if not should_pull and self.is_image_available(test_docker_image):
+            logger.debug(f"XSUP-43593 log: first return statement, return values: {test_docker_image=}, {errors=}")
             return test_docker_image, errors
         base_image = self.get_image_registry(base_image)
         test_docker_image = self.get_image_registry(test_docker_image)
@@ -476,9 +477,11 @@ class DockerBase:
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
+                logger.debug(f"XSUP-43593 log: Exception raised: {errors=}")
                 logger.critical(  # noqa: PLE1205
                     "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
                 )
+        logger.debug(f"XSUP-43593 log: second return statement, return values: {test_docker_image=}, {errors=}")
         return test_docker_image, errors
 
 

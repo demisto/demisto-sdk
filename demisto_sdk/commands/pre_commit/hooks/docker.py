@@ -182,6 +182,9 @@ def devtest_image(
 
     """
     docker_base = get_docker()
+    logger.debug(
+        f"XSUP-43593 log: calling docker_base.get_or_create_test_image with the following args: base_image={image_tag}, container_type={TYPE_PWSH if is_powershell else TYPE_PYTHON}"
+    )
     image, errors = docker_base.get_or_create_test_image(
         base_image=image_tag,
         container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
@@ -192,7 +195,11 @@ def devtest_image(
         if should_install_mypy_additional_dependencies
         else None,
     )
+    logger.debug(
+        f"XSUP-43593 log: after get_or_create_test_image run, return values: {image=}, {errors=}"
+    )
     if not errors:
+        logger.debug("XSUP-43593 log: inside 'not errors'")
         if not should_pull:
             # pull images in background
             if os.getenv("CONTENT_GITLAB_CI"):
@@ -313,6 +320,9 @@ class DockerHook(Hook):
             "name", ""
         ).startswith(  # see CIAC-11832
             "mypy-in-docker"
+        )
+        logger.debug(
+            f"XSUP-43593 log: calling devtest_image with the following args: {image=}, {is_image_powershell=}, {self.context.dry_run=}, {mypy_additional_dependencies=}"
         )
         dev_image = devtest_image(
             image,

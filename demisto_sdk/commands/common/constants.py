@@ -19,7 +19,7 @@ NEO4J_DIR = PROJECT_DATA_DIR / "neo4j"
 
 LOG_FILE_NAME = "demisto_sdk_debug.log"
 
-NEO4J_DEFAULT_VERSION = "5.22.0"
+NEO4J_DEFAULT_VERSION = "5.13.0"
 
 # --- Environment Variables ---
 # General

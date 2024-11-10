@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where logging would fail when linking PR to Jira issue in the GitHub workflow step.
+  type: fix
+pr_number: 4649

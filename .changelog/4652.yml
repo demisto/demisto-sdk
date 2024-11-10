@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where Upload command uploaded packs without their dependencies when using --zip flag.
+  type: fix
+pr_number: 4652

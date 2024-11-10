@@ -12,7 +12,6 @@
 * Moved RN113 to the new validate format. The validation ensures that all the first level headers in the release note are valid content types.
 * Moved RN115 to the new validate format. The validation ensure that the release notes first level headers are valid.
 
-
 ## 1.32.3
 * Fixed an issue where integrations and scripts validations didn't run in builds. [#4609](https://github.com/demisto/demisto-sdk/pull/4609)
 * Added BA127 new validation. The validation checks that the level of depth of the context output path in the yml is lower or equal to 5 in XSOAR supported content items. [#4490](https://github.com/demisto/demisto-sdk/pull/4490)

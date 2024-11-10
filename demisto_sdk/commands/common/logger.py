@@ -108,9 +108,9 @@ def logging_setup(
     logger = logger.opt(
         colors=colorize
     )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
-    # _add_console_logger(
-    #     colorize=colorize, threshold=console_threshold, diagnose=diagnose
-    # )
+    _add_console_logger(
+        colorize=colorize, threshold=console_threshold, diagnose=diagnose
+    )
 
     # if not initial:
     #     _add_file_logger(

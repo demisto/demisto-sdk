@@ -18,17 +18,23 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 @logging_setup_decorator
 def prepare_content(
+    ctx: typer.Context,
     input: str = typer.Option(
-        None, help="Comma-separated list of paths to directories or files to unify."
+        None,
+        "-i",
+        "--input",
+        help="Comma-separated list of paths to directories or files to unify.",
     ),
     all: bool = typer.Option(
         False,
+        "-a",
+        "--all",
         is_flag=True,
         help="Run prepare-content on all content packs. If no output path is given, "
         "will dump the result in the current working path.",
     ),
     graph: bool = typer.Option(
-        False, is_flag=True, help="Whether to use the content graph"
+        False, "-g", "--graph", is_flag=True, help="Whether to use the content graph"
     ),
     skip_update: bool = typer.Option(
         False,
@@ -37,24 +43,30 @@ def prepare_content(
         "(used only when graph is true)",
     ),
     output: Path = typer.Option(
-        None, help="The output dir to write the unified YML to"
+        None, "-o", "--output", help="The output dir to write the unified YML to"
     ),
     custom: str = typer.Option(
-        None, help="Add test label to unified YML id/name/display"
+        None, "-c", "--custom", help="Add test label to unified YML id/name/display"
     ),
     force: bool = typer.Option(
         False,
+        "-f",
+        "--force",
         is_flag=True,
         help="Forcefully overwrites the preexisting YML if one exists",
     ),
     ignore_native_image: bool = typer.Option(
         False,
+        "-ini",
+        "--ignore-native-image",
         is_flag=True,
         help="Whether to ignore the addition of the native image key to "
         "the YML of a script/integration",
     ),
     marketplace: MarketplaceVersions = typer.Option(
         MarketplaceVersions.XSOAR,
+        "-mp",
+        "--marketplace",
         help="The marketplace the content items are created for, "
         "that determines usage of marketplace unique text.",
     ),

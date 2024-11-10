@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 from demisto_sdk.__main__ import app
 
 
-@pytest.mark.parametrize("error_code", ["BA102"])
+@pytest.mark.parametrize("error_code", ["BC100"])
 def test_error_code_info_end_to_end(mocker, error_code):
     """
     Given
@@ -19,6 +19,7 @@ def test_error_code_info_end_to_end(mocker, error_code):
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(app, ["error-code", "-i", error_code])
+
     assert result.exit_code == 0
     assert not result.exception
     assert result.output

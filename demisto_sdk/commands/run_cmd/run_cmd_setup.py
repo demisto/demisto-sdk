@@ -20,14 +20,18 @@ class RunnerArgs(TypedDict):
 @logging_setup_decorator
 def run(
     ctx: typer.Context,
-    query: str = typer.Option(..., help="The query to run"),
+    query: str = typer.Option(..., "-q", "--query", help="The query to run"),
     insecure: bool = typer.Option(False, help="Skip certificate validation"),
     incident_id: Optional[str] = typer.Option(
         None,
+        "-id",
+        "--incident-id",
         help="The incident to run the query on, if not specified the playground will be used.",
     ),
     debug: bool = typer.Option(
         False,
+        "-d",
+        "--debug",
         help="Enable debug-mode feature. If you want to save the output file please use the --debug-path option.",
     ),
     debug_path: Optional[str] = typer.Option(
@@ -40,10 +44,14 @@ def run(
     ),
     prefix: Optional[str] = typer.Option(
         None,
+        "-p",
+        "--prefix",
         help="Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, the base path for the outputs that the script generates.",
     ),
     raw_response: bool = typer.Option(
         False,
+        "-r",
+        "--raw-response",
         help="Used with `json-to-outputs` flag. Use the raw response of the query for `json-to-outputs`.",
     ),
     console_log_threshold: str = typer.Option(

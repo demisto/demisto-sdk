@@ -1,4 +1,3 @@
-import click
 import demisto_client
 import pytest
 import typer

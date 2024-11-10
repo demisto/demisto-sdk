@@ -222,6 +222,9 @@ app.command(
 app.command(name="prepare-content", help="Prepares content to upload to the platform.")(
     prepare_content
 )
+app.command(name="unify", help="Prepares content to upload to the platform.")(
+    prepare_content
+)
 app.command(name="xsoar-lint", help="Runs the xsoar lint on the given paths.")(
     xsoar_linter
 )

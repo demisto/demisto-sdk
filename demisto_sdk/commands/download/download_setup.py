@@ -4,7 +4,7 @@ from typing import List
 
 import typer
 
-from demisto_sdk.commands.common.logger import logging_setup_decorator, logger
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 
 
 class ItemType(str, Enum):

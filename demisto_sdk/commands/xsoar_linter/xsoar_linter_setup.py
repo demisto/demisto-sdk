@@ -18,6 +18,17 @@ def xsoar_linter(
         show_default=False,
         help="The paths to run xsoar linter on. May pass multiple paths.",
     ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
+    ),
 ):
     """
     Runs the xsoar lint on the given paths.

@@ -30,12 +30,13 @@ def upload(
     ),
     zip: bool = typer.Option(
         True,
+        "-z/-nz",
         "--zip/--no-zip",
         help="Compress the pack to zip before upload. Relevant only for packs.",
     ),
     tpb: bool = typer.Option(
         False,
-        "--tpb",
+        "-tpb",
         help="Adds the test playbook for upload when this flag is used. Relevant only for packs.",
     ),
     xsiam: bool = typer.Option(
@@ -46,6 +47,7 @@ def upload(
     ),
     marketplace: str = typer.Option(
         None,
+        "-mp",
         "--marketplace",
         help="The marketplace to which the content will be uploaded.",
     ),
@@ -61,7 +63,7 @@ def upload(
     ),
     skip_validation: bool = typer.Option(
         False,
-        "--skip-validation",
+        "--skip_validation",
         help="Only for upload zipped packs. If true, will skip upload packs validation. "
         "Use this only when migrating existing custom content to packs.",
     ),

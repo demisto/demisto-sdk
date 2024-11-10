@@ -189,18 +189,18 @@ def logging_setup_decorator(func: Callable):
     def wrapper(ctx: typer.Context, *args, **kwargs):
         # Setup logging based on options in kwargs
         # Default logging options
-        if 'console_log_threshold' not in kwargs:
-            kwargs['console_log_threshold'] = "INFO"
-        if 'file_log_threshold' not in kwargs:
-            kwargs['file_log_threshold'] = "DEBUG"
-        if 'log_file_path' not in kwargs:
-            kwargs['log_file_path'] = None
+        if "console_log_threshold" not in kwargs:
+            kwargs["console_log_threshold"] = "INFO"
+        if "file_log_threshold" not in kwargs:
+            kwargs["file_log_threshold"] = "DEBUG"
+        if "log_file_path" not in kwargs:
+            kwargs["log_file_path"] = None
 
         # Initialize logging
         logging_setup(
-            console_threshold=kwargs['console_log_threshold'],
-            file_threshold=kwargs['file_log_threshold'],
-            path=kwargs['log_file_path'],
+            console_threshold=kwargs["console_log_threshold"],
+            file_threshold=kwargs["file_log_threshold"],
+            path=kwargs["log_file_path"],
             calling_function=func.__name__,
         )
 

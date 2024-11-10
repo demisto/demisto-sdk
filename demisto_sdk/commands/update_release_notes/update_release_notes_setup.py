@@ -13,20 +13,32 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 def update_release_notes(
     ctx: typer.Context,
     input: str = typer.Option(
-        None, help="The relative path of the content pack. For example Packs/Pack_Name"
+        None,
+        "-i",
+        "--input",
+        help="The relative path of the content pack. For example Packs/Pack_Name",
     ),
     update_type: str = typer.Option(
         None,
+        "-u",
+        "--update-type",
         help="The type of update being done. [major, minor, revision, documentation]",
         metavar="UPDATE_TYPE",
     ),
-    version: str = typer.Option(None, help="Bump to a specific version."),
+    version: str = typer.Option(
+        None, "-v", "--version", help="Bump to a specific version."
+    ),
     use_git: bool = typer.Option(
         False,
+        "-g",
+        "--use-git",
         help="Use git to identify the relevant changed files, will be used by default if '-i' is not set.",
     ),
     force: bool = typer.Option(
-        False, help="Force update release notes for a pack (even if not required)."
+        False,
+        "-f",
+        "--force",
+        help="Force update release notes for a pack (even if not required).",
     ),
     text: str = typer.Option(
         None, help="Text to add to all of the release notes files."
@@ -42,7 +54,10 @@ def update_release_notes(
         None, help="The path of the id-set.json used for APIModule updates."
     ),
     breaking_changes: bool = typer.Option(
-        False, help="If new version contains breaking changes."
+        False,
+        "-bc",
+        "--breaking-changes",
+        help="If new version contains breaking changes.",
     ),
     console_log_threshold: str = typer.Option(
         None,

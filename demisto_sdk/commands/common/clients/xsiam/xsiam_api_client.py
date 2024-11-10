@@ -32,10 +32,8 @@ class XsiamClient(XsoarSaasClient):
             self.get_ioc_rules()
             return True
         except ApiException as error:
-            logger.debug(  # noqa: PLE1205
-                "{}",
-                f"<cyan>{self} is not {self.server_type} server, error: {error}</cyan>",
-            )
+            logger.debug(
+                f"{self} is not {self.server_type} server, error: {error}")
             return False
 
     @property
@@ -45,6 +43,28 @@ class XsiamClient(XsoarSaasClient):
     @property
     def marketplace(self) -> MarketplaceVersions:
         return MarketplaceVersions.MarketplaceV2
+
+    """
+    #############################
+    Helper methods
+    #############################
+    """
+
+    def _process_response(self, response, status_code, expected_status=200):
+        """Process the HTTP response coming from the XSOAR client."""  # noqa: E999
+        if status_code == expected_status:
+            if response:
+                try:
+                    return json.loads(response)
+                except json.JSONDecodeError:
+                    api_response = response.replace("'", '"').replace(
+                        "False", "false").replace("True", "true").replace("None", "null")
+                    return json.loads(api_response)
+            return {}
+        else:
+            error_message = f"Expected status {expected_status}, but got {status_code}. Response: {response}"
+            raise Exception(error_message)
+
 
     """
     #############################
@@ -60,7 +80,8 @@ class XsiamClient(XsoarSaasClient):
         response_type: str = "object",
     ):
         # if in the future it will be possible to delete incidents in XSIAM, implement this method
-        raise NotImplementedError("it is not possible to delete incidents in XSIAM")
+        raise NotImplementedError(
+            "it is not possible to delete incidents in XSIAM")
 
     """
     #############################
@@ -76,7 +97,8 @@ class XsiamClient(XsoarSaasClient):
         data_format: str = "json",
     ):
         if self.server_config.token:
-            endpoint = urljoin(self.server_config.base_api_url, "logs/v1/xsiam")
+            endpoint = urljoin(
+                self.server_config.base_api_url, "logs/v1/xsiam")
             additional_headers = {
                 "authorization": self.server_config.token,
                 "format": data_format,
@@ -86,14 +108,13 @@ class XsiamClient(XsoarSaasClient):
             }
             token_type = "xsiam_token"
         elif self.server_config.collector_token:
-            endpoint = urljoin(self.server_config.base_api_url, "logs/v1/event")
+            endpoint = urljoin(
+                self.server_config.base_api_url, "logs/v1/event")
             additional_headers = {
                 "authorization": self.server_config.collector_token,
-                "content-type": (
-                    "application/json"
-                    if data_format.casefold == "json"
-                    else "text/plain"
-                ),
+                "content-type": "application/json"
+                if data_format.casefold == "json"
+                else "text/plain",
                 "content-encoding": "gzip",
             }
             token_type = "collector_token"
@@ -109,7 +130,8 @@ class XsiamClient(XsoarSaasClient):
         )
         try:
             data = response.json()
-        except requests.exceptions.JSONDecodeError:  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        except requests.exceptions.JSONDecodeError:
             error = response.text
             err_msg = f"Failed to push using {token_type} - with status code {response.status_code}"
             err_msg += f"\n{error}" if error else ""
@@ -167,7 +189,8 @@ class XsiamClient(XsoarSaasClient):
             self.server_config.base_api_url, "public_api/v1/xql/get_query_results/"
         )
         logger.info(f"Getting xql query results: endpoint={endpoint}")
-        response = self._xdr_client.post(endpoint, data=payload, timeout=timeout)
+        response = self._xdr_client.post(
+            endpoint, data=payload, timeout=timeout)
         logger.debug("Request completed to get xql query results")
         data = response.json()
         logger.debug(pformat(data))
@@ -188,8 +211,7 @@ class XsiamClient(XsoarSaasClient):
     def get_ioc_rules(self):
         # /ioc-rules is only an endpoint in XSIAM.
         response, status_code, response_headers = self._xsoar_client.generic_request(
-            "/ioc-rules", "GET", response_type="object"
-        )
+            "/ioc-rules", "GET", response_type="object")
         if (
             "text/html" in response_headers.get("Content-Type")
             or status_code != requests.codes.ok
@@ -199,3 +221,78 @@ class XsiamClient(XsoarSaasClient):
             )
 
         return response
+
+    # def connect_xdr(alerts):
+    #     headers = {
+    #         "Authorization": self.public_api_key.key,
+    #         "x-xdr-auth-id": self.public_api_key.id,
+    #         "Content-Type": "application/json",
+    #     }
+    #     alert_payload = {"request_data": {"alerts": alerts}}
+    #     res = requests.post(
+    #         url=f'https://api-{xsoar_host}/public_api/v1/alerts/insert_parsed_alerts/', headers=headers, json=alert_payload)
+
+    """
+    #############################
+    Alerts related methods
+    #############################
+    """
+
+    def create_alert_from_json(self, json_content: dict) -> int:
+        alert_payload = {"request_data": {"alert": json_content}}
+        res = requests.post(url=f'{self.base_url}/public_api/v1/alerts/create_alert',
+                            headers=self._xdr_client.headers, json=alert_payload)
+        alert_data = self._process_response(res.content, res.status_code, 200)
+        return alert_data['reply']
+
+    def get_internal_alert_id(self, alert_external_id: str) -> int:
+        data = self.search_alerts(alert_external_id)
+        return data['alerts'][0]['alert_id']
+
+    def update_alert(self, alert_id: str | list[str], updated_data: dict):
+        """
+        Args:
+            alert_id (str | list[str]): alert ids to edit.
+            updated_data (dict): The data to update the alerts with. https://cortex-panw.stoplight.io/docs/cortex-xsiam-1/rpt3p1ne2bwfe-update-alerts
+        """
+        alert_payload = {"request_data": {
+            "update_data": updated_data, "alert_id_list": alert_id}}
+        res = requests.post(url=f'{self.base_url}/public_api/v1/alerts/update_alerts',
+                            headers=self._xdr_client.headers, json=alert_payload)
+        alert_data = self._process_response(res.content, res.status_code, 200)
+        return alert_data
+
+    def search_alerts(self, external_alert_id: str | list[str]):
+        body = {
+            "request_data": {
+                "filters": [
+                    {
+                        "field": "external_id_list",
+                        "operator": "in",
+                        "value": external_alert_id if isinstance(external_alert_id, list) else [external_alert_id]
+                    }
+                ]
+            }
+        }
+        res = requests.post(url=f'{self.base_url}/public_api/v1/alerts/get_alerts/',
+                            headers=self._xdr_client.headers, json=body)
+        return self._process_response(res.content, res.status_code, 200)['reply']
+
+    """
+    #############################
+    Playbooks related methods
+    #############################
+    """
+
+    def get_playbook_data(self, playbook_id: int) -> dict:
+        playbook_endpoint = f"/playbook/{playbook_id}"
+
+        res = requests.get(url=f'{self.base_url}/public_api/v1{playbook_endpoint}',
+                            headers=self._xdr_client.headers, json=body)
+        return self._process_response(res.content, res.status_code, 200)
+
+    def update_playbook_input(self, playbook_id: str, new_inputs: dict):
+        saving_inputs_path = f"/playbook/inputs/{playbook_id}"
+        res = requests.post(url=f'{self.base_url}/public_api/v1{saving_inputs_path}',
+                            headers=self._xdr_client.headers, json={"inputs":new_inputs})
+        return self._process_response(res.content, res.status_code, 200)

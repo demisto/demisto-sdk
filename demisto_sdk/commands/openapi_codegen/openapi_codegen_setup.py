@@ -1,11 +1,13 @@
-import json
 from pathlib import Path
 
 import typer
 
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
 
+@logging_setup_decorator
 def openapi_codegen(
     input_file: Path = typer.Option(
         ..., "-i", "--input-file", help="The swagger file to load in JSON format"

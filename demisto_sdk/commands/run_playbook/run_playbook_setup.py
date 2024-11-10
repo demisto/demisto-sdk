@@ -1,6 +1,9 @@
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 
+
+@logging_setup_decorator
 def run_playbook(
     playbook_id: str = typer.Option(
         ...,

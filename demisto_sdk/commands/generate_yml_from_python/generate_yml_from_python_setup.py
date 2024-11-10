@@ -2,9 +2,11 @@ from pathlib import Path
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 
 
+@logging_setup_decorator
 def generate_yml_from_python(
     ctx: typer.Context,
     input: Path = typer.Option(

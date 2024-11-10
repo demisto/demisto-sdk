@@ -2,9 +2,10 @@ import os
 import platform
 import sys
 from pathlib import Path
-from typing import Iterable, Optional, Union
+from typing import Callable, Iterable, Optional, Union
 
 import loguru  # noqa: TID251 # This is the only place where we allow it
+import typer
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOG_FILE_PATH,
@@ -180,3 +181,35 @@ def handle_deprecated_args(input_args: Iterable[str]):
             f"Argument {argument} is deprecated,"
             f"Use {DEPRECATED_PARAMETERS[argument]} instead."
         )
+
+
+def logging_setup_decorator(func: Callable, *args, **kwargs):
+    def get_context_arg(args):
+        for arg in args:
+            if isinstance(arg, typer.Context):
+                return arg
+        print(  # noqa: T201
+            "Error: Cannot find the Context arg. Is the command configured correctly?"
+        )
+        return None
+
+    # Define Typer options here
+    def wrapper(*args, **kwargs):
+        # Extracting options from the kwargs and calling logging setup
+        console_threshold = kwargs.get("console_log_threshold", "INFO")
+        file_threshold = kwargs.get("file_log_threshold", "DEBUG")
+        log_file_path = kwargs.get("log_file_path", None)
+
+        logging_setup(
+            console_threshold=console_threshold,
+            file_threshold=file_threshold,
+            path=log_file_path,
+            calling_function=func.__name__,
+        )
+
+        # Handle deprecated arguments
+        handle_deprecated_args(get_context_arg(args).args)
+
+        return func(*args, **kwargs)
+
+    return wrapper

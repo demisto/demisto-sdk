@@ -4,11 +4,13 @@ import typer
 
 from demisto_sdk.commands.common.configuration import sdk
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 
+@logging_setup_decorator
 def split(
     input: Path = typer.Option(..., help="The yml/json file to extract from"),
     output: Path = typer.Option(

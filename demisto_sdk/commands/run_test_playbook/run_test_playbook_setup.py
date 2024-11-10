@@ -1,8 +1,10 @@
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
+@logging_setup_decorator
 def run_test_playbook(
     test_playbook_path: str = typer.Option(
         None,
@@ -27,10 +29,6 @@ def run_test_playbook(
 ):
     """
     Run a test playbooks in your instance.
-    Global Options:
-      --console-log-threshold
-      --file-log-threshold
-      --log-file-path
     """
     from demisto_sdk.commands.run_test_playbook.test_playbook_runner import (
         TestPlaybookRunner,
@@ -45,5 +43,5 @@ def run_test_playbook(
     }
 
     update_command_args_from_config_file("run-test-playbook", kwargs)
-    test_playbook_runner = TestPlaybookRunner(**kwargs)
+    test_playbook_runner = TestPlaybookRunner(**kwargs)  # type: ignore[arg-type]
     raise typer.Exit(test_playbook_runner.manage_and_run_test_playbooks())

@@ -1,15 +1,16 @@
 from pathlib import Path
-from typing import List
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
+@logging_setup_decorator
 def zip_packs(
-    input: List[str] = typer.Option(
-        ..., help="The packs to be zipped as a list of pack paths."
+    input: str = typer.Option(
+        ..., help="The packs to be zipped as csv list of pack paths."
     ),
     output: str = typer.Option(
         ..., help="The destination directory to create the packs.", resolve_path=True

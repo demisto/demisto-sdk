@@ -3,9 +3,11 @@ from typing import Optional
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import xsoar_linter_manager
 
 
+@logging_setup_decorator
 def xsoar_linter(
     file_paths: Optional[list[Path]] = typer.Argument(
         None,

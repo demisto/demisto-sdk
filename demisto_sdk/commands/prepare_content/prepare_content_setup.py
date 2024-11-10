@@ -4,6 +4,7 @@ from pathlib import Path
 import typer
 
 from demisto_sdk.commands.common.constants import FileType, MarketplaceVersions
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import find_type, parse_marketplace_kwargs
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.prepare_content.generic_module_unifier import (
@@ -15,6 +16,7 @@ from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
+@logging_setup_decorator
 def prepare_content(
     input: str = typer.Option(
         None, help="Comma-separated list of paths to directories or files to unify."

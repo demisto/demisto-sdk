@@ -1,10 +1,12 @@
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
     XSOARConfigFileUpdater,
 )
 
 
+@logging_setup_decorator
 def xsoar_config_file_update(
     ctx: typer.Context,
     pack_id: str = typer.Option(

@@ -2,9 +2,11 @@ from pathlib import Path
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 
+@logging_setup_decorator
 def find_dependencies(
     input: list[Path] = typer.Option(
         None,

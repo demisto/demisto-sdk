@@ -2,7 +2,10 @@ from pathlib import Path
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 
+
+@logging_setup_decorator
 def upload(
     input_path: Path = typer.Option(
         ...,

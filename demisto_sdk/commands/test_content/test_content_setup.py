@@ -2,9 +2,11 @@ from pathlib import Path
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.test_content.execute_test_content import execute_test_content
 
 
+@logging_setup_decorator
 def test_content(
     artifacts_path: str = typer.Option(
         Path("./Tests"),

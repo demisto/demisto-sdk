@@ -106,7 +106,7 @@ werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
 loguru = "^0.7.2"
 pygithub = "^2.2.0"
 astor = "^0.8.1"
-klara = "^0.6.3"
+klara = {version = "^0.6.3", optional = true}
 
 [tool.poetry.extras]
 build = ["gsutil"]

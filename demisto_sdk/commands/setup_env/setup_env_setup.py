@@ -1,10 +1,13 @@
 from pathlib import Path
+from typing import Tuple
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.setup_env.setup_environment import IDEType, setup_env
 
 
+@logging_setup_decorator
 def setup_env_command(
     ide: str = typer.Option(
         "auto-detect",
@@ -39,7 +42,7 @@ def setup_env_command(
         False,
         help="Clean the repository of temporary files created by the 'lint' command.",
     ),
-    file_paths: list[Path] = typer.Argument(..., exists=True, resolve_path=True),
+    file_paths: Tuple[Path, ...] = typer.Argument(..., exists=True, resolve_path=True),
 ):
     """Set up the integration environments."""
 

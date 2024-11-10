@@ -1,16 +1,18 @@
-import json
 from pathlib import Path
 
 import typer
 
 from demisto_sdk.commands.common.configuration import sdk
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     postman_to_autogen_configuration,
 )
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 
+@logging_setup_decorator
 def postman_codegen(
     input: Path = typer.Option(..., help="The Postman collection 2.1 JSON file"),
     output: Path = typer.Option(

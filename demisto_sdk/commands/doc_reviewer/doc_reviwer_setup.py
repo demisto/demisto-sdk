@@ -2,9 +2,11 @@ import sys
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
 
+@logging_setup_decorator
 def doc_review(
     ctx: typer.Context,
     input: list[str] = typer.Option(

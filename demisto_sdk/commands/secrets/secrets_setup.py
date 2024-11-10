@@ -5,10 +5,12 @@ from typing import List
 import typer
 
 from demisto_sdk.commands.common.configuration import sdk
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
+@logging_setup_decorator
 def secrets(
     ctx: typer.Context,
     input: str = typer.Option(

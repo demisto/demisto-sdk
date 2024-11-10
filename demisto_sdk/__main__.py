@@ -1,4 +1,3 @@
-import json
 import os
 import platform
 from pathlib import Path
@@ -9,6 +8,8 @@ from pkg_resources import DistributionNotFound, get_distribution
 from typer.main import get_command
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import (
     convert_path_to_str,
     get_last_remote_release_version,
@@ -76,6 +77,7 @@ from demisto_sdk.commands.zip_packs.zip_packs_setup import zip_packs
 app = typer.Typer(rich_markup_mode="markdown")
 
 
+@app.command(name="export-api", help="Dumps the `demisto-sdk` API to a file.")
 def dump_api(
     ctx: typer.Context,
     output_path: Path = typer.Option(
@@ -86,25 +88,27 @@ def dump_api(
     ),
 ):
     """
-    This commands dumps the `demisto-sdk` API to a file.
+    This command dumps the `demisto-sdk` API to a file.
     It is used to view the help of all commands in one file.
 
     Args:
-        ctx (typer.Context):
-        output_path (Path, optional): The output directory or JSON file to save the demisto-sdk api.
+        ctx (typer.Context): The context of the command.
+        output_path (Path, optional): The output directory or JSON file to save the demisto-sdk API.
     """
     output_json: dict = {}
     typer_app = get_command(app)
 
     # Iterate over registered commands in the main application
-    for command_name, command in typer_app.commands.items():
-        typer.echo(command_name, color=True)  # Print command name with color
+    for command_name, command in typer_app.commands.items():  # type: ignore[attr-defined]
+        typer.echo(command_name, color=True)
         if isinstance(command, typer.Typer):
             output_json[command_name] = {}
-            # Iterate over the subcommands of the command
-            for sub_command_name, sub_command in command.registered_commands:
+
+            # Iterate over subcommands
+            for sub_command in command.registered_commands:
+                sub_command_name = sub_command.name
                 # Convert subcommand to info dictionary
-                output_json[command_name][sub_command_name] = sub_command.to_info_dict(
+                output_json[command_name][sub_command_name] = sub_command.to_info_dict(  # type: ignore[attr-defined]
                     ctx
                 )
         else:
@@ -236,7 +240,6 @@ app.command(
     help="Created incidents for selected test-playbooks and gives a report about the results.",
     hidden=True,
 )(test_content)
-app.command(name="export-api", help="Dumps the `demisto-sdk` API to a file.")(dump_api)
 app.add_typer(
     graph_cmd_group,
     name="graph",
@@ -250,6 +253,7 @@ app.command(name="generate-modeling-rules", help="Generated modeling-rules.")(
 )
 
 
+@logging_setup_decorator
 @app.callback(
     invoke_without_command=True,
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -265,17 +269,6 @@ def main(
         "-rn",
         help="Show the release notes for the current version.",
     ),
-    # console_log_threshold: str = typer.Option(
-    #     None,
-    #     "--console-log-threshold",
-    #     help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
-    # ),
-    # file_log_threshold: str = typer.Option(
-    #     None, "--file-log-threshold", help="Minimum logging threshold for file output."
-    # ),
-    # log_file_path: str = typer.Option(
-    #     None, "--log-file-path", help="Path to save log files."
-    # ),
 ):
     load_dotenv(Path(os.getcwd()) / ".env", override=True)
 

@@ -4,6 +4,8 @@ from typing import List
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
+
 
 class ItemType(str, Enum):
     incident_type = "IncidentType"
@@ -16,6 +18,7 @@ class ItemType(str, Enum):
     mapper = "Mapper"
 
 
+@logging_setup_decorator
 def download(
     output: Path = typer.Option(
         None,

@@ -4,10 +4,12 @@ from pathlib import Path
 import typer
 
 from demisto_sdk.commands.common.constants import SDK_OFFLINE_ERROR_MESSAGE
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
+@logging_setup_decorator
 def update_release_notes(
     input: str = typer.Option(
         None, help="The relative path of the content pack. For example Packs/Pack_Name"

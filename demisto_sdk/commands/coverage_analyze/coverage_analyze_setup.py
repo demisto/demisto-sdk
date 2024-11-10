@@ -4,12 +4,11 @@ from typing import Optional
 import typer
 
 from demisto_sdk.commands.common.constants import DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
-coverage_analyze_app = typer.Typer()
 
-
-@coverage_analyze_app.command()
+@logging_setup_decorator
 def coverage_analyze(
     input: str = typer.Option(
         os.path.join("coverage_report", ".coverage"),
@@ -78,7 +77,3 @@ def coverage_analyze(
         typer.echo(f"Error: {error}")
 
     return 1
-
-
-if __name__ == "__main__":
-    coverage_analyze_app()

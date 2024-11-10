@@ -757,7 +757,7 @@ test = ["pytest"]
 name = "configargparse"
 version = "1.7"
 description = "A drop-in replacement for argparse that allows options to also be set via config files and/or environment variables."
-optional = false
+optional = true
 python-versions = ">=3.5"
 files = [
     {file = "ConfigArgParse-1.7-py3-none-any.whl", hash = "sha256:d249da6591465c6c26df64a9f73d2536e743be2f244eb3ebe61114af2f94f86b"},
@@ -2129,7 +2129,7 @@ files = [
 name = "klara"
 version = "0.6.3"
 description = "Automatic test case generation and static analysis library"
-optional = false
+optional = true
 python-versions = ">=3.6.2,<4.0"
 files = [
     {file = "klara-0.6.3-py3-none-any.whl", hash = "sha256:9687fb2503e0d0ae1ecc789d88af46d4008522a89db5d542c9c993ee6d0875d2"},
@@ -4655,7 +4655,7 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 name = "typed-ast"
 version = "1.5.5"
 description = "a fork of Python 2 and 3 ast modules with type comment support"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "typed_ast-1.5.5-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:4bc1efe0ce3ffb74784e06460f01a223ac1f6ab31c6bc0376a21184bf5aabe3b"},
@@ -5318,7 +5318,7 @@ multidict = ">=4.0"
 name = "z3-solver"
 version = "4.13.3.0"
 description = "an efficient SMT solver library"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "z3_solver-4.13.3.0-py3-none-macosx_13_0_arm64.whl", hash = "sha256:cae621cb47ebcf055f6a27285343d5c932f4c282b15c5d2840327e73e15a86a4"},
@@ -5415,4 +5415,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "2469720c0c0dff59d9bff9880b135b21190131d82a6aca36548c138f07d86d1a"
+content-hash = "3eac7cf2404d8a58b71cfd94061680f62f88fa4f8d8a674c4cf438d6fce21385"

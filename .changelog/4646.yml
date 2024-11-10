@@ -1,0 +1,4 @@
+changes:
+- description: "The following commands will be deprecated and removed entirely in the next SDK release in two weeks: convert, create-content-artifacts, create-id-set, extract-code and lint."
+  type: breaking
+pr_number: 4646

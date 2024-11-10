@@ -3303,12 +3303,7 @@ def generate_yml_from_python(ctx, **kwargs):
 
 
 # ====================== convert ====================== #
-@main.command(
-    context_settings=dict(
-        ignore_unknown_options=True,
-        allow_extra_args=True,
-    )
-)
+@main.command(hidden=True)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -3325,7 +3320,7 @@ def generate_yml_from_python(ctx, **kwargs):
 @logging_setup_decorator
 def convert(ctx, config, **kwargs):
     """
-    Convert the content of the pack/directory in the given input to be compatible with the version given by
+    Deprecated. Convert the content of the pack/directory in the given input to be compatible with the version given by
     version command.
     """
     from demisto_sdk.commands.convert.convert_manager import ConvertManager

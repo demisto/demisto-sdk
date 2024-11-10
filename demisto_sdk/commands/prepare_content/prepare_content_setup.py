@@ -58,6 +58,17 @@ def prepare_content(
         help="The marketplace the content items are created for, "
         "that determines usage of marketplace unique text.",
     ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
+    ),
 ):
     """
     This command is used to prepare the content to be used in the platform.

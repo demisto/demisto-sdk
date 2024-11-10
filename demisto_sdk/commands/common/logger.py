@@ -1,3 +1,4 @@
+import functools
 import os
 import platform
 import sys
@@ -193,7 +194,7 @@ def logging_setup_decorator(func: Callable, *args, **kwargs):
         )
         return None
 
-    # Define Typer options here
+    @functools.wraps(func)  # Preserve the original function's signature and metadata
     def wrapper(*args, **kwargs):
         # Extracting options from the kwargs and calling logging setup
         console_threshold = kwargs.get("console_log_threshold", "INFO")

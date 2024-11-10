@@ -46,6 +46,17 @@ def coverage_analyze(
         f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json",
         help="URL of the previous coverage report.",
     ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
+    ),
 ):
     """Analyze coverage report."""
     try:

@@ -20,6 +20,17 @@ def generate_integration(
     output: Path = typer.Option(
         Path("."), "-o", "--output", help="Directory to save the integration package"
     ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
+    ),
 ):
     # Open and load the JSON config file
     with input.open("r") as file:

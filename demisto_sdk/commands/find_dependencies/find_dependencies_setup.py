@@ -55,6 +55,17 @@ def find_dependencies(
         "-d",
         help="Find which items in a specific content pack appear as a mandatory dependency of the searched pack.",
     ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
+    ),
 ):
     """Find pack dependencies and update pack metadata."""
     # Convert input to tuple to match the expected input type in the PackDependencies function.

@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import List, Tuple
 
-import typer
-
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Mapper
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
@@ -112,7 +110,7 @@ class MapperJSONFormat(BaseUpdateJSON):
         mapper = self.data.get("mapping", {})
 
         if fields_not_in_repo:
-            typer.echo(
+            logger.info(
                 f"Removing the fields {fields_not_in_repo} from the mapper {self.source_file} "
                 f"because they aren't in the content repo."
             )

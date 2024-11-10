@@ -4,8 +4,6 @@ from abc import ABC
 from pathlib import Path
 from typing import List, Set, Tuple
 
-import typer
-
 from demisto_sdk.commands.common.constants import (
     FileType,
 )
@@ -339,7 +337,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         }
 
         if fields_not_in_repo:
-            typer.echo(
+            logger.info(
                 f"Removing the fields {fields_not_in_repo} from the layout {self.source_file} "
                 f"because they aren't in the content repo."
             )

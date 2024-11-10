@@ -304,7 +304,14 @@ def repository(mocker, repo) -> ContentDTO:
 
 
 def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, repo):
-    # Setup content graph and mock interfaces
+    """
+    Given
+    - A mapper.
+    When
+    - Running format command on it
+    Then
+    -  Ensure that the unknown field was removed from the mapper.
+    """
     with ContentGraphInterface() as interface:
         create_content_graph(interface)
 

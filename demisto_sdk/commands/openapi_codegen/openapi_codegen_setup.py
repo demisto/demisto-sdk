@@ -54,6 +54,17 @@ def openapi_codegen(
         "--use-default",
         help="Use the automatically generated integration configuration",
     ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
+    ),
 ):
     """
     Generates a Cortex XSOAR integration from an OpenAPI specification file. Creates a config file on first run; run again with modified config.

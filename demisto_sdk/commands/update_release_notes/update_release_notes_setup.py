@@ -43,6 +43,17 @@ def update_release_notes(
     breaking_changes: bool = typer.Option(
         False, help="If new version contains breaking changes."
     ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
+    ),
 ):
     """Auto-increment pack version and generate release notes template."""
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (

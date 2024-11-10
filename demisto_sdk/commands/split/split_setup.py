@@ -37,6 +37,17 @@ def split(
         help="Create a new module file instead of editing the existing file. (only for json files)",
         show_default=True,
     ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
+    ),
 ):
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files (To a package format - https://demisto.pan.dev/docs/package-dir).

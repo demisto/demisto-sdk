@@ -1,10 +1,11 @@
 import click
 import demisto_client
 import pytest
+import typer
 from demisto_client.demisto_api import DefaultApi
 from typer.testing import CliRunner
 
-from demisto_sdk.__main__original import run_test_playbook
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.run_test_playbook.test_playbook_runner import (
     TestPlaybookRunner,
 )
@@ -33,7 +34,7 @@ class TestTestPlaybookRunner:
         When:
             - run the run_test_playbook command
         Then:
-            - validate the results is aas expected
+            - validate the results is as expected
         """
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, "print_tpb_error_details")
@@ -48,11 +49,16 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        with pytest.raises(click.exceptions.Exit) as e:
-            click.Context(command=run_test_playbook).invoke(
-                run_test_playbook, test_playbook_path=TEST_PLAYBOOK
+        runner = CliRunner()
+
+        # Use pytest.raises to catch the Exit exception
+        with pytest.raises(typer.Exit) as exc_info:
+            runner.invoke(
+                app, args=["run-test-playbook", "--test-playbook-path", TEST_PLAYBOOK]
             )
-        assert e.value.exit_code == res
+
+        # Assert the exit code is as expected
+        assert exc_info.value.exit_code == res
 
     @pytest.mark.parametrize(
         argnames="tpb_result, res, message",
@@ -82,11 +88,16 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        with pytest.raises(click.exceptions.Exit) as e:
-            click.Context(command=run_test_playbook).invoke(
-                run_test_playbook, test_playbook_path=TEST_PLAYBOOK
+        runner = CliRunner()
+
+        # Use pytest.raises to catch the Exit exception
+        with pytest.raises(typer.Exit) as exc_info:
+            runner.invoke(
+                app, args=["run-test-playbook", "--test-playbook-path", TEST_PLAYBOOK]
             )
-        assert e.value.exit_code == res
+
+        # Assert the exit code is as expected
+        assert exc_info.value.exit_code == res
 
     @pytest.mark.parametrize(
         argnames="tpb_result, expected_exit_code, message",
@@ -123,7 +134,7 @@ class TestTestPlaybookRunner:
                 return_value={"state": tpb_result},
             )
             result = CliRunner(mix_stderr=False).invoke(
-                run_test_playbook, ["--all", "-tpb", "", "-t", "5"]
+                app, ["run-test-playbook", "--all", "-tpb", "", "-t", "5"]
             )
             assert result.exit_code == expected_exit_code
             assert result.output.count(message) == 6

@@ -36,6 +36,17 @@ def postman_codegen(
         False,
         help="Generated integration will be split to package format instead of a YML file.",
     ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
+    ),
 ):
     postman_config = postman_to_autogen_configuration(
         collection=json.load(open(input)),  # Open the file directly

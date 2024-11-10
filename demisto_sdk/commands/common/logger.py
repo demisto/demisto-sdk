@@ -100,7 +100,7 @@ def logging_setup(
     global logger
     _setup_neo4j_logger()
 
-    logger.remove(None)  # Removes all pre-existing handlers
+    logger.remove()  # Removes all pre-existing handlers
 
     diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", 'False'))
     colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, 'False'))
@@ -120,9 +120,9 @@ def logging_setup(
     #     )
     #     os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
 
-    # logger.debug(
-    #     f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
-    # )
+    logger.debug(
+        f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
+    )
 
 
 def _add_file_logger(log_path: Path, threshold: Optional[str], diagnose: bool):

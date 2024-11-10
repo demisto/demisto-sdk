@@ -196,6 +196,11 @@ def logging_setup_decorator(func: Callable, *args, **kwargs):
 
     @functools.wraps(func)  # Preserve the original function's signature and metadata
     def wrapper(*args, **kwargs):
+
+        context = get_context_arg(args)
+        # If the context is not found, log an error or handle gracefully
+        if context is None:
+            print("Warning: Could not find Typer context in args.")
         # Extracting options from the kwargs and calling logging setup
         console_threshold = kwargs.get("console_log_threshold", "INFO")
         file_threshold = kwargs.get("file_log_threshold", "DEBUG")

@@ -100,10 +100,10 @@ def logging_setup(
     global logger
     _setup_neo4j_logger()
 
-    # logger.remove(None)  # Removes all pre-existing handlers
+    logger.remove(None)  # Removes all pre-existing handlers
 
-    # diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", 'False'))
-    # colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, 'False'))
+    diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", 'False'))
+    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, 'False'))
 
     # logger = logger.opt(
     #     colors=colorize

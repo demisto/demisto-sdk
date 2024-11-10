@@ -30,7 +30,6 @@ DEFAULT_CONSOLE_THRESHOLD = "INFO"
 DEFAULT_FILE_SIZE = 1 * (1024**2)  # 1 MB
 DEFAULT_FILE_COUNT = 10
 
-global logger
 logger = loguru.logger  # all SDK modules should import from this file, not from loguru
 logger.disable(None)  # enabled at setup_logging()
 

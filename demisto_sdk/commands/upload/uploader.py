@@ -30,6 +30,9 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
 )
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
 )
@@ -274,6 +277,12 @@ class Uploader:
             )
             self.failed_parsing.append((path, reason))
             return False
+
+        with ContentGraphInterface() as interface:
+            content_item = interface.from_path(
+                path=content_item.path,
+                marketplace=self.marketplace,
+            )
         if (
             self.marketplace
             and isinstance(content_item, ContentItem)

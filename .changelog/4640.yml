@@ -1,0 +1,4 @@
+changes:
+- description: Moved RN115 to the new validate format. The validation ensure that the release notes first level headers are valid.
+  type: internal
+pr_number: 4640

@@ -31,8 +31,6 @@ from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetad
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
-IS_CONTENT_GITLAB_CI = os.getenv("CONTENT_GITLAB_CI")
-DOCKER_IO = os.getenv("DOCKER_IO")
 DOCKER_CLIENT = None
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
@@ -56,34 +54,6 @@ class DockerException(Exception):
 
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
-    """
-    Initialize and return a global Docker client to access and use a local Docker Daemon.
-
-    This function initializes a global Docker client if it doesn't exist, or returns the existing one.
-    It handles different environments, including GitLab CI, and attempts to log in to the Docker registry
-    if credentials are available.
-
-    Args:
-        timeout (int, optional): The timeout for Docker client operations in seconds. Defaults to 60.
-        log_prompt (str, optional): A prefix for log messages. Defaults to an empty string.
-
-    Returns:
-        docker.client.DockerClient: An initialized Docker client.
-
-    Raises:
-        docker.errors.DockerException: If initialization fails, likely due to Docker daemon not running.
-
-    Behavior:
-    1. Checks if a global Docker client already exists.
-    2. If in GitLab CI environment, attempts to create a client using the job environment.
-    3. If not in GitLab CI or if connecting via Gitlab CI environment fails,
-       attempts to log in to the Docker registry if credentials are available.
-    5. Logs various steps and outcomes of the initialization process.
-
-    Note:
-    - The function uses environment variables for Docker credentials.
-    - It handles both standard and SSH-based Docker connections.
-    """
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         if log_prompt:
@@ -93,28 +63,6 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         if ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None:
             logger.debug(f"{log_prompt} - Using ssh client setting: {ssh_client}")
         logger.debug(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
-        try:
-            if IS_CONTENT_GITLAB_CI:
-                """In the case of running in Gitlab CI environment, try to init a docker client from the
-                job environment to utilize DockerHub API proxy requests (DOCKER_IO)"""
-                logger.info(
-                    "Gitlab CI use case detected, trying to create docker client from Gitlab CI job environment."
-                )
-                DOCKER_CLIENT = docker.from_env()
-                if DOCKER_CLIENT.ping():
-                    # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping().
-                    logger.info(
-                        "Successfully initialized docker client from Gitlab CI job environment."
-                    )
-                    return DOCKER_CLIENT
-                else:
-                    logger.warning(
-                        f"{log_prompt} - Failed to init docker client in Gitlab CI use case."
-                    )
-        except docker.errors.DockerException:
-            logger.warning(
-                f"{log_prompt} - Failed to init docker client in CONTENT_GITLAB_CI use case. "
-            )
         try:
             DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
         except docker.errors.DockerException:
@@ -142,7 +90,8 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 def is_custom_registry():
     return (
-        not IS_CONTENT_GITLAB_CI and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
+        not os.getenv("CONTENT_GITLAB_CI")
+        and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
     )
 
 
@@ -204,33 +153,6 @@ def get_pip_requirements_from_file(requirements_file: Path) -> List[str]:
 
 
 class DockerBase:
-    """
-    Base class for Docker-related operations in the Demisto SDK.
-
-    This class utilizes any environment where a Docker Daemon is initialized,
-    and provides core functionality for working with Docker containers and images.
-
-    Attributes:
-        tmp_dir_name (tempfile.TemporaryDirectory): Temporary directory for Docker operations.
-        tmp_dir (Path): Path object for the temporary directory.
-        installation_scripts (dict): Mapping of container types to installation script paths.
-        changes (dict): Docker image changes for different container types.
-        requirements (Path): Path to the requirements.txt file.
-        _files_to_push_on_installation (List[Tuple[os.PathLike, str]]): Files to be pushed during installation.
-
-    Methods:
-        version(): Get the Docker version.
-        installation_files(container_type): Get installation files for a specific container type.
-        pull_image(image): Pull a Docker image.
-        is_image_available(image): Check if a Docker image is available.
-        copy_files_container(container, files): Copy files to a Docker container.
-        create_container(image, command, files_to_push, environment, **kwargs): Create a Docker container.
-        push_image(image, log_prompt): Push a Docker image to the repository.
-        create_image(base_image, image, container_type, install_packages, push, log_prompt): Create a new Docker image.
-        get_image_registry(image): Get the full image name with registry.
-        get_or_create_test_image(base_image, container_type, python_version, additional_requirements, push, should_pull, log_prompt): Get or create a test Docker image.
-    """
-
     def __init__(self):
         self.tmp_dir_name = tempfile.TemporaryDirectory(
             prefix=os.path.join(os.getcwd(), "tmp")
@@ -380,30 +302,36 @@ class DockerBase:
 
         return container
 
-    def push_image(self, image: str, log_prompt: str = ""):
+    def push_image(self, image: str, log_prompt: str = "") -> None:
         """This pushes the test image to dockerhub if the DOCKERHUB env variables are set
-
         Args:
             image (str): The image to push
             log_prompt (str, optional): The log prompt to print. Defaults to "".
         """
-        for _ in range(2):
+        test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
+
+        logger.info(
+            f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository."
+        )
+        for attempt in range(2):
             try:
-                test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
-                logger.info(
-                    f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
+                logger.success(
+                    f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
+                )
+                logger.debug(
+                    f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
                 break
             except (
                 requests.exceptions.ConnectionError,
                 urllib3.exceptions.ReadTimeoutError,
                 requests.exceptions.ReadTimeout,
-            ):
+            ) as e:
                 logger.warning(
-                    f"{log_prompt} - Unable to push image {image} to repository",
+                    f"{log_prompt} - Attempt {attempt + 1}: Failed to push image {test_image_name_to_push} to repository due to {type(e).__name__}",
                     exc_info=True,
                 )
 
@@ -454,13 +382,13 @@ class DockerBase:
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
-        if IS_CONTENT_GITLAB_CI:
+        if os.getenv("CONTENT_GITLAB_CI"):
             container.commit(
                 repository=repository.replace(f"{DOCKER_REGISTRY_URL}/", ""),
                 tag=tag,
                 changes=self.changes[container_type],
             )
-        if push and IS_CONTENT_GITLAB_CI:
+        if push and os.getenv("CONTENT_GITLAB_CI"):
             self.push_image(image, log_prompt=log_prompt)
         return image
 
@@ -548,7 +476,9 @@ class DockerBase:
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
-                logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
+                logger.critical(  # noqa: PLE1205
+                    "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
+                )
         return test_docker_image, errors
 
 
@@ -729,17 +659,6 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         return python_version
     logger.debug(f"Could not get python version for {image=} from regex")
 
-    if IS_CONTENT_GITLAB_CI:
-        try:
-            logger.debug(
-                f"get python version for {image=} from available docker client"
-            )
-            return _get_python_version_from_image_client(image)
-        except Exception:
-            logger.debug(
-                f"Could not get python version for {image=} from available docker client"
-            )
-
     try:
         logger.debug(f"get python version for {image=} from dockerhub api")
         return _get_python_version_from_dockerhub_api(image)
@@ -791,7 +710,7 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
         raise ValueError(f"Invalid docker image: {image}")
     else:
         repo, tag = image.split(":")
-    if IS_CONTENT_GITLAB_CI:
+    if os.getenv("CONTENT_GITLAB_CI"):
         # we need to remove the gitlab prefix, as we query the API
         repo = repo.replace(f"{DOCKER_REGISTRY_URL}/", "")
     try:

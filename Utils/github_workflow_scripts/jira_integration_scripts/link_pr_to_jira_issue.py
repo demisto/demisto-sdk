@@ -82,7 +82,9 @@ def trigger_generic_webhook(options):
     password = options.password
     instance_url = options.url
 
-    logger.info(f"Detected Pr: {pr_title=}, {pr_link=}, {pr_body=}")
+    logger.info(  # noqa: PLE1205
+        "{}", f"<yellow>Detected Pr: {pr_title=}, {pr_link=}, {pr_body=}</yellow>"
+    )
 
     # Handle cases where the PR did not intend to add links:
     if (

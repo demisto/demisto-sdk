@@ -267,7 +267,7 @@ def main(ctx, config, version, release_notes, **kwargs):
     )
 )
 @click.help_option("-h", "--help")
-@click.option("-i", "--input", help="The yml/json file to extract from", required=True)
+@click.option("-i", "--input", help="The yml/json file to extract from.", required=True)
 @click.option(
     "-o",
     "--output",
@@ -275,26 +275,26 @@ def main(ctx, config, version, release_notes, **kwargs):
 )
 @click.option(
     "--no-demisto-mock",
-    help="Don't add an import for demisto mock. (only for yml files)",
+    help="Don't add an import for demisto-mock (only for yml files).",
     is_flag=True,
     show_default=True,
 )
 @click.option(
     "--no-common-server",
-    help="Don't add an import for CommonServerPython. (only for yml files)",
+    help="Don't add an import for CommonServerPython or CommonServerPythonShell (only for yml files).",
     is_flag=True,
     show_default=True,
 )
 @click.option(
     "--no-auto-create-dir",
     help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts/*Dashboards"
-    "/*GenericModules.",
+    "/*GenericModules. The auto directory created will be named according to the Integration/Script name.",
     is_flag=True,
     show_default=True,
 )
 @click.option(
     "--new-module-file",
-    help="Create a new module file instead of editing the existing file. (only for json files)",
+    help="Create a new module file instead of editing the existing file (only for json files).",
     is_flag=True,
     show_default=True,
 )
@@ -398,41 +398,42 @@ def extract_code(ctx, config, **kwargs):
     "-a",
     "--all",
     is_flag=True,
-    help="Run prepare-content on all content packs. If no output path is given, will dump the result in the current working path.",
+    help="Run prepare-content on all content packs. If no output path is given, will dump the result in the "
+    "current working path.",
 )
 @click.option(
     "-g",
     "--graph",
-    help="Whether use the content graph",
+    help="Whether to use the content graph.",
     is_flag=True,
     default=False,
 )
 @click.option(
     "--skip-update",
-    help="Whether to skip updating the content graph (used only when graph is true)",
+    help="Whether to skip updating the content graph (used only when graph is true).",
     is_flag=True,
     default=False,
 )
 @click.option(
-    "-o", "--output", help="The output dir to write the unified yml to", required=False
+    "-o", "--output", help="The output dir to write the unified yml to.", required=False
 )
 @click.option(
     "-c",
     "--custom",
-    help="Add test label to unified yml id/name/display",
+    help="Add test label to unified yml id/name/display.",
     required=False,
 )
 @click.option(
     "-f",
     "--force",
-    help="Forcefully overwrites the preexisting yml if one exists",
+    help="Forcefully overwrites the preexisting yml if one exists.",
     is_flag=True,
     show_default=False,
 )
 @click.option(
     "-ini",
     "--ignore-native-image",
-    help="Whether to ignore the addition of the nativeimage key to the yml of a script/integration",
+    help="Whether to ignore the addition of the nativeimage key to the yml of a script/integration.",
     is_flag=True,
     show_default=False,
     default=False,
@@ -440,7 +441,7 @@ def extract_code(ctx, config, **kwargs):
 @click.option(
     "-mp",
     "--marketplace",
-    help="The marketplace the content items are created for, that determines usage of marketplace "
+    help="The marketplace content items are created for, that determines usage of marketplace "
     "unique text. Default is the XSOAR marketplace.",
     default="xsoar",
     type=click.Choice([mp.value for mp in list(MarketplaceVersions)] + ["v2"]),
@@ -521,14 +522,14 @@ main.add_command(prepare_content, name="unify")
 @click.option(
     "-i",
     "--input",
-    help="The packs to be zipped as csv list of pack paths.",
+    help="The packs to create artifacts for. Optional values are: `all` or csv list of pack names.",
     type=PathsParamType(exists=True, resolve_path=True),
     required=True,
 )
 @click.option(
     "-o",
     "--output",
-    help="The destination directory to create the packs.",
+    help="The path to the directory into which to write the zip files.",
     type=click.Path(file_okay=False, resolve_path=True),
     required=True,
 )
@@ -978,7 +979,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
 @click.option(
     "-s",
     "--suffix",
-    help="Suffix to add all yaml/json/yml files in the created artifacts.",
+    help="The suffix to add all yaml/json/yml files in the created artifacts.",
 )
 @click.option(
     "--cpus",
@@ -1082,12 +1083,12 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     )
 )
 @click.help_option("-h", "--help")
-@click.option("-i", "--input", help="Specify file of to check secret on.")
+@click.option("-i", "--input", help="Specify a file to check secret for.")
 @click.option(
     "--post-commit",
     is_flag=True,
     show_default=True,
-    help="Whether the secretes is done after you committed your files, "
+    help="Whether the validation secretes is done after you committed your files, "
     "this will help the command to determine which files it should check in its "
     "run. Before you commit the files it should not be used. Mostly for build "
     "validations.",
@@ -1103,7 +1104,7 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     "--whitelist",
     default="./Tests/secrets_white_list.json",
     show_default=True,
-    help='Full path to whitelist file, file name should be "secrets_white_list.json"',
+    help='Full path to whitelist file, file name should be "secrets_white_list.json."',
 )
 @click.option("--prev-ver", help="The branch against which to run secrets validation.")
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
@@ -1133,12 +1134,7 @@ def secrets(ctx, config, file_paths: str, **kwargs):
 
 
 # ====================== lint ====================== #
-@main.command(
-    context_settings=dict(
-        ignore_unknown_options=True,
-        allow_extra_args=True,
-    )
-)
+@main.command(hidden=True)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -1399,7 +1395,7 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The path of the script yml file or a comma separated list\n"
+    help="The path of the desired file to be formatted.\n"
     "If no input is specified, the format will be executed on all new/changed files.",
     type=PathsParamType(
         exists=True, resolve_path=True
@@ -1408,30 +1404,38 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-o",
     "--output",
-    help="The path where the formatted file will be saved to",
+    help="Specifies where the formatted file should be saved to. If not used, the default is to overwrite the "
+    "origin file..",
     type=click.Path(resolve_path=True),
 )
-@click.option("-fv", "--from-version", help="Specify fromversion of the pack")
 @click.option(
-    "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True
+    "-fv",
+    "--from-version",
+    help="Specifies the minimum version that this content item or content pack is compatible with.",
+)
+@click.option(
+    "-nv",
+    "--no-validate",
+    help="Set when validate on file is not wanted.",
+    is_flag=True,
 )
 @click.option(
     "-ud",
     "--update-docker",
-    help="Set if you want to update the docker image of the integration/script",
+    help="Updates the Docker image of the integration/script to the newest available tag.",
     is_flag=True,
 )
 @click.option(
     "-y/-n",
     "--assume-yes/--assume-no",
-    help="Automatic yes/no to prompts; assume 'yes'/'no' as answer to all prompts and run non-interactively",
+    help="Automatic yes/no to prompts; assume 'yes'/'no' as answer to all prompts and run non-interactively.",
     is_flag=True,
     default=None,
 )
 @click.option(
     "-d",
     "--deprecate",
-    help="Set if you want to deprecate the integration/script/playbook",
+    help="Deprecates the integration/script/playbook.",
     is_flag=True,
 )
 @click.option(
@@ -1522,16 +1526,16 @@ def format(ctx, **kwargs):
     type=PathsParamType(exists=True, resolve_path=True),
     help="The path of file or a directory to upload. The following are supported:\n"
     "- Pack\n"
-    "- A content entity directory that is inside a pack. For example: an Integrations "
-    "directory or a Layouts directory.\n"
-    "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
-    "helloWorld.yml",
+    "- Directory inside a pack. For example: Integrations\n"
+    "- Directory containing an integration or a script data for example: HelloWorld\n"
+    "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: helloWorld.yml"
+    "- Path to zipped pack (may locate outside the Content directory).",
     required=False,
 )
 @click.option(
     "--input-config-file",
     type=PathsParamType(exists=True, resolve_path=True),
-    help="The path to the config file to download all the custom packs from",
+    help="The path to the config file to download all the custom packs from.",
     required=False,
 )
 @click.option(
@@ -1550,7 +1554,7 @@ def format(ctx, **kwargs):
 @click.option(
     "-x",
     "--xsiam",
-    help="Upload the pack to XSIAM server. Must be used together with -z",
+    help="Upload the pack to XSIAM server. Must be used together with -z.",
     is_flag=True,
 )
 @click.option(
@@ -1611,34 +1615,35 @@ def upload(ctx, **kwargs):
 @click.option(
     "-o",
     "--output",
-    help="A path to a pack directory to download content to.",
+    help="A path to a pack directory to download custom content to.",
     required=False,
     multiple=False,
 )
 @click.option(
     "-i",
     "--input",
-    help="Name of a custom content item to download. The flag can be used multiple times to download multiple files.",
+    help="Custom content file name to be downloaded. Can be provided multiple times. "
+    "File names can be retrieved using the -lf flag.",
     required=False,
     multiple=True,
 )
 @click.option(
     "-r",
     "--regex",
-    help="Download all custom content items matching this RegEx pattern.",
+    help="Regex Pattern. When specified, download all the custom content files with a name that matches this regex pattern.",
     required=False,
 )
-@click.option("--insecure", help="Skip certificate validation", is_flag=True)
+@click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.option(
     "-f",
     "--force",
-    help="If downloaded content already exists in the output directory, overwrite it. ",
+    help="Whether to override existing files.",
     is_flag=True,
 )
 @click.option(
     "-lf",
     "--list-files",
-    help="List all custom content items available to download and exit.",
+    help="List all custom content items available to download.",
     is_flag=True,
 )
 @click.option(
@@ -1650,14 +1655,14 @@ def upload(ctx, **kwargs):
 @click.option(
     "-fmt",
     "--run-format",
-    help="Format downloaded files.",
+    help="Whether to run Demisto SDK formatting on downloaded files.",
     is_flag=True,
 )
-@click.option("--system", help="Download system items", is_flag=True, default=False)
+@click.option("--system", help="Download system items.", is_flag=True, default=False)
 @click.option(
     "-it",
     "--item-type",
-    help="Type of the content item to download. Required and used only when downloading system items.",
+    help="Type of the content item to download, use only when downloading system items.",
     type=click.Choice(
         [
             "IncidentType",
@@ -1686,7 +1691,7 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--auto-replace-uuids/--no-auto-replace-uuids",
-    help="Whether to replace UUID IDs (automatically assigned to custom content by the server) for downloaded custom content.",
+    help="If False, avoid UUID replacements when downloading using the download command. The default value is True.",
     default=True,
 )
 @click.pass_context
@@ -1713,7 +1718,7 @@ def download(ctx, **kwargs):
 @click.option(
     "-pi",
     "--pack-id",
-    help="The Pack ID to add to XSOAR Configuration File",
+    help="The Pack ID to add to XSOAR Configuration File.",
     required=False,
     multiple=False,
 )
@@ -1721,7 +1726,7 @@ def download(ctx, **kwargs):
     "-pd",
     "--pack-data",
     help="The Pack Data to add to XSOAR Configuration File - "
-    "Pack URL for Custom Pack and Pack Version for OOTB Pack",
+    "Pack URL for Custom Pack and Pack Version for OOTB Pack.",
     required=False,
     multiple=False,
 )
@@ -1773,37 +1778,37 @@ def xsoar_config_file_update(ctx, **kwargs):
     )
 )
 @click.help_option("-h", "--help")
-@click.option("-q", "--query", help="The query to run", required=True)
-@click.option("--insecure", help="Skip certificate validation", is_flag=True)
+@click.option("-q", "--query", help="The query to run.", required=True)
+@click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.option(
     "-id",
     "--incident-id",
     help="The incident to run the query on, if not specified the playground will be used.",
 )
 @click.option(
-    "-D",
+    "-d",
     "--debug",
     help="Whether to enable the debug-mode feature or not, if you want to save the output file "
-    "please use the --debug-path option",
+    "please use the --debug-path option.",
     is_flag=True,
 )
 @click.option(
     "--debug-path",
     help="The path to save the debug file at, if not specified the debug file will be printed to the "
-    "terminal",
+    "terminal.",
 )
 @click.option(
     "--json-to-outputs",
     help="Whether to run json_to_outputs command on the context output of the query. If the "
-    "context output does not exists or the `-r` flag is used, will use the raw"
-    " response of the query",
+    "context output does not exist or the `-r` flag is used, will use the raw"
+    " response of the query.",
     is_flag=True,
 )
 @click.option(
     "-p",
     "--prefix",
     help="Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, "
-    "the base path for the outputs that the script generates",
+    "the base path for the outputs that the script generates.",
 )
 @click.option(
     "-r",
@@ -1905,7 +1910,7 @@ def run_playbook(ctx, **kwargs):
     "-t",
     default=90,
     show_default=True,
-    help="Timeout for the command. The test-playbook will continue to run in your instance",
+    help="Timeout for the command in seconds. The test-playbook will continue to run in XSOAR.",
 )
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.pass_context
@@ -1927,13 +1932,13 @@ def run_test_playbook(ctx, **kwargs):
 @click.option(
     "-c",
     "--command",
-    help="Specific command name (e.g. xdr-get-incidents)",
+    help="Command name (e.g. xdr-get-incidents)",
     required=False,
 )
 @click.option(
     "-j",
     "--json",
-    help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
+    help="A JSON file path. If not specified, the script will wait for user input in the terminal. "
     "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False,
 )
@@ -1941,13 +1946,13 @@ def run_test_playbook(ctx, **kwargs):
     "-p",
     "--prefix",
     help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
-    "script generates",
+    "script generates.",
     required=False,
 )
 @click.option(
     "-o",
     "--output",
-    help="Output file path, if not specified then will print to stdout",
+    help="Output file path, if not specified then will print to stdout.",
     required=False,
 )
 @click.option(
@@ -1958,7 +1963,7 @@ def run_test_playbook(ctx, **kwargs):
 @click.option(
     "--interactive",
     help="If passed, then for each output field will ask user interactively to enter the "
-    "description. By default is interactive mode is disabled. No need to use with --ai (it is already interactive)",
+    "description. By default the interactive mode is disabled.",
     is_flag=True,
 )
 @click.option(
@@ -1968,7 +1973,12 @@ def run_test_playbook(ctx, **kwargs):
     "If not specified, the script prompt the user to input the JSON content.",
     is_flag=True,
 )
-@click.option("-i", "--input", help="Valid YAML integration file path.", required=False)
+@click.option(
+    "-i",
+    "--input",
+    help="Path of the yml file (outputs are inserted here in-place) - used for context from examples.",
+    required=False,
+)
 @click.option(
     "-e",
     "--examples",
@@ -1979,7 +1989,7 @@ def run_test_playbook(ctx, **kwargs):
 )
 @click.option(
     "--insecure",
-    help="Skip certificate validation to run the commands in order to generate the docs.",
+    help="Skip certificate validation.",
     is_flag=True,
 )
 @click.pass_context
@@ -2007,7 +2017,7 @@ def generate_outputs(ctx, **kwargs):
 )
 @click.help_option("-h", "--help")
 @click.option(
-    "-i", "--input", required=True, help="Specify integration/script yml path"
+    "-i", "--input", required=True, help="Specify integration/script yml path."
 )
 @click.option(
     "-o",
@@ -2025,13 +2035,13 @@ def generate_outputs(ctx, **kwargs):
     "-n",
     "--name",
     required=True,
-    help="Specify test playbook name. The output file name will be `playbook-<name>_Test.yml",
+    help="Specify test playbook name. The output file name will be `playbook-<name>_Test.yml.",
 )
 @click.option(
     "--no-outputs",
     is_flag=True,
     help="Skip generating verification conditions for each output contextPath. Use when you want to decide which "
-    "outputs to verify and which not",
+    "outputs to verify and which not.",
 )
 @click.option(
     "-ab",
@@ -2100,29 +2110,29 @@ def generate_test_playbook(ctx, **kwargs):
 )
 @click.help_option("-h", "--help")
 @click.option(
-    "-n", "--name", help="The name of the directory and file you want to create"
+    "-n",
+    "--name",
+    help="The name given to the files and directories of new pack/integration/script being created.",
 )
-@click.option("--id", help="The id used in the yml file of the integration or script")
+@click.option("--id", help="The id used in the yml file of the integration or script.")
 @click.option(
     "-o",
     "--output",
-    help="The output dir to write the object into. The default one is the current working "
+    help="The output directory to which the created object will be saved. The default one is the current working "
     "directory.",
 )
 @click.option(
     "--integration",
     is_flag=True,
-    help="Create an Integration based on BaseIntegration template",
+    help="Create an Integration.",
 )
-@click.option(
-    "--script", is_flag=True, help="Create a Script based on BaseScript example"
-)
+@click.option("--script", is_flag=True, help="Create a Script.")
 @click.option(
     "--xsiam",
     is_flag=True,
-    help="Create an Event Collector based on a template, and create matching sub directories",
+    help="Create an Event Collector based on a template, and create matching subdirectories.",
 )
-@click.option("--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option("--pack", is_flag=True, help="Create pack and its sub directories.")
 @click.option(
     "-t",
     "--template",
@@ -2134,7 +2144,7 @@ def generate_test_playbook(ctx, **kwargs):
     "-a",
     "--author-image",
     help="Path of the file 'Author_image.png'. \n "
-    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50",
+    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50.",
 )
 @click.option(
     "--demisto_mock",
@@ -2174,20 +2184,21 @@ def init(ctx, **kwargs):
 @click.option(
     "-o",
     "--output",
-    help="The output dir to write the documentation file into,"
-    " documentation file name is README.md. If not specified, will be in the yml dir.",
+    help="The output directory to write the documentation file to. Documentation file name is README.md. "
+    "If not specified, written to the YAML directory.",
     required=False,
 )
 @click.option(
     "-uc",
     "--use_cases",
-    help="For integration - Top use-cases. Number the steps by '*' (i.e. '* foo. * bar.')",
+    help="For integrations - provide a list of use-cases that should appear in the generated docs. "
+    "Create an unordered list by using * before each use-case (i.e. '* foo. * bar.')",
     required=False,
 )
 @click.option(
     "-c",
     "--command",
-    help="A comma-separated command names to generate doc for, will ignore the rest of the commands."
+    help="A comma-separated list of command names to generate documentation for. The rest of the commands are ignored."
     "e.g xdr-get-incidents,xdr-update-incident",
     required=False,
 )
@@ -2203,7 +2214,7 @@ def init(ctx, **kwargs):
     "-p",
     "--permissions",
     type=click.Choice(["none", "general", "per-command"]),
-    help="Permissions needed.",
+    help="The needed permissions.",
     required=True,
     default="none",
 )
@@ -2218,19 +2229,19 @@ def init(ctx, **kwargs):
 @click.option(
     "-l",
     "--limitations",
-    help="Known limitations. Number the steps by '*' (i.e. '* foo. * bar.')",
+    help="Known limitations. Create an unordered list by using * before each use-case. (i.e. '* foo. * bar.')",
     required=False,
 )
 @click.option(
     "--insecure",
-    help="Skip certificate validation to run the commands in order to generate the docs.",
+    help="Skip certificate validation.",
     is_flag=True,
 )
-@click.option("--old-version", help="Path of the old integration version yml file.")
+@click.option("--old-version", help="Path of the old integration version YML file.")
 @click.option(
     "--skip-breaking-changes",
     is_flag=True,
-    help="Skip generating of breaking changes section.",
+    help="SDo not generate the breaking changes section.",
 )
 @click.option(
     "--custom-image-path",
@@ -2239,13 +2250,13 @@ def init(ctx, **kwargs):
 @click.option(
     "-rt",
     "--readme-template",
-    help="The readme template that should be appended to the given README.md file",
+    help="The readme template that should be appended to the given README.md file.",
     type=click.Choice(["syslog", "xdrc", "http-collector"]),
 )
 @click.option(
     "-gr/-ngr",
     "--graph/--no-graph",
-    help="Whether to use the content graph or not.",
+    help="Whether to use the content graph",
     is_flag=True,
     default=True,
 )
@@ -2523,39 +2534,43 @@ def merge_id_sets(ctx, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The relative path of the content pack. For example Packs/Pack_Name",
+    help="The path of the content pack you wish to generate release notes for.",
 )
 @click.option(
     "-u",
     "--update-type",
-    help="The type of update being done. [major, minor, revision, documentation]",
+    help="The type of update being done.",
     type=click.Choice(["major", "minor", "revision", "documentation"]),
 )
 @click.option(
-    "-v", "--version", help="Bump to a specific version.", type=VersionParamType()
+    "-v",
+    "--version",
+    help="Bump to a specific version. Cannot be used with -u, --update_type flag.",
+    type=VersionParamType(),
 )
 @click.option(
     "-g",
     "--use-git",
-    help="Use git to identify the relevant changed files, will be used by default if '-i' is not set",
+    help="Use git to identify the relevant changed files, will be used by default if '-i' is not set.",
     is_flag=True,
 )
 @click.option(
     "-f",
     "--force",
-    help="Force update release notes for a pack (even if not required).",
+    help="Update the release notes of a pack even if no changes that require update were made.",
     is_flag=True,
 )
 @click.option(
     "--text",
-    help="Text to add to all of the release notes files.",
+    help="Text to add to all the release notes files.",
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
 )
 @click.option(
     "--pre_release",
-    help="Indicates that this change should be designated a pre-release version.",
+    help="Indicates that this update is for a pre-release version. "
+    "The currentVersion will change to reflect the pre-release version number.",
     is_flag=True,
 )
 @click.option(
@@ -2664,8 +2679,8 @@ def update_release_notes(ctx, **kwargs):
 @click.option(
     "-o",
     "--output-path",
-    help="The destination path for the packs dependencies json file. This argument is "
-    "only relevant for when using the '--all-packs-dependecies' flag.",
+    help="The destination path for the packs dependencies json file. "
+    "This argument only works when using either the --all-packs-dependencies or --get-dependent-on flags.",
     required=False,
 )
 @click.option(
@@ -2726,28 +2741,28 @@ def find_dependencies(ctx, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The Postman collection 2.1 JSON file",
+    help="The Postman collection 2.1 JSON file.",
     required=True,
     type=click.File(),
 )
 @click.option(
     "-o",
     "--output",
-    help="The output directory to save the config file or the integration",
+    help="Directory to store the output in (default is current working directory).",
     type=click.Path(dir_okay=True, exists=True),
     default=Path("."),
     show_default=True,
 )
-@click.option("-n", "--name", help="The output integration name")
+@click.option("-n", "--name", help="The output integration name.")
 @click.option(
     "-op",
     "--output-prefix",
-    help="The global integration output prefix. By default it is the product name.",
+    help="The global integration output prefix. By default, it is the product name.",
 )
 @click.option(
     "-cp",
     "--command-prefix",
-    help="The prefix for each command in the integration. By default is the product name in lower case",
+    help="The prefix for each command in the integration. By default, is the product name in lower case.",
 )
 @click.option(
     "--config-out",
@@ -2823,14 +2838,14 @@ def postman_codegen(
 @click.option(
     "-i",
     "--input",
-    help="config json file produced by commands like postman-codegen and openapi-codegen",
+    help="config json file produced by commands like postman-codegen and openapi-codegen.",
     required=True,
     type=click.File(),
 )
 @click.option(
     "-o",
     "--output",
-    help="The output directory to save the integration package",
+    help="The output directory to save the integration package.",
     type=click.Path(dir_okay=True, exists=True),
     default=Path("."),
 )
@@ -3209,14 +3224,14 @@ def doc_review(ctx, **kwargs):
     "-n",
     "--new",
     type=str,
-    help="The path to the new version of the integration",
+    help="The path to the new integration yml file.",
     required=True,
 )
 @click.option(
     "-o",
     "--old",
     type=str,
-    help="The path to the old version of the integration",
+    help="The path to the old integration yml file.",
     required=True,
 )
 @click.option(
@@ -3260,7 +3275,7 @@ def integration_diff(ctx, **kwargs):
     "-i",
     "--input",
     type=click.Path(exists=True),
-    help="The path to the python code to generate from",
+    help="The path to the python code to generate from.",
     required=True,
 )
 @click.option(
@@ -3268,7 +3283,7 @@ def integration_diff(ctx, **kwargs):
     "--force",
     is_flag=True,
     type=bool,
-    help="Override existing yml file.",
+    help="Override existing yml file. If not used and yml file already exists, the script will not generate a new yml file.",
     required=False,
 )
 @click.pass_context
@@ -3288,19 +3303,14 @@ def generate_yml_from_python(ctx, **kwargs):
 
 
 # ====================== convert ====================== #
-@main.command(
-    context_settings=dict(
-        ignore_unknown_options=True,
-        allow_extra_args=True,
-    )
-)
+@main.command(hidden=True)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
     "--input",
     type=click.Path(exists=True),
     required=True,
-    help="The path of the content pack/directory/file to convert.",
+    help="The path of a package directory, or entity directory (Layouts, Classifiers) that contains the entities to be converted.",
 )
 @click.option(
     "-v", "--version", required=True, help="Version the input to be compatible with."
@@ -3310,7 +3320,7 @@ def generate_yml_from_python(ctx, **kwargs):
 @logging_setup_decorator
 def convert(ctx, config, **kwargs):
     """
-    Convert the content of the pack/directory in the given input to be compatible with the version given by
+    Deprecated. Convert the content of the pack/directory in the given input to be compatible with the version given by
     version command.
     """
     from demisto_sdk.commands.convert.convert_manager import ConvertManager
@@ -3343,24 +3353,33 @@ def convert(ctx, config, **kwargs):
 @click.option(
     "-o",
     "--output_dir",
-    help="Directory to store the output in (default is the input integration directory)",
+    help="Directory to store the output - the generated test file in in (default is the input integration directory)",
     required=False,
 )
-@click.option("-i", "--input_path", help="Valid integration file path.", required=True)
 @click.option(
-    "-d", "--use_demisto", help="Run commands at Demisto automatically.", is_flag=True
+    "-i", "--input_path", help="Path of the integration python file.", required=True
+)
+@click.option(
+    "-d",
+    "--use_demisto",
+    help="If passed, the XSOAR instance configured in the DEMISTO_BASE_URL and DEMISTO_API_KEY "
+    "environment variables will run the Integration commands and generate outputs which "
+    "will be used as mock outputs. If this flag is not passed, you will need to create the "
+    "mocks manually, at the outputs directory, with the name of the command.",
+    is_flag=True,
 )
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-e",
     "--examples",
-    help="Integrations: path for file containing command examples."
-    " Each command should be in a separate line.",
+    help="A path for a file containing Integration command examples. Each command example should be in a "
+    "separate line.\n A comma-separated list of examples, wrapped by quotes. If the file or the list contains "
+    "a command with more than one example, all of them will be used as different test cases.",
 )
 @click.option(
     "-a",
     "--append",
-    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT",
+    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT.",
     is_flag=True,
 )
 @click.pass_context
@@ -3431,7 +3450,7 @@ def error_code(ctx, config, **kwargs):
     "--output-path",
     type=click.Path(resolve_path=True, path_type=Path, dir_okay=True, file_okay=False),
     default=None,
-    help="Output folder to place the zip file of the graph exported CSVs files",
+    help="Output folder to place the zip file of the graph exported CSVs files.",
 )
 @click.option(
     "-mp",
@@ -3567,7 +3586,8 @@ def update_content_graph(
     type=PathsParamType(
         exists=True, resolve_path=True
     ),  # PathsParamType allows passing a list of paths
-    help="Paths to content integrations or script to setup the environment. If not provided, will configure the environment for the content repository.",
+    help="Paths to content integrations or script to setup the environment. "
+    "If not provided, will configure the environment for the content repository.",
 )
 @click.option(
     "--create-virtualenv",
@@ -3583,7 +3603,8 @@ def update_content_graph(
 )
 @click.option(
     "--secret-id",
-    help="Secret ID to use for the Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set.",
+    help="Secret ID to use for the Google Secret Manager instance. "
+    "Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set.",
     required=False,
 )
 @click.option(
@@ -3596,13 +3617,14 @@ def update_content_graph(
     required=False,
     is_flag=True,
     default=False,
-    help="Whether to run test-module on the configured XSOAR / XSIAM instance.",
+    help="Whether to run test-module on the configured XSOAR / XSIAM integration instance.",
 )
 @click.option(
     "--clean",
     is_flag=True,
     default=False,
-    help="Clean the repository of temporary files created by the 'lint' command.",
+    help="Clean the repo out of the temp CommonServerPython.py files, demistomock.py and other files "
+    "that were created by lint.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(

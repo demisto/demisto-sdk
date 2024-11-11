@@ -12,6 +12,10 @@ from demisto_sdk.commands.common.hook_validations.structure import StructureVali
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_dict_from_file
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+from demisto_sdk.commands.validate.tools import (
+    extract_rn_headers,
+    filter_rn_headers_prefix,
+)
 from TestSuite.pack import Pack
 
 json = JSON_Handler()
@@ -822,12 +826,12 @@ def test_invalid_headers(mocker, repo, content, content_type, expected_result):
     validator = get_validator(
         content, MODIFIED_FILES, pack_name=pack.name, pack_path=pack.path
     )
-    headers = validator.extract_rn_headers()
+    headers = extract_rn_headers(validator.latest_release_notes)
     for content_type, content_items in headers.items():
         assert expected_result[
             "rn_valid_header_format"
         ] == validator.rn_valid_header_format(content_type, content_items)
-        validator.filter_rn_headers(headers=headers)
+        filter_rn_headers_prefix(headers=headers)
         assert expected_result[
             "validate_content_type_header"
         ] == validator.validate_content_type_header(content_type=content_type)

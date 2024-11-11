@@ -5,6 +5,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_old_file_pointers,
     create_pack_object,
+    create_script_object,
     create_trigger_object,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_notes_filled_out import (
@@ -16,11 +17,20 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN105_multiple_rns_a
 from demisto_sdk.commands.validate.validators.RN_validators.RN108_is_rn_added_to_new_pack import (
     IsRNAddedToNewPackValidator,
 )
+from demisto_sdk.commands.validate.validators.RN_validators.RN111_is_docker_entry_match_yml import (
+    IsDockerEntryMatchYmlValidator,
+)
 from demisto_sdk.commands.validate.validators.RN_validators.RN112_is_bc_rn_exist import (
     IsBCRNExistValidator,
 )
+from demisto_sdk.commands.validate.validators.RN_validators.RN113_is_valid_content_type_header import (
+    IsValidContentTypeHeaderValidator,
+)
 from demisto_sdk.commands.validate.validators.RN_validators.RN114_validate_release_notes_header import (
     ReleaseNoteHeaderValidator,
+)
+from demisto_sdk.commands.validate.validators.RN_validators.RN115_is_valid_rn_headers_format import (
+    IsValidRnHeadersFormatValidator,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN116_first_level_header_missing import (
     FirstLevelHeaderMissingValidator,
@@ -381,4 +391,197 @@ def test_FirstLevelHeaderMissingValidator_obtain_invalid_content_items():
     ]
     assert all(
         [res_msg in expected_msgs for res_msg in [result.message for result in results]]
+    )
+
+
+def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - content_items list with 5 packs, each with RN with different content.
+        - Case 1: An integration with modified docker where the docker image entry doesn't match the version in the rn.
+        - Case 2: An integration without docker modification.
+        - Case 3: A script with modified docker where the docker image entry in the rn match the on in the yml.
+        - Case 4: A script with modified docker where no docker image entry appear in the rn.
+
+    When:
+    - Calling the IsDockerEntryMatchYmlValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail anything.
+        - Case 3: Shouldn't fail anything.
+        - Case 4: Should fail.
+    """
+    integration_1 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    old_integration_1 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24070"]
+    )
+    pack_1 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content=f"#### Integration\n##### {integration_1.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
+    )
+    integration_2 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    old_integration_2 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    pack_2 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content=f"#### Integration\n##### {integration_2.name}\n- entry not related to docker update.",
+    )
+    script_1 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    old_script_1 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    pack_3 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content=f"#### Scripts\n##### {script_1.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
+    )
+    script_2 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    old_script_2 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    pack_4 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content=f"#### Scripts\n##### {script_2.name}\n- Entry not related to docker image update.",
+    )
+    integration_1.pack = pack_1
+    integration_2.pack = pack_2
+    script_1.pack = pack_3
+    script_2.pack = pack_4
+    content_items = [integration_1, integration_2, script_1, script_2]
+    old_content_items = [
+        old_integration_1,
+        old_integration_2,
+        old_script_1,
+        old_script_2,
+    ]
+    create_old_file_pointers(content_items, old_content_items)
+    validator = IsDockerEntryMatchYmlValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+    assert len(results) == 2
+    expected_msgs = [
+        "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: demisto/python3:3.9.7.24076, docker image in yml demisto/python3:3.9.7.24071 - please make sure the dockers match.",
+        "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: No docker entry found, docker image in yml demisto/python3:3.9.7.24076 - please make sure the dockers match.",
+    ]
+    assert all(
+        [res_msg in expected_msgs for res_msg in [result.message for result in results]]
+    )
+
+
+def test_IsValidContentTypeHeaderValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - content_items list with 5 packs, each with RN with different content.
+        - Case 1: RN with 2 invalid content type headers.
+        - Case 2: RN with 1 invalid and 1 valid content type headers.
+        - Case 3: RN with 2 valid content type headers.
+    When:
+    - Calling the IsValidContentTypeHeaderValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Should fail.
+        - Case 3: Shouldn't fail anything.
+    """
+    pack_1 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### FakeContentType_1\n##### FakeContentItem_1\nFake comment.\n#### FakeContentType_2\n##### FakeContentItem_1\nFake comment.",
+    )
+    pack_2 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### FakeContentType_1\n##### FakeContentItem_1\nFake comment.\n#### Integrations\n##### Test integration\ntest.",
+    )
+    pack_3 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Scripts\n##### Test script\ntest.\n#### Integrations\n##### Test integration\ntest.",
+    )
+    content_items = [pack_1, pack_2, pack_3]
+    validator = IsValidContentTypeHeaderValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+    assert len(results) == 2
+    expected_msgs = [
+        'The following content type header(s) "FakeContentType_1, FakeContentType_2" are invalid.\nPlease use "demisto-sdk update-release-notes -i Packs/HelloWorld"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+        'The following content type header(s) "FakeContentType_1" are invalid.\nPlease use "demisto-sdk update-release-notes -i Packs/HelloWorld"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+    ]
+    assert all(
+        [res_msg in expected_msgs for res_msg in [result.message for result in results]]
+    )
+
+
+def test_IsValidRnHeadersFormatValidator_obtain_invalid_content_items():
+    """
+    Given:
+    - content_items list with 5 packs, each with RN with different content.
+        - Case 1: RN with valid second level header "integration-test" starting with 5 #'s.
+        - Case 2: RN with valid second level header "Test" starting with 5 #'s.
+        - Case 3: RN with invalid second level header "Test" starting with 5 #'s followed by several spaces.
+        - Case 4: RN with invalid second level header "integration-test" surrounded by '**'.
+        - Case 5: RN with invalid second level header "test" surrounded by '**'.
+    When:
+    - Calling the IsValidRnHeadersFormatValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail anything.
+        - Case 2: Shouldn't fail anything.
+        - Case 3: Should fail.
+        - Case 4: Should fail.
+        - Case 5: Should fail.
+    """
+    pack_1 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Integrations\n##### integration-test\n- Added x y z",
+    )
+    pack_2 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### FakeContentType\n##### Test\n- Added x y z",
+    )
+    pack_3 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Incident Fields\n    ##### Test\n    - Added x y z",
+    )
+    pack_4 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Integrations\n- **integration-test**\n- Added x y z",
+    )
+    pack_5 = create_pack_object(
+        paths=["version"],
+        values=["2.0.5"],
+        release_note_content="#### Incident Fields\n- **test**\n- Added x y z",
+    )
+    content_items = [pack_1, pack_2, pack_3, pack_4, pack_5]
+    validator = IsValidRnHeadersFormatValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+    assert len(results) == 3
+    expected_msgs = [
+        "Did not find content items headers under the following content types: Incident Fields. This might be due to invalid format.",
+        "Did not find content items headers under the following content types: Integrations. This might be due to invalid format.",
+        "Did not find content items headers under the following content types: Incident Fields. This might be due to invalid format.",
+    ]
+    assert all(
+        [
+            expected_msg in result.message
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
     )

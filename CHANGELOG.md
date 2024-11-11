@@ -1,4 +1,34 @@
 # Changelog
+## 1.32.4 (2024-11-10)
+### Breaking
+* The following commands will be deprecated and removed entirely in the next SDK release in two weeks: convert, create-content-artifacts, create-id-set, extract-code and lint.
+* Moved CJ102 to the new validate format. The validation's error number is now BA103 and it ensure that the tests section is either a non-empty list or "No tests".
+
+### Fix
+* Fixed an issue where getting a malformed file raised an non-indicative error.
+* Fixed an issue where the **validate** and **create-id-set** commands would fail to process correctly when encountering null values in the filters or transformers fields.
+
+### Internal
+* Moved RN113 to the new validate format. The validation ensures that all the first level headers in the release note are valid content types.
+* Moved RN115 to the new validate format. The validation ensure that the release notes first level headers are valid.
+
+## 1.32.3
+* Fixed an issue where integrations and scripts validations didn't run in builds. [#4609](https://github.com/demisto/demisto-sdk/pull/4609)
+* Added BA127 new validation. The validation checks that the level of depth of the context output path in the yml is lower or equal to 5 in XSOAR supported content items. [#4490](https://github.com/demisto/demisto-sdk/pull/4490)
+* Added RM116 validation to the new validate format. The validation ensure that every playbook has an image and that the image is located under doc_files folder. [#4538](https://github.com/demisto/demisto-sdk/pull/4538)
+* Added Python 3.12 support. [#4598](https://github.com/demisto/demisto-sdk/pull/4598)
+* Added the ***hidden:marketplacev2*** field to the StrictScript pydantic object since it was recently added to the script schema. [#4610](https://github.com/demisto/demisto-sdk/pull/4610)
+* Removed IN161 - invalid siem marketplace from the old validate. [#4609](https://github.com/demisto/demisto-sdk/pull/4609)
+* Fixed an issue where docker logged debug level messages as info level. [#4500](https://github.com/demisto/demisto-sdk/pull/4500)
+* Improved docker registry logs. [#4601](https://github.com/demisto/demisto-sdk/pull/4601)
+* Fixed the StrictScript pydantic object to contain the new field ***hidden:marketplacev2*** just as a field in Argument. [#4615](https://github.com/demisto/demisto-sdk/pull/4615)
+* Fixed an issue where docker validation didn't run in new validate. [#4603](https://github.com/demisto/demisto-sdk/pull/4603)
+* Fixed an issue where tasks calling playbooks were forced to have their names match the playbook ID. [#4602](https://github.com/demisto/demisto-sdk/pull/4602)
+*  Modified the RM106 validation message to reflect the problem in the README file. [#4604](https://github.com/demisto/demisto-sdk/pull/4604)
+* Update SDK documentation. [#4599](https://github.com/demisto/demisto-sdk/pull/4599)
+* Moved RN111 validation to the new validate format. The validation ensures that the docker documented in the yml file matches the one in the Release Notes. [#4619](https://github.com/demisto/demisto-sdk/pull/4619)
+* Reverted support for GAR DockerHub proxy when running in a Gitlab CI environment. [#4628](https://github.com/demisto/demisto-sdk/pull/4628)
+
 ## 1.32.2
 * GR107 validation has been removed from the legacy validate command to enhance performance. [#4561](https://github.com/demisto/demisto-sdk/pull/4561)
 * Added support in the schema for XSIAM custom hidden value. [#4584](https://github.com/demisto/demisto-sdk/pull/4584)

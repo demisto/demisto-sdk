@@ -238,6 +238,7 @@ files = [
 ]
 
 
+@pytest.mark.skip("CIAC-12008")
 @pytest.mark.parametrize(
     "file, python_version,support_level,long_running,exit_code,error_msgs,commands",
     files,

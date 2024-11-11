@@ -60,11 +60,11 @@ class GitUtil:
             repo_path = path or Path.cwd()
 
         try:
-            if not GitUtil.repo:
+            if not GitUtil.repo or :
                 GitUtil.repo = Repo(
                     repo_path, search_parent_directories=search_parent_directories
                 )
-                
+    
         except InvalidGitRepositoryError:
             raise InvalidGitRepositoryError(
                 f"Unable to find Repository from current {repo_path.absolute()} - aborting"

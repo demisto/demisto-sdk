@@ -46,7 +46,7 @@ class GitFileNotFoundError(FileNotFoundError):
 class GitUtil:
     # in order to use Repo class/static methods
     REPO_CLS = Repo
-
+    repo = None     # Maintaining a single instance of the content repo rather then initializing it each time.
     def __init__(
         self,
         path: Optional[Union[str, Path, Repo]] = None,
@@ -60,9 +60,11 @@ class GitUtil:
             repo_path = path or Path.cwd()
 
         try:
-            self.repo = Repo(
-                repo_path, search_parent_directories=search_parent_directories
-            )
+            if not GitUtil.repo:
+                GitUtil.repo = Repo(
+                    repo_path, search_parent_directories=search_parent_directories
+                )
+                
         except InvalidGitRepositoryError:
             raise InvalidGitRepositoryError(
                 f"Unable to find Repository from current {repo_path.absolute()} - aborting"

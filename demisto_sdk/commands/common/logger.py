@@ -1,3 +1,4 @@
+import logging
 import os
 import platform
 import sys
@@ -5,7 +6,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Union
 
 import loguru  # noqa: TID251 # This is the only place where we allow it
-import logging
+
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOG_FILE_PATH,
     DEMISTO_SDK_LOG_FILE_SIZE,

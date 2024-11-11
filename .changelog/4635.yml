@@ -1,4 +1,0 @@
-changes:
-- description: Moved RN113 to the new validate format. The validation ensures that all the first level headers in the release note are valid content types.
-  type: internal
-pr_number: 4635

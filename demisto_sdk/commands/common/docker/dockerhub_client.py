@@ -4,7 +4,9 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import dateparser
+import google.auth
 import requests
+from google.auth.transport.requests import Request
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
@@ -16,6 +18,8 @@ from demisto_sdk.commands.common.tools import retry
 DOCKERHUB_USER = "DOCKERHUB_USER"
 DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
 DEFAULT_REPOSITORY = "demisto"
+IS_CONTENT_GITLAB_CI = os.getenv("CONTENT_GITLAB_CI")
+DOCKER_IO = os.getenv("DOCKER_IO", "")
 
 
 class DockerHubAuthScope(StrEnum):
@@ -49,7 +53,7 @@ class DockerHubClient:
         password: str = "",
         verify_ssl: bool = False,
     ):
-        self.registry_api_url = registry or self.DEFAULT_REGISTRY
+        self.registry_api_url = get_registry_api_url(registry, self.DEFAULT_REGISTRY)
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
         self.username = username or os.getenv(DOCKERHUB_USER, "")
         self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")
@@ -77,6 +81,18 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
+        if IS_CONTENT_GITLAB_CI:
+            # If running in a Gitlab CI environment, try using the Google Cloud access token
+            logger.debug(
+                "Attempting to use Google Cloud access token for Docker Hub proxy authentication"
+            )
+            try:
+                if gcloud_access_token := get_gcloud_access_token():
+                    logger.debug("returning gcloud_access_token")
+                    return gcloud_access_token
+            except Exception as e:
+                logger.error(f"Failed to get gcloud access token: {e}")
+
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             now = datetime.now()
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
@@ -371,6 +387,10 @@ class DockerHubClient:
             tag: The tag of the docker image
         """
         try:
+            if IS_CONTENT_GITLAB_CI:
+                image_digest = self.get_image_digest(docker_image, tag=tag)
+                response = self.get_image_blobs(docker_image, image_digest=image_digest)
+                return response
             return self.do_docker_hub_get_request(
                 f"/repositories/{docker_image}/tags/{tag}"
             )
@@ -416,9 +436,12 @@ class DockerHubClient:
             tag: The tag of the docker image
         """
         response = self.get_image_tag_metadata(docker_image, tag=tag)
-        return datetime.strptime(
-            response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
-        )
+        if creation_date := response.get("created"):
+            return datetime.strptime(creation_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+        else:
+            return datetime.strptime(
+                response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
 
     def get_latest_docker_image_tag(self, docker_image: str) -> Version:
         """
@@ -490,3 +513,118 @@ class DockerHubClient:
             for image_metadata in self.get_repository_images(repo)
             if image_metadata.get("name")
         ]
+
+
+### Google Artifactory functions ###
+
+
+def get_dockerhub_artifact_registry_url(base_path: str) -> str:
+    """
+    Parses a DockerHub Google Artifact Registry internal base path into a base url for DockerHub proxy API calls.
+    See Confluence page: Shared-Services GCP Services - GAR.
+
+    Args:
+    base_path (str): The base path of the Google Artifact Registry in the format 'region-domain/project/repository'.
+
+    Returns:
+        str: The base URL for the DockerHub proxy API calls based on the provided Artifact Registry path.
+        Example: For base_path 'us-docker.pkg.dev/my-project/my-repo',
+        the returned URL would be 'https://region-domain-docker.pkg.dev/v2/my-project/my-repo'
+
+    Raises:
+        ValueError: If the input base_path is not in the expected format.
+    """
+    logger.debug(
+        f"Trying to parse a DockerHub Google Artifact Registry internal base path {base_path=}"
+    )
+    # Split base path into region-domain, project, and repository
+    try:
+        region_domain, project, repository = base_path.split("/")
+    except ValueError:
+        raise ValueError(
+            "Invalid Artifact Registry path format. Expected format: 'region-domain/project/repository'"
+        )
+
+    # Construct and return the base URL for DockerHub proxy API calls
+    parsed_dockerhub_proxy_api_url = (
+        f"https://{region_domain}/v2/{project}/{repository}"
+    )
+    logger.debug(
+        f"Returning parsed DockerHub Google Artifact Registry API: {parsed_dockerhub_proxy_api_url=}"
+    )
+    return parsed_dockerhub_proxy_api_url
+
+
+def get_registry_api_url(registry: str, default_registry: str) -> str:
+    """
+    Determine the appropriate registry API URL based on the environment and provided parameters.
+
+    This function checks if the code is running in a GitLab CI environment and if a custom Docker.io URL is set.
+    If both conditions are true, it uses the custom Docker.io URL. Otherwise, it falls back to the provided
+    registry or the default registry.
+
+    Args:
+        registry (str): The registry URL provided by the user.
+        default_registry (str): The default registry URL to use if no custom URL is provided.
+
+    Returns:
+        str: The determined registry API URL to use for Docker operations.
+    """
+    logger.debug(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
+    if IS_CONTENT_GITLAB_CI and DOCKER_IO:
+        try:
+            logger.info(
+                "Running in a GitLab CI environment with custom DOCKER_IO environment variable, Trying to prase a DockerHub Google Artifact Registry from DOCKER_IO environment variable."
+            )
+            if parsed_dockerhub_proxy_api_url := get_dockerhub_artifact_registry_url(
+                DOCKER_IO
+            ):
+                return parsed_dockerhub_proxy_api_url
+            else:
+                logger.info(
+                    "Could not parse a valid API URL from the DOCKER_IO environment variable."
+                )
+        except Exception as e:
+            logger.info(
+                f"Could not parse a valid API URL from the DOCKER_IO environment variable, Error: {str(e)} "
+            )
+
+    logger.info(f"using provided or default registry, {default_registry=}")
+    return registry or default_registry
+
+
+def get_gcloud_access_token() -> Optional[str]:
+    """
+    Retrieves a Google Cloud access token using environment credentials.
+
+    This method attempts to obtain credentials from the environment and use them
+    to retrieve a valid Google Cloud access token. If successful, it returns the
+    token as a string. If unsuccessful, it returns None.
+
+    Returns:
+        str | None: The Google Cloud access token if successful, None otherwise.
+
+    Raises:
+        Exception: Any exception that occurs during the token retrieval process
+                   is caught and logged, but not re-raised.
+    """
+    try:
+        logger.debug("Trying to retrieve a Google Cloud access token.")
+        # Automatically obtain credentials from the environment
+        credentials, project_id = google.auth.default()
+
+        # Refresh the token if needed (ensures the token is valid)
+        credentials.refresh(Request())
+        # Extract the access token
+        access_token = credentials.token
+        if access_token:
+            logger.debug(
+                f"Successfully obtained Google Cloud access token, {project_id=}."
+            )
+            return access_token
+        else:
+            logger.debug("Failed to obtain Google Cloud access token.")
+            return None
+    except Exception as e:
+        logger.debug(f"Failed to get access token: {str(e)}")
+        return None

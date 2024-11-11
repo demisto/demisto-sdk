@@ -60,7 +60,7 @@ class GitUtil:
             repo_path = path or Path.cwd()
 
         try:
-            if not GitUtil.repo or GitUtil.re:
+            if not GitUtil.repo or GitUtil.repo != :
                 GitUtil.repo = Repo(
                     repo_path, search_parent_directories=search_parent_directories
                 )

@@ -1757,10 +1757,11 @@ class TestResults:
                 )
             )
 
-        ContentStatusUpdater(artifacts_folder=self.artifacts_path)
-        ContentStatusUpdater.update_content_status(
-            successful_tests=succeed_playbooks,
-            failed_tests=failed_playbooks
+        content_status_update = ContentStatusUpdater(
+            artifacts_folder=self.artifacts_path
+        )
+        content_status_update.update_content_status(
+            successful_tests=succeed_playbooks, failed_tests=list(failed_playbooks)
         )
 
     @staticmethod
@@ -3262,10 +3263,12 @@ class ContentStatusUpdater:
         """
         self.artifacts_folder = artifacts_folder
         self.content_status_filename = "content_status.json"
-        self.content_status_path = os.path.join(artifacts_folder, self.content_status_filename)
-        self.content_status = {}
+        self.content_status_path = Path(artifacts_folder) / self.content_status_filename
+        self.content_status: Dict[Any, Any] = {}
 
-    def update_content_status(self, successful_tests: List[str], failed_tests: List[str]) -> None:
+    def update_content_status(
+        self, successful_tests: List[str], failed_tests: List[str]
+    ) -> None:
         """
         Updates the content status with the provided test results, adding the failed and successful playbooks.
 
@@ -3273,8 +3276,10 @@ class ContentStatusUpdater:
             successful_tests (List[str]): List of successful playbooks to be added.
             failed_tests (List[str]): List of failed playbooks to be added.
         """
-        logging.info(f"Starting update_content_status with {len(failed_tests)} failed tests and "
-                     f"{len(successful_tests)} successful tests.")
+        logging.info(
+            f"Starting update_content_status with {len(failed_tests)} failed tests and "
+            f"{len(successful_tests)} successful tests."
+        )
 
         self._load_content_status()
         self._initialize_content_status_keys()
@@ -3290,17 +3295,21 @@ class ContentStatusUpdater:
         """
         Attempts to load the content status from the file. If the file doesn't exist or is invalid, initializes an empty status.
         """
-        if os.path.exists(self.content_status_path):
+        if Path.exists(self.content_status_path):
             logging.info(f"Content status file exists at {self.content_status_path}")
             try:
-                with open(self.content_status_path, 'r') as content_file:
+                with open(self.content_status_path, "r") as content_file:
                     self.content_status = json.load(content_file)
                     logging.info(f"Loaded content status: {self.content_status}")
             except json.JSONDecodeError as e:
-                logging.error(f"JSON decode error while loading content_status.json: {e}")
+                logging.error(
+                    f"JSON decode error while loading content_status.json: {e}"
+                )
                 self.content_status = {}
         else:
-            logging.info(f"Initializing empty content status at {self.content_status_path}")
+            logging.info(
+                f"Initializing empty content status at {self.content_status_path}"
+            )
             self.content_status = {}
 
     def _initialize_content_status_keys(self) -> None:
@@ -3309,7 +3318,9 @@ class ContentStatusUpdater:
         """
         for key in ["failed_playbooks", "successful_playbooks"]:
             if key not in self.content_status:
-                logging.info(f"'{key}' key not in content_status. Initializing to empty list.")
+                logging.info(
+                    f"'{key}' key not in content_status. Initializing to empty list."
+                )
                 self.content_status[key] = []
 
     def _update_playbooks(self, key: str, tests: List[str]) -> None:
@@ -3333,6 +3344,8 @@ class ContentStatusUpdater:
         Saves the updated content status back to the specified file path.
         """
         os.makedirs(os.path.dirname(self.content_status_path), exist_ok=True)
-        with open(self.content_status_path, 'w') as content_file:
+        with open(self.content_status_path, "w") as content_file:
             json.dump(self.content_status, content_file, indent=4)
-            logging.info(f"Saved updated content_status.json to {self.content_status_path}")
+            logging.info(
+                f"Saved updated content_status.json to {self.content_status_path}"
+            )

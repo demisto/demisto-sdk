@@ -105,24 +105,25 @@ def logging_setup(
     diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", 'False'))
     colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, 'False'))
 
-    logger = logger.opt(
-        colors=colorize
-    )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
+    # logger = logger.opt(
+    #     colors=colorize
+    # )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
     _add_console_logger(
         colorize=colorize, threshold=console_threshold, diagnose=diagnose
     )
 
     # if not initial:
-    #     _add_file_logger(
-    #         log_path=calculate_log_dir(path) / LOG_FILE_NAME,
-    #         threshold=file_threshold,
-    #         diagnose=diagnose,
-    #     )
-    #     os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
-
-    logger.debug(
-        f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
-    )
+    # _add_file_logger(
+    #     log_path=calculate_log_dir(path) / LOG_FILE_NAME,
+    #     threshold=file_threshold,
+    #     diagnose=diagnose,
+    # )
+    os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
+    logger.info('BARRY BARRY')
+    logger.debug('YOSI YOSI')
+    # logger.debug(
+    #     f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
+    # )
 
 
 def _add_file_logger(log_path: Path, threshold: Optional[str], diagnose: bool):

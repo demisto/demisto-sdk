@@ -1,4 +1,4 @@
-import logging
+import logging  # noqa: TID251 # Required for propagation handling.
 import os
 import platform
 import sys
@@ -98,7 +98,7 @@ def logging_setup(
     file_threshold: str = DEFAULT_FILE_THRESHOLD,
     path: Optional[Union[Path, str]] = None,
     initial: bool = False,
-    propagate: bool = False
+    propagate: bool = False,
 ):
     """
     The initial set up is required since we have code (e.g. get_content_path) that runs in __main__ before the typer/click commands set up the logger.
@@ -118,13 +118,12 @@ def logging_setup(
 
     logger.remove()  # Removes all pre-existing handlers
 
-    diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", 'False'))
-    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, 'False'))
+    diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", "False"))
+    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, "False"))
 
     if propagate:
         _propagate_logger(console_threshold)
     else:
-
         logger = logger.opt(
             colors=colorize
         )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
@@ -142,7 +141,10 @@ def logging_setup(
         f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
     )
 
-def _propagate_logger(threshold: Optional[str],):
+
+def _propagate_logger(
+    threshold: Optional[str],
+):
     """
     Adds a PropagateHandler to Loguru's logger to forward logs to Python's logging system.
     """
@@ -177,7 +179,6 @@ def _add_console_logger(colorize: bool, threshold: Optional[str], diagnose: bool
         diagnose=diagnose,
         level=(threshold or DEFAULT_CONSOLE_THRESHOLD),
     )
-
 
 
 def log_system_details():

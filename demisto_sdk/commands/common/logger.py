@@ -101,7 +101,16 @@ def logging_setup(
 ):
     """
     The initial set up is required since we have code (e.g. get_content_path) that runs in __main__ before the typer/click commands set up the logger.
-    In the initial set up there is NO file logging (only console)
+    In the initial set up there is NO file logging (only console).
+
+    Parameters:
+    - calling_function (str): The name of the function invoking the logger setup, included in all logs.
+    - console_threshold (str): Log level for console output.
+    - file_threshold (str): Log level for file output.
+    - path (Union[Path, str], optional): Path for file logs. If None, defaults to the calculated log directory.
+    - initial (bool): Indicates if the setup is for the initial configuration (console-only if True).
+    - propagate (bool): If True, propagates logs to Python's logging system.
+
     """
     global logger
     _setup_neo4j_logger()
@@ -112,7 +121,7 @@ def logging_setup(
     colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, 'False'))
 
     if propagate:
-        logger.add(PropagateHandler(), format=calling_function+"-{message}")
+        _propagate_logger(console_threshold)
     else:
 
         logger = logger.opt(
@@ -128,10 +137,18 @@ def logging_setup(
                 diagnose=diagnose,
             )
     os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
-    logger.info('BARRY BARRY')
-    logger.debug('YOSI YOSI')
     logger.debug(
         f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
+    )
+
+def _propagate_logger(threshold: Optional[str],):
+    """
+    Adds a PropagateHandler to Loguru's logger to forward logs to Python's logging system.
+    """
+    logger.add(
+        PropagateHandler(),
+        format=CONSOLE_FORMAT,
+        level=(threshold or DEFAULT_CONSOLE_THRESHOLD),
     )
 
 

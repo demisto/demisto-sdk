@@ -1,10 +1,7 @@
-from typing import Optional
-
 import pytest
 
-from demisto_sdk.commands.content_graph.common import RelationshipType
-from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+from demisto_sdk.commands.common.constants import API_MODULES_PACK
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_incoming_mapper_object,
     create_integration_object,
@@ -535,23 +532,28 @@ def test_IsValidContentTypeHeaderValidator_obtain_invalid_content_items():
 
 
 @pytest.fixture
-def mock_is_pack_missing_rns(mocker):
-    # the release note file does not have a git status so we must mock this function
-    def is_pack_missing_rns(pack: Pack) -> bool:
-        from packaging.version import parse
-
-        return bool(
-            pack.pack_version
-            and pack.pack_version > parse("1.0.0")
-            and not pack.release_note.file_content
-        )
-
+def mock_is_missing_rn_validator(mocker):
+    """simplified validator methods for testing"""
     mocker.patch.object(
-        IsMissingReleaseNotes, "is_pack_missing_rns", side_effect=is_pack_missing_rns
+        IsMissingReleaseNotes,
+        "should_skip_check",
+        side_effect=lambda c: isinstance(c, TestPlaybook),
+    )
+    mocker.patch.object(
+        IsMissingReleaseNotes,
+        "is_missing_rn",
+        side_effect=lambda c: not bool(c.pack.release_note.file_content),  # type: ignore
+    )
+    mocker.patch.object(
+        IsMissingReleaseNotes,
+        "get_pack_ids_to_added_rn",
+        side_effect=lambda packs: {
+            p.object_id: p.release_note.file_content for p in packs
+        },  # type: ignore
     )
 
 
-def test_IsMissingReleaseNotes(mock_is_pack_missing_rns):
+def test_IsMissingReleaseNotes(mock_is_missing_rn_validator):
     """
     Given:
     - pack1 with a changed integration, a release notes file exists
@@ -570,73 +572,97 @@ def test_IsMissingReleaseNotes(mock_is_pack_missing_rns):
     )
     integ = create_integration_object()
     integ.pack = pack1
+
     pack2 = create_pack_object(
         paths=["version"],
         values=["1.0.1"],
     )
     script = create_script_object()
     script.pack = pack2
+
     pack3 = create_pack_object(
         paths=["version"],
         values=["1.0.1"],
     )
     tpb = create_test_playbook_object()
     tpb.pack = pack3
+
+    content_items = [pack1, integ, pack2, script, pack3, tpb]
     validator = IsMissingReleaseNotes()
-    results = validator.obtain_invalid_content_items([integ, script, tpb])
+    results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 1
     assert results[0].content_object == pack2
 
 
-@pytest.mark.parametrize("release_note", [None, "this is a rn"])
 def test_IsMissingReleaseNotes_missing_release_note_for_api_module_dependent(
-    mock_is_pack_missing_rns,
-    release_note: Optional[str],
+    mocker,
+    mock_is_missing_rn_validator,
 ):
     """
     Given:
-    - A change in an API module imported by an integration of DummyPack (the integration itself was not modified).
-        - Case 1: The dependent pack (DummyPack) does not have a release note.
-        - Case 2: The dependent pack (DummyPack) has a release note.
+    - A change in an API module imported by three integrations from three different packs.
+        - Pack 1 has a release note.
+        - Packs 2 and 3 do not have a release note.
     When:
     - Calling IsMissingReleaseNotes.obtain_invalid_content_items().
+    - Integrations of packs 1 and 2 are validated before the API module.
+    - Integration of pack 3 is validated after the API module.
     Then:
-    - Case 1: Ensure only one validation error is returned with DummyPack mentioned within its message.
-    - Case 2: Ensure no validation results are returned.
+    - Ensure two validation error are returned.
+    - Ensure we recommend to run update-release-notes on pack 2 and on ApiModules pack (for pack 3).
 
     """
     pack1 = create_pack_object(
         paths=["version"],
         values=["1.0.1"],
-        release_note_content=release_note,
+        release_note_content="this is a rn",
     )
     integ1 = create_integration_object()
-    integ1.database_id = "1"
     integ1.pack = pack1
+
+    pack2 = create_pack_object(
+        paths=["version"],
+        values=["1.0.1"],
+    )
+    integ2 = create_integration_object()
+    integ2.pack = pack2
+
+    pack3 = create_pack_object(
+        paths=["version"],
+        values=["1.0.1"],
+    )
+    integ3 = create_integration_object()
+    integ3.pack = pack3
+
     api_modules_pack = create_pack_object(
         paths=["name"],
-        values=["ApiModules"],
+        values=[API_MODULES_PACK],
     )
     api_module = create_script_object()
-    api_module.database_id = "2"
     api_module.pack = api_modules_pack
-    api_module.add_relationship(
-        RelationshipType.IMPORTS,
-        RelationshipData(
-            relationship_type=RelationshipType.IMPORTS,
-            source_id=integ1.database_id,
-            target_id=api_module.database_id,
-            content_item_to=integ1,
-        ),
+    mocker.patch.object(
+        IsMissingReleaseNotes,
+        "get_api_module_imports",
+        return_value=[integ1, integ2, integ3],
     )
+
+    content_items = [
+        pack1,
+        integ1,
+        pack2,
+        integ2,
+        api_module,
+        api_modules_pack,
+        pack3,
+        integ3,
+    ]
     validator = IsMissingReleaseNotes()
-    results = validator.obtain_invalid_content_items([api_module])
-    if not release_note:
-        assert len(results) == 1
-        assert results[0].content_object == pack1
-        assert api_modules_pack.object_id not in results[0].message
-    else:
-        assert not results
+    results = validator.obtain_invalid_content_items(content_items)
+    assert len(results) == 2
+    assert results[0].content_object == pack2
+    assert api_modules_pack.name not in results[0].message
+    assert results[1].content_object == pack3
+    assert api_modules_pack.name in results[1].message
 
 
 def test_IsValidRnHeadersFormatValidator_obtain_invalid_content_items():

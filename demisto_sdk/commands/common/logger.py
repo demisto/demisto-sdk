@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Union
 
 import loguru  # noqa: TID251 # This is the only place where we allow it
-
+import logging
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOG_FILE_PATH,
     DEMISTO_SDK_LOG_FILE_SIZE,
@@ -32,6 +32,11 @@ DEFAULT_FILE_COUNT = 10
 
 logger = loguru.logger  # all SDK modules should import from this file, not from loguru
 logger.disable(None)  # enabled at setup_logging()
+
+
+class PropagateHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        logging.getLogger(record.name).handle(record)
 
 
 def _setup_neo4j_logger():
@@ -105,12 +110,14 @@ def logging_setup(
     diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", 'False'))
     colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, 'False'))
 
+    logger.add(PropagateHandler(), format="{message}")
+    
     # logger = logger.opt(
     #     colors=colorize
     # )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
-    _add_console_logger(
-        colorize=colorize, threshold=console_threshold, diagnose=diagnose
-    )
+    # _add_console_logger(
+    #     colorize=colorize, threshold=console_threshold, diagnose=diagnose
+    # )
 
     # if not initial:
     # _add_file_logger(
@@ -150,6 +157,7 @@ def _add_console_logger(colorize: bool, threshold: Optional[str], diagnose: bool
         diagnose=diagnose,
         level=(threshold or DEFAULT_CONSOLE_THRESHOLD),
     )
+
 
 
 def log_system_details():

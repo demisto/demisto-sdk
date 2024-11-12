@@ -32,7 +32,9 @@ class SourceryHook(Hook):
         Returns:
             None
         """
-        config_file = ContentPaths.CONTENT_PATH / self._get_property("config_file", ".sourcery.yml")
+        config_file = ContentPaths.CONTENT_PATH / self._get_property(
+            "config_file", ".sourcery.yml"
+        )
         if not config_file.exists():
             return []
         self.base_hook.pop("config_file", None)

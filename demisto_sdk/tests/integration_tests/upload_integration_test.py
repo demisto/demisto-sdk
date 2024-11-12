@@ -63,7 +63,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     )
     mocker.patch.object(
         content_item,
-        "CONTENT_PATH",
+        "ContentPaths.CONTENT_PATH",
         Path(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example"),
     )
 
@@ -122,7 +122,7 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
     )
     mocker.patch.object(
         content_item,
-        "CONTENT_PATH",
+        "ContentPaths.CONTENT_PATH",
         Path(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example"),
     )
 

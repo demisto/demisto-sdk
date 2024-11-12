@@ -62,7 +62,10 @@ class ContentItem(BaseContent):
             return v
         if not ContentPaths.CONTENT_PATH.name:
             return ContentPaths.CONTENT_PATH / v
-        return ContentPaths.CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
+        return (
+            ContentPaths.CONTENT_PATH.with_name(values.get("source_repo", "content"))
+            / v
+        )
 
     @staticmethod
     @abstractmethod
@@ -126,7 +129,8 @@ class ContentItem(BaseContent):
         if not pack:
             if pack_name := get_pack_name(path):
                 pack = BaseContent.from_path(
-                    ContentPaths.CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
+                    ContentPaths.CONTENT_PATH / PACKS_FOLDER / pack_name,
+                    metadata_only=True,
                 )  # type: ignore[assignment]
         return pack  # type: ignore[return-value]
 

@@ -95,7 +95,9 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
     ):
         try:
             common_server_python_contnet = TextFile.read_from_github_api(
-                str(ContentPaths.COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py"),
+                str(
+                    ContentPaths.COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py"
+                ),
                 verify_ssl=False,
             )
         except (FileReadError, ConnectionError, Timeout):
@@ -110,7 +112,8 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
 
         TextFile.write(
             common_server_python_contnet,
-            output_path=ContentPaths.COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py",
+            output_path=ContentPaths.COMMON_SERVER_PYTHON_PATH
+            / "CommonServerUserPython.py",
         )
 
         docker_python_path.append(
@@ -286,7 +289,11 @@ def configure_module_discovery(ide_type: IDEType):
         if ContentPaths.CONTENT_PATH in python_discovery_paths:
             python_discovery_paths.remove(ContentPaths.CONTENT_PATH)
 
-        config_file_path = ContentPaths.CONTENT_PATH / ".idea" / f"{ContentPaths.CONTENT_PATH.name.lower()}.iml"
+        config_file_path = (
+            ContentPaths.CONTENT_PATH
+            / ".idea"
+            / f"{ContentPaths.CONTENT_PATH.name.lower()}.iml"
+        )
         update_pycharm_config_file(
             file_path=config_file_path,
             python_discovery_paths=python_discovery_paths,
@@ -689,7 +696,9 @@ def upload_and_create_instance(
 
 
 def add_demistomock_and_commonserveruser(integration_script: IntegrationScript):
-    source_demisto_mock_path = ContentPaths.CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py"
+    source_demisto_mock_path = (
+        ContentPaths.CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py"
+    )
     target_demisto_mock_path = integration_script.path.parent / "demistomock.py"
     if source_demisto_mock_path.exists():
         shutil.copy(

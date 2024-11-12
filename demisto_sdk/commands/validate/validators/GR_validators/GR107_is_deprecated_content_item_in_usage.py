@@ -106,7 +106,9 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
                     deprecated_item_type=item.deprecated_item_type,
                     deprecated_item=item.deprecated_item_id,
                     using_deprecated_item=str(
-                        item_using_deprecated.path.relative_to(ContentPaths.CONTENT_PATH)
+                        item_using_deprecated.path.relative_to(
+                            ContentPaths.CONTENT_PATH
+                        )
                     ),
                 ),
                 content_object=item_using_deprecated,

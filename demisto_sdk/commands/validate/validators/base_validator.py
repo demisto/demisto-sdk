@@ -232,7 +232,9 @@ class BaseResult(BaseModel):
     @property
     def format_json_message(self):
         return {
-            "file path": str(self.content_object.path.relative_to(ContentPaths.CONTENT_PATH)),
+            "file path": str(
+                self.content_object.path.relative_to(ContentPaths.CONTENT_PATH)
+            ),
             "error code": self.validator.error_code,
             "message": self.message,
         }

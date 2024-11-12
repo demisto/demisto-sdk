@@ -365,7 +365,8 @@ class DockerHook(Hook):
                     target = obj.path.parent / Path(file).name
                     if source != target and source.exists() and not target.exists():
                         shutil.copy(
-                            ContentPaths.CONTENT_PATH / file, obj.path.parent / Path(file).name
+                            ContentPaths.CONTENT_PATH / file,
+                            obj.path.parent / Path(file).name,
                         )
         run_isolated = self._get_property("run_isolated", False)
         config_arg = self._get_config_file_arg()

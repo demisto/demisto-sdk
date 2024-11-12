@@ -301,10 +301,14 @@ class PreCommitRunner:
         ret_val = 0
         pre_commit_context.dry_run = dry_run
         precommit_env = os.environ.copy()
-        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in ContentPaths.PYTHONPATH)
+        precommit_env["PYTHONPATH"] = ":".join(
+            str(path) for path in ContentPaths.PYTHONPATH
+        )
         # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
         precommit_env["MYPYPATH"] = ":".join(
-            str(path) for path in sorted(ContentPaths.PYTHONPATH) if "site-packages" not in str(path)
+            str(path)
+            for path in sorted(ContentPaths.PYTHONPATH)
+            if "site-packages" not in str(path)
         )
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(ContentPaths.CONTENT_PATH)
         precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
@@ -451,7 +455,9 @@ def group_by_language(
                 )
             else:
                 exclude_integration_script.add(
-                    integration_script.path.parent.relative_to(ContentPaths.CONTENT_PATH)
+                    integration_script.path.parent.relative_to(
+                        ContentPaths.CONTENT_PATH
+                    )
                 )
             continue
 

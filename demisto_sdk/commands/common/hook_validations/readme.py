@@ -757,7 +757,9 @@ class ReadMeValidator(BaseValidator):
             if mdx_server_is_up():  # this allows for this context to be reentrant
                 logger.debug("server is already up. Not restarting")
                 return empty_context_mgr(True)
-            if ReadMeValidator.are_modules_installed_for_verify(ContentPaths.CONTENT_PATH):  # type: ignore
+            if ReadMeValidator.are_modules_installed_for_verify(
+                ContentPaths.CONTENT_PATH
+            ):  # type: ignore
                 ReadMeValidator.add_node_env_vars()
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():

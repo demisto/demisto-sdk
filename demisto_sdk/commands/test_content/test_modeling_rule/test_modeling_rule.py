@@ -142,8 +142,12 @@ def get_relative_path_to_content(path: Path) -> str:
     Returns:
         Path: The relative path to the content directory.
     """
-    if path.is_absolute() and path.as_posix().startswith(ContentPaths.CONTENT_PATH.as_posix()):
-        return path.as_posix().replace(f"{ContentPaths.CONTENT_PATH.as_posix()}{os.path.sep}", "")
+    if path.is_absolute() and path.as_posix().startswith(
+        ContentPaths.CONTENT_PATH.as_posix()
+    ):
+        return path.as_posix().replace(
+            f"{ContentPaths.CONTENT_PATH.as_posix()}{os.path.sep}", ""
+        )
     return path.as_posix()
 
 

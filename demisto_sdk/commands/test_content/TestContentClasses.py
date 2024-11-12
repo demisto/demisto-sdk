@@ -3263,7 +3263,7 @@ class ContentStatusUpdater:
         """
         self.artifacts_folder = artifacts_folder
         self.content_status_filename = "content_status.json"
-        self.content_status_path = Path(artifacts_folder) / self.content_status_filename
+        self.content_status_path = Path(artifacts_folder, self.content_status_filename) 
         self.content_status: Dict[Any, Any] = {}
 
     def update_content_status(
@@ -3293,7 +3293,7 @@ class ContentStatusUpdater:
         """
         Attempts to load the content status from the file. If the file doesn't exist or is invalid, initializes an empty status.
         """
-        if Path.exists(self.content_status_path):
+        if self.content_status_path.exists():
             logging.info(f"Content status file exists at {self.content_status_path}")
             try:
                 with open(self.content_status_path, "r") as content_file:
@@ -3330,7 +3330,7 @@ class ContentStatusUpdater:
             tests (List[str]): The list of tests (either successful or failed) to add to the content status.
         """
         current_playbooks = self.content_status.get(key, [])
-        new_playbooks = [test for test in tests if test not in current_playbooks]
+        new_playbooks = sorted(set(tests).difference(current_playbooks))
         if new_playbooks:
             logging.info(f"Adding {len(new_playbooks)} new {key}: {new_playbooks}")
             current_playbooks.extend(new_playbooks)
@@ -3341,7 +3341,7 @@ class ContentStatusUpdater:
         """
         Saves the updated content status back to the specified file path.
         """
-        os.makedirs(os.path.dirname(self.content_status_path), exist_ok=True)
+        Path(self.content_status_path.name).mkdir(exists_ok=True)
         with open(self.content_status_path, "w") as content_file:
             json.dump(self.content_status, content_file, indent=4)
             logging.info(

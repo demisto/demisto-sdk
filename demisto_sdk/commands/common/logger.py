@@ -1,7 +1,6 @@
 import logging  # noqa: TID251 # Required for propagation handling.
 import os
 import platform
-import re
 import sys
 from pathlib import Path
 from typing import Iterable, Optional, Union
@@ -26,8 +25,6 @@ FILE_FORMAT = (
 )
 CONSOLE_FORMAT = "{message}"
 
-COLOR_TAG_PATTERN = re.compile(r"</?[^>]+>")
-
 DEFAULT_FILE_THRESHOLD = "DEBUG"
 DEFAULT_CONSOLE_THRESHOLD = "INFO"
 
@@ -40,8 +37,6 @@ logger.disable(None)  # enabled at setup_logging()
 
 class PropagateHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
-        # Remove color tags from the log message
-        record.msg = COLOR_TAG_PATTERN.sub("", record.msg)
         logging.getLogger(record.name).handle(record)
 
 

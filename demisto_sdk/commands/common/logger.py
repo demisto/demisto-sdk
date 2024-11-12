@@ -40,7 +40,7 @@ logger.disable(None)  # enabled at setup_logging()
 
 class PropagateHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
-        
+        record.msg = COLOR_TAG_PATTERN.sub("", record.msg)
         logging.getLogger(record.name).handle(record)
 
 

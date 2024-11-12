@@ -3866,9 +3866,9 @@ playbook_flow_app = typer.Typer(
 playbook_flow_app.command("test", no_args_is_help=True)(
     run_playbook_flow_test.run_flow_test
 )
-playbook_flow_app.command("init", no_args_is_help=True)(
-    init_flow_test.create_new_flow_test
-)
+# playbook_flow_app.command("init", no_args_is_help=True)(
+#     init_flow_test.create_new_flow_test
+# )
 typer_click_object = typer.main.get_command(playbook_flow_app)
 main.add_command(typer_click_object, "playbook-flow-test")
 

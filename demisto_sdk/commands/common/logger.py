@@ -40,6 +40,7 @@ logger.disable(None)  # enabled at setup_logging()
 
 class PropagateHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
+        
         logging.getLogger(record.name).handle(record)
 
 

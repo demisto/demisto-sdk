@@ -276,7 +276,7 @@ def test_convert_contribution_zip_updated_pack(tmp_path, mocker):
     # Create fake content repo and contribution zip
     repo = Repo(repo_dir)
     mocker.patch(
-        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", repo.path
+        "demisto_sdk.commands.init.contribution_converter.ContentPaths.CONTENT_PATH", repo.path
     )
     pack = repo.create_pack("TestPack")
     integration = pack.create_integration("integration0")
@@ -501,7 +501,7 @@ def test_convert_contribution_zip(
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
     mocker.patch(
-        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", git_repo.path
+        "demisto_sdk.commands.init.contribution_converter.ContentPaths.CONTENT_PATH", git_repo.path
     )
 
     contrib_zip = Contribution(target_dir, "ContribTestPack", git_repo)
@@ -633,7 +633,7 @@ def test_convert_contribution_zip_with_args(
     contribution_zip_dir.mkdir()
 
     mocker.patch(
-        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", git_repo.path
+        "demisto_sdk.commands.init.contribution_converter.ContentPaths.CONTENT_PATH", git_repo.path
     )
     contrib_zip = Contribution(target_dir, "ContribTestPack", git_repo)
     # contrib_zip.create_zip(contribution_zip_dir)

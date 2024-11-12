@@ -187,18 +187,24 @@ def handle_deprecated_args(input_args: Iterable[str]):
 def logging_setup_decorator(func: Callable):
     @functools.wraps(func)
     def wrapper(ctx: typer.Context, *args, **kwargs):
-        # Ensure console and file thresholds are set to valid levels
-        console_threshold = kwargs.get("console_log_threshold", "INFO")
-        file_threshold = kwargs.get("file_log_threshold", "DEBUG")
+        # Fetch the parameters directly from context to apply default values if they are None
+        console_threshold = ctx.params.get("console_log_threshold") or "INFO"
+        file_threshold = ctx.params.get("file_log_threshold") or "DEBUG"
 
         # Validate the logging levels
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         if console_threshold not in valid_levels:
-            console_threshold = "INFO"  # Default if invalid
+            console_threshold = "INFO"
         if file_threshold not in valid_levels:
-            file_threshold = "DEBUG"  # Default if invalid
+            file_threshold = "DEBUG"
 
-        # Initialize logging
+        # Set back the validated and default values in both `ctx.params` and `kwargs`
+        ctx.params["console_log_threshold"] = console_threshold
+        ctx.params["file_log_threshold"] = file_threshold
+        kwargs["console_log_threshold"] = console_threshold
+        kwargs["file_log_threshold"] = file_threshold
+
+        # Initialize logging with the validated thresholds
         logging_setup(
             console_threshold=console_threshold,
             file_threshold=file_threshold,
@@ -206,7 +212,7 @@ def logging_setup_decorator(func: Callable):
             calling_function=func.__name__,
         )
 
-        # Handle deprecated arguments directly from context args
+        # Handle deprecated arguments directly from context args if needed
         handle_deprecated_args(ctx.args if ctx else [])
 
         # Run the wrapped function

@@ -1,5 +1,5 @@
-import sys
 from pathlib import Path
+from typing import Optional
 
 import typer
 
@@ -9,8 +9,10 @@ from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
-def validate_version(value: str) -> str:
+def validate_version(value: Optional[str]) -> Optional[str]:
     """Validate that the version is in the format x.y.z where x, y, z are digits."""
+    if value is None:
+        return None  # Allow None values
     version_sections = value.split(".")
     if len(version_sections) == 3 and all(
         section.isdigit() for section in version_sections
@@ -95,7 +97,7 @@ def update_release_notes(
 
     if is_sdk_defined_working_offline():
         typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)
-        sys.exit(1)
+        raise typer.Exit(1)
 
     update_command_args_from_config_file("update-release-notes", locals())
 
@@ -103,14 +105,13 @@ def update_release_notes(
         typer.echo(
             "<red>Please add a specific pack in order to force a release notes update.</red>"
         )
-        sys.exit(0)
+        raise typer.Exit(0)
 
     if not use_git and input is None:
         if not typer.confirm(
             "No specific pack was given, do you want to update all changed packs?"
         ):
-            sys.exit(0)
-
+            raise typer.Exit(0)
     try:
         rn_mng = UpdateReleaseNotesManager(
             user_input=input,
@@ -125,9 +126,9 @@ def update_release_notes(
             is_bc=breaking_changes,
         )
         rn_mng.manage_rn_update()
-        sys.exit(0)
+        raise typer.Exit(0)
     except Exception as e:
         typer.echo(
             f"<red>An error occurred while updating the release notes: {str(e)}</red>"
         )
-        sys.exit(1)
+        raise typer.Exit(1)

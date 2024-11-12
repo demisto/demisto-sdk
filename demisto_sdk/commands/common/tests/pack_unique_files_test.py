@@ -216,7 +216,6 @@ class TestPackUniqueFilesValidator:
                 ],
                 catch_exceptions=False,
             )
-        print(f"This is the result - {result.stderr}")
         assert "Contributed packs must include email or url" in result.output
 
     @pytest.mark.parametrize(

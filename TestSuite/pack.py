@@ -225,6 +225,7 @@ class Pack(TestSuiteBase):
                 "categories": [],
                 "useCases": [],
                 "keywords": [],
+                "marketplaces": [],
             }
         )
         self.author_image = File(

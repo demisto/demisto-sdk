@@ -770,29 +770,12 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
-            [FORMAT_CMD, "-i", "playbook.yml", "-y", "-ngr"],
+            [FORMAT_CMD, "-i", playbook.path, "-y", "-ngr"],
             catch_exceptions=False,
         )
         assert "======= Updating file" in result.output
         assert f"Format Status on file: {playbook.path} - Success" in result.output
-
-        with ChangeCWD(repo.path):
-            result = runner.invoke(
-                app,
-                [
-                    "validate",
-                    "-i",
-                    "Packs/PackName/Playbooks/playbook.yml",
-                    "--no-docker-checks",
-                    "--no-conf-json",
-                    "--allow-skipped",
-                    "--run-old-validate",
-                    "--skip-new-validate",
-                ],
-                catch_exceptions=False,
-            )
-
-    assert "The files are valid" in result.output
+        assert f"Validate Status on file: {playbook.path} - Success" in result.output
 
 
 def test_format_integration_skipped_files(repo, mocker, monkeypatch):

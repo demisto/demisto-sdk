@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 
 import typer
@@ -18,6 +17,8 @@ def format(
         None,
         "-i",
         "--input",
+        resolve_path=True,
+        exists=True,
         help="The path of the script yml file or a comma-separated list. If not specified, the format will run "
         "on all new/changed files.",
     ),
@@ -108,10 +109,10 @@ def format(
     """
     if is_sdk_defined_working_offline():
         typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)
-        sys.exit(1)
+        raise typer.Exit(1)
 
     update_command_args_from_config_file("format", ctx.params)
-    _input = input or ",".join(map(str, file_paths))
+    _input = input if input else ",".join(map(str, file_paths)) if file_paths else None
 
     with ReadMeValidator.start_mdx_server():
         return format_manager(

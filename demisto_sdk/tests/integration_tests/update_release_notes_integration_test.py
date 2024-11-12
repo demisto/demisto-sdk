@@ -35,7 +35,7 @@ json = JSON_Handler()
 def demisto_client(mocker):
     mocker.patch(
         "demisto_sdk.commands.download.downloader.demisto_client",
-        return_valure="object",
+        return_value="object",
     )
 
 

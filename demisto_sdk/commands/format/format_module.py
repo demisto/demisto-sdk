@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
+import typer
+
 from demisto_sdk.commands.common.constants import (
     JOB,
     TESTS_AND_DOC_DIRECTORIES,
@@ -288,7 +290,7 @@ def format_manager(
                 )
             )
         # No files were found to format
-        return 0
+        raise typer.Exit(0)
 
     logger.info("")  # Just adding a new line before summary
     for string, print_color in log_list:
@@ -296,8 +298,8 @@ def format_manager(
         logger.info(f"<{print_color}>{joined_string}</{print_color}>")
 
     if error_list:
-        return 1
-    return 0
+        raise typer.Exit(1)
+    raise typer.Exit(0)
 
 
 def get_files_to_format_from_git(

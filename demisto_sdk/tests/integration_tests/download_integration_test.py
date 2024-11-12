@@ -101,7 +101,7 @@ def test_integration_download_with_force(demisto_client, tmp_path, mocker):
     assert result.exit_code == 0
 
 
-def test_integration_download_list_files(demisto_client, mocker):
+def test_integration_download_list_files(demisto_client, mocker, capsys):
     """
     Given
     - lf flag to list all available content items.

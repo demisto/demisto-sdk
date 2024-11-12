@@ -66,7 +66,7 @@ def update_global_content_path(content_path: str) -> None:
     global PYTHONPATH
     global PYTHONPATH_STR
 
-    logger.info(f'Updating content_path globally: {content_path}')
+    logger.info(f"Updating content_path globally: {content_path}")
     CONTENT_PATH = Path(content_path)
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = CONTENT_PATH / "all_packs_dependencies.json"
     CONF_PATH = CONTENT_PATH / TESTS_DIR / "conf.json"

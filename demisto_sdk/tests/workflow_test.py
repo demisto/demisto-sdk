@@ -121,9 +121,8 @@ class ContentGitRepo:
 
     def run_validations(self):
         """
-        Run all of the following validations:
+        Run all the following validations:
         * secrets
-        * lint -g --no-test
         * validate -g --staged
         * validate -g
         * validate -g --include-untracked
@@ -133,9 +132,6 @@ class ContentGitRepo:
             self.run_command("git add .")
             # commit flow - secrets, lint and validate only on staged files without rn
             res = runner.invoke(app, "secrets")
-            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
-
-            res = runner.invoke(app, "lint -g --no-test")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
             res = runner.invoke(

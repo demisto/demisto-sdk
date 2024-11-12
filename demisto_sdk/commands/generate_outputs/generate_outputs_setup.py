@@ -5,6 +5,7 @@ import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.generate_outputs.generate_outputs import run_generate_outputs
+from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 @logging_setup_decorator
@@ -82,4 +83,5 @@ def generate_outputs(
         "examples": examples,
         "insecure": insecure,
     }
+    update_command_args_from_config_file("generate-outputs", kwargs)
     return run_generate_outputs(**kwargs)

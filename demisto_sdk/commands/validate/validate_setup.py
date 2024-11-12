@@ -168,9 +168,10 @@ def validate(
         elif file_path:
             execution_mode = ExecutionMode.SPECIFIC_FILES
         else:
-            # If neither condition is satisfied, exit gracefully
-            typer.echo("No files specified and git validation is disabled.", err=True)
-            sys.exit(1)
+            execution_mode = ExecutionMode.USE_GIT
+            # default validate to -g --post-commit
+            use_git = True
+            post_commit = True
 
         exit_code = 0
         run_new_validate = not skip_new_validate or (

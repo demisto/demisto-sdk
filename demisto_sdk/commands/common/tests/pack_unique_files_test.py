@@ -3,9 +3,7 @@ from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 
 import pytest
-import typer
 from git import GitCommandError
-from typer.main import get_command
 from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
@@ -206,20 +204,19 @@ class TestPackUniqueFilesValidator:
         )
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
-        typer_command = get_command(app)
         with ChangeCWD(repo.path):
-            with typer.Context(typer_command):
-                result = CliRunner(mix_stderr=False).invoke(
-                    typer_command,
-                    [
-                        VALIDATE_CMD,
-                        "-i",
-                        str(pack.path),
-                        "--run-old-validate",
-                        "--skip-new-validate",
-                    ],
-                    catch_exceptions=False,
-                )
+            result = CliRunner(mix_stderr=False).invoke(
+                app,
+                [
+                    VALIDATE_CMD,
+                    "-i",
+                    str(pack.path),
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
+            )
+        print(f"This is the result - {result.stderr}")
         assert "Contributed packs must include email or url" in result.output
 
     @pytest.mark.parametrize(

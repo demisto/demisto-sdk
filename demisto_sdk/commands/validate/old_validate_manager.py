@@ -1146,7 +1146,7 @@ class OldValidateManager:
         filtered_added_files: Set = set()
         filtered_old_format: Set = set()
 
-        for path in self.file_path.split(","):
+        for path in self.file_path:
             path = get_relative_path_from_packs_dir(path)
             file_level = detect_file_level(path)
             if file_level == PathLevel.FILE:

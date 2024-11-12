@@ -737,8 +737,16 @@ def test_update_release_notes_specific_version_invalid(demisto_client, repo):
         app, [UPDATE_RN_COMMAND, "-i", join("Packs", "ThinkCanary"), "-v", "3.x.t"]
     )
     assert (
-        "The format of version should be in x.y.z format, e.g: <2.1.3>" in result.stdout
-    )
+        "Usage: main update-release-notes [OPTIONS]\n"
+        "Try 'main update-release-notes -h' for help.\n"
+        "╭─ Error "
+        "──────────────────────────────────────────────────────────────────────╮\n"
+        "│ Invalid value for '-v' / '--version': Version 3.x.t is not in the "
+        "expected   │\n"
+        "│ format. The format should be x.y.z, e.g., "
+        "2.1.3.                             │\n"
+        "╰──────────────────────────────────────────────────────────────────────────────╯\n"
+    ) == result.stdout
 
 
 def test_update_release_notes_specific_version_valid(demisto_client, mocker, repo):

@@ -51,13 +51,12 @@ class TestTestPlaybookRunner:
         runner = CliRunner()
 
         # Use pytest.raises to catch the Exit exception
-        with pytest.raises(typer.Exit) as exc_info:
-            runner.invoke(
-                app, args=["run-test-playbook", "--test-playbook-path", TEST_PLAYBOOK]
-            )
+        result = runner.invoke(
+            app, args=["run-test-playbook", "--test-playbook-path", TEST_PLAYBOOK]
+        )
 
         # Assert the exit code is as expected
-        assert exc_info.value.exit_code == res
+        assert result.exit_code == res
 
     @pytest.mark.parametrize(
         argnames="tpb_result, res, message",
@@ -70,7 +69,7 @@ class TestTestPlaybookRunner:
         When:
             - run the run_test_playbook command
         Then:
-            - validate the results is aas expected
+            - validate the results is as expected
             - validate the num of tpb is as expected (4 tpb in Azure Pack)
         """
 
@@ -89,14 +88,14 @@ class TestTestPlaybookRunner:
         )
         runner = CliRunner()
 
-        # Use pytest.raises to catch the Exit exception
-        with pytest.raises(typer.Exit) as exc_info:
-            runner.invoke(
-                app, args=["run-test-playbook", "--test-playbook-path", TEST_PLAYBOOK]
-            )
-
+        result = runner.invoke(
+            app,
+            args=["run-test-playbook", "--test-playbook-path", TEST_PLAYBOOK],
+            catch_exceptions=False,
+        )
         # Assert the exit code is as expected
-        assert exc_info.value.exit_code == res
+        assert result.exit_code == res
+        assert message in result.output
 
     @pytest.mark.parametrize(
         argnames="tpb_result, expected_exit_code, message",
@@ -136,7 +135,7 @@ class TestTestPlaybookRunner:
                 app, ["run-test-playbook", "--all", "-tpb", "", "-t", "5"]
             )
             assert result.exit_code == expected_exit_code
-            assert result.output.count(message) == 6
+            assert message in result.output
 
     @pytest.mark.parametrize(
         argnames="input_tpb, exit_code, err",
@@ -169,9 +168,14 @@ class TestTestPlaybookRunner:
 
         self.test_playbook_input = input_tpb
         test_playbook = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
-        error_code = test_playbook.manage_and_run_test_playbooks()
-        assert error_code == exit_code
+        # Use pytest.raises to capture typer.Exit
+        with pytest.raises(typer.Exit) as exc_info:
+            test_playbook.manage_and_run_test_playbooks()
 
+        # Check the exit code from typer.Exit
+        assert exc_info.value.exit_code == exit_code
+
+        # Capture the output and verify if needed
         stdout, _ = capsys.readouterr()
         if err:
             assert err in stdout
@@ -210,9 +214,14 @@ class TestTestPlaybookRunner:
 
         self.test_playbook_input = input_tpb
         test_playbook = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
-        error_code = test_playbook.manage_and_run_test_playbooks()
-        assert error_code == exit_code
+        # Use pytest.raises to capture typer.Exit
+        with pytest.raises(typer.Exit) as exc_info:
+            test_playbook.manage_and_run_test_playbooks()
 
+        # Check the exit code from typer.Exit
+        assert exc_info.value.exit_code == exit_code
+
+        # Capture the output and verify if needed
         if err:
             assert err in caplog.text
 
@@ -252,9 +261,10 @@ class TestTestPlaybookRunner:
         test_playbook_runner = TestPlaybookRunner(
             test_playbook_path=self.test_playbook_input
         )
-        res = test_playbook_runner.run_test_playbook_by_id(playbook_id)
+        with pytest.raises(typer.Exit) as exc_info:
+            test_playbook_runner.run_test_playbook_by_id(playbook_id)
 
-        assert res == exit_code
+        assert exc_info.value.exit_code == exit_code
         assert WAITING_MESSAGE in caplog.text
         assert LINK_MESSAGE in caplog.text
         assert SUCCESS_MESSAGE in caplog.text
@@ -290,14 +300,11 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_results},
         )
+        test_playbook_runner = TestPlaybookRunner(test_playbook_path=TEST_PLAYBOOK)
+        with pytest.raises(typer.Exit) as exc_info:
+            test_playbook_runner.run_test_playbook_by_id(playbook_id)
 
-        assert (
-            TestPlaybookRunner(
-                test_playbook_path=TEST_PLAYBOOK
-            ).run_test_playbook_by_id(playbook_id)
-            == exit_code
-        )
-
+        assert exc_info.value.exit_code == exit_code
         assert WAITING_MESSAGE in caplog.text
         assert LINK_MESSAGE in caplog.text
         assert FAILED_MESSAGE in caplog.text

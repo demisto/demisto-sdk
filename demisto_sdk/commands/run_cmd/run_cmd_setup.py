@@ -30,7 +30,7 @@ def run(
     ),
     debug: bool = typer.Option(
         False,
-        "-d",
+        "-D",
         "--debug",
         help="Enable debug-mode feature. If you want to save the output file please use the --debug-path option.",
     ),

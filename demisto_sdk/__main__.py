@@ -74,7 +74,7 @@ from demisto_sdk.commands.validate.validate_setup import validate
 from demisto_sdk.commands.xsoar_linter.xsoar_linter_setup import xsoar_linter
 from demisto_sdk.commands.zip_packs.zip_packs_setup import zip_packs
 
-app = typer.Typer(rich_markup_mode="markdown")
+app = typer.Typer()
 
 
 @app.command(name="export-api", help="Dumps the `demisto-sdk` API to a file.")

@@ -9,6 +9,19 @@ from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
+def validate_version(value: str) -> str:
+    """Validate that the version is in the format x.y.z where x, y, z are digits."""
+    version_sections = value.split(".")
+    if len(version_sections) == 3 and all(
+        section.isdigit() for section in version_sections
+    ):
+        return value
+    else:
+        raise typer.BadParameter(
+            f"Version {value} is not in the expected format. The format should be x.y.z, e.g., 2.1.3."
+        )
+
+
 @logging_setup_decorator
 def update_release_notes(
     ctx: typer.Context,
@@ -26,7 +39,11 @@ def update_release_notes(
         metavar="UPDATE_TYPE",
     ),
     version: str = typer.Option(
-        None, "-v", "--version", help="Bump to a specific version."
+        None,
+        "-v",
+        "--version",
+        help="Bump to a specific version.",
+        callback=validate_version,
     ),
     use_git: bool = typer.Option(
         False,

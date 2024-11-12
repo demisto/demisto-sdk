@@ -15,18 +15,26 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 @logging_setup_decorator
 def postman_codegen(
     ctx: typer.Context,
-    input: Path = typer.Option(..., help="The Postman collection 2.1 JSON file"),
+    input: Path = typer.Option(
+        ..., "-i", "--input", help="The Postman collection 2.1 JSON file"
+    ),
     output: Path = typer.Option(
         Path("."),
+        "-o",
+        "--output",
         help="The output directory to save the config file or the integration",
     ),
-    name: str = typer.Option(None, help="The output integration name"),
+    name: str = typer.Option(None, "-n", "--name", help="The output integration name"),
     output_prefix: str = typer.Option(
         None,
+        "-op",
+        "--output-prefix",
         help="The global integration output prefix. By default it is the product name.",
     ),
     command_prefix: str = typer.Option(
         None,
+        "-cp",
+        "--command-prefix",
         help="The prefix for each command in the integration. By default is the product name in lower case",
     ),
     config_out: bool = typer.Option(
@@ -35,6 +43,8 @@ def postman_codegen(
     ),
     package: bool = typer.Option(
         False,
+        "-p",
+        "--package",
         help="Generated integration will be split to package format instead of a YML file.",
     ),
     console_log_threshold: str = typer.Option(

@@ -187,20 +187,22 @@ def handle_deprecated_args(input_args: Iterable[str]):
 def logging_setup_decorator(func: Callable):
     @functools.wraps(func)
     def wrapper(ctx: typer.Context, *args, **kwargs):
-        # Setup logging based on options in kwargs
-        # Default logging options
-        if "console_log_threshold" not in kwargs:
-            kwargs["console_log_threshold"] = "INFO"
-        if "file_log_threshold" not in kwargs:
-            kwargs["file_log_threshold"] = "DEBUG"
-        if "log_file_path" not in kwargs:
-            kwargs["log_file_path"] = None
+        # Ensure console and file thresholds are set to valid levels
+        console_threshold = kwargs.get("console_log_threshold", "INFO")
+        file_threshold = kwargs.get("file_log_threshold", "DEBUG")
+
+        # Validate the logging levels
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        if console_threshold not in valid_levels:
+            console_threshold = "INFO"  # Default if invalid
+        if file_threshold not in valid_levels:
+            file_threshold = "DEBUG"  # Default if invalid
 
         # Initialize logging
         logging_setup(
-            console_threshold=kwargs["console_log_threshold"],
-            file_threshold=kwargs["file_log_threshold"],
-            path=kwargs["log_file_path"],
+            console_threshold=console_threshold,
+            file_threshold=file_threshold,
+            path=kwargs.get("log_file_path", None),
             calling_function=func.__name__,
         )
 

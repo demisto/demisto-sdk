@@ -9,6 +9,8 @@ def run_test_playbook(
     ctx: typer.Context,
     test_playbook_path: str = typer.Option(
         None,
+        "-tpb",
+        "--test-playbook-path",
         help="Path to test playbook to run, can be a path to specific "
         "test playbook or path to pack name for example: Packs/GitHub.",
     ),
@@ -18,11 +20,13 @@ def run_test_playbook(
     wait: bool = typer.Option(
         True,
         "-w",
+        "--wait",
         help="Wait until the test-playbook run is finished and get a response.",
     ),
     timeout: int = typer.Option(
         90,
         "-t",
+        "--timeout",
         help="Timeout for the command. The test-playbook will continue to run in your instance.",
         show_default=True,
     ),

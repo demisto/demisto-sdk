@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
+from demisto_sdk.commands.upload.upload import upload_content_entity
 
 
 @logging_setup_decorator
@@ -119,33 +120,18 @@ def upload(
     unset XSIAM_AUTH_ID
     ```
     """
-    typer.echo(
-        f"Upload initiated with input: {input_path}, config file: {input_config_file}, zip: {zip}, "
-        f"tpb: {tpb}, xsiam: {xsiam}, marketplace: {marketplace}, keep_zip: {keep_zip}, "
-        f"insecure: {insecure}, skip_validation: {skip_validation}, "
-        f"reattach: {reattach}, override_existing: {override_existing}."
+
+    # Call the actual upload logic
+    upload_content_entity(
+        input=input_path,
+        input_config_file=input_config_file,
+        zip=zip,
+        tpb=tpb,
+        xsiam=xsiam,
+        marketplace=marketplace,
+        keep_zip=keep_zip,
+        insecure=insecure,
+        skip_validation=skip_validation,
+        reattach=reattach,
+        override_existing=override_existing,
     )
-
-    try:
-        # Call the actual upload logic
-        upload_content_entity(
-            input=input_path,
-            input_config_file=input_config_file,
-            zip=zip,
-            tpb=tpb,
-            xsiam=xsiam,
-            marketplace=marketplace,
-            keep_zip=keep_zip,
-            insecure=insecure,
-            skip_validation=skip_validation,
-            reattach=reattach,
-            override_existing=override_existing,
-        )
-        typer.echo("Upload completed successfully.")
-    except Exception as e:
-        typer.echo(f"Error during upload: {e}", err=True)
-        raise
-
-
-def upload_content_entity(**kwargs):
-    typer.echo(f"Uploading content with the following parameters: {kwargs}")

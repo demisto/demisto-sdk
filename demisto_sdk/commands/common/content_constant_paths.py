@@ -47,7 +47,8 @@ PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
 
 def update_global_content_path(content_path: str) -> None:
     """
-    Set the global CONTENT_PATH variable to the provided content path.
+    Sets the global CONTENT_PATH variable to the provided content path
+    and its derivatives accordingly.
 
     Args:
         content_path (str): The new content path to set.

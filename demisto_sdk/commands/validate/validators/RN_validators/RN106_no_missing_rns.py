@@ -14,7 +14,6 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.test_script import TestScript
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -39,26 +38,23 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
     related_field = "release notes"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
-    pack_ids_to_added_rn: dict[str, str] = {}
+    packs_with_added_rn: list[str] = []
     checked_packs: set[str] = set()
 
-    def should_skip_check(self, content_item: ContentItem) -> bool:
+    @staticmethod
+    def should_skip_check(content_item: ContentItem) -> bool:
         if isinstance(content_item, (TestPlaybook, TestScript)):
             return True
         if isinstance(content_item, Integration):
-            old_content = content_item.old_base_content_object
-            assert isinstance(old_content, Integration)
             return (
                 not content_item.git_status
-                and not old_content.description_file.git_status
+                and not content_item.description_file.git_status
             )
         if isinstance(content_item, ModelingRule):
-            old_content = content_item.old_base_content_object
-            assert isinstance(old_content, ModelingRule)
             return (
                 not content_item.git_status
-                and not old_content.xif_file.git_status
-                and not old_content.schema_file.git_status
+                and not content_item.xif_file.git_status
+                and not content_item.schema_file.git_status
             )
         if content_item.git_status == GitStatuses.RENAMED:
             return not IsMissingReleaseNotes.is_pack_move(content_item)
@@ -70,57 +66,39 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
         assert isinstance(old_content, ContentItem)
         return content_item.pack_id != old_content.pack_id
 
-    def get_api_module_imports(self, content_item: ContentItem) -> list[ContentItem]:
-        try:
-            api_module_node: Script = self.graph.search(
-                object_id=content_item.object_id
-            )[0]
-        except IndexError:
-            logger.warning(f"Could not find {API_MODULES_PACK} in graph")
-            return []
-        return [c for c in api_module_node.imported_by]
-
     def get_missing_rns_for_api_module_dependents(
-        self, content_item: ContentItem
-    ) -> list[ValidationResult]:
-        dependent_items = self.get_api_module_imports(content_item)
-        results = [
-            ValidationResult(
+        self, api_module: ContentItem
+    ) -> dict[str, ValidationResult]:
+        dependent_items = self.graph.get_api_module_imports(api_module.object_id)
+        result = {
+            c.pack_id: ValidationResult(
                 validator=self,
                 message=self.error_message.format(API_MODULES_PACK),
-                content_object=c.in_pack,
+                content_object=c.pack,
             )
             for c in dependent_items
-            if c.in_pack
-            and self.is_missing_rn(c)
-            and c.pack_id not in self.checked_packs
-        ]
-        self.checked_packs.update([c.pack_id for c in dependent_items])
-        return results
-
-    def is_missing_rn(self, content_item: ContentItem) -> bool:
-        pack = content_item.in_pack
-        assert pack and pack.pack_version
-        return (
-            pack.pack_version > parse("1.0.0")
-            and pack.object_id not in self.pack_ids_to_added_rn
-        )
-
-    def get_pack_ids_to_added_rn(self, packs: list[Pack]) -> dict:
-        return {
-            p.object_id: p.release_note.file_content
-            for p in packs
-            if isinstance(p.old_base_content_object, Pack)
-            and p.old_base_content_object.release_note.git_status == GitStatuses.ADDED
+            if c.pack_id not in self.packs_with_added_rn
         }
+        return result
+
+    @staticmethod
+    def get_packs_with_added_rns(content_objects: Iterable[BaseContent]) -> list[str]:
+        return [
+            p.object_id
+            for p in content_objects
+            if isinstance(p, Pack)
+            and p.release_note.git_status == GitStatuses.ADDED
+            and p.pack_version > parse("1.0.0")  # type: ignore
+        ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        results: list[ValidationResult] = []
-        self.pack_ids_to_added_rn = self.get_pack_ids_to_added_rn(
-            [p for p in content_items if isinstance(p, Pack)]
-        )
+        results: dict[str, ValidationResult] = {}
+        api_module_results: dict[str, ValidationResult] = {}
+
+        self.packs_with_added_rn = self.get_packs_with_added_rns(content_items)
+
         for content_item in content_items:
             if isinstance(content_item, ContentItem):
                 if (
@@ -129,19 +107,21 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
                 ):
                     logger.debug(f"Skipping RN106 for {content_item.path}")
                     continue
+
                 logger.debug(f"Running RN106 for {content_item.path}")
-                assert content_item.in_pack
-                if content_item.in_pack.name == API_MODULES_PACK:
-                    results.extend(
+
+                if content_item.pack_id == API_MODULES_PACK:
+                    api_module_results.update(
                         self.get_missing_rns_for_api_module_dependents(content_item)
                     )
-                elif self.is_missing_rn(content_item):
-                    self.checked_packs.add(content_item.pack_id)
-                    results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message.format(content_item.pack_id),
-                            content_object=content_item.pack,
-                        )
+                    self.checked_packs.update(api_module_results.keys())
+
+                elif content_item.pack_id not in self.packs_with_added_rn:
+                    results[content_item.pack_id] = ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(content_item.pack_id),
+                        content_object=content_item.pack,
                     )
-        return results
+                    self.checked_packs.add(content_item.pack_id)
+
+        return list((results | api_module_results).values())

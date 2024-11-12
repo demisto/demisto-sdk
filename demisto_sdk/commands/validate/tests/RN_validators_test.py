@@ -1,6 +1,8 @@
 import pytest
 
 from demisto_sdk.commands.common.constants import API_MODULES_PACK
+from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_incoming_mapper_object,
@@ -541,16 +543,25 @@ def mock_is_missing_rn_validator(mocker):
     )
     mocker.patch.object(
         IsMissingReleaseNotes,
-        "is_missing_rn",
-        side_effect=lambda c: not bool(c.pack.release_note.file_content),  # type: ignore
+        "get_packs_with_added_rns",
+        side_effect=lambda objs: [
+            p.object_id
+            for p in objs
+            if isinstance(p, Pack) and p.release_note.file_content
+        ],  # type: ignore
     )
+
+
+@pytest.fixture
+def mock_graph(mocker):
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.base_validator.update_content_graph"
+    )
+    mocker.patch.object(ContentGraphInterface, "__init__", return_value=None)
     mocker.patch.object(
-        IsMissingReleaseNotes,
-        "get_pack_ids_to_added_rn",
-        side_effect=lambda packs: {
-            p.object_id: p.release_note.file_content for p in packs
-        },  # type: ignore
+        ContentGraphInterface, "__enter__", return_value=ContentGraphInterface
     )
+    mocker.patch.object(ContentGraphInterface, "__exit__", return_value=None)
 
 
 def test_IsMissingReleaseNotes(mock_is_missing_rn_validator):
@@ -596,6 +607,7 @@ def test_IsMissingReleaseNotes(mock_is_missing_rn_validator):
 
 def test_IsMissingReleaseNotes_missing_release_note_for_api_module_dependent(
     mocker,
+    mock_graph,
     mock_is_missing_rn_validator,
 ):
     """
@@ -635,13 +647,14 @@ def test_IsMissingReleaseNotes_missing_release_note_for_api_module_dependent(
     integ3.pack = pack3
 
     api_modules_pack = create_pack_object(
+        name=API_MODULES_PACK,
         paths=["name"],
         values=[API_MODULES_PACK],
     )
     api_module = create_script_object()
     api_module.pack = api_modules_pack
     mocker.patch.object(
-        IsMissingReleaseNotes,
+        ContentGraphInterface,
         "get_api_module_imports",
         return_value=[integ1, integ2, integ3],
     )
@@ -660,9 +673,8 @@ def test_IsMissingReleaseNotes_missing_release_note_for_api_module_dependent(
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 2
     assert results[0].content_object == pack2
-    assert api_modules_pack.name not in results[0].message
     assert results[1].content_object == pack3
-    assert api_modules_pack.name in results[1].message
+    assert all(API_MODULES_PACK in result.message for result in results)
 
 
 def test_IsValidRnHeadersFormatValidator_obtain_invalid_content_items():

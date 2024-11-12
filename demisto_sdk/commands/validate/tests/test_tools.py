@@ -341,7 +341,7 @@ def create_pack_object(
     json_content = load_json("pack_metadata.json")
     update_keys(json_content, paths, values)
     remove_fields_from_dict(json_content, fields_to_delete)
-    pack = REPO.create_pack()
+    pack = REPO.create_pack(name)
     pack_path = Path(pack.path)
 
     if release_note_content is not None:

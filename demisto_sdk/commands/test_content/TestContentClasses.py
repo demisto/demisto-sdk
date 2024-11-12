@@ -3276,7 +3276,7 @@ class ContentStatusUpdater:
             successful_tests (List[str]): List of successful playbooks to be added.
             failed_tests (List[str]): List of failed playbooks to be added.
         """
-        logging.info(
+        logging.warning(
             f"Starting update_content_status with {len(failed_tests)} failed tests and "
             f"{len(successful_tests)} successful tests."
         )
@@ -3300,14 +3300,14 @@ class ContentStatusUpdater:
             try:
                 with open(self.content_status_path, "r") as content_file:
                     self.content_status = json.load(content_file)
-                    logging.info(f"Loaded content status: {self.content_status}")
+                    logging.warning(f"Loaded content status: {self.content_status}")
             except json.JSONDecodeError as e:
                 logging.error(
                     f"JSON decode error while loading content_status.json: {e}"
                 )
                 self.content_status = {}
         else:
-            logging.info(
+            logging.warning(
                 f"Initializing empty content status at {self.content_status_path}"
             )
             self.content_status = {}
@@ -3318,7 +3318,7 @@ class ContentStatusUpdater:
         """
         for key in ["failed_playbooks", "successful_playbooks"]:
             if key not in self.content_status:
-                logging.info(
+                logging.warning(
                     f"'{key}' key not in content_status. Initializing to empty list."
                 )
                 self.content_status[key] = []
@@ -3334,10 +3334,10 @@ class ContentStatusUpdater:
         current_playbooks = self.content_status.get(key, [])
         new_playbooks = [test for test in tests if test not in current_playbooks]
         if new_playbooks:
-            logging.info(f"Adding {len(new_playbooks)} new {key}: {new_playbooks}")
+            logging.warning(f"Adding {len(new_playbooks)} new {key}: {new_playbooks}")
             current_playbooks.extend(new_playbooks)
         else:
-            logging.info(f"No new {key} to add.")
+            logging.warning(f"No new {key} to add.")
 
     def _save_content_status(self) -> None:
         """
@@ -3346,6 +3346,6 @@ class ContentStatusUpdater:
         os.makedirs(os.path.dirname(self.content_status_path), exist_ok=True)
         with open(self.content_status_path, "w") as content_file:
             json.dump(self.content_status, content_file, indent=4)
-            logging.info(
+            logging.warning(
                 f"Saved updated content_status.json to {self.content_status_path}"
             )

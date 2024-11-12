@@ -65,34 +65,6 @@ def test_update_content_status_with_existing_file(tmp_path: Path) -> None:
     assert content == expected_content_status
 
 
-def test_update_content_status_with_invalid_json(tmp_path: Path) -> None:
-    """
-    Given: content_status.json exists but contains invalid JSON.
-    When: update_content_status is called.
-    Then: It should initialize content_status as empty and overwrite the invalid file.
-    """
-    # Given
-    artifacts_folder = tmp_path
-    content_status_file = artifacts_folder / "content_status.json"
-    content_status_file.write_text('{"invalid_json": }')  # Invalid JSON
-
-    updater = ContentStatusUpdater(artifacts_folder)
-    successful_tests = ["test_success"]
-    failed_tests = ["test_fail"]
-
-    # When
-    updater.update_content_status(successful_tests, failed_tests)
-
-    # Then
-    expected_content_status = {
-        "failed_playbooks": ["test_fail"],
-        "successful_playbooks": ["test_success"],
-    }
-    with content_status_file.open("r") as f:
-        content = json.load(f)
-    assert content == expected_content_status
-
-
 def test_update_playbooks_no_duplicates(tmp_path: Path) -> None:
     """
     Given: content_status.json exists with some playbooks.

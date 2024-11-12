@@ -96,3 +96,10 @@
   entry: prevent-mypy-global-ignore
   language: python
   files: .*Packs/.*/(?:Integrations|Scripts)/.*.py$
+
+- id: generate-docs
+  name: Generate Documentation for Changed Commands
+  description: Generates documentation for commands when a _setup.py file is modified.
+  entry: python pre_commit_generate_docs.py
+  language: python
+  files: ^.*_setup\.py$

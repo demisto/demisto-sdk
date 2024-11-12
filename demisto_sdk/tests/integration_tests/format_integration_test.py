@@ -260,7 +260,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
     mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
+        "demisto_sdk.commands.format.update_generic_yml.ContentPaths.CONF_PATH", conf_json_path
     )
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
@@ -313,7 +313,7 @@ def test_integration_format_configuring_conf_json_positive(
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
     mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
+        "demisto_sdk.commands.format.update_generic_yml.ContentPaths.CONF_PATH", conf_json_path
     )
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
@@ -390,7 +390,7 @@ def test_integration_format_configuring_conf_json_negative(
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
     mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
+        "demisto_sdk.commands.format.update_generic_yml.ContentPaths.CONF_PATH", conf_json_path
     )
 
     with open(conf_json_path, "w") as file:

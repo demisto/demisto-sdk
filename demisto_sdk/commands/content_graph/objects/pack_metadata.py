@@ -9,9 +9,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content_constant_paths import (
-    LANDING_PAGE_SECTIONS_PATH,
-)
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
@@ -459,10 +457,10 @@ class PackMetadata(BaseModel):
         tags: set = set()
 
         try:
-            landing_page_sections = get_json(LANDING_PAGE_SECTIONS_PATH)
+            landing_page_sections = get_json(ContentPaths.LANDING_PAGE_SECTIONS_PATH)
         except FileNotFoundError as e:
             logger.warning(
-                f"Couldn't find the landing_page file in path {LANDING_PAGE_SECTIONS_PATH}. Skipping collecting tags by landing page sections.\n{e}"
+                f"Couldn't find the landing_page file in path {ContentPaths.LANDING_PAGE_SECTIONS_PATH}. Skipping collecting tags by landing page sections.\n{e}"
             )
             return tags
 

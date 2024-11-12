@@ -1,4 +1,0 @@
-changes:
-- description: Moved CJ102 to the new validate format. The validation's error number is now BA103 and it ensure that the tests section is either a non-empty list or "No tests".
-  type: breaking
-pr_number: 4638

@@ -19,7 +19,7 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN103_is_release_not
 from demisto_sdk.commands.validate.validators.RN_validators.RN105_multiple_rns_added import (
     MultipleRNsAddedValidator,
 )
-from demisto_sdk.commands.validate.validators.RN_validators.RN106_no_missing_rns import (
+from demisto_sdk.commands.validate.validators.RN_validators.RN106_missing_release_notes_for_pack import (
     IsMissingReleaseNotes,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN108_is_rn_added_to_new_pack import (

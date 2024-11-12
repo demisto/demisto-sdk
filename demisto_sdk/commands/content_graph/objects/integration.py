@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType, replace_incorrect_marketplace
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
     IntegrationScript,
@@ -94,6 +94,8 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
             "outputs": [output.dict(exclude_none=True) for output in self.outputs],
         }
         remove_nulls_from_dictionary(command)
+        command = replace_incorrect_marketplace(command, self.marketplace)
+
         return command
 
 

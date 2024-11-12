@@ -514,3 +514,20 @@ CONTENT_PRIVATE_ITEMS: dict = {
         "MITRE Layout",
     ],
 }
+
+
+
+def replace_incorrect_marketplace(data, marketplace=MarketplaceVersions.XSOAR):
+    """#TODO add docstring
+    """
+    if marketplace in {MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}:
+        if isinstance(data, dict):
+            return {k: replace_incorrect_marketplace(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [replace_incorrect_marketplace(v) for v in data]
+        elif isinstance(data, str):
+            return data.replace("Cortex XSOAR", "Cortex {}".format(marketplace.value))
+        else:
+            return data
+    return data
+

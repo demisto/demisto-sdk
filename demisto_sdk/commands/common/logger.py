@@ -31,6 +31,8 @@ DEFAULT_CONSOLE_THRESHOLD = "INFO"
 DEFAULT_FILE_SIZE = 1 * (1024**2)  # 1 MB
 DEFAULT_FILE_COUNT = 10
 
+LOGURU_DIAGNOSE = "LOGURU_DIAGNOSE"
+
 logger = loguru.logger  # all SDK modules should import from this file, not from loguru
 logger.disable(None)  # enabled at setup_logging()
 
@@ -118,7 +120,7 @@ def logging_setup(
 
     logger.remove()  # Removes all pre-existing handlers
 
-    diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", "False"))
+    diagnose = string_to_bool(os.getenv(LOGURU_DIAGNOSE, "False"))
     colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, "False"))
 
     if propagate:
@@ -136,7 +138,7 @@ def logging_setup(
                 threshold=file_threshold,
                 diagnose=diagnose,
             )
-    os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
+        os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
     logger.debug(
         f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
     )

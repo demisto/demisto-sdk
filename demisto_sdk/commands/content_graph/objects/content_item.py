@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
+    replace_incorrect_marketplace,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -349,6 +350,8 @@ class ContentItem(BaseContent):
             logger.warning(f"Could not find file {self.path}, skipping dump")
             return
         dir.mkdir(exist_ok=True, parents=True)
+        # Replace incorrect marketplace references
+        data = replace_incorrect_marketplace(data, marketplace)
         try:
             write_dict(
                 dir / self.normalize_name,

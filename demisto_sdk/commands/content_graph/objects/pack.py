@@ -280,6 +280,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata.update(
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
+        # Replace incorrect marketplace references
         metadata =replace_incorrect_marketplace(metadata, marketplace)
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
@@ -297,6 +298,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         with open(path, "r+") as f:
             try:
                 text = f.read()
+                # Replace incorrect marketplace references
                 text = replace_incorrect_marketplace(text, marketplace)
 
                 if (

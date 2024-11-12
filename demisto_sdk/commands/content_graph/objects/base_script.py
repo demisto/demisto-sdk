@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
+    replace_incorrect_marketplace,
 )
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
@@ -93,6 +94,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
                         "path": self.path.with_name(f"{script_name}.yml"),
                     }
                 )
+            data = replace_incorrect_marketplace(data, marketplace)
             try:
                 write_dict(dir / obj.normalize_name, data=data, handler=obj.handler)
 

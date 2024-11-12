@@ -516,18 +516,22 @@ CONTENT_PRIVATE_ITEMS: dict = {
 }
 
 
+def replace_incorrect_marketplace(data: Any, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> Any:
+    """
+    Recursively replaces "Cortex XSIAM" with "Cortex" in the given data if the marketplace is MarketplaceV2 or XPANSE.
 
-def replace_incorrect_marketplace(data, marketplace=MarketplaceVersions.XSOAR):
-    """#TODO add docstring
+    Args:
+        data (Any): The data to process, which can be a dictionary, list, or string.
+        marketplace (MarketplaceVersions): The marketplace version to check against.
+
+    Returns:
+        Any: The processed data with replacements made if applicable.
     """
     if marketplace in {MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}:
         if isinstance(data, dict):
-            return {k: replace_incorrect_marketplace(v) for k, v in data.items()}
+            return {k: replace_incorrect_marketplace(v, marketplace) for k, v in data.items()}
         elif isinstance(data, list):
-            return [replace_incorrect_marketplace(v) for v in data]
+            return [replace_incorrect_marketplace(v, marketplace) for v in data]
         elif isinstance(data, str):
-            return data.replace("Cortex XSOAR", "Cortex {}".format(marketplace.value))
-        else:
-            return data
+            return data.replace("Cortex XSOAR", "Cortex")
     return data
-

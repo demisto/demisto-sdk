@@ -29,7 +29,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
     description = "Validate that there are no missing release notes entries."
     rationale = "Ensure that whenever there is an actual pack update, it is visible to customers."
     error_message = (
-        'No release note entry was found for the {file_type.value.lower()} "{entity_name}" in the '
+        'No release note entry was found for the {file_type} "{entity_name}" in the '
         "{pack_name} pack. Please rerun the update-release-notes command without -u to "
         "generate an updated template. If you are trying to exclude an item from the release "
         "notes, please refer to the documentation found here - "
@@ -59,7 +59,9 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
             c.path: ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    entity_name=c.object_id, pack_name=c.pack_id
+                    file_type=c.content_type.value.lower(),
+                    entity_name=c.object_id,
+                    pack_name=c.pack_id,
                 ),
                 content_object=c,
             )
@@ -116,6 +118,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                     results[content_item.path] = ValidationResult(
                         validator=self,
                         message=self.error_message.format(
+                            file_type=content_item.content_type.value.lower(),
                             entity_name=content_item.object_id,
                             pack_name=content_item.pack_id,
                         ),

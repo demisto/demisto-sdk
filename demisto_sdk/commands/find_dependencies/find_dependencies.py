@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACKS_IN_DEPENDENCY_CALC,
     PACKS_DIR,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -39,7 +39,7 @@ COMMON_TYPES_PACK = "CommonTypes"
 CORE_ALERT_FIELDS_PACK = "CoreAlertFields"
 
 # full path to Packs folder in content repo
-PACKS_FULL_PATH = os.path.join(CONTENT_PATH, PACKS_DIR)  # type: ignore
+PACKS_FULL_PATH = os.path.join(ContentPaths.CONTENT_PATH, PACKS_DIR)  # type: ignore
 
 
 def parse_for_pack_metadata(

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import API_MODULES_PACK, FileType
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -37,7 +37,7 @@ class ConfJsonValidator(BaseValidator):
         self.conf_data = self.load_conf_file()
 
     def load_conf_file(self):
-        with open(CONF_PATH) as data_file:
+        with open(ContentPaths.CONF_PATH) as data_file:
             return json.load(data_file)
 
     def is_valid_conf_json(self):
@@ -69,7 +69,7 @@ class ConfJsonValidator(BaseValidator):
             error_message, error_code = Errors.description_missing_from_conf_json(
                 problematic_instances
             )
-            if self.handle_error(error_message, error_code, file_path=CONF_PATH):
+            if self.handle_error(error_message, error_code, file_path=ContentPaths.CONF_PATH):
                 self._is_valid = False
 
         return self._is_valid
@@ -91,7 +91,7 @@ class ConfJsonValidator(BaseValidator):
                 return True
 
         error_message, error_code = Errors.test_not_in_conf_json(file_id)
-        if self.handle_error(error_message, error_code, file_path=CONF_PATH):
+        if self.handle_error(error_message, error_code, file_path=ContentPaths.CONF_PATH):
             return False
         return True
 

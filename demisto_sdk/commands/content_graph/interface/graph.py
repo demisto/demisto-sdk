@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -29,7 +29,7 @@ class DeprecatedItemUsage(NamedTuple):
 
 
 class ContentGraphInterface(ABC):
-    repo_path = CONTENT_PATH  # type: ignore
+    repo_path = ContentPaths.CONTENT_PATH  # type: ignore
     METADATA_FILE_NAME = "metadata.json"
     DEPENDS_ON_FILE_NAME = "depends_on.json"
     _depends_on = None

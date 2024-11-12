@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 from pydantic import DirectoryPath, Field, fields, validator
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
@@ -60,9 +60,9 @@ class ContentItem(BaseContent):
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
-        if not CONTENT_PATH.name:
-            return CONTENT_PATH / v
-        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
+        if not ContentPaths.CONTENT_PATH.name:
+            return ContentPaths.CONTENT_PATH / v
+        return ContentPaths.CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
 
     @staticmethod
     @abstractmethod
@@ -126,7 +126,7 @@ class ContentItem(BaseContent):
         if not pack:
             if pack_name := get_pack_name(path):
                 pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
+                    ContentPaths.CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
                 )  # type: ignore[assignment]
         return pack  # type: ignore[return-value]
 
@@ -134,13 +134,13 @@ class ContentItem(BaseContent):
     def ignored_errors(self) -> List[str]:
         if ignored_errors := self.get_ignored_errors(self.path.name):
             return ignored_errors
-        file_path = get_relative_path(self.path, CONTENT_PATH)
+        file_path = get_relative_path(self.path, ContentPaths.CONTENT_PATH)
         return self.get_ignored_errors(file_path)
 
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
             return ignored_errors
-        file_path = get_relative_path(file_path, CONTENT_PATH)
+        file_path = get_relative_path(file_path, ContentPaths.CONTENT_PATH)
         return self.get_ignored_errors(file_path)
 
     def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:

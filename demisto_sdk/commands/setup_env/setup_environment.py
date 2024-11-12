@@ -20,12 +20,7 @@ from demisto_sdk.commands.common.clients import (
     get_client_from_server_type,
 )
 from demisto_sdk.commands.common.constants import DEF_DOCKER
-from demisto_sdk.commands.common.content_constant_paths import (
-    COMMON_SERVER_PYTHON_PATH,
-    CONTENT_PATH,
-    PYTHONPATH,
-    PYTHONPATH_STR,
-)
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.files import FileReadError, TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
@@ -43,7 +38,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 BACKUP_FILES_SUFFIX = ".demisto_sdk_backup"
-DOTENV_PATH = CONTENT_PATH / ".env"
+DOTENV_PATH = ContentPaths.CONTENT_PATH / ".env"
 
 
 class IDEType(Enum):
@@ -69,14 +64,14 @@ def configure_vscode_settings(
         settings["python.defaultInterpreterPath"] = str(interpreter_path)
     if integration_script:
         if devcontainer:
-            testing_path = f"workspaces/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
+            testing_path = f"workspaces/content/{integration_script.path.parent.relative_to(ContentPaths.CONTENT_PATH)}"
         else:
             testing_path = str(integration_script.path.parent)
         settings["python.testing.cwd"] = testing_path
     if devcontainer:
         python_path = get_docker_python_path("/workspaces/content")
     else:
-        python_path = [str(path) for path in PYTHONPATH if str(path)]
+        python_path = [str(path) for path in ContentPaths.PYTHONPATH if str(path)]
 
     settings["python.analysis.extraPaths"] = [
         path for path in python_path if "site-packages" not in path
@@ -87,11 +82,11 @@ def configure_vscode_settings(
 
 def get_docker_python_path(docker_prefix: str) -> List[str]:
     docker_python_path = []
-    for path in PYTHONPATH:
+    for path in ContentPaths.PYTHONPATH:
         with contextlib.suppress(ValueError):
             # we can't add paths which is not relative to CONTENT_PATH, and `is_relative_to is not working on python3.8`
             docker_python_path.append(
-                f"{docker_prefix}/{path.relative_to(CONTENT_PATH.absolute())}"
+                f"{docker_prefix}/{path.relative_to(ContentPaths.CONTENT_PATH.absolute())}"
             )
 
     if (
@@ -100,22 +95,22 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
     ):
         try:
             common_server_python_contnet = TextFile.read_from_github_api(
-                str(COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py"),
+                str(ContentPaths.COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py"),
                 verify_ssl=False,
             )
         except (FileReadError, ConnectionError, Timeout):
             logger.error(
-                f"Could not retrieve common server python content from content github from path {COMMON_SERVER_PYTHON_PATH}/CommonServerUserPython.py"
+                f"Could not retrieve common server python content from content github from path {ContentPaths.COMMON_SERVER_PYTHON_PATH}/CommonServerUserPython.py"
             )
             raise RuntimeError(
                 "Could not set debug-in-docker on VSCode. Either CONTENT_PATH is not set properly or CommonServerPython could not be read"
             )
 
-        Path(COMMON_SERVER_PYTHON_PATH).mkdir(parents=True, exist_ok=True)
+        Path(ContentPaths.COMMON_SERVER_PYTHON_PATH).mkdir(parents=True, exist_ok=True)
 
         TextFile.write(
             common_server_python_contnet,
-            output_path=COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py",
+            output_path=ContentPaths.COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py",
         )
 
         docker_python_path.append(
@@ -243,7 +238,7 @@ def update_pycharm_config_xml_data(
 
     for python_path in python_discovery_paths:
         try:
-            python_path_relative = python_path.relative_to(CONTENT_PATH)
+            python_path_relative = python_path.relative_to(ContentPaths.CONTENT_PATH)
 
         except ValueError:  # Skip paths that are not within the project root
             logger.debug(
@@ -275,23 +270,23 @@ def configure_module_discovery(ide_type: IDEType):
         ide_type (IDEType): The IDE type to configure
     """
     if ide_type == IDEType.VSCODE:
-        ide_folder = CONTENT_PATH / ".vscode"
+        ide_folder = ContentPaths.CONTENT_PATH / ".vscode"
         ide_folder.mkdir(exist_ok=True, parents=True)
         configure_vscode_settings(ide_folder=ide_folder)
-        env_file = CONTENT_PATH / ".env"
+        env_file = ContentPaths.CONTENT_PATH / ".env"
         env_vars = dotenv.dotenv_values(env_file)
-        env_vars["PYTHONPATH"] = PYTHONPATH_STR
+        env_vars["PYTHONPATH"] = ContentPaths.PYTHONPATH_STR
         update_dotenv(DOTENV_PATH, env_vars)
 
     if ide_type == IDEType.PYCHARM:
-        python_discovery_paths = PYTHONPATH.copy()
+        python_discovery_paths = ContentPaths.PYTHONPATH.copy()
 
         # Remove 'CONTENT_PATH' from the python discovery paths as it is already configured by default,
         # and all the configured paths are relative to the project root (which is 'CONTENT_PATH').
-        if CONTENT_PATH in python_discovery_paths:
-            python_discovery_paths.remove(CONTENT_PATH)
+        if ContentPaths.CONTENT_PATH in python_discovery_paths:
+            python_discovery_paths.remove(ContentPaths.CONTENT_PATH)
 
-        config_file_path = CONTENT_PATH / ".idea" / f"{CONTENT_PATH.name.lower()}.iml"
+        config_file_path = ContentPaths.CONTENT_PATH / ".idea" / f"{ContentPaths.CONTENT_PATH.name.lower()}.iml"
         update_pycharm_config_file(
             file_path=config_file_path,
             python_discovery_paths=python_discovery_paths,
@@ -317,12 +312,12 @@ def configure_vscode_tasks(
                         "image": integration_script.docker_image,
                         "volumes": [
                             {
-                                "localPath": str(CONTENT_PATH),
-                                "containerPath": str(CONTENT_PATH),
+                                "localPath": str(ContentPaths.CONTENT_PATH),
+                                "containerPath": str(ContentPaths.CONTENT_PATH),
                             }
                         ],
                         "env": {
-                            "PYTHONPATH": PYTHONPATH_STR,
+                            "PYTHONPATH": ContentPaths.PYTHONPATH_STR,
                         },
                     },
                 },
@@ -346,12 +341,12 @@ def configure_vscode_tasks(
                         "image": test_docker_image,
                         "volumes": [
                             {
-                                "localPath": str(CONTENT_PATH),
-                                "containerPath": str(CONTENT_PATH),
+                                "localPath": str(ContentPaths.CONTENT_PATH),
+                                "containerPath": str(ContentPaths.CONTENT_PATH),
                             }
                         ],
                         "customOptions": f"-w {integration_script.path.parent}",
-                        "env": {"PYTHONPATH": PYTHONPATH_STR},
+                        "env": {"PYTHONPATH": ContentPaths.PYTHONPATH_STR},
                     },
                 },
             ],
@@ -374,7 +369,7 @@ def configure_vscode_launch(
                         "type": "PowerShell",
                         "request": "launch",
                         "script": (
-                            f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
+                            f"/workspaces/content/{integration_script.path.relative_to(ContentPaths.CONTENT_PATH)}"
                             if devcontainer
                             else str(integration_script.path.with_suffix(".ps1"))
                         ),
@@ -394,8 +389,8 @@ def configure_vscode_launch(
                         "python": {
                             "pathMappings": [
                                 {
-                                    "localRoot": str(CONTENT_PATH),
-                                    "remoteRoot": str(CONTENT_PATH),
+                                    "localRoot": str(ContentPaths.CONTENT_PATH),
+                                    "remoteRoot": str(ContentPaths.CONTENT_PATH),
                                 }
                             ],
                             "projectType": "general",
@@ -410,8 +405,8 @@ def configure_vscode_launch(
                         "python": {
                             "pathMappings": [
                                 {
-                                    "localRoot": str(CONTENT_PATH),
-                                    "remoteRoot": str(CONTENT_PATH),
+                                    "localRoot": str(ContentPaths.CONTENT_PATH),
+                                    "remoteRoot": str(ContentPaths.CONTENT_PATH),
                                 },
                             ],
                             "projectType": "general",
@@ -423,14 +418,14 @@ def configure_vscode_launch(
                         "type": "debugpy",
                         "request": "launch",
                         "program": (
-                            f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
+                            f"/workspaces/content/{integration_script.path.relative_to(ContentPaths.CONTENT_PATH)}"
                             if devcontainer
                             else str(integration_script.path.with_suffix(".py"))
                         ),
                         "console": "integratedTerminal",
                         "cwd": "${workspaceFolder}",
                         "justMyCode": False,
-                        "env": {"PYTHONPATH": PYTHONPATH_STR},
+                        "env": {"PYTHONPATH": ContentPaths.PYTHONPATH_STR},
                     },
                     {
                         "name": "Python: Debug Tests",
@@ -440,7 +435,7 @@ def configure_vscode_launch(
                         "purpose": ["debug-test"],
                         "console": "integratedTerminal",
                         "justMyCode": False,
-                        "env": {"PYTHONPATH": PYTHONPATH_STR},
+                        "env": {"PYTHONPATH": ContentPaths.PYTHONPATH_STR},
                     },
                 ],
             }
@@ -694,7 +689,7 @@ def upload_and_create_instance(
 
 
 def add_demistomock_and_commonserveruser(integration_script: IntegrationScript):
-    source_demisto_mock_path = CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py"
+    source_demisto_mock_path = ContentPaths.CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py"
     target_demisto_mock_path = integration_script.path.parent / "demistomock.py"
     if source_demisto_mock_path.exists():
         shutil.copy(
@@ -738,7 +733,7 @@ def configure_integration(
         RuntimeError: If using auto-detection for IDE and it failed,
             or if the configuration failed (for instance, Docker is turned off)
     """
-    base_path = CONTENT_PATH
+    base_path = ContentPaths.CONTENT_PATH
 
     integration_script = BaseContent.from_path(Path(file_path))
     assert isinstance(
@@ -746,7 +741,7 @@ def configure_integration(
     ), "Expected Integration Script"
     add_demistomock_and_commonserveruser(integration_script)
     docker_image: Union[str, DockerImage] = integration_script.docker_image
-    interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
+    interpreter_path = ContentPaths.CONTENT_PATH / ".venv" / "bin" / "python"
     configure_params(integration_script, secret_id, instance_name, test_module)
     if not docker_image:
         docker_image = DEF_DOCKER
@@ -796,13 +791,13 @@ def clean_repo():
     """
     Clean the repository from temporary files like 'CommonServerPython' and API modules created by the 'lint' command.
     """
-    for path in PYTHONPATH:
-        for temp_file in CONTENT_PATH.rglob(f"{path.name}.py"):
+    for path in ContentPaths.PYTHONPATH:
+        for temp_file in ContentPaths.CONTENT_PATH.rglob(f"{path.name}.py"):
             if temp_file.parent != path and ".venv" not in temp_file.parts:
                 temp_file.unlink(missing_ok=True)
-    for path in CONTENT_PATH.rglob("*.pyc"):
+    for path in ContentPaths.CONTENT_PATH.rglob("*.pyc"):
         path.unlink(missing_ok=True)
-    for path in CONTENT_PATH.rglob("test_data/__init__.py"):
+    for path in ContentPaths.CONTENT_PATH.rglob("test_data/__init__.py"):
         path.unlink(missing_ok=True)
 
 
@@ -837,9 +832,9 @@ def setup_env(
 
     configure_module_discovery(ide_type=ide_type)
     if not file_paths:
-        (CONTENT_PATH / "CommonServerUserPython.py").touch()
+        (ContentPaths.CONTENT_PATH / "CommonServerUserPython.py").touch()
         if ide_type == IDEType.VSCODE:
-            ide_folder = CONTENT_PATH / ".vscode"
+            ide_folder = ContentPaths.CONTENT_PATH / ".vscode"
             ide_folder.mkdir(exist_ok=True)
             configure_vscode_settings(ide_folder=ide_folder)
     for file_path in file_paths:

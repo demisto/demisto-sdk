@@ -8,11 +8,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_COMMANDS_NAMES,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content_constant_paths import (
-    DEFAULT_ID_SET_PATH,
-    MP_V2_ID_SET_PATH,
-    XPANSE_ID_SET_PATH,
-)
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import open_id_set_file
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
@@ -109,11 +105,11 @@ class IDSetCreator:
     def save_id_set(self):
         if not self.output:
             if self.marketplace == MarketplaceVersions.MarketplaceV2:
-                self.output = MP_V2_ID_SET_PATH
+                self.output = ContentPaths.MP_V2_ID_SET_PATH
             elif self.marketplace == MarketplaceVersions.XPANSE:
-                self.output = XPANSE_ID_SET_PATH
+                self.output = ContentPaths.XPANSE_ID_SET_PATH
             else:
-                self.output = DEFAULT_ID_SET_PATH
+                self.output = ContentPaths.DEFAULT_ID_SET_PATH
         if self.output:
             if not exists(self.output):
                 intermediate_dirs = os.path.dirname(os.path.abspath(self.output))

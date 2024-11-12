@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.constants import (
     ContentItems,
     FileType,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -168,7 +168,7 @@ class ContributionConverter:
         self.create_new = create_new
         self.contribution_items_version: Dict[str, Dict[str, str]] = {}
         self.contribution_items_version_note = ""
-        base_dir = base_dir or CONTENT_PATH  # type: ignore
+        base_dir = base_dir or ContentPaths.CONTENT_PATH  # type: ignore
         self.packs_dir_path: str = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)

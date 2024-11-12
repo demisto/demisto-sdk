@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.tools import is_external_repository
 
 FOUND_FILES_AND_ERRORS: list = []
@@ -2512,8 +2512,8 @@ class Errors:
         file_path, missing_test_playbook_configurations, no_tests_key
     ):
         return (
-            f"The following integration is not registered in {CONF_PATH} file.\n"
-            f"Please add:\n{missing_test_playbook_configurations}\nto {CONF_PATH} "
+            f"The following integration is not registered in {ContentPaths.CONF_PATH} file.\n"
+            f"Please add:\n{missing_test_playbook_configurations}\nto {ContentPaths.CONF_PATH} "
             f"path under 'tests' key.\n"
             f"If you don't want to add a test playbook for this integration, please add: \n{no_tests_key}to the "
             f"file {file_path} or run 'demisto-sdk format -i {file_path}'"
@@ -2539,10 +2539,10 @@ class Errors:
         missing_integration_configurations,
     ):
         return (
-            f"The TestPlaybook {content_item_id} is not registered in {CONF_PATH} file.\n "
+            f"The TestPlaybook {content_item_id} is not registered in {ContentPaths.CONF_PATH} file.\n "
             f"Please add\n{missing_test_playbook_configurations}\n "
             f"or if this test playbook is for an integration\n{missing_integration_configurations}\n "
-            f"to {CONF_PATH} path under 'tests' key."
+            f"to {ContentPaths.CONF_PATH} path under 'tests' key."
         )
 
     @staticmethod

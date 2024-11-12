@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule,
     SingleModelingRule,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
@@ -142,8 +142,8 @@ def get_relative_path_to_content(path: Path) -> str:
     Returns:
         Path: The relative path to the content directory.
     """
-    if path.is_absolute() and path.as_posix().startswith(CONTENT_PATH.as_posix()):
-        return path.as_posix().replace(f"{CONTENT_PATH.as_posix()}{os.path.sep}", "")
+    if path.is_absolute() and path.as_posix().startswith(ContentPaths.CONTENT_PATH.as_posix()):
+        return path.as_posix().replace(f"{ContentPaths.CONTENT_PATH.as_posix()}{os.path.sep}", "")
     return path.as_posix()
 
 

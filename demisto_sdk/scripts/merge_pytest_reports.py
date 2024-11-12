@@ -6,10 +6,10 @@ from pathlib import Path
 import coverage
 from junitparser import JUnitXml
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.logger import logger, logging_setup
 
-PRECOMMIT_FOLDER = CONTENT_PATH / ".pre-commit"
+PRECOMMIT_FOLDER = ContentPaths.CONTENT_PATH / ".pre-commit"
 
 
 def fix_coverage_report_path(coverage_file: Path) -> bool:
@@ -41,7 +41,7 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
                         continue
                     file = Path(file).relative_to("/src")
                     if (
-                        not (CONTENT_PATH / file).exists()
+                        not (ContentPaths.CONTENT_PATH / file).exists()
                         or file.parent.name
                         != file.stem  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
                     ):
@@ -52,7 +52,7 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
                     else:
                         cursor.execute(
                             "UPDATE file SET path = ? WHERE id = ?",
-                            (str(CONTENT_PATH / file), id_),
+                            (str(ContentPaths.CONTENT_PATH / file), id_),
                         )
                 sql_connection.commit()
                 logger.debug("Done editing coverage report")
@@ -66,7 +66,7 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
 
 
 def merge_coverage_report():
-    coverage_path = CONTENT_PATH / ".coverage"
+    coverage_path = ContentPaths.CONTENT_PATH / ".coverage"
     coverage_path.unlink(missing_ok=True)
     cov = coverage.Coverage(data_file=coverage_path)
     # this is the path where the pre-commit created the coverage files
@@ -93,7 +93,7 @@ def merge_junit_reports():
         report = reports[0]
         for rep in reports[1:]:
             report += rep
-        report.write(str(CONTENT_PATH / ".report_pytest.xml"))
+        report.write(str(ContentPaths.CONTENT_PATH / ".report_pytest.xml"))
         for file in report_files:
             Path(file).unlink(missing_ok=True)
     logger.info("Junit report was successfully merged.")

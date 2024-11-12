@@ -37,10 +37,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content_constant_paths import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
-    CONTENT_PATH,
-)
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
@@ -212,7 +209,7 @@ def main(ctx, config, version, release_notes, **kwargs):
     import dotenv
 
     dotenv.load_dotenv(
-        CONTENT_PATH / ".env", override=True
+        ContentPaths.CONTENT_PATH / ".env", override=True
     )  # load .env file from the cwd
 
     if platform.system() == "Windows":
@@ -2712,7 +2709,7 @@ def find_dependencies(ctx, **kwargs):
     use_pack_metadata = kwargs.get("use_pack_metadata", False)
     all_packs_dependencies = kwargs.get("all_packs_dependencies", False)
     get_dependent_on = kwargs.get("get_dependent_on", False)
-    output_path = kwargs.get("output_path", ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
+    output_path = kwargs.get("output_path", ContentPaths.ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
     dependency = kwargs.get("dependency", "")
     try:
         PackDependencies.find_dependencies_manager(
@@ -3644,12 +3641,12 @@ def setup_env(
 
     if ide == "auto-detect":
         # Order decides which IDEType will be selected for configuration if multiple IDEs are detected
-        if (CONTENT_PATH / ".vscode").exists():
+        if (ContentPaths.CONTENT_PATH / ".vscode").exists():
             logger.info(
                 "Visual Studio Code IDEType has been detected and will be configured."
             )
             ide_type = IDEType.VSCODE
-        elif (CONTENT_PATH / ".idea").exists():
+        elif (ContentPaths.CONTENT_PATH / ".idea").exists():
             logger.info(
                 "PyCharm / IDEA IDEType has been detected and will be configured."
             )
@@ -3912,7 +3909,7 @@ export_app = typer.Typer(
 def dump_api(
     ctx: typer.Context,
     output_path: Path = typer.Option(
-        CONTENT_PATH,
+        ContentPaths.CONTENT_PATH,
         "-o",
         "--output",
         help="The output directory or JSON file to save the demisto-sdk api.",

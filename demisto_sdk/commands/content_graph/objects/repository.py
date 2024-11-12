@@ -9,7 +9,7 @@ import tqdm
 from pydantic import BaseModel, DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -19,7 +19,7 @@ USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
 @lru_cache
-def from_path(path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = None):
+def from_path(path: Path = ContentPaths.CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = None):
     """
     Returns a ContentDTO object with all the packs of the content repository.
 
@@ -40,12 +40,12 @@ def from_path(path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = 
 
 
 class ContentDTO(BaseModel):
-    path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
+    path: DirectoryPath = Path(ContentPaths.CONTENT_PATH)  # type: ignore
     packs: List[Pack]
 
     @staticmethod
     def from_path(
-        path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str, ...]] = None
+        path: Path = ContentPaths.CONTENT_PATH, packs_to_parse: Optional[Tuple[str, ...]] = None
     ):
         """
         Returns a ContentDTO object with all the packs of the content repository.

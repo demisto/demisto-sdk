@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH,
     TYPE_PYTHON,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.docker_helper import (
     DockerBase,
@@ -59,7 +59,7 @@ def get_mypy_requirements():
     Raises:
         RuntimeError: If the requirements cannot be read from GitHub.
     """
-    mypy_requirements_path = Path(f"{CONTENT_PATH}/mypy-requirements.txt")
+    mypy_requirements_path = Path(f"{ContentPaths.CONTENT_PATH}/mypy-requirements.txt")
     if mypy_requirements_path.exists():
         requirements = get_pip_requirements_from_file(mypy_requirements_path)
     else:
@@ -88,7 +88,7 @@ def get_docker_python_path(drop_site_packages: bool = False) -> str:
     This means CommonServerPython's path is /src/Packs/Base/...CSP.py
     Returns: A PYTHONPATH formatted string
     """
-    path_to_replace = str(Path(CONTENT_PATH).absolute())
+    path_to_replace = str(Path(ContentPaths.CONTENT_PATH).absolute())
     docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
     if drop_site_packages:
         docker_path = [p for p in docker_path if "site-packages" not in p]
@@ -361,11 +361,11 @@ class DockerHook(Hook):
             all_objects = {obj for _, obj in filtered_files_with_objects if obj}
             for obj in all_objects:
                 for file in copy_files:
-                    source: Path = CONTENT_PATH / file
+                    source: Path = ContentPaths.CONTENT_PATH / file
                     target = obj.path.parent / Path(file).name
                     if source != target and source.exists() and not target.exists():
                         shutil.copy(
-                            CONTENT_PATH / file, obj.path.parent / Path(file).name
+                            ContentPaths.CONTENT_PATH / file, obj.path.parent / Path(file).name
                         )
         run_isolated = self._get_property("run_isolated", False)
         config_arg = self._get_config_file_arg()
@@ -464,7 +464,7 @@ class DockerHook(Hook):
                                 Path("/src")
                                 / (
                                     integration_script.path.parent / config_arg[1]
-                                ).relative_to(CONTENT_PATH)
+                                ).relative_to(ContentPaths.CONTENT_PATH)
                             ),
                         ]
                     )
@@ -477,7 +477,7 @@ class DockerHook(Hook):
                 )
                 # change the working directory to the integration script, as it runs in an isolated container
                 hook["entry"] = (
-                    f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"
+                    f"-w {Path('/src') / integration_script.path.parent.relative_to(ContentPaths.CONTENT_PATH)} {hook['entry']}"
                 )
 
             if self._set_files_on_hook(

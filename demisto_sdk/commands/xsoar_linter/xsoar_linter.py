@@ -9,7 +9,7 @@ from typing import List, Optional
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Integration, Script
@@ -122,7 +122,7 @@ def build_xsoar_linter_env_var(integration_script: IntegrationScript) -> dict:
         xsoar_linter_env["commands"] = ",".join(
             [command.name for command in integration_script.commands]
         )
-    xsoar_linter_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
+    xsoar_linter_env["PYTHONPATH"] = ":".join(str(path) for path in ContentPaths.PYTHONPATH)
 
     return xsoar_linter_env
 

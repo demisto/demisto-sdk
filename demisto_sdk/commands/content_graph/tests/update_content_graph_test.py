@@ -47,7 +47,7 @@ def setup_method(mocker, tmp_path_factory):
 
     from_path.cache_clear()
 
-    bc.CONTENT_PATH = GIT_PATH
+    bc.ContentPaths.update_content_path(GIT_PATH)
     mocker.patch.object(
         neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
     )

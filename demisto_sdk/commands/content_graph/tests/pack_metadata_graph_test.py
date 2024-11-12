@@ -28,7 +28,7 @@ def setup_method(mocker, tmp_path_factory, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
-    bc.CONTENT_PATH = Path(repo.path)
+    bc.ContentPaths.update_content_path(Path(repo.path))
     mocker.patch.object(
         neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
     )

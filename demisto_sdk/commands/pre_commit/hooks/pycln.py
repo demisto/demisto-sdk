@@ -1,4 +1,4 @@
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.pre_commit.hooks.hook import (
     GeneratedHooks,
     Hook,
@@ -18,8 +18,8 @@ class PyclnHook(Hook):
         """
         paths_to_skip = tuple(
             path.name
-            for path in PYTHONPATH
-            if path.absolute() != CONTENT_PATH.absolute()
+            for path in ContentPaths.PYTHONPATH
+            if path.absolute() != ContentPaths.CONTENT_PATH.absolute()
         )
         builtins_to_skip = ("demisto", "CommonServerUserPython")
 

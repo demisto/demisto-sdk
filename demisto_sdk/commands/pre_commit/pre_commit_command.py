@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_FOLDER,
     SCRIPTS_DIR,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
@@ -184,7 +184,7 @@ class PreCommitRunner:
                 )
             ),
             env=precommit_env,
-            cwd=CONTENT_PATH,
+            cwd=ContentPaths.CONTENT_PATH,
             stdout=stdout,
             stderr=stdout,
             universal_newlines=True,
@@ -301,12 +301,12 @@ class PreCommitRunner:
         ret_val = 0
         pre_commit_context.dry_run = dry_run
         precommit_env = os.environ.copy()
-        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
+        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in ContentPaths.PYTHONPATH)
         # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
         precommit_env["MYPYPATH"] = ":".join(
-            str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
+            str(path) for path in sorted(ContentPaths.PYTHONPATH) if "site-packages" not in str(path)
         )
-        precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
+        precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(ContentPaths.CONTENT_PATH)
         precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
         precommit_env["PRE_COMMIT_COLOR"] = "always"
 
@@ -383,7 +383,7 @@ def group_by_language(
             )
             if not find_path_index:
                 raise Exception(f"Could not find Integrations/Scripts path for {file}")
-            code_file_path = CONTENT_PATH / Path(
+            code_file_path = ContentPaths.CONTENT_PATH / Path(
                 *file.parts[: next(find_path_index) + 1]
             )
             if not code_file_path.is_dir():
@@ -429,12 +429,12 @@ def group_by_language(
                     add_related_files(
                         api_module.path
                         if not api_module.path.is_absolute()
-                        else api_module.path.relative_to(CONTENT_PATH)
+                        else api_module.path.relative_to(ContentPaths.CONTENT_PATH)
                     )
                     | add_related_files(
                         imported_by.path
                         if not imported_by.path.is_absolute()
-                        else imported_by.path.relative_to(CONTENT_PATH)
+                        else imported_by.path.relative_to(ContentPaths.CONTENT_PATH)
                     )
                 )
         logger.debug("Pre-Commit: Finished handling API Modules")
@@ -447,11 +447,11 @@ def group_by_language(
             # the reason we maintain this set is for performance when running with --all-files. It is much faster to exclude.
             if integration_script.is_unified:
                 exclude_integration_script.add(
-                    integration_script.path.relative_to(CONTENT_PATH)
+                    integration_script.path.relative_to(ContentPaths.CONTENT_PATH)
                 )
             else:
                 exclude_integration_script.add(
-                    integration_script.path.parent.relative_to(CONTENT_PATH)
+                    integration_script.path.parent.relative_to(ContentPaths.CONTENT_PATH)
                 )
             continue
 
@@ -468,7 +468,7 @@ def group_by_language(
             },
             {
                 (
-                    integration_script.path.relative_to(CONTENT_PATH)
+                    integration_script.path.relative_to(ContentPaths.CONTENT_PATH)
                     if integration_script.path.is_absolute()
                     else integration_script.path,
                     integration_script,
@@ -532,7 +532,7 @@ def pre_commit_manager(
         int: Return code of pre-commit.
     """
     # We have imports to this module, however it does not exists in the repo.
-    (CONTENT_PATH / "CommonServerUserPython.py").touch()
+    (ContentPaths.CONTENT_PATH / "CommonServerUserPython.py").touch()
 
     if not any((input_files, staged_only, git_diff, all_files)):
         logger.info("No arguments were given, running on staged files and git changes.")
@@ -689,7 +689,7 @@ def preprocess_files(
             files_to_run.update(add_related_files(file))
     # convert to relative file to content path
     relative_paths = {
-        file.relative_to(CONTENT_PATH) if file.is_absolute() else file
+        file.relative_to(ContentPaths.CONTENT_PATH) if file.is_absolute() else file
         for file in files_to_run
     }
     # filter out files that are not in the content git repo (e.g in .gitignore)

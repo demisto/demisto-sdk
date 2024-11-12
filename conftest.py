@@ -102,10 +102,10 @@ def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Ge
 
     repo = get_repo(request, tmp_path_factory)
 
-    bc.CONTENT_PATH = Path(repo.path)
-    neo4j_path = bc.CONTENT_PATH.parent.parent / "neo4j"
+    bc.ContentPaths.update_content_path(Path(repo.path))
+    neo4j_path = bc.ContentPaths.CONTENT_PATH.parent.parent / "neo4j"
 
-    mock.patch.object(ContentGraphInterface, "repo_path", bc.CONTENT_PATH)
+    mock.patch.object(ContentGraphInterface, "repo_path", bc.ContentPaths.CONTENT_PATH)
     mock.patch.object(neo4j_service, "REPO_PATH", neo4j_path)
 
     yield repo

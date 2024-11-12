@@ -1277,7 +1277,7 @@ class TestReadmes:
 
         import demisto_sdk.commands.init.contribution_converter as cc
 
-        cc.CONTENT_PATH = git_repo.path
+        cc.ContentPaths.update_content_path(git_repo.path)
 
         # Read integration python, yml code and README to create mock integration
         py_code_path = Path(CONTRIBUTION_TESTS, "common", "integration.py")
@@ -1409,7 +1409,7 @@ class TestReadmes:
 
         import demisto_sdk.commands.init.contribution_converter as cc
 
-        cc.CONTENT_PATH = git_repo.path
+        cc.ContentPaths.update_content_path(git_repo.path)
 
         git_repo.create_pack(self.existing_pack_name)
 

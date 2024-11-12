@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, List, Set
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.pre_commit.hooks.utils import get_property
 from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
@@ -70,7 +70,7 @@ class Hook:
         files: Iterable[Path],
         should_filter: bool = True,
         use_args: bool = False,
-        base_path: Path = CONTENT_PATH,
+        base_path: Path = ContentPaths.CONTENT_PATH,
     ) -> int:
         """
 
@@ -210,7 +210,7 @@ def join_files(files: Set[Path], separator: str = "|") -> str:
         str: The joined string.
     """
     return separator.join(
-        str(file) if (CONTENT_PATH / file).is_file() else f"{str(file)}{os.sep}"
+        str(file) if (ContentPaths.CONTENT_PATH / file).is_file() else f"{str(file)}{os.sep}"
         for file in files
     )
 

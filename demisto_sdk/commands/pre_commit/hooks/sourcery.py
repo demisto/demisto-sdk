@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook, join_files
 
 
@@ -32,7 +32,7 @@ class SourceryHook(Hook):
         Returns:
             None
         """
-        config_file = CONTENT_PATH / self._get_property("config_file", ".sourcery.yml")
+        config_file = ContentPaths.CONTENT_PATH / self._get_property("config_file", ".sourcery.yml")
         if not config_file.exists():
             return []
         self.base_hook.pop("config_file", None)

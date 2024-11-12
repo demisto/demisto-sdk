@@ -13,7 +13,7 @@ from packaging.version import Version
 from pydantic import BaseModel, Extra, Field, validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import ContentType
 
@@ -88,7 +88,7 @@ class ConfJSON(StrictBaseModel):
     reputation_tests: List[str]
 
     @staticmethod
-    def from_path(path: Path = CONF_PATH) -> "ConfJSON":
+    def from_path(path: Path = ContentPaths.CONF_PATH) -> "ConfJSON":
         return ConfJSON(**get_json(path))  # type:ignore[assignment]
 
     @property

@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     ExecutionMode,
     GitStatuses,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -65,7 +65,7 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA114_pack_metadata_
 
 INTEGRATION = create_integration_object()
 INTEGRATION.path = Path(
-    f"{CONTENT_PATH}/Packs/pack_0/Integrations/integration_0/integration_0.yml"
+    f"{ContentPaths.CONTENT_PATH}/Packs/pack_0/Integrations/integration_0/integration_0.yml"
 )
 
 

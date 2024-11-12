@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -91,7 +91,7 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
         results: List[ValidationResult] = []
         file_paths_to_validate = (
             [
-                str(content_item.path.relative_to(CONTENT_PATH))
+                str(content_item.path.relative_to(ContentPaths.CONTENT_PATH))
                 for content_item in content_items
             ]
             if not validate_all_files

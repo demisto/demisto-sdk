@@ -1,3 +1,4 @@
+import logging  # noqa: TID251 # Required for propagation handling.
 import os
 import platform
 import sys
@@ -30,9 +31,15 @@ DEFAULT_CONSOLE_THRESHOLD = "INFO"
 DEFAULT_FILE_SIZE = 1 * (1024**2)  # 1 MB
 DEFAULT_FILE_COUNT = 10
 
-global logger
+LOGURU_DIAGNOSE = "LOGURU_DIAGNOSE"
+
 logger = loguru.logger  # all SDK modules should import from this file, not from loguru
 logger.disable(None)  # enabled at setup_logging()
+
+
+class PropagateHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        logging.getLogger(record.name).handle(record)
 
 
 def _setup_neo4j_logger():
@@ -93,36 +100,60 @@ def logging_setup(
     file_threshold: str = DEFAULT_FILE_THRESHOLD,
     path: Optional[Union[Path, str]] = None,
     initial: bool = False,
+    propagate: bool = False,
 ):
     """
     The initial set up is required since we have code (e.g. get_content_path) that runs in __main__ before the typer/click commands set up the logger.
-    In the initial set up there is NO file logging (only console)
+    In the initial set up there is NO file logging (only console).
+
+    Parameters:
+    - calling_function (str): The name of the function invoking the logger setup, included in all logs.
+    - console_threshold (str): Log level for console output.
+    - file_threshold (str): Log level for file output.
+    - path (Union[Path, str], optional): Path for file logs. If None, defaults to the calculated log directory.
+    - initial (bool): Indicates if the setup is for the initial configuration (console-only if True).
+    - propagate (bool): If True, propagates logs to Python's logging system.
+
     """
     global logger
     _setup_neo4j_logger()
 
-    logger.remove(None)  # Removes all pre-existing handlers
+    logger.remove()  # Removes all pre-existing handlers
 
-    diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", False))
-    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), False)
+    diagnose = string_to_bool(os.getenv(LOGURU_DIAGNOSE, "False"))
+    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, "False"))
 
-    logger = logger.opt(
-        colors=colorize
-    )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
-    _add_console_logger(
-        colorize=colorize, threshold=console_threshold, diagnose=diagnose
-    )
-
-    if not initial:
-        _add_file_logger(
-            log_path=calculate_log_dir(path) / LOG_FILE_NAME,
-            threshold=file_threshold,
-            diagnose=diagnose,
+    if propagate:
+        _propagate_logger(console_threshold)
+    else:
+        logger = logger.opt(
+            colors=colorize
+        )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
+        _add_console_logger(
+            colorize=colorize, threshold=console_threshold, diagnose=diagnose
         )
+        if not initial:
+            _add_file_logger(
+                log_path=calculate_log_dir(path) / LOG_FILE_NAME,
+                threshold=file_threshold,
+                diagnose=diagnose,
+            )
         os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
-
     logger.debug(
         f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
+    )
+
+
+def _propagate_logger(
+    threshold: Optional[str],
+):
+    """
+    Adds a PropagateHandler to Loguru's logger to forward logs to Python's logging system.
+    """
+    logger.add(
+        PropagateHandler(),
+        format=CONSOLE_FORMAT,
+        level=(threshold or DEFAULT_CONSOLE_THRESHOLD),
     )
 
 

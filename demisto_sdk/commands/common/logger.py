@@ -1,6 +1,7 @@
 import logging  # noqa: TID251 # Required for propagation handling.
 import os
 import platform
+import re
 import sys
 from pathlib import Path
 from typing import Iterable, Optional, Union
@@ -24,6 +25,8 @@ FILE_FORMAT = (
     "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {message} @ {file}:{line} (function)"
 )
 CONSOLE_FORMAT = "{message}"
+
+COLOR_TAG_PATTERN = re.compile(r"</?[^>]+>")
 
 DEFAULT_FILE_THRESHOLD = "DEBUG"
 DEFAULT_CONSOLE_THRESHOLD = "INFO"

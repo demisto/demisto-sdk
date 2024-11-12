@@ -516,9 +516,10 @@ CONTENT_PRIVATE_ITEMS: dict = {
 }
 
 
-def replace_incorrect_marketplace(data: Any, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> Any:
+def replace_incorrect_marketplace(data: Any, marketplace: MarketplaceVersions) -> Any:
     """
-    Recursively replaces "Cortex XSIAM" with "Cortex" in the given data if the marketplace is MarketplaceV2 or XPANSE.
+    Recursively replaces "Cortex XSOAR" with "Cortex" in the given data if the marketplace is MarketplaceV2 or XPANSE.
+    If the word following "Cortex XSOAR" contains a number, it will also be removed.
 
     Args:
         data (Any): The data to process, which can be a dictionary, list, or string.
@@ -533,5 +534,6 @@ def replace_incorrect_marketplace(data: Any, marketplace: MarketplaceVersions = 
         elif isinstance(data, list):
             return [replace_incorrect_marketplace(v, marketplace) for v in data]
         elif isinstance(data, str):
-            return data.replace("Cortex XSOAR", "Cortex")
+            # Replace "Cortex XSOAR" and the following word if it contains a number
+            return re.sub(r'Cortex XSOAR(?: \w*\d\w*)?', 'Cortex', data)
     return data

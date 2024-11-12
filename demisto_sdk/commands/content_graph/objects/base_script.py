@@ -94,6 +94,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
                         "path": self.path.with_name(f"{script_name}.yml"),
                     }
                 )
+            # Replace incorrect marketplace references
             data = replace_incorrect_marketplace(data, marketplace)
             try:
                 write_dict(dir / obj.normalize_name, data=data, handler=obj.handler)

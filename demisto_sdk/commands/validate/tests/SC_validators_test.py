@@ -161,7 +161,7 @@ def test_DuplicatedScriptNameValidatorListFiles_obtain_invalid_content_items(
         - Validate that only the first pair of scripts appear in the results, and the rest of the scripts is valid.
     """
     mocker.patch.object(
-        SC109_script_name_is_not_unique_validator,
+        SC109_script_name_is_not_unique_validator.ContentPaths,
         "CONTENT_PATH",
         new=graph_repo.path,
     )
@@ -209,7 +209,7 @@ def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
         - Validate that only the first pair of scripts appear in the results, and the rest of the scripts is valid.
     """
     mocker.patch.object(
-        SC109_script_name_is_not_unique_validator,
+        SC109_script_name_is_not_unique_validator.ContentPaths,
         "CONTENT_PATH",
         new=graph_repo.path,
     )

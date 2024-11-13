@@ -83,7 +83,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_obtain_invalid_content
         - Validate that we got the error messages for the duplicate name.
     """
     mocker.patch.object(
-        GR104_is_pack_display_name_already_exists,
+        GR104_is_pack_display_name_already_exists.ContentPaths,
         "CONTENT_PATH",
         new=graph_repo.path,
     )
@@ -122,7 +122,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_obtain_invalid_content_
         - Validate that we got the error messages for the duplicate name.
     """
     mocker.patch.object(
-        GR104_is_pack_display_name_already_exists,
+        GR104_is_pack_display_name_already_exists.ContentPaths,
         "CONTENT_PATH",
         new=graph_repo.path,
     )

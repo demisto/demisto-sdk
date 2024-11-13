@@ -35,18 +35,18 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     test_image = "test/python3-sha"
     params = {"username": "user", "password": "pass"}
     repo_path = Path(pack.repo_path)
-    mocker.patch.object(setup_environment, "CONTENT_PATH", repo_path)
-    mocker.patch.object(setup_environment, "DOTENV_PATH", repo_path / ".env")
+    mocker.patch.object(setup_environment.ContentPaths, "CONTENT_PATH", repo_path)
+    mocker.patch.object(setup_environment.ContentPaths, "DOTENV_PATH", repo_path / ".env")
 
     mocker.patch.object(
-        setup_environment,
+        setup_environment.ContentPaths,
         "PYTHONPATH",
         [repo_path / "Packs/Base/Scripts/CommonServerPython"],
     )
 
     mocker.patch.object(setup_environment, "add_demistomock_and_commonserveruser")
 
-    mocker.patch.object(content_item, "CONTENT_PATH", repo_path)
+    mocker.patch.object(content_item.ContentPaths, "CONTENT_PATH", repo_path)
     mocker.patch.object(
         docker_helper.DockerBase,
         "get_or_create_test_image",

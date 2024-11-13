@@ -133,7 +133,7 @@ def test_upload_folder(
         "upload",
     )
     content_path = f"{git_path()}/demisto_sdk/tests/test_files/"
-    mocker.patch.object(content_item, "CONTENT_PATH", Path(content_path))
+    mocker.patch.object(content_item.ContentPaths, "CONTENT_PATH", Path(content_path))
     mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
     path = Path(content_path, path_end)
@@ -609,7 +609,7 @@ class TestPrintSummary:
         import demisto_sdk.commands.content_graph.objects.content_item as content_item
 
         mocker.patch.object(
-            content_item,
+            content_item.ContentPaths,
             "CONTENT_PATH",
             Path(f"{git_path()}/demisto_sdk/tests/test_files"),
         )
@@ -621,8 +621,7 @@ class TestPrintSummary:
         uploader.print_summary()
 
         assert "UPLOAD SUMMARY:\n" in caplog.text
-        assert (
-            "\n".join(
+        res = "\n".join(
                 (
                     "<green>SUCCESSFUL UPLOADS:",
                     "╒═════════════════╤════════╤═════════════╤════════════════╕",
@@ -633,6 +632,8 @@ class TestPrintSummary:
                     "</green>",
                 )
             )
+        assert (
+            res
             in caplog.text
         )
 

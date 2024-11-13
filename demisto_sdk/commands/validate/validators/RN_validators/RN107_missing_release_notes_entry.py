@@ -5,7 +5,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
-    GitStatuses,
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -38,16 +37,13 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
     related_field = "release notes"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
-    content_items_with_added_rn: list[Path] = []
+    pack_to_rn_headers: dict[str, dict[str, list]] = {}
 
-    @staticmethod
-    def should_skip_check(
-        content_item: ContentItem, packs_with_added_rn: list[str]
-    ) -> bool:
+    def should_skip_check(self, content_item: ContentItem) -> bool:
         if content_item.pack_id == API_MODULES_PACK:
             return False
         return (
-            content_item.pack_id not in packs_with_added_rn
+            content_item.pack_id not in self.pack_to_rn_headers
             or IsMissingReleaseNotes.should_skip_check(content_item)
         )
 
@@ -66,27 +62,25 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                 content_object=c,
             )
             for c in dependent_items
-            if c.object_id not in self.content_items_with_added_rn
+            if not self.should_skip_check(c) and self.is_missing_rn(c)
         }
         return result
 
     @staticmethod
-    def get_content_items_with_added_rns(
+    def get_pack_to_rn_headers(
         content_items: Iterable[BaseContent],
-    ) -> list[Path]:
+    ) -> dict[str, dict[str, list]]:
         pack_to_rn_headers = {
             p.object_id: extract_rn_headers(p.release_note.file_content)
             for p in content_items
-            if isinstance(p, Pack) and p.release_note.git_status == GitStatuses.ADDED
+            if isinstance(p, Pack) and IsMissingReleaseNotes.is_rn_added(p)
         }
-        return [
-            c.path
-            for c in content_items
-            if isinstance(c, ContentItem)
-            and c.pack_id in pack_to_rn_headers
-            and c.display_name
-            in pack_to_rn_headers[c.pack_id].get(c.content_type.as_folder, [])
-        ]
+        return pack_to_rn_headers
+
+    def is_missing_rn(self, c: ContentItem) -> bool:
+        return c.display_name not in self.pack_to_rn_headers[c.pack_id].get(
+            c.content_type.as_folder, []
+        )
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -94,16 +88,11 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
         results: dict[Path, ValidationResult] = {}
         api_module_results: dict[Path, ValidationResult] = {}
 
-        packs_with_added_rn = IsMissingReleaseNotes.get_packs_with_added_rns(
-            content_items
-        )
-        self.content_items_with_added_rn = self.get_content_items_with_added_rns(
-            content_items
-        )
+        self.pack_to_rn_headers = self.get_pack_to_rn_headers(content_items)
 
         for content_item in content_items:
             if isinstance(content_item, ContentItem):
-                if self.should_skip_check(content_item, packs_with_added_rn):
+                if self.should_skip_check(content_item):
                     logger.debug(f"Skipping RN107 for {content_item.path}")
                     continue
 
@@ -114,7 +103,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                         self.get_missing_rns_for_api_module_dependents(content_item)
                     )
 
-                elif content_item.path not in self.content_items_with_added_rn:
+                elif self.is_missing_rn(content_item):
                     results[content_item.path] = ValidationResult(
                         validator=self,
                         message=self.error_message.format(
@@ -122,7 +111,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                             entity_name=content_item.object_id,
                             pack_name=content_item.pack_id,
                         ),
-                        content_object=content_item.pack,
+                        content_object=content_item,
                     )
 
         return list((results | api_module_results).values())

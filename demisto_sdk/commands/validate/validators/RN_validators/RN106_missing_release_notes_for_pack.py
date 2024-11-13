@@ -82,13 +82,18 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
         return result
 
     @staticmethod
+    def is_rn_added(p: Pack) -> bool:
+        return (
+            p.release_note.git_status == GitStatuses.ADDED
+            and p.pack_version > parse("1.0.0")  # type: ignore
+        )
+
+    @staticmethod
     def get_packs_with_added_rns(content_objects: Iterable[BaseContent]) -> list[str]:
         return [
             p.object_id
             for p in content_objects
-            if isinstance(p, Pack)
-            and p.release_note.git_status == GitStatuses.ADDED
-            and p.pack_version > parse("1.0.0")  # type: ignore
+            if isinstance(p, Pack) and IsMissingReleaseNotes.is_rn_added(p)
         ]
 
     def obtain_invalid_content_items(

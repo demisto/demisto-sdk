@@ -217,9 +217,7 @@ def get_deprecated_rn(old_yml, new_yml, file_type):
         )
         rn_from_description = get_deprecated_comment_from_desc(description)
         return f'- Deprecated. {rn_from_description or "Use %%% instead"}.\n'
-
-    if file_type != FileType.INTEGRATION:
-        return ""
+    return ""
 
 
 class UpdateRN:

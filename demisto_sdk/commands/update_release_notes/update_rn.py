@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
 
+import dictdiffer
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
@@ -182,7 +183,7 @@ def get_json_objects(path: str, file_type) -> Tuple[Any, JSONContentObject]:
         Two json objects, the first of the json at master (old json) and the second from the current branch (new json)
     """
     old_json_obj = get_remote_file(path)
-    new_json_obj = JSON[file_type](path)
+    new_json_obj = TYPE_CONVERSION_BY_FileType[file_type](path)
 
     return old_json_obj, new_json_obj
 
@@ -221,7 +222,7 @@ def added_or_updated_content(old_content_dict, new_content_dict, type, parent_na
             else:
                 content_info = new_content.get("additionalinfo", new_content.get("description"))
                 rn += f'- Added the **{new_content.get("display", new_content_name)}** {type.value}' \
-                    f'{(" which " + content_info.lower()) if content_info else "."}\n'
+                    f'{(" which " + content_info.replace("-", "").lower()) if content_info else "."}\n'
         else:
             old_content = old_content_dict[new_content_name]
             if new_content.get('deprecated') and not old_content.get('deprecated'):
@@ -241,6 +242,7 @@ def find_diff(old_content_info, new_content_info, type, parent_name=None):
     rn = ''
     old_content_dict = {old_content.get('name'):old_content for old_content in old_content_info}
     new_content_dict = {new_content.get('name'):new_content for new_content in new_content_info}
+    # help = list(dictdiffer.diff(old_content_dict, new_content_dict))
     rn += deleted_content(old_content_dict, new_content_dict, type, parent_name)
     rn += added_or_updated_content(old_content_dict, new_content_dict, type, parent_name)
     return rn
@@ -249,7 +251,7 @@ def find_diff(old_content_info, new_content_info, type, parent_name=None):
 def create_rn_for_updated_content_item(path, _type, text):
     rn_desc = ''
     deprecate_rn = ''
-    if _type in TYPE_CONVERSION_BY_FileType and (isinstance(_type, YAMLContentUnifiedObject) or isinstance(_type, YAMLContentObject)):
+    if _type in TYPE_CONVERSION_BY_FileType and (issubclass(TYPE_CONVERSION_BY_FileType[_type], YAMLContentUnifiedObject) or issubclass(TYPE_CONVERSION_BY_FileType[_type], YAMLContentObject)):
         old_content_file, new_content_file = get_yml_objects(path, _type)
     if _type in (
     FileType.INTEGRATION,
@@ -267,8 +269,9 @@ def create_rn_for_updated_content_item(path, _type, text):
             rn_desc += find_diff(old_content_file.get("script", {}).get("commands", []), new_content_file.script.get("commands", []), content_type.COMMAND)
         elif _type == FileType.SCRIPT:
             rn_desc += find_diff(old_content_file.get("args"), new_content_file.get("args"), content_type.ARGUMENT)
-        elif _type in TYPE_CONVERSION_BY_FileType and (isinstance(_type, JSONContentObject)):
+        elif _type in TYPE_CONVERSION_BY_FileType and (issubclass(TYPE_CONVERSION_BY_FileType[_type], JSONContentObject)):
             old_json_file, new_json_file = get_json_objects(path, _type)
+            # help = list(dictdiffer.diff(old_json_file, new_json_file.to_dict()))
             if new_associated_types := new_json_file.get('associatedTypes'):
                 old_associated_types = old_json_file.get('associatedTypes')
                 added_associated_types = [new_type for new_type in new_associated_types if new_type not in old_associated_types]
@@ -1161,9 +1164,9 @@ def get_content_item_name(path, file_type) -> str:
             f'<yellow>Cannot get file description: "{path}" file does not exist</yellow>'
         )
         return ""
-    if file_type in JSON:
+    if issubclass(TYPE_CONVERSION_BY_FileType[file_type],JSONContentObject):
         file = get_json(path)
-    elif file_type in YML:
+    elif (issubclass(TYPE_CONVERSION_BY_FileType[file_type],YAMLContentObject) or isinstance(file_type, YAMLContentUnifiedObject)):
         file = get_yaml(path)
     else:
         return "%%UPDATE_CONTENT_ITEM_NAME%%"
@@ -1193,9 +1196,9 @@ def get_file_description(path, file_type) -> str:
         )
         return ""
 
-    if file_type in YML:
+    if (issubclass(TYPE_CONVERSION_BY_FileType[file_type],YAMLContentObject) or isinstance(file_type, YAMLContentUnifiedObject)):
         file = get_yaml(path)
-    elif file_type in JSON:
+    elif issubclass(TYPE_CONVERSION_BY_FileType[file_type],JSONContentObject):
         file = get_json(path)
     else:
         return "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%"

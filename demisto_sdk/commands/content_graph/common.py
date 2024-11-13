@@ -2,6 +2,8 @@ import os
 import re
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Set
+from demisto_sdk.commands.common.logger import logger
+
 
 from neo4j import graph
 from pydantic import BaseModel
@@ -528,12 +530,16 @@ def replace_incorrect_marketplace(data: Any, marketplace: MarketplaceVersions) -
     Returns:
         Any: The processed data with replacements made if applicable.
     """
-    if marketplace in {MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}:
-        if isinstance(data, dict):
-            return {k: replace_incorrect_marketplace(v, marketplace) for k, v in data.items()}
-        elif isinstance(data, list):
-            return [replace_incorrect_marketplace(v, marketplace) for v in data]
-        elif isinstance(data, str):
-            # Replace "Cortex XSOAR" and the following word if it contains a number
-            return re.sub(r'Cortex XSOAR(?: \w*\d\w*)?', 'Cortex', data)
+    try:
+        if marketplace in {MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}:
+            if isinstance(data, dict):
+                return {k: replace_incorrect_marketplace(v, marketplace) for k, v in data.items()}
+            elif isinstance(data, list):
+                return [replace_incorrect_marketplace(v, marketplace) for v in data]
+            elif isinstance(data, str):
+                # Replace "Cortex XSOAR" and the following word if it contains a number
+                return re.sub(r'Cortex XSOAR(?: \w*\d\w*)?', 'Cortex', data)
+    except Exception as e:
+        #TODO improve to include the item's path or name
+        logger.error(f"Error processing data for replacing incorrect marketplace: {e}")
     return data

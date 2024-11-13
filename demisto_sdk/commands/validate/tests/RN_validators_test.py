@@ -539,16 +539,18 @@ def test_IsValidContentTypeHeaderValidator_obtain_invalid_content_items():
 @pytest.fixture
 def mock_is_missing_rn_validator(mocker):
     """simplified validator methods for testing"""
-    mocker.patch.object(
-        IsMissingReleaseNotes,
-        "should_skip_check",
-        side_effect=lambda c: isinstance(c, TestPlaybook),
-    )
-    mocker.patch.object(
-        IsMissingReleaseNotes,
-        "is_rn_added",
-        side_effect=lambda p: bool(p.release_note.file_content),  # type: ignore
-    )
+    for rn_validator in [
+        "RN106_missing_release_notes_for_pack",
+        "RN107_missing_release_notes_entry",
+    ]:
+        mocker.patch(
+            f"demisto_sdk.commands.validate.validators.RN_validators.{rn_validator}.should_skip_rn_check",
+            side_effect=lambda c: isinstance(c, TestPlaybook),
+        )
+        mocker.patch(
+            f"demisto_sdk.commands.validate.validators.RN_validators.{rn_validator}.was_rn_added",
+            side_effect=lambda p: bool(p.release_note.file_content),  # type: ignore
+        )
 
 
 @pytest.fixture

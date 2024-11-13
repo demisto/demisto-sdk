@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from pkg_resources import DistributionNotFound, get_distribution
 from typer.main import get_command
 
+from demisto_sdk.commands.common.configuration import Configuration, DemistoSDK
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logging_setup_decorator
@@ -47,6 +48,7 @@ from demisto_sdk.commands.init.init_setup import init
 from demisto_sdk.commands.integration_diff.intergation_diff_setup import (
     integration_diff,
 )
+from demisto_sdk.commands.lint.lint_setup import lint
 from demisto_sdk.commands.openapi_codegen.openapi_codegen_setup import openapi_codegen
 from demisto_sdk.commands.postman_codegen.postman_codegen_setup import postman_codegen
 from demisto_sdk.commands.pre_commit.pre_commit_setup import pre_commit
@@ -254,6 +256,9 @@ app.add_typer(modeling_rules_app, name="modeling-rules")
 app.command(name="generate-modeling-rules", help="Generated modeling-rules.")(
     generate_modeling_rules
 )
+app.command(
+    name="lint", help="Deprecated, use demisto-sdk pre-commit instead.", hidden=True
+)(lint)
 
 
 @logging_setup_decorator
@@ -284,8 +289,10 @@ def main(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    load_dotenv(Path(os.getcwd()) / ".env", override=True)
-
+    sdk = DemistoSDK()  # Initialize your SDK class
+    sdk.configuration = Configuration()  # Initialize the configuration
+    ctx.obj = sdk  # Pass sdk instance to context
+    load_dotenv(CONTENT_PATH / ".env", override=True)
     if platform.system() == "Windows":
         typer.echo(
             "Warning: Using Demisto-SDK on Windows is not supported. Use WSL2 or run in a container."

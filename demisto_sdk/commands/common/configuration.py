@@ -20,14 +20,7 @@ class Configuration:
 
 
 class DemistoSDK:
-    """
-    The core class for the SDK.
-    """
+    """Core SDK class."""
 
     def __init__(self):
-        if not hasattr(self, "configuration"):
-            self.configuration = Configuration()
-
-
-# Create a single instance of DemistoSDK
-sdk = DemistoSDK()
+        self.configuration = Configuration()

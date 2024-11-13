@@ -6,18 +6,19 @@ from typing import Optional
 import git
 import typer
 
-from demisto_sdk.commands.common.configuration import sdk
 from demisto_sdk.commands.common.constants import (
     SDK_OFFLINE_ERROR_MESSAGE,
     ExecutionMode,
 )
-from demisto_sdk.commands.common.logger import logging_setup_decorator
+from demisto_sdk.commands.common.logger import logger, logging_setup_decorator
 from demisto_sdk.commands.common.tools import (
     is_external_repository,
     is_sdk_defined_working_offline,
 )
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
@@ -25,17 +26,20 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 @logging_setup_decorator
 def validate(
     ctx: typer.Context,
-    file_paths: Optional[list[str]] = typer.Argument(
-        None, exists=True, resolve_path=True
-    ),
+    file_paths: str = typer.Argument(None, exists=True, resolve_path=True),
     no_conf_json: bool = typer.Option(False, help="Skip conf.json validation."),
     id_set: bool = typer.Option(
-        False, help="Perform validations using the id_set file."
+        False, "-s", "--id-set", help="Perform validations using the id_set file."
     ),
     id_set_path: Path = typer.Option(
-        None, help="Path of the id-set.json used for validations."
+        None,
+        "-idp",
+        "--id-set-path",
+        help="Path of the id-set.json used for validations.",
     ),
-    graph: bool = typer.Option(False, help="Perform validations on content graph."),
+    graph: bool = typer.Option(
+        False, "-gr", "--graph", help="Perform validations on content graph."
+    ),
     prev_ver: str = typer.Option(
         None, help="Previous branch or SHA1 commit to run checks against."
     ),
@@ -46,16 +50,24 @@ def validate(
         False, "-g", "--use-git", help="Validate changes using git."
     ),
     post_commit: bool = typer.Option(
-        False, help="Run validation only on committed changed files."
+        False,
+        "-pc",
+        "--post-commit",
+        help="Run validation only on committed changed files.",
     ),
-    staged: bool = typer.Option(False, help="Ignore unstaged files."),
+    staged: bool = typer.Option(
+        False, "-st", "--staged", help="Ignore unstaged files."
+    ),
     include_untracked: bool = typer.Option(
-        False, help="Whether to include untracked files in the validation."
+        False,
+        "-iu",
+        "--include-untracked",
+        help="Whether to include untracked files in the validation.",
     ),
     validate_all: bool = typer.Option(
         False, "-a", "--validate-all", help="Run all validation on all files."
     ),
-    input: list[str] = typer.Option(
+    input: Optional[str] = typer.Option(
         None, "-i", "--input", help="Path of the content pack/file to validate."
     ),
     skip_pack_release_notes: bool = typer.Option(
@@ -78,7 +90,7 @@ def validate(
         False, help="Whether to create the id_set.json file."
     ),
     json_file: str = typer.Option(
-        None, help="The JSON file path to output command results."
+        None, "-j", "--json-file", help="The JSON file path to output command results."
     ),
     skip_schema_check: bool = typer.Option(
         False, help="Whether to skip the file schema check."
@@ -99,12 +111,17 @@ def validate(
         False, help="Run validate all without multiprocessing."
     ),
     run_specific_validations: str = typer.Option(
-        None, help="Comma separated list of validations to run."
+        None,
+        "-sv",
+        "--run-specific-validations",
+        help="Comma separated list of validations to run.",
     ),
     category_to_run: str = typer.Option(
         None, help="Run specific validations by stating category."
     ),
-    fix: bool = typer.Option(False, help="Whether to autofix failing validations."),
+    fix: bool = typer.Option(
+        False, "-f", "--fix", help="Whether to autofix failing validations."
+    ),
     config_path: Path = typer.Option(None, help="Path for a config file to run."),
     ignore_support_level: bool = typer.Option(
         False, help="Skip validations based on support level."
@@ -130,170 +147,162 @@ def validate(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    """Validate your content files. If no additional flags are given, will validate only committed files."""
-    from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
-    from demisto_sdk.commands.validate.validate_manager import ValidateManager
-
-    # If no file_paths are provided, set defaults for use_git and post_commit
-    if not file_paths:
-        use_git = True
-        post_commit = True
-
+    """
+    Validate content files. If no additional flags are given, only committed files are validated.
+    """
     if is_sdk_defined_working_offline():
         typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)
-        sys.exit(1)
+        raise typer.Exit(1)
 
     if file_paths and not input:
-        input = [str(fp) for fp in file_paths]
+        input = ",".join(file_paths)
 
     run_with_mp = not no_multiprocessing
-    update_command_args_from_config_file("validate", locals())
+    update_command_args_from_config_file("validate", ctx.params)
+    sdk = ctx.obj
     sys.path.append(sdk.configuration.env_dir)
 
-    file_path = input
-
     if post_commit and staged:
-        typer.echo(
-            "Could not supply the staged flag with the post-commit flag", err=True
-        )
+        logger.error("Cannot use both post-commit and staged flags.")
         sys.exit(1)
+
+    is_external_repo = is_external_repository()
+    file_path = input
+    execution_mode = determine_execution_mode(file_path, validate_all, use_git)
+    exit_code = 0
+
+    # Check environment variables
+    run_new_validate = not skip_new_validate or (
+        (env_flag := os.getenv("SKIP_NEW_VALIDATE")) and str(env_flag).lower() == "true"
+    )
+    run_old_validate = run_old_validate or (
+        (env_flag := os.getenv("RUN_OLD_VALIDATE")) and str(env_flag).lower() == "true"
+    )
+
+    # Log warnings for ignored flags
+    warn_on_ignored_flags(run_new_validate, run_old_validate, ctx.params)
 
     try:
-        is_external_repo = is_external_repository()
-        # Determine execution mode based on provided flags
-        if validate_all:
-            execution_mode = ExecutionMode.ALL_FILES
-        elif use_git:
-            execution_mode = ExecutionMode.USE_GIT
-        elif file_path:
-            execution_mode = ExecutionMode.SPECIFIC_FILES
-        else:
-            execution_mode = ExecutionMode.USE_GIT
-            # default validate to -g --post-commit
-            use_git = True
-            post_commit = True
-
-        exit_code = 0
-        run_new_validate = not skip_new_validate or (
-            (env_flag := os.getenv("SKIP_NEW_VALIDATE"))
-            and str(env_flag).lower() == "true"
-        )
-        run_old_validate = run_old_validate or (  # type: ignore[assignment]
-            (env_flag := os.getenv("RUN_OLD_VALIDATE"))
-            and str(env_flag).lower() == "true"
-        )
-
-        if not run_new_validate:
-            for new_validate_flag in [
-                "fix",
-                "ignore_support_level",
-                "config_path",
-                "category_to_run",
-            ]:
-                if locals().get(new_validate_flag):
-                    typer.echo(
-                        f"The following flag {new_validate_flag.replace('_', '-')} is related only to the new validate "
-                        f"and is being called while not running the new validate flow, "
-                        f"therefore the flag will be ignored.",
-                        err=True,
-                    )
-
-        if not run_old_validate:
-            for old_validate_flag in [
-                "no_backward_comp",
-                "no_conf_json",
-                "id_set",
-                "graph",
-                "skip_pack_release_notes",
-                "print_ignored_errors",
-                "print_ignored_files",
-                "no_docker_checks",
-                "silence_init_prints",
-                "skip_pack_dependencies",
-                "id_set_path",
-                "create_id_set",
-                "skip_schema_check",
-                "debug_git",
-                "include_untracked",
-                "quiet_bc_validation",
-                "allow_skipped",
-                "no_multiprocessing",
-            ]:
-                if locals().get(old_validate_flag):
-                    typer.echo(
-                        f"The following flag {old_validate_flag.replace('_', '-')} is related only to the old validate "
-                        f"and is being called while not running the old validate flow, "
-                        f"therefore the flag will be ignored.",
-                        err=True,
-                    )
-
+        # Run old validation flow
         if run_old_validate:
-            if not skip_new_validate:
-                graph = False
-            validator = OldValidateManager(
-                is_backward_check=not no_backward_comp,
-                only_committed_files=post_commit,
-                prev_ver=prev_ver,
-                skip_conf_json=no_conf_json,
-                use_git=use_git,
-                file_path=file_path,
-                validate_all=validate_all,
-                validate_id_set=id_set,
-                validate_graph=graph,
-                skip_pack_rn_validation=skip_pack_release_notes,
-                print_ignored_errors=print_ignored_errors,
-                is_external_repo=is_external_repo,
-                print_ignored_files=print_ignored_files,
-                no_docker_checks=no_docker_checks,
-                silence_init_prints=silence_init_prints,
-                skip_dependencies=skip_pack_dependencies,
-                id_set_path=id_set_path,
-                staged=staged,
-                create_id_set=create_id_set,
-                json_file_path=json_file,
-                skip_schema_check=skip_schema_check,
-                debug_git=debug_git,
-                include_untracked=include_untracked,
-                quiet_bc=quiet_bc_validation,
-                multiprocessing=run_with_mp,
-                check_is_unskipped=not allow_skipped,
-                specific_validations=run_specific_validations,
+            exit_code += run_old_validation(
+                file_path, is_external_repo, run_with_mp, **ctx.params
             )
-            exit_code += validator.run_validation()
 
+        # Run new validation flow
         if run_new_validate:
-            validation_results = ResultWriter(
-                json_file_path=json_file,
-            )
-            config_reader = ConfigReader(
-                path=config_path,
-                category=category_to_run,
-                explicitly_selected=(run_specific_validations or "").split(","),
-            )
-            initializer = Initializer(
-                staged=staged,
-                committed_only=post_commit,
-                prev_ver=prev_ver,
-                file_path=file_path,
-                execution_mode=execution_mode,
-            )
-            validator_v2 = ValidateManager(
-                file_path=file_path,
-                initializer=initializer,
-                validation_results=validation_results,
-                config_reader=config_reader,
-                allow_autofix=fix,
-                ignore_support_level=ignore_support_level,
-                ignore=ignore,
-            )
-            exit_code += validator_v2.run_validations()
+            exit_code += run_new_validation(file_path, execution_mode, **ctx.params)
 
-        return exit_code
+        raise typer.Exit(code=exit_code)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
-        typer.echo(f"{e}", err=True)
-        typer.echo(
-            "\nYou may not be running `demisto-sdk validate` command in the content directory.\n"
-            "Please run the command from content directory",
-            err=True,
+        logger.error(f"{e}")
+        logger.error(
+            "You may not be running `demisto-sdk validate` from the content directory.\n"
+            "Please run this command from the content directory."
         )
         sys.exit(1)
+
+
+def determine_execution_mode(file_path, validate_all, use_git):
+    if validate_all:
+        return ExecutionMode.ALL_FILES
+    elif use_git:
+        return ExecutionMode.USE_GIT
+    elif file_path:
+        return ExecutionMode.SPECIFIC_FILES
+    else:
+        return ExecutionMode.USE_GIT
+
+
+def warn_on_ignored_flags(run_new_validate, run_old_validate, params):
+    if not run_new_validate:
+        for flag in ["fix", "ignore_support_level", "config_path", "category_to_run"]:
+            if params.get(flag):
+                logger.warning(
+                    f"Flag '{flag.replace('_', '-')}' is ignored when skipping new validation."
+                )
+
+    if not run_old_validate:
+        for flag in [
+            "no_backward_comp",
+            "no_conf_json",
+            "id_set",
+            "graph",
+            "skip_pack_release_notes",
+            "print_ignored_errors",
+            "print_ignored_files",
+            "no_docker_checks",
+            "silence_init_prints",
+            "skip_pack_dependencies",
+            "id_set_path",
+            "create_id_set",
+            "skip_schema_check",
+            "debug_git",
+            "include_untracked",
+            "quiet_bc_validation",
+            "allow_skipped",
+            "no_multiprocessing",
+        ]:
+            if params.get(flag):
+                logger.warning(
+                    f"Flag '{flag.replace('_', '-')}' is ignored when skipping old validation."
+                )
+
+
+def run_old_validation(file_path, is_external_repo, run_with_mp, **kwargs):
+    validator = OldValidateManager(
+        is_backward_check=not kwargs["no_backward_comp"],
+        only_committed_files=kwargs["post_commit"],
+        prev_ver=kwargs["prev_ver"],
+        skip_conf_json=kwargs["no_conf_json"],
+        use_git=kwargs["use_git"],
+        file_path=file_path,
+        validate_all=kwargs["validate_all"],
+        validate_id_set=kwargs["id_set"],
+        validate_graph=kwargs["graph"],
+        skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
+        print_ignored_errors=kwargs["print_ignored_errors"],
+        is_external_repo=is_external_repo,
+        print_ignored_files=kwargs["print_ignored_files"],
+        no_docker_checks=kwargs["no_docker_checks"],
+        silence_init_prints=kwargs["silence_init_prints"],
+        skip_dependencies=kwargs["skip_pack_dependencies"],
+        id_set_path=kwargs["id_set_path"],
+        staged=kwargs["staged"],
+        create_id_set=kwargs["create_id_set"],
+        json_file_path=kwargs["json_file"],
+        skip_schema_check=kwargs["skip_schema_check"],
+        debug_git=kwargs["debug_git"],
+        include_untracked=kwargs["include_untracked"],
+        quiet_bc=kwargs["quiet_bc_validation"],
+        multiprocessing=run_with_mp,
+        check_is_unskipped=not kwargs.get("allow_skipped", False),
+        specific_validations=kwargs.get("run_specific_validations"),
+    )
+    return validator.run_validation()
+
+
+def run_new_validation(file_path, execution_mode, **kwargs):
+    validation_results = ResultWriter(json_file_path=kwargs.get("json_file"))
+    config_reader = ConfigReader(
+        path=kwargs.get("config_path"),
+        category=kwargs.get("category_to_run"),
+        explicitly_selected=(kwargs.get("run_specific_validations") or "").split(","),
+    )
+    initializer = Initializer(
+        staged=kwargs["staged"],
+        committed_only=kwargs["post_commit"],
+        prev_ver=kwargs["prev_ver"],
+        file_path=file_path,
+        execution_mode=execution_mode,
+    )
+    validator_v2 = ValidateManager(
+        file_path=file_path,
+        initializer=initializer,
+        validation_results=validation_results,
+        config_reader=config_reader,
+        allow_autofix=kwargs["fix"],
+        ignore_support_level=kwargs["ignore_support_level"],
+        ignore=kwargs["ignore"],
+    )
+    return validator_v2.run_validations()

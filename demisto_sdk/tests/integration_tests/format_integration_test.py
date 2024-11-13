@@ -129,6 +129,7 @@ def test_integration_format_yml_with_no_test_positive(
 
     source_file, output_file = tmp_path / "source.yml", tmp_path / "output.yml"
     source_path, output_path = str(source_file), str(output_file)
+    print(output_path)
     source_file.write_text(source_yml)
     mocker.patch.object(BaseUpdate, "set_fromVersion")
     # Running format in the first time
@@ -775,7 +776,24 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
         )
         assert "======= Updating file" in result.output
         assert f"Format Status on file: {playbook.path} - Success" in result.output
-        assert f"Validate Status on file: {playbook.path} - Success" in result.output
+
+        with ChangeCWD(repo.path):
+            result = runner.invoke(
+                app,
+                [
+                    "validate",
+                    "-i",
+                    "Packs/PackName/Playbooks/playbook.yml",
+                    "--no-docker-checks",
+                    "--no-conf-json",
+                    "--allow-skipped",
+                    "--run-old-validate",
+                    "--skip-new-validate",
+                ],
+                catch_exceptions=False,
+            )
+
+    assert "The files are valid" in result.output
 
 
 def test_format_integration_skipped_files(repo, mocker, monkeypatch):

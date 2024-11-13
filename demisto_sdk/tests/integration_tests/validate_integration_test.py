@@ -915,7 +915,7 @@ class TestDeprecatedIntegration:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "The files are valid",
                 ]
             ]
@@ -1086,7 +1086,7 @@ class TestDeprecatedIntegration:
                 ],
                 catch_exceptions=False,
             )
-        assert f"{integration.yml.path} as integration" in result.output
+        assert f"{integration.yml.rel_path} as integration" in result.output
         assert all(
             current_str in result.output
             for current_str in [
@@ -1142,7 +1142,7 @@ class TestDeprecatedIntegration:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "The files are valid",
                 ]
             ]
@@ -1265,7 +1265,7 @@ class TestDeprecatedIntegration:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "The files are valid",
                 ]
             ]
@@ -1385,7 +1385,7 @@ class TestIntegrationValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "The files are valid",
                 ]
             ]
@@ -1511,7 +1511,7 @@ class TestIntegrationValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "IN119",
                 ]
             ]
@@ -1953,8 +1953,10 @@ class TestPackValidation:
                 "--skip-new-validate",
                 "-i",
                 AZURE_FEED_INVALID_PACK_PATH,
+                "--no-conf-json",
             ],
         )
+        print(result.stdout)
         assert "does not exist" in result.stderr
         assert result.exit_code == 2
 
@@ -3990,7 +3992,7 @@ class TestPlaybookValidateDeprecated:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{playbook.yml.path} as playbook",
+                    f"{playbook.yml.rel_path} as playbook",
                     "The files are valid",
                 ]
             ]
@@ -4099,7 +4101,7 @@ class TestPlaybookValidateDeprecated:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{playbook.yml.path} as playbook",
+                    f"{playbook.yml.rel_path} as playbook",
                     "The files are valid",
                 ]
             ]
@@ -4367,7 +4369,7 @@ class TestScriptValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                     "The files are valid",
                 ]
             ]
@@ -4412,7 +4414,7 @@ class TestScriptValidation:
                 for current_str in [
                     "SC100",
                     "The name of this v2 script is incorrect",
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                 ]
             ]
         )
@@ -4458,7 +4460,7 @@ class TestScriptDeprecatedValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                     "The files are valid",
                 ]
             ]
@@ -4499,7 +4501,11 @@ class TestScriptDeprecatedValidation:
             )
         assert all(
             current_str in result.output
-            for current_str in ["SC101", "Deprecated.", f"{script.yml.path} as script"]
+            for current_str in [
+                "SC101",
+                "Deprecated.",
+                f"{script.yml.rel_path} as script",
+            ]
         )
         assert result.exit_code == 1
 
@@ -4543,7 +4549,7 @@ class TestScriptDeprecatedValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                     "The files are valid",
                 ]
             ]
@@ -4657,7 +4663,7 @@ class TestScriptDeprecatedValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                     "The files are valid",
                 ]
             ]

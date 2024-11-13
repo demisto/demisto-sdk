@@ -2,7 +2,6 @@ from pathlib import Path
 
 import typer
 
-from demisto_sdk.commands.common.configuration import sdk
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logging_setup_decorator
@@ -59,6 +58,7 @@ def postman_codegen(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
+    sdk = ctx.obj
     postman_config = postman_to_autogen_configuration(
         collection=json.load(open(input)),  # Open the file directly
         name=name,

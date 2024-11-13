@@ -4,7 +4,6 @@ from typing import List
 
 import typer
 
-from demisto_sdk.commands.common.configuration import sdk
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.utils.utils import update_command_args_from_config_file
@@ -60,6 +59,7 @@ def secrets(
         input = ",".join([str(path) for path in file_paths])
 
     update_command_args_from_config_file("secrets", ctx.params)
+    sdk = ctx.obj
     sys.path.append(sdk.configuration.env_dir)
     # Initialize the SecretsValidator
     secrets_validator = SecretsValidator(

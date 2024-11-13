@@ -2,7 +2,6 @@ from pathlib import Path
 
 import typer
 
-from demisto_sdk.commands.common.configuration import sdk
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import find_type
@@ -53,6 +52,7 @@ def split(
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files (To a package format - https://demisto.pan.dev/docs/package-dir).
     """
+    sdk = ctx.obj
 
     file_type: FileType = find_type(str(input), ignore_sub_categories=True)
     if file_type not in [

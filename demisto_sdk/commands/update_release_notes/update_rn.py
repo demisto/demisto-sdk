@@ -848,8 +848,8 @@ class UpdateRN:
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
-                if _type in YML or _type in JSON:
-                    new_content_file = YML[_type](path) if _type in YML else JSON[_type](path)
+                if _type in TYPE_CONVERSION_BY_FileType:
+                    new_content_file = TYPE_CONVERSION_BY_FileType[_type](path)
                     rn_desc += f"- New: added a new {RN_HEADER_BY_FILE_TYPE.get(_type, _type.lower())} - {name} which {desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.'}"
                 else:
                     rn_desc += f"- New: {desc}"

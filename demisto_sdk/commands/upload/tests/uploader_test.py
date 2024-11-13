@@ -622,20 +622,17 @@ class TestPrintSummary:
 
         assert "UPLOAD SUMMARY:\n" in caplog.text
         res = "\n".join(
-                (
-                    "<green>SUCCESSFUL UPLOADS:",
-                    "╒═════════════════╤════════╤═════════════╤════════════════╕",
-                    "│ NAME            │ TYPE   │ PACK NAME   │ PACK VERSION   │",
-                    "╞═════════════════╪════════╪═════════════╪════════════════╡",
-                    "│ DummyScript.yml │ Script │ DummyPack   │ 1.0.0          │",
-                    "╘═════════════════╧════════╧═════════════╧════════════════╛",
-                    "</green>",
-                )
+            (
+                "<green>SUCCESSFUL UPLOADS:",
+                "╒═════════════════╤════════╤═════════════╤════════════════╕",
+                "│ NAME            │ TYPE   │ PACK NAME   │ PACK VERSION   │",
+                "╞═════════════════╪════════╪═════════════╪════════════════╡",
+                "│ DummyScript.yml │ Script │ DummyPack   │ 1.0.0          │",
+                "╘═════════════════╧════════╧═════════════╧════════════════╛",
+                "</green>",
             )
-        assert (
-            res
-            in caplog.text
         )
+        assert res in caplog.text
 
     def test_print_summary_failed_uploaded(self, caplog, mocker):
         """

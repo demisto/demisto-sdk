@@ -140,7 +140,9 @@ def test_config_files(mocker, repo: Repo, native_image_config):
         TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
     pack1 = repo.create_pack("Pack1")
-    mocker.patch.object(pre_commit_command.ContentPaths, "CONTENT_PATH", Path(repo.path))
+    mocker.patch.object(
+        pre_commit_command.ContentPaths, "CONTENT_PATH", Path(repo.path)
+    )
 
     mocker.patch.object(
         pre_commit_command,
@@ -239,7 +241,9 @@ def test_handle_api_modules(mocker, git_repo: Repo):
     integration = pack2.create_integration(
         "integration1", code="from TestApiModule import *"
     )
-    mocker.patch.object(pre_commit_command.ContentPaths, "CONTENT_PATH", Path(git_repo.path))
+    mocker.patch.object(
+        pre_commit_command.ContentPaths, "CONTENT_PATH", Path(git_repo.path)
+    )
     with ChangeCWD(git_repo.path):
         git_repo.create_graph()
         files_to_run = group_by_language(
@@ -386,7 +390,9 @@ class TestPreprocessFiles:
             - Check that the associated python file was gathered correctly.
         """
         pack1 = repo.create_pack("Pack1")
-        mocker.patch.object(pre_commit_command.ContentPaths, "CONTENT_PATH", Path(repo.path))
+        mocker.patch.object(
+            pre_commit_command.ContentPaths, "CONTENT_PATH", Path(repo.path)
+        )
 
         integration = pack1.create_integration("integration")
         relative_paths = {

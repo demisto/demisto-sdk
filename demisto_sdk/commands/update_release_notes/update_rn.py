@@ -3,10 +3,10 @@ This script is used to create a release notes template
 """
 
 import copy
-from enum import Enum
 import errno
 import os
 import re
+from enum import Enum
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
 
@@ -30,39 +30,19 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Integration,
     Playbook,
     Script,
-    GenericModule,
-    GenericField,
-    GenericType,
-    Job,
-    ParsingRule,
-    ModelingRule,
-    CorrelationRule,
-    XSIAMDashboard,
-    XSIAMReport,
-    Trigger,
-    Wizard,
-    IndicatorType,
-    LayoutRule,
-    Layout,
-    LayoutsContainer,
-    IndicatorField,
-    IncidentField,
-    IncidentType,
-    Dashboard,
-    ClassifierMapper,
-    Classifier,
-    Widget,
-    Report,
-    PreProcessRule,
-    
-)
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
-    YAMLContentObject
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
-    JSONContentObject
+    JSONContentObject,
 )
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import YAMLContentUnifiedObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
+    YAMLContentObject,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import (
+    YAMLContentUnifiedObject,
+)
+from demisto_sdk.commands.common.content.objects_factory import (
+    TYPE_CONVERSION_BY_FileType,
+)
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -84,59 +64,6 @@ from demisto_sdk.commands.content_graph.commands.update import update_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
-
-from demisto_sdk.commands.common.content.objects_factory import TYPE_CONVERSION_BY_FileType
-#  {
-#     FileType.GENERIC_DEFINITION: "Objects",
-#     FileType.GENERIC_MODULE: "Modules",
-#     FileType.LISTS: "Lists",
-#     FileType.MODELING_RULE: "Modeling Rules",
-#     FileType.MODELING_RULE_SCHEMA: "Modeling Rules Schema",
-#     FileType.CORRELATION_RULE: "Correlation Rules",
-#     FileType.XSIAM_REPORT: "XSIAM Reports",
-#     FileType.TRIGGER: "Triggers Recommendations",  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
-#     FileType.WIZARD: "Wizards",
-#     FileType.XDRC_TEMPLATE: "XDRC Templates",
-#     FileType.LAYOUT_RULE: "Layout Rules",
-#     FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
-#     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
-#     # FileType.CASE_FIELD: "Case Fields",
-# }
-# JSON = {
-#     FileType.XSIAM_DASHBOARD: XSIAMDashboard,
-#     FileType.WIZARD: Wizard,
-#     FileType.TRIGGER: Trigger,
-#     FileType.INDICATOR_TYPE: IndicatorType,
-#     FileType.GENERIC_TYPE: GenericType,
-#     FileType.GENERIC_FIELD: GenericField,
-#     FileType.INCIDENT_FIELD: IncidentField,
-#     FileType.INDICATOR_FIELD: IndicatorField,
-#     FileType.LAYOUTS_CONTAINER: LayoutsContainer,
-#     FileType.LAYOUT: Layout,
-#     FileType.DASHBOARD: Dashboard,
-#     FileType.INCIDENT_TYPE: IncidentType,
-#     FileType.MAPPER: ClassifierMapper,
-#     FileType.CLASSIFIER: Classifier,
-#     FileType.OLD_CLASSIFIER: Classifier,
-#     FileType.WIDGET: Widget,
-#     FileType.REPORT: Report,
-#     FileType.JOB: Job,
-#     FileType.XSIAM_REPORT: XSIAMReport,
-#     FileType.REPUTATION: IndicatorType,
-#     FileType.PRE_PROCESS_RULES: PreProcessRule,
-#     FileType.CASE_LAYOUT: LayoutsContainer,
-#     FileType.CASE_FIELD: 
-# }
-
-# YML = {
-#     FileType.PARSING_RULE: ParsingRule,
-#     FileType.MODELING_RULE: ModelingRule,
-#     FileType.CORRELATION_RULE: CorrelationRule,
-#     FileType.INTEGRATION: Integration,
-#     FileType.SCRIPT: Script,
-#     FileType.PLAYBOOK: Playbook,
-#     FileType.BETA_INTEGRATION: Integration,
-# }
 
 CLASS_BY_FILE_TYPE = {
     FileType.INTEGRATION: Integration,

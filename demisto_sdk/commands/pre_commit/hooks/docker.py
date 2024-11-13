@@ -89,7 +89,7 @@ def get_docker_python_path(drop_site_packages: bool = False) -> str:
     Returns: A PYTHONPATH formatted string
     """
     path_to_replace = str(Path(ContentPaths.CONTENT_PATH).absolute())
-    docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
+    docker_path = [str(path).replace(path_to_replace, "/src") for path in ContentPaths.PYTHONPATH]
     if drop_site_packages:
         docker_path = [p for p in docker_path if "site-packages" not in p]
     path = ":".join(docker_path)

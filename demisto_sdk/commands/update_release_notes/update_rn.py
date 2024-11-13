@@ -851,23 +851,9 @@ class UpdateRN:
                 if _type in TYPE_CONVERSION_BY_FileType:
                     new_content_file = TYPE_CONVERSION_BY_FileType[_type](path)
                     rn_desc += f"- New: added a new {RN_HEADER_BY_FILE_TYPE.get(_type, _type.lower())} - {name} which {desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.'}"
-                else:
+                elif desc:
                     rn_desc += f"- New: {desc}"
-                if _type in SIEM_ONLY_ENTITIES or content_name.replace(
-                    " ", ""
-                ).lower().endswith(EVENT_COLLECTOR.lower()):
-                    rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>"
-                elif from_version and _type not in SIEM_ONLY_ENTITIES:
-                    pack_marketplaces = self.get_pack_metadata().get(
-                        "marketplaces", [MarketplaceVersions.XSOAR.value]
-                    )
-                    if MarketplaceVersions.MarketplaceV2.value in pack_marketplaces:
-                        rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
-                    if (
-                        not pack_marketplaces
-                        or MarketplaceVersions.XSOAR.value in pack_marketplaces
-                    ):
-                        rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
+                rn_desc += self.add_marketplaces_availability(_type, content_name, from_version)
                 rn_desc += "\n"
                 if _type == FileType.INTEGRATION:
                     rn_desc += "\n- Added the following commands:\n"
@@ -885,6 +871,25 @@ class UpdateRN:
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n"
+        return rn_desc
+
+    def add_marketplaces_availability(self, _type, content_name, from_version):
+        rn_desc = ''
+        if _type in SIEM_ONLY_ENTITIES or content_name.replace(
+            " ", ""
+        ).lower().endswith(EVENT_COLLECTOR.lower()):
+            rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>"
+        elif from_version and _type not in SIEM_ONLY_ENTITIES:
+            pack_marketplaces = self.get_pack_metadata().get(
+                "marketplaces", [MarketplaceVersions.XSOAR.value]
+            )
+            if MarketplaceVersions.MarketplaceV2.value in pack_marketplaces:
+                rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
+            if (
+                not pack_marketplaces
+                or MarketplaceVersions.XSOAR.value in pack_marketplaces
+            ):
+                rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
         return rn_desc
 
     def does_content_item_header_exist_in_rns(

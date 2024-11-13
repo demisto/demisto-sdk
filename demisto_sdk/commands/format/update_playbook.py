@@ -2,6 +2,7 @@ import os
 import uuid
 from typing import Tuple, Union
 
+from commands.common.content import Content
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
@@ -9,7 +10,6 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOK,
     FileType,
 )
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -142,7 +142,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         # modified then any additional playbook changes were changed alongside it -
         # we would use git to gather all other changed playbooks
         try:
-            git_util = GitUtil()
+            git_util = Content.git_util()
             modified_files = git_util.modified_files(include_untracked=True)
             added_files = git_util.added_files(include_untracked=True)
             renamed_files = git_util.renamed_files(

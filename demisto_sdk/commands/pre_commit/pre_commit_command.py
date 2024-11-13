@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import more_itertools
+from commands.common.content import Content
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
@@ -21,7 +22,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     write_dict,
@@ -650,7 +650,7 @@ def preprocess_files(
     Returns:
         Set[Path]: The set of files to run pre-commit on.
     """
-    git_util = GitUtil()
+    git_util = Content.git_util()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files().union(staged_files)
     contribution_flow = os.getenv("CONTRIB_BRANCH")

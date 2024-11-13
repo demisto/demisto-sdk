@@ -52,7 +52,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     ClassifierMapper,
     Classifier,
     Widget,
-    Report
+    Report,
+    PreProcessRule,
+    
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject
@@ -60,6 +62,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject
 )
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import YAMLContentUnifiedObject
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -81,35 +84,59 @@ from demisto_sdk.commands.content_graph.commands.update import update_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
-JSON = {
-    FileType.XSIAM_DASHBOARD: XSIAMDashboard,
-    FileType.WIZARD: Wizard,
-    FileType.TRIGGER: Trigger,
-    FileType.INDICATOR_TYPE: IndicatorType,
-    FileType.GENERIC_TYPE: GenericType,
-    FileType.GENERIC_FIELD: GenericField,
-    FileType.INCIDENT_FIELD: IncidentField,
-    FileType.INDICATOR_FIELD: IndicatorField,
-    FileType.LAYOUTS_CONTAINER: LayoutsContainer,
-    FileType.DASHBOARD: Dashboard,
-    FileType.INCIDENT_TYPE: IncidentType,
-    FileType.MAPPER: ClassifierMapper,
-    FileType.CLASSIFIER: Classifier,
-    FileType.WIDGET: Widget,
-    FileType.REPORT: Report,
-    FileType.JOB: Job,
-    FileType.XSIAM_REPORT: XSIAMReport,
-    FileType.REPUTATION: IndicatorType
-}
 
-YML = {
-    FileType.PARSING_RULE: ParsingRule,
-    FileType.MODELING_RULE: ModelingRule,
-    FileType.CORRELATION_RULE: CorrelationRule,
-    FileType.INTEGRATION: Integration,
-    FileType.SCRIPT: Script,
-    FileType.PLAYBOOK: Playbook,
-}
+from demisto_sdk.commands.common.content.objects_factory import TYPE_CONVERSION_BY_FileType
+#  {
+#     FileType.GENERIC_DEFINITION: "Objects",
+#     FileType.GENERIC_MODULE: "Modules",
+#     FileType.LISTS: "Lists",
+#     FileType.MODELING_RULE: "Modeling Rules",
+#     FileType.MODELING_RULE_SCHEMA: "Modeling Rules Schema",
+#     FileType.CORRELATION_RULE: "Correlation Rules",
+#     FileType.XSIAM_REPORT: "XSIAM Reports",
+#     FileType.TRIGGER: "Triggers Recommendations",  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+#     FileType.WIZARD: "Wizards",
+#     FileType.XDRC_TEMPLATE: "XDRC Templates",
+#     FileType.LAYOUT_RULE: "Layout Rules",
+#     FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
+#     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
+#     # FileType.CASE_FIELD: "Case Fields",
+# }
+# JSON = {
+#     FileType.XSIAM_DASHBOARD: XSIAMDashboard,
+#     FileType.WIZARD: Wizard,
+#     FileType.TRIGGER: Trigger,
+#     FileType.INDICATOR_TYPE: IndicatorType,
+#     FileType.GENERIC_TYPE: GenericType,
+#     FileType.GENERIC_FIELD: GenericField,
+#     FileType.INCIDENT_FIELD: IncidentField,
+#     FileType.INDICATOR_FIELD: IndicatorField,
+#     FileType.LAYOUTS_CONTAINER: LayoutsContainer,
+#     FileType.LAYOUT: Layout,
+#     FileType.DASHBOARD: Dashboard,
+#     FileType.INCIDENT_TYPE: IncidentType,
+#     FileType.MAPPER: ClassifierMapper,
+#     FileType.CLASSIFIER: Classifier,
+#     FileType.OLD_CLASSIFIER: Classifier,
+#     FileType.WIDGET: Widget,
+#     FileType.REPORT: Report,
+#     FileType.JOB: Job,
+#     FileType.XSIAM_REPORT: XSIAMReport,
+#     FileType.REPUTATION: IndicatorType,
+#     FileType.PRE_PROCESS_RULES: PreProcessRule,
+#     FileType.CASE_LAYOUT: LayoutsContainer,
+#     FileType.CASE_FIELD: 
+# }
+
+# YML = {
+#     FileType.PARSING_RULE: ParsingRule,
+#     FileType.MODELING_RULE: ModelingRule,
+#     FileType.CORRELATION_RULE: CorrelationRule,
+#     FileType.INTEGRATION: Integration,
+#     FileType.SCRIPT: Script,
+#     FileType.PLAYBOOK: Playbook,
+#     FileType.BETA_INTEGRATION: Integration,
+# }
 
 CLASS_BY_FILE_TYPE = {
     FileType.INTEGRATION: Integration,
@@ -117,22 +144,6 @@ CLASS_BY_FILE_TYPE = {
     FileType.PLAYBOOK: Playbook,
 }
 
-CONVERT_FOR_RN = {
-    FileType.INDICATOR_FIELD: 'Indicator Field',
-    FileType.INCIDENT_TYPE: 'Incident Type',
-    FileType.XSIAM_DASHBOARD: 'Xsiam Dashboard',
-    FileType.REPUTATION: 'Incident Type',
-    FileType.XSIAM_DASHBOARD: 'Xsiam Dashboard',
-    FileType.GENERIC_TYPE: 'Generic Type',
-    FileType.GENERIC_FIELD: 'Generic Field',
-    FileType.INCIDENT_FIELD: 'Incident Field',
-    FileType.INDICATOR_FIELD: 'Indicator Field',
-    FileType.LAYOUTS_CONTAINER: 'Layout Container',
-    FileType.XSIAM_REPORT: 'Xsiam Report',
-    FileType.PARSING_RULE: 'Parsing Rule',
-    FileType.MODELING_RULE: 'Modeling Rule',
-    FileType.CORRELATION_RULE: 'Correlation Rule',
-}
 class content_type(Enum):
     PARAMETER = 'parameter'
     COMMAND = 'command'
@@ -238,7 +249,7 @@ def find_diff(old_content_info, new_content_info, type, parent_name=None):
 def create_rn_for_updated_content_item(path, _type, text):
     rn_desc = ''
     deprecate_rn = ''
-    if _type in YML:
+    if _type in TYPE_CONVERSION_BY_FileType and (isinstance(_type, YAMLContentUnifiedObject) or isinstance(_type, YAMLContentObject)):
         old_content_file, new_content_file = get_yml_objects(path, _type)
     if _type in (
     FileType.INTEGRATION,
@@ -256,12 +267,13 @@ def create_rn_for_updated_content_item(path, _type, text):
             rn_desc += find_diff(old_content_file.get("script", {}).get("commands", []), new_content_file.script.get("commands", []), content_type.COMMAND)
         elif _type == FileType.SCRIPT:
             rn_desc += find_diff(old_content_file.get("args"), new_content_file.get("args"), content_type.ARGUMENT)
-        elif _type in JSON:
+        elif _type in TYPE_CONVERSION_BY_FileType and (isinstance(_type, JSONContentObject)):
             old_json_file, new_json_file = get_json_objects(path, _type)
             if new_associated_types := new_json_file.get('associatedTypes'):
                 old_associated_types = old_json_file.get('associatedTypes')
-                
-                # TODO
+                added_associated_types = [new_type for new_type in new_associated_types if new_type not in old_associated_types]
+                if added_associated_types:
+                    rn_desc += f'- Added new associated types: {",".join(added_associated_types)}.\n'
         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
     return rn_desc
 
@@ -911,7 +923,7 @@ class UpdateRN:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if _type in YML or _type in JSON:
                     new_content_file = YML[_type](path) if _type in YML else JSON[_type](path)
-                    rn_desc += f"- New: added a new {CONVERT_FOR_RN.get(_type, _type.lower())} - {name} which {desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.'}"
+                    rn_desc += f"- New: added a new {RN_HEADER_BY_FILE_TYPE.get(_type, _type.lower())} - {name} which {desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.'}"
                 else:
                     rn_desc += f"- New: {desc}"
                 if _type in SIEM_ONLY_ENTITIES or content_name.replace(
@@ -941,7 +953,7 @@ class UpdateRN:
                 if self.update_type == "documentation":
                     rn_desc += "- Documentation and metadata improvements.\n"
                 else:
-                    create_rn_for_updated_content_item(path, _type, text)
+                    rn_desc += create_rn_for_updated_content_item(path, _type, text)
 
 
         if docker_image:

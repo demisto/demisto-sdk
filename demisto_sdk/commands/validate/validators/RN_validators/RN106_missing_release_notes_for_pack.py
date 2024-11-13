@@ -2,21 +2,15 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from packaging.version import parse
-
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
-    GitStatuses,
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
-from demisto_sdk.commands.content_graph.objects.test_script import TestScript
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.validate.tools import should_skip_rn_check, was_rn_added
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -41,31 +35,6 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
     packs_with_added_rn: list[str] = []
     checked_packs: set[str] = set()
 
-    @staticmethod
-    def should_skip_check(content_item: ContentItem) -> bool:
-        if isinstance(content_item, (TestPlaybook, TestScript)):
-            return True
-        if isinstance(content_item, Integration):
-            return (
-                not content_item.git_status
-                and not content_item.description_file.git_status
-            )
-        if isinstance(content_item, ModelingRule):
-            return (
-                not content_item.git_status
-                and not content_item.xif_file.git_status
-                and not content_item.schema_file.git_status
-            )
-        if content_item.git_status == GitStatuses.RENAMED:
-            return not IsMissingReleaseNotes.is_pack_move(content_item)
-        return content_item.git_status is None
-
-    @staticmethod
-    def is_pack_move(content_item: ContentItem) -> bool:
-        old_content = content_item.old_base_content_object
-        assert isinstance(old_content, ContentItem)
-        return content_item.pack_id != old_content.pack_id
-
     def get_missing_rns_for_api_module_dependents(
         self, api_module: ContentItem
     ) -> dict[str, ValidationResult]:
@@ -82,18 +51,11 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
         return result
 
     @staticmethod
-    def is_rn_added(p: Pack) -> bool:
-        return (
-            p.release_note.git_status == GitStatuses.ADDED
-            and p.pack_version > parse("1.0.0")  # type: ignore
-        )
-
-    @staticmethod
     def get_packs_with_added_rns(content_objects: Iterable[BaseContent]) -> list[str]:
         return [
             p.object_id
             for p in content_objects
-            if isinstance(p, Pack) and IsMissingReleaseNotes.is_rn_added(p)
+            if isinstance(p, Pack) and was_rn_added(p)
         ]
 
     def obtain_invalid_content_items(
@@ -107,7 +69,7 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
         for content_item in content_items:
             if isinstance(content_item, ContentItem):
                 if (
-                    self.should_skip_check(content_item)
+                    should_skip_rn_check(content_item)
                     or content_item.pack_id in self.checked_packs
                 ):
                     logger.debug(f"Skipping RN106 for {content_item.path}")

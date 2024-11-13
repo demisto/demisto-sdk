@@ -11,13 +11,14 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.tools import extract_rn_headers
+from demisto_sdk.commands.validate.tools import (
+    extract_rn_headers,
+    should_skip_rn_check,
+    was_rn_added,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
-)
-from demisto_sdk.commands.validate.validators.RN_validators.RN106_missing_release_notes_for_pack import (
-    IsMissingReleaseNotes,
 )
 
 ContentTypes = BaseContent
@@ -44,7 +45,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
             return False
         return (
             content_item.pack_id not in self.pack_to_rn_headers
-            or IsMissingReleaseNotes.should_skip_check(content_item)
+            or should_skip_rn_check(content_item)
         )
 
     def get_missing_rns_for_api_module_dependents(
@@ -73,7 +74,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
         pack_to_rn_headers = {
             p.object_id: extract_rn_headers(p.release_note.file_content)
             for p in content_items
-            if isinstance(p, Pack) and IsMissingReleaseNotes.is_rn_added(p)
+            if isinstance(p, Pack) and was_rn_added(p)
         }
         return pack_to_rn_headers
 

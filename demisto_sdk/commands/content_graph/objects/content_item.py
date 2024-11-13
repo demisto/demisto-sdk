@@ -350,12 +350,15 @@ class ContentItem(BaseContent):
             logger.warning(f"Could not find file {self.path}, skipping dump")
             return
         dir.mkdir(exist_ok=True, parents=True)
-        # Replace incorrect marketplace references
-        data = replace_incorrect_marketplace(data, marketplace)
         try:
+            data = self.prepare_for_upload(current_marketplace=marketplace)
+
+            # Replace incorrect marketplace references
+            data = replace_incorrect_marketplace(data, marketplace)
+
             write_dict(
                 dir / self.normalize_name,
-                data=self.prepare_for_upload(current_marketplace=marketplace),
+                data=data,
                 handler=self.handler,
             )
         except FileNotFoundError as e:

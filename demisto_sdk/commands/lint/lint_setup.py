@@ -101,7 +101,7 @@ def lint(
         "--check-dependent-api-module",
         help="Run unit tests and lint on all packages that are dependent on modified API modules.",
     ),
-    time_measurements_dir: Optional[List[Path]] = typer.Option(
+    time_measurements_dir: Optional[str] = typer.Option(
         None,
         "--time-measurements-dir",
         help="Specify directory for the time measurements report file",

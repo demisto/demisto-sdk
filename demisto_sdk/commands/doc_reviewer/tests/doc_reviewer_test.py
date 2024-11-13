@@ -1394,9 +1394,9 @@ def test_replace_escape_characters(sentence, expected):
     "use_pack_known_words, expected_param_value",
     [
         (["--use-packs-known-words"], True),
-        # (["--skip-packs-known-words"], False),
-        # ([""], True),
-        # (["--skip-packs-known-words", "--use-packs-known-words"], True),
+        (["--skip-packs-known-words"], False),
+        ([""], True),
+        (["--skip-packs-known-words", "--use-packs-known-words"], True),
     ],
 )
 def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker):

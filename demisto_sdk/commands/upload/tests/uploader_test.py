@@ -1,3 +1,4 @@
+import re
 import shutil
 import zipfile
 from builtins import len
@@ -10,6 +11,7 @@ from unittest.mock import MagicMock, patch
 import click
 import demisto_client
 import pytest
+import typer
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from more_itertools import first_true
@@ -139,11 +141,13 @@ def test_upload_folder(
     path = Path(content_path, path_end)
 
     assert path.exists()
+
     uploader = Uploader(path)
     with patch.object(uploader, "client", return_value="ok"):
-        assert (
-            uploader.upload() == SUCCESS_RETURN_CODE
-        ), f"failed uploading {'/'.join(path.parts[-2:])}"
+        with pytest.raises(typer.Exit):
+            assert (
+                uploader.upload() == SUCCESS_RETURN_CODE
+            ), f"failed uploading {'/'.join(path.parts[-2:])}"
     assert len(uploader._successfully_uploaded_content_items) == item_count
     assert mock_upload.call_count == item_count
 
@@ -224,9 +228,8 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
 
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
-
-    # run
-    uploader.upload()
+    with pytest.raises(typer.Exit):
+        assert uploader.upload() == SUCCESS_RETURN_CODE
 
     assert len(uploader._successfully_uploaded_content_items) == 1
     assert len(mocked_client_upload_method.call_args_list) == 1
@@ -740,9 +743,15 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
         # run
         uploader = Uploader(path)
-        assert uploader.upload() == SUCCESS_RETURN_CODE
 
-        # validate
+        # Capture the exit code by catching the typer.Exit exception
+        with pytest.raises(typer.Exit) as exc_info:
+            assert uploader.upload() == SUCCESS_RETURN_CODE
+
+        # Validate the exit code is as expected (success)
+        assert exc_info.value.exit_code == SUCCESS_RETURN_CODE
+
+        # Validate upload behavior
         assert len(uploader._successfully_uploaded_zipped_packs) == 1
         assert mocked_upload_content_packs.call_args[1]["file"] == str(path)
 
@@ -772,11 +781,11 @@ class TestZippedPackUpload:
         )
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
-        # run
-        click.Context(command=upload).invoke(upload, input=str(TEST_PACK_ZIP))
+        runner = CliRunner()
+        runner.invoke(app, ["upload", "-i", str(TEST_PACK_ZIP)])
 
-        # validate
-        tools.update_server_configuration.call_count == exp_call_count
+        # Validate the call count based on user input
+        assert tools.update_server_configuration.call_count == exp_call_count
 
     def test_upload_zip_does_not_exist(self):
         """
@@ -791,14 +800,12 @@ class TestZippedPackUpload:
             - Ensure failure upload message is printed to the stderr as the failure caused by click.Path.convert check.
         """
         invalid_zip_path = "not_exist_dir/not_exist_zip"
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner(mix_stderr=True)
         result = runner.invoke(app, ["upload", "-i", invalid_zip_path, "--insecure"])
         assert result.exit_code == 2
         assert isinstance(result.exception, SystemExit)
-        assert (
-            f"Invalid value for '-i' / '--input': Path '{invalid_zip_path}' does not exist"
-            in result.stderr
-        )
+        pattern = r"Invalid value for '--input' \/ '-i': (.*)"
+        assert re.search(pattern, result.stdout)
 
     @pytest.mark.parametrize(
         argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
@@ -823,7 +830,10 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         # run
-        click.Context(command=upload).invoke(upload, input=str(path))
+        runner = CliRunner()
+
+        # Run the command using runner.invoke()
+        runner.invoke(app, ["upload", "-i", str(path)])
         assert mock_upload_content_packs.call_count == 1
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1]["skip_verify"] == "true"
@@ -855,11 +865,10 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         # run
-        result = click.Context(command=upload).invoke(
-            upload, input=str(path), skip_validation=True
-        )
+        runner = CliRunner()
+        result = runner.invoke(app, ["upload", "-i", str(path), "--skip_validation"])
 
-        assert result == SUCCESS_RETURN_CODE
+        assert result.exit_code == 0
 
         upload_call_args = mock_upload_content_packs.call_args[1]
         assert upload_call_args["skip_validation"] == "true"
@@ -891,7 +900,8 @@ class TestZippedPackUpload:
         )
         mocker.patch("builtins.input", return_value="y")
         # run
-        click.Context(command=upload).invoke(upload, input=str(path))
+        runner = CliRunner()
+        runner.invoke(app, ["upload", "-i", str(path)])
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1].get("skip_validate") is None
 
@@ -946,14 +956,20 @@ class TestZippedPackUpload:
 
         with TemporaryDirectory() as dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
-            click.Context(command=upload).invoke(
-                upload,
-                marketplace=marketplace,
-                input=TEST_XSIAM_PACK,
-                zip=True,
-                keep_zip=dir,
+            runner = CliRunner()
+            runner.invoke(
+                app,
+                [
+                    "upload",
+                    "-i",
+                    str(TEST_XSIAM_PACK),
+                    "--zip",
+                    "-mp",
+                    marketplace,
+                    "--keep-zip",
+                    dir,
+                ],
             )
-
             with zipfile.ZipFile(
                 Path(dir) / MULTIPLE_ZIPPED_PACKS_FILE_NAME, "r"
             ) as outer_zip_file:

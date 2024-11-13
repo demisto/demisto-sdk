@@ -50,7 +50,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     Then
     - Ensure release notes file created with no errors
     - Ensure message is printed when update release notes process finished.
-    - Ensure the release motes content is valid and as expected.
+    - Ensure the release notes content is valid and as expected.
     """
 
     expected_rn = (
@@ -89,25 +89,28 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
     Path(rn_path).unlink(missing_ok=True)
-    result = runner.invoke(
-        app, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
-    )
-    assert result.exit_code == 0
-    assert Path(rn_path).is_file()
-    assert not result.exception
-    assert all(
-        [
-            current_str in result.output
-            for current_str in [
-                "Changes were detected. Bumping FeedAzureValid to version: 1.0.1",
-                "Finished updating release notes for FeedAzureValid.",
+    try:
+        result = runner.invoke(app, [UPDATE_RN_COMMAND, "-i", AZURE_FEED_PACK_PATH])
+        assert result.exit_code == 0
+        assert Path(rn_path).is_file()
+        assert not result.exception
+        assert all(
+            [
+                current_str in result.output
+                for current_str in [
+                    "Changes were detected. Bumping FeedAzureValid to version: 1.0.1",
+                    "Finished updating release notes for FeedAzureValid.",
+                ]
             ]
-        ]
-    )
+        )
 
-    with open(rn_path) as f:
-        rn = f.read()
-    assert expected_rn == rn
+        with open(rn_path) as f:
+            rn = f.read()
+        assert expected_rn == rn
+    finally:
+        # Cleanup: remove the file after the test is finished
+        if Path(rn_path).exists():
+            Path(rn_path).unlink()
 
 
 def test_update_release_notes_modified_integration(demisto_client, mocker):
@@ -723,7 +726,7 @@ def test_force_update_release_no_pack_given(demisto_client, repo, mocker):
 def test_update_release_notes_specific_version_invalid(demisto_client, repo):
     """
     Given
-    - Nothing have changed.
+    - Nothing has changed.
 
     When
     - Running demisto-sdk update-release-notes command with --version flag but not in the right format.
@@ -735,17 +738,11 @@ def test_update_release_notes_specific_version_invalid(demisto_client, repo):
     result = runner.invoke(
         app, [UPDATE_RN_COMMAND, "-i", join("Packs", "ThinkCanary"), "-v", "3.x.t"]
     )
+    assert result.exit_code != 0
     assert (
-        "Usage: main update-release-notes [OPTIONS]\n"
-        "Try 'main update-release-notes -h' for help.\n"
-        "╭─ Error "
-        "──────────────────────────────────────────────────────────────────────╮\n"
-        "│ Invalid value for '-v' / '--version': Version 3.x.t is not in the "
-        "expected   │\n"
-        "│ format. The format should be x.y.z, e.g., "
-        "2.1.3.                             │\n"
-        "╰──────────────────────────────────────────────────────────────────────────────╯\n"
-    ) == result.stdout
+        "Version 3.x.t is not in the expected format. The format should be x.y.z, e.g., 2.1.3."
+        in str(result.stdout)
+    )
 
 
 def test_update_release_notes_specific_version_valid(demisto_client, mocker, repo):

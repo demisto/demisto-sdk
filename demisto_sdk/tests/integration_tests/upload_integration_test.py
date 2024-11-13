@@ -83,23 +83,22 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     )
     assert result.exit_code == 0
     assert (
-        "\n"
-        "SUCCESSFUL UPLOADS:\n"
-        "╒═════════════════════════╤═══════════════╤═══════════════╤════════════════╕\n"
-        "│ NAME                    │ TYPE          │ PACK NAME     │ PACK VERSION   "
-        "│\n"
-        "╞═════════════════════════╪═══════════════╪═══════════════╪════════════════╡\n"
-        "│ incidentfield-city.json │ IncidentField │ AzureSentinel │ 1.0.0          "
-        "│\n"
-        "├─────────────────────────┼───────────────┼───────────────┼────────────────┤\n"
-        "│ FeedAzure.yml           │ Integration   │ AzureSentinel │ 1.0.0          "
-        "│\n"
-        "├─────────────────────────┼───────────────┼───────────────┼────────────────┤\n"
-        "│ FeedAzure_test.yml      │ Playbook      │ AzureSentinel │ 1.0.0          "
-        "│\n"
-        "╘═════════════════════════╧═══════════════╧═══════════════╧════════════════╛\n"
-        "\n"
-    ) in result.output
+        "\n".join(
+            (
+                "SUCCESSFUL UPLOADS:",
+                "╒═════════════════════════╤═══════════════╤═══════════════╤════════════════╕",
+                "│ NAME                    │ TYPE          │ PACK NAME     │ PACK VERSION   │",
+                "╞═════════════════════════╪═══════════════╪═══════════════╪════════════════╡",
+                "│ incidentfield-city.json │ IncidentField │ AzureSentinel │ 1.0.0          │",
+                "├─────────────────────────┼───────────────┼───────────────┼────────────────┤",
+                "│ FeedAzure.yml           │ Integration   │ AzureSentinel │ 1.0.0          │",
+                "├─────────────────────────┼───────────────┼───────────────┼────────────────┤",
+                "│ FeedAzure_test.yml      │ Playbook      │ AzureSentinel │ 1.0.0          │",
+                "╘═════════════════════════╧═══════════════╧═══════════════╧════════════════╛",
+            )
+        )
+        in result.output
+    )
 
 
 def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, mocker):
@@ -333,15 +332,18 @@ def test_zipped_pack_upload_positive(
                     )
 
     assert (
-        "\n"
-        "SUCCESSFUL UPLOADS:\n"
-        "╒═══════════╤════════╤═════════════╤════════════════╕\n"
-        "│ NAME      │ TYPE   │ PACK NAME   │ PACK VERSION   │\n"
-        "╞═══════════╪════════╪═════════════╪════════════════╡\n"
-        "│ test-pack │ Pack   │ test-pack   │ 1.0.0          │\n"
-        "╘═══════════╧════════╧═════════════╧════════════════╛\n"
-        "\n"
-    ) in result.output
+        "\n".join(
+            (
+                "SUCCESSFUL UPLOADS:",
+                "╒═══════════╤════════╤═════════════╤════════════════╕",
+                "│ NAME      │ TYPE   │ PACK NAME   │ PACK VERSION   │",
+                "╞═══════════╪════════╪═════════════╪════════════════╡",
+                "│ test-pack │ Pack   │ test-pack   │ 1.0.0          │",
+                "╘═══════════╧════════╧═════════════╧════════════════╛",
+            )
+        )
+        in result.output
+    )
 
 
 def test_integration_upload_path_does_not_exist(demisto_client_mock):
@@ -359,12 +361,12 @@ def test_integration_upload_path_does_not_exist(demisto_client_mock):
     invalid_dir_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/DoesNotExist"
     )
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner(mix_stderr=True)
     result = runner.invoke(app, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
     assert result.exit_code == 2
     assert isinstance(result.exception, SystemExit)
     pattern = r"Invalid value for '--input' \/ '-i': (.*)"
-    assert re.search(pattern, result.stderr)
+    assert re.search(pattern, result.stdout)
 
 
 def test_integration_upload_pack_invalid_connection_params(mocker):

@@ -43,7 +43,7 @@ class TestPrepareContent:
             )
             assert (
                 result.exception.args[0]
-                == "Exactly one of the '-a' or '-i' parameters must be provided."
+                == "Exactly one of '-a' or '-i' must be provided."
             )
 
             # Verify that not passing either of -a and -i raises an exception.
@@ -54,7 +54,7 @@ class TestPrepareContent:
             )
             assert (
                 result.exception.args[0]
-                == "Exactly one of the '-a' or '-i' parameters must be provided."
+                == "Exactly one of '-a' or '-i' must be provided."
             )
 
             # Verify that specifying an output path of a file and passing multiple inputs raises an exception

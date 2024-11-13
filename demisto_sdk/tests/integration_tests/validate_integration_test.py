@@ -1956,7 +1956,6 @@ class TestPackValidation:
                 "--no-conf-json",
             ],
         )
-        print(result.stdout)
         assert "does not exist" in result.stderr
         assert result.exit_code == 2
 

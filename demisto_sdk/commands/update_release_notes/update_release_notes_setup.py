@@ -19,9 +19,11 @@ def validate_version(value: Optional[str]) -> Optional[str]:
     ):
         return value
     else:
-        raise typer.BadParameter(
-            f"Version {value} is not in the expected format. The format should be x.y.z, e.g., 2.1.3."
+        typer.echo(
+            f"Version {value} is not in the expected format. The format should be x.y.z, e.g., 2.1.3.",
+            err=True,
         )
+    raise typer.Exit(1)
 
 
 @logging_setup_decorator

@@ -129,7 +129,6 @@ def test_integration_format_yml_with_no_test_positive(
 
     source_file, output_file = tmp_path / "source.yml", tmp_path / "output.yml"
     source_path, output_path = str(source_file), str(output_file)
-    print(output_path)
     source_file.write_text(source_yml)
     mocker.patch.object(BaseUpdate, "set_fromVersion")
     # Running format in the first time

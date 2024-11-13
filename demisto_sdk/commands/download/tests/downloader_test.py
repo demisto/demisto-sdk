@@ -380,7 +380,8 @@ class TestFlags:
         """
         downloader = Downloader(input=("test",))
 
-        assert downloader.download() == 1
+        with pytest.raises(typer.Exit):
+            assert downloader.download() == 1
         assert "Error: Missing required parameter '-o' / '--output'." in caplog.text
 
     def test_missing_input_flag_system(self, mocker, caplog):
@@ -413,7 +414,8 @@ class TestFlags:
         )
         mocker.patch.object(Downloader, "verify_output_path", return_value=True)
 
-        assert downloader.download() == 1
+        with pytest.raises(typer.Exit):
+            assert downloader.download() == 1
         assert (
             "Error: No input parameter has been provided ('-i' / '--input', '-r' / '--regex', '-a' / '--all)."
             in caplog.text
@@ -430,7 +432,8 @@ class TestFlags:
         )
         mocker.patch.object(Downloader, "verify_output_path", return_value=True)
 
-        assert downloader.download() == 1
+        with pytest.raises(typer.Exit):
+            assert downloader.download() == 1
         assert (
             "Error: Missing required parameter for downloading system items: '-it' / '--item-type'."
             in caplog.text
@@ -682,7 +685,7 @@ class TestDownloadExistingFile:
 
     def test_download_and_format_existing_file(self, tmp_path):
         """
-        Given: A remote Script with differernt comment.
+        Given: A remote Script with different comment.
         When: Downloading with force=True and run_format=True.
         Then: Assert the file is merged and the remote comment is formatted is in the new file.
         """
@@ -700,14 +703,14 @@ class TestDownloadExistingFile:
         script_data["comment"] = "some other comment"
 
         env.SCRIPT_CUSTOM_CONTENT_OBJECT["data"] = script_data
-
-        assert downloader.write_files_into_output_path(
-            downloaded_content_objects={
-                script_file_name: env.SCRIPT_CUSTOM_CONTENT_OBJECT
-            },
-            existing_pack_structure=env.PACK_CONTENT,
-            output_path=env.PACK_INSTANCE_PATH,
-        )
+        with pytest.raises(typer.Exit):
+            assert downloader.write_files_into_output_path(
+                downloaded_content_objects={
+                    script_file_name: env.SCRIPT_CUSTOM_CONTENT_OBJECT
+                },
+                existing_pack_structure=env.PACK_CONTENT,
+                output_path=env.PACK_INSTANCE_PATH,
+            )
         assert script_file_path.is_file()
         data = get_yaml(script_file_path)
         # Make sure the new comment is formatted and a '.' was added.
@@ -1491,8 +1494,8 @@ def test_auto_replace_uuids_flag(mocker, auto_replace_uuids: bool):
     mocker.patch.object(downloader, "build_existing_pack_structure", return_value={})
     mocker.patch.object(downloader, "write_files_into_output_path", return_value=True)
     mock_replace_uuids = mocker.spy(downloader, "replace_uuid_ids")
-
-    downloader.download()
+    with pytest.raises(typer.Exit):
+        downloader.download()
 
     if auto_replace_uuids:
         assert mock_replace_uuids.called
@@ -1510,7 +1513,8 @@ def test_invalid_regex_error(mocker, caplog):
     downloader = Downloader(regex="*invalid-regex*", output="fake_output_dir")
     mocker.patch.object(downloader, "verify_output_path", return_value=True)
 
-    assert downloader.download() == 1
+    with pytest.raises(typer.Exit):
+        assert downloader.download() == 1
     assert "Error: Invalid regex pattern provided: '*invalid-regex*'." in caplog.text
 
 

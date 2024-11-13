@@ -107,10 +107,12 @@ def prepare_content(
     inputs = input.split(",") if input else []
     output_path = output if output else Path(".")
 
-    if output_path.is_file() and len(inputs) > 1:
-        raise ValueError(
-            "When passing multiple inputs, the output path should be a directory and not a file."
-        )
+    if output_path:
+        if "." in Path(output_path).name:  # check if the output path is a file
+            if len(inputs) > 1:
+                raise ValueError(
+                    "When passing multiple inputs, the output path should be a directory and not a file."
+                )
     elif not output_path.is_file():
         output_path.mkdir(exist_ok=True)
 

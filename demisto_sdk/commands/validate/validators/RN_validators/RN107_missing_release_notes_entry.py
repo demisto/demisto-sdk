@@ -52,6 +52,9 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
         self, api_module: ContentItem
     ) -> dict[Path, ValidationResult]:
         dependent_items = self.graph.get_api_module_imports(api_module.object_id)
+        logger.debug(
+            f"Validating {api_module.object_id} dependents: {[d.object_id for d in dependent_items]}"
+        )
         result = {
             c.path: ValidationResult(
                 validator=self,
@@ -63,7 +66,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                 content_object=c,
             )
             for c in dependent_items
-            if not self.should_skip_check(c) and self.is_missing_rn(c)
+            if c.pack_id in self.pack_to_rn_headers and self.is_missing_rn(c)
         }
         return result
 

@@ -10,7 +10,6 @@ import re
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
 
-import dictdiffer
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (

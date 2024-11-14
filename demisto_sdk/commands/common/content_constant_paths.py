@@ -46,22 +46,22 @@ class ContentPaths:
         """
         logger.info(f"Updating content_path globally: {content_path}")
 
-        cls.CONTENT_PATH = Path(get_content_path(Path(content_path)))
+        cls.CONTENT_PATH: Path = Path(get_content_path(Path(content_path)))
         cls.ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = (
             cls.CONTENT_PATH / "all_packs_dependencies.json"
         )
-        cls.CONF_PATH = cls.CONTENT_PATH / TESTS_DIR / "conf.json"
-        cls.DEFAULT_ID_SET_PATH = cls.CONTENT_PATH / TESTS_DIR / "id_set.json"
-        cls.MP_V2_ID_SET_PATH = cls.CONTENT_PATH / TESTS_DIR / "id_set_mp_v2.json"
-        cls.XPANSE_ID_SET_PATH = cls.CONTENT_PATH / TESTS_DIR / "id_set_xpanse.json"
-        cls.LANDING_PAGE_SECTIONS_PATH = (
+        cls.CONF_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / "conf.json"
+        cls.DEFAULT_ID_SET_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / "id_set.json"
+        cls.MP_V2_ID_SET_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / "id_set_mp_v2.json"
+        cls.XPANSE_ID_SET_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / "id_set_xpanse.json"
+        cls.LANDING_PAGE_SECTIONS_PATH: Path = (
             cls.CONTENT_PATH / TESTS_DIR / "Marketplace" / "landingPage_sections.json"
         )
-        cls.NATIVE_IMAGE_PATH = cls.CONTENT_PATH / TESTS_DIR / NATIVE_IMAGE_FILE_NAME
-        cls.COMMON_SERVER_PYTHON_PATH = (
+        cls.NATIVE_IMAGE_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / NATIVE_IMAGE_FILE_NAME
+        cls.COMMON_SERVER_PYTHON_PATH: Path = (
             cls.CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"
         )
-        cls.DEMISTO_MOCK_PATH = cls.CONTENT_PATH / TESTS_DIR / "demistomock"
+        cls.DEMISTO_MOCK_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / "demistomock"
         cls.API_MODULES_SCRIPTS_DIR = (
             cls.CONTENT_PATH / "Packs" / "ApiModules" / "Scripts"
         )

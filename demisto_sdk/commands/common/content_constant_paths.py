@@ -53,11 +53,15 @@ class ContentPaths:
         cls.CONF_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / "conf.json"
         cls.DEFAULT_ID_SET_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / "id_set.json"
         cls.MP_V2_ID_SET_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / "id_set_mp_v2.json"
-        cls.XPANSE_ID_SET_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / "id_set_xpanse.json"
+        cls.XPANSE_ID_SET_PATH: Path = (
+            cls.CONTENT_PATH / TESTS_DIR / "id_set_xpanse.json"
+        )
         cls.LANDING_PAGE_SECTIONS_PATH: Path = (
             cls.CONTENT_PATH / TESTS_DIR / "Marketplace" / "landingPage_sections.json"
         )
-        cls.NATIVE_IMAGE_PATH: Path = cls.CONTENT_PATH / TESTS_DIR / NATIVE_IMAGE_FILE_NAME
+        cls.NATIVE_IMAGE_PATH: Path = (
+            cls.CONTENT_PATH / TESTS_DIR / NATIVE_IMAGE_FILE_NAME
+        )
         cls.COMMON_SERVER_PYTHON_PATH: Path = (
             cls.CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"
         )

@@ -55,7 +55,6 @@ class PreCommitContext:
     docker_image: Optional[str] = None
     dry_run: bool = False
     pre_commit_template_path: Path = PRECOMMIT_TEMPLATE_PATH
-    default_config_file
 
     def __post_init__(self):
         """

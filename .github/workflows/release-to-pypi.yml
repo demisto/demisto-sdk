@@ -38,13 +38,15 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Poetry build
-        run: |
-          poetry build
+      - name: Build
+        run: uvx --from build pyproject-build --installer uv
 
       - name: Publish SDK to PyPi
-        run: |
-          poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: uvx twine upload dist/*
+
 
       - name: Comment PR that SDK has been released
         uses: thollander/actions-comment-pull-request@v2

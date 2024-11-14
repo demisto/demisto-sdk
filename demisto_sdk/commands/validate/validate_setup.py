@@ -168,7 +168,9 @@ def validate(
 
     is_external_repo = is_external_repository()
     file_path = input
-    execution_mode = determine_execution_mode(file_path, validate_all, use_git)
+    execution_mode = determine_execution_mode(
+        file_path, validate_all, use_git, post_commit
+    )
     exit_code = 0
 
     # Check environment variables
@@ -203,14 +205,17 @@ def validate(
         sys.exit(1)
 
 
-def determine_execution_mode(file_path, validate_all, use_git):
+def determine_execution_mode(file_path, validate_all, use_git, post_commit):
     if validate_all:
         return ExecutionMode.ALL_FILES
-    elif use_git:
-        return ExecutionMode.USE_GIT
     elif file_path:
         return ExecutionMode.SPECIFIC_FILES
+    elif use_git:
+        return ExecutionMode.USE_GIT
     else:
+        # Default case: fall back to using git for validation
+        use_git = True
+        post_commit = True
         return ExecutionMode.USE_GIT
 
 

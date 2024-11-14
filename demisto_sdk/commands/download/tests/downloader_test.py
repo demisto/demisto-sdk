@@ -393,7 +393,8 @@ class TestFlags:
         downloader = Downloader(output="Output", input=tuple(), system=True)
         mocker.patch.object(Downloader, "verify_output_path", return_value=True)
 
-        assert downloader.download() == 1
+        with pytest.raises(typer.Exit):
+            assert downloader.download() == 1
         assert (
             "Error: Missing required parameter for downloading system items: '-i' / '--input'."
             in caplog.text
@@ -700,7 +701,7 @@ class TestDownloadExistingFile:
         )
 
         # The downloaded yml contains some other comment now.
-        script_data["comment"] = "some other comment"
+        script_data["comment"] = "some other comment."
 
         env.SCRIPT_CUSTOM_CONTENT_OBJECT["data"] = script_data
         with pytest.raises(typer.Exit):
@@ -1440,7 +1441,8 @@ def test_list_files_flag(mocker):
 
     list_file_method_mock = mocker.spy(downloader, "list_all_custom_content")
     content_table_mock = mocker.spy(downloader, "create_custom_content_table")
-    assert downloader.download() == 0
+    with pytest.raises(typer.Exit):
+        assert downloader.download() == 0
 
     expected_table = (
         "Content Name                Content Type\n"

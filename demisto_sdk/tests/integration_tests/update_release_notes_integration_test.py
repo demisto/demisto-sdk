@@ -166,8 +166,10 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     result = runner.invoke(
         app, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )
+    # Check the result output and exception
+    print(f"Result Output: {result.output}")
     assert result.exit_code == 0
-    assert Path(rn_path).is_file()
+    assert Path(rn_path).is_file(), f"Release notes file not found at {rn_path}"
     assert not result.exception
     assert all(
         [
@@ -770,6 +772,7 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
         "get_git_changed_files",
         return_value=(modified_files, {"1_1_0.md"}, set()),
     )
+    print(f"Modified files: {modified_files}")
     mocker.patch.object(
         UpdateRN, "get_pack_metadata", return_value={"currentVersion": "1.1.0"}
     )
@@ -884,6 +887,7 @@ def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
 
     runner = CliRunner(mix_stderr=True)
     result = runner.invoke(app, [UPDATE_RN_COMMAND, "-g"])
+    print(result.stdout)
     assert result.exit_code == 0
     assert not result.exception
     assert (
@@ -892,7 +896,7 @@ def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
     )
 
 
-def test_update_release_on_matadata_change_that_require_rn(
+def test_update_release_on_metadata_change_that_require_rn(
     demisto_client, mocker, repo
 ):
     """

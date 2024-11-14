@@ -5597,7 +5597,7 @@ class TestValidationUsingGit:
     def test_validation_non_content_path(self):
         """
         Given
-        - non content pack path file, file not existing.
+        - non-content pack path file, file not existing.
 
         When
         - Running demisto-sdk validate command.
@@ -5620,6 +5620,8 @@ class TestValidationUsingGit:
             ],
             catch_exceptions=False,
         )
+        print(result.output)
+        print(result.exit_code)
         assert result.exit_code == 2
         assert result.exception
         assert "does not exist" in result.stderr  # check error str is in stdout
@@ -5627,7 +5629,7 @@ class TestValidationUsingGit:
     def test_validation_non_content_path_mocked_repo(self, mocker, repo):
         """
         Given
-        - non content pack path file, file existing.
+        - non-content pack path file, file existing.
 
         When
         - Running demisto-sdk validate command.
@@ -5731,7 +5733,6 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-
         assert all(
             [
                 current_str in result.output

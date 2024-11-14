@@ -5,6 +5,7 @@ from typing import Optional
 from unittest.mock import patch
 
 import pytest
+import typer
 
 from demisto_sdk.commands.format import (
     update_dashboard,
@@ -174,11 +175,12 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target, use_graph=False)
-        shutil.rmtree(target, ignore_errors=True)
-        shutil.rmtree(path, ignore_errors=True)
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, output=target, use_graph=False)
+            shutil.rmtree(target, ignore_errors=True)
+            shutil.rmtree(path, ignore_errors=True)
 
-        assert res is answer
+            assert res is answer
 
     @pytest.mark.parametrize(
         "source, target, path, answer", FORMAT_FILES_OLD_FROMVERSION
@@ -198,12 +200,12 @@ class TestFormattingJson:
         shutil.copyfile(source, target)
 
         monkeypatch.setattr("builtins.input", lambda: "N")
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, output=target, use_graph=False)
+            shutil.rmtree(target, ignore_errors=True)
+            shutil.rmtree(path, ignore_errors=True)
 
-        res = format_manager(input=target, output=target, use_graph=False)
-        shutil.rmtree(target, ignore_errors=True)
-        shutil.rmtree(path, ignore_errors=True)
-
-        assert res is answer
+            assert res is answer
 
     @pytest.mark.parametrize("invalid_output", [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):

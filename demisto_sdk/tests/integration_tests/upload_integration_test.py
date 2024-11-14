@@ -1,13 +1,14 @@
-import re
 from io import BytesIO
 from os.path import join
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest import mock
 from zipfile import ZipFile
 
 import demisto_client
 import pytest
 from packaging.version import Version
+from rich.console import Console
 from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
@@ -361,12 +362,19 @@ def test_integration_upload_path_does_not_exist(demisto_client_mock):
     invalid_dir_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/DoesNotExist"
     )
-    runner = CliRunner(mix_stderr=True)
-    result = runner.invoke(app, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
-    assert result.exit_code == 2
-    assert isinstance(result.exception, SystemExit)
-    pattern = r"Invalid value for '--input' \/ '-i': (.*)"
-    assert re.search(pattern, result.stdout)
+
+    # Mock rich Console to avoid rich formatting during tests
+    with mock.patch.object(Console, "print", wraps=Console().print) as mock_print:
+        runner = CliRunner(mix_stderr=True)
+        result = runner.invoke(app, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
+
+        assert result.exit_code == 2
+        assert isinstance(result.exception, SystemExit)
+
+        # Check for error message in the output
+        assert "Invalid value for '--input' / '-i'" in result.stdout
+        assert "does not exist" in result.stdout
+        mock_print.assert_called()
 
 
 def test_integration_upload_pack_invalid_connection_params(mocker):

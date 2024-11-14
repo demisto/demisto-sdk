@@ -1418,19 +1418,5 @@ def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker)
         "demisto_sdk.commands.doc_reviewer.doc_reviewer.DocReviewer",
         return_value=mock_doc_reviewer,
     )
-    # runner.invoke(app, ["doc-review", *use_pack_known_words])
-    # assert m.call_args.kwargs.get("load_known_words_from_pack") == expected_param_value
-    result = runner.invoke(app, ["doc-review", *use_pack_known_words])
-
-    # Assert the call was made correctly
-    assert (
-        m.call_args is not None
-    ), f"DocReviewer was not called. Output: {result.output}"
-
-    # Check the load_known_words_from_pack argument
-    load_known_words_from_pack_value = m.call_args.kwargs.get(
-        "load_known_words_from_pack"
-    )
-    assert (
-        load_known_words_from_pack_value == expected_param_value
-    ), f"Expected {expected_param_value}, but got {load_known_words_from_pack_value}"
+    runner.invoke(app, ["doc-review", *use_pack_known_words])
+    assert m.call_args.kwargs.get("load_known_words_from_pack") == expected_param_value

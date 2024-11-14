@@ -177,35 +177,41 @@ def find_diff(old_content_info, new_content_info, type, parent_name=None):
 def create_rn_for_updated_content_item(path, _type, text):
     rn_desc = ''
     deprecate_rn = ''
-    if _type in TYPE_CONVERSION_BY_FileType and (issubclass(TYPE_CONVERSION_BY_FileType[_type], YAMLContentUnifiedObject) or issubclass(TYPE_CONVERSION_BY_FileType[_type], YAMLContentObject)):
-        old_content_file, new_content_file = get_yml_objects(path, _type)
+    old_content_file = {}
+    new_content_file = {}
     if _type in (
     FileType.INTEGRATION,
     FileType.SCRIPT,
     FileType.PLAYBOOK,
     ):
+        old_content_file, new_content_file = get_yml_objects(path, _type)
         deprecate_rn = get_deprecated_rn(old_content_file, new_content_file, _type)
     if deprecate_rn:
         if text:
             rn_desc += f"- {text}\n"
         rn_desc += deprecate_rn
     else:
-        if _type == FileType.INTEGRATION:
-            rn_desc += find_diff(old_content_file.get("configuration", []), new_content_file.get("configuration", []), content_type.PARAMETER)
-            rn_desc += find_diff(old_content_file.get("script", {}).get("commands", []), new_content_file.script.get("commands", []), content_type.COMMAND)
-        elif _type == FileType.SCRIPT:
-            rn_desc += find_diff(old_content_file.get("args"), new_content_file.get("args"), content_type.ARGUMENT)
-        elif _type in TYPE_CONVERSION_BY_FileType and (issubclass(TYPE_CONVERSION_BY_FileType[_type], JSONContentObject)):
-            old_json_file, new_json_file = get_json_objects(path, _type)
-            # help = list(dictdiffer.diff(old_json_file, new_json_file.to_dict()))
-            if new_associated_types := new_json_file.get('associatedTypes'):
-                old_associated_types = old_json_file.get('associatedTypes')
-                added_associated_types = [new_type for new_type in new_associated_types if new_type not in old_associated_types]
-                if added_associated_types:
-                    rn_desc += f'- Added new associated types: {",".join(added_associated_types)}.\n'
+        rn_desc += add_enhance_rn(_type, path, old_content_file, new_content_file)
         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
     return rn_desc
 
+
+def add_enhance_rn(_type, path, old_content_file, new_content_file):
+    rn_desc = ''
+    if _type == FileType.INTEGRATION:
+        rn_desc += find_diff(old_content_file.get("configuration", []), new_content_file.get("configuration", []), content_type.PARAMETER)
+        rn_desc += find_diff(old_content_file.get("script", {}).get("commands", []), new_content_file.script.get("commands", []), content_type.COMMAND)
+    elif _type == FileType.SCRIPT:
+        rn_desc += find_diff(old_content_file.get("args"), new_content_file.get("args"), content_type.ARGUMENT)
+    elif _type in (FileType.INCIDENT_FIELD):
+        old_json_file, new_json_file = get_json_objects(path, _type)
+        # help = list(dictdiffer.diff(old_json_file, new_json_file.to_dict()))
+        if new_associated_types := new_json_file.get('associatedTypes'):
+            old_associated_types = old_json_file.get('associatedTypes')
+            added_associated_types = [new_type for new_type in new_associated_types if new_type not in old_associated_types]
+            if added_associated_types:
+                rn_desc += f'- Added new associated types: {",".join(added_associated_types)}.\n'
+    return rn_desc
 
 def get_deprecated_rn(old_yml, new_yml, file_type):
     """Generate rn for deprecated items"""
@@ -857,7 +863,7 @@ class UpdateRN:
                 rn_desc += "\n"
                 if _type == FileType.INTEGRATION:
                     rn_desc += "\n- Added the following commands:\n"
-                    new_content_file = CLASS_BY_FILE_TYPE[_type](path)
+                    new_content_file = TYPE_CONVERSION_BY_FileType[_type](path)
                     new_commands = new_content_file.script.get("commands", [])
                     for command in new_commands:
                         rn_desc += f"\t- ***{command.get('name')}***\n"

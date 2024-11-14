@@ -180,7 +180,7 @@ tests = ["mypy (>=0.800)", "pytest", "pytest-asyncio"]
 name = "astor"
 version = "0.8.1"
 description = "Read/rewrite/write Python ASTs"
-optional = false
+optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
 files = [
     {file = "astor-0.8.1-py2.py3-none-any.whl", hash = "sha256:070a54e890cefb5b3739d19f30f5a5ec840ffc9c50ffa7d23cc9fc1a38ebbfc5"},
@@ -4400,23 +4400,23 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "75.1.0"
+version = "75.5.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "setuptools-75.1.0-py3-none-any.whl", hash = "sha256:35ab7fd3bcd95e6b7fd704e4a1539513edad446c097797f2985e0e4b960772f2"},
-    {file = "setuptools-75.1.0.tar.gz", hash = "sha256:d59a21b17a275fb872a9c3dae73963160ae079f1049ed956880cd7c09b120538"},
+    {file = "setuptools-75.5.0-py3-none-any.whl", hash = "sha256:87cb777c3b96d638ca02031192d40390e0ad97737e27b6b4fa831bea86f2f829"},
+    {file = "setuptools-75.5.0.tar.gz", hash = "sha256:5c4ccb41111392671f02bb5f8436dfc5a9a7185e80500531b133f5775c4163ef"},
 ]
 
 [package.extras]
-check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)", "ruff (>=0.5.2)"]
-core = ["importlib-metadata (>=6)", "importlib-resources (>=5.10.2)", "jaraco.collections", "jaraco.functools", "jaraco.text (>=3.7)", "more-itertools", "more-itertools (>=8.8)", "packaging", "packaging (>=24)", "platformdirs (>=2.6.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
+check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)", "ruff (>=0.7.0)"]
+core = ["importlib-metadata (>=6)", "jaraco.collections", "jaraco.functools (>=4)", "jaraco.text (>=3.7)", "more-itertools", "more-itertools (>=8.8)", "packaging", "packaging (>=24.2)", "platformdirs (>=4.2.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
 cover = ["pytest-cov"]
 doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
 enabler = ["pytest-enabler (>=2.2)"]
-test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
-type = ["importlib-metadata (>=7.0.2)", "jaraco.develop (>=7.21)", "mypy (==1.11.*)", "pytest-mypy"]
+test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test (>=5.5)", "packaging (>=24.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
+type = ["importlib-metadata (>=7.0.2)", "jaraco.develop (>=7.21)", "mypy (>=1.12,<1.14)", "pytest-mypy"]
 
 [[package]]
 name = "shellingham"
@@ -4703,20 +4703,27 @@ files = [
 
 [[package]]
 name = "typer"
-version = "0.12.5"
+version = "0.9.4"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.6"
 files = [
-    {file = "typer-0.12.5-py3-none-any.whl", hash = "sha256:62fe4e471711b147e3365034133904df3e235698399bc4de2b36c8579298d52b"},
-    {file = "typer-0.12.5.tar.gz", hash = "sha256:f592f089bedcc8ec1b974125d64851029c3b1af145f04aca64d69410f0c9b722"},
+    {file = "typer-0.9.4-py3-none-any.whl", hash = "sha256:aa6c4a4e2329d868b80ecbaf16f807f2b54e192209d7ac9dd42691d63f7a54eb"},
+    {file = "typer-0.9.4.tar.gz", hash = "sha256:f714c2d90afae3a7929fcd72a3abb08df305e1ff61719381384211c4070af57f"},
 ]
 
 [package.dependencies]
-click = ">=8.0.0"
-rich = ">=10.11.0"
-shellingham = ">=1.3.0"
+click = ">=7.1.1,<9.0.0"
+colorama = {version = ">=0.4.3,<0.5.0", optional = true, markers = "extra == \"all\""}
+rich = {version = ">=10.11.0,<14.0.0", optional = true, markers = "extra == \"all\""}
+shellingham = {version = ">=1.3.0,<2.0.0", optional = true, markers = "extra == \"all\""}
 typing-extensions = ">=3.7.4.3"
+
+[package.extras]
+all = ["colorama (>=0.4.3,<0.5.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
+dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2.17.0,<3.0.0)"]
+doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "pillow (>=9.3.0,<10.0.0)"]
+test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.971)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
 
 [[package]]
 name = "types-dateparser"
@@ -4789,13 +4796,13 @@ urllib3 = ">=2"
 
 [[package]]
 name = "types-setuptools"
-version = "69.5.0.20240522"
+version = "75.3.0.20241112"
 description = "Typing stubs for setuptools"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-setuptools-69.5.0.20240522.tar.gz", hash = "sha256:c5a97601b2d040d3b9fcd0633730f0a8c86ebef208552525c97301427f261549"},
-    {file = "types_setuptools-69.5.0.20240522-py3-none-any.whl", hash = "sha256:e27231cbc80648cfaee4921d2f1150107fdf8d33666958abf2aba0191a82688b"},
+    {file = "types-setuptools-75.3.0.20241112.tar.gz", hash = "sha256:f9e1ebd17a56f606e16395c4ee4efa1cdc394b9a2a0ee898a624058b4b62ef8f"},
+    {file = "types_setuptools-75.3.0.20241112-py3-none-any.whl", hash = "sha256:78cb5fef4a6056d2f37114d27da90f4655a306e4e38042d7034a8a880bc3f5dd"},
 ]
 
 [[package]]
@@ -5316,18 +5323,18 @@ multidict = ">=4.0"
 
 [[package]]
 name = "z3-solver"
-version = "4.13.3.0"
+version = "4.13.2.0"
 description = "an efficient SMT solver library"
 optional = true
 python-versions = "*"
 files = [
-    {file = "z3_solver-4.13.3.0-py3-none-macosx_13_0_arm64.whl", hash = "sha256:cae621cb47ebcf055f6a27285343d5c932f4c282b15c5d2840327e73e15a86a4"},
-    {file = "z3_solver-4.13.3.0-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:7900fbd1917164c938a20bea7845f7b95fcb431d0ade474d408f979196bccb8f"},
-    {file = "z3_solver-4.13.3.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:794843e4946ade1561e40a75ffc1163b45d36b493fd6cc269ad1d6a65bddb8e5"},
-    {file = "z3_solver-4.13.3.0-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:ab5057cb1f4680406a232d2c1d968daaf69fae10685baa0887b85ca8e938a5cf"},
-    {file = "z3_solver-4.13.3.0-py3-none-win32.whl", hash = "sha256:ba465489e9ab609f1cf0f232cbc102165b89a507347a6093c2ac3224cf161aa3"},
-    {file = "z3_solver-4.13.3.0-py3-none-win_amd64.whl", hash = "sha256:d55e4793fa48230af766c7f6f7f033198b2d9df150d89ec65b07fd7b87998897"},
-    {file = "z3_solver-4.13.3.0.tar.gz", hash = "sha256:4c27466455bac65d3c512f4bb4841ac79e05e121d3f98ddc99ac27ab4bc27e05"},
+    {file = "z3_solver-4.13.2.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:93456e4c462c4bf9c94371807548ffbbfe68aa7187f67b8c9ce19e82db7d3d27"},
+    {file = "z3_solver-4.13.2.0-py3-none-macosx_12_7_x86_64.whl", hash = "sha256:61f313649d3877c91f67cded2cbefe0f33fe47f194eb43bb302694b9e3dfae2c"},
+    {file = "z3_solver-4.13.2.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:18a67ba6f934350c352d9930ace9a69ba9f6d0c52aca5a8d2e2265ad57fca6bd"},
+    {file = "z3_solver-4.13.2.0-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:1ae47832194d7ae6db6b04c856261f1ce3cd1ed0457d30cbec165559149859f9"},
+    {file = "z3_solver-4.13.2.0-py3-none-win32.whl", hash = "sha256:ce5d7478c6d7e7649d5ea9ac4e06091f0e94ef5998e31c1ca35c3cec62037dbc"},
+    {file = "z3_solver-4.13.2.0-py3-none-win_amd64.whl", hash = "sha256:63cdae5e8144b27a6afaab2d21a0baf97ed452797bff01ef1f0cbe9608cdff01"},
+    {file = "z3_solver-4.13.2.0.tar.gz", hash = "sha256:8b02db03e028e8f3b8498fe65e45ce7348c2995e66427353a0a8ce84ed83d934"},
 ]
 
 [[package]]
@@ -5415,4 +5422,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "3eac7cf2404d8a58b71cfd94061680f62f88fa4f8d8a674c4cf438d6fce21385"
+content-hash = "af510a626ef88465ad8458b2ff0d43bf70ae22244aec13be86b5f84bc0f0ca2b"

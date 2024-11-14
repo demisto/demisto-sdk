@@ -37,7 +37,7 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     repo_path = Path(pack.repo_path)
     mocker.patch.object(setup_environment.ContentPaths, "CONTENT_PATH", repo_path)
     mocker.patch.object(
-        setup_environment.ContentPaths, "DOTENV_PATH", repo_path / ".env"
+        setup_environment, "DOTENV_PATH", repo_path / ".env"
     )
 
     mocker.patch.object(

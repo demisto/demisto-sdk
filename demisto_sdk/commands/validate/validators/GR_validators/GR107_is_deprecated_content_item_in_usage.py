@@ -84,7 +84,7 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
         "Validates that deprecated content items are not used in other content items."
     )
     rationale = "Using deprecated content items can lead to unexpected behavior and should be avoided."
-    error_message = "The {deprecated_item_type} '{deprecated_item}' is deprecated but used in the following content item: {using_deprecated_item}."
+    error_message = "The item '{using_deprecated_item}' is using the following deprecated {deprecated_item_type}: {deprecated_item}"
     related_field = "deprecated"
     is_auto_fixable = False
 

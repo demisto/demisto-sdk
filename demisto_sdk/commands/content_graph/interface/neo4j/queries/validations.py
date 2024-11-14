@@ -119,9 +119,8 @@ def get_items_using_deprecated(
 def get_items_using_deprecated_commands(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, str, List[graph.Node]]]:
-    files_filter = (
-        f"AND (p.path in {file_paths} OR i.path IN {file_paths})" if file_paths else ""
-    )
+    files_filter = f"AND p.path IN {file_paths}" if file_paths else ""
+
     command_query = f"""// Returning all the items which using deprecated commands
 MATCH (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(i:Integration) WHERE NOT p.is_test
 OPTIONAL MATCH (i2:Integration)-[:HAS_COMMAND{{deprecated: false}}]->(c)
@@ -143,9 +142,8 @@ RETURN c.object_id AS deprecated_command, c.content_type AS deprecated_content_t
 def get_items_using_deprecated_content_items(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, str, List[graph.Node]]]:
-    files_filter = (
-        f"AND (p.path IN {file_paths} OR d.path IN {file_paths})" if file_paths else ""
-    )
+    files_filter = f"AND p.path IN {file_paths}" if file_paths else ""
+
     query = f"""
     MATCH (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) WHERE not p.is_test
 // be sure the USES relationship is not because a command, as commands has dedicated query

@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
     GitStatuses,
 )
 from demisto_sdk.commands.common.tools import (
-    filter_none_values,
+    filter_out_falsy_values,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -50,7 +50,7 @@ class IsValidContentTypeHeaderValidator(BaseValidator[ContentTypes]):
             )
             and (
                 rn_first_level_headers := [
-                    filter_none_values(ls=section)[0] for section in rn_sections
+                    filter_out_falsy_values(ls=section)[0] for section in rn_sections
                 ]
             )
             and (

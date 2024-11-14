@@ -4628,7 +4628,7 @@ def pascalToSpace(s):
     return s
 
 
-def filter_none_values(ls: Union[List, Tuple]) -> List:
+def filter_out_falsy_values(ls: Union[List, Tuple]) -> List:
     """
         Filters out None values from a list or tuple.
     Args:

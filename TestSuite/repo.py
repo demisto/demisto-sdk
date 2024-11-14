@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.content_graph.commands.create import create_content_graph
 from demisto_sdk.commands.content_graph.interface import (
@@ -43,6 +44,7 @@ class Repo:
         self._packs_path: Path = tmpdir / "Packs"
         self._packs_path.mkdir()
         self.path = str(self._tmpdir)
+        ContentPaths.update_content_path(self.path)
 
         # Initiate ./Tests/ dir
         self._test_dir = tmpdir / "Tests"

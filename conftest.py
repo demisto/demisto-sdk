@@ -99,6 +99,7 @@ def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Ge
     """
     import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
     import demisto_sdk.commands.content_graph.objects.base_content as bc
+
     repo = get_repo(request, tmp_path_factory)
     bc.ContentPaths.update_content_path(Path(repo.path))
     neo4j_path = bc.ContentPaths.CONTENT_PATH.parent.parent / "neo4j"

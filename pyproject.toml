@@ -140,7 +140,7 @@ types-dateparser = "^1.1.4.20240106"
 types-python-dateutil = "^2.9.0.20240316"
 
 [tool.poetry.scripts]
-demisto-sdk = "demisto_sdk.__main__:main"
+demisto-sdk = "demisto_sdk.__main__:app"
 sdk-changelog = "demisto_sdk.scripts.changelog.changelog:main"
 merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
 merge-pytest-reports = "demisto_sdk.scripts.merge_pytest_reports:main"

@@ -1,3 +1,4 @@
+import importlib
 import os
 import platform
 from pathlib import Path
@@ -38,9 +39,7 @@ from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import
 from demisto_sdk.commands.generate_outputs.generate_outputs_setup import (
     generate_outputs,
 )
-from demisto_sdk.commands.generate_unit_tests.generate_unit_tests_setup import (
-    generate_unit_tests,
-)
+from demisto_sdk.commands.generate_unit_tests.generate_unit_tests_setup import generate_unit_tests
 from demisto_sdk.commands.generate_yml_from_python.generate_yml_from_python_setup import (
     generate_yml_from_python,
 )
@@ -75,6 +74,7 @@ from demisto_sdk.commands.upload.upload_setup import upload
 from demisto_sdk.commands.validate.validate_setup import validate
 from demisto_sdk.commands.xsoar_linter.xsoar_linter_setup import xsoar_linter
 from demisto_sdk.commands.zip_packs.zip_packs_setup import zip_packs
+from demisto_sdk.commands.generate_unit_tests.generate_unit_tests_setup import generate_unit_tests
 
 app = typer.Typer()
 
@@ -127,7 +127,6 @@ def dump_api(
     # Write the JSON output to the specified file
     output_path.write_text(json.dumps(output_json, indent=4))
     typer.echo(f"API dumped successfully to {output_path}")
-
 
 # Registers the commands directly to the Demisto-SDK app.
 app.command(name="upload", help="Uploads an entity to Cortex XSOAR or Cortex XSIAM.")(
@@ -189,11 +188,6 @@ app.command(
     name="generate-yml-from-python",
     help="Generates a YAML file from Python code that includes " "its special syntax.",
 )(generate_yml_from_python)
-app.command(
-    name="generate-unit-tests",
-    help="This command generates unit tests automatically from an "
-    "integration's Python code.",
-)(generate_unit_tests)
 app.command(name="init", help="Creates a new pack, integration, or script template.")(
     init
 )
@@ -259,6 +253,10 @@ app.command(name="generate-modeling-rules", help="Generated modeling-rules.")(
 app.command(
     name="lint", help="Deprecated, use demisto-sdk pre-commit instead.", hidden=True
 )(lint)
+app.command(
+    name="generate-unit-tests",
+    help="This command generates unit tests automatically from an integration's Python code."
+)(generate_unit_tests)
 
 
 @logging_setup_decorator

@@ -94,9 +94,6 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
             "outputs": [output.dict(exclude_none=True) for output in self.outputs],
         }
         remove_nulls_from_dictionary(command)
-        # Replace incorrect marketplace references
-        command = replace_incorrect_marketplace(command, self.marketplace)
-
         return command
 
 
@@ -188,7 +185,8 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 f"Adding the following native images {supported_native_images} to integration {self.object_id}"
             )
             data["script"]["nativeimage"] = supported_native_images
-
+        # Replace incorrect marketplace references
+        data = replace_incorrect_marketplace(data, current_marketplace, str(self.path))
         return data
 
     @classmethod

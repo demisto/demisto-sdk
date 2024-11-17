@@ -61,6 +61,8 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
                 f"Adding the following native images {supported_native_images} to script {self.object_id}"
             )
             data["nativeimage"] = supported_native_images
+        # Replace incorrect marketplace references
+        data = replace_incorrect_marketplace(data, current_marketplace, str(self.path))
 
         return data
 
@@ -94,8 +96,6 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
                         "path": self.path.with_name(f"{script_name}.yml"),
                     }
                 )
-            # Replace incorrect marketplace references
-            data = replace_incorrect_marketplace(data, marketplace)
             try:
                 write_dict(dir / obj.normalize_name, data=data, handler=obj.handler)
 

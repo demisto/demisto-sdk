@@ -273,6 +273,9 @@ class ContentItem(BaseContent):
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
         logger.debug(f"preparing {self.path}")
+
+        # Replace incorrect marketplace references
+        data = replace_incorrect_marketplace(data, current_marketplace, str(self.path))
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
@@ -351,14 +354,9 @@ class ContentItem(BaseContent):
             return
         dir.mkdir(exist_ok=True, parents=True)
         try:
-            data = self.prepare_for_upload(current_marketplace=marketplace)
-
-            # Replace incorrect marketplace references
-            data = replace_incorrect_marketplace(data, marketplace)
-
             write_dict(
                 dir / self.normalize_name,
-                data=data,
+                data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,
             )
         except FileNotFoundError as e:

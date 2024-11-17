@@ -2,7 +2,7 @@ from functools import cached_property
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import ContentType, replace_incorrect_marketplace
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
     ContentItemXSIAM,
 )
@@ -23,6 +23,8 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
             data = super().prepare_for_upload(current_marketplace)
         else:
             data = self.data
+        # Replace incorrect marketplace references
+        data = replace_incorrect_marketplace(data, current_marketplace, str(self.path))
         data = RuleUnifier.unify(self.path, data, current_marketplace)
         return data
 

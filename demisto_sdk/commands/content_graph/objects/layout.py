@@ -5,7 +5,7 @@ import demisto_client
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import ContentType, replace_incorrect_marketplace
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
@@ -38,6 +38,8 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
             and self.group == "indicator"
         ):
             data = replace_layout_incident_alert(data)
+        # Replace incorrect marketplace references
+        data = replace_incorrect_marketplace(data, current_marketplace, str(self.path))
 
         return data
 

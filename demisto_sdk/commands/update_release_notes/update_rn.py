@@ -139,36 +139,61 @@ def deleted_content(old_content_dict, new_content_dict, type, parent_name):
             logger.info(f'Please add a breaking changes json file for deleting the {old_content.get("display", old_content_name)}** {type.value}')
     return rn
 
-def added_or_updated_content(old_content_dict, new_content_dict, type, parent_name):
-    rn = ''
+def deprecations_rn(name: str, content_type: content_type, parent: str | None = None) -> str:
+    if content_type == content_type.COMMAND:
+        return f"- Deprecated ***{name}*** {content_type.value}. Use %%% instead.\n"
+    if content_type == content_type.ARGUMENT and parent:
+        return f"- Deprecated the `{name}` {content_type.value} inside the **{parent}** command.\n"
+    return f"- Deprecated ***{name}*** {content_type.value}.\n"
+
+def required_rn(name: str, content_type: content_type) -> str:
+    return f"- Updated the **{name}** {content_type.value} to be required.\n"
+
+def additions_rn(
+    name: str, new_content: dict[str, Any], content_type: content_type, parent: str | None = None
+) -> str:
+    content_info = new_content.get("additionalinfo", new_content.get("description", "")).replace("-", "").lower()
+    display_name = new_content.get("display", name)
+    if content_type == content_type.ARGUMENT and parent:
+        return f"- Added support for `{name}` argument in the **{parent}** command.\n"
+    return f"- Added the **{display_name}** {content_type.value}" \
+            f"{(' which ' + content_info) if content_info else '.'}\n"
+
+def added_or_updated_content(
+    old_content_dict: dict[str, Any],
+    new_content_dict: dict[str, Any],
+    type: content_type,
+    parent_name: str | None,
+) -> str:
+    rn = ""
+
     for new_content_name, new_content in new_content_dict.items():
         if new_content_name not in old_content_dict:
-            if type == content_type.ARGUMENT and parent_name:
-                rn += f'- Updated the **{parent_name}** to use the `{new_content_name}` argument.\n'
-            else:
-                content_info = new_content.get("additionalinfo", new_content.get("description"))
-                rn += f'- Added the **{new_content.get("display", new_content_name)}** {type.value}' \
-                    f'{(" which " + content_info.replace("-", "").lower()) if content_info else "."}\n'
+            rn += additions_rn(new_content_name, new_content, type, parent_name)
         else:
             old_content = old_content_dict[new_content_name]
-            if new_content.get('deprecated') and not old_content.get('deprecated'):
-                if type == content_type.COMMAND:
-                    rn += f'- Deprecated ***{new_content_name}*** {type.value}. Use %%% instead.\n'
-                elif type == content_type.ARGUMENT and parent_name:
-                    rn += f'- Deprecated the `{new_content_name}` {type.value} inside the **{parent_name}** command.\n'
-                else:
-                    rn += f'- Deprecated ***{new_content_name}*** {type.value}.\n'
-            if (type == content_type.PARAMETER or type == content_type.ARGUMENT) and new_content.get('required') and not old_content.get('required'):
-                rn += f'- Updated the **{new_content.get("display", new_content_name)}** {type.value} to be required.\n'
-            elif type == content_type.COMMAND:
-                rn+= find_diff(old_content.get('arguments', []), new_content.get('arguments', []), content_type.ARGUMENT, new_content_name)
+            if new_content.get("deprecated") and not old_content.get("deprecated"):
+                rn += deprecations_rn(new_content_name, type, parent_name)
+            if (
+                type in {content_type.PARAMETER, content_type.ARGUMENT}
+                and new_content.get("required")
+                and not old_content.get("required")
+            ):
+                rn += required_rn(new_content.get("display", new_content_name), type)
+            if type == content_type.COMMAND:
+                rn += find_diff(
+                    old_content.get("arguments", []),
+                    new_content.get("arguments", []),
+                    content_type.ARGUMENT,
+                    new_content_name,
+                )
+
     return rn
 
 def find_diff(old_content_info, new_content_info, type, parent_name=None):
     rn = ''
     old_content_dict = {old_content.get('name'):old_content for old_content in old_content_info}
     new_content_dict = {new_content.get('name'):new_content for new_content in new_content_info}
-    # help = list(dictdiffer.diff(old_content_dict, new_content_dict))
     rn += deleted_content(old_content_dict, new_content_dict, type, parent_name)
     rn += added_or_updated_content(old_content_dict, new_content_dict, type, parent_name)
     return rn
@@ -205,7 +230,6 @@ def add_enhance_rn(_type, path, old_content_file, new_content_file):
         rn_desc += find_diff(old_content_file.get("args"), new_content_file.get("args"), content_type.ARGUMENT)
     elif _type in (FileType.INCIDENT_FIELD):
         old_json_file, new_json_file = get_json_objects(path, _type)
-        # help = list(dictdiffer.diff(old_json_file, new_json_file.to_dict()))
         if new_associated_types := new_json_file.get('associatedTypes'):
             old_associated_types = old_json_file.get('associatedTypes')
             added_associated_types = [new_type for new_type in new_associated_types if new_type not in old_associated_types]

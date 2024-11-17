@@ -43,26 +43,42 @@ def test_to_neo4j_pattern():
     )
 
 
-
-@pytest.mark.parametrize("data, marketplace, expected", [
-    ("This is a Cortex XSOAR v1 example.", MarketplaceVersions.MarketplaceV2, "This is a Cortex example."),
-    ("This is a Cortex XSOAR example.", MarketplaceVersions.MarketplaceV2, "This is a Cortex example."),
-    ("This is a Cortex XSOAR v1 example.", MarketplaceVersions.XSOAR, "This is a Cortex XSOAR v1 example."),
-    ({
-        "description": "This is a Cortex XSOAR v1 example.",
-        "details": "Cortex XSOAR should be replaced."
-    }, MarketplaceVersions.MarketplaceV2, {
-        "description": "This is a Cortex example.",
-        "details": "Cortex should be replaced."
-    }),
-    ([
-        "This is a Cortex XSOAR v1 example.",
-        "Cortex XSOAR should be replaced."
-    ], MarketplaceVersions.MarketplaceV2, [
-        "This is a Cortex example.",
-        "Cortex should be replaced."
-    ]),
-])
+@pytest.mark.parametrize(
+    "data, marketplace, expected",
+    [
+        (
+            "This is a Cortex XSOAR v1 example.",
+            MarketplaceVersions.MarketplaceV2,
+            "This is a Cortex example.",
+        ),
+        (
+            "This is a Cortex XSOAR example.",
+            MarketplaceVersions.MarketplaceV2,
+            "This is a Cortex example.",
+        ),
+        (
+            "This is a Cortex XSOAR v1 example.",
+            MarketplaceVersions.XSOAR,
+            "This is a Cortex XSOAR v1 example.",
+        ),
+        (
+            {
+                "description": "This is a Cortex XSOAR v1 example.",
+                "details": "Cortex XSOAR should be replaced.",
+            },
+            MarketplaceVersions.MarketplaceV2,
+            {
+                "description": "This is a Cortex example.",
+                "details": "Cortex should be replaced.",
+            },
+        ),
+        (
+            ["This is a Cortex XSOAR v1 example.", "Cortex XSOAR should be replaced."],
+            MarketplaceVersions.MarketplaceV2,
+            ["This is a Cortex example.", "Cortex should be replaced."],
+        ),
+    ],
+)
 def test_replace_incorrect_marketplace(data, marketplace, expected):
     """
     Test the replace_incorrect_marketplace function.
@@ -80,6 +96,7 @@ def test_replace_incorrect_marketplace(data, marketplace, expected):
     """
     result = replace_incorrect_marketplace(data, marketplace, path="example/path")
     assert result == expected
+
 
 def test_replace_incorrect_marketplace_error_handling(caplog):
     """
@@ -99,9 +116,17 @@ def test_replace_incorrect_marketplace_error_handling(caplog):
     data = {"key": "value"}
     marketplace = MarketplaceVersions.MarketplaceV2
 
-    with patch('demisto_sdk.commands.content_graph.common.replace_incorrect_marketplace', side_effect=Exception("Test exception")):
+    with patch(
+        "demisto_sdk.commands.content_graph.common.replace_incorrect_marketplace",
+        side_effect=Exception("Test exception"),
+    ):
         with caplog.at_level(logging.ERROR):
-            result = replace_incorrect_marketplace(data, marketplace, path="example/path")
+            result = replace_incorrect_marketplace(
+                data, marketplace, path="example/path"
+            )
 
     assert result == data
-    assert "Error processing data for replacing incorrect marketplace at path 'example/path'" in caplog.text
+    assert (
+        "Error processing data for replacing incorrect marketplace at path 'example/path'"
+        in caplog.text
+    )

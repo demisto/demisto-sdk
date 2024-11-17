@@ -14,7 +14,10 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import (
     write_dict,
 )
-from demisto_sdk.commands.content_graph.common import ContentType, replace_incorrect_marketplace
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    replace_incorrect_marketplace,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
 )

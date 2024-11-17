@@ -281,7 +281,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
         # Replace incorrect marketplace references
-        metadata =replace_incorrect_marketplace(metadata, marketplace, str(self.path))
+        metadata = replace_incorrect_marketplace(metadata, marketplace, str(self.path))
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:

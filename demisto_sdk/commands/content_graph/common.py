@@ -517,7 +517,9 @@ CONTENT_PRIVATE_ITEMS: dict = {
 }
 
 
-def replace_incorrect_marketplace(data: Any, marketplace: MarketplaceVersions, path: str = "") -> Any:
+def replace_incorrect_marketplace(
+    data: Any, marketplace: MarketplaceVersions, path: str = ""
+) -> Any:
     """
     Recursively replaces "Cortex XSOAR" with "Cortex" in the given data if the marketplace is MarketplaceV2 or XPANSE.
     If the word following "Cortex XSOAR" contains a number, it will also be removed.
@@ -532,14 +534,22 @@ def replace_incorrect_marketplace(data: Any, marketplace: MarketplaceVersions, p
         Any: The processed data with replacements made if applicable.
     """
     try:
-        if marketplace in {MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}:
+        if marketplace in {
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }:
             if isinstance(data, dict):
-                return {k: replace_incorrect_marketplace(v, marketplace) for k, v in data.items()}
+                return {
+                    k: replace_incorrect_marketplace(v, marketplace)
+                    for k, v in data.items()
+                }
             elif isinstance(data, list):
                 return [replace_incorrect_marketplace(v, marketplace) for v in data]
             elif isinstance(data, str):
                 # Replace "Cortex XSOAR" and the following word if it contains a number
-                return re.sub(r'Cortex XSOAR(?: \w*\d\w*)?', 'Cortex', data)
+                return re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
     except Exception as e:
-        logger.error(f"Error processing data for replacing incorrect marketplace at path '{path}': {e}")
+        logger.error(
+            f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"
+        )
     return data

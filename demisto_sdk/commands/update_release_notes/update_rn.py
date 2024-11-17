@@ -220,6 +220,15 @@ def create_rn_for_updated_content_item(path, _type, text):
         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
     return rn_desc
 
+def associated_types_diff(path, _type):
+    rn_desc = ''
+    old_json_file, new_json_file = get_json_objects(path, _type)
+    if new_associated_types := new_json_file.get('associatedTypes'):
+        old_associated_types = old_json_file.get('associatedTypes')
+        added_associated_types = [new_type for new_type in new_associated_types if new_type not in old_associated_types]
+        if added_associated_types:
+            rn_desc += f'- Added new associated types: {",".join(added_associated_types)}.\n'
+    return rn_desc
 
 def add_enhance_rn(_type, path, old_content_file, new_content_file):
     rn_desc = ''
@@ -229,12 +238,7 @@ def add_enhance_rn(_type, path, old_content_file, new_content_file):
     elif _type == FileType.SCRIPT:
         rn_desc += find_diff(old_content_file.get("args"), new_content_file.get("args"), content_type.ARGUMENT)
     elif _type in (FileType.INCIDENT_FIELD):
-        old_json_file, new_json_file = get_json_objects(path, _type)
-        if new_associated_types := new_json_file.get('associatedTypes'):
-            old_associated_types = old_json_file.get('associatedTypes')
-            added_associated_types = [new_type for new_type in new_associated_types if new_type not in old_associated_types]
-            if added_associated_types:
-                rn_desc += f'- Added new associated types: {",".join(added_associated_types)}.\n'
+        rn_desc += associated_types_diff(path, _type)
     return rn_desc
 
 def get_deprecated_rn(old_yml, new_yml, file_type):

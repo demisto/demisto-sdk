@@ -393,24 +393,6 @@ jobs:
           artifact-name: test-old-validate-command-artifacts
           validate-arguments: "-a --graph --skip-pack-dependencies --skip-new-validate --run-old-validate --prev-ver origin/master"
 
-  validate-files-new-validate:
-    runs-on: ubuntu-latest
-    name: Test New Validate Command
-    timeout-minutes: 60
-    env:
-      CI_COMMIT_BRANCH: "master"
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Run Validate
-        uses: ./.github/actions/validate
-        with:
-          artifacts-path-dir: test-new-validate-command
-          artifact-name: test-new-validate-command-artifacts
-          validate-arguments: "-a --prev-ver origin/master --config-path sdk_validation_config.toml"
-
   slack-notify-master-failure:
     needs:
       [

@@ -69,6 +69,15 @@ repos:
     language: system
     require_serial: true
 
+
+  - id: validate
+    name: validate
+    description: validate content using the new validate flow.
+    entry: demisto-sdk validate
+    args:
+    - --config-path=demisto_sdk/commands/validate/sdk_validation_config.toml
+
+
   - id: merge-pytest-reports
     name: merge-pytest-reports
     entry: merge-pytest-reports

@@ -58,10 +58,11 @@ def generate_unit_tests(
     This command is used to generate unit tests automatically from an integration's Python code.
     Also supports generating unit tests for specific commands.
     """
+    import logging  # noqa: TID251 # special case: controlling external logger
+
     from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
         run_generate_unit_tests,
     )
-    import logging  # noqa: TID251 # special case: controlling external logger
 
     logging.getLogger("PYSCA").propagate = False
 

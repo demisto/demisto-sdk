@@ -5620,8 +5620,6 @@ class TestValidationUsingGit:
             ],
             catch_exceptions=False,
         )
-        print(result.output)
-        print(result.exit_code)
         assert result.exit_code == 2
         assert result.exception
         assert "does not exist" in result.stderr  # check error str is in stdout

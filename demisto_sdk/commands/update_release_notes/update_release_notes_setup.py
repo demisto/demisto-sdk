@@ -114,18 +114,25 @@ def update_release_notes(
             "No specific pack was given, do you want to update all changed packs?"
         ):
             raise typer.Exit(0)
+    try:
+        rn_mng = UpdateReleaseNotesManager(
+            user_input=input,
+            update_type=update_type,
+            pre_release=pre_release,
+            is_all=use_git,
+            text=text,
+            specific_version=version,
+            id_set_path=id_set_path,
+            prev_ver=prev_ver,
+            is_force=force,
+            is_bc=breaking_changes,
+        )
+        rn_mng.manage_rn_update()
 
-    rn_mng = UpdateReleaseNotesManager(
-        user_input=input,
-        update_type=update_type,
-        pre_release=pre_release,
-        is_all=use_git,
-        text=text,
-        specific_version=version,
-        id_set_path=id_set_path,
-        prev_ver=prev_ver,
-        is_force=force,
-        is_bc=breaking_changes,
-    )
-    rn_mng.manage_rn_update()
+    except Exception as e:
+        typer.echo(
+            f"An error occurred while updating the release notes: {str(e)}", err=True
+        )
+        raise typer.Exit(1)
+
     raise typer.Exit(0)

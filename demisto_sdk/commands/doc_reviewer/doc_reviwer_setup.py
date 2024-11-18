@@ -1,5 +1,3 @@
-import sys
-
 import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
@@ -89,5 +87,5 @@ def doc_review(
     )
     result = doc_reviewer.run_doc_review()
     if result:
-        sys.exit(0)
-    sys.exit(1)
+        raise typer.Exit(0)
+    raise typer.Exit(1)

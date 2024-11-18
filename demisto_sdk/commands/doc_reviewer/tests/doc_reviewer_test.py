@@ -1402,12 +1402,12 @@ def test_replace_escape_characters(sentence, expected):
 def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker):
     """
     Given:
-        - the --use-pack-known-words parameter
+        - the --use-packs-known-words parameter
     When:
         - running the doc-review command
     Then:
-        - Validate that given --use-packs-known-words" the load_known_words_from_pack is True
-        - Validate that given --skip-packs-known-words" the load_known_words_from_pack is False
+        - Validate that given --use-packs-known-words the load_known_words_from_pack is True
+        - Validate that given --skip-packs-known-words the load_known_words_from_pack is False
         - Validate that no param the default load_known_words_from_pack is True
         - Validate that given --use-packs-known-words and --skip-packs-known-words the load_known_words_from_pack is True
     """
@@ -1419,5 +1419,7 @@ def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker)
         DocReviewer, "__init__",
         return_value=mock_doc_reviewer,
     )
-    runner.invoke(app, ["doc-review", *use_pack_known_words])
+
+    # runner.invoke(__main__.doc_review, use_pack_known_words)
+    runner.invoke(app, ["doc-review", use_pack_known_words])
     assert m.call_args.kwargs.get("load_known_words_from_pack") == expected_param_value

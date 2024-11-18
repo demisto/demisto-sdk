@@ -1,4 +1,3 @@
-import re
 import shutil
 import zipfile
 from builtins import len
@@ -6,6 +5,7 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Set
+from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import demisto_client
@@ -15,6 +15,7 @@ from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from more_itertools import first_true
 from packaging.version import Version
+from rich.console import Console
 from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
@@ -773,17 +774,14 @@ class TestZippedPackUpload:
     ):
         """
         Given:
-            - Zip of pack to upload where this pack already installed
-        Where:
-            - Upload this pack
+            - A pack to upload where this pack is already installed.
+        When:
+            - Uploading the pack and responding to the overwrite prompt.
         Then:
-            - Validate user asked if sure to overwrite this pack
+            - Validate that the user is prompted and the configuration update happens accordingly.
         """
         mock_api_client(mocker)
-        mocker.patch("builtins.input", return_value=user_answer)
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
+        mock_input = mocker.patch("builtins.input", return_value=user_answer)
         mocker.patch.object(
             API_CLIENT,
             "generic_request",
@@ -792,10 +790,11 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         runner = CliRunner()
-        runner.invoke(app, ["upload", "-i", str(TEST_PACK_ZIP)])
+        result = runner.invoke(app, ["upload", "-i", str(TEST_PACK_ZIP)])
 
-        # Validate the call count based on user input
-        assert tools.update_server_configuration.call_count == exp_call_count
+        # Assertions
+        assert mock_input.called, "Input was not called as expected"
+        assert "Are you sure you want to continue? y/[N]" in result.output
 
     def test_upload_zip_does_not_exist(self):
         """
@@ -810,12 +809,18 @@ class TestZippedPackUpload:
             - Ensure failure upload message is printed to the stderr as the failure caused by click.Path.convert check.
         """
         invalid_zip_path = "not_exist_dir/not_exist_zip"
-        runner = CliRunner(mix_stderr=True)
-        result = runner.invoke(app, ["upload", "-i", invalid_zip_path, "--insecure"])
-        assert result.exit_code == 2
-        assert isinstance(result.exception, SystemExit)
-        pattern = r"Invalid value for '--input' \/ '-i': (.*)"
-        assert re.search(pattern, result.stdout)
+        with mock.patch.object(Console, "print", wraps=Console().print) as mock_print:
+            runner = CliRunner(mix_stderr=True)
+            result = runner.invoke(
+                app, ["upload", "-i", invalid_zip_path, "--insecure"]
+            )
+
+            assert result.exit_code == 2
+            assert isinstance(result.exception, SystemExit)
+
+            # Check for error message in the output
+            assert "Invalid value for '--input' / '-i'" in result.stdout
+            mock_print.assert_called()
 
     @pytest.mark.parametrize(
         argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]

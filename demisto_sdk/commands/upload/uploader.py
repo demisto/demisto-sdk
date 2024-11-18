@@ -122,7 +122,8 @@ class Uploader:
                 )
             ) and response[0]:
                 installed_packs = {pack["name"] for pack in response[0]}
-                if common_packs := installed_packs.intersection(self.pack_names):
+                common_packs = installed_packs.intersection({path.stem})
+                if common_packs:
                     pack_names = "\n".join(sorted(common_packs))
                     product = (
                         self.marketplace.lower()

@@ -59,7 +59,6 @@ repos:
     - Tests/demistomock/demistomock.ps1
     run_isolated: true
 
-
   - id: validate
     name: validate
     description: validate content using the new validate flow.
@@ -69,7 +68,6 @@ repos:
     pass_filenames: false
     language: system
     require_serial: true
-
 
   - id: merge-pytest-reports
     name: merge-pytest-reports

@@ -46,7 +46,7 @@ class ContentPaths:
         """
         logger.info(f"Updating content_path globally: {content_path}")
 
-        cls.CONTENT_PATH = Path(get_content_path(Path(content_path)))
+        cls.CONTENT_PATH = Path(content_path)
         logger.info(f"CONTENT_PATH Type: {type(cls.CONTENT_PATH)}")
         cls.ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = (
             cls.CONTENT_PATH / "all_packs_dependencies.json"

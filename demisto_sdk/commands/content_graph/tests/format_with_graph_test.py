@@ -61,7 +61,6 @@ def setup_method(mocker, tmp_path_factory, repo: Repo):
 @pytest.fixture
 def repository(mocker, repo) -> ContentDTO:
     repository = ContentDTO(
-        path=Path(repo.path),
         packs=[],
     )
     relationships = {

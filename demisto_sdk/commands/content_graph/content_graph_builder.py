@@ -45,7 +45,6 @@ class ContentGraphBuilder:
         self, packs_to_parse: Optional[Tuple[str, ...]] = None
     ) -> None:
         content_dto: ContentDTO = self._create_content_dto(packs_to_parse)
-        # ContentPaths.update_content_path(content_dto.path)
         self._collect_nodes_and_relationships_from_model(content_dto)
 
     def _create_content_dto(self, packs: Optional[Tuple[str, ...]]) -> ContentDTO:

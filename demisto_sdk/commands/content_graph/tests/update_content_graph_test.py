@@ -6,6 +6,7 @@ import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
@@ -68,8 +69,10 @@ def setup_method(mocker, tmp_path_factory):
 
 @pytest.fixture
 def repository(mocker) -> ContentDTO:
+    repo_path = ContentPaths.CONTENT_PATH.with_name("content")
+    ContentPaths.update_content_path(repo_path)
     repository = ContentDTO(
-        path=GIT_PATH,
+        path=repo_path,
         packs=[],
     )
     relationships = {

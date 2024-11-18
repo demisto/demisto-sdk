@@ -65,8 +65,10 @@ def setup_method(mocker, tmp_path_factory):
 
 @pytest.fixture
 def repository(mocker) -> ContentDTO:
+    repo_path = ContentPaths.CONTENT_PATH.with_name("content")
+    ContentPaths.update_content_path(repo_path)
     repository = ContentDTO(
-        path=GIT_PATH,
+        path=repo_path,
         packs=[],
     )
     relationships = {
@@ -374,13 +376,10 @@ def repository(mocker) -> ContentDTO:
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         return_value=repository,
     )
-    ContentPaths.update_content_path(repository.path)
     return repository
 
 
 # HELPERS
-
-
 def mock_dependency(source: str, target: str, mandatory: bool = True) -> Dict[str, Any]:
     return {
         "source_id": source,

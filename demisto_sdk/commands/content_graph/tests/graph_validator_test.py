@@ -66,6 +66,7 @@ def setup_method(mocker, tmp_path_factory):
 @pytest.fixture
 def repository(mocker) -> ContentDTO:
     repo_path = ContentPaths.CONTENT_PATH.with_name("content")
+    repo_path.mkdir()
     ContentPaths.update_content_path(repo_path)
     repository = ContentDTO(
         path=repo_path,

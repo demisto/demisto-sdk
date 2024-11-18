@@ -1,4 +1,3 @@
-import logging
 from unittest.mock import patch
 
 import pytest
@@ -98,7 +97,7 @@ def test_replace_incorrect_marketplace(data, marketplace, expected):
     assert result == expected
 
 
-def test_replace_incorrect_marketplace_error_handling(caplog):
+def test_replace_incorrect_marketplace_error_handling():
     """
     Test the error handling of the replace_incorrect_marketplace function.
 
@@ -116,17 +115,9 @@ def test_replace_incorrect_marketplace_error_handling(caplog):
     data = {"key": "value"}
     marketplace = MarketplaceVersions.MarketplaceV2
 
-    with patch(
-        "demisto_sdk.commands.content_graph.common.replace_incorrect_marketplace",
-        side_effect=Exception("Test exception"),
-    ):
-        with caplog.at_level(logging.ERROR):
-            result = replace_incorrect_marketplace(
-                data, marketplace, path="example/path"
-            )
+    with patch("demisto_sdk.commands.content_graph.common.replace_incorrect_marketplace", side_effect=Exception("Test exception")):
+        with patch("demisto_sdk.commands.content_graph.common.logger") as mock_logger:
+            result = replace_incorrect_marketplace(data, marketplace, path="example/path")
 
     assert result == data
-    assert (
-        "Error processing data for replacing incorrect marketplace at path 'example/path'"
-        in caplog.text
-    )
+    mock_logger.error.assert_called_once_with("Error processing data for replacing incorrect marketplace at path 'example/path': Test exception")

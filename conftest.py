@@ -29,9 +29,7 @@ def get_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo
 
 
 def get_git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
-    content_tmp_dir = (
-        _mk_tmp(request, tmp_path_factory).with_name("content") / "content"
-    )
+    content_tmp_dir = _mk_tmp(request, tmp_path_factory) / "content"
     content_tmp_dir.mkdir()
     return Repo(content_tmp_dir, init_git=True)
 

@@ -28,10 +28,10 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
-    REPO,
     create_classifier_object,
     create_integration_object,
     create_pack_object,
+    get_repo,
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
@@ -284,7 +284,7 @@ class PackRelationshipsVerifier:
 
 
 class TestParsersAndModels:
-    def test_classifier_parser_below_min_marketplace_version(self):
+    def test_classifier_parser_below_min_marketplace_version(self, git_repo):
         """
         Given:
             - A pack with a classifier.
@@ -298,7 +298,7 @@ class TestParsersAndModels:
             ClassifierParser,
         )
 
-        with ChangeCWD(REPO.path):
+        with ChangeCWD(git_repo.path):
             classifier = create_classifier_object(paths=["toVersion"], values=["5.9.9"])
             classifier_path = Path(classifier.path)
             with pytest.raises(NotAContentItemException):
@@ -3057,7 +3057,7 @@ def test_support_attribute_in_integration_object(
     Then:
         - Ensure that the support attribute of the Integration object is set to the expected support level, e.g., the integration support level if it is not an empty string, or the pack support level otherwise.
     """
-    with ChangeCWD(REPO.path):
+    with ChangeCWD(get_repo().path):
         test_integration = create_integration_object(
             paths=["supportlevelheader"],
             values=[integration_support],
@@ -3080,7 +3080,7 @@ def test_layout_parser_group():
     """
     from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 
-    pack = REPO.create_pack("TestPack")
+    pack = get_repo().create_pack("TestPack")
     layout = pack.create_layoutcontainer(
         "TestLayoutscontainer",
         content={

@@ -56,9 +56,12 @@ from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_
 from TestSuite.file import File
 from TestSuite.repo import Repo
 
-content_temp_dir = Path(os.path.join(tempfile.mkdtemp(), "content"))
-content_temp_dir.mkdir()
-REPO = Repo(tmpdir=content_temp_dir, init_git=True)
+
+def get_repo():
+    content_temp_dir = Path(os.path.join(tempfile.mkdtemp(), "content"))
+    content_temp_dir.mkdir()
+
+    return Repo(tmpdir=content_temp_dir, init_git=True)
 
 
 def create_integration_object(
@@ -83,7 +86,7 @@ def create_integration_object(
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
 
-    pack = REPO.create_pack()
+    pack = get_repo.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
 
@@ -122,7 +125,7 @@ def create_parsing_rule_object(
     """
     yml_content = load_yaml("parsing_rule.yml")
     update_keys(yml_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     parsing_rule = pack.create_parsing_rule("TestParsingRule", yml_content)
     parser = ParsingRuleParser(Path(parsing_rule.path), list(MarketplaceVersions))
     return ParsingRule.from_orm(parser)
@@ -143,7 +146,7 @@ def create_correlation_rule_object(
     """
     yml_content = load_yaml("correlation_rule_test.yml")
     update_keys(yml_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_correlation_rule(name="correlation_rule", content=yml_content)
     return cast(
         CorrelationRule, BaseContent.from_path(Path(pack.correlation_rules[0].path))
@@ -168,7 +171,7 @@ def create_playbook_object(
     """
     yml_content = load_yaml("playbook.yml")
     update_keys(yml_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     if pack_info:
         pack.set_data(**pack_info)
     additional_params = {}
@@ -218,7 +221,7 @@ def create_modeling_rule_object(
     """
     yml_content = load_yaml("modeling_rule.yml")
     update_keys(yml_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_modeling_rule(yml=yml_content, rules=rules, schema=schema)
     return cast(ModelingRule, BaseContent.from_path(Path(pack.modeling_rules[0].path)))
 
@@ -238,7 +241,7 @@ def create_ps_integration_object(
     """
     yml_content = load_yaml("ps_integration.yml")
     update_keys(yml_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     integration = pack.create_integration(yml=yml_content)
     integration.code = File(
         Path(f"{integration.path}/integration_0.ps1"), integration.repo_path
@@ -272,7 +275,7 @@ def create_script_object(
 
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     if pack_info:
         pack.set_data(**pack_info)
     if readme_content is not None:
@@ -309,7 +312,7 @@ def create_pack_object(
     json_content = load_json("pack_metadata.json")
     update_keys(json_content, paths, values)
     remove_fields_from_dict(json_content, fields_to_delete)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack_path = Path(pack.path)
 
     if release_note_content is not None:
@@ -374,7 +377,7 @@ def create_classifier_object(
     """
     json_content = load_json("classifier.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_classifier(name="test_classifier", content=json_content)
     return cast(Classifier, BaseContent.from_path(Path(pack.classifiers[0].path)))
 
@@ -393,7 +396,7 @@ def create_list_object(
     """
     json_content = load_json("list.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_list(name="list", content=json_content)
     return cast(ListObject, BaseContent.from_path(Path(pack.lists[0].path)))
 
@@ -411,7 +414,7 @@ def create_job_object(
         The job object.
     """
     json_content = {}
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_job(name="job", is_feed=True)
     if paths and values:
         with open(pack.jobs[0].path) as f:
@@ -436,7 +439,7 @@ def create_dashboard_object(
     """
     json_content = load_json("dashboard.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_dashboard(name="dashboard", content=json_content)
     return cast(Dashboard, BaseContent.from_path(Path(pack.dashboards[0].path)))
 
@@ -455,7 +458,7 @@ def create_incident_type_object(
     """
     json_content = load_json("incident_type.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_incident_type(name="incident_type", content=json_content)
     return cast(IncidentType, BaseContent.from_path(Path(pack.incident_types[0].path)))
 
@@ -476,7 +479,7 @@ def create_incident_field_object(
     """
     json_content = load_json("incident_field.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     if pack_info:
         pack.set_data(**pack_info)
     pack.create_incident_field(name="incident_field", content=json_content)
@@ -499,7 +502,7 @@ def create_report_object(
     """
     json_content = load_json("report.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_report(name="report", content=json_content)
     return cast(Report, BaseContent.from_path(Path(pack.reports[0].path)))
 
@@ -518,7 +521,7 @@ def create_xsiam_report_object(
     """
     json_content = load_json("xsiam_report.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_xsiam_report(name="xsiam_report", content=json_content)
     return cast(XSIAMReport, BaseContent.from_path(Path(pack.xsiam_reports[0].path)))
 
@@ -537,7 +540,7 @@ def create_xsiam_dashboard_object(
     """
     json_content = load_json("xsiam_dashboard.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_xsiam_dashboard(name="xsiam_dashboard", content=json_content)
     return cast(
         XSIAMDashboard, BaseContent.from_path(Path(pack.xsiam_dashboards[0].path))
@@ -565,7 +568,7 @@ def create_xdrc_template_object(
     update_keys(json_content, json_paths, json_values)
     yml_content = load_yaml("xdrc_template.yml")
     update_keys(json_content, yml_paths, yml_values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_xdrc_template(
         name="xdrc_template", json_content=json_content, yaml_content=yml_content
     )
@@ -593,7 +596,7 @@ def create_assets_modeling_rule_object(
     update_keys(json_content, json_paths, json_values)
     yml_content = load_yaml("assets_modeling_rule.yml")
     update_keys(json_content, yml_paths, yml_values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_assets_modeling_rule(
         name="assets_modeling_rule", schema=json_content, yml=yml_content
     )
@@ -617,7 +620,7 @@ def create_trigger_object(
     """
     json_content = load_json("trigger.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_trigger(name="trigger", content=json_content)
     return cast(Trigger, BaseContent.from_path(Path(pack.triggers[0].path)))
 
@@ -636,7 +639,7 @@ def create_layout_object(
     """
     json_content = load_json("layoutscontainer.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_layout(name="layout", content=json_content)
     return cast(Layout, BaseContent.from_path(Path(pack.layouts[0].path)))
 
@@ -655,7 +658,7 @@ def create_widget_object(
     """
     json_content = load_json("widget.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_widget(name="widget", content=json_content)
     return cast(Widget, BaseContent.from_path(Path(pack.widgets[0].path)))
 
@@ -674,7 +677,7 @@ def create_indicator_field_object(
     """
     json_content = load_json("indicator_field.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_indicator_field(name="indicator_field", content=json_content)
     return cast(
         IndicatorField, BaseContent.from_path(Path(pack.indicator_fields[0].path))
@@ -690,7 +693,7 @@ def create_wizard_object(dict_to_update: Optional[Any] = None) -> Wizard:
     Returns:
         The wizard object.
     """
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_wizard(name="test_wizard")
     if dict_to_update:
         pack.wizards[0].update(dict_to_update)
@@ -711,7 +714,7 @@ def create_generic_definition_object(
     """
     json_content = load_json("generic_definition.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_generic_definition(name="generic_definition", content=json_content)
     return cast(
         GenericDefinition, BaseContent.from_path(Path(pack.generic_definitions[0].path))
@@ -732,7 +735,7 @@ def create_generic_field_object(
     """
     json_content = load_json("generic_field.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_generic_field(name="generic_field", content=json_content)
     return cast(GenericField, BaseContent.from_path(Path(pack.generic_fields[0].path)))
 
@@ -751,7 +754,7 @@ def create_generic_type_object(
     """
     json_content = load_json("generic_type.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_generic_type(name="generic_type", content=json_content)
     return cast(GenericType, BaseContent.from_path(Path(pack.generic_types[0].path)))
 
@@ -770,7 +773,7 @@ def create_generic_module_object(
     """
     json_content = load_json("generic_module.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_generic_module(name="generic_module", content=json_content)
     return cast(
         GenericModule, BaseContent.from_path(Path(pack.generic_modules[0].path))
@@ -791,7 +794,7 @@ def create_incoming_mapper_object(
     """
     json_content = load_json("incoming_mapper.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_mapper(name="incoming_mapper", content=json_content)
     return cast(Mapper, BaseContent.from_path(Path(pack.mappers[0].path)))
 
@@ -810,7 +813,7 @@ def create_outgoing_mapper_object(
     """
     json_content = load_json("outgoing_mapper.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_mapper(name="outgoing_mapper", content=json_content)
     return BaseContent.from_path(Path(pack.mappers[0].path))
 
@@ -829,7 +832,7 @@ def create_indicator_type_object(
     """
     json_content = load_json("indicator_type.json")
     update_keys(json_content, paths, values)
-    pack = REPO.create_pack()
+    pack = get_repo().create_pack()
     pack.create_indicator_type(name="indicator_type", content=json_content)
     return cast(
         IndicatorType, BaseContent.from_path(Path(pack.indicator_types[0].path))

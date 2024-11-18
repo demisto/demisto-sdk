@@ -86,7 +86,7 @@ def create_integration_object(
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
 
-    pack = get_repo.create_pack()
+    pack = get_repo().create_pack()
     if pack_info:
         pack.set_data(**pack_info)
 

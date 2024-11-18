@@ -1,0 +1,4 @@
+changes:
+- description: Moved new validate step into pre-commit. The new validate step will no longer run as a separate step in the build.
+  type: internal
+pr_number: 4669

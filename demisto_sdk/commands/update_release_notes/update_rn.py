@@ -77,6 +77,10 @@ class content_type(Enum):
     ARGUMENT = 'argument'
 
 NEW_RN_TEMPLATE = "- New: added a new {type} - {name} which {description}"
+GENERAL_DEPRECATED_RN = "- Deprecated ***{name}*** {type}. Use %%% instead.\n"
+GENERAL_BC = '- Breaking Changes: Deleted the **{name}** {value}.\n'
+DEPRECATED_ARGUMENT = "- Deprecated the `{name}` {type} inside the **{command_name}** command.\n"
+ARGUMENT_BC = '- Breaking Changes: Updated the **{command_name}** to not use the `{argument_name}` argument.\n'
 
 def get_deprecated_comment_from_desc(description: str) -> str:
     """
@@ -130,23 +134,22 @@ def get_yml_objects(path: str, file_type) -> Tuple[Any, YAMLContentObject]:
 
     return old_yml_obj, new_yml_obj
 
-def deleted_content(old_content_dict, new_content_dict, type, parent_name):
+def deleted_content(old_content_dict: dict[str, Any], new_content_dict: dict[str, Any], type, parent_name=None):
     rn = ''
-    for old_content_name, old_content in old_content_dict.items():
-        if old_content_name not in new_content_dict:
-            if type == content_type.ARGUMENT and parent_name:
-                rn += f'- Breaking Changes: Updated the **{parent_name}** to not use the `{old_content_name}` argument.\n'
-            else:
-                rn += f'- Breaking Changes: Deleted the **{old_content.get("display", old_content_name)}** {type.value}.\n'
-            logger.info(f'Please add a breaking changes json file for deleting the {old_content.get("display", old_content_name)}** {type.value}')
+    deleted_objects_names = set(old_content_dict.keys()) - set(new_content_dict.keys())
+    for deleted_object_name in deleted_objects_names:
+        name = old_content_dict[deleted_object_name].get("display", deleted_object_name)
+        if type == content_type.ARGUMENT and parent_name:
+            rn += ARGUMENT_BC.format(command_name=parent_name, argument_name=name)
+        else:
+            rn += GENERAL_BC.format(name=name, value=type.value)
+        logger.info(f'Please add a breaking changes json file for deleting the {name} {type.value}')
     return rn
 
 def deprecations_rn(name: str, content_type: content_type, parent: str | None = None) -> str:
-    if content_type == content_type.COMMAND:
-        return f"- Deprecated ***{name}*** {content_type.value}. Use %%% instead.\n"
     if content_type == content_type.ARGUMENT and parent:
-        return f"- Deprecated the `{name}` {content_type.value} inside the **{parent}** command.\n"
-    return f"- Deprecated ***{name}*** {content_type.value}.\n"
+        return DEPRECATED_ARGUMENT.format(name=name, type=content_type.value, command_name=parent)
+    return GENERAL_DEPRECATED_RN.format(name=name, type=content_type.value)
 
 def required_rn(name: str, content_type: content_type) -> str:
     return f"- Updated the **{name}** {content_type.value} to be required.\n"
@@ -168,29 +171,31 @@ def added_or_updated_content(
     parent_name: str | None,
 ) -> str:
     rn = ""
-
-    for new_content_name, new_content in new_content_dict.items():
-        if new_content_name not in old_content_dict:
-            rn += additions_rn(new_content_name, new_content, type, parent_name)
-        else:
-            old_content = old_content_dict[new_content_name]
-            if new_content.get("deprecated") and not old_content.get("deprecated"):
-                rn += deprecations_rn(new_content_name, type, parent_name)
-            if (
-                type in {content_type.PARAMETER, content_type.ARGUMENT}
-                and new_content.get("required")
-                and not old_content.get("required")
-            ):
-                rn += required_rn(new_content.get("display", new_content_name), type)
-            if type == content_type.COMMAND:
-                rn += find_diff(
-                    old_content.get("arguments", []),
-                    new_content.get("arguments", []),
-                    content_type.ARGUMENT,
-                    new_content_name,
-                )
+    new_keys = set(new_content_dict.keys()) - set(old_content_dict.keys())
+    old_keys = set(new_content_dict.keys()) - new_keys
+    for new_key in new_keys:
+        rn += additions_rn(new_key, new_content_dict[new_key], type, parent_name)
+    for old_key in old_keys:
+        old_content = old_content_dict[old_key]
+        new_content = new_content_dict[old_key]
+        if new_content.get("deprecated") and not old_content.get("deprecated"):
+            rn += deprecations_rn(old_key, type, parent_name)
+        if (
+            type in {content_type.PARAMETER, content_type.ARGUMENT}
+            and new_content.get("required")
+            and not old_content.get("required")
+        ):
+            rn += required_rn(new_content.get("display", old_key), type)
+        if type == content_type.COMMAND:
+            rn += find_diff(
+                old_content.get("arguments", []),
+                new_content.get("arguments", []),
+                content_type.ARGUMENT,
+                old_key,
+            )
 
     return rn
+
 
 def find_diff(old_content_info, new_content_info, type, parent_name=None):
     rn = ''
@@ -201,26 +206,31 @@ def find_diff(old_content_info, new_content_info, type, parent_name=None):
     return rn
 
 
-def create_rn_for_updated_content_item(path, _type, text):
-    rn_desc = ''
-    deprecate_rn = ''
+def is_content_item_deprecated(path, _type):
     old_content_file = {}
     new_content_file = {}
+    deprecated_rn = ''
     if _type in (
-    FileType.INTEGRATION,
-    FileType.SCRIPT,
-    FileType.PLAYBOOK,
+        FileType.INTEGRATION,
+        FileType.SCRIPT,
+        FileType.PLAYBOOK,
     ):
         old_content_file, new_content_file = get_yml_objects(path, _type)
-        deprecate_rn = get_deprecated_rn(old_content_file, new_content_file, _type)
+        deprecated_rn += get_deprecated_rn(old_content_file, new_content_file, _type)
+    return deprecated_rn, old_content_file, new_content_file
+
+
+def create_rn_for_updated_content_item(path, _type, text):
+    rn_desc = ''
+    deprecate_rn, old_content_file, new_content_file = is_content_item_deprecated(path, _type)
     if deprecate_rn:
         if text:
             rn_desc += f"- {text}\n"
         rn_desc += deprecate_rn
     else:
-        rn_desc += add_enhance_rn(_type, path, old_content_file, new_content_file)
-        rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+        rn_desc += add_enhance_rn(_type, path, old_content_file, new_content_file) + f'- {text or "%%UPDATE_RN%%"}\n'
     return rn_desc
+
 
 def associated_types_diff(path, _type):
     rn_desc = ''
@@ -232,6 +242,7 @@ def associated_types_diff(path, _type):
             rn_desc += f'- Added new associated types: {",".join(added_associated_types)}.\n'
     return rn_desc
 
+
 def add_enhance_rn(_type, path, old_content_file, new_content_file):
     rn_desc = ''
     if _type == FileType.INTEGRATION:
@@ -242,6 +253,7 @@ def add_enhance_rn(_type, path, old_content_file, new_content_file):
     elif _type in (FileType.INCIDENT_FIELD):
         rn_desc += associated_types_diff(path, _type)
     return rn_desc
+
 
 def get_deprecated_rn(old_yml, new_yml, file_type):
     """Generate rn for deprecated items"""
@@ -872,6 +884,7 @@ class UpdateRN:
             is_new_file: True if the file is new
             text: Text to add to the release notes files
             from_version: From version
+            name: The name of the content item
 
         :rtype: ``str``
         :return

@@ -160,17 +160,47 @@ def rn_for_deleted_content(old_content_dict: dict[str, Any], new_content_dict: d
         logger.info(f'Please add a breaking changes json file for deleting the {name} {type.value}')
     return rn
 
-def deprecations_rn(name: str, content_type: content_type, parent: str | None = None) -> str:
+def generate_deprecation_rn(name: str, content_type: content_type, parent: str | None = None) -> str:
+    """Generates release notes for deprecated content items.
+
+    Args:
+        item_name (str): The name of the content item being deprecated.
+        content_type (content_type): The type of the content item (e.g., argument, command).
+        parent_name (str | None, optional): The name of the parent content item (if applicable, e.g., command name for arguments).
+
+    Returns:
+        str: A formatted release note indicating deprecation for the item.
+    """
     if content_type == content_type.ARGUMENT and parent:
         return DEPRECATED_ARGUMENT.format(name=name, type=content_type.value, command_name=parent)
     return GENERAL_DEPRECATED_RN.format(name=name, type=content_type.value)
 
-def required_rn(name: str, content_type: content_type) -> str:
+def generate_required_rn(name: str, content_type: content_type) -> str:
+    """Generates release notes for required fields in content items.
+
+    Args:
+        item_name (str): The name of the content item being updated.
+        content_type (content_type): The type of the content item (e.g., parameter, argument).
+
+    Returns:
+        str: A formatted release note indicating the item is now required.
+    """
     return f"- Updated the **{name}** {content_type.value} to be required.\n"
 
-def additions_rn(
+def generate_addition_rn(
     name: str, new_content: dict[str, Any], content_type: content_type, parent: str | None = None
 ) -> str:
+    """Generates release notes for newly added content items.
+
+    Args:
+        item_name (str): The name of the new content item.
+        new_content_data (dict[str, Any]): The data for the new content item.
+        content_type (content_type): The type of the content item (e.g., parameter, argument, command).
+        parent_name (str | None, optional): The name of the parent content item, if applicable (e.g., command name for arguments).
+
+    Returns:
+        str: A formatted release note describing the addition of the content item.
+    """
     content_info = new_content.get("additionalinfo", new_content.get("description", "")).replace("-", "").lower()
     display_name = new_content.get("display", name)
     if content_type == content_type.ARGUMENT and parent:
@@ -202,18 +232,18 @@ def rn_for_added_or_updated_content(
     new_keys = set(new_content_dict.keys()) - set(old_content_dict.keys())
     old_keys = set(new_content_dict.keys()) - new_keys
     for new_key in new_keys:
-        rn += additions_rn(new_key, new_content_dict[new_key], type, parent_name)
+        rn += generate_addition_rn(new_key, new_content_dict[new_key], type, parent_name)
     for old_key in old_keys:
         old_content = old_content_dict[old_key]
         new_content = new_content_dict[old_key]
         if new_content.get("deprecated") and not old_content.get("deprecated"):
-            rn += deprecations_rn(old_key, type, parent_name)
+            rn += generate_deprecation_rn(old_key, type, parent_name)
         if (
             type in {content_type.PARAMETER, content_type.ARGUMENT}
             and new_content.get("required")
             and not old_content.get("required")
         ):
-            rn += required_rn(new_content.get("display", old_key), type)
+            rn += generate_required_rn(new_content.get("display", old_key), type)
         if type == content_type.COMMAND:
             rn += compare_content_item_changes(
                 old_content.get("arguments", []),

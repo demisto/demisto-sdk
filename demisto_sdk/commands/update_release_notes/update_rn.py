@@ -76,6 +76,8 @@ class content_type(Enum):
     COMMAND = 'command'
     ARGUMENT = 'argument'
 
+NEW_RN_TEMPLATE = "- New: added a new {type} - {name} which {description}"
+
 def get_deprecated_comment_from_desc(description: str) -> str:
     """
     find deprecated comment from description
@@ -883,18 +885,14 @@ class UpdateRN:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if _type in TYPE_CONVERSION_BY_FileType:
-                    new_content_file = TYPE_CONVERSION_BY_FileType[_type](path)
-                    rn_desc += f"- New: added a new {RN_HEADER_BY_FILE_TYPE.get(_type, _type.lower())} - {name} which {desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.'}"
+                    rn_desc += NEW_RN_TEMPLATE.format(type=RN_HEADER_BY_FILE_TYPE.get(_type, _type).rstrip('s').lower(),
+                                                   name=name,
+                                                   description=desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.')
                 elif desc:
                     rn_desc += f"- New: {desc}"
                 rn_desc += self.add_marketplaces_availability(_type, content_name, from_version)
-                rn_desc += "\n"
                 if _type == FileType.INTEGRATION:
-                    rn_desc += "\n- Added the following commands:\n"
-                    new_content_file = TYPE_CONVERSION_BY_FileType[_type](path)
-                    new_commands = new_content_file.script.get("commands", [])
-                    for command in new_commands:
-                        rn_desc += f"\t- ***{command.get('name')}***\n"
+                    rn_desc += self.new_commands_rn(path)
             else:
                 rn_desc = f"##### {content_name}\n\n"
                 if self.update_type == "documentation":
@@ -905,6 +903,14 @@ class UpdateRN:
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n"
+        return rn_desc
+
+    def new_commands_rn(self, path):
+        rn_desc = "\n- Added the following commands:\n"
+        new_content_file = TYPE_CONVERSION_BY_FileType[FileType.INTEGRATION](path)
+        new_commands = new_content_file.script.get("commands", [])
+        for command in new_commands:
+            rn_desc += f"\t- ***{command.get('name')}***\n"
         return rn_desc
 
     def add_marketplaces_availability(self, _type, content_name, from_version):
@@ -924,6 +930,7 @@ class UpdateRN:
                 or MarketplaceVersions.XSOAR.value in pack_marketplaces
             ):
                 rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
+        rn_desc += "\n"
         return rn_desc
 
     def does_content_item_header_exist_in_rns(

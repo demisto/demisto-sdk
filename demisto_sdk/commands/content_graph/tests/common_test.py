@@ -115,9 +115,16 @@ def test_replace_incorrect_marketplace_error_handling():
     data = {"key": "value"}
     marketplace = MarketplaceVersions.MarketplaceV2
 
-    with patch("demisto_sdk.commands.content_graph.common.replace_incorrect_marketplace", side_effect=Exception("Test exception")):
+    with patch(
+        "demisto_sdk.commands.content_graph.common.replace_incorrect_marketplace",
+        side_effect=Exception("Test exception"),
+    ):
         with patch("demisto_sdk.commands.content_graph.common.logger") as mock_logger:
-            result = replace_incorrect_marketplace(data, marketplace, path="example/path")
+            result = replace_incorrect_marketplace(
+                data, marketplace, path="example/path"
+            )
 
     assert result == data
-    mock_logger.error.assert_called_once_with("Error processing data for replacing incorrect marketplace at path 'example/path': Test exception")
+    mock_logger.error.assert_called_once_with(
+        "Error processing data for replacing incorrect marketplace at path 'example/path': Test exception"
+    )

@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -62,12 +63,18 @@ def setup_method(mocker, tmp_path_factory):
         },
     )
 
+def mk_content_dir(repo_path: Path):
+    if repo_path.exists():
+        shutil.rmtree(repo_path)
+    repo_path.mkdir()
+
 
 @pytest.fixture
 def repository(mocker) -> ContentDTO:
     repo_path = ContentPaths.CONTENT_PATH.with_name("content")
-    repo_path.mkdir(exist_ok=True)
+    mk_content_dir(repo_path)
     ContentPaths.update_content_path(repo_path)
+    
     repository = ContentDTO(
         path=repo_path,
         packs=[],

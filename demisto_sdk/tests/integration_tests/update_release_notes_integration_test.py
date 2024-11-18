@@ -348,7 +348,7 @@ def test_update_release_notes_non_content_path(demisto_client, mocker):
 
     assert result.exit_code == 1
     assert result.exception
-    assert "You are not running" in result.output
+    assert "You are not running" in result.stderr
 
 
 def test_update_release_notes_existing(demisto_client, mocker):
@@ -887,7 +887,6 @@ def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
 
     runner = CliRunner(mix_stderr=True)
     result = runner.invoke(app, [UPDATE_RN_COMMAND, "-g"])
-    print(result.stdout)
     assert result.exit_code == 0
     assert not result.exception
     assert (

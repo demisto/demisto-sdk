@@ -10,7 +10,7 @@ from demisto_sdk.commands.upload.upload import upload_content_entity
 def upload(
     ctx: typer.Context,
     input_path: Path = typer.Option(
-        ...,
+        None,
         "--input",
         "-i",
         exists=True,
@@ -27,7 +27,7 @@ def upload(
         "--input-config-file",
         exists=True,
         resolve_path=True,
-        help="The path to the config file to download all the custom packs from",
+        help="The path to the config file to download all the custom packs from.",
     ),
     zip: bool = typer.Option(
         True,

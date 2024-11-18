@@ -23,6 +23,20 @@ from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
+def validate_paths(value: Optional[str]) -> Optional[str]:
+    if not value:  # If no input is provided, just return None
+        return None
+
+    # Split the value into paths
+    paths = value.split(",")
+    for path in paths:
+        stripped_path = path.strip()  # Strip extra spaces
+        if not os.path.exists(stripped_path):  # Check existence
+            raise typer.BadParameter(f"The path '{stripped_path}' does not exist.")
+
+    return value
+
+
 @logging_setup_decorator
 def validate(
     ctx: typer.Context,
@@ -68,7 +82,11 @@ def validate(
         False, "-a", "--validate-all", help="Run all validation on all files."
     ),
     input: Optional[str] = typer.Option(
-        None, "-i", "--input", help="Path of the content pack/file to validate."
+        None,
+        "-i",
+        "--input",
+        help="Path of the content pack/file to validate.",
+        callback=validate_paths,
     ),
     skip_pack_release_notes: bool = typer.Option(
         False, help="Skip validation of pack release notes."
@@ -155,7 +173,7 @@ def validate(
         raise typer.Exit(1)
 
     if file_paths and not input:
-        input = ",".join(file_paths)
+        input = file_paths
 
     run_with_mp = not no_multiprocessing
     update_command_args_from_config_file("validate", ctx.params)
@@ -164,7 +182,7 @@ def validate(
 
     if post_commit and staged:
         logger.error("Cannot use both post-commit and staged flags.")
-        sys.exit(1)
+        raise typer.Exit(1)
 
     is_external_repo = is_external_repository()
     file_path = input
@@ -202,7 +220,7 @@ def validate(
             "You may not be running `demisto-sdk validate` from the content directory.\n"
             "Please run this command from the content directory."
         )
-        sys.exit(1)
+        raise typer.Exit(1)
 
 
 def determine_execution_mode(file_path, validate_all, use_git, post_commit):

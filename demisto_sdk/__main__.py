@@ -68,10 +68,7 @@ from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
 )
 from demisto_sdk.commands.setup_env.setup_environment import IDEType
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.commands.test_content.playbook_flow_test import (
-    init_flow_test,
-    run_playbook_flow_test,
-)
+from demisto_sdk.commands.test_content.playbook_flow_test import run_playbook_flow_test
 from demisto_sdk.commands.test_content.test_modeling_rule import (
     init_test_data,
     test_modeling_rule,
@@ -3866,11 +3863,10 @@ playbook_flow_app = typer.Typer(
 playbook_flow_app.command("test", no_args_is_help=True)(
     run_playbook_flow_test.run_flow_test
 )
-# playbook_flow_app.command("init", no_args_is_help=True)(
-#     init_flow_test.create_new_flow_test
-# )
+
 typer_click_object = typer.main.get_command(playbook_flow_app)
 main.add_command(typer_click_object, "playbook-flow-test")
+
 
 # ====================== graph command group ====================== #
 

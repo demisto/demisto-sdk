@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Iterable, List, Union
+from typing import Dict, Iterable, List, Union
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
@@ -84,7 +84,7 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
         "Validates that deprecated content items are not used in other content items."
     )
     rationale = "Using deprecated content items can lead to unexpected behavior and should be avoided."
-    error_message = "The item '{using_deprecated_item}' is using the following deprecated {deprecated_item_type}: {deprecated_item}"
+    error_message = "The item '{using_deprecated_item}' is using the following deprecated items: {deprecated_items}"
     related_field = "deprecated"
     is_auto_fixable = False
 
@@ -99,18 +99,27 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
                 for content_item in content_items
             ]
         )
+        # Group results by content item
+        grouped_results: Dict = {}
+        for item in self.graph.find_items_using_deprecated_items(content_item_paths):
+            for item_using_deprecated in item.content_items_using_deprecated:
+                path_key = str(item_using_deprecated.path.relative_to(CONTENT_PATH))
+                if path_key not in grouped_results:
+                    grouped_results[path_key] = {
+                        "content_object": item_using_deprecated,
+                        "deprecated_items": set(),
+                    }
+                grouped_results[path_key]["deprecated_items"].add(
+                    item.deprecated_item_id
+                )
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    deprecated_item_type=item.deprecated_item_type,
-                    deprecated_item=item.deprecated_item_id,
-                    using_deprecated_item=str(
-                        item_using_deprecated.path.relative_to(CONTENT_PATH)
-                    ),
+                    using_deprecated_item=path,
+                    deprecated_items=", ".join(data["deprecated_items"]),
                 ),
-                content_object=item_using_deprecated,
+                content_object=data["content_object"],
             )
-            for item in self.graph.find_items_using_deprecated_items(content_item_paths)
-            for item_using_deprecated in item.content_items_using_deprecated
+            for path, data in grouped_results.items()
         ]

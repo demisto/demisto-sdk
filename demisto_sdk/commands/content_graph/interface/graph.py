@@ -24,7 +24,6 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 class DeprecatedItemUsage(NamedTuple):
     deprecated_item_id: str
-    deprecated_item_type: str
     content_items_using_deprecated: List[BaseNode]
 
 

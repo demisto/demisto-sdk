@@ -722,14 +722,14 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_playbook(
     repo_for_test_gr_107: Repo,
 ):
     """
-    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for a valid script.
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for a valid playbook.
 
     Given:
     - A repository with a deprecated playbook and an integration that uses the deprecated playbook.
       The deprecated playbook does not use any deprecated content items.
 
     When:
-    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific script.
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific playbook.
 
     Then:
     - Verify that the validator correctly identifies that no deprecated content items are used.

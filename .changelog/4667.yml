@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where validate GR107 was failing when running on deprecated content-items.
+- description: Fixed an issue where validate GR107 was failing on unrelated content-item when running on deprecated content-items.
   type: fix
 pr_number: 4667

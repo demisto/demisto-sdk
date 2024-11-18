@@ -2,7 +2,6 @@ import os
 import re
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Set
-from demisto_sdk.commands.common.logger import logger
 
 from neo4j import graph
 from pydantic import BaseModel
@@ -16,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,

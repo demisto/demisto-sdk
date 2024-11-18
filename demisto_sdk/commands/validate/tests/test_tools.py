@@ -1,3 +1,4 @@
+import os
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
@@ -55,7 +56,9 @@ from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_
 from TestSuite.file import File
 from TestSuite.repo import Repo
 
-REPO = Repo(tmpdir=Path(tempfile.mkdtemp()), init_git=True)
+content_temp_dir = Path(os.path.join(tempfile.mkdtemp(), "content"))
+content_temp_dir.mkdir()
+REPO = Repo(tmpdir=content_temp_dir, init_git=True)
 
 
 def create_integration_object(

@@ -65,6 +65,7 @@ repos:
     entry: demisto-sdk validate
     args:
     - --config-path=demisto_sdk/commands/validate/sdk_validation_config.toml
+    - --validate-all
     pass_filenames: false
     language: system
     require_serial: true

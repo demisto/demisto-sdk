@@ -59,16 +59,6 @@ repos:
     - Tests/demistomock/demistomock.ps1
     run_isolated: true
 
-  - id: validate
-    name: validate
-    description: validate content
-    entry: demisto-sdk validate
-    args:
-    - --skip-pack-dependencies
-    pass_filenames: false
-    language: system
-    require_serial: true
-
 
   - id: validate
     name: validate
@@ -76,6 +66,9 @@ repos:
     entry: demisto-sdk validate
     args:
     - --config-path=demisto_sdk/commands/validate/sdk_validation_config.toml
+    pass_filenames: false
+    language: system
+    require_serial: true
 
 
   - id: merge-pytest-reports

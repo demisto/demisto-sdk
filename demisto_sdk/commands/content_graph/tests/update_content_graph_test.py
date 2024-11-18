@@ -217,9 +217,12 @@ def repository(mocker) -> ContentDTO:
 
 
 @pytest.fixture
-def external_repository(mocker) -> ContentDTO:
+def external_repository(mocker, tmp_path: Path) -> ContentDTO:
+    content_temp_dir = tmp_path / "content"
+    content_temp_dir.mkdir()
+    ContentPaths.update_content_path(content_temp_dir)
+
     repository = ContentDTO(
-        path=GIT_PATH,
         packs=[],
     )
 

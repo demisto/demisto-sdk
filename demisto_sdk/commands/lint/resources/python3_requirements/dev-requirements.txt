@@ -16,5 +16,5 @@ pytest-pretty==1.2.0
 pytest-github-actions-annotate-failures==0.2.0
 pytest
 mypy>=1.11.2,<2.0.0
-pytest-monkeytype==1.1.0
+pytest-monkeytype
 monkeytype

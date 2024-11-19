@@ -22,7 +22,7 @@ from demisto_sdk.commands.coverage_analyze.coverage_analyze_setup import (
     coverage_analyze,
 )
 from demisto_sdk.commands.create_id_set.create_id_set_setup import create_id_set
-from demisto_sdk.commands.doc_reviewer.doc_reviwer_setup import doc_review
+from demisto_sdk.commands.doc_reviewer.doc_reviewer_setup import doc_review
 from demisto_sdk.commands.download.download_setup import download
 from demisto_sdk.commands.error_code_info.error_code_info_setup import error_code
 from demisto_sdk.commands.find_dependencies.find_dependencies_setup import (

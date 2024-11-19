@@ -3057,11 +3057,14 @@ def test_support_attribute_in_integration_object(
     Then:
         - Ensure that the support attribute of the Integration object is set to the expected support level, e.g., the integration support level if it is not an empty string, or the pack support level otherwise.
     """
-    with ChangeCWD(get_repo().path):
+    repo = get_repo()
+    repo_path = repo.path
+    with ChangeCWD(repo_path):
         test_integration = create_integration_object(
             paths=["supportlevelheader"],
             values=[integration_support],
             pack_info={"support": pack_support},
+            repo=repo,
         )
         assert test_integration.support == expected_support
 

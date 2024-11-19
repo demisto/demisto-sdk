@@ -320,7 +320,7 @@ def generate_rn_for_updated_content_items(path, _type, text):
         rn_desc += deprecate_rn
     else:
         rn_desc += generate_rn_for_content_item_updates(_type, path, old_content_file, new_content_file)
-        rn_desc += '- {text or "%%UPDATE_RN%%"}\n'
+        rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
     return rn_desc
 
 

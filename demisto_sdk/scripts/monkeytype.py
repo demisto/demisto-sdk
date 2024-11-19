@@ -7,11 +7,18 @@ from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
 
 
 def monkeytype(path: Path):
+    """
+    This function runs monkeytype on the Python files in the path's folder.
+    It knows how to identify variable types and recommends adding typing according to the tests.
+    """
     if path.is_file():
         path = path.parent
-    runner_path = path / "runner.py" # a temporary file, generated at runtime, solving an issue where MonkeyType can't run on files outside of python packages
+    runner_path = path / "runner.py"  # a temporary file, generated at runtime,
+    # solving an issue where MonkeyType can't run on files outside of python packages
     python_path = ":".join(str(path_) for path_ in PYTHONPATH + [path])
-    env = os.environ.copy() | {"PYTHONPATH": os.environ["PYTHONPATH"] + ":" + python_path}
+    env = os.environ.copy() | {
+        "PYTHONPATH": os.environ["PYTHONPATH"] + ":" + python_path
+    }
     subprocess.run(
         [
             "pytest",
@@ -22,7 +29,8 @@ def monkeytype(path: Path):
         env=env,
         cwd=path,
     )
-    modules = subprocess.run( # list the python files to run on (usually `<integration>.py` and `test_<integration>.py`)
+    modules = subprocess.run(
+        # list the python files to run on (usually `<integration>.py` and `test_<integration>.py`)
         ["monkeytype", "list-modules"],
         text=True,
         check=True,
@@ -30,18 +38,20 @@ def monkeytype(path: Path):
         cwd=path,
         env=env,
     ).stdout.splitlines()
-    filtered_modules = set(modules).difference(("demistomock", "CommonServerPython")) # we don't want to run monkeytype on these
+    filtered_modules = set(modules).difference(
+        ("demistomock", "CommonServerPython")
+    )  # we don't want to run monkeytype on these
     runner_path.write_text(
         "\n".join(f"import {module}\n{module}.main()" for module in filtered_modules)
     )
-    for module in filtered_modules: # actually run monkeytype on each module
+    for module in filtered_modules:  # actually run monkeytype on each module
         subprocess.run(
             ["monkeytype", "-v", "stub", module], check=True, cwd=path, env=env
         )
         subprocess.run(
             ["monkeytype", "-v", "apply", module], check=True, cwd=path, env=env
         )
-    runner_path.unlink() # that was a temporary file we no longer need
+    runner_path.unlink()  # that was a temporary file we no longer need
 
 
 def main():

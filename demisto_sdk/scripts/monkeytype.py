@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
 def monkeytype(path: Path):
     if path.is_file():
         path = path.parent
-    runner_path = path / "runner.py"
+    runner_path = path / "runner.py" # a temporary file, generated at runtime, solving an issue where MonkeyType can't run on files outside of python packages
     python_path = ":".join(str(path_) for path_ in PYTHONPATH + [path])
     env = os.environ.copy() | {"PYTHONPATH": os.environ["PYTHONPATH"] + ":" + python_path}
     subprocess.run(

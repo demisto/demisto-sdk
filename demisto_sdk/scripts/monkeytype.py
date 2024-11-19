@@ -11,10 +11,7 @@ def monkeytype(path: Path):
         path = path.parent
     runner_path = path / "runner.py"
     python_path = ":".join(str(path_) for path_ in PYTHONPATH + [path])
-    env = {
-        **os.environ.copy(),
-        **{"PYTHONPATH": os.environ["PYTHONPATH"] + ":" + python_path},
-    }
+    env = os.environ.copy() | {"PYTHONPATH": os.environ["PYTHONPATH"] + ":" + python_path}
     subprocess.run(
         [
             "pytest",

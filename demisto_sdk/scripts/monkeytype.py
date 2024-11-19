@@ -37,7 +37,7 @@ def monkeytype(path: Path):
     runner_path.write_text(
         "\n".join(f"import {module}\n{module}.main()" for module in filtered_modules)
     )
-    for module in filtered_modules:
+    for module in filtered_modules: # actually run monkeytype on each module
         subprocess.run(
             ["monkeytype", "-v", "stub", module], check=True, cwd=path, env=env
         )

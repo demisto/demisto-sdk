@@ -604,6 +604,7 @@ def test_IsMissingReleaseNotes(mock_is_missing_rn_validator):
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 1
     assert results[0].content_object == pack2
+    assert pack2.object_id in results[0].message
 
 
 def test_IsMissingReleaseNotes_for_api_module_dependents(

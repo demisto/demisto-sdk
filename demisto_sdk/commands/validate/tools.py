@@ -256,6 +256,20 @@ def is_pack_move(content_item: ContentItem) -> bool:
 
 
 def should_skip_rn_check(content_item: ContentItem) -> bool:
+    """Determines whether a RN validation should run on the given content item.
+    Assumptions:
+    - Only modified content items should have RNs
+      - Integration is considered modified if its description file was modified
+      - A modeling rule is considered modified if its XIF and schema files are modified
+      - A movement between packs is considered a modification
+    - Test content items shouldn't have RNs
+
+    Args:
+        content_item (ContentItem): A content item object
+
+    Returns:
+        bool: True iff should run the RN validaion.
+    """
     if isinstance(content_item, (TestPlaybook, TestScript)):
         return True
     if isinstance(content_item, Integration):

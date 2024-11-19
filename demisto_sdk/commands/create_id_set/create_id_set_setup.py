@@ -51,7 +51,7 @@ def create_id_set(
 
     update_command_args_from_config_file("create-id-set", kwargs)
 
-    id_set_creator = IDSetCreator(**kwargs)
+    id_set_creator = IDSetCreator(**kwargs)  # type: ignore[arg-type]
     id_set, excluded_items_by_pack, excluded_items_by_type = (
         id_set_creator.create_id_set()
     )

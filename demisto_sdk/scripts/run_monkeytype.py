@@ -6,7 +6,7 @@ from pathlib import Path
 from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
 
 
-def monkeytype(path: Path):
+def run_monkeytype(path: Path):
     """
     This function runs monkeytype on the Python files in the path's folder.
     It knows how to identify variable types and recommends adding typing according to the tests.
@@ -55,7 +55,7 @@ def monkeytype(path: Path):
 
 
 def main():
-    monkeytype(Path(sys.argv[0]))
+    run_monkeytype(Path(sys.argv[0]))
 
 
 if __name__ == "__main__":

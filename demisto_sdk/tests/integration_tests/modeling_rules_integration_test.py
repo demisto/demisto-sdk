@@ -992,13 +992,15 @@ class TestTheTestModelingRuleCommandSingleRule:
                         "0",
                     ],
                 )
+                schema_path = Path(pack.modeling_rules[0].schema.path).relative_to(
+                    pack.repo_path
+                )
                 # Assert
                 assert result.exit_code == 0
                 assert "All mappings validated successfully" in result.output
                 # make sure the schema validation was skipped.
-                schema_path = pack.modeling_rules[0].schema.path
                 assert (
-                    f"Skipping the validation to check that the schema {schema_path} is aligned with TestData file"
+                    f"Skipping the validation to check that the schema {str(schema_path)} is aligned with TestData file"
                     in result.output
                 )
         except typer.Exit:

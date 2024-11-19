@@ -4359,14 +4359,18 @@ def check_timestamp_format(timestamp: str) -> bool:
         return False
 
 
-def get_pack_latest_rn_version(pack_path: str) -> str:
+def get_pack_latest_rn_version(pack_path: str, git_sha: Optional[str] = None) -> str:
     """
     Extract all the Release notes from the pack and return the highest version of release note in the Pack.
 
     Return:
         (str): The lastest version of RN.
     """
-    list_of_files = glob.glob(pack_path + "/ReleaseNotes/*")
+    if git_sha:
+        git_util = GitUtil.from_content_path()
+        list_of_files = git_util.list_files_in_dir(f"{pack_path}/ReleaseNotes", git_sha)
+    else:
+        list_of_files = glob.glob(f"{pack_path}/ReleaseNotes/*")
     list_of_release_notes = [
         Path(file).name for file in list_of_files if Path(file).suffix == ".md"
     ]
@@ -4626,3 +4630,14 @@ def pascalToSpace(s):
     # split and join: to remove double spacing caused by previous workaround
     s = " ".join(s.split())
     return s
+
+
+def filter_out_falsy_values(ls: Union[List, Tuple]) -> List:
+    """
+        Filters out None values from a list or tuple.
+    Args:
+        ls: (List | Tuple) - This list or tuple to filter.
+    Return:
+        List filtered from None values.
+    """
+    return list(filter(lambda x: x, ls))

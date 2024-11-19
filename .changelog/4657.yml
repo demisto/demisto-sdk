@@ -1,0 +1,4 @@
+changes:
+- description: Fixing logger crashes when imported as library.
+  type: fix
+pr_number: 4657

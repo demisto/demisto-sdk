@@ -50,6 +50,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_versi
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA103_is_tests_section_valid import (
+    IsTestsSectionValidValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA105_id_contain_slashes import (
     IDContainSlashesValidator,
 )
@@ -2373,3 +2376,45 @@ def test_is_valid_context_path_depth_command_multiple_commands_with_invalid_outp
             assert invalid_path_ip_2 in result[0].message
             assert invalid_path_file_1 in result[0].message
             assert invalid_path_file_2 in result[0].message
+
+
+def test_IsTestsSectionValidValidator_obtain_invalid_content_items():
+    """
+    Given
+    - content items iterable with 5 content items:
+        - One integration with a tests section which is an empty list.
+        - One integration with a tests section which is the string "No tests (auto formatted)".
+        - One script with a tests section which is an the string "No tests".
+        - One script with a tests section which is a non empty list.
+        - One script with a tests section which is an empty string.
+    When
+    - Calling the IsTestsSectionValidValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures is returned and the error message is correct:
+        - Should fail.
+        - Shouldn't fail.
+        - Shouldn't fail.
+        - Shouldn't fail.
+        - Should fail.
+    """
+    content_items = [
+        create_integration_object(paths=["tests"], values=[[]]),
+        create_integration_object(
+            paths=["tests"], values=["No tests (auto formatted)"]
+        ),
+        create_script_object(paths=["tests"], values=["No tests"]),
+        create_script_object(paths=["tests"], values=[["- test_1", "- test_2"]]),
+        create_script_object(paths=["tests"], values=[""]),
+    ]
+    results = IsTestsSectionValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == 2
+    expected_msgs = [
+        'The tests section of the following Integration is malformed. It should either be a non empty list for tests or "No tests" in case there are no tests.',
+        'The tests section of the following Script is malformed. It should either be a non empty list for tests or "No tests" in case there are no tests.',
+    ]
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

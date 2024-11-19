@@ -22,7 +22,7 @@ def monkeytype(path: Path):
         env=env,
         cwd=path,
     )
-    modules = subprocess.run(
+    modules = subprocess.run( # list the python files to run on (usually `<integration>.py` and `test_<integration>.py`)
         ["monkeytype", "list-modules"],
         text=True,
         check=True,

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where SDK commands would fail in some system setups.
+  type: fix
+pr_number: 4666

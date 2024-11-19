@@ -7,10 +7,12 @@
 }
 """
 import json
+
 import pytest
 
 from demisto_sdk.commands.common.clients import (
     XsiamClient,
+    get_client_conf_from_pytest_request,
     get_client_from_server_type,
 )
 

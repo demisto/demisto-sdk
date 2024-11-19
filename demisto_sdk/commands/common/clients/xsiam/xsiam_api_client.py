@@ -32,8 +32,10 @@ class XsiamClient(XsoarSaasClient):
             self.get_ioc_rules()
             return True
         except ApiException as error:
-            logger.debug(
-                f"{self} is not {self.server_type} server, error: {error}")
+            logger.debug(  # noqa: PLE1205
+                "{}",
+                f"<cyan>{self} is not {self.server_type} server, error: {error}</cyan>",
+            )
             return False
 
     @property
@@ -221,16 +223,6 @@ class XsiamClient(XsoarSaasClient):
             )
 
         return response
-
-    # def connect_xdr(alerts):
-    #     headers = {
-    #         "Authorization": self.public_api_key.key,
-    #         "x-xdr-auth-id": self.public_api_key.id,
-    #         "Content-Type": "application/json",
-    #     }
-    #     alert_payload = {"request_data": {"alerts": alerts}}
-    #     res = requests.post(
-    #         url=f'https://api-{xsoar_host}/public_api/v1/alerts/insert_parsed_alerts/', headers=headers, json=alert_payload)
 
     """
     #############################

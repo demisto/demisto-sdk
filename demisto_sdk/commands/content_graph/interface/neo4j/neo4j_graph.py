@@ -801,8 +801,8 @@ class Neo4jContentGraphInterfaceSingleton:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            logger.debug("Creating a new instance of Neo4jContentGraphInterface.")
+            logger.info("Creating a new instance of Neo4jContentGraphInterface.")
             cls._instance = Neo4jContentGraphInterface()
         else:
-            logger.debug("Using the existing instance of Neo4jContentGraphInterface.")
+            logger.info("Using the existing instance of Neo4jContentGraphInterface.")
         return cls._instance

@@ -33,7 +33,7 @@ def monkeytype(path: Path):
         cwd=path,
         env=env,
     ).stdout.splitlines()
-    filtered_modules = set(modules).difference(("demistomock", "CommonServerPython"))
+    filtered_modules = set(modules).difference(("demistomock", "CommonServerPython")) # we don't want to run monkeytype on these
     runner_path.write_text(
         "\n".join(f"import {module}\n{module}.main()" for module in filtered_modules)
     )

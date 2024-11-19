@@ -52,6 +52,7 @@ def run_monkeytype(path: Path):
             ["monkeytype", "-v", "apply", module], check=True, cwd=path, env=env
         )
     runner_path.unlink()  # that was a temporary file we no longer need
+    (path / "monkeytype.sqlite3").unlink()  # created by monkeytype
 
 
 def main():

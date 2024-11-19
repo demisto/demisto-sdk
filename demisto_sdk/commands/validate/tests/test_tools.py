@@ -59,7 +59,7 @@ from TestSuite.file import File
 from TestSuite.repo import Repo
 
 
-def get_temp_repo():
+def get_temp_repo() -> Repo:
     content_temp_dir = Path(os.path.join(tempfile.mkdtemp(), "content"))
     content_temp_dir.mkdir()
 
@@ -75,7 +75,7 @@ def create_integration_object(
     name: Optional[str] = None,
     code: Optional[str] = None,
     unit_test_name: Optional[str] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -117,7 +117,7 @@ def create_integration_object(
 def create_parsing_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> ParsingRule:
     """Creating a parsing_rule object with altered fields from a default parsing_rule yml structure.
 
@@ -140,7 +140,7 @@ def create_parsing_rule_object(
 def create_correlation_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> CorrelationRule:
     """Creating an correlation_rule object with altered fields from a default correlation_rule yml structure.
 
@@ -166,7 +166,7 @@ def create_playbook_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Playbook:
     """Creating a playbook object with altered fields from a default playbook yml structure.
 
@@ -252,7 +252,7 @@ def create_modeling_rule_object(
     values: Optional[List[Any]] = None,
     rules: Optional[str] = None,
     schema: Optional[dict] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> ModelingRule:
     """Creating an modeling_rule object with altered fields from a default modeling_rule yml structure.
 
@@ -273,7 +273,7 @@ def create_modeling_rule_object(
 def create_ps_integration_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -303,7 +303,7 @@ def create_script_object(
     name: Optional[str] = None,
     code: Optional[str] = None,
     test_code: Optional[str] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Script:
     """Creating an script object with altered fields from a default script yml structure.
 
@@ -346,7 +346,7 @@ def create_pack_object(
     name: Optional[str] = None,
     release_note_content: Optional[str] = None,
     bc_release_note_content: Optional[List[Dict[str, str]]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -416,7 +416,7 @@ def remove_fields_from_dict(
 def create_classifier_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Classifier:
     """Creating an classifier object with altered fields from a default classifier json structure.
 
@@ -438,7 +438,7 @@ def create_classifier_object(
 def create_list_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> ListObject:
     """Creating an list object with altered fields from a default list json structure.
 
@@ -460,7 +460,7 @@ def create_list_object(
 def create_job_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Job:
     """Creating an job object with altered fields from a default job json structure.
 
@@ -487,7 +487,7 @@ def create_job_object(
 def create_dashboard_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Dashboard:
     """Creating an dashboard object with altered fields from a default dashboard json structure.
 
@@ -509,7 +509,7 @@ def create_dashboard_object(
 def create_incident_type_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> IncidentType:
     """Creating an incident_type object with altered fields from a default incident_type json structure.
 
@@ -532,7 +532,7 @@ def create_incident_field_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> IncidentField:
     """Creating an incident_field object with altered fields from a default incident_field json structure.
 
@@ -558,7 +558,7 @@ def create_incident_field_object(
 def create_report_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Report:
     """Creating an report object with altered fields from a default report json structure.
 
@@ -580,7 +580,7 @@ def create_report_object(
 def create_xsiam_report_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> XSIAMReport:
     """Creating an xsiam_report object with altered fields from a default xsiam_report json structure.
 
@@ -602,7 +602,7 @@ def create_xsiam_report_object(
 def create_xsiam_dashboard_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> XSIAMDashboard:
     """Creating an xsiam_dashboard object with altered fields from a default xsiam_dashboard json structure.
 
@@ -628,7 +628,7 @@ def create_xdrc_template_object(
     json_values: Optional[List[Any]] = None,
     yml_paths: Optional[List[str]] = None,
     yml_values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> XDRCTemplate:
     """Creating an xdrc_template object with altered fields from a default xdrc_template json and yml structures.
 
@@ -658,7 +658,7 @@ def create_assets_modeling_rule_object(
     json_values: Optional[List[Any]] = None,
     yml_paths: Optional[List[str]] = None,
     yml_values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> AssetsModelingRule:
     """Creating an assets_modeling_rule object with altered fields from a default assets_modeling_rule json and yml structures.
 
@@ -689,7 +689,7 @@ def create_assets_modeling_rule_object(
 def create_trigger_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Trigger:
     """Creating an trigger object with altered fields from a default trigger json structure.
 
@@ -711,7 +711,7 @@ def create_trigger_object(
 def create_layout_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Layout:
     """Creating an layout object with altered fields from a default layout json structure.
 
@@ -733,7 +733,7 @@ def create_layout_object(
 def create_widget_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Widget:
     """Creating an widget object with altered fields from a default widget json structure.
 
@@ -755,7 +755,7 @@ def create_widget_object(
 def create_indicator_field_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> IndicatorField:
     """Creating an indicator_field object with altered fields from a default indicator_field json structure.
 
@@ -798,7 +798,7 @@ def create_wizard_object(
 def create_generic_definition_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> GenericDefinition:
     """Creating an generic_definition object with altered fields from a default generic_definition json structure.
 
@@ -822,7 +822,7 @@ def create_generic_definition_object(
 def create_generic_field_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> GenericField:
     """Creating an generic_field object with altered fields from a default generic_field json structure.
 
@@ -844,7 +844,7 @@ def create_generic_field_object(
 def create_generic_type_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> GenericType:
     """Creating an generic_type object with altered fields from a default generic_type json structure.
 
@@ -866,7 +866,7 @@ def create_generic_type_object(
 def create_generic_module_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> GenericModule:
     """Creating an generic_module object with altered fields from a default generic_module json structure.
 
@@ -890,7 +890,7 @@ def create_generic_module_object(
 def create_incoming_mapper_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> Mapper:
     """Creating an incoming_mapper object with altered fields from a default incoming_mapper json structure.
 
@@ -912,7 +912,7 @@ def create_incoming_mapper_object(
 def create_outgoing_mapper_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ):
     """Creating an outgoing_mapper object with altered fields from a default outgoing_mapper json structure.
 
@@ -934,7 +934,7 @@ def create_outgoing_mapper_object(
 def create_indicator_type_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    repo: Repo = get_temp_repo(),
+    repo=get_temp_repo(),
 ) -> IndicatorType:
     """Creating an indicator_type object with altered fields from a default indicator_type json structure.
 

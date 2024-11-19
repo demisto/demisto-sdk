@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
-    REPO,
     create_assets_modeling_rule_object,
     create_classifier_object,
     create_correlation_rule_object,
@@ -43,6 +42,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_xdrc_template_object,
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
+    get_temp_repo,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_version import (
     IsValidVersionValidator,
@@ -2096,17 +2096,20 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items__all_valid():
     Then
     - Make sure no failures are returned.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 name="MyIntegration0",
                 unit_test_name="MyIntegration0",
                 pack_info={"support": XSOAR_SUPPORT},
+                repo=repo,
             ),
             create_integration_object(
                 name="MyIntegration0",
                 unit_test_name="MyIntegration0",
                 pack_info={"support": PARTNER_SUPPORT},
+                repo=repo,
             ),
         ]
 
@@ -2127,12 +2130,14 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items__invalid_item(
     Then
     - Make sure one failure is returned and the error message is correct.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 name="MyIntegration0",
                 unit_test_name="myintegration0",
                 pack_info={"support": XSOAR_SUPPORT},
+                repo=repo,
             ),
         ]
 
@@ -2163,7 +2168,8 @@ def test_is_valid_context_path_depth_command():
     Then
     - Make sure one failure is returned and the error message is correct.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 paths=["script.commands"],
@@ -2190,6 +2196,7 @@ def test_is_valid_context_path_depth_command():
                     ]
                 ],
                 pack_info={"support": XSOAR_SUPPORT},
+                repo=repo,
             ),
         ]
         expected_msg = "The level of depth for context output path for command: ip In the yml should be less or equal to 5 check the following outputs:\npath_1.2.3.4.5.6\n"
@@ -2212,7 +2219,8 @@ def test_is_valid_context_path_depth_script():
     Then
     - Make sure one failure is returned and the error message is correct.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_script_object(
                 paths=["outputs"],
@@ -2226,6 +2234,7 @@ def test_is_valid_context_path_depth_script():
                     ]
                 ],
                 pack_info={"support": XSOAR_SUPPORT},
+                repo=repo,
             ),
         ]
         expected_msg = "The level of depth for context output path for script: myScript In the yml should be less or equal to 5 check the following outputs:\ntest.test.1.2.3.4.5.6"
@@ -2248,7 +2257,8 @@ def test_is_valid_context_path_depth_command_multiple_invalid_outputs():
     Then
     - Make sure the paths exist in the error message that is returned
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 paths=["script.commands"],
@@ -2280,6 +2290,7 @@ def test_is_valid_context_path_depth_command_multiple_invalid_outputs():
                     ]
                 ],
                 pack_info={"support": XSOAR_SUPPORT},
+                repo=repo,
             ),
         ]
 
@@ -2305,7 +2316,8 @@ def test_is_valid_context_path_depth_command_multiple_commands_with_invalid_outp
     Then
     - Make sure the paths exist in the error message that is returned
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 paths=["script.commands"],
@@ -2360,6 +2372,7 @@ def test_is_valid_context_path_depth_command_multiple_commands_with_invalid_outp
                     ]
                 ],
                 pack_info={"support": XSOAR_SUPPORT},
+                repo=repo,
             ),
         ]
         invalid_path_ip_1 = "path_1.2.3.4.5.6"

@@ -3,8 +3,8 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
-    REPO,
     create_script_object,
+    get_temp_repo,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.SC_validators import (
@@ -80,7 +80,8 @@ def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_c
     Then:
      - make sure the script with the argument that has "incident" fails the validation
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         mocker.patch(
             "demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs.get_core_pack_list",
             return_value=["PackWithInvalidScript"],
@@ -94,6 +95,7 @@ def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_c
                     [{"name": "incident-id", "description": "test"}],
                 ],
                 pack_info={"name": "PackWithInvalidScript"},
+                repo=repo,
             ),
             create_script_object(
                 paths=["args"],
@@ -107,8 +109,9 @@ def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_c
                     ],
                 ],
                 pack_info={"name": "PackWithValidScript"},
+                repo=repo,
             ),
-            create_script_object(),
+            create_script_object(repo=repo),
         )
 
         results = IsScriptArgumentsContainIncidentWordValidatorCorePacks().obtain_invalid_content_items(

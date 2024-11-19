@@ -23,10 +23,10 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
-    REPO,
     create_integration_object,
     create_old_file_pointers,
     create_script_object,
+    get_temp_repo,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy_and_insecure import (
     IsValidProxyAndInsecureValidator,
@@ -4951,12 +4951,19 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
     Then
     - Make sure the validation pass for all.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
-            create_integration_object(pack_info={"support": XSOAR_SUPPORT}),
-            create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
-            create_integration_object(pack_info={"support": DEVELOPER_SUPPORT}),
-            create_integration_object(pack_info={"support": COMMUNITY_SUPPORT}),
+            create_integration_object(pack_info={"support": XSOAR_SUPPORT}, repo=repo),
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT}, repo=repo
+            ),
+            create_integration_object(
+                pack_info={"support": DEVELOPER_SUPPORT}, repo=repo
+            ),
+            create_integration_object(
+                pack_info={"support": COMMUNITY_SUPPORT}, repo=repo
+            ),
             create_integration_object(
                 paths=["configuration"],
                 values=[
@@ -4971,6 +4978,7 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
                     ]
                 ],
                 pack_info={"support": XSOAR_SUPPORT},
+                repo=repo,
             ),
         ]
 
@@ -4995,7 +5003,8 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
     Then
     - Make sure the validation fail and the right error message is returned.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 paths=["configuration"],
@@ -5011,6 +5020,7 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
                     ]
                 ],
                 pack_info={"support": PARTNER_SUPPORT},
+                repo=repo,
             ),
             create_integration_object(
                 paths=["configuration"],
@@ -5026,6 +5036,7 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
                     ]
                 ],
                 pack_info={"support": DEVELOPER_SUPPORT},
+                repo=repo,
             ),
             create_integration_object(
                 paths=["configuration"],
@@ -5041,6 +5052,7 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
                     ]
                 ],
                 pack_info={"support": COMMUNITY_SUPPORT},
+                repo=repo,
             ),
         ]
 
@@ -5118,7 +5130,8 @@ def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_v
     Then
     - Make sure the validation pass for all.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 paths=["configuration"],
@@ -5141,6 +5154,7 @@ def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_v
                     ]
                 ],
                 pack_info={"support": PARTNER_SUPPORT},
+                repo=repo,
             ),
             create_integration_object(
                 paths=["configuration"],
@@ -5163,6 +5177,7 @@ def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_v
                     ]
                 ],
                 pack_info={"support": DEVELOPER_SUPPORT},
+                repo=repo,
             ),
             create_integration_object(
                 paths=["configuration"],
@@ -5185,6 +5200,7 @@ def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_v
                     ]
                 ],
                 pack_info={"support": COMMUNITY_SUPPORT},
+                repo=repo,
             ),
             create_integration_object(
                 paths=["configuration"],
@@ -5206,6 +5222,7 @@ def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_v
                     ]
                 ],
                 pack_info={"support": XSOAR_SUPPORT},
+                repo=repo,
             ),
         ]
 
@@ -5225,7 +5242,8 @@ def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_i
     Then
     - Make sure the validation fail and the right error message is returned.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 paths=["configuration"],
@@ -5241,6 +5259,7 @@ def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_i
                     ]
                 ],
                 pack_info={"support": XSOAR_SUPPORT},
+                repo=repo,
             ),
         ]
 
@@ -5397,7 +5416,8 @@ def test_IsNameContainIncidentInCorePackValidator_obtain_invalid_content_items(
         "demisto_sdk.commands.validate.validators.IN_validators.IN139_is_name_contain_incident_in_core_pack.get_core_pack_list",
         return_value=["pack_no_1", "pack_no_2", "pack_no_4"],
     )
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         results = (
             IsNameContainIncidentInCorePackValidator().obtain_invalid_content_items(
                 content_items
@@ -5426,29 +5446,36 @@ def test_IsPartnerCollectorHasXsoarSupportLevelValidator_obtain_invalid_content_
     Then
     - Make sure the validation pass for all.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 pack_info={"support": XSOAR_SUPPORT},
                 paths=["script.isfetchevents"],
                 values=[True],
+                repo=repo,
             ),
             create_integration_object(
                 pack_info={"support": PARTNER_SUPPORT},
                 paths=["supportlevelheader", "script.isfetchevents"],
                 values=[XSOAR_SUPPORT, True],
+                repo=repo,
             ),
             create_integration_object(
                 pack_info={"support": XSOAR_SUPPORT},
                 paths=["script.isfetcheventsandassets"],
                 values=[True],
+                repo=repo,
             ),
             create_integration_object(
                 pack_info={"support": PARTNER_SUPPORT},
                 paths=["supportlevelheader", "script.isfetcheventsandassets"],
                 values=[XSOAR_SUPPORT, True],
+                repo=repo,
             ),
-            create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
+            create_integration_object(
+                pack_info={"support": PARTNER_SUPPORT}, repo=repo
+            ),
         ]
 
         results = IsPartnerCollectorHasXsoarSupportLevelValidator().obtain_invalid_content_items(
@@ -5469,17 +5496,20 @@ def test_IsPartnerCollectorHasXsoarSupportLevelValidator_obtain_invalid_content_
     Then
     - Make sure the validation fail and the right error message is returned.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         content_items = [
             create_integration_object(
                 pack_info={"support": PARTNER_SUPPORT},
                 paths=["script.isfetchevents"],
                 values=[True],
+                repo=repo,
             ),
             create_integration_object(
                 pack_info={"support": PARTNER_SUPPORT},
                 paths=["script.isfetcheventsandassets"],
                 values=[True],
+                repo=repo,
             ),
         ]
 

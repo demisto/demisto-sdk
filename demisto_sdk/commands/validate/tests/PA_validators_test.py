@@ -21,13 +21,13 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.content_graph.objects.base_content import BaseNode
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFile
 from demisto_sdk.commands.validate.tests.test_tools import (
-    REPO,
     create_integration_object,
     create_modeling_rule_object,
     create_old_file_pointers,
     create_pack_object,
     create_playbook_object,
     create_script_object,
+    get_temp_repo,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.PA_validators.PA100_valid_tags_prefixes import (
@@ -1702,9 +1702,10 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
         "`demisto-sdk update-release-notes -i Packs/{pack} -u "
         "(major|minor|revision|documentation)` for a specific pack and version."
     )
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         integration = create_integration_object(
-            pack_info={"currentVersion": current_version}
+            pack_info={"currentVersion": current_version}, repo=repo
         )
         pack = integration.in_pack
         integration.git_status = GitStatuses.MODIFIED
@@ -1744,8 +1745,11 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
     )
     old_version = "1.0.0"
     current_version = "1.0.0"
-    with ChangeCWD(REPO.path):
-        pack = create_pack_object(["currentVersion", "price"], [current_version, 5])
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
+        pack = create_pack_object(
+            ["currentVersion", "price"], [current_version, 5], repo=repo
+        )
         old_pack = pack.copy(deep=True)
         old_pack.current_version = old_version
 

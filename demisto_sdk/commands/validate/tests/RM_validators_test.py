@@ -5,12 +5,12 @@ import pytest
 
 from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.validate.tests.test_tools import (
-    REPO,
     create_doc_file_object,
     create_integration_object,
     create_pack_object,
     create_playbook_object,
     create_script_object,
+    get_temp_repo,
 )
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
 from demisto_sdk.commands.validate.validators.RM_validators.RM100_no_empty_sections import (
@@ -329,7 +329,8 @@ def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
     expected_number_of_failures,
     expected_msgs,
 ):
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         for content_item, file_name in zip(content_items, doc_files_name):
             if file_name:
                 create_doc_file_object(find_pack_folder(content_item.path), file_name)

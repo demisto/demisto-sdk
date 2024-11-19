@@ -9,7 +9,6 @@ from demisto_sdk.commands.content_graph.objects.integration import Command, Outp
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
-    REPO,
     create_incident_field_object,
     create_incident_type_object,
     create_incoming_mapper_object,
@@ -17,6 +16,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_old_file_pointers,
     create_pack_object,
     create_script_object,
+    get_temp_repo,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
@@ -385,10 +385,15 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
         - Case 2: Should pass the validation since the user did not remove any marketplace.
         - Case 3: Should pass the validation since the user did not remove any marketplace.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         modified_content_items = [
-            create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
-            create_script_object(pack_info={"marketplaces": in_pack_marketplaces}),
+            create_integration_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
+            create_script_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
         ]
         old_content_items = [create_integration_object(), create_script_object()]
 
@@ -433,12 +438,20 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
         - Case 1: Should fail the validation since the user removed marketplaces.
         - Case 2: Should fail the validation since the user replaced one marketplace with a different one.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         modified_content_items = [
-            create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
-            create_script_object(pack_info={"marketplaces": in_pack_marketplaces}),
+            create_integration_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
+            create_script_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
         ]
-        old_content_items = [create_integration_object(), create_script_object()]
+        old_content_items = [
+            create_integration_object(repo=repo),
+            create_script_object(repo=repo),
+        ]
 
         modified_content_items[0].marketplaces = modified_content_items[
             1
@@ -483,12 +496,20 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__pas
         - Case 1: Should pass the validation since the user added marketplaces or removed all marketplaces which is equal to adding all marketplaces.
         - Case 2: Should pass the validation since the user added marketplaces or removed all marketplaces which is equal to adding all marketplaces.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         modified_content_items = [
-            create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
-            create_script_object(pack_info={"marketplaces": in_pack_marketplaces}),
+            create_integration_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
+            create_script_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
         ]
-        old_content_items = [create_integration_object(), create_script_object()]
+        old_content_items = [
+            create_integration_object(repo=repo),
+            create_script_object(repo=repo),
+        ]
 
         modified_content_items[0].marketplaces = modified_content_items[
             1
@@ -521,15 +542,23 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__fai
         - Should fail the validation since the user replaced one marketplace with a different one.
 
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         modified_marketplaces = XSOAR_MARKETPLACE
         in_pack_marketplaces = ALL_MARKETPLACES_FOR_IN_PACK
 
         modified_content_items = [
-            create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
-            create_script_object(pack_info={"marketplaces": in_pack_marketplaces}),
+            create_integration_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
+            create_script_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
         ]
-        old_content_items = [create_integration_object(), create_script_object()]
+        old_content_items = [
+            create_integration_object(repo=repo),
+            create_script_object(repo=repo),
+        ]
 
         modified_content_items[0].marketplaces = modified_content_items[
             1
@@ -575,12 +604,20 @@ def test_WasMarketplaceModifiedValidator__old_and_modified_items_have_all_market
         - Case 1: Should pass the validation since the user added marketplaces or removed all marketplaces which is equal to adding all marketplaces.
         - Case 2: Should pass the validation since the user didn't change anything or removed all marketplaces which is equal to adding all marketplaces.
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         modified_content_items = [
-            create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
-            create_script_object(pack_info={"marketplaces": in_pack_marketplaces}),
+            create_integration_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
+            create_script_object(
+                pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
+            ),
         ]
-        old_content_items = [create_integration_object(), create_script_object()]
+        old_content_items = [
+            create_integration_object(repo=repo),
+            create_script_object(repo=repo),
+        ]
 
         create_old_file_pointers(modified_content_items, old_content_items)
 
@@ -684,15 +721,23 @@ def test_WasMarketplaceModifiedValidator__renamed__fails():
         - Should fail the validation since moving to a different pack with less marketplaces is not allowed.
 
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         renamed_content_items = [
-            create_integration_object(pack_info={"marketplaces": XSOAR_MARKETPLACE}),
-            create_script_object(pack_info={"marketplaces": XSOAR_MARKETPLACE}),
+            create_integration_object(
+                pack_info={"marketplaces": XSOAR_MARKETPLACE}, repo=repo
+            ),
+            create_script_object(
+                pack_info={"marketplaces": XSOAR_MARKETPLACE}, repo=repo
+            ),
         ]
         renamed_content_items[0].git_status = renamed_content_items[1].git_status = (
             GitStatuses.RENAMED
         )
-        old_content_items = [create_integration_object(), create_script_object()]
+        old_content_items = [
+            create_integration_object(repo=repo),
+            create_script_object(repo=repo),
+        ]
 
         old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
             ALL_MARKETPLACES_FOR_IN_PACK
@@ -724,19 +769,23 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
         - Should pass the validation since the new host has all marketplaces in pack level.
 
     """
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         renamed_content_items = [
             create_integration_object(
-                pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}
+                pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}, repo=repo
             ),
             create_script_object(
-                pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}
+                pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}, repo=repo
             ),
         ]
         renamed_content_items[0].git_status = renamed_content_items[1].git_status = (
             GitStatuses.RENAMED
         )
-        old_content_items = [create_integration_object(), create_script_object()]
+        old_content_items = [
+            create_integration_object(repo=repo),
+            create_script_object(repo=repo),
+        ]
 
         old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
             XSOAR_MARKETPLACE

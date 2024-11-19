@@ -41,7 +41,7 @@ def monkeytype(path: Path):
         subprocess.run(
             ["monkeytype", "-v", "apply", module], check=True, cwd=path, env=env
         )
-    runner_path.unlink()
+    runner_path.unlink() # that was a temporary file we no longer need
 
 
 def main():

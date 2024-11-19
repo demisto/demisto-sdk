@@ -30,7 +30,7 @@ def validate_paths(value: Optional[str]) -> Optional[str]:
     paths = value.split(",")
     for path in paths:
         stripped_path = path.strip()
-        if not Path.exists(stripped_path):  # type: ignore[arg-type]
+        if not os.path.exists(stripped_path):
             raise typer.BadParameter(f"The path '{stripped_path}' does not exist.")
 
     return value
@@ -230,6 +230,9 @@ def determine_execution_mode(file_path, validate_all, use_git, post_commit):
     elif use_git:
         return ExecutionMode.USE_GIT
     else:
+        # Default case: fall back to using git for validation
+        use_git = True
+        post_commit = True
         return ExecutionMode.USE_GIT
 
 

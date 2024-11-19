@@ -1413,8 +1413,10 @@ def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker)
     mock_doc_reviewer = mocker.MagicMock(name="DocReviewer")
     mock_doc_reviewer.run_doc_review.return_value = True
     from demisto_sdk.commands.doc_reviewer.doc_reviewer_setup import DocReviewer
+
     m = mocker.patch.object(
-        DocReviewer, "__init__",
+        DocReviewer,
+        "__init__",
         return_value=mock_doc_reviewer,
     )
     runner.invoke(app, ["doc-review", use_pack_known_words])

@@ -1,4 +1,4 @@
 changes:
-- description: Added support for ***monkeytype***, which adds typing for Python and Python test files.
+- description: Added support for ***monkeytype***, which adds type hints for Python files, based on types seen during the unit-test run.
   type: feature
 pr_number: 4454

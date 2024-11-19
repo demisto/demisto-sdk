@@ -2,12 +2,13 @@ import os
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
+from commands.common.content import Content
+
 from demisto_sdk.commands.common.constants import (
     JOB,
     TESTS_AND_DOC_DIRECTORIES,
     FileType,
 )
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
@@ -313,7 +314,7 @@ def get_files_to_format_from_git(
     Returns:
         list. a list of all the files that should be formatted.
     """
-    git_util = GitUtil()
+    git_util = Content.git_util()
     all_changed_files = git_util.get_all_changed_files(
         prev_ver=prev_ver, include_untracked=include_untracked
     )

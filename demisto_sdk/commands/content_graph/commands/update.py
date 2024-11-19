@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import typer
+from commands.common.content import Content
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -97,7 +98,7 @@ def update_content_graph(
         logger.info("A path to import the graph from was not provided, using git")
         use_git = True
 
-    git_util = GitUtil()
+    git_util = Content.git_util()
     is_external_repo = is_external_repository()
 
     if is_external_repo:

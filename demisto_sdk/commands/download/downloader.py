@@ -186,7 +186,6 @@ class Downloader:
             int: Exit code. 1 if failed, 0 if succeeded
         """
         input_files_missing = False  # Used for returning an exit code of 1 if one of the inputs is missing.
-        typer.echo(self.should_list_files)
         try:
             if self.should_list_files:
                 # No flag validations are needed, since only the '-lf' flag is used.

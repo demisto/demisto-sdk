@@ -36,5 +36,5 @@ def integration_diff(
     result = integration_diff_detector.check_different()
 
     if result:
-        sys.exit(0)
-    sys.exit(1)
+        raise typer.Exit(0)
+    raise typer.Exit(1)

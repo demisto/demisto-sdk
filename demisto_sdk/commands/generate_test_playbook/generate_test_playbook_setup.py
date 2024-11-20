@@ -82,8 +82,8 @@ def generate_test_playbook(
     try:
         generator = PlaybookTestsGenerator(file_type=file_type.value, **ctx.params)
         if generator.run():
-            sys.exit(0)
-        sys.exit(1)
+            raise typer.Exit(0)
+        raise typer.Exit(1)
     except PlaybookTestsGenerator.InvalidOutputPathError as e:
         typer.echo(f"<red>{e}</red>", err=True)
-        sys.exit(1)
+        raise typer.Exit(1)

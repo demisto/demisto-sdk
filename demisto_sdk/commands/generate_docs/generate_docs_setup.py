@@ -149,7 +149,7 @@ def generate_docs(
 
     except Exception:
         typer.echo("Failed generating docs", err=True)
-        sys.exit(1)
+        raise typer.Exit(1)
 
 
 def _generate_docs_for_file(kwargs: Dict[str, Any]):
@@ -229,4 +229,4 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
 
     except Exception:
         typer.echo(f"Failed generating docs for {input_path}", err=True)
-        sys.exit(1)
+        raise typer.Exit(1)

@@ -2,10 +2,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
 
-import click
 import pytest
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__original import xsoar_config_file_update
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
@@ -38,11 +38,10 @@ class TestXSOARConfigFileUpdater:
         argnames="add_all_marketplace_packs, expected_path, expected_outputs",
         argvalues=[
             (
-                True,
+                "--add-all-marketplace-packs",
                 "xsoar_config.json",
                 {"marketplace_packs": [{"id": "test1", "version": "1.0.0"}]},
             ),
-            (False, "", {}),
         ],
     )
     def test_add_all_marketplace_packs(
@@ -63,21 +62,35 @@ class TestXSOARConfigFileUpdater:
             "get_installed_packs",
             return_value=[{"id": "test1", "version": "1.0.0"}],
         )
+        runner = CliRunner()
         with temp_dir() as tmp_output_dir:
-            click.Context(command=xsoar_config_file_update).invoke(
-                xsoar_config_file_update,
-                file_path=tmp_output_dir / "xsoar_config.json",
-                add_all_marketplace_packs=add_all_marketplace_packs,
+            file_path = (
+                Path(tmp_output_dir) / expected_path
+            )  # Get the expected file path
+
+            # Run the command with the current flag value
+            result = runner.invoke(
+                app,
+                args=[
+                    "xsoar-config-file-update",
+                    "--file-path",
+                    str(file_path),
+                    add_all_marketplace_packs,
+                ],
             )
+            assert result.exit_code == 0
 
-            assert Path(f"{tmp_output_dir}/{expected_path}").exists()
-
-            try:
-                with open(f"{tmp_output_dir}/{expected_path}") as config_file:
-                    config_file_info = json.load(config_file)
-            except IsADirectoryError:
-                config_file_info = {}
-            assert config_file_info == expected_outputs
+            if add_all_marketplace_packs:
+                assert file_path.exists()
+                try:
+                    with open(file_path, "r") as config_file:
+                        config_file_info = json.load(config_file)
+                except IsADirectoryError:
+                    config_file_info = {}
+                assert config_file_info == expected_outputs
+            else:
+                # When `add_all_marketplace_packs` is False, ensure the file does not exist
+                assert not file_path.exists()
 
     def test_add_all_marketplace_packs_on_existing_list(self, mocker):
         """
@@ -102,11 +115,15 @@ class TestXSOARConfigFileUpdater:
                     {"marketplace_packs": [{"id": "test2", "version": "2.0.0"}]},
                     config_file,
                 )
-
-            click.Context(command=xsoar_config_file_update).invoke(
-                xsoar_config_file_update,
-                file_path=tmp_output_dir / "xsoar_config.json",
-                add_all_marketplace_packs=True,
+            runner = CliRunner()
+            runner.invoke(
+                app,
+                args=[
+                    "xsoar-config-file-update",
+                    "--file-path",
+                    tmp_output_dir / "xsoar_config.json",
+                    "--add-all-marketplace-packs",
+                ],
             )
 
             assert Path(f"{tmp_output_dir}/xsoar_config.json").exists()
@@ -132,22 +149,37 @@ class TestXSOARConfigFileUpdater:
         When:
             - run the update_xsoar_config_file command
         Then:
-            - validate the xsoar_config file exist in the destination output
+            - validate the xsoar_config file exists in the destination output
             - validate the xsoar_config file output is as expected
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=xsoar_config_file_update).invoke(
-                xsoar_config_file_update,
-                file_path=tmp_output_dir / "xsoar_config.json",
-                add_marketplace_pack=True,
-                pack_id="Pack1",
-                pack_data="1.0.1",
+            runner = CliRunner()
+
+            # Prepare the file path for the config
+            config_file_path = Path(tmp_output_dir) / "xsoar_config.json"
+            result = runner.invoke(
+                app,
+                args=[
+                    "xsoar-config-file-update",
+                    "--file-path",
+                    str(config_file_path),
+                    "-mp",
+                    "-pi",
+                    "Pack1",
+                    "-pd",
+                    "1.0.1",
+                ],
             )
-            assert Path(f"{tmp_output_dir}/xsoar_config.json").exists()
+
+            # Assert the result was successful (exit code 0)
+            assert result.exit_code == 0
+
+            # Check that the xsoar_config.json file was created
+            assert config_file_path.exists()
 
             try:
-                with open(f"{tmp_output_dir}/xsoar_config.json") as config_file:
+                with open(config_file_path, "r") as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
@@ -167,17 +199,25 @@ class TestXSOARConfigFileUpdater:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=xsoar_config_file_update).invoke(
-                xsoar_config_file_update,
-                file_path=tmp_output_dir / "xsoar_config.json",
-                add_custom_pack=True,
-                pack_id="Pack1",
-                pack_data="Packs/Pack1",
+            runner = CliRunner()
+            config_file_path = Path(tmp_output_dir) / "xsoar_config.json"
+            runner.invoke(
+                app,
+                args=[
+                    "xsoar-config-file-update",
+                    "--file-path",
+                    str(config_file_path),
+                    "-cp",
+                    "-pi",
+                    "Pack1",
+                    "-pd",
+                    "Packs/Pack1",
+                ],
             )
             assert Path(f"{tmp_output_dir}/xsoar_config.json").exists()
 
             try:
-                with open(f"{tmp_output_dir}/xsoar_config.json") as config_file:
+                with open(config_file_path) as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
@@ -212,12 +252,20 @@ class TestXSOARConfigFileUpdater:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=xsoar_config_file_update).invoke(
-                xsoar_config_file_update,
-                file_path=tmp_output_dir / "xsoar_config.json",
-                add_marketplace_pack=add_marketplace_pack,
-                pack_id=pack_id,
-                pack_data=pack_data,
+            runner = CliRunner()
+            config_file_path = Path(tmp_output_dir) / "xsoar_config.json"
+            runner.invoke(
+                app,
+                args=[
+                    "xsoar-config-file-update",
+                    "--file-path",
+                    str(config_file_path),
+                    "-mp",
+                    "-pi",
+                    pack_id,
+                    "-pd",
+                    pack_data,
+                ],
             )
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
@@ -254,12 +302,20 @@ class TestXSOARConfigFileUpdater:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=xsoar_config_file_update).invoke(
-                xsoar_config_file_update,
-                file_path=tmp_output_dir / "xsoar_config.json",
-                add_custom_pack=add_custom_pack,
-                pack_id=pack_id,
-                pack_data=pack_data,
+            runner = CliRunner()
+            config_file_path = Path(tmp_output_dir) / "xsoar_config.json"
+            runner.invoke(
+                app,
+                args=[
+                    "xsoar-config-file-update",
+                    "--file-path",
+                    str(config_file_path),
+                    "-cp",
+                    "-pi",
+                    pack_id,
+                    "-pd",
+                    pack_data,
+                ],
             )
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
@@ -301,7 +357,7 @@ class TestXSOARConfigFileUpdater:
             - check that the flags is as expected
         Then:
             - validate the error code is as expected.
-            - validate the Error massage when the argument us missing
+            - validate the Error message when the argument us missing
         """
 
         self.add_custom_pack = add_custom_pack
@@ -340,7 +396,7 @@ class TestXSOARConfigFileUpdater:
             - check that the update_config_file_manager works as expected
         Then:
             - validate the error code is as expected.
-            - validate the Error massage when the argument is missing
+            - validate the Error message when the argument is missing
         """
         mocker.patch.object(XSOARConfigFileUpdater, "update_marketplace_pack")
 

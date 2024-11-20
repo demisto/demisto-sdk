@@ -1,18 +1,14 @@
 import os
 import platform
-from pathlib import Path
 
 import typer
 from dotenv import load_dotenv
 from pkg_resources import DistributionNotFound, get_distribution
-from typer.main import get_command
 
 from demisto_sdk.commands.common.configuration import Configuration, DemistoSDK
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import (
-    convert_path_to_str,
     get_last_remote_release_version,
     get_release_note_entries,
     is_sdk_defined_working_offline,
@@ -24,6 +20,7 @@ from demisto_sdk.commands.coverage_analyze.coverage_analyze_setup import (
 from demisto_sdk.commands.create_id_set.create_id_set_setup import create_id_set
 from demisto_sdk.commands.doc_reviewer.doc_reviewer_setup import doc_review
 from demisto_sdk.commands.download.download_setup import download
+from demisto_sdk.commands.dump_api.dump_api_setup import dump_api
 from demisto_sdk.commands.error_code_info.error_code_info_setup import error_code
 from demisto_sdk.commands.find_dependencies.find_dependencies_setup import (
     find_dependencies,
@@ -79,58 +76,8 @@ from demisto_sdk.commands.zip_packs.zip_packs_setup import zip_packs
 
 app = typer.Typer()
 
-
-@app.command(name="export-api", help="Dumps the `demisto-sdk` API to a file.")
-def dump_api(
-    ctx: typer.Context,
-    output_path: Path = typer.Option(
-        CONTENT_PATH,
-        "-o",
-        "--output",
-        help="The output directory or JSON file to save the demisto-sdk API.",
-    ),
-):
-    """
-    This command dumps the `demisto-sdk` API to a file.
-    It is used to view the help of all commands in one file.
-
-    Args:
-        ctx (typer.Context): The context of the command.
-        output_path (Path, optional): The output directory or JSON file to save the demisto-sdk API.
-    """
-    output_json: dict = {}
-    typer_app = get_command(app)
-
-    # Iterate over registered commands in the main application
-    for command_name, command in typer_app.commands.items():  # type: ignore[attr-defined]
-        typer.echo(command_name, color=True)
-        if isinstance(command, typer.Typer):
-            output_json[command_name] = {}
-
-            # Iterate over subcommands
-            for sub_command in command.registered_commands:
-                sub_command_name = sub_command.name
-                # Convert subcommand to info dictionary
-                output_json[command_name][sub_command_name] = sub_command.to_info_dict(  # type: ignore[attr-defined]
-                    ctx
-                )
-        else:
-            # Convert command to info dictionary
-            output_json[command_name] = command.to_info_dict(ctx)
-
-    # Convert paths in the output JSON (if applicable)
-    convert_path_to_str(output_json)
-
-    # Determine output file path
-    if output_path.is_dir():
-        output_path = output_path / "demisto-sdk-api.json"
-
-    # Write the JSON output to the specified file
-    output_path.write_text(json.dumps(output_json, indent=4))
-    typer.echo(f"API dumped successfully to {output_path}")
-
-
 # Registers the commands directly to the Demisto-SDK app.
+app.command(name="export-api", help="Dumps the `demisto-sdk` API to a file.")(dump_api)
 app.command(name="upload", help="Uploads an entity to Cortex XSOAR or Cortex XSIAM.")(
     upload
 )

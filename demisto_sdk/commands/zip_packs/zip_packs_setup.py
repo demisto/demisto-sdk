@@ -11,16 +11,23 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 def zip_packs(
     ctx: typer.Context,
     input: str = typer.Option(
-        ..., help="The packs to be zipped as csv list of pack paths."
+        ..., "-i", "--input", help="The packs to be zipped as csv list of pack paths."
     ),
     output: str = typer.Option(
-        ..., help="The destination directory to create the packs.", resolve_path=True
+        ...,
+        "-o",
+        "--output",
+        help="The destination directory to create the packs.",
+        resolve_path=True,
     ),
     content_version: str = typer.Option(
-        "0.0.0", help="The content version in CommonServerPython."
+        "0.0.0",
+        "-c",
+        "--content-version",
+        help="The content version in CommonServerPython.",
     ),
     upload: bool = typer.Option(
-        False, help="Upload the unified packs to the marketplace."
+        False, "-u", "--upload", help="Upload the unified packs to the marketplace."
     ),
     zip_all: bool = typer.Option(False, help="Zip all the packs in one zip file."),
     console_log_threshold: str = typer.Option(

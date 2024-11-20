@@ -983,16 +983,19 @@ class TestFormattingList:
 class TestFormattingClassifier:
     @pytest.fixture(autouse=True)
     def classifier_copy(self):
+        # Ensure the path exists
         os.makedirs(CLASSIFIER_PATH, exist_ok=True)
-        yield shutil.copyfile(SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER)
-        Path(DESTINATION_FORMAT_CLASSIFIER).unlink()
-        os.rmdir(CLASSIFIER_PATH)
+        # Copy the file and yield the destination path as a string
+        shutil.copyfile(SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER)
+        yield str(DESTINATION_FORMAT_CLASSIFIER)
+        # Cleanup all contents of the directory
+        shutil.rmtree(CLASSIFIER_PATH, ignore_errors=True)
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def classifier_formatter(self, classifier_copy):
         yield ClassifierJSONFormat(
             input=classifier_copy,
-            output=DESTINATION_FORMAT_CLASSIFIER,
+            output=classifier_copy,
             clear_cache=True,
             path=CLASSIFIER_SCHEMA_PATH,
         )

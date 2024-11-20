@@ -81,11 +81,11 @@ def coverage_analyze(
             or cov_report.coverage_diff_report()
             or no_min_coverage_enforcement
         ):
-            raise typer.Exit(0)
+            return 0
     except FileNotFoundError as e:
         typer.echo(f"Warning: {e}")
-        raise typer.Exit(0)
+        return 0
     except Exception as error:
         typer.echo(f"Error: {error}")
 
-    raise typer.Exit(1)
+    return 1

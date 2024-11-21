@@ -3035,11 +3035,6 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     pack.pack_metadata.write_json(pack_metadata_info)
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(
-        PackUniqueFilesValidator,
-        "is_categories_field_match_standard",
-        return_value=True,
-    )
-    mocker.patch.object(
         OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=(

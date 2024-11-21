@@ -130,11 +130,6 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
-        mocker.patch.object(
-            PackUniqueFilesValidator,
-            "is_categories_field_match_standard",
-            return_value=True,
-        )
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator("fake")
         mocker.patch.object(
@@ -151,11 +146,6 @@ class TestPackUniqueFilesValidator:
         )
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
-        )
-        mocker.patch.object(
-            PackUniqueFilesValidator,
-            "is_categories_field_match_standard",
-            return_value=True,
         )
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator("fake")

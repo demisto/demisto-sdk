@@ -244,7 +244,7 @@ class XsiamClient(XsoarSaasClient):
         data = self.search_alerts(alert_external_id)
         return data["alerts"][0]["alert_id"]
 
-    def update_alert(self, alert_id: str | list[str], updated_data: dict) -> dict:
+    def update_alert(self, alert_id: Union[str, list[str]], updated_data: dict) -> dict:
         """
         Args:
             alert_id (str | list[str]): alert ids to edit.

@@ -1,0 +1,4 @@
+changes:
+- description: "Added support for non-default registry ports when using custom docker images. i.e: 'registry:5000/repository/image:main'"
+  type: feature
+pr_number: 4674

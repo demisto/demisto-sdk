@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from pytest_mock import MockerFixture
 
@@ -85,7 +87,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_obtain_invalid_content
     mocker.patch.object(
         GR104_is_pack_display_name_already_exists.ContentPaths,
         "CONTENT_PATH",
-        new=graph_repo.path,
+        new=Path(graph_repo.path),
     )
     graph_repo.create_pack(name="pack1")
 

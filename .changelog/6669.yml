@@ -1,0 +1,4 @@
+changes:
+- description: Adding fixtures to xsiam client.
+  type: internal
+pr_number: 6669

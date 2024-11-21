@@ -90,10 +90,9 @@ def create_integration_object(
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
 
+    pack = repo.create_pack()
     if pack_info:
-        pack = repo.create_pack(**pack_info)
-    else:
-        pack = repo.create_pack()
+        pack.set_data(**pack_info)
 
     additional_params = {}
 

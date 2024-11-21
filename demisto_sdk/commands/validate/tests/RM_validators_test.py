@@ -359,7 +359,6 @@ def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
         )
     assert len(results) == expected_number_of_failures
     for result, expected_msg in zip(results, expected_msgs):
-        result_message = result.message
         assert result.message == expected_msg
 
 

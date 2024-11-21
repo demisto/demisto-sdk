@@ -380,7 +380,7 @@ class DockerBase:
             )
         repository, tag = image.rsplit(
             ":", 1
-        )  # rsplit is used to support non-default docker ports which require extra colon. i.e: `image.registry:5050/repo/test-python3:main`
+        )  # rsplit is used to support non-default docker ports which require extra colon. i.e: `image.registry:5000/repo/some-image:main`
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )

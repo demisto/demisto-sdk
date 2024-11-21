@@ -1838,10 +1838,6 @@ class TestPackValidation:
             return_value=[],
         )
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
-            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
-        )
-        mocker.patch(
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
             return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
         )

@@ -311,7 +311,7 @@ def create_script_object(
     test_code: Optional[str] = None,
     repo=get_temp_repo(),
 ) -> Script:
-    """Creating an script object with altered fields from a default script yml structure.
+    """Creating a script object with altered fields from a default script yml structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
@@ -328,10 +328,9 @@ def create_script_object(
 
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
+    pack = repo.create_pack()
     if pack_info:
-        pack = repo.create_pack(**pack_info)
-    else:
-        pack = repo.create_pack()
+        pack.set_data(**pack_info)
     if readme_content is not None:
         additional_params["readme"] = readme_content
 

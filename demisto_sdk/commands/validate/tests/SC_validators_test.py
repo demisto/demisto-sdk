@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
@@ -166,7 +168,7 @@ def test_DuplicatedScriptNameValidatorListFiles_obtain_invalid_content_items(
     mocker.patch.object(
         SC109_script_name_is_not_unique_validator.ContentPaths,
         "CONTENT_PATH",
-        new=graph_repo.path,
+        new=Path(graph_repo.path),
     )
     pack = graph_repo.create_pack()
 
@@ -214,7 +216,7 @@ def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
     mocker.patch.object(
         SC109_script_name_is_not_unique_validator.ContentPaths,
         "CONTENT_PATH",
-        new=graph_repo.path,
+        new=Path(graph_repo.path),
     )
     pack = graph_repo.create_pack()
 

@@ -395,6 +395,7 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
                 pack_info={"marketplaces": in_pack_marketplaces}, repo=repo
             ),
         ]
+        # old_content_items = [create_integration_object(repo=repo), create_script_object(repo=repo)]
         old_content_items = [create_integration_object(), create_script_object()]
 
         modified_content_items[0].marketplaces = modified_content_items[

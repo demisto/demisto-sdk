@@ -126,7 +126,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_obtain_invalid_content_
     mocker.patch.object(
         GR104_is_pack_display_name_already_exists.ContentPaths,
         "CONTENT_PATH",
-        new=graph_repo.path,
+        new=Path(graph_repo.path),
     )
     graph_repo.create_pack(name="pack1")
 

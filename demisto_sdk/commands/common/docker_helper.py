@@ -378,7 +378,9 @@ class DockerBase:
                 reason=f"Installation script failed to run on container '{container.id}', {container_logs=}",
                 build_log=container_logs,
             )
-        repository, tag = image.split(":")
+        repository, tag = image.rsplit(
+            ":", 1
+        )  # rsplit is used to support non-default docker ports which require extra colon. i.e: `image.registry:5050/repo/test-python3:main`
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )

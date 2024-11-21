@@ -55,10 +55,6 @@ class TestPackMetadataValidator:
         ],
     )
     def test_metadata_validator_valid(self, mocker, metadata):
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
-            return_value=["Data Enrichment & Threat Intelligence"],
-        )
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )

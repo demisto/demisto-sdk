@@ -1,0 +1,6 @@
+changes:
+- description: Modified PA103 in the new validate (validate pack categories), the validation will now allow multiple categories for a single pack.
+  type: feature
+- description: Removed PA134 from the old validate, the validate ensured the pack has exactly 1 category and that the category is a valid category.
+  type: breaking
+pr_number: 4673

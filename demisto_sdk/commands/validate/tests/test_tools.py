@@ -90,9 +90,10 @@ def create_integration_object(
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
 
-    pack = repo.create_pack()
     if pack_info:
-        pack.set_data(**pack_info)
+        pack = repo.create_pack(**pack_info)
+    else:
+        pack = repo.create_pack()
 
     additional_params = {}
 
@@ -142,7 +143,7 @@ def create_correlation_rule_object(
     values: Optional[List[Any]] = None,
     repo=get_temp_repo(),
 ) -> CorrelationRule:
-    """Creating an correlation_rule object with altered fields from a default correlation_rule yml structure.
+    """Creating a correlation_rule object with altered fields from a default correlation_rule yml structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
@@ -181,9 +182,11 @@ def create_playbook_object(
     """
     yml_content = load_yaml("playbook.yml")
     update_keys(yml_content, paths, values)
-    pack = repo.create_pack()
     if pack_info:
-        pack.set_data(**pack_info)
+        pack = repo.create_pack(**pack_info)
+    else:
+        pack = repo.create_pack()
+
     additional_params = {}
 
     if readme_content is not None:
@@ -201,6 +204,7 @@ def create_test_playbook_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    repo=get_temp_repo(),
 ) -> TestPlaybook:
     """Creating a test playbook object with altered fields from a default test playbook yml structure.
 
@@ -209,14 +213,17 @@ def create_test_playbook_object(
         values (Optional[List[Any]]): The values to update.
         pack_info (Optional[List[str]]): The playbook's pack name.
         readme_content (Optional[List[Any]]): The playbook's readme.
+        repo: Containing repository object. New temporary repo is created by default.
+
     Returns:
         The test playbook object.
     """
     yml_content = load_yaml("playbook.yml")
     update_keys(yml_content, paths, values)
-    pack = get_temp_repo().create_pack()
     if pack_info:
-        pack.set_data(**pack_info)
+        pack = repo.create_pack(**pack_info)
+    else:
+        pack = repo.create_pack()
     additional_params = {}
 
     if readme_content is not None:
@@ -322,9 +329,10 @@ def create_script_object(
 
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
-    pack = repo.create_pack()
     if pack_info:
-        pack.set_data(**pack_info)
+        pack = repo.create_pack(**pack_info)
+    else:
+        pack = repo.create_pack()
     if readme_content is not None:
         additional_params["readme"] = readme_content
 

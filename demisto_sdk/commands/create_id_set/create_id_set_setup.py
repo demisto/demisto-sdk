@@ -10,6 +10,7 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 @logging_setup_decorator
 def create_id_set(
+    ctx: typer.Context,
     input: str = typer.Option(
         "",
         "-i",
@@ -37,6 +38,17 @@ def create_id_set(
             "are inserted to the id set, and which items are present in the id set for "
             "each pack. Default is all packs exists in the content repository."
         ),
+    ),
+    console_log_threshold: str = typer.Option(
+        None,
+        "--console-log-threshold",
+        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+    ),
+    file_log_threshold: str = typer.Option(
+        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+    ),
+    log_file_path: str = typer.Option(
+        None, "--log-file-path", help="Path to save log files."
     ),
 ):
     """

@@ -10,10 +10,7 @@ show_error_codes = true
 follow_imports = "silent"
 pretty = true
 allow_redefinition = true
-exclude = [
-  "^demisto_sdk/commands/test_content/test_content_setup.py$",
-  "tests/.*|demisto_sdk/commands/init/templates/.*"
-]
+exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"

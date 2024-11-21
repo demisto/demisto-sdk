@@ -59,7 +59,7 @@ from demisto_sdk.commands.run_test_playbook.run_test_playbook_setup import (
 from demisto_sdk.commands.secrets.secrets_setup import secrets
 from demisto_sdk.commands.setup_env.setup_env_setup import setup_env_command
 from demisto_sdk.commands.split.split_setup import split
-from demisto_sdk.commands.test_content.test_content_setup import test_content
+from demisto_sdk.commands.test_content.content_test_setup import test_content
 from demisto_sdk.commands.test_content.test_modeling_rule.modeling_rules_setup import (
     modeling_rules_app,
 )

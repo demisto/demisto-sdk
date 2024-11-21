@@ -27,8 +27,10 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that images placed under doc_files folder and used in README exist."
     )
-    error_message = ("The following images do not exist or have additional characters present in their declaration "
-                     "within the README: {0}")
+    error_message = (
+        "The following images do not exist or have additional characters present in their declaration "
+        "within the README: {0}"
+    )
     rationale = "Missing images are not shown in rendered markdown"
     related_field = ""
     is_auto_fixable = False
@@ -37,7 +39,6 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-
         return [
             ValidationResult(
                 validator=self,

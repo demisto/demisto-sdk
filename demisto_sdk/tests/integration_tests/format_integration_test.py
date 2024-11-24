@@ -2018,7 +2018,10 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     -  Ensure deletion from test.conf
     """
 
-    # Prepare mockers
+    # Save the current content path and update it for the lifetime of the test.
+    old_content_path = ContentPaths.CONTENT_PATH
+    repo_path = repo.path
+    ContentPaths.update_content_path(repo_path)
 
     # Prepare content
     # Create pack with script and with test playbook in the yml.
@@ -2026,7 +2029,6 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     script = pack.create_script("TestScript")
     script.yml.update({"tests": ["test_playbook_for_script"]})
     script_path = script.path
-    repo_path = repo.path
 
     # We don't need to format empty readme files
     Path(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md").unlink(
@@ -2063,6 +2065,9 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
         {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
         {"scripts": ["AnotherTestScript"], "playbookID": "test_playbook_for_script"},
     ]
+
+    # Restore the original content path.
+    ContentPaths.update_content_path(old_content_path)
 
 
 def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):

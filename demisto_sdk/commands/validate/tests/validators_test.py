@@ -31,6 +31,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_pack_object,
     create_script_object,
+    get_temp_repo,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
@@ -283,97 +284,40 @@ def test_gather_validations_from_conf(
     assert results.support_level_dict == expected_results.support_level_dict
 
 
-@pytest.mark.parametrize(
-    "results, fixing_results, expected_results",
-    [
-        (
-            [
-                ValidationResult(
-                    validator=IDNameValidator(),
-                    message="",
-                    content_object=INTEGRATION,
-                )
-            ],
-            [],
-            {
-                "validations": [
-                    {
-                        "file path": str(
-                            INTEGRATION.path.relative_to(ContentPaths.CONTENT_PATH)
-                        ),
-                        "error code": "BA101",
-                        "message": "",
-                    }
-                ],
-                "fixed validations": [],
-                "invalid content items": [],
-                "Validations that caught exceptions": [],
-            },
-        ),
-        (
-            [],
-            [],
-            {
-                "validations": [],
-                "fixed validations": [],
-                "invalid content items": [],
-                "Validations that caught exceptions": [],
-            },
-        ),
-        (
-            [
-                ValidationResult(
-                    validator=IDNameValidator(),
-                    message="",
-                    content_object=INTEGRATION,
-                )
-            ],
-            [
-                FixResult(
-                    validator=IDNameValidator(),
-                    message="Fixed this issue",
-                    content_object=INTEGRATION,
-                )
-            ],
-            {
-                "validations": [
-                    {
-                        "file path": str(
-                            INTEGRATION.path.relative_to(ContentPaths.CONTENT_PATH)
-                        ),
-                        "error code": "BA101",
-                        "message": "",
-                    }
-                ],
-                "fixed validations": [
-                    {
-                        "file path": str(
-                            INTEGRATION.path.relative_to(ContentPaths.CONTENT_PATH)
-                        ),
-                        "error code": "BA101",
-                        "message": "Fixed this issue",
-                    }
-                ],
-                "invalid content items": [],
-                "Validations that caught exceptions": [],
-            },
-        ),
-    ],
-)
-def test_write_results_to_json_file(results, fixing_results, expected_results):
+@pytest.fixture
+def temp_integration():
+    """Fixture to create a temporary integration object for testing."""
+    temp_repo = get_temp_repo()
+    return create_integration_object(repo=temp_repo)
+
+
+def test_write_results_case_1(temp_integration):
     """
-    Given
-    results and fixing_results lists.
-        - Case 1: One validation result.
-        - Case 2: Both lists are empty.
-        - Case 3: Both lists has one item.
-    When
-    - Calling the write_results_to_json_file function.
-    Then
-        - Case 1: Make sure the results hold both list where the fixing results is empty.
-        - Case 2: Make sure the results hold both list where both are empty.
-        - Case 3: Make sure the results hold both list where both hold 1 result each.
+    Test case 1: One validation result, no fixes.
     """
+    results = [
+        ValidationResult(
+            validator=IDNameValidator(),
+            message="",
+            content_object=temp_integration,
+        )
+    ]
+    fixing_results = []
+    expected_results = {
+        "validations": [
+            {
+                "file path": str(
+                    temp_integration.path.relative_to(ContentPaths.CONTENT_PATH)
+                ),
+                "error code": "BA101",
+                "message": "",
+            }
+        ],
+        "fixed validations": [],
+        "invalid content items": [],
+        "Validations that caught exceptions": [],
+    }
+
     with tempfile.NamedTemporaryFile(
         mode="w", delete=False, suffix=".json"
     ) as temp_file:
@@ -382,94 +326,194 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
         validation_results.validation_results = results
         validation_results.fixing_results = fixing_results
         validation_results.write_results_to_json_file()
+
         with open(temp_file_path, "r") as file:
             loaded_data = json.load(file)
             assert loaded_data == expected_results
 
 
-@pytest.mark.parametrize(
-    "only_throw_warnings, results, expected_exit_code, expected_warnings_call_count, expected_error_call_count, expected_error_code_in_warnings, expected_error_code_in_errors",
-    [
-        (
-            ["BA101"],
-            [
-                ValidationResult(
-                    validator=IDNameValidator(),
-                    message="",
-                    content_object=INTEGRATION,
-                )
-            ],
-            0,
-            1,
-            0,
-            ["BA101"],
-            [],
-        ),
-        (
-            [],
-            [
-                ValidationResult(
-                    validator=IDNameValidator(),
-                    message="",
-                    content_object=INTEGRATION,
-                )
-            ],
-            1,
-            0,
-            1,
-            [],
-            ["BA101"],
-        ),
-        (
-            ["BC100"],
-            [
-                ValidationResult(
-                    validator=IDNameValidator(),
-                    message="",
-                    content_object=INTEGRATION,
-                ),
-                ValidationResult(
-                    validator=BreakingBackwardsSubtypeValidator(),
-                    message="",
-                    content_object=INTEGRATION,
-                ),
-            ],
-            1,
-            1,
-            1,
-            ["BC100"],
-            ["BA101"],
-        ),
-    ],
-)
-def test_post_results(
-    mocker,
-    only_throw_warnings,
-    results,
-    expected_exit_code,
-    expected_warnings_call_count,
-    expected_error_call_count,
-    expected_error_code_in_warnings,
-    expected_error_code_in_errors,
-    caplog,
-):
+def test_write_results_case_2(temp_integration):
     """
-    Given
-    an only_throw_warnings list, and a list of results.
-        - Case 1: One failed validation with its error_code in the only_throw_warnings list.
-        - Case 2: One failed validation with its error_code not in the only_throw_warnings list.
-        - Case 3: One failed validation with its error_code in the only_throw_warnings list and one failed validation with its error_code not in the only_throw_warnings list.
-    When
-    - Calling the post_results function.
-    Then
-        - Make sure the error and warning loggers was called the correct number of times with the right error codes, and that the exit code was calculated correctly.
-        - Case 1: Make sure the exit_code is 0 (success), and that the warning logger was called once with 'BA101' and the error logger wasn't called.
-        - Case 2: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'BA101' and the warning logger wasn't called.
-        - Case 3: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'BA101' and the warning logger was called once with 'BC100'
+    Test case 2: Empty results and fixing results.
     """
+    results = []
+    fixing_results = []
+    expected_results = {
+        "validations": [],
+        "fixed validations": [],
+        "invalid content items": [],
+        "Validations that caught exceptions": [],
+    }
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".json"
+    ) as temp_file:
+        temp_file_path = temp_file.name
+        validation_results = ResultWriter(json_file_path=temp_file_path)
+        validation_results.validation_results = results
+        validation_results.fixing_results = fixing_results
+        validation_results.write_results_to_json_file()
+
+        with open(temp_file_path, "r") as file:
+            loaded_data = json.load(file)
+            assert loaded_data == expected_results
+
+
+def test_write_results_case_3(temp_integration):
+    """
+    Test case 3: One validation result and one fix result.
+    """
+    results = [
+        ValidationResult(
+            validator=IDNameValidator(),
+            message="",
+            content_object=temp_integration,
+        )
+    ]
+    fixing_results = [
+        FixResult(
+            validator=IDNameValidator(),
+            message="Fixed this issue",
+            content_object=temp_integration,
+        )
+    ]
+    expected_results = {
+        "validations": [
+            {
+                "file path": str(
+                    temp_integration.path.relative_to(ContentPaths.CONTENT_PATH)
+                ),
+                "error code": "BA101",
+                "message": "",
+            }
+        ],
+        "fixed validations": [
+            {
+                "file path": str(
+                    temp_integration.path.relative_to(ContentPaths.CONTENT_PATH)
+                ),
+                "error code": "BA101",
+                "message": "Fixed this issue",
+            }
+        ],
+        "invalid content items": [],
+        "Validations that caught exceptions": [],
+    }
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".json"
+    ) as temp_file:
+        temp_file_path = temp_file.name
+        validation_results = ResultWriter(json_file_path=temp_file_path)
+        validation_results.validation_results = results
+        validation_results.fixing_results = fixing_results
+        validation_results.write_results_to_json_file()
+
+        with open(temp_file_path, "r") as file:
+            loaded_data = json.load(file)
+            assert loaded_data == expected_results
+
+
+def test_post_results_case_1(temp_integration, caplog):
+    """
+    Case 1: One failed validation with its error_code in the only_throw_warnings list.
+    """
+    only_throw_warnings = ["BA101"]
+    results = [
+        ValidationResult(
+            validator=IDNameValidator(),
+            message="",
+            content_object=temp_integration,
+        )
+    ]
+    expected_exit_code = 0
+    expected_warnings_call_count = 1
+    expected_error_call_count = 0
+    expected_error_code_in_warnings = ["BA101"]
+    expected_error_code_in_errors = []
+
     validation_results = ResultWriter()
     validation_results.validation_results = results
     exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
+
+    assert exit_code == expected_exit_code
+
+    log_by_level = map_reduce(caplog.records, lambda log: log.levelno)
+    warnings = log_by_level.get(30, ())
+    assert len(warnings) == expected_warnings_call_count
+    for code in expected_error_code_in_warnings:
+        assert code in " ".join({log.message for log in warnings})
+
+    errors = log_by_level.get(40, ())
+    assert len(errors) == expected_error_call_count
+    for code in expected_error_code_in_errors:
+        assert code in " ".join({log.message for log in errors})
+
+
+def test_post_results_case_2(temp_integration, caplog):
+    """
+    Case 2: One failed validation with its error_code not in the only_throw_warnings list.
+    """
+    only_throw_warnings = []
+    results = [
+        ValidationResult(
+            validator=IDNameValidator(),
+            message="",
+            content_object=temp_integration,
+        )
+    ]
+    expected_exit_code = 1
+    expected_warnings_call_count = 0
+    expected_error_call_count = 1
+    expected_error_code_in_warnings = []
+    expected_error_code_in_errors = ["BA101"]
+
+    validation_results = ResultWriter()
+    validation_results.validation_results = results
+    exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
+
+    assert exit_code == expected_exit_code
+
+    log_by_level = map_reduce(caplog.records, lambda log: log.levelno)
+    warnings = log_by_level.get(30, ())
+    assert len(warnings) == expected_warnings_call_count
+    for code in expected_error_code_in_warnings:
+        assert code in " ".join({log.message for log in warnings})
+
+    errors = log_by_level.get(40, ())
+    assert len(errors) == expected_error_call_count
+    for code in expected_error_code_in_errors:
+        assert code in " ".join({log.message for log in errors})
+
+
+def test_post_results_case_3(temp_integration, caplog):
+    """
+    Case 3: One failed validation with its error_code in the only_throw_warnings list
+    and one failed validation with its error_code not in the only_throw_warnings list.
+    """
+    only_throw_warnings = ["BC100"]
+    results = [
+        ValidationResult(
+            validator=IDNameValidator(),
+            message="",
+            content_object=temp_integration,
+        ),
+        ValidationResult(
+            validator=BreakingBackwardsSubtypeValidator(),
+            message="",
+            content_object=temp_integration,
+        ),
+    ]
+    expected_exit_code = 1
+    expected_warnings_call_count = 1
+    expected_error_call_count = 1
+    expected_error_code_in_warnings = ["BC100"]
+    expected_error_code_in_errors = ["BA101"]
+
+    validation_results = ResultWriter()
+    validation_results.validation_results = results
+    exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
+
     assert exit_code == expected_exit_code
 
     log_by_level = map_reduce(caplog.records, lambda log: log.levelno)
@@ -508,7 +552,10 @@ def test_should_run(validator, expected_results):
         - Case 3: Should return False.
     """
     assert expected_results == validator.should_run(
-        INTEGRATION, [], {}, running_execution_mode=ExecutionMode.USE_GIT
+        create_integration_object(),
+        [],
+        {},
+        running_execution_mode=ExecutionMode.USE_GIT,
     )
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.tools import replace_incident_to_alert
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -38,7 +38,7 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes], ABC):
         when the script name included `alert`.
         """
         file_paths_to_objects = {
-            str(content_item.path.relative_to(CONTENT_PATH)): content_item
+            str(content_item.path.relative_to(ContentPaths.CONTENT_PATH)): content_item
             for content_item in content_items
         }
         query_list = list(file_paths_to_objects) if not validate_all_files else []

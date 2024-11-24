@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR,
     FileType,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
@@ -89,7 +89,7 @@ class BaseUpdateYML(BaseUpdate):
         Returns:
             The content of the json file
         """
-        return get_file(CONF_PATH, raise_on_error=True)
+        return get_file(ContentPaths.CONF_PATH, raise_on_error=True)
 
     def get_id_and_version_path_object(self):
         """Gets the dict that holds the id and version fields.
@@ -287,7 +287,7 @@ class BaseUpdateYML(BaseUpdate):
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
             logger.debug(
-                f"<yellow>Unable to find {CONF_PATH} - skipping update.</yellow>"
+                f"<yellow>Unable to find {ContentPaths.CONF_PATH} - skipping update.</yellow>"
             )
             return
         conf_json_test_configuration = conf_json_content["tests"]
@@ -319,7 +319,7 @@ class BaseUpdateYML(BaseUpdate):
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
             logger.debug(
-                f"<yellow>Unable to find {CONF_PATH} - skipping update.</yellow>"
+                f"<yellow>Unable to find {ContentPaths.CONF_PATH} - skipping update.</yellow>"
             )
             return
         conf_json_test_configuration = conf_json_content["tests"]
@@ -354,7 +354,7 @@ class BaseUpdateYML(BaseUpdate):
 
     def _save_to_conf_json(self, conf_json_content: Dict) -> None:
         """Save formatted JSON data to destination file."""
-        with open(CONF_PATH, "w") as file:
+        with open(ContentPaths.CONF_PATH, "w") as file:
             json.dump(conf_json_content, file, indent=4)
 
     def update_deprecate(self, file_type=None):

@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -38,16 +39,25 @@ from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.fixture
-def repository(mocker):
+def repository(mocker, tmp_path: Path):
+    content_temp_dir = tmp_path / "content"
+    content_temp_dir.mkdir()
+
+    # Using this content path for a test's lifetime only and restoring when terminated.
+    old_content_path = ContentPaths.CONTENT_PATH
+    ContentPaths.update_content_path(content_temp_dir)
+
     repository = ContentDTO(
-        path=Path(),
         packs=[],
     )
     mocker.patch(
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         return_value=repository,
     )
-    return repository
+    yield repository
+
+    # Cleanup and content path restoration.
+    ContentPaths.update_content_path(old_content_path)
 
 
 def mock_pack(

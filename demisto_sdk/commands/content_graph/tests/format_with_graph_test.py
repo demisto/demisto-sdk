@@ -36,10 +36,13 @@ FORMAT_CMD = "format"
 @pytest.fixture(autouse=True)
 def setup_method(mocker, tmp_path_factory, repo: Repo):
     """Auto-used fixture for setup before every test run"""
-    import demisto_sdk.commands.content_graph.objects.base_content as bc
+    from demisto_sdk.commands.common.content_constant_paths import ContentPaths
     from demisto_sdk.commands.common.files.file import File
 
-    bc.CONTENT_PATH = Path(repo.path)
+    # Save the current content path and update it for the lifetime of the test.
+    old_content_path = ContentPaths.CONTENT_PATH
+    ContentPaths.update_content_path(Path(repo.path))
+
     mocker.patch.object(
         neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
     )
@@ -57,11 +60,15 @@ def setup_method(mocker, tmp_path_factory, repo: Repo):
         },
     )
 
+    yield
+
+    # Restore the original content path after the test has terminated.
+    ContentPaths.update_content_path(old_content_path)
+
 
 @pytest.fixture
 def repository(mocker, repo) -> ContentDTO:
     repository = ContentDTO(
-        path=Path(repo.path),
         packs=[],
     )
     relationships = {
@@ -303,7 +310,7 @@ def repository(mocker, repo) -> ContentDTO:
     return repository
 
 
-def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, repo):
+def test_format_mapper_with_graph_remove_unknown_content(mocker, repository):
     """
     Given
     - A mapper.
@@ -327,7 +334,7 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    with ChangeCWD(repo.path):
+    with ChangeCWD(repository.path):
         runner = CliRunner()
         result = runner.invoke(
             main,
@@ -358,7 +365,7 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
     )
 
 
-def test_format_layout_with_graph_remove_unknown_content(mocker, repository, repo):
+def test_format_layout_with_graph_remove_unknown_content(mocker, repository):
     """
     Given
     - A layout.
@@ -382,7 +389,7 @@ def test_format_layout_with_graph_remove_unknown_content(mocker, repository, rep
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    with ChangeCWD(repo.path):
+    with ChangeCWD(repository.path):
         runner = CliRunner()
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"]
@@ -419,7 +426,7 @@ def test_format_layout_with_graph_remove_unknown_content(mocker, repository, rep
 
 
 def test_format_incident_field_graph_fix_aliases_marketplace(
-    mocker, monkeypatch, repository, repo
+    mocker, monkeypatch, repository
 ):
     """
     Given
@@ -451,7 +458,7 @@ def test_format_incident_field_graph_fix_aliases_marketplace(
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    with ChangeCWD(repo.path):
+    with ChangeCWD(repository.path):
         runner = CliRunner()
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y", "-nv"]

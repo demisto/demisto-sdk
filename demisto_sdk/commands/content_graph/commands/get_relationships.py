@@ -248,12 +248,12 @@ def path_to_str(
 ) -> str:
     def node_to_str(node_data: dict) -> str:
         name = f"<cyan>{node_data['name']}</cyan>"
-        content_type = f"<lightblue>{node_data['content_type']}</lightblue>"
+        content_type = f"<blue>{node_data['content_type']}</blue>"
         path = node_data["path"]
         return f"• ({name}:{content_type} {{path: {path}}})\n"
 
     def rel_to_str(rel: RelationshipType, props: dict) -> str:
-        return f"   └─ [<purple>{rel}</purple>]{props or ''} ↴\n"
+        return f"   └─ [<blue>{rel}</blue>]{props or ''} ↴\n"
 
     path_str = ""
     for idx, path_element in enumerate(path):

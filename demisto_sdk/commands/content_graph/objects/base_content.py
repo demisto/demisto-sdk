@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.constants import (
     GitStatuses,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import set_value, write_dict
@@ -182,7 +182,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (
-                Path(json_dct["path"]).relative_to(CONTENT_PATH)
+                Path(json_dct["path"]).relative_to(ContentPaths.CONTENT_PATH)
             ).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct

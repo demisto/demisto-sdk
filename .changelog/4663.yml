@@ -1,0 +1,4 @@
+changes:
+- description: Introducing functionality for updating CONTENT_PATH global.
+  type: feature
+pr_number: 4663

@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH, CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -224,7 +224,7 @@ class ContentEntityValidator(BaseValidator):
             try:
                 old_pack_marketplaces = set(
                     get_remote_file(
-                        f"{CONTENT_PATH}/Packs/{pack_name}/pack_metadata.json",
+                        f"{ContentPaths.CONTENT_PATH}/Packs/{pack_name}/pack_metadata.json",
                         tag=self.prev_ver,
                     ).get(MARKETPLACE_KEY_PACK_METADATA, ())
                 )
@@ -368,7 +368,7 @@ class ContentEntityValidator(BaseValidator):
         return True
 
     def _load_conf_file(self):
-        with open(CONF_PATH) as data_file:
+        with open(ContentPaths.CONF_PATH) as data_file:
             return json.load(data_file)
 
     @error_codes("CJ104,CJ102")

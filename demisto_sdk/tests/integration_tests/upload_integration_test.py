@@ -62,7 +62,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
     )
     mocker.patch.object(
-        content_item,
+        content_item.ContentPaths,
         "CONTENT_PATH",
         Path(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example"),
     )
@@ -121,7 +121,7 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
         "tests/test_files/content_repo_example/Packs/ExamplePack/Integrations",
     )
     mocker.patch.object(
-        content_item,
+        content_item.ContentPaths,
         "CONTENT_PATH",
         Path(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example"),
     )

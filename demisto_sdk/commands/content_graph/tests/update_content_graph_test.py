@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 from zipfile import ZipFile
@@ -6,6 +7,7 @@ import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
@@ -42,12 +44,13 @@ GIT_PATH = Path(git_path())
 @pytest.fixture(autouse=True)
 def setup_method(mocker, tmp_path_factory):
     """Auto-used fixture for setup before every test run"""
-    import demisto_sdk.commands.content_graph.objects.base_content as bc
+    from demisto_sdk.commands.common.content_constant_paths import ContentPaths
     from demisto_sdk.commands.common.files.file import File
 
     from_path.cache_clear()
-
-    bc.CONTENT_PATH = GIT_PATH
+    # Save the current content path and update it for the lifetime of the test.
+    old_content_path = ContentPaths.CONTENT_PATH
+    ContentPaths.update_content_path(GIT_PATH)
     mocker.patch.object(
         neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
     )
@@ -65,11 +68,28 @@ def setup_method(mocker, tmp_path_factory):
         },
     )
 
+    yield
+
+    # Restore the original content path after the test has terminated.
+    ContentPaths.update_content_path(old_content_path)
+
+
+def mk_content_dir(repo_path: Path):
+    if repo_path.exists():
+        shutil.rmtree(repo_path)
+    repo_path.mkdir()
+
 
 @pytest.fixture
 def repository(mocker) -> ContentDTO:
+    # Save the current content path and update it for the lifetime of the test.
+    old_content_path = ContentPaths.CONTENT_PATH
+    repo_path = ContentPaths.CONTENT_PATH.with_name("content")
+    mk_content_dir(repo_path)
+    ContentPaths.update_content_path(repo_path)
+
     repository = ContentDTO(
-        path=GIT_PATH,
+        path=repo_path,
         packs=[],
     )
     relationships = {
@@ -202,13 +222,22 @@ def repository(mocker) -> ContentDTO:
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
-    return repository
+    yield repository
+
+    # Restore the original content path after the test has terminated.
+    ContentPaths.update_content_path(old_content_path)
 
 
 @pytest.fixture
-def external_repository(mocker) -> ContentDTO:
+def external_repository(mocker, tmp_path: Path) -> ContentDTO:
+    # Save the current content path and update it for the lifetime of the test.
+    old_content_path = ContentPaths.CONTENT_PATH
+
+    content_temp_dir = tmp_path / "content"
+    content_temp_dir.mkdir()
+    ContentPaths.update_content_path(content_temp_dir)
+
     repository = ContentDTO(
-        path=GIT_PATH,
         packs=[],
     )
 
@@ -238,7 +267,10 @@ def external_repository(mocker) -> ContentDTO:
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
-    return repository
+    yield repository
+
+    # Restore the original content path after the test has terminated.
+    ContentPaths.update_content_path(old_content_path)
 
 
 # HELPERS

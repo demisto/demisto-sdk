@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 from demisto_sdk.commands.common.constants import CACHE_DIR
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
@@ -23,7 +23,7 @@ from demisto_sdk.commands.pre_commit.hooks.utils import get_property
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
 PRECOMMIT_TEMPLATE_NAME = ".pre-commit-config_template.yaml"
-PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
+PRECOMMIT_TEMPLATE_PATH = ContentPaths.CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
 PATH = Path(__file__).parents[0].resolve()
 DEFAULT_PRE_COMMIT_TEMPLATE_PATH = PATH / PRECOMMIT_TEMPLATE_NAME
 
@@ -34,7 +34,7 @@ ARTIFACTS_FOLDER = os.getenv("ARTIFACTS_FOLDER")
 HOOK_LOG_PATH = Path(ARTIFACTS_FOLDER) / "pre-commit" if ARTIFACTS_FOLDER else None
 
 # This has to be relative to content path so the docker will be able to write to it
-PRE_COMMIT_FOLDER_SHARED = CONTENT_PATH / ".pre-commit"
+PRE_COMMIT_FOLDER_SHARED = ContentPaths.CONTENT_PATH / ".pre-commit"
 
 
 @dataclass

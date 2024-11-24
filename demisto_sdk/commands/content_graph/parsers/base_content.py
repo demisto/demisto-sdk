@@ -7,9 +7,7 @@ import pydantic
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import (
-    CONTENT_PATH,
-)
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     StructureError,
@@ -60,7 +58,7 @@ class BaseContentParser(ABC):
 
     @property
     def source_repo(self) -> Optional[str]:
-        return CONTENT_PATH.name
+        return ContentPaths.CONTENT_PATH.name
 
     @staticmethod
     def update_marketplaces_set_with_xsoar_values(marketplaces_set: set) -> set:

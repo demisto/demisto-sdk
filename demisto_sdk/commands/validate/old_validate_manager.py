@@ -34,10 +34,7 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import (
-    CONTENT_PATH,
-    DEFAULT_ID_SET_PATH,
-)
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
@@ -255,7 +252,7 @@ class OldValidateManager:
             specific_validations=specific_validations
         ).should_run_validation
         self.file_path = file_path
-        self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
+        self.id_set_path = id_set_path or ContentPaths.DEFAULT_ID_SET_PATH
         # create the id_set only once per run.
         self.id_set_file = self.get_id_set_file(
             self.skip_id_set_creation, self.id_set_path
@@ -359,7 +356,7 @@ class OldValidateManager:
             bool: True if node exist, else False
         """
         # Check node exist
-        content_path = CONTENT_PATH
+        content_path = ContentPaths.CONTENT_PATH
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)  # type: ignore
         if exit_code:
             return False
@@ -911,7 +908,7 @@ class OldValidateManager:
                 ReadMeValidator.add_node_env_vars()
                 if (
                     not ReadMeValidator.are_modules_installed_for_verify(
-                        CONTENT_PATH  # type: ignore
+                        ContentPaths.CONTENT_PATH  # type: ignore
                     )
                     and not ReadMeValidator.is_docker_available()
                 ):  # shows warning message

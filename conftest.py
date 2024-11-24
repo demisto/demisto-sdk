@@ -2,7 +2,6 @@
 
 import os
 import shutil
-from pathlib import Path
 from typing import Generator
 from unittest import mock
 
@@ -24,13 +23,15 @@ from TestSuite.yml import YAML
 
 
 def get_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
-    tmp_dir = _mk_tmp(request, tmp_path_factory)
-    return Repo(tmp_dir)
+    content_tmp_dir = _mk_tmp(request, tmp_path_factory) / "content"
+    content_tmp_dir.mkdir()
+    return Repo(content_tmp_dir)
 
 
 def get_git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
-    tmp_dir = _mk_tmp(request, tmp_path_factory)
-    return Repo(tmp_dir, init_git=True)
+    content_tmp_dir = _mk_tmp(request, tmp_path_factory) / "content"
+    content_tmp_dir.mkdir()
+    return Repo(content_tmp_dir, init_git=True)
 
 
 def get_pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack:
@@ -101,11 +102,9 @@ def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Ge
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
     repo = get_repo(request, tmp_path_factory)
+    neo4j_path = bc.ContentPaths.CONTENT_PATH.parent.parent / "neo4j"
 
-    bc.CONTENT_PATH = Path(repo.path)
-    neo4j_path = bc.CONTENT_PATH.parent.parent / "neo4j"
-
-    mock.patch.object(ContentGraphInterface, "repo_path", bc.CONTENT_PATH)
+    mock.patch.object(ContentGraphInterface, "repo_path", bc.ContentPaths.CONTENT_PATH)
     mock.patch.object(neo4j_service, "REPO_PATH", neo4j_path)
 
     yield repo

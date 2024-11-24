@@ -6,13 +6,13 @@ import pytest
 import typer
 from freezegun import freeze_time
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 
 DEFAULT_TEST_EVENT_ID = UUID("00000000-0000-0000-0000-000000000000")
 
 
 class ModelingRuleMock:
-    path = Path(CONTENT_PATH)
+    path = Path(ContentPaths.CONTENT_PATH)
 
     def normalize_file_name(self):
         return "test_modeling_rule.yml"

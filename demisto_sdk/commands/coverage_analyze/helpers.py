@@ -8,7 +8,7 @@ from typing import Dict, Iterable, List, Optional
 import coverage
 import requests
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 
@@ -89,7 +89,7 @@ def coverage_files() -> Iterable[str]:
     """
     iterate over the '.coverage' files in the repo.
     """
-    packs_path = CONTENT_PATH / "Packs"
+    packs_path = ContentPaths.CONTENT_PATH / "Packs"
     for cov_path in packs_path.glob("*/Integrations/*/.coverage"):
         yield str(cov_path)
     for cov_path in packs_path.glob("*/Scripts/*/.coverage"):

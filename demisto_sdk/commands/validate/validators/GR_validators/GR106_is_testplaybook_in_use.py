@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -31,7 +31,7 @@ class IsTestPlaybookInUseValidator(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        conf_data = ConfJSON.from_path(CONTENT_PATH / "Tests/conf.json")
+        conf_data = ConfJSON.from_path(ContentPaths.CONTENT_PATH / "Tests/conf.json")
         test_playbooks_ids_to_skip = list(
             set(conf_data.skipped_tests.keys()) | set(conf_data.reputation_tests)
         )

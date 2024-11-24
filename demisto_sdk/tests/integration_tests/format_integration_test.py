@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
 )
 from demisto_sdk.commands.common.content.content import Content
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -260,7 +261,8 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
     mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
+        "demisto_sdk.commands.format.update_generic_yml.ContentPaths.CONF_PATH",
+        conf_json_path,
     )
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
@@ -313,7 +315,8 @@ def test_integration_format_configuring_conf_json_positive(
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
     mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
+        "demisto_sdk.commands.format.update_generic_yml.ContentPaths.CONF_PATH",
+        conf_json_path,
     )
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
@@ -390,7 +393,8 @@ def test_integration_format_configuring_conf_json_negative(
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
     mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
+        "demisto_sdk.commands.format.update_generic_yml.ContentPaths.CONF_PATH",
+        conf_json_path,
     )
 
     with open(conf_json_path, "w") as file:
@@ -1936,16 +1940,17 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     Then
     -  Ensure deletion from test.conf
     """
+    # Save the current content path and update it for the lifetime of the test.
+    old_content_path = ContentPaths.CONTENT_PATH
+    repo_path = repo.path
+    ContentPaths.update_content_path(repo_path)
 
-    # Prepare mockers
-
-    # Prepare content
     # Create pack with integration and with test playbook in the yml.
     pack = repo.create_pack("TestPack")
     integration = pack.create_integration("TestIntegration")
     integration.yml.update({"tests": ["test_playbook"]})
     pack_path = pack.path
-    repo_path = repo.path
+
     # We don't need to format empty readme files
     Path(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md").unlink(
         missing_ok=True
@@ -1995,6 +2000,9 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
         }
     ]
 
+    # Restore the original content path.
+    ContentPaths.update_content_path(old_content_path)
+
 
 def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     mocker, monkeypatch, repo
@@ -2010,7 +2018,10 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     -  Ensure deletion from test.conf
     """
 
-    # Prepare mockers
+    # Save the current content path and update it for the lifetime of the test.
+    old_content_path = ContentPaths.CONTENT_PATH
+    repo_path = repo.path
+    ContentPaths.update_content_path(repo_path)
 
     # Prepare content
     # Create pack with script and with test playbook in the yml.
@@ -2018,7 +2029,6 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     script = pack.create_script("TestScript")
     script.yml.update({"tests": ["test_playbook_for_script"]})
     script_path = script.path
-    repo_path = repo.path
 
     # We don't need to format empty readme files
     Path(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md").unlink(
@@ -2055,6 +2065,9 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
         {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
         {"scripts": ["AnotherTestScript"], "playbookID": "test_playbook_for_script"},
     ]
+
+    # Restore the original content path.
+    ContentPaths.update_content_path(old_content_path)
 
 
 def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):

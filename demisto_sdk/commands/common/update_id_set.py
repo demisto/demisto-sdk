@@ -51,11 +51,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content_constant_paths import (
-    DEFAULT_ID_SET_PATH,
-    MP_V2_ID_SET_PATH,
-    XPANSE_ID_SET_PATH,
-)
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -2629,7 +2625,7 @@ def merge_id_sets(
 
 
 def re_create_id_set(  # noqa: C901
-    id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH,
+    id_set_path: Optional[Path] = ContentPaths.DEFAULT_ID_SET_PATH,
     pack_to_create=None,
     objects_to_create: list = None,
     print_logs: bool = True,
@@ -2652,9 +2648,9 @@ def re_create_id_set(  # noqa: C901
     """
     if id_set_path == "":
         id_set_path = {
-            MarketplaceVersions.MarketplaceV2.value: MP_V2_ID_SET_PATH,
-            MarketplaceVersions.XPANSE.value: XPANSE_ID_SET_PATH,
-        }.get(marketplace, DEFAULT_ID_SET_PATH)
+            MarketplaceVersions.MarketplaceV2.value: ContentPaths.MP_V2_ID_SET_PATH,
+            MarketplaceVersions.XPANSE.value: ContentPaths.XPANSE_ID_SET_PATH,
+        }.get(marketplace, ContentPaths.DEFAULT_ID_SET_PATH)
 
     if not objects_to_create:
         if marketplace == MarketplaceVersions.MarketplaceV2.value:

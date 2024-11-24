@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -1351,7 +1351,7 @@ class LintManager:
         """
         error_messages = errors.get("messages", "")
         error_messages = error_messages.split("\n") if error_messages else []
-        content_path = CONTENT_PATH
+        content_path = ContentPaths.CONTENT_PATH
         for message in error_messages:
             if message:
                 file_name, line_number, error_contents = message.split(":", 2)

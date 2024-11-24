@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.content.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
@@ -184,11 +184,11 @@ class TestValidators:
             if not Path(dir_to_create).exists():
                 cls.CREATED_DIRS.append(dir_to_create)
                 os.makedirs(dir_to_create)
-        copyfile(CONF_JSON_MOCK_PATH, CONF_PATH)
+        copyfile(CONF_JSON_MOCK_PATH, ContentPaths.CONF_PATH)
 
     @classmethod
     def teardown_class(cls):
-        Path(CONF_PATH).unlink()
+        Path(ContentPaths.CONF_PATH).unlink()
         for dir_to_delete in cls.CREATED_DIRS:
             if Path(dir_to_delete).exists():
                 os.rmdir(dir_to_delete)

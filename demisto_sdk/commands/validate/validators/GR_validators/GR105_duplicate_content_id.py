@@ -4,7 +4,7 @@ from abc import ABC
 from pathlib import Path
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -93,7 +93,7 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
             []
             if validate_all_files
             else [
-                str(content_item.path.relative_to(CONTENT_PATH))
+                str(content_item.path.relative_to(ContentPaths.CONTENT_PATH))
                 for content_item in content_items
             ]
         )
@@ -102,7 +102,7 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
                 validator=self,
                 message=self.error_message.format(
                     content_item.object_id,
-                    Path(duplicate.path).relative_to(CONTENT_PATH),  # type: ignore[attr-defined]
+                    Path(duplicate.path).relative_to(ContentPaths.CONTENT_PATH),  # type: ignore[attr-defined]
                 ),
                 content_object=content_item,  # type: ignore[arg-type]
             )

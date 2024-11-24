@@ -4,9 +4,9 @@ import pytest
 
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.tests.test_tools import (
-    REPO,
     create_incident_field_object,
     create_old_file_pointers,
+    get_temp_repo,
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF100_is_valid_name_and_cli_name import (
     IsValidNameAndCliNameValidator,
@@ -281,9 +281,12 @@ def test_NameFieldPrefixValidator_obtain_invalid_content_items_without_item_pref
     """
     # not valid
     pack_name = "Foo"
-    with ChangeCWD(REPO.path):
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
         # Create an Incident field so that there is no prefix name of the pack in the name field
-        content_item = create_incident_field_object(pack_info={"name": pack_name})
+        content_item = create_incident_field_object(
+            pack_info={"name": pack_name}, repo=repo
+        )
         assert not content_item.name.startswith(pack_name)
         results = NameFieldPrefixValidator().obtain_invalid_content_items(
             [content_item]
@@ -334,10 +337,11 @@ def test_NameFieldPrefixValidator_obtain_invalid_content_items_with_item_prefix(
         - Ensure that no ValidationResult returned when prefix name
           is in itemPrefix which is in pack_metadata
     """
+    repo = get_temp_repo()
     # not valid
-    with ChangeCWD(REPO.path):
+    with ChangeCWD(repo.path):
         content_item = create_incident_field_object(
-            pack_info={"name": "Foo", "itemPrefix": item_prefix}
+            pack_info={"name": "Foo", "itemPrefix": item_prefix}, repo=repo
         )
         results = NameFieldPrefixValidator().obtain_invalid_content_items(
             [content_item]
@@ -364,8 +368,11 @@ def test_NameFieldPrefixValidator_obtain_invalid_content_items_with_special_pack
     Then:
         - Ensure that no ValidationResult returned
     """
-    with ChangeCWD(REPO.path):
-        content_item = create_incident_field_object(pack_info={"name": special_pack})
+    repo = get_temp_repo()
+    with ChangeCWD(repo.path):
+        content_item = create_incident_field_object(
+            pack_info={"name": special_pack}, repo=repo
+        )
         assert not NameFieldPrefixValidator().obtain_invalid_content_items(
             [content_item]
         )

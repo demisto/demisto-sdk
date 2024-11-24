@@ -4443,10 +4443,8 @@ def extract_image_paths_from_str(
 ) -> List[str]:
     """
     Args:
-        local_paths (List[str]): list of file paths
-        is_lower (bool): True to check when line is lower cased.
-        to_split (bool): True to split the line in order to search specific word
         text (str): The readme content to search.
+        regex_str (str): regex to search for.
 
     Returns:
         list of lines which contains the given text.

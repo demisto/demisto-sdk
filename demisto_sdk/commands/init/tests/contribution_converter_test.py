@@ -1278,9 +1278,11 @@ class TestReadmes:
         - The integration README should be updated with the new command.
         """
 
-        import demisto_sdk.commands.init.contribution_converter as cc
+        from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 
-        cc.ContentPaths.update_content_path(git_repo.path)
+        # Save the current content path and update it for the lifetime of the test.
+        old_content_path = ContentPaths.CONTENT_PATH
+        ContentPaths.update_content_path(git_repo.path)
 
         # Read integration python, yml code and README to create mock integration
         py_code_path = Path(CONTRIBUTION_TESTS, "common", "integration.py")
@@ -1390,6 +1392,11 @@ class TestReadmes:
         assert actual_integration_python.read_text() != py_code
         assert "helloworld-new-cmd" in actual_integration_python.read_text()
 
+        yield
+
+        # Restore the original content path after the test has terminated.
+        ContentPaths.update_content_path(old_content_path)
+
     def test_process_existing_pack_new_integration_readme(
         self, tmp_path: Path, git_repo: Repo, mocker: MockerFixture
     ):
@@ -1410,9 +1417,11 @@ class TestReadmes:
         - A new Integration README should be generated.
         """
 
-        import demisto_sdk.commands.init.contribution_converter as cc
+        from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 
-        cc.ContentPaths.update_content_path(git_repo.path)
+        # Save the current content path and update it for the lifetime of the test.
+        old_content_path = ContentPaths.CONTENT_PATH
+        ContentPaths.update_content_path(git_repo.path)
 
         git_repo.create_pack(self.existing_pack_name)
 
@@ -1444,6 +1453,9 @@ class TestReadmes:
         # and hasn't yet been copied at this point to the content path
         generated_readme = Path(contrib_converter.readme_files[0])
         assert not generated_readme.exists()
+
+        # Restore the original content path after the test has terminated.
+        ContentPaths.update_content_path(old_content_path)
 
     def test_process_new_pack(
         self, tmp_path: Path, git_repo: Repo, mocker: MockerFixture

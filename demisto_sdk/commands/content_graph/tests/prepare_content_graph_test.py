@@ -34,10 +34,13 @@ GIT_ROOT = git_path()
 @pytest.fixture(autouse=True)
 def setup_method(mocker, tmp_path_factory, repo: Repo):
     """Auto-used fixture for setup before every test run"""
-    import demisto_sdk.commands.content_graph.objects.base_content as bc
+    from demisto_sdk.commands.common.content_constant_paths import ContentPaths
     from demisto_sdk.commands.common.files.file import File
 
-    bc.ContentPaths.update_content_path(Path(repo.path))
+    # Save the current content path and update it for the lifetime of the test.
+    old_content_path = ContentPaths.CONTENT_PATH
+    ContentPaths.update_content_path(Path(repo.path))
+
     mocker.patch.object(
         neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
     )
@@ -54,6 +57,11 @@ def setup_method(mocker, tmp_path_factory, repo: Repo):
             }
         },
     )
+
+    yield
+
+    # Restore the original content path after the test has terminated.
+    ContentPaths.update_content_path(old_content_path)
 
 
 @pytest.fixture

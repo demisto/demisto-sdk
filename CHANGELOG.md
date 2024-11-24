@@ -23,7 +23,7 @@
 
 ## 1.32.4 (2024-11-10)
 ### Breaking
-* The following commands will be deprecated and removed entirely in the next minor demisto-sdk release: convert, create-content-artifacts, create-id-set, extract-code and lint.
+* The following commands will be deprecated and removed entirely in the next SDK release in two weeks: convert, create-content-artifacts, create-id-set, extract-code and lint.
 * Moved CJ102 to the new validate format. The validation's error number is now BA103 and it ensure that the tests section is either a non-empty list or "No tests".
 
 ### Fix

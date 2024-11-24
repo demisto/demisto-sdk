@@ -293,27 +293,27 @@ def create_content_item_2(temp_repo):
     return [
         create_playbook_object(
             readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png), ",
-            pack_info={"name": "test1"},
+            pack_info={"name": "pack_0"},
             repo=temp_repo,
         ),
         create_integration_object(
             readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png)",
-            pack_info={"name": "test2"},
+            pack_info={"name": "pack_1"},
             repo=temp_repo,
         ),
         create_playbook_object(
             readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png ), ",
-            pack_info={"name": "test3"},
+            pack_info={"name": "pack_2"},
             repo=temp_repo,
         ),
         create_integration_object(
             readme_content="This is not a valid readme if this file doesn't exists ![example image]( ../doc_files/example.png)",
-            pack_info={"name": "test4"},
+            pack_info={"name": "pack_3"},
             repo=temp_repo,
         ),
         create_integration_object(
             readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.jpg)",
-            pack_info={"name": "test5"},
+            pack_info={"name": "pack_4"},
             repo=temp_repo,
         ),
     ]
@@ -322,21 +322,21 @@ def create_content_item_2(temp_repo):
 @pytest.mark.parametrize(
     "create_content_items_func, doc_files_name, expected_number_of_failures, expected_msgs",
     [
-        # (
-        #         create_content_items_1,
-        #         [None, "example.png", None, None, "example.png", "example.jpg", None],
-        #         0,
-        #         [],
-        # ),
+        (
+                create_content_items_1,
+                [None, "example.png", None, None, "example.png", "example.jpg", None],
+                0,
+                [],
+        ),
         (
             create_content_item_2,
             [None, None, "example.png", "example.png", None],
             5,
             [
-                "The following images do not exist or have additional characters present in their declaration within the README: Packs/test1/doc_files/example.png",
-                "The following images do not exist or have additional characters present in their declaration within the README: Packs/test2/doc_files/example.png",
-                "The following images do not exist or have additional characters present in their declaration within the README: Packs/test3/doc_files/example.png ",
-                "The following images do not exist or have additional characters present in their declaration within the README: Packs/test4/ doc_files/example.png",
+                "The following images do not exist or have additional characters present in their declaration within the README: Packs/pack_0/doc_files/example.png",
+                "The following images do not exist or have additional characters present in their declaration within the README: Packs/pack_1/doc_files/example.png",
+                "The following images do not exist or have additional characters present in their declaration within the README: Packs/pack_2/doc_files/example.png ",
+                "The following images do not exist or have additional characters present in their declaration within the README: Packs/pack_3/ doc_files/example.png",
             ],
         ),
     ],

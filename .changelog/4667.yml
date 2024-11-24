@@ -1,4 +1,6 @@
 changes:
 - description: Fixed an issue where validate GR107 was failing on unrelated content-item when running on deprecated content-items.
   type: fix
+- description: Improve the error message of the GR107 validation to show all deprecated content-item used in the single error message.
+  type: feature
 pr_number: 4667

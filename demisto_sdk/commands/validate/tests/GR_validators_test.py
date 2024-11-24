@@ -573,7 +573,15 @@ def repo_for_test_gr_107(graph_repo: Repo):
                     "id": "1",
                     "script": "|||test-command",
                 },
-            }
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "|||test-command",
+                },
+            },
         },
     }
     playbook_dict_using_deprecated_playbook = {

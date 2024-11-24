@@ -298,7 +298,9 @@ def test_gather_validations_from_conf(
             {
                 "validations": [
                     {
-                        "file path": str(INTEGRATION.path),
+                        "file path": str(
+                            INTEGRATION.path.relative_to(ContentPaths.CONTENT_PATH)
+                        ),
                         "error code": "BA101",
                         "message": "",
                     }
@@ -336,14 +338,18 @@ def test_gather_validations_from_conf(
             {
                 "validations": [
                     {
-                        "file path": str(INTEGRATION.path),
+                        "file path": str(
+                            INTEGRATION.path.relative_to(ContentPaths.CONTENT_PATH)
+                        ),
                         "error code": "BA101",
                         "message": "",
                     }
                 ],
                 "fixed validations": [
                     {
-                        "file path": str(INTEGRATION.path),
+                        "file path": str(
+                            INTEGRATION.path.relative_to(ContentPaths.CONTENT_PATH)
+                        ),
                         "error code": "BA101",
                         "message": "Fixed this issue",
                     }

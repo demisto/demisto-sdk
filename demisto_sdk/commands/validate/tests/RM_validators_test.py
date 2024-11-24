@@ -323,10 +323,10 @@ def create_content_item_2(temp_repo):
     "create_content_items_func, doc_files_name, expected_number_of_failures, expected_msgs",
     [
         (
-                create_content_items_1,
-                [None, "example.png", None, None, "example.png", "example.jpg", None],
-                0,
-                [],
+            create_content_items_1,
+            [None, "example.png", None, None, "example.png", "example.jpg", None],
+            0,
+            [],
         ),
         (
             create_content_item_2,

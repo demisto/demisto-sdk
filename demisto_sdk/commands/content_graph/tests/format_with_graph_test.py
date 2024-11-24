@@ -302,7 +302,7 @@ def repository(mocker, repo) -> ContentDTO:
     return repository
 
 
-def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, repo):
+def test_format_mapper_with_graph_remove_unknown_content(mocker, repository):
     """
     Given
     - A mapper.
@@ -326,7 +326,7 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    with ChangeCWD(repo.path):
+    with ChangeCWD(repository.path):
         runner = CliRunner()
         result = runner.invoke(
             main,
@@ -357,7 +357,7 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
     )
 
 
-def test_format_layout_with_graph_remove_unknown_content(mocker, repository, repo):
+def test_format_layout_with_graph_remove_unknown_content(mocker, repository):
     """
     Given
     - A layout.
@@ -381,7 +381,7 @@ def test_format_layout_with_graph_remove_unknown_content(mocker, repository, rep
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    with ChangeCWD(repo.path):
+    with ChangeCWD(repository.path):
         runner = CliRunner()
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"]
@@ -418,7 +418,7 @@ def test_format_layout_with_graph_remove_unknown_content(mocker, repository, rep
 
 
 def test_format_incident_field_graph_fix_aliases_marketplace(
-    mocker, monkeypatch, repository, repo
+    mocker, monkeypatch, repository
 ):
     """
     Given
@@ -450,7 +450,7 @@ def test_format_incident_field_graph_fix_aliases_marketplace(
         "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
-    with ChangeCWD(repo.path):
+    with ChangeCWD(repository.path):
         runner = CliRunner()
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y", "-nv"]

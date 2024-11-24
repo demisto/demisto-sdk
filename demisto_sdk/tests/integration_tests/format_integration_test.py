@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
 )
 from demisto_sdk.commands.common.content.content import Content
+from demisto_sdk.commands.common.content_constant_paths import ContentPaths
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -1939,16 +1940,17 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     Then
     -  Ensure deletion from test.conf
     """
+    # Save the current content path and update it for the lifetime of the test.
+    old_content_path = ContentPaths.CONTENT_PATH
+    repo_path = repo.path
+    ContentPaths.update_content_path(repo_path)
 
-    # Prepare mockers
-
-    # Prepare content
     # Create pack with integration and with test playbook in the yml.
     pack = repo.create_pack("TestPack")
     integration = pack.create_integration("TestIntegration")
     integration.yml.update({"tests": ["test_playbook"]})
     pack_path = pack.path
-    repo_path = repo.path
+
     # We don't need to format empty readme files
     Path(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md").unlink(
         missing_ok=True
@@ -1997,6 +1999,9 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
             "playbookID": "another_test_playbook",
         }
     ]
+
+    # Restore the original content path.
+    ContentPaths.update_content_path(old_content_path)
 
 
 def test_verify_deletion_from_conf_script_format_with_deprecate_flag(

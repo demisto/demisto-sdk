@@ -68,7 +68,7 @@ def update_content_paths(content_path: str | Path):
     global PYTHONPATH
     global PYTHONPATH_STR
 
-    CONTENT_PATH: Path = Path(content_path)
+    CONTENT_PATH = Path(content_path)
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = CONTENT_PATH / "all_packs_dependencies.json"
     CONF_PATH = CONTENT_PATH / TESTS_DIR / "conf.json"
     DEFAULT_ID_SET_PATH = CONTENT_PATH / TESTS_DIR / "id_set.json"

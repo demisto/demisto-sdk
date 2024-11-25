@@ -49,14 +49,18 @@ else:
 PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
 
 
-def reload_module_and_dependents(module_name, visited=None):
+def reload_module_and_dependents(
+    module_name, reload_current=True, visited=None, module_items=None
+):
     """
     Reload the given module and all modules that depend on it, recursively.
     The root module is reloaded first, followed by its dependents.
 
     :param module_name: The name of the module to reload (e.g., 'my_module').
     :param visited: A set to keep track of visited modules to avoid infinite recursion.
+    :param module_items: (Optional) Static list of modules to iterate over.
     """
+
     if visited is None:
         visited = set()
 
@@ -65,18 +69,26 @@ def reload_module_and_dependents(module_name, visited=None):
 
     visited.add(module_name)
 
-    # Reloading root module first.
-    module = sys.modules.get(module_name)
-    if module is None:
-        logger.debug(f"Module {module_name} not found in sys.modules.")
-        return
+    if reload_current:
+        # Reloading root/current module first.
+        module = sys.modules.get(module_name)
+        if module is None:
+            logger.debug(f"Module {module_name} not found in sys.modules.")
+            return
 
-    logger.debug(f"Reloading {module_name}")
-    reload(module)
+        logger.debug(f"Reloading {module_name}")
+        reload(module)
+
+    if module_items is None:
+        module_items = [
+            (name, module)
+            for name, module in sys.modules.items()
+            if name.startswith("demisto_sdk")
+        ]
 
     # Finding modules that import this module.
     dependents = []
-    for _module_name, _module in sys.modules.items():
+    for _module_name, _module in module_items:
         if _module_name not in visited and isinstance(_module, types.ModuleType):
             # Retrieving modules that imports the root module (this module).
             imports_root = False
@@ -93,19 +105,19 @@ def reload_module_and_dependents(module_name, visited=None):
                     continue  # Some attributes may cause exceptions on access.
             if imports_root:
                 dependents.append(_module_name)
+    logger.debug(f"Dependencies found: {dependents}")
 
     # Recursively reloading dependents.
     for dependent_name in dependents:
-        reload_module_and_dependents(dependent_name, visited)
+        reload_module_and_dependents(dependent_name, visited, module_items)
 
 
 def update_content_paths(content_path: Union[str, Path]):
     """
     Updates content paths globally and reloads dependent modules.
-    Args:
-        content_path: path to be set as new CONTENT_PATH and derived paths.
-
+    :param content_path: The path to be set as the new CONTENT_PATH and derived paths.
     """
+
     global CONTENT_PATH
     global ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
     global CONF_PATH
@@ -154,4 +166,4 @@ def update_content_paths(content_path: Union[str, Path]):
 
     PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
 
-    reload_module_and_dependents(__name__)
+    reload_module_and_dependents(__name__, reload_current=False)

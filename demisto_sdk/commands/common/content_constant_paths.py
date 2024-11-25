@@ -107,7 +107,12 @@ def reload_module_and_dependents(
 
     # Recursively reloading dependents.
     for dependent_name in dependents:
-        reload_module_and_dependents(dependent_name, set(visited), module_items)
+        reload_module_and_dependents(
+            module_name=dependent_name,
+            reload_current=True,
+            visited=set(visited),
+            module_items=module_items
+        )
 
 
 def update_content_paths(content_path: Union[str, Path]):

@@ -1,6 +1,0 @@
-changes:
-- description: Moved RN106 and RN107 to the new validate format. These validations ensure there are no missing release notes.
-  type: internal
-- description: Fixed an issue where the git statuses of content objects' related files were not calculated correctly.
-  type: internal
-pr_number: 4643

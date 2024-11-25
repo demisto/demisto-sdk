@@ -111,7 +111,7 @@ def reload_module_and_dependents(
             module_name=dependent_name,
             reload_current=True,
             visited=set(visited),
-            module_items=module_items
+            module_items=module_items,
         )
 
 

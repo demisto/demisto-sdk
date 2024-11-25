@@ -47,6 +47,7 @@ from demisto_sdk.commands.integration_diff.intergation_diff_setup import (
     integration_diff,
 )
 from demisto_sdk.commands.lint.lint_setup import lint
+from demisto_sdk.commands.merge_id_sets.merge_id_sets_setup import merge_id_sets
 from demisto_sdk.commands.openapi_codegen.openapi_codegen_setup import openapi_codegen
 from demisto_sdk.commands.postman_codegen.postman_codegen_setup import postman_codegen
 from demisto_sdk.commands.pre_commit.pre_commit_setup import pre_commit
@@ -207,6 +208,11 @@ app.command(
     help="Deprecated, use demisto-sdk graph command instead.",
     hidden=True,
 )(create_id_set)
+app.command(
+    name="merge-id-sets",
+    help="Deprecated. Merge two id_sets.",
+    hidden=True,
+)(merge_id_sets)
 app.command(
     name="generate-unit-tests",
     help="This command generates unit tests automatically from an integration's Python code.",

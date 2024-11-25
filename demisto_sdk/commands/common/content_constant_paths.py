@@ -56,7 +56,8 @@ def reload_module_and_dependents(
     Reload the given module and all modules that depend on it, recursively.
     The root module is reloaded first, followed by its dependents.
 
-    :param module_name: The name of the module to reload (e.g., 'my_module').
+    :param module_name: The name of the module to reload.
+    :param reload_current: Whether to reload the current module.
     :param visited: A set to keep track of visited modules to avoid infinite recursion.
     :param module_items: (Optional) Static list of modules to iterate over.
     """

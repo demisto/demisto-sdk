@@ -169,4 +169,4 @@ def update_content_paths(content_path: Union[str, Path]):
 
     PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
 
-    reload_module_and_dependents(__name__, reload_current=False)
+    reload_module_and_dependents(__name__, reload_current=True)

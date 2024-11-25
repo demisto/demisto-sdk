@@ -61,6 +61,7 @@ def reload_module_and_dependents(
     :param visited: A set to keep track of visited modules to avoid infinite recursion.
     :param module_items: (Optional) Static list of modules to iterate over.
     """
+    logger.debug(f"Visiting {module_name=}")
 
     if module_name in visited:
         return
@@ -78,11 +79,7 @@ def reload_module_and_dependents(
         reload(module)
 
     if module_items is None:
-        module_items = [
-            (name, module)
-            for name, module in sys.modules.items()
-            if name.startswith("demisto_sdk")
-        ]
+        module_items = [(name, module) for name, module in sys.modules.items()]
 
     # Finding modules that import this module.
     dependents = []

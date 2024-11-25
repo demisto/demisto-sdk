@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Union
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME, TESTS_DIR
 from demisto_sdk.commands.common.logger import logger
@@ -45,7 +46,7 @@ else:
 PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
 
 
-def update_content_paths(content_path: str | Path):
+def update_content_paths(content_path: Union[str, Path]):
     """
     Update content paths globally and reload dependent modules.
     Args:

@@ -76,10 +76,11 @@ def reload_module_and_dependents(
             return
 
         logger.debug(f"Reloading {module_name}")
-        reload(module)
+        # reload(module)
 
     if module_items is None:
         module_items = [(name, module) for name, module in sys.modules.items()]
+    logger.debug(f'Module items: {module_items=}')
 
     # Finding modules that import this module.
     dependents = []

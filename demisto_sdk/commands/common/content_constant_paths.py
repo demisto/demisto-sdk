@@ -131,6 +131,7 @@ def update_content_paths(content_path: Union[str, Path]):
     global API_MODULES_SCRIPTS_DIR
     global PYTHONPATH
     global PYTHONPATH_STR
+    logger.debug(f"Updating content path globally: {content_path}")
 
     CONTENT_PATH = Path(content_path)
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = CONTENT_PATH / "all_packs_dependencies.json"
@@ -163,7 +164,7 @@ def update_content_paths(content_path: Union[str, Path]):
         logger.debug(
             "Could not add API modules to 'PYTHONPATH' as the base directory does not exist."
         )
-
     PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
 
+    logger.debug(f"update_content_paths {__name__}=")
     reload_module_and_dependents(__name__, reload_current=True)

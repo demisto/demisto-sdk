@@ -50,7 +50,7 @@ PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
 
 
 def reload_module_and_dependents(
-    module_name, reload_current=True, visited=None, module_items=None
+    module_name, reload_current=True, visited=set(), module_items=None
 ):
     """
     Reload the given module and all modules that depend on it, recursively.
@@ -60,9 +60,6 @@ def reload_module_and_dependents(
     :param visited: A set to keep track of visited modules to avoid infinite recursion.
     :param module_items: (Optional) Static list of modules to iterate over.
     """
-
-    if visited is None:
-        visited = set()
 
     if module_name in visited:
         return
@@ -109,7 +106,7 @@ def reload_module_and_dependents(
 
     # Recursively reloading dependents.
     for dependent_name in dependents:
-        reload_module_and_dependents(dependent_name, visited, module_items)
+        reload_module_and_dependents(dependent_name, set(visited), module_items)
 
 
 def update_content_paths(content_path: Union[str, Path]):

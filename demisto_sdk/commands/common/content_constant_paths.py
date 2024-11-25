@@ -1,3 +1,6 @@
+import sys
+import types
+from importlib import reload
 from pathlib import Path
 from typing import Union
 
@@ -46,13 +49,61 @@ else:
 PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
 
 
+def reload_module_and_dependents(module_name, visited=None):
+    """
+    Reload the given module and all modules that depend on it, recursively.
+    The root module is reloaded first, followed by its dependents.
+
+    :param module_name: The name of the module to reload (e.g., 'my_module').
+    :param visited: A set to keep track of visited modules to avoid infinite recursion.
+    """
+    if visited is None:
+        visited = set()
+
+    if module_name in visited:
+        return
+
+    visited.add(module_name)
+
+    # Reloading root module first.
+    module = sys.modules.get(module_name)
+    if module is None:
+        logger.debug(f"Module {module_name} not found in sys.modules.")
+        return
+
+    logger.debug(f"Reloading {module_name}")
+    reload(module)
+
+    # Finding modules that import this module.
+    dependents = []
+    for _module_name, _module in sys.modules.items():
+        if _module_name not in visited and isinstance(_module, types.ModuleType):
+            # Retrieving modules that imports the root module (this module).
+            imports_root = False
+            for attr_name in dir(_module):
+                try:
+                    attr = getattr(_module, attr_name)
+                    if (
+                        isinstance(attr, types.ModuleType)
+                        and attr.__name__ == module_name
+                    ):
+                        imports_root = True
+                        break
+                except Exception:
+                    continue  # Some attributes may cause exceptions on access.
+            if imports_root:
+                dependents.append(_module_name)
+
+    # Recursively reloading dependents.
+    for dependent_name in dependents:
+        reload_module_and_dependents(dependent_name, visited)
+
+
 def update_content_paths(content_path: Union[str, Path]):
     """
-    Update content paths globally and reload dependent modules.
+    Updates content paths globally and reloads dependent modules.
     Args:
-        content_path:
-
-    Returns:
+        content_path: path to be set as new CONTENT_PATH and derived paths.
 
     """
     global CONTENT_PATH
@@ -102,3 +153,5 @@ def update_content_paths(content_path: Union[str, Path]):
         )
 
     PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
+
+    reload_module_and_dependents(__name__)

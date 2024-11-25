@@ -1,11 +1,13 @@
+import functools
 import logging  # noqa: TID251 # Required for propagation handling.
 import os
 import platform
 import sys
 from pathlib import Path
-from typing import Iterable, Optional, Union
+from typing import Callable, Iterable, Optional, Union
 
 import loguru  # noqa: TID251 # This is the only place where we allow it
+import typer
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOG_FILE_PATH,
@@ -211,3 +213,40 @@ def handle_deprecated_args(input_args: Iterable[str]):
             f"Argument {argument} is deprecated,"
             f"Use {DEPRECATED_PARAMETERS[argument]} instead."
         )
+
+
+def logging_setup_decorator(func: Callable):
+    @functools.wraps(func)
+    def wrapper(ctx: typer.Context, *args, **kwargs):
+        # Fetch the parameters directly from context to apply default values if they are None
+        console_threshold = ctx.params.get("console_log_threshold") or "INFO"
+        file_threshold = ctx.params.get("file_log_threshold") or "DEBUG"
+
+        # Validate the logging levels
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        if console_threshold not in valid_levels:
+            console_threshold = "INFO"
+        if file_threshold not in valid_levels:
+            file_threshold = "DEBUG"
+
+        # Set back the validated and default values in both `ctx.params` and `kwargs`
+        ctx.params["console_log_threshold"] = console_threshold
+        ctx.params["file_log_threshold"] = file_threshold
+        kwargs["console_log_threshold"] = console_threshold
+        kwargs["file_log_threshold"] = file_threshold
+
+        # Initialize logging with the validated thresholds
+        logging_setup(
+            console_threshold=console_threshold,
+            file_threshold=file_threshold,
+            path=kwargs.get("log_file_path", None),
+            calling_function=func.__name__,
+        )
+
+        # Handle deprecated arguments directly from context args if needed
+        handle_deprecated_args(ctx.args if ctx else [])
+
+        # Run the wrapped function
+        return func(ctx, *args, **kwargs)
+
+    return wrapper

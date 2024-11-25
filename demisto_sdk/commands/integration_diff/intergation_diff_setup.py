@@ -1,0 +1,38 @@
+import typer
+
+from demisto_sdk.commands.common.logger import logging_setup_decorator
+from demisto_sdk.commands.integration_diff.integration_diff_detector import (
+    IntegrationDiffDetector,
+)
+
+
+@logging_setup_decorator
+def integration_diff(
+    ctx: typer.Context,
+    new: str = typer.Option(
+        ..., "-n", "--new", help="The path to the new version of the integration"
+    ),
+    old: str = typer.Option(
+        ..., "-o", "--old", help="The path to the old version of the integration"
+    ),
+    docs_format: bool = typer.Option(
+        False,
+        "--docs-format",
+        help="Whether output should be in the format for the "
+        "version differences section in README.",
+    ),
+):
+    """
+    Checks for differences between two versions of an integration and verifies that the new version covers
+    the old version.
+    """
+    integration_diff_detector = IntegrationDiffDetector(
+        new=new,
+        old=old,
+        docs_format=docs_format,
+    )
+    result = integration_diff_detector.check_different()
+
+    if result:
+        raise typer.Exit(0)
+    raise typer.Exit(1)

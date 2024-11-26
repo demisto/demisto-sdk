@@ -236,11 +236,6 @@ class XsiamClient(XsoarSaasClient):
             self.server_config.base_api_url, "/public_api/v1/alerts/create_alert"
         )
         res = self._xdr_client.post(endpoint, json=alert_payload)
-        # res = requests.post(
-        #     url=f"{self.base_url}/public_api/v1/alerts/create_alert",
-        #     headers=self._xdr_client.headers,
-        #     json=alert_payload,
-        # )
         alert_data = self._process_response(res.content, res.status_code, 200)
         return alert_data["reply"]
 
@@ -261,11 +256,6 @@ class XsiamClient(XsoarSaasClient):
             self.server_config.base_api_url, "/public_api/v1/alerts/update_alerts"
         )
         res = self._xdr_client.post(endpoint, json=alert_payload)
-        # res = requests.post(
-        #     url=f"{self.base_url}/public_api/v1/alerts/update_alerts",
-        #     headers=self._xdr_client.headers,
-        #     json=alert_payload,
-        # )
         alert_data = self._process_response(res.content, res.status_code, 200)
         return alert_data
 
@@ -287,11 +277,6 @@ class XsiamClient(XsoarSaasClient):
             self.server_config.base_api_url, "/public_api/v1/alerts/get_alerts/"
         )
         res = self._xdr_client.post(endpoint, json=body)
-        # res = requests.post(
-        #     url=f"{self.base_url}/public_api/v1/alerts/get_alerts/",
-        #     headers=self._xdr_client.headers,
-        #     json=body,
-        # )
         return self._process_response(res.content, res.status_code, 200)["reply"]
 
     """

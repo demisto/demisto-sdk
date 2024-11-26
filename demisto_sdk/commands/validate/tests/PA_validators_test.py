@@ -545,6 +545,9 @@ def test_IsVersionMatchRnValidator_obtain_invalid_content_items(
                 create_pack_object(["categories"], [["Utilities"]]),
                 create_pack_object(["categories"], [["Random Category..."]]),
                 create_pack_object(["categories"], [["Network Security", "Utilities"]]),
+                create_pack_object(
+                    ["categories"], [["Utilities", "Random Category..."]]
+                ),
             ],
             2,
         ),
@@ -562,13 +565,14 @@ def test_IsValidCategoriesValidator_obtain_invalid_content_items(
             - One pack_metadata with a valid category.
             - One pack_metadata with an invalid category.
             - One pack_metadata with 2 valid categories.
+            - One pack_metadata with 1 valid and 1 invalid categories.
     When
     - Calling the IsValidCategoriesValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Should fail.
-        - Case 3: Should fail only the pack_metadata with 2 and 0 categories.
+        - Case 3: Should fail only the pack_metadata with 2 where 1 is a valid and the other isn't and 0 categories.
     """
 
     mocker.patch(
@@ -581,7 +585,7 @@ def test_IsValidCategoriesValidator_obtain_invalid_content_items(
         [
             (
                 result.message
-                == "The pack metadata categories field doesn't match the standard,\nplease make sure the field contain only one category from the following options: Network Security, Utilities."
+                == "The pack metadata categories field doesn't match the standard,\nplease make sure the field contain at least one category from the following options: Network Security, Utilities."
             )
             for result in results
         ]

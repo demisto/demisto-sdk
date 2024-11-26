@@ -289,7 +289,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         self.parse_ignored_errors(git_sha)
         if not metadata_only:
             self.parse_pack_folders()
-        self.get_rn_info()
+        self.get_rn_info(git_sha)
 
         logger.debug(f"Successfully parsed {self.node_id}")
 
@@ -366,8 +366,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
             else {}
         )
 
-    def get_rn_info(self):
-        self.latest_rn_version = get_pack_latest_rn_version(str(self.path))
+    def get_rn_info(self, git_sha: Optional[str] = None):
+        self.latest_rn_version = get_pack_latest_rn_version(str(self.path), git_sha)
 
     @cached_property
     def field_mapping(self):

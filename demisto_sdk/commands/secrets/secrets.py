@@ -159,7 +159,7 @@ class SecretsValidator:
 
                 secrets_found_string += (
                     "For more information about whitelisting visit: "
-                    "https://xsoar.pan.dev/docs/concepts/demisto-sdk#secrets"
+                    "https://docs-cortex.paloaltonetworks.com/r/1/Demisto-SDK-Guide/secrets"
                 )
                 logger.info(f"<red>{secrets_found_string}</red>")
         return secret_to_location_mapping

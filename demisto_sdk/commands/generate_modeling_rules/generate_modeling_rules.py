@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
     logging_setup,
+    logging_setup_decorator,
 )
 from demisto_sdk.commands.common.tools import get_max_version
 
@@ -28,6 +29,7 @@ SCHEMA_TYPE_NUMBER = "Number"
 SCHEMA_TYPE_BOOLEAN = "Boolean"
 
 
+@logging_setup_decorator
 @app.command(
     no_args_is_help=True,
     context_settings={

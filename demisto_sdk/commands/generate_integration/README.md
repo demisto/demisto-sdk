@@ -1,7 +1,7 @@
 ## Generate XSOAR Integration from XSOAR integration config file.
 
 ### Overview
-Use the generate-integration command to generate a Cortex XSIAM/Cortex XSOAR integration from an integration config JSON file. 
+Use the generate-integration command to generate a Cortex XSIAM/Cortex XSOAR integration from an integration config JSON file.
 The JSON config file can be generated from a Postman collection via the postman-codegen command.
 
 ### Options

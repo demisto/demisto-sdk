@@ -1,6 +1,5 @@
 import sys
 import types
-from importlib import reload
 from pathlib import Path
 from typing import Union
 
@@ -80,7 +79,7 @@ def reload_module_and_dependents(
 
     if module_items is None:
         module_items = [(name, module) for name, module in sys.modules.items()]
-    logger.debug(f'Module items: {module_items=}')
+    logger.debug(f"Module items: {module_items=}")
 
     # Finding modules that import this module.
     dependents = []
@@ -168,4 +167,3 @@ def update_content_paths(content_path: Union[str, Path]):
     PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)
 
     logger.debug(f"update_content_paths {__name__}=")
-    reload_module_and_dependents(__name__, reload_current=True)

@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     suppress_stdout,
 )
+from demisto_sdk.commands.update_release_notes.rn_initializer import RN_Initializer
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN,
     update_api_modules_dependents_rn,
@@ -37,6 +38,7 @@ class UpdateReleaseNotesManager:
         prev_ver: Optional[str] = None,
         is_force: bool = False,
         is_bc: bool = False,
+        initializer: Optional[RN_Initializer] = None,
     ):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
@@ -56,6 +58,8 @@ class UpdateReleaseNotesManager:
             raise ValueError("Please remove the -g flag when specifying only one pack.")
         self.rn_path: list = list()
         self.is_bc = is_bc
+        self.initializer = initializer
+        self.initializer.set_git_sha()
 
     def manage_rn_update(self):
         """
@@ -328,6 +332,7 @@ class UpdateReleaseNotesManager:
                 is_force=self.is_force,
                 existing_rn_version_path=existing_rn_version,
                 is_bc=self.is_bc,
+                initializer=self.initializer,
             )
             updated = update_pack_rn.execute_update()
             self.rn_path.append(update_pack_rn.rn_path)

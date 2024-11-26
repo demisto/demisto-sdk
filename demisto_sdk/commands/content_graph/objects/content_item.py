@@ -445,3 +445,12 @@ class ContentItem(BaseContent):
         ):
             raise IncompatibleUploadVersionException(self, target_demisto_version)
         self._upload(client, marketplace)
+
+    def details_for_rn(self):
+        return self.description
+
+    def name_for_rn(self):
+        try:
+            return self.display_name
+        except Exception:
+            return self.name

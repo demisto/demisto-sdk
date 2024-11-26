@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,  # Must remain at the top - sets up the logger
 )
+from demisto_sdk.commands.update_release_notes.rn_initializer import RN_Initializer
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
@@ -2611,6 +2612,9 @@ def update_release_notes(ctx, **kwargs):
         )
 
     try:
+        initializer = RN_Initializer(
+                prev_ver=kwargs["prev_ver"],
+            )
         rn_mng = UpdateReleaseNotesManager(
             user_input=kwargs.get("input"),
             update_type=kwargs.get("update_type"),
@@ -2622,6 +2626,7 @@ def update_release_notes(ctx, **kwargs):
             prev_ver=kwargs.get("prev_ver"),
             is_force=kwargs.get("force", False),
             is_bc=kwargs.get("breaking_changes", False),
+            initializer= initializer
         )
         rn_mng.manage_rn_update()
         sys.exit(0)

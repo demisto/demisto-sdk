@@ -63,6 +63,12 @@ class Argument(BaseModel):
             dictified_arg["auto"] = dictified_arg["auto"].value
         return dictified_arg
 
+    def details_for_rn(self):
+        return self.description
+
+    def name_for_rn(self):
+        return self.name
+
 
 class IntegrationScript(ContentItem):
     type: str
@@ -148,3 +154,6 @@ class IntegrationScript(ContentItem):
     @cached_property
     def readme(self) -> ReadmeRelatedFile:
         return ReadmeRelatedFile(self.path, is_pack_readme=False, git_sha=self.git_sha)
+
+    def details_for_rn(self):
+        return self.description

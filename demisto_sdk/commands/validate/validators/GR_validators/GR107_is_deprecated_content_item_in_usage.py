@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC
+from collections import defaultdict
 from typing import Dict, Iterable, List, Union
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -100,25 +102,22 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
             ]
         )
         # Group results by content item
-        grouped_results: Dict = {}
+        grouped_results: Dict[BaseContent, Dict[str, set]] = defaultdict(
+            lambda: {"deprecated_items": set()}
+        )
         for item in self.graph.find_items_using_deprecated_items(content_item_paths):
             for item_using_deprecated in item.content_items_using_deprecated:
-                if item_using_deprecated not in grouped_results:
-                    grouped_results[item_using_deprecated] = {
-                        "content_object": item_using_deprecated,
-                        "deprecated_items": set(),
-                    }
-                grouped_results[item_using_deprecated]["deprecated_items"].add(
+                grouped_results[item_using_deprecated]["deprecated_items"].add(  # type: ignore[index]
                     item.deprecated_item_id
                 )
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    using_deprecated_item=item_using_deprecated.object_id,
+                    item_id=item_using_deprecated.object_id,
                     deprecated_items=", ".join(data["deprecated_items"]),
                 ),
-                content_object=data["content_object"],
+                content_object=item_using_deprecated,
             )
             for item_using_deprecated, data in grouped_results.items()
         ]

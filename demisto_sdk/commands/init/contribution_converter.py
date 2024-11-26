@@ -134,7 +134,7 @@ class ContributionConverter:
         detected_content_items: list = [],
         base_dir: Optional[str] = None,
         working_dir_path: str = "",
-        pack_readme: str = ""
+        pack_readme: str = "",
     ):
         """Initializes a ContributionConverter instance
 
@@ -749,7 +749,9 @@ class ContributionConverter:
         logger.info("Creating pack base files")
         Path(self.working_dir_path, PACKS_README_FILE_NAME).touch()
         if self.pack_readme:
-            Path(self.working_dir_path, PACKS_README_FILE_NAME).write_text(self.pack_readme)
+            Path(self.working_dir_path, PACKS_README_FILE_NAME).write_text(
+                self.pack_readme
+            )
 
         Path(self.working_dir_path, ".secrets-ignore").touch()
 

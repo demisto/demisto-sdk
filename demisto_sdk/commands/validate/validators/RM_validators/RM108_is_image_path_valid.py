@@ -78,6 +78,8 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
                 # based on whether the link matches the URL or HTML pattern.
                 absolute_link[1] if absolute_link[0] else absolute_link[2]
                 for absolute_link in absolute_links
+                #removing content-assets links
+                if "content-assets" not in (absolute_link[1] if absolute_link[0] else absolute_link[2])
             ]
 
             return (

@@ -1432,7 +1432,7 @@ yml_data_cases = [
             "| test2 | True |",
             "",
         ],  # expected
-        id="case no param with additional info field"
+        id="case no param with additional info field",
     ),
     pytest.param(
         {
@@ -1584,7 +1584,7 @@ yml_data_cases = [
             "| Password | Credentials | True |",
             "",
         ],  # expected
-        id="case credentials parameter have hiddenusername"
+        id="case credentials parameter have hiddenusername",
     ),
     pytest.param(
         {
@@ -1639,7 +1639,7 @@ yml_data_cases = [
             "| User Name | The User Name | True |",
             "",
         ],  # expected
-        id="case credentials parameter have hiddenusername and hiddenpassword"
+        id="case credentials parameter have hiddenusername and hiddenpassword",
     ),
     pytest.param(
         {
@@ -1670,7 +1670,7 @@ yml_data_cases = [
             "| User Name | The User Name | True |",
             "",
         ],  # expected
-        id="case of hidden parameter"
+        id="case of hidden parameter",
     ),
     pytest.param(
         {
@@ -1709,7 +1709,7 @@ yml_data_cases = [
             "| Proxy | non-default info. | True |",
             "",
         ],  # expected
-        id="case some param with additional information, one that should take default, and one overriding default"
+        id="case some param with additional information, one that should take default, and one overriding default",
     ),
 ]
 

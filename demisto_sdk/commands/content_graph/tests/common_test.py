@@ -1,7 +1,5 @@
 from unittest.mock import patch
 
-import pytest
-
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     MarketplaceVersions,
@@ -42,48 +40,12 @@ def test_to_neo4j_pattern():
     )
 
 
-@pytest.mark.parametrize(
-    "data, marketplace, expected",
-    [
-        (
-            "This is a Cortex XSOAR v1 example.",
-            MarketplaceVersions.MarketplaceV2,
-            "This is a Cortex example.",
-        ),
-        (
-            "This is a Cortex XSOAR example.",
-            MarketplaceVersions.MarketplaceV2,
-            "This is a Cortex example.",
-        ),
-        (
-            "This is a Cortex XSOAR v1 example.",
-            MarketplaceVersions.XSOAR,
-            "This is a Cortex XSOAR v1 example.",
-        ),
-        (
-            {
-                "description": "This is a Cortex XSOAR v1 example.",
-                "details": "Cortex XSOAR should be replaced.",
-            },
-            MarketplaceVersions.MarketplaceV2,
-            {
-                "description": "This is a Cortex example.",
-                "details": "Cortex should be replaced.",
-            },
-        ),
-        (
-            ["This is a Cortex XSOAR v1 example.", "Cortex XSOAR should be replaced."],
-            MarketplaceVersions.MarketplaceV2,
-            ["This is a Cortex example.", "Cortex should be replaced."],
-        ),
-    ],
-)
-def test_replace_incorrect_marketplace(data, marketplace, expected):
+def test_replace_incorrect_marketplace_string_with_number():
     """
-    Test the replace_incorrect_marketplace function.
+    Test the replace_incorrect_marketplace function with a string containing a number.
 
     Given:
-        - A data object (string, dict, or list).
+        - A string data object.
         - A marketplace version.
 
     When:
@@ -93,7 +55,113 @@ def test_replace_incorrect_marketplace(data, marketplace, expected):
     Then:
         - The function should return the data with the replacements made if applicable.
     """
-    result = replace_incorrect_marketplace(data, marketplace, path="example/path")
+    data = "This is a Cortex XSOAR v1 example."
+    expected = "This is a Cortex example."
+    result = replace_incorrect_marketplace(
+        data, MarketplaceVersions.MarketplaceV2, path="example/path"
+    )
+    assert result == expected
+
+
+def test_replace_incorrect_marketplace_string_without_number():
+    """
+    Test the replace_incorrect_marketplace function with a string not containing a number.
+
+    Given:
+        - A string data object.
+        - A marketplace version.
+
+    When:
+        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex" if the marketplace is MarketplaceV2 or XPANSE.
+
+    Then:
+        - The function should return the data with the replacements made if applicable.
+    """
+    data = "This is a Cortex XSOAR example."
+    expected = "This is a Cortex example."
+    result = replace_incorrect_marketplace(
+        data, MarketplaceVersions.MarketplaceV2, path="example/path"
+    )
+    assert result == expected
+
+
+def test_replace_incorrect_marketplace_string_no_replacement():
+    """
+    Test the replace_incorrect_marketplace function with a string where no replacement should occur.
+
+    Given:
+        - A string data object.
+        - A marketplace version.
+
+    When:
+        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex" if the marketplace is MarketplaceV2 or XPANSE.
+
+    Then:
+        - The function should return the data with the replacements made if applicable.
+    """
+    data = "This is a Cortex XSOAR v1 example."
+    expected = "This is a Cortex XSOAR v1 example."
+    result = replace_incorrect_marketplace(
+        data, MarketplaceVersions.XSOAR, path="example/path"
+    )
+    assert result == expected
+
+
+def test_replace_incorrect_marketplace_dict():
+    """
+    Test the replace_incorrect_marketplace function with a dictionary.
+
+    Given:
+        - A dictionary data object.
+        - A marketplace version.
+
+    When:
+        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex" if the marketplace is MarketplaceV2 or XPANSE.
+        - If the word following "Cortex XSOAR" contains a number, it will also be removed.
+
+    Then:
+        - The function should return the data with the replacements made if applicable.
+    """
+    data = {
+        "description": "This is a Cortex XSOAR v1 example.",
+        "details": "Cortex XSOAR should be replaced.",
+    }
+    expected = {
+        "description": "This is a Cortex example.",
+        "details": "Cortex should be replaced.",
+    }
+    result = replace_incorrect_marketplace(
+        data, MarketplaceVersions.MarketplaceV2, path="example/path"
+    )
+    assert result == expected
+
+
+def test_replace_incorrect_marketplace_list():
+    """
+    Test the replace_incorrect_marketplace function with a list.
+
+    Given:
+        - A list data object.
+        - A marketplace version.
+
+    When:
+        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex" if the marketplace is MarketplaceV2 or XPANSE.
+        - If the word following "Cortex XSOAR" contains a number, it will also be removed.
+
+    Then:
+        - The function should return the data with the replacements made if applicable.
+    """
+    data = [
+        "This is a Cortex XSOAR v1 example.",
+        "Cortex XSOAR should be replaced.",
+    ]
+    expected = [
+        "This is a Cortex example.",
+        "Cortex should be replaced.",
+    ]
+    result = replace_incorrect_marketplace(
+        data, MarketplaceVersions.MarketplaceV2, path="example/path"
+    )
     assert result == expected
 
 

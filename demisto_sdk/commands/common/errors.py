@@ -946,10 +946,6 @@ ERROR_CODE: Dict = {
         "code": "PA133",
         "related_field": "",
     },
-    "categories_field_does_not_match_standard": {
-        "code": "PA134",
-        "related_field": "",
-    },
     "pack_metadata_invalid_modules": {
         "code": "PA135",
         "related_field": "",
@@ -4085,14 +4081,6 @@ class Errors:
             f"The description of the pack in the pack_metadata.json should be one of the following formats:\n"
             f'1. "Deprecated. Use <PACK_NAME> instead."\n'
             f'2. "Deprecated. <REASON> No available replacement."'
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def categories_field_does_not_match_standard(approved_list):
-        return (
-            f"The pack metadata categories field doesn't match the standard,\n"
-            f"please make sure the field contain only one category from the following options:\n{approved_list}"
         )
 
     @staticmethod

@@ -780,6 +780,7 @@ class TestGetFilesInDir:
         files = [
             f"{project_dir}/__init__.py",
             f"{project_dir}/downloader.py",
+            f"{project_dir}/download_setup.py",
             f"{project_dir}/README.md",
         ]
         assert sorted(get_files_in_dir(project_dir, ["py", "md"], False)) == sorted(

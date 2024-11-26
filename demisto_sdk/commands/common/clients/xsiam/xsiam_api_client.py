@@ -232,7 +232,9 @@ class XsiamClient(XsoarSaasClient):
 
     def create_alert_from_json(self, json_content: dict) -> int:
         alert_payload = {"request_data": {"alert": json_content}}
-        endpoint = "/public_api/v1/alerts/create_alert"
+        endpoint = urljoin(
+            self.server_config.base_api_url, "/public_api/v1/alerts/create_alert"
+        )
         res = self._xdr_client.post(endpoint, json=alert_payload)
         # res = requests.post(
         #     url=f"{self.base_url}/public_api/v1/alerts/create_alert",
@@ -255,8 +257,10 @@ class XsiamClient(XsoarSaasClient):
         alert_payload = {
             "request_data": {"update_data": updated_data, "alert_id_list": alert_id}
         }
-        endpoint = "/public_api/v1/alerts/update_alerts"
-        res = self._xdr_client.post(endpoint, json=json)
+        endpoint = urljoin(
+            self.server_config.base_api_url, "/public_api/v1/alerts/update_alerts"
+        )
+        res = self._xdr_client.post(endpoint, json=alert_payload)
         # res = requests.post(
         #     url=f"{self.base_url}/public_api/v1/alerts/update_alerts",
         #     headers=self._xdr_client.headers,
@@ -279,7 +283,9 @@ class XsiamClient(XsoarSaasClient):
                 ]
             }
         }
-        endpoint = "/public_api/v1/alerts/get_alerts/"
+        endpoint = urljoin(
+            self.server_config.base_api_url, "/public_api/v1/alerts/get_alerts/"
+        )
         res = self._xdr_client.post(endpoint, json=body)
         # res = requests.post(
         #     url=f"{self.base_url}/public_api/v1/alerts/get_alerts/",

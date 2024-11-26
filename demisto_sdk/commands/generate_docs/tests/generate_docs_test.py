@@ -1403,7 +1403,7 @@ def test_generate_table_section_numbered_section():
 
 
 yml_data_cases = [
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1423,7 +1423,7 @@ yml_data_cases = [
                     "type": 8,
                 },
             ],
-        },  # case no param with additional info field
+        },
         [
             "",
             "| **Parameter** | **Required** |",
@@ -1432,8 +1432,9 @@ yml_data_cases = [
             "| test2 | True |",
             "",
         ],  # expected
+        id="case no param with additional info field"
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1447,7 +1448,7 @@ yml_data_cases = [
                 },
                 {"display": "test2", "name": "test2", "required": True, "type": 8},
             ],
-        },  # case some params with additional info field
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1456,8 +1457,9 @@ yml_data_cases = [
             "| test2 |  | True |",
             "",
         ],  # expected
+        id="case some params with additional info field",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1477,7 +1479,7 @@ yml_data_cases = [
                     "type": 8,
                 },
             ],
-        },  # case all params with additional info field
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1486,8 +1488,9 @@ yml_data_cases = [
             "| test2 | Some more data | True |",
             "",
         ],  # expected
+        id="case all params with additional info field",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1501,7 +1504,7 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have displaypassword
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1510,8 +1513,9 @@ yml_data_cases = [
             "| password |  | True |",
             "",
         ],  # expected
+        id="case credentials parameter have displaypassword",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1524,7 +1528,7 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have no displaypassword
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1533,8 +1537,9 @@ yml_data_cases = [
             "| Password |  | True |",
             "",
         ],  # expected
+        id="case credentials parameter have no displaypassword",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1546,22 +1551,18 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have no display
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | user_name | Credentials | True |",
-            "    | Password |  | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| user_name | Credentials | True |",
+            "| Password |  | True |",
             "",
         ],  # expected
+        id="case credentials parameter have no display",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1575,21 +1576,17 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have hiddenusername
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | Password | Credentials | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| Password | Credentials | True |",
             "",
         ],  # expected
+        id="case credentials parameter have hiddenusername"
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1603,21 +1600,17 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have hiddenpassword
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | User Name | Credentials | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| User Name | Credentials | True |",
             "",
         ],  # expected
+        id="case credentials parameter have hiddenpassword",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1638,21 +1631,17 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have hiddenusername and hiddenpassword
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | User Name | The User Name | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| User Name | The User Name | True |",
             "",
         ],  # expected
+        id="case credentials parameter have hiddenusername and hiddenpassword"
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1673,21 +1662,17 @@ yml_data_cases = [
                     "type": 4,
                 },
             ],
-        },  # case of hidden parameter
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | User Name | The User Name | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| User Name | The User Name | True |",
             "",
         ],  # expected
+        id="case of hidden parameter"
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1714,7 +1699,7 @@ yml_data_cases = [
                     "type": 8,
                 },
             ],
-        },  # case some param with additional information, one that should take default, and one overriding default
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1724,6 +1709,7 @@ yml_data_cases = [
             "| Proxy | non-default info. | True |",
             "",
         ],  # expected
+        id="case some param with additional information, one that should take default, and one overriding default"
     ),
 ]
 

@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where **generate-docs** command used un-ordered dependency lists, which resulted in redundant git changes.
-  type: fix
-pr_number: 4533

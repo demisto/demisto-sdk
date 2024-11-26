@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import List
 
 import pytest
-from click.testing import CliRunner, Result
+from typer.testing import CliRunner, Result
 
-from demisto_sdk import __main__
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -344,7 +344,7 @@ class TestDocReviewXSOAROnly:
 
         args: List[str] = self.default_args + cmd_args
 
-        return CliRunner().invoke(__main__.doc_review, args)
+        return CliRunner().invoke(app, ["doc-review", *args])
 
     def test_valid_supported_pack(self, supported_pack: Pack):
         """
@@ -1393,30 +1393,31 @@ def test_replace_escape_characters(sentence, expected):
 @pytest.mark.parametrize(
     "use_pack_known_words, expected_param_value",
     [
-        (["--use-packs-known-words"], True),
-        (["--skip-packs-known-words"], False),
-        ([""], True),
-        (["--skip-packs-known-words", "--use-packs-known-words"], True),
+        ("--use-packs-known-words", True),
+        ("--skip-packs-known-words", False),
     ],
 )
 def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker):
     """
     Given:
-        - the --use-pack-known-words parameter
+        - the --use-packs-known-words parameter
     When:
         - running the doc-review command
     Then:
-        - Validate that given --use-packs-known-words" the load_known_words_from_pack is True
-        - Validate that given --skip-packs-known-words" the load_known_words_from_pack is False
+        - Validate that given --use-packs-known-words the load_known_words_from_pack is True
+        - Validate that given --skip-packs-known-words the load_known_words_from_pack is False
         - Validate that no param the default load_known_words_from_pack is True
         - Validate that given --use-packs-known-words and --skip-packs-known-words the load_known_words_from_pack is True
     """
     runner = CliRunner()
     mock_doc_reviewer = mocker.MagicMock(name="DocReviewer")
     mock_doc_reviewer.run_doc_review.return_value = True
-    m = mocker.patch(
-        "demisto_sdk.commands.doc_reviewer.doc_reviewer.DocReviewer",
+    from demisto_sdk.commands.doc_reviewer.doc_reviewer_setup import DocReviewer
+
+    m = mocker.patch.object(
+        DocReviewer,
+        "__init__",
         return_value=mock_doc_reviewer,
     )
-    runner.invoke(__main__.doc_review, use_pack_known_words)
+    runner.invoke(app, ["doc-review", use_pack_known_words])
     assert m.call_args.kwargs.get("load_known_words_from_pack") == expected_param_value

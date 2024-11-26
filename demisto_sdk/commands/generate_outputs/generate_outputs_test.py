@@ -1,7 +1,7 @@
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
-import demisto_sdk.__main__ as main
+from demisto_sdk.__main__ import app
 
 
 @pytest.mark.parametrize(
@@ -30,7 +30,7 @@ def test_generate_outputs_json_to_outputs_flow(
     mocker.patch.object(go, "json_to_outputs", return_value="None")
 
     runner = CliRunner()
-    result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
+    result = runner.invoke(app, ["generate-outputs", *args], catch_exceptions=False)
     if expected_stdout:
         assert expected_stdout in result.output
 
@@ -38,7 +38,7 @@ def test_generate_outputs_json_to_outputs_flow(
 @pytest.mark.parametrize(
     "args, expected_stdout, expected_exit_code",
     [
-        ("-e", "requires an argument", 2),
+        (["-e"], "requires an argument", 2),
         (["-e", "<example>"], "command please include an `input` argument", 0),
         (["-e", "<example>", "-i", "123"], "Input file 123 was not found", 0),
     ],
@@ -62,7 +62,7 @@ def test_generate_outputs_generate_integration_context_flow(
     mocker.patch.object(go, "generate_integration_context", return_value="None")
 
     runner = CliRunner()
-    result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
+    result = runner.invoke(app, ["generate-outputs", *args], catch_exceptions=False)
     assert result.exit_code == expected_exit_code
     if expected_exit_code == 0:
         assert expected_stdout in result.output

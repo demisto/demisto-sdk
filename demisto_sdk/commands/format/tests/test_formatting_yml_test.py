@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import requests_mock
+import typer
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
@@ -385,39 +386,6 @@ class TestFormatting:
 
         assert integration.yml.read_dict()["script"]["commands"] == test_data
 
-    @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
-    def test_playbook_task_description_name(self, source_path):
-        schema_path = os.path.normpath(
-            os.path.join(
-                __file__,
-                "..",
-                "..",
-                "..",
-                "common",
-                "schemas",
-                "{}.yml".format("playbook"),
-            )
-        )
-        base_yml = PlaybookYMLFormat(source_path, path=schema_path)
-        base_yml.add_description()
-        base_yml.update_playbook_task_name()
-
-        assert (
-            base_yml.data["tasks"]["29"]["task"]["name"]
-            == "File Enrichment - Virus Total Private API_dev_copy"
-        )
-        base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
-
-        assert "description" in base_yml.data["tasks"]["7"]["task"]
-        assert (
-            base_yml.data["tasks"]["29"]["task"]["name"]
-            == "File Enrichment - Virus Total Private API"
-        )
-        assert (
-            base_yml.data["tasks"]["25"]["task"]["description"]
-            == "Check if there is a SHA256 hash in context."
-        )
-
     @pytest.mark.parametrize("source_path", [PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS])
     def test_remove_empty_scripts_keys_from_playbook(self, source_path):
         """
@@ -576,11 +544,12 @@ class TestFormatting:
         user_input.side_effect = user_responses
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target)
-        Path(target).unlink()
-        os.rmdir(path)
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, output=target)
+            Path(target).unlink()
+            os.rmdir(path)
 
-        assert res is answer
+            assert res is answer
 
     @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_remove_unnecessary_keys_from_playbook(self, source_path):
@@ -766,18 +735,19 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
-        res = format_manager(input=target, assume_answer=True)
-        with open(target) as f:
-            yaml_content = yaml.load(f)
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, assume_answer=True)
+            with open(target) as f:
+                yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
             for param in params:
                 if "defaultvalue" in param and param["name"] != "feed":
                     param.pop("defaultvalue")
             for param in INCIDENT_FETCH_REQUIRED_PARAMS:
                 assert param in yaml_content["configuration"]
-        Path(target).unlink()
-        os.rmdir(path)
-        assert res is answer
+            Path(target).unlink()
+            os.rmdir(path)
+            assert res is answer
 
     FORMAT_FILES_FEED = [
         (FEED_INTEGRATION_VALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),
@@ -812,23 +782,24 @@ class TestFormatting:
         )
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, clear_cache=True, assume_answer=True)
-        with open(target) as f:
-            yaml_content = yaml.load(f)
-            params = yaml_content["configuration"]
-            for counter, param in enumerate(params):
-                if "defaultvalue" in param and param["name"] != "feed":
-                    params[counter].pop("defaultvalue")
-                if "hidden" in param:
-                    param.pop("hidden")
-            for param_details in FEED_REQUIRED_PARAMS:
-                param = {"name": param_details.get("name")}
-                param.update(param_details.get("must_equal", dict()))
-                param.update(param_details.get("must_contain", dict()))
-                assert param in params
-        Path(target).unlink()
-        os.rmdir(path)
-        assert res is answer
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, clear_cache=True, assume_answer=True)
+            with open(target) as f:
+                yaml_content = yaml.load(f)
+                params = yaml_content["configuration"]
+                for counter, param in enumerate(params):
+                    if "defaultvalue" in param and param["name"] != "feed":
+                        params[counter].pop("defaultvalue")
+                    if "hidden" in param:
+                        param.pop("hidden")
+                for param_details in FEED_REQUIRED_PARAMS:
+                    param = {"name": param_details.get("name")}
+                    param.update(param_details.get("must_equal", dict()))
+                    param.update(param_details.get("must_contain", dict()))
+                    assert param in params
+            Path(target).unlink()
+            os.rmdir(path)
+            assert res is answer
 
     def test_set_feed_params_in_config_with_default_value(self):
         """

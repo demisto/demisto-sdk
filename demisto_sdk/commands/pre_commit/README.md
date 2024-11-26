@@ -77,7 +77,7 @@ Will run pre-commit without the validate step.
 Will run pre-commit and show differences when failing.
 
 ## Modes
-When different args set for the different modes are needed, for example, some rules should be excluded in the nightly build.
+You can set different arguments for different modes. for example, some rules should be excluded in the nightly build.
 Any key can be set this way.
 You can set this as follows.
 ```yaml
@@ -150,7 +150,7 @@ The following SDK commands are automatically run
 ### Docker hooks
 To run a command in a script's relevant container you can set up a Docker Hook.
 
-A docker hook must be under the `local` repo and it's `id` must end with `in-docker`.
+A docker hook must be under the `local` repo, and it's `id` must end with `in-docker`.
 
 #### Example
 ```yaml

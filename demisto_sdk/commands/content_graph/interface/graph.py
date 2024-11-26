@@ -1,7 +1,7 @@
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -18,8 +18,17 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+
+class DeprecatedItemUsage(NamedTuple):
+    deprecated_item_id: str
+    deprecated_item_type: str
+    content_items_using_deprecated: List[BaseNode]
 
 
 class ContentGraphInterface(ABC):
@@ -194,7 +203,9 @@ class ContentGraphInterface(ABC):
     def clean_graph(self): ...
 
     @abstractmethod
-    def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+    def find_items_using_deprecated_items(
+        self, file_paths: List[str]
+    ) -> List[DeprecatedItemUsage]:
         pass
 
     @abstractmethod
@@ -297,9 +308,13 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def find_mandatory_hidden_packs_dependencies(
+    def find_packs_with_invalid_dependencies(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
+        pass
+
+    @abstractmethod
+    def get_api_module_imports(self, api_module: str) -> List[IntegrationScript]:
         pass
 
     @abstractmethod

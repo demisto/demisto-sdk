@@ -29,7 +29,7 @@ jobs:
       - name: Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Validate Changelog
         env:
@@ -57,7 +57,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Cache pre-commit
         uses: actions/cache@v4
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     defaults:
       run:
@@ -121,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     defaults:
       run:
@@ -160,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     defaults:
       run:
@@ -200,10 +200,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Download all artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
@@ -237,7 +237,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"  # CIAC-11940
 
       - name: Checkout Content
         uses: actions/checkout@v4
@@ -326,7 +326,7 @@ jobs:
         if: steps.files-changed.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Validate content master paths
         if: steps.files-changed.outputs.any_changed == 'true'
@@ -344,7 +344,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Checkout content
         uses: actions/checkout@v4
@@ -357,16 +357,16 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
-          mkdir -p test-graph-commands
+          mkdir -p ./test-graph-commands/content_graph
           # create content graph from scratch
-          demisto-sdk create-content-graph
+          demisto-sdk graph create
           # clean import folder
           sudo rm -rf /var/lib/neo4j/import
           # Update content graph from the bucket
-          demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
+          demisto-sdk graph update -g -o ./test-graph-commands/content_graph
 
           # Update content graph from the the previous content graph that was created/built
-          demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
+          demisto-sdk graph update -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
 
       - name: Upload artifacts
         if: always()
@@ -432,7 +432,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -451,7 +451,7 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Generate Docs
         run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
@@ -477,7 +477,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "pip"
 
       - name: pip intsall current project

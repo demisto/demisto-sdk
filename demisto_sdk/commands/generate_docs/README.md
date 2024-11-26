@@ -1,4 +1,4 @@
-# `generate-docs`
+## generate-docs
 
 ### Overview
 

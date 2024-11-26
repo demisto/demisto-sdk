@@ -1,4 +1,4 @@
-# `generate-modeling-rules`
+## generate-modeling-rules
 
 ### Overview
 This command parses the raw events and the one data model to extract the field types.

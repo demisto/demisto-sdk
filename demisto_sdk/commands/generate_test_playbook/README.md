@@ -1,4 +1,4 @@
-### Generate Test Playbook
+## Generate Test Playbook
 ### Overview
 
 Generate a test playbook from integration/script YAML arguments.

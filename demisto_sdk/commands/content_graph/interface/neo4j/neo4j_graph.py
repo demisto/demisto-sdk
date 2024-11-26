@@ -1,4 +1,5 @@
 import os
+from functools import lru_cache
 from multiprocessing import Pool
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -81,8 +82,12 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     UnknownContent,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+from demisto_sdk.commands.content_graph.objects.script import Script
 
 
 def _parse_node(element_id: str, node: dict) -> BaseNode:
@@ -614,6 +619,16 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             self._add_nodes_to_mapping(results)
             return [self._id_to_obj[result.element_id] for result in results]
+
+    @lru_cache
+    def get_api_module_imports(self, api_module: str) -> list[IntegrationScript]:
+        try:
+            api_module_node = self.search(object_id=api_module)[0]
+        except IndexError:
+            logger.warning(f"Could not find {api_module} in graph")
+            return []
+        assert isinstance(api_module_node, Script)
+        return [c for c in api_module_node.imported_by]
 
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]

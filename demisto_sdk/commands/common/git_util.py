@@ -976,21 +976,29 @@ class GitUtil:
             == status
         }
 
-    def _check_file_status(self, file_path: str, remote: str, branch: str) -> str:
+    def _check_file_status(
+        self,
+        file_path: str,
+        remote: str,
+        branch: str,
+        feature_branch_or_hash: Optional[str] = None,
+    ) -> str:
         """Get the git status of a given file path
         Args:
             file_path (str): the file path to check
             remote (str): the used git remote
             branch (str): the used git branch
+            feature_branch_or_hash (str | None): compare against a specific branch or commit
         Returns:
             str: the git status of the file (M, A, R, D).
         """
-        current_branch_or_hash = self.get_current_git_branch_or_hash()
+        if not feature_branch_or_hash:
+            feature_branch_or_hash = self.get_current_git_branch_or_hash()
 
         if remote:
             diff_line = self.repo.git.diff(
                 "--name-status",
-                f"{remote}/{branch}...{current_branch_or_hash}",
+                f"{remote}/{branch}...{feature_branch_or_hash}",
                 "--",
                 file_path,
             )
@@ -998,7 +1006,7 @@ class GitUtil:
         # if remote does not exist we are checking against the commit sha1
         else:
             diff_line = self.repo.git.diff(
-                "--name-status", f"{branch}...{current_branch_or_hash}", "--", file_path
+                "--name-status", f"{branch}...{feature_branch_or_hash}", "--", file_path
             )
 
         if not diff_line:

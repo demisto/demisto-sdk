@@ -3,10 +3,10 @@ from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
 from git import GitCommandError
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -130,11 +130,6 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
-        mocker.patch.object(
-            PackUniqueFilesValidator,
-            "is_categories_field_match_standard",
-            return_value=True,
-        )
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator("fake")
         mocker.patch.object(
@@ -151,11 +146,6 @@ class TestPackUniqueFilesValidator:
         )
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
-        )
-        mocker.patch.object(
-            PackUniqueFilesValidator,
-            "is_categories_field_match_standard",
-            return_value=True,
         )
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator("fake")
@@ -206,7 +196,7 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
             result = CliRunner(mix_stderr=False).invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -268,7 +258,7 @@ class TestPackUniqueFilesValidator:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -323,7 +313,7 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
             result = CliRunner(mix_stderr=False).invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",

@@ -55,8 +55,12 @@ def generate_unit_tests(
     ),
 ):
     """
-    This command is used to generate unit tests automatically from an integration's Python code.
-    Also supports generating unit tests for specific commands.
+    This command generates unit tests automatically from an integration's Python code.
+    It also supports generating unit tests for specific commands.
+    Note that this command is not intended to fully replace manual work on unit tests but is intended to make it easier to write them.
+
+    >NOTE: The generate-unit-test command only works if demisto-sdk is installed with pip install demisto-sdk [generate-unit-tests].
+
     """
     import logging  # noqa: TID251 # special case: controlling external logger
 

@@ -103,9 +103,11 @@ def format(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
-    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
-    genericmodule/genericdefinition.
+    """
+    This command formats new or modified files to align with the Cortex standard.
+    This is useful when developing a new integration, script, playbook, incident field, incident type, indicator field, indicator type, layout, or dashboard.
+    When formatting is complete, the `validate` command runs and notifies you of any issues the formatter could not fix.
+
     """
     if is_sdk_defined_working_offline():
         typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)

@@ -1,8 +1,9 @@
 ### Generate Test Playbook
+### Overview
 
-This command generates a test playbook from integration/script YAML arguments.
+Generate a test playbook from integration/script YAML arguments.
 
-**Arguments**:
+### Options
 * **-i, --input**
    Specify integration/script yml path.
 * **-o, --output**

@@ -1,12 +1,13 @@
 # `generate-docs`
 
+### Overview
+
 Generates a `README` file for your integration, script or playbook. Used to create documentation files for Cortex XSOAR.
 
+This command creates a new README.md file in the same directory as the entity on which it ran, unless otherwise specified using the -o flag. 
+To generate command examples, set up the required environment variables prior to running this command in order to establish a connection between the Demisto SDK and the server, as well as create a file containing command examples to be run for the documentation.
 >Note: This command is not supported in Cortex XSIAM.
-
-This command creates a new README.md file in the same directory as the entity on which it ran, unless otherwise specified using the -o flag. To generate command examples, set up the required environment variables prior to running this command in order to establish a connection between the Demisto SDK and the server, as well as create a file containing command examples to be run for the documentation.
-
-## Arguments
+### Options
 
 * **-i, --input**
 Path of the yml file.

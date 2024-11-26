@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import requests_mock
+import typer
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
@@ -543,11 +544,12 @@ class TestFormatting:
         user_input.side_effect = user_responses
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target)
-        Path(target).unlink()
-        os.rmdir(path)
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, output=target)
+            Path(target).unlink()
+            os.rmdir(path)
 
-        assert res is answer
+            assert res is answer
 
     @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_remove_unnecessary_keys_from_playbook(self, source_path):
@@ -733,18 +735,19 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
-        res = format_manager(input=target, assume_answer=True)
-        with open(target) as f:
-            yaml_content = yaml.load(f)
-        params = yaml_content["configuration"]
-        for param in params:
-            if "defaultvalue" in param and param["name"] != "feed":
-                param.pop("defaultvalue")
-        for param in INCIDENT_FETCH_REQUIRED_PARAMS:
-            assert param in yaml_content["configuration"]
-        Path(target).unlink()
-        os.rmdir(path)
-        assert res is answer
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, assume_answer=True)
+            with open(target) as f:
+                yaml_content = yaml.load(f)
+            params = yaml_content["configuration"]
+            for param in params:
+                if "defaultvalue" in param and param["name"] != "feed":
+                    param.pop("defaultvalue")
+            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
+                assert param in yaml_content["configuration"]
+            Path(target).unlink()
+            os.rmdir(path)
+            assert res is answer
 
     FORMAT_FILES_FEED = [
         (FEED_INTEGRATION_VALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),
@@ -779,23 +782,24 @@ class TestFormatting:
         )
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, clear_cache=True, assume_answer=True)
-        with open(target) as f:
-            yaml_content = yaml.load(f)
-            params = yaml_content["configuration"]
-            for counter, param in enumerate(params):
-                if "defaultvalue" in param and param["name"] != "feed":
-                    params[counter].pop("defaultvalue")
-                if "hidden" in param:
-                    param.pop("hidden")
-            for param_details in FEED_REQUIRED_PARAMS:
-                param = {"name": param_details.get("name")}
-                param.update(param_details.get("must_equal", dict()))
-                param.update(param_details.get("must_contain", dict()))
-                assert param in params
-        Path(target).unlink()
-        os.rmdir(path)
-        assert res is answer
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, clear_cache=True, assume_answer=True)
+            with open(target) as f:
+                yaml_content = yaml.load(f)
+                params = yaml_content["configuration"]
+                for counter, param in enumerate(params):
+                    if "defaultvalue" in param and param["name"] != "feed":
+                        params[counter].pop("defaultvalue")
+                    if "hidden" in param:
+                        param.pop("hidden")
+                for param_details in FEED_REQUIRED_PARAMS:
+                    param = {"name": param_details.get("name")}
+                    param.update(param_details.get("must_equal", dict()))
+                    param.update(param_details.get("must_contain", dict()))
+                    assert param in params
+            Path(target).unlink()
+            os.rmdir(path)
+            assert res is answer
 
     def test_set_feed_params_in_config_with_default_value(self):
         """

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Tuple, Union
 
 import demisto_client
+import typer
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 from tabulate import tabulate
@@ -121,7 +122,8 @@ class Uploader:
                 )
             ) and response[0]:
                 installed_packs = {pack["name"] for pack in response[0]}
-                if common_packs := installed_packs.intersection(self.pack_names):
+                common_packs = installed_packs.intersection({path.stem})
+                if common_packs:
                     pack_names = "\n".join(sorted(common_packs))
                     product = (
                         self.marketplace.lower()
@@ -197,11 +199,11 @@ class Uploader:
             logger.info(
                 "<red>Could not connect to the server. Try checking your connection configurations.</red>"
             )
-            return ERROR_RETURN_CODE
+            raise typer.Exit(ERROR_RETURN_CODE)
 
         if not self.path or not self.path.exists():
             logger.error(f"<red>input path: {self.path} does not exist</red>")
-            return ERROR_RETURN_CODE
+            raise typer.Exit(ERROR_RETURN_CODE)
 
         if self.should_detach_files:
             item_detacher = ItemDetacher(
@@ -226,7 +228,7 @@ class Uploader:
             else:
                 success = self._upload_single(self.path)
         except KeyboardInterrupt:
-            return ABORTED_RETURN_CODE
+            raise typer.Exit(ABORTED_RETURN_CODE)
 
         if self.failed_parsing and not any(
             (
@@ -248,10 +250,14 @@ class Uploader:
                     )
                 )
             )
-            return ERROR_RETURN_CODE
+            raise typer.Exit(ERROR_RETURN_CODE)
 
         self.print_summary()
-        return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
+        raise (
+            typer.Exit(SUCCESS_RETURN_CODE)
+            if success
+            else typer.Exit(ERROR_RETURN_CODE)
+        )
 
     def _upload_single(self, path: Path) -> bool:
         """

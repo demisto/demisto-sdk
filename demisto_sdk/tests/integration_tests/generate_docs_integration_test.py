@@ -2,9 +2,9 @@ from os.path import join
 from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 GENERATE_DOCS_CMD = "generate-docs"
@@ -35,7 +35,7 @@ class TestPlaybooks:
         )
         runner = CliRunner(mix_stderr=False)
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_with_io, "-o", tmpdir]
-        result = runner.invoke(main, arguments)
+        result = runner.invoke(app, arguments)
         readme_path = join(tmpdir, "playbook-Test_playbook_README.md")
 
         assert result.exit_code == 0
@@ -75,7 +75,7 @@ class TestPlaybooks:
         )
         runner = CliRunner(mix_stderr=False)
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_no_io, "-o", tmpdir]
-        result = runner.invoke(main, arguments)
+        result = runner.invoke(app, arguments)
         readme_path = join(tmpdir, "Playbooks.playbook-test_README.md")
 
         assert result.exit_code == 0
@@ -118,7 +118,7 @@ class TestPlaybooks:
             "-o",
             tmpdir,
         ]
-        result = runner.invoke(main, arguments)
+        result = runner.invoke(app, arguments)
         readme_path = join(tmpdir, "DummyPlaybook_README.md")
 
         assert result.exit_code == 0
@@ -161,7 +161,7 @@ class TestPlaybooks:
             "-o",
             tmpdir,
         ]
-        result = runner.invoke(main, arguments)
+        result = runner.invoke(app, arguments)
         readme_path = join(tmpdir, "Cortex_XDR_Incident_Handling_README.md")
 
         assert result.exit_code == 0
@@ -200,7 +200,7 @@ class TestPlaybooks:
         valid_playbook_dir = join(DEMISTO_SDK_PATH, "tests/test_files/Playbooks")
         runner = CliRunner(mix_stderr=False)
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_dir, "-o", tmpdir]
-        result = runner.invoke(main, arguments)
+        result = runner.invoke(app, arguments)
         readme_path_1 = join(tmpdir, "playbook-Test_playbook_README.md")
         readme_path_2 = join(tmpdir, "Playbooks.playbook-test_README.md")
 

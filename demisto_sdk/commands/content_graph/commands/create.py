@@ -77,6 +77,8 @@ def create(
     ),
     output_path: Path = typer.Option(
         None,
+        "-o",
+        "--output-path",
         exists=True,
         dir_okay=True,
         file_okay=False,

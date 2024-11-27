@@ -1,11 +1,13 @@
-# Secrets
+## Secrets
+
+### Overview
 
 Run the secrets validator to catch sensitive data before exposing your code to a public repository.
 
 You can attach the full path to manually allow an allow list.
 
 >Note: This command is not guaranteed to find all secrets. A manual review of all files is highly recommended.
-**Arguments:**
+### Options
 * **-i, --input**
 Specify a file to check secret for.
 * **--post-commit**
@@ -20,29 +22,7 @@ Full path to whitelist file, file name should be "secrets_white_list.json".
 * **--prev-ver**
 The branch against which to run secrets validation.
 
-### Examples
-```
-demisto-sdk secrets
-```
-Runs the secrets validator on your uncommitted files.
-<br/><br/>
-```
-demisto-sdk secrets -i ./Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml
-```
-Runs the secrets validator on the file located in ./Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml.
-<br/><br/>
-```
-demisto-sdk secrets --post-commit
-```
-Runs the secrets validator on your files after you committed them.
-<br/><br/>
-```
-demisto-sdk secrets -wl ./secrets_white_list.json
-```
-Runs the secrets validator on your files with your own whitelist file located in ./secrets_white_list.json.
-
-
-## More About Secrets and Sensitive Data
+### More About Secrets and Sensitive Data
 
 The [content](https://github.com/demisto/content) repository is public and open source. It is important we don't commit secrets and sensitive data into this repository.
 Secret detection is done in the pre-commit stage and also in the build stage.
@@ -63,7 +43,7 @@ Data we consider sensitive:
 * Screenshots of third party products
 * Screenshots that may contain any of the above data
 
-## Allow Lists
+### Allow Lists
 
 - Temporary allow lists occur automatically for .yml files with context paths configured.
 - The main allow file is secrets_white_list.json, this file is divided into 3 major parts:
@@ -81,7 +61,7 @@ ONLY do this in the rare case the string does not fit logically anywhere else.
 
 - **Notice:** all words in allow list must be lowercase. In order to lower case strings use **command+shift+u**
 
-## Ignoring single lines / multi lines
+### Ignoring single lines / multi lines
 
 Why would we want to ignore a line instead of whitelisting it?
 - The line has dynamic secret/false positive (like a hash)
@@ -112,7 +92,7 @@ TONS_OF_REGEX = r'(?:(?:[0-9A-Fa-f]{1,4}:){6}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4
 # Drops the mic disable-secrets-detection-end
 ```
 
-## How secrets detection / whitelisting works
+### How secrets detection / whitelisting works
 
 **Secrets Detection**
 
@@ -133,3 +113,24 @@ an example would be IPV4 which can have a lot of repeating characters, reducing 
 - If a python file is detected, a related yml file will automatically be pulled and it's context paths will be used as temporary white list.
 - Currently, regex is being used also in order to identify strings that have high risk of being high entropy strings,
 such as dates and UUID, and are regarded as false positives. Also regex is being used to catch and remove patterns that have extremely high probability of being false positives.
+
+### Examples
+```
+demisto-sdk secrets
+```
+Runs the secrets validator on your uncommitted files.
+<br/><br/>
+```
+demisto-sdk secrets -i ./Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml
+```
+Runs the secrets validator on the file located in ./Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml.
+<br/><br/>
+```
+demisto-sdk secrets --post-commit
+```
+Runs the secrets validator on your files after you committed them.
+<br/><br/>
+```
+demisto-sdk secrets -wl ./secrets_white_list.json
+```
+Runs the secrets validator on your files with your own whitelist file located in ./secrets_white_list.json.

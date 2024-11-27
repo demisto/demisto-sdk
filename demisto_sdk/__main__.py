@@ -302,22 +302,27 @@ def show_release_notes():
     """Display release notes for the currently installed demisto-sdk version."""
     current_version, _ = get_version_info()
     rn_entries = get_release_note_entries(current_version)
-    console = Console()
+    remote_changelog_referral = typer.style(
+        "See https://github.com/demisto/demisto-sdk/blob/master/CHANGELOG.md for the full demisto-sdk changelog",
+        fg=typer.colors.YELLOW,
+    )
     if rn_entries:
         # rich library places md headings in the center by default, so the ### prefix is removed to align the sub-titles to the left
         rn_entries = rn_entries.replace("###", "")
         md = Markdown(rn_entries, justify="left")
-        console.print(
+        Console().print(
             Panel(
                 md,
                 title_align="left",
                 subtitle_align="left",
-                subtitle="See https://github.com/demisto/demisto-sdk/blob/master/CHANGELOG.md for the full demisto-sdk changelog",
-                title=f"Release notes of the currently installed demisto-sdk version: {current_version}",
+                subtitle=remote_changelog_referral,
+                title=f"Release notes of the currently installed demisto-sdk version: {current_version}.",
             )
         )
     else:
-        typer.echo("Could not retrieve release notes for this version.")
+        typer.echo(
+            f"Could not retrieve release notes for this version. {remote_changelog_referral}"
+        )
 
 
 if __name__ == "__main__":

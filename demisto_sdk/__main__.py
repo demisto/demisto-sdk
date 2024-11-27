@@ -4,6 +4,9 @@ import platform
 import typer
 from dotenv import load_dotenv
 from pkg_resources import DistributionNotFound, get_distribution
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
 
 from demisto_sdk.commands.common.configuration import Configuration, DemistoSDK
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -296,13 +299,23 @@ def show_version():
 
 
 def show_release_notes():
-    """Display release notes for the current version."""
+    """Display release notes for the currently installed demisto-sdk version."""
     current_version, _ = get_version_info()
     rn_entries = get_release_note_entries(current_version)
-
+    console = Console()
     if rn_entries:
-        typer.echo("\nRelease notes for the current version:\n")
-        typer.echo(rn_entries)
+        # rich library places md headings in the center by default, so the ### prefix is removed to align the sub-titles to the left
+        rn_entries = rn_entries.replace("###", "")
+        md = Markdown(rn_entries, justify="left")
+        console.print(
+            Panel(
+                md,
+                title_align="left",
+                subtitle_align="left",
+                subtitle="See https://github.com/demisto/demisto-sdk/blob/master/CHANGELOG.md for the full demisto-sdk changelog",
+                title=f"Release notes of the currently installed demisto-sdk version: {current_version}",
+            )
+        )
     else:
         typer.echo("Could not retrieve release notes for this version.")
 

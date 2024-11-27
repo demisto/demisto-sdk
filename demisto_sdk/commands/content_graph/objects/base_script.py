@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
-    replace_incorrect_marketplace,
 )
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
@@ -61,8 +60,6 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
                 f"Adding the following native images {supported_native_images} to script {self.object_id}"
             )
             data["nativeimage"] = supported_native_images
-        # Replace incorrect marketplace references
-        data = replace_incorrect_marketplace(data, current_marketplace, str(self.path))
 
         return data
 

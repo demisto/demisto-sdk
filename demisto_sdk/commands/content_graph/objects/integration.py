@@ -23,11 +23,7 @@ from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import (
-    ContentType,
-    RelationshipType,
-    replace_incorrect_marketplace,
-)
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
     IntegrationScript,
@@ -189,8 +185,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 f"Adding the following native images {supported_native_images} to integration {self.object_id}"
             )
             data["script"]["nativeimage"] = supported_native_images
-        # Replace incorrect marketplace references
-        data = replace_incorrect_marketplace(data, current_marketplace, str(self.path))
+
         return data
 
     @classmethod

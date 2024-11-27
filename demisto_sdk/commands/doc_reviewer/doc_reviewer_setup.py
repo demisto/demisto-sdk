@@ -70,7 +70,11 @@ def doc_review(
     ),
 ):
     """
-    Check the spelling in .md and .yml files as well as review release notes
+    Check the spelling in .md and .yml files as well as review release notes.
+
+    **Use-Cases**
+     - Used to check for misspelled words in .md files such as README and integration descriptions also in .yml file such as integrations, scripts and playbooks.
+     - Performs a basic documentation review on release notes.
     """
     doc_reviewer = DocReviewer(
         file_paths=input,

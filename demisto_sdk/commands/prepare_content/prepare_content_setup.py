@@ -87,7 +87,9 @@ def prepare_content(
     ),
 ):
     """
-    This command is used to prepare the content to be used in the platform.
+    This command prepares content to upload to the platform. If the content item is a pack, prepare-content creates the pack zip file. If the content item is an integration/script/rule, prepare-content creates the unified YAML file.
+
+    NOTE: The prepare-content command replaces the unify command.
     """
     assert (
         sum([bool(all), bool(input)]) == 1

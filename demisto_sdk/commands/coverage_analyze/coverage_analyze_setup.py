@@ -59,7 +59,7 @@ def coverage_analyze(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    """Analyze coverage report."""
+    """Generating and printing the coverage reports."""
     try:
         no_degradation_check = allowed_coverage_degradation_percentage == 100.0
 

@@ -1,11 +1,10 @@
 
 ## coverage-analyze
-Print and analyze coverage reports.
 
-**Use-Cases**:
+### Overview
 Generating and printing the coverage reports.
 
-**Arguments**:
+### Options
 * **-i --input**
 The .coverage file to analyze.
 * **--default-min-coverage**

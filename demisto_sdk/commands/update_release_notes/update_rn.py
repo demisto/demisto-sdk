@@ -109,7 +109,7 @@ def deprecated_commands(commands: list) -> set:
     """return a set of the deprecated commands only"""
     return {command.get("name") for command in commands if command.get("deprecated")}
 
-def create_content_item_object(path: str, initializer: RN_Initializer, is_new_file: bool) -> Optional["BaseContent"]:
+def create_content_item_object(path: str, prev_ver: str, is_new_file: bool) -> Optional["BaseContent"]:
     """
     Generate yml files from master and from the current branch
     Args:
@@ -128,7 +128,7 @@ def create_content_item_object(path: str, initializer: RN_Initializer, is_new_fi
     changed_content_item = BaseContent.from_path(path_object)
     if changed_content_item and not is_new_file:
         try:
-            old_obj = BaseContent.from_path(path_object, git_sha=initializer.prev_ver, raise_on_exception=True)
+            old_obj = BaseContent.from_path(path_object, git_sha=prev_ver, raise_on_exception=True)
             changed_content_item.old_base_content_object = old_obj
         except Exception as e:
             logger.info(f'<yellow>Cannot create content object from origin/master with error {e}.</yellow>')
@@ -406,7 +406,7 @@ class UpdateRN:
         existing_rn_version_path: str = "",
         is_force: bool = False,
         is_bc: bool = False,
-        initializer: Optional[RN_Initializer] = None,
+        prev_ver: Optional[str] = '',
     ):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
@@ -440,7 +440,7 @@ class UpdateRN:
         self.rn_path = ""
         self.is_bc = is_bc
         self.bc_path = ""
-        self.initializer = initializer
+        self.prev_ver = prev_ver
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:
@@ -525,7 +525,8 @@ class UpdateRN:
                 self.pack_metadata_only = True
                 continue
             is_new_file = packfile in self.added_files
-            content_item_object = (create_content_item_object(packfile, self.initializer, is_new_file)
+            aa = get_remote_file(packfile)
+            content_item_object = (create_content_item_object(packfile, self.prev_ver, is_new_file)
                                    if file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION, FileType.SCRIPT]
                                    else None)
             name, description = ((content_item_object.name_for_rn(), content_item_object.details_for_rn())
@@ -1026,12 +1027,9 @@ class UpdateRN:
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
-                if _type in TYPE_CONVERSION_BY_FileType:
-                    rn_desc += NEW_RN_TEMPLATE.format(type=RN_HEADER_BY_FILE_TYPE.get(_type, _type).rstrip('s').lower(),
-                                                   name=name,
-                                                   description=desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.')
-                elif desc:
-                    rn_desc += f"- New: {desc}"
+                rn_desc += NEW_RN_TEMPLATE.format(type=RN_HEADER_BY_FILE_TYPE.get(_type, _type).rstrip('s').lower(),
+                                                name=name,
+                                                description=desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.')
                 rn_desc += self.generate_rn_marketplaces_availability(_type, content_name, from_version)
                 if _type == FileType.INTEGRATION:
                     rn_desc += self.generate_rn_list_new_commands(changed_content_object)

@@ -38,7 +38,6 @@ class UpdateReleaseNotesManager:
         prev_ver: Optional[str] = None,
         is_force: bool = False,
         is_bc: bool = False,
-        initializer: Optional[RN_Initializer] = None,
     ):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
@@ -58,8 +57,6 @@ class UpdateReleaseNotesManager:
             raise ValueError("Please remove the -g flag when specifying only one pack.")
         self.rn_path: list = list()
         self.is_bc = is_bc
-        self.initializer = initializer
-        self.initializer.set_git_sha()
 
     def manage_rn_update(self):
         """
@@ -176,6 +173,7 @@ class UpdateReleaseNotesManager:
             if not validate_manager.git_util:  # in case git utils can't be initialized.
                 raise git.InvalidGitRepositoryError("unable to connect to git.")
             validate_manager.setup_git_params()
+            self.prev_ver = validate_manager.prev_ver
             if self.given_pack:
                 with suppress_stdout():
                     # The Validator prints errors which are related to all changed files that
@@ -332,7 +330,7 @@ class UpdateReleaseNotesManager:
                 is_force=self.is_force,
                 existing_rn_version_path=existing_rn_version,
                 is_bc=self.is_bc,
-                initializer=self.initializer,
+                prev_ver=self.prev_ver,
             )
             updated = update_pack_rn.execute_update()
             self.rn_path.append(update_pack_rn.rn_path)

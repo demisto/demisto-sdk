@@ -2612,9 +2612,6 @@ def update_release_notes(ctx, **kwargs):
         )
 
     try:
-        initializer = RN_Initializer(
-                prev_ver=kwargs["prev_ver"],
-            )
         rn_mng = UpdateReleaseNotesManager(
             user_input=kwargs.get("input"),
             update_type=kwargs.get("update_type"),
@@ -2626,7 +2623,6 @@ def update_release_notes(ctx, **kwargs):
             prev_ver=kwargs.get("prev_ver"),
             is_force=kwargs.get("force", False),
             is_bc=kwargs.get("breaking_changes", False),
-            initializer= initializer
         )
         rn_mng.manage_rn_update()
         sys.exit(0)

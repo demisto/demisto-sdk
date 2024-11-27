@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,  # Must remain at the top - sets up the logger
 )
-from demisto_sdk.commands.update_release_notes.rn_initializer import RN_Initializer
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter

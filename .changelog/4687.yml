@@ -1,0 +1,4 @@
+changes:
+  - description: Modified the ***demisto-sdk release-notes*** command to print a much nicer markdown format of the currently installed demisto-sdk changelog.
+type: feature
+pr_number: 4687

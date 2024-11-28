@@ -400,7 +400,10 @@ def generate_rn_for_content_item_updates(changed_content_object: Union[Integrati
              such as parameter changes, command updates.
     """
     rn_desc = ""
-    if isinstance(changed_content_object, Integration):
+    if (isinstance(changed_content_object, Integration)
+    and changed_content_object.old_base_content_object
+    and isinstance(changed_content_object.old_base_content_object,Integration)
+    ):
         rn_desc += compare_content_item_changes(
             changed_content_object.old_base_content_object.params,
             changed_content_object.params,
@@ -411,7 +414,10 @@ def generate_rn_for_content_item_updates(changed_content_object: Union[Integrati
             changed_content_object.commands,
             content_type.COMMAND,
         )
-    elif isinstance(changed_content_object, Script):
+    elif (isinstance(changed_content_object, Script)
+    and changed_content_object.old_base_content_object
+    and isinstance(changed_content_object.old_base_content_object, Script)
+    ):
         rn_desc += compare_content_item_changes(
             changed_content_object.old_base_content_object.args,
             changed_content_object.args,
@@ -1108,10 +1114,7 @@ class UpdateRN:
                 rn_desc += self.generate_rn_marketplaces_availability(
                     _type, content_name, from_version
                 )
-                if changed_content_object and isinstance(changed_content_object, Integration):
-                    rn_desc += self.generate_rn_list_new_commands(
-                        changed_content_object
-                    )
+                rn_desc += self.generate_rn_list_new_commands(changed_content_object)
                 rn_desc += "\n\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"
@@ -1127,20 +1130,23 @@ class UpdateRN:
         return rn_desc
 
     def generate_rn_list_new_commands(
-        self, changed_integration_object: Integration
+        self, changed_content_object: Optional[Union[Integration,Script,Playbook]]
     ) -> str:
         """Generates a release note description for newly added commands in an integration.
 
         Args:
-            path (str): The file path of the content item.
+            changed_content_object (BaseContent): The content object being checked for new commands. 
+                                                Must be an instance of `Integration` to generate release notes.
 
         Returns:
-            str: A release note description listing the new commands.
+            str: A formatted release note listing the new commands, or an empty string if no commands are found.
         """
-        rn_desc = "\n- Added the following commands:\n"
-        new_commands = changed_integration_object.commands
-        for command in new_commands:
-            rn_desc += f"\t- ***{command.name_for_rn()}***\n"
+        rn_desc = ""
+        if changed_content_object and isinstance(changed_content_object, Integration):
+            rn_desc = "\n- Added the following commands:\n"
+            new_commands = changed_content_object.commands
+            for command in new_commands:
+                rn_desc += f"\t- ***{command.name_for_rn()}***\n"
         return rn_desc
 
     def generate_rn_marketplaces_availability(self, _type, content_name, from_version):

@@ -1145,3 +1145,41 @@ def test_invalid_short_file():
         not_to_short_readme_validator.obtain_invalid_content_items([test_pack])
     )
     assert result[0].message == short_readme_error
+
+
+def test_ImagePathIntegrationValidator_content_assets():
+    """
+        Given
+        content_items.
+        - Pack with:
+            1. invalid readme that contains absolute path.
+            2. description contains relative path that saved not under dec_files.
+    demisto_sdk/commands/validate/sdk_validation_config.toml
+
+        When
+        - Calling the ImagePathIntegrationValidator obtain_invalid_content_items function.
+        Then
+        - Make sure that the pack is failing.
+    """
+    content_items = [
+        create_integration_object(
+            readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
+            " ![Example Image](https://www.example.com/images/example_image.jpg)\n"
+            "![Example Image](https://www.example.com/content_assets/example_image.jpg)\n"
+            "![Example Image](https://www.example.com/content_assets/example_image.gif)\n",
+            description_content="valid description ![Example Image](../../content/image.jpg)",
+        ),
+    ]
+    expected = (
+        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links "
+        "provided below.:\nhttps://www.example.com/images/example_image.jpg\n"
+        "https://www.example.com/content_assets/example_image.jpg\n\nRelative image paths have been"
+        " identified outside the pack's 'doc_files' directory. Please relocate the following images to the"
+        " 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add"
+        " images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    )
+    result = IntegrationRelativeImagePathValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert result[0].message == expected
+

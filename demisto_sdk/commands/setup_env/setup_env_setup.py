@@ -17,6 +17,8 @@ def setup_env_command(
     ),
     input: list[Path] = typer.Option(
         None,
+        "-i",
+        "--input",
         help="Paths to content integrations or script to setup the environment. If not provided, "
         "will configure the environment for the content repository.",
     ),

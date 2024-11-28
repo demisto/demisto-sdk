@@ -17,7 +17,6 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     suppress_stdout,
 )
-from demisto_sdk.commands.update_release_notes.rn_initializer import RN_Initializer
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN,
     update_api_modules_dependents_rn,

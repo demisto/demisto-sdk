@@ -67,7 +67,6 @@ from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.update_release_notes.rn_initializer import RN_Initializer
 
 CLASS_BY_FILE_TYPE = {
     FileType.INTEGRATION: Integration,

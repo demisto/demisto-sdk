@@ -218,13 +218,13 @@ class PreCommitRunner:
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
         del pre_commit_context
-        # install dependencies of all hooks in advance
-        PreCommitRunner._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH,
-            precommit_env,
-            verbose,
-            command=["install-hooks"],
-        )
+        # # install dependencies of all hooks in advance
+        # PreCommitRunner._run_pre_commit_process(
+        #     PRECOMMIT_CONFIG_MAIN_PATH,
+        #     precommit_env,
+        #     verbose,
+        #     command=["install-hooks"],
+        # )
 
         num_processes = cpu_count()
         all_hooks_exit_codes = []

@@ -1,22 +1,11 @@
-# Setup Environment
+## Setup Environment
 
-The Command sets up a content environment and an integration/script environment.
+### Overview
+
+The setup-env command creates a content environment and integration/script environment.
 The command will configure VSCode and XSOAR/XSIAM instances for development and testing.
 
-## Notes
-
-- The setup-env command downloads integration parameters from Google Secret Manager, if the environment variable DEMISTO_SDK_GCP_PROJECT_ID is set to the GCP project ID.
-- The setup-env command creates a virtual environment in the .venv folder if the --create-virtualenv argument is included.
-- The setup-env command configures VSCode debugging and linting for the provided file paths or content repository.
-- If the --instance-name argument is included, the setup-env command creates an integration instance in your Cortex XSOAR or Cortex XSIAM tenant, with the provided file paths or content repository, if a secret was found in Google Secret Manager.
-
-## Usage
-
-```sh
-demisto-sdk setup-env [OPTIONS] [FILE_PATHS]
-```
-
-## Options
+### Options
 
 | Flag | Description |
 | --- | --- |
@@ -27,3 +16,10 @@ demisto-sdk setup-env [OPTIONS] [FILE_PATHS]
 | `--instance-name` | Instance name to configure in XSOAR/XSIAM. |
 | `--run-test-module` | Whether to run test-module on the configured XSOAR / XSIAM integration instance. |
 | `--clean` | Clean the repo out of the temp `CommonServerPython.py` files, `demistomock.py` and other files that were created by `lint`. |
+
+### Notes
+
+- The setup-env command downloads integration parameters from Google Secret Manager, if the environment variable DEMISTO_SDK_GCP_PROJECT_ID is set to the GCP project ID.
+- The setup-env command creates a virtual environment in the .venv folder if the --create-virtualenv argument is included.
+- The setup-env command configures VSCode debugging and linting for the provided file paths or content repository.
+- If the --instance-name argument is included, the setup-env command creates an integration instance in your Cortex XSOAR or Cortex XSIAM tenant, with the provided file paths or content repository, if a secret was found in Google Secret Manager.

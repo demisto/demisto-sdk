@@ -58,6 +58,16 @@ def postman_codegen(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
+    """
+    Use the `demisto sdk postman-codegen` command to generate an XSOAR integration (yml file) from a Postman Collection v2.1. Note the generated integration is in the yml format. Use the `demisto-sdk split` [command](package-dir#split-a-yml-file-to-directory-structure) to split the integration into the recommended [Directory Structure](package-dir) for further development.
+
+    You can generate the integration either as a two-step process or a single step.
+    - **Single Step:** Use this method to generate directly an integration yml file.
+    - **Two Steps:** Use this method for more configuration and customization of the generated integration and code.
+        1. Generate an integration config file.
+        2. Update the config file as needed. Then generate the integration from the config file using the `demisto-sdk generate-integration` command.
+
+    """
     sdk = ctx.obj
     postman_config = postman_to_autogen_configuration(
         collection=json.load(open(input)),  # Open the file directly

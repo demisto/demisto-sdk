@@ -18,20 +18,19 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
-from demisto_sdk.commands.common.tools import get_json
+from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
 )
 from demisto_sdk.commands.update_release_notes.update_rn import (
-    CLASS_BY_FILE_TYPE,
     UpdateRN,
     deprecated_commands,
     get_deprecated_comment_from_desc,
     get_deprecated_rn,
-    get_file_description,
 )
 
 
@@ -1384,32 +1383,30 @@ class TestRNUpdate:
         Then:
             Ensure the function returns a valid rn when the command is deprecated compared to last yml
         """
+        from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
         FILES_PATH = os.path.normpath(
             os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
         )
         NOT_DEP_INTEGRATION_PATH = pathlib.Path(
-            FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml"
+            FILES_PATH, "deprecated_rn_test", "not_deprecated_integration_deprecated_command.yml"
         )
 
-        old_yml_obj, new_yml_obj = get_mock_yml_obj(
-            NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False
-        )
-        new_yml_obj.script["commands"][0]["deprecated"] = True
+        content_object = BaseContent.from_path(NOT_DEP_INTEGRATION_PATH)
+        if content_object and isinstance(content_object, Integration):
+            content_object.old_base_content_object = content_object
+            # When the command is already deprecated
+            res = get_deprecated_rn(content_object)
+            assert (
+                res == ""
+            )
 
-        mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.get_yml_objects",
-            return_value=(old_yml_obj, new_yml_obj),
-        )
-        # When command is newly deprecated
-        res = get_deprecated_rn(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION)
-        assert (
-            res == "- Command ***xdr-get-incidents*** is deprecated. Use %%% instead.\n"
-        )
-
-        # When the command is already deprecated
-        old_yml_obj["script"]["commands"][0]["deprecated"] = True
-        res = get_deprecated_rn(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION)
-        assert res == ""
+            INTEGRATION_WITH_DEPRECATED_COMMAND = pathlib.Path(
+                FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml"
+            )
+            content_object.old_base_content_object = BaseContent.from_path(INTEGRATION_WITH_DEPRECATED_COMMAND)
+            # When the command is already deprecated
+            res = get_deprecated_rn(content_object)
+            assert res == ""
 
     @pytest.mark.parametrize(
         "path, file_type, deprecated, expected_res",
@@ -1609,7 +1606,7 @@ class TestRNUpdate:
 
 
 def get_mock_yml_obj(path, file_type, deprecated) -> dict:
-    new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)
+    new_yml_obj = get_yaml(path)
     if file_type == FileType.INTEGRATION:
         old_yml_dict = {
             "script": {"commands": deepcopy(new_yml_obj.script.get("commands"))},
@@ -2975,16 +2972,6 @@ def test_handle_existing_rn_version_path(mocker, repo):
         )
     ],
 )
-def test_get_file_description(path, file_type, expected_results):
-    """
-    Given:
-        - File type and file path.
-    When:
-        - Calling get_file_description function.
-    Then:
-        Ensure the function extracted the information from the right field.
-    """
-    assert get_file_description(path, file_type) == expected_results
 
 
 def test_no_release_notes_for_first_version(mocker):

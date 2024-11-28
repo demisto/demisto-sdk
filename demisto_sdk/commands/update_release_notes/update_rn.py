@@ -373,33 +373,6 @@ def generate_rn_for_updated_content_items(
     return rn_desc
 
 
-def associated_types_diff(path, _type):
-    """
-    Generates a release note description for changes in associated types.
-
-    Args:
-        path (str): The file path to the content item.
-        _type (str): The type of the content item.
-
-    Returns:
-        str: A release note description detailing any added associated types.
-    """
-    rn_desc = ""
-    old_json_file, new_json_file = get_json_objects(path, _type)
-    if new_associated_types := new_json_file.get("associatedTypes"):
-        old_associated_types = old_json_file.get("associatedTypes")
-        added_associated_types = [
-            new_type
-            for new_type in new_associated_types
-            if new_type not in old_associated_types
-        ]
-        if added_associated_types:
-            rn_desc += (
-                f'- Added new associated types: {",".join(added_associated_types)}.\n'
-            )
-    return rn_desc
-
-
 def generate_rn_for_content_item_updates(
     _type, changed_content_object: Optional["BaseContent"]
 ):
@@ -433,8 +406,6 @@ def generate_rn_for_content_item_updates(
             changed_content_object.args,
             content_type.ARGUMENT,
         )
-    # elif _type in (FileType.INCIDENT_FIELD):
-    #     rn_desc += associated_types_diff(path, _type)
     return rn_desc
 
 

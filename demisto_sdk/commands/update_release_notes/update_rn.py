@@ -181,49 +181,67 @@ def rn_for_deleted_content(
 
 def generate_deprecation_rn(
     name: str,
-    description: str,
+    old_content: Union[Parameter, Argument, Command],
+    new_content: Union[Parameter, Argument, Command],
     content_type: content_type,
     parent: Union[str, None] = None,
 ) -> str:
     """Generates release notes for deprecated content items.
 
     Args:
-        item_name (str): The name of the content item being deprecated.
-        content_type (content_type): The type of the content item (e.g., argument, command).
-        parent_name (str | None, optional): The name of the parent content item (if applicable, e.g., command name for arguments).
+        name (str): The name of the content item being deprecated.
+        old_content (Union[Parameter, Argument, Command]): The previous version of the content item.
+        new_content (Union[Parameter, Argument, Command]): The updated version of the content item.
+        content_type (content_type): The type of the content item (e.g., argument, command, parameter).
+        parent (Union[str, None], optional): The name of the parent content item, if applicable 
+                                             (e.g., the command name for a deprecated argument). Defaults to None.
 
     Returns:
-        str: A formatted release note indicating deprecation for the item.
+        str: A formatted release note indicating the deprecation of the item. Returns an empty string if no deprecation is detected.
     """
-    if content_type == content_type.ARGUMENT and parent:
-        return DEPRECATED_ARGUMENT.format(
-            name=name, type=content_type.value, command_name=parent
+    if new_content.deprecated and not old_content.deprecated:
+        if isinstance(new_content, Argument) and parent:
+            return DEPRECATED_ARGUMENT.format(
+                name=name, type=content_type.value, command_name=parent
+            )
+        return GENERAL_DEPRECATED_RN.format(
+            name=name,
+            type=content_type.value,
+            replacement=(
+                get_deprecated_comment_from_desc(new_content.details_for_rn()) or "Use %%% instead"
+            ),
         )
-    return GENERAL_DEPRECATED_RN.format(
-        name=name,
-        type=content_type.value,
-        replacement=(
-            get_deprecated_comment_from_desc(description) or "Use %%% instead"
-        ),
-    )
+    return ""
 
 
-def generate_required_rn(name: str, content_type: content_type) -> str:
-    """Generates release notes for required fields in content items.
+def generate_required_rn(name: str,
+                         new_content: Union[Parameter, Argument, Command],
+                         old_content: Union[Parameter, Argument, Command],
+                         content_type: content_type) -> str:
+    """Generates release notes for content items that have been updated to be required.
 
     Args:
-        item_name (str): The name of the content item being updated.
-        content_type (content_type): The type of the content item (e.g., parameter, argument).
+        name (str): The name of the content item being updated.
+        new_content (Union[Parameter, Argument, Command]): The updated version of the content item.
+        old_content (Union[Parameter, Argument, Command]): The previous version of the content item.
+        content_type (content_type): The type of the content item (e.g., parameter, argument, command).
 
     Returns:
-        str: A formatted release note indicating the item is now required.
+        str: A formatted release note indicating that the specified content item is now required.
+             Returns an empty string if no changes to the "required" status are detected.
     """
-    return f"- Updated the **{name}** {content_type.value} to be required.\n"
+    if (((isinstance(new_content, Parameter) and isinstance(old_content, Parameter))
+         or (isinstance(new_content, Argument) and isinstance(old_content, Argument)))
+        and new_content.required
+        and not old_content.required
+        ):
+        return f"- Updated the **{name}** {content_type.value} to be required.\n"
+    return ""
 
 
 def generate_addition_rn(
     name: str,
-    new_content: Union[Argument,Integration,Parameter,Script],
+    new_content: Union[Parameter, Argument, Command],
     content_type: content_type,
     parent: Union[str, None] = None,
 ) -> str:
@@ -240,17 +258,17 @@ def generate_addition_rn(
     """
     description = new_content.details_for_rn().replace("-", "").lower()
     display_name = new_content.name_for_rn()
-    if content_type == content_type.ARGUMENT and parent:
+    if isinstance(new_content, Argument) and parent:
         return f"- Added support for `{name}` argument in the **{parent}** command.\n"
     return (
         f"- Added the **{display_name}** {content_type.value}"
-        f"{(' which ' + description) if description else '.'}\n"
+        f"{(' which ' + description.rstrip('.') + '.') if description else '.'}\n"
     )
 
 
 def rn_for_added_or_updated_content(
-    old_content_dict: dict[str, list[Any]],
-    new_content_dict: dict[str, list[Argument,Integration,Parameter,Script]],
+    old_content_dict: dict[str, Union[Parameter, Argument, Command]],
+    new_content_dict: dict[str, Union[Parameter, Argument, Command]],
     type: content_type,
     parent_name: Union[str, None],
 ) -> str:
@@ -278,17 +296,9 @@ def rn_for_added_or_updated_content(
     for old_key_name in old_keys_names:
         old_content = old_content_dict[old_key_name]
         new_content = new_content_dict[old_key_name]
-        if new_content.deprecated and not old_content.deprecated:
-            rn += generate_deprecation_rn(
-                old_key_name, new_content.details_for_rn(), type, parent_name
-            )
-        if (
-            type in {content_type.PARAMETER, content_type.ARGUMENT}
-            and new_content.required
-            and not old_content.required
-        ):
-            rn += generate_required_rn(new_content.name_for_rn(), type)
-        if type == content_type.COMMAND:
+        rn += generate_deprecation_rn(old_key_name, new_content, old_content, type, parent_name)
+        rn += generate_required_rn(old_key_name, new_content, old_content, type)
+        if isinstance(new_content, Command):
             rn += compare_content_item_changes(
                 old_content.args,
                 new_content.args,
@@ -300,7 +310,7 @@ def rn_for_added_or_updated_content(
 
 
 def compare_content_item_changes(
-    old_content_info: list[Union[]], new_content_info: list[Any], type, parent_name=None
+    old_content_info: Union[list[Parameter], list[Argument], list[Command]], new_content_info: list[Any], type, parent_name=None
 ):
     """Compares old and new versions of a content item to generate release notes.
 

@@ -26,11 +26,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content.objects.pack_objects import (
-    Integration,
-    Playbook,
-    Script,
-)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,
 )
@@ -65,12 +60,6 @@ from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-
-CLASS_BY_FILE_TYPE = {
-    FileType.INTEGRATION: Integration,
-    FileType.SCRIPT: Script,
-    FileType.PLAYBOOK: Playbook,
-}
 
 
 class content_type(Enum):
@@ -183,7 +172,10 @@ def rn_for_deleted_content(
 
 
 def generate_deprecation_rn(
-    name: str, description: str, content_type: content_type, parent: str | None = None
+    name: str,
+    description: str,
+    content_type: content_type,
+    parent: Union[str, None] = None,
 ) -> str:
     """Generates release notes for deprecated content items.
 
@@ -223,9 +215,9 @@ def generate_required_rn(name: str, content_type: content_type) -> str:
 
 def generate_addition_rn(
     name: str,
-    new_content: dict[str, Optional["BaseContent"]],
+    new_content: list[Any],
     content_type: content_type,
-    parent: str | None = None,
+    parent: Union[str, None] = None,
 ) -> str:
     """Generates release notes for newly added content items.
 
@@ -249,8 +241,8 @@ def generate_addition_rn(
 
 
 def rn_for_added_or_updated_content(
-    old_content_dict: dict[str, Any],
-    new_content_dict: dict[str, Any],
+    old_content_dict: dict[str, list[Any]],
+    new_content_dict: dict[str, list[Any]],
     type: content_type,
     parent_name: str | None,
 ) -> str:
@@ -300,7 +292,7 @@ def rn_for_added_or_updated_content(
 
 
 def compare_content_item_changes(
-    old_content_info, new_content_info, type, parent_name=None
+    old_content_info: list[Any], new_content_info: list[Any], type, parent_name=None
 ):
     """Compares old and new versions of a content item to generate release notes.
 

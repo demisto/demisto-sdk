@@ -145,6 +145,7 @@ from demisto_sdk.commands.common.string_to_bool import (
     # See the comment in string_to_bool's implementation
     string_to_bool,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
 DEMISTO_SDK_REPO = "demisto/demisto-sdk"
 if TYPE_CHECKING:
@@ -869,7 +870,7 @@ def get_file(
     file_path = Path(file_path)  # type: ignore[arg-type]
     if git_sha:
         if file_path.is_absolute():
-            file_path = file_path.relative_to(get_content_path())
+            file_path = file_path.relative_to(CONTENT_PATH)
         return get_remote_file(
             str(file_path), tag=git_sha, return_content=return_content
         )

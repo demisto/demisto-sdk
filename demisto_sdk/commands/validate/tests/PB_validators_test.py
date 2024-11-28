@@ -63,7 +63,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB126_is_default_not
 from demisto_sdk.commands.validate.validators.PB_validators.PB127_marketplace_keys_have_default_value import (
     MarketplaceKeysHaveDefaultValidator,
 )
-
+from demisto_sdk.commands.validate.validators.PB_validators.PB130_is_silent_playbook import (
+    IsSilentPlaybookValidator,
+)
 
 @pytest.mark.parametrize(
     "content_item, expected_result",
@@ -1338,3 +1340,77 @@ def test_MarketplaceKeysHaveDefaultValidator(
             assert expected_bad_key in fix_message
 
         assert fixed_content_item.data == expected_playbook_obj.data
+
+
+
+@pytest.mark.parametrize(
+    "name, id, is_silent, result_len",
+    [
+        (
+            'test',
+            'test',
+            False,
+            0,
+        ),
+        (
+            'silent-test',
+            'silent-test',
+            True,
+            0,
+        ),
+        (
+            'test',
+            'silent-test',
+            True,
+            1,
+        ),
+        (
+            'silent-test',
+            'test',
+            True,
+            1,
+        ),
+        (
+            'silent-test',
+            'silent-test',
+            False,
+            1,
+        ),
+        (
+            'test',
+            'silent-test',
+            False,
+            1,
+        ),
+        (
+            'silent-test',
+            'test',
+            False,
+            1,
+        ),
+        (
+            'test',
+            'test',
+            True,
+            1,
+        ),
+    ],
+)
+def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
+    """
+    Given:
+    - All kinds of cases of a playbook that has the field isSilent and the prefix silent in the name/id and that doesn't.
+
+    When:
+    - calling IsSilentPlaybookValidator.obtain_invalid_content_items.
+
+    Then:
+    - Checks that it only fails in the right cases.
+    """
+    playbook = create_playbook_object()
+    playbook.data['id'] = id
+    playbook.data['name'] = name
+    playbook.data['isSilent'] = is_silent
+
+    invalid_content_items = IsSilentPlaybookValidator().obtain_invalid_content_items([playbook])
+    assert result_len == len(invalid_content_items)

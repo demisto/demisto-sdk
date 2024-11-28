@@ -1,0 +1,4 @@
+changes:
+- description: Added validation checks whether the silent playbook name id and the isSilent key are set correctly.
+  type: feature
+pr_number: 4662

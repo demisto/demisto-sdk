@@ -780,8 +780,8 @@ class TestFormatting:
         )
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        with pytest.raises(typer.Exit):
-            res = format_manager(input=target, clear_cache=True, assume_answer=True)
+        with pytest.raises(typer.Exit) as e:
+            format_manager(input=target, clear_cache=True, assume_answer=True)
             with open(target) as f:
                 yaml_content = yaml.load(f)
                 params = yaml_content["configuration"]
@@ -797,7 +797,7 @@ class TestFormatting:
                     assert param in params
             Path(target).unlink()
             os.rmdir(path)
-            assert res is answer
+        assert e.value.exit_code == answer
 
     def test_set_feed_params_in_config_with_default_value(self):
         """

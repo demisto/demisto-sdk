@@ -1309,7 +1309,8 @@ def add_access_data_of_type_credentials(
     if not hidden_user_name:
         access_data.append(
             {
-                "Parameter": credentials_conf.get("display") or credentials_conf["name"],
+                "Parameter": credentials_conf.get("display")
+                or credentials_conf["name"],
                 "Description": string_escape_md(
                     credentials_conf.get("additionalinfo", "")
                 ),

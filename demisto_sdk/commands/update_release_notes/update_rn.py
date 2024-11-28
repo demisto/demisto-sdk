@@ -14,8 +14,6 @@ from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
-    DEMISTO_GIT_PRIMARY_BRANCH,
-    DEMISTO_GIT_UPSTREAM,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     EVENT_COLLECTOR,
@@ -74,17 +72,22 @@ CLASS_BY_FILE_TYPE = {
     FileType.PLAYBOOK: Playbook,
 }
 
+
 class content_type(Enum):
-    PARAMETER = 'parameter'
-    COMMAND = 'command'
-    ARGUMENT = 'argument'
+    PARAMETER = "parameter"
+    COMMAND = "command"
+    ARGUMENT = "argument"
+
 
 NEW_RN_TEMPLATE = "- New: added a new {type} - {name} which {description}"
 GENERAL_DEPRECATED_RN = "- Deprecated ***{name}*** {type}. {replacement}.\n"
-GENERAL_BC = '- Breaking Changes: Deleted the **{name}** {value}.\n'
-DEPRECATED_ARGUMENT = "- Deprecated the `{name}` {type} inside the **{command_name}** command.\n"
-ARGUMENT_BC = '- Breaking Changes: Updated the **{command_name}** to not use the `{argument_name}` argument.\n'
-DEPRECATED_CONTENT_ITEM_RN = '- Deprecated. {replacement}.\n'
+GENERAL_BC = "- Breaking Changes: Deleted the **{name}** {value}.\n"
+DEPRECATED_ARGUMENT = (
+    "- Deprecated the `{name}` {type} inside the **{command_name}** command.\n"
+)
+ARGUMENT_BC = "- Breaking Changes: Updated the **{command_name}** to not use the `{argument_name}` argument.\n"
+DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
+
 
 def get_deprecated_comment_from_desc(description: str) -> str:
     """
@@ -108,7 +111,10 @@ def deprecated_commands(commands: list) -> set:
     """return a set of the deprecated commands only"""
     return {command.get("name") for command in commands if command.get("deprecated")}
 
-def create_content_item_object(path: str, prev_ver: str, is_new_file: bool) -> Optional["BaseContent"]:
+
+def create_content_item_object(
+    path: str, prev_ver: str, is_new_file: bool
+) -> Optional["BaseContent"]:
     """
     Generate yml files from master and from the current branch
     Args:
@@ -127,14 +133,24 @@ def create_content_item_object(path: str, prev_ver: str, is_new_file: bool) -> O
     changed_content_item = BaseContent.from_path(path_object)
     if changed_content_item and not is_new_file:
         try:
-            old_obj = BaseContent.from_path(path_object, git_sha=prev_ver, raise_on_exception=True)
+            old_obj = BaseContent.from_path(
+                path_object, git_sha=prev_ver, raise_on_exception=True
+            )
             changed_content_item.old_base_content_object = old_obj
         except Exception as e:
-            logger.info(f'<yellow>Cannot create content object from origin/master with error {e}.</yellow>')
+            logger.error(
+                f"<red>Cannot create content object from origin/master with error {e}.</error>"
+            )
             pass
     return changed_content_item
 
-def rn_for_deleted_content(old_content_dict: dict[str, Any], new_content_dict: dict[str, Any], type, parent_name=None):
+
+def rn_for_deleted_content(
+    old_content_dict: dict[str, Any],
+    new_content_dict: dict[str, Any],
+    type,
+    parent_name=None,
+):
     """Generates release notes for deleted content items.
 
     Args:
@@ -149,7 +165,7 @@ def rn_for_deleted_content(old_content_dict: dict[str, Any], new_content_dict: d
     Returns:
         str: A release note describing the deleted content items.
     """
-    rn = ''
+    rn = ""
     deleted_objects_names = set(old_content_dict.keys()) - set(new_content_dict.keys())
     for deleted_object_name in deleted_objects_names:
         try:
@@ -160,10 +176,15 @@ def rn_for_deleted_content(old_content_dict: dict[str, Any], new_content_dict: d
             rn += ARGUMENT_BC.format(command_name=parent_name, argument_name=name)
         else:
             rn += GENERAL_BC.format(name=name, value=type.value)
-        logger.info(f'Please add a breaking changes json file for deleting the {name} {type.value}')
+        logger.info(
+            f"Please add a breaking changes json file for deleting the {name} {type.value}"
+        )
     return rn
 
-def generate_deprecation_rn(name: str, description: str, content_type: content_type, parent: str | None = None) -> str:
+
+def generate_deprecation_rn(
+    name: str, description: str, content_type: content_type, parent: str | None = None
+) -> str:
     """Generates release notes for deprecated content items.
 
     Args:
@@ -175,10 +196,17 @@ def generate_deprecation_rn(name: str, description: str, content_type: content_t
         str: A formatted release note indicating deprecation for the item.
     """
     if content_type == content_type.ARGUMENT and parent:
-        return DEPRECATED_ARGUMENT.format(name=name, type=content_type.value, command_name=parent)
-    return GENERAL_DEPRECATED_RN.format(name=name,
-                                        type=content_type.value,
-                                        replacement=(get_deprecated_comment_from_desc(description) or 'Use %%% instead'))
+        return DEPRECATED_ARGUMENT.format(
+            name=name, type=content_type.value, command_name=parent
+        )
+    return GENERAL_DEPRECATED_RN.format(
+        name=name,
+        type=content_type.value,
+        replacement=(
+            get_deprecated_comment_from_desc(description) or "Use %%% instead"
+        ),
+    )
+
 
 def generate_required_rn(name: str, content_type: content_type) -> str:
     """Generates release notes for required fields in content items.
@@ -192,8 +220,12 @@ def generate_required_rn(name: str, content_type: content_type) -> str:
     """
     return f"- Updated the **{name}** {content_type.value} to be required.\n"
 
+
 def generate_addition_rn(
-    name: str, new_content: dict[str, Optional["BaseContent"]], content_type: content_type, parent: str | None = None
+    name: str,
+    new_content: dict[str, Optional["BaseContent"]],
+    content_type: content_type,
+    parent: str | None = None,
 ) -> str:
     """Generates release notes for newly added content items.
 
@@ -210,8 +242,11 @@ def generate_addition_rn(
     display_name = new_content.name_for_rn()
     if content_type == content_type.ARGUMENT and parent:
         return f"- Added support for `{name}` argument in the **{parent}** command.\n"
-    return f"- Added the **{display_name}** {content_type.value}" \
-            f"{(' which ' + description) if description else '.'}\n"
+    return (
+        f"- Added the **{display_name}** {content_type.value}"
+        f"{(' which ' + description) if description else '.'}\n"
+    )
+
 
 def rn_for_added_or_updated_content(
     old_content_dict: dict[str, Any],
@@ -237,12 +272,16 @@ def rn_for_added_or_updated_content(
     new_keys = set(new_content_dict.keys()) - set(old_content_dict.keys())
     old_keys_names = set(new_content_dict.keys()) - new_keys
     for new_key in new_keys:
-        rn += generate_addition_rn(new_key, new_content_dict[new_key], type, parent_name)
+        rn += generate_addition_rn(
+            new_key, new_content_dict[new_key], type, parent_name
+        )
     for old_key_name in old_keys_names:
         old_content = old_content_dict[old_key_name]
         new_content = new_content_dict[old_key_name]
         if new_content.deprecated and not old_content.deprecated:
-            rn += generate_deprecation_rn(old_key_name, new_content.details_for_rn(), type, parent_name)
+            rn += generate_deprecation_rn(
+                old_key_name, new_content.details_for_rn(), type, parent_name
+            )
         if (
             type in {content_type.PARAMETER, content_type.ARGUMENT}
             and new_content.required
@@ -260,7 +299,9 @@ def rn_for_added_or_updated_content(
     return rn
 
 
-def compare_content_item_changes(old_content_info, new_content_info, type, parent_name=None):
+def compare_content_item_changes(
+    old_content_info, new_content_info, type, parent_name=None
+):
     """Compares old and new versions of a content item to generate release notes.
 
     Args:
@@ -272,15 +313,23 @@ def compare_content_item_changes(old_content_info, new_content_info, type, paren
     Returns:
         str: A release note describing changes, including deleted, added, or updated content.
     """
-    rn = ''
-    old_content_dict = {old_content.name :old_content for old_content in old_content_info}
-    new_content_dict = {new_content.name :new_content for new_content in new_content_info}
+    rn = ""
+    old_content_dict = {
+        old_content.name: old_content for old_content in old_content_info
+    }
+    new_content_dict = {
+        new_content.name: new_content for new_content in new_content_info
+    }
     rn += rn_for_deleted_content(old_content_dict, new_content_dict, type, parent_name)
-    rn += rn_for_added_or_updated_content(old_content_dict, new_content_dict, type, parent_name)
+    rn += rn_for_added_or_updated_content(
+        old_content_dict, new_content_dict, type, parent_name
+    )
     return rn
 
 
-def generate_deprecated_content_item_rn(_type, changed_content_object: Optional["BaseContent"] = None):
+def generate_deprecated_content_item_rn(
+    _type, changed_content_object: Optional["BaseContent"] = None
+):
     """Checks if a content item of type integration/script/playbook is deprecated and generates a deprecation release note if applicable.
 
     Args:
@@ -294,16 +343,22 @@ def generate_deprecated_content_item_rn(_type, changed_content_object: Optional[
             - dict: The YAML representation of the new content item (if it is integration/script/playbook).
     """
     deprecated_rn = ""
-    if _type in (
-        FileType.INTEGRATION,
-        FileType.SCRIPT,
-        FileType.PLAYBOOK,
-    ) and changed_content_object:
+    if (
+        _type
+        in (
+            FileType.INTEGRATION,
+            FileType.SCRIPT,
+            FileType.PLAYBOOK,
+        )
+        and changed_content_object
+    ):
         deprecated_rn += get_deprecated_rn(changed_content_object, _type)
     return deprecated_rn
 
 
-def generate_rn_for_updated_content_items(changed_content_object: Optional["BaseContent"], _type, text):
+def generate_rn_for_updated_content_items(
+    changed_content_object: Optional["BaseContent"], _type, text
+):
     """Generates a release note description for updated content items.
 
     Args:
@@ -314,7 +369,7 @@ def generate_rn_for_updated_content_items(changed_content_object: Optional["Base
     Returns:
         str: A release note description for the updated content item, including deprecation and enhancement details.
     """
-    rn_desc = ''
+    rn_desc = ""
     deprecate_rn = generate_deprecated_content_item_rn(_type, changed_content_object)
     if deprecate_rn:
         if text:
@@ -337,17 +392,25 @@ def associated_types_diff(path, _type):
     Returns:
         str: A release note description detailing any added associated types.
     """
-    rn_desc = ''
+    rn_desc = ""
     old_json_file, new_json_file = get_json_objects(path, _type)
-    if new_associated_types := new_json_file.get('associatedTypes'):
-        old_associated_types = old_json_file.get('associatedTypes')
-        added_associated_types = [new_type for new_type in new_associated_types if new_type not in old_associated_types]
+    if new_associated_types := new_json_file.get("associatedTypes"):
+        old_associated_types = old_json_file.get("associatedTypes")
+        added_associated_types = [
+            new_type
+            for new_type in new_associated_types
+            if new_type not in old_associated_types
+        ]
         if added_associated_types:
-            rn_desc += f'- Added new associated types: {",".join(added_associated_types)}.\n'
+            rn_desc += (
+                f'- Added new associated types: {",".join(added_associated_types)}.\n'
+            )
     return rn_desc
 
 
-def generate_rn_for_content_item_updates(_type, changed_content_object: Optional["BaseContent"]):
+def generate_rn_for_content_item_updates(
+    _type, changed_content_object: Optional["BaseContent"]
+):
     """Generates release notes for updates to a specific content item.
 
     Args:
@@ -360,12 +423,24 @@ def generate_rn_for_content_item_updates(_type, changed_content_object: Optional
         str: A release note describing the updates made to the content item,
              such as parameter changes, command updates.
     """
-    rn_desc = ''
+    rn_desc = ""
     if _type == FileType.INTEGRATION:
-        rn_desc += compare_content_item_changes(changed_content_object.old_base_content_object.params, changed_content_object.params, content_type.PARAMETER)
-        rn_desc += compare_content_item_changes(changed_content_object.old_base_content_object.commands, changed_content_object.commands, content_type.COMMAND)
+        rn_desc += compare_content_item_changes(
+            changed_content_object.old_base_content_object.params,
+            changed_content_object.params,
+            content_type.PARAMETER,
+        )
+        rn_desc += compare_content_item_changes(
+            changed_content_object.old_base_content_object.commands,
+            changed_content_object.commands,
+            content_type.COMMAND,
+        )
     elif _type == FileType.SCRIPT:
-        rn_desc += compare_content_item_changes(changed_content_object.old_base_content_object.args, changed_content_object.args, content_type.ARGUMENT)
+        rn_desc += compare_content_item_changes(
+            changed_content_object.old_base_content_object.args,
+            changed_content_object.args,
+            content_type.ARGUMENT,
+        )
     # elif _type in (FileType.INCIDENT_FIELD):
     #     rn_desc += associated_types_diff(path, _type)
     return rn_desc
@@ -382,9 +457,16 @@ def get_deprecated_rn(changed_object: Optional["BaseContent"], file_type):
     Returns:
         str: A formatted release note indicating the deprecation status of the content item.
     """
-    if not changed_object.old_base_content_object.deprecated and changed_object.deprecated:
-        rn_from_description = get_deprecated_comment_from_desc(changed_object.description)
-        return DEPRECATED_CONTENT_ITEM_RN.format(replacement=(rn_from_description or "Use %%% instead"))
+    if (
+        not changed_object.old_base_content_object.deprecated
+        and changed_object.deprecated
+    ):
+        rn_from_description = get_deprecated_comment_from_desc(
+            changed_object.description
+        )
+        return DEPRECATED_CONTENT_ITEM_RN.format(
+            replacement=(rn_from_description or "Use %%% instead")
+        )
     return ""
 
 
@@ -405,7 +487,7 @@ class UpdateRN:
         existing_rn_version_path: str = "",
         is_force: bool = False,
         is_bc: bool = False,
-        prev_ver: Optional[str] = '',
+        prev_ver: Optional[str] = "",
     ):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
@@ -524,28 +606,47 @@ class UpdateRN:
                 self.pack_metadata_only = True
                 continue
             is_new_file = packfile in self.added_files
-            aa = get_remote_file(packfile)
-            content_item_object = (create_content_item_object(packfile, self.prev_ver, is_new_file)
-                                   if file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION, FileType.SCRIPT]
-                                   else None)
-            name, description = ((content_item_object.name_for_rn(), content_item_object.details_for_rn())
-                                 if content_item_object
-                                 else (get_content_item_details(packfile, file_type)))
+            # aa = get_remote_file(packfile)
+            content_item_object = (
+                create_content_item_object(packfile, self.prev_ver, is_new_file)
+                if file_type
+                in [FileType.INTEGRATION, FileType.BETA_INTEGRATION, FileType.SCRIPT]
+                else None
+            )
+            name, description = (
+                (
+                    content_item_object.name_for_rn(),
+                    content_item_object.details_for_rn(),
+                )
+                if content_item_object
+                else (get_content_item_details(packfile, file_type))
+            )
             changed_files[(file_name, file_type)] = {
                 "description": description,
                 "is_new_file": packfile in self.added_files,
                 "fromversion": get_from_version_at_update_rn(packfile),
-                "dockerimage": self.get_docker_image_if_changed(content_item_object, packfile),
+                "dockerimage": self.get_docker_image_if_changed(
+                    content_item_object, packfile
+                ),
                 "path": packfile,
                 "name": name,
-                "changed_content_object": content_item_object
+                "changed_content_object": content_item_object,
             }
         self.pack_metadata_only = (not changed_files) and self.pack_metadata_only
         return self.create_pack_rn(rn_path, changed_files, new_metadata, new_version)
 
-    def get_docker_image_if_changed(self, content_item_object: Optional["BaseContent"], packfile):
-        if content_item_object and packfile not in self.added_files and "yml" in packfile:
-            if content_item_object.docker_image != content_item_object.old_base_content_object.docker_image:
+    def get_docker_image_if_changed(
+        self, content_item_object: Optional["BaseContent"], packfile
+    ):
+        if (
+            content_item_object
+            and packfile not in self.added_files
+            and "yml" in packfile
+        ):
+            if (
+                content_item_object.docker_image
+                != content_item_object.old_base_content_object.docker_image
+            ):
                 return content_item_object.docker_image
         return None
 
@@ -980,7 +1081,7 @@ class UpdateRN:
                 from_version=from_version,
                 path=path,
                 name=name,
-                changed_content_object=changed_content_object
+                changed_content_object=changed_content_object,
             )
 
             header = f"\n#### {RN_HEADER_BY_FILE_TYPE[_type]}\n\n"
@@ -1001,8 +1102,8 @@ class UpdateRN:
         docker_image: Optional[str] = "",
         from_version: str = "",
         path: str = "",
-        name : str = "",
-        changed_content_object : Optional["BaseContent"] = None,
+        name: str = "",
+        changed_content_object: Optional["BaseContent"] = None,
     ) -> str:
         """Builds the release notes description.
 
@@ -1026,26 +1127,35 @@ class UpdateRN:
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
-                rn_desc += NEW_RN_TEMPLATE.format(type=RN_HEADER_BY_FILE_TYPE.get(_type, _type).rstrip('s').lower(),
-                                                name=name,
-                                                description=desc or '%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.')
-                rn_desc += self.generate_rn_marketplaces_availability(_type, content_name, from_version)
+                rn_desc += NEW_RN_TEMPLATE.format(
+                    type=RN_HEADER_BY_FILE_TYPE.get(_type, _type).rstrip("s").lower(),
+                    name=name,
+                    description=desc or "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.",
+                )
+                rn_desc += self.generate_rn_marketplaces_availability(
+                    _type, content_name, from_version
+                )
                 if _type == FileType.INTEGRATION:
-                    rn_desc += self.generate_rn_list_new_commands(changed_content_object)
+                    rn_desc += self.generate_rn_list_new_commands(
+                        changed_content_object
+                    )
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"
                 if self.update_type == "documentation":
                     rn_desc += "- Documentation and metadata improvements.\n"
                 else:
-                    rn_desc += generate_rn_for_updated_content_items(changed_content_object, _type, text)
-
+                    rn_desc += generate_rn_for_updated_content_items(
+                        changed_content_object, _type, text
+                    )
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n\n"
         return rn_desc
 
-    def generate_rn_list_new_commands(self, changed_content_object: Optional["BaseContent"]) -> str:
+    def generate_rn_list_new_commands(
+        self, changed_content_object: Optional["BaseContent"]
+    ) -> str:
         """Generates a release note description for newly added commands in an integration.
 
         Args:
@@ -1074,11 +1184,13 @@ class UpdateRN:
         Returns:
             str: A release note description specifying availability in Cortex XSOAR and/or Cortex XSIAM.
         """
-        rn_desc = ''
+        rn_desc = ""
         if _type in SIEM_ONLY_ENTITIES or content_name.replace(
             " ", ""
         ).lower().endswith(EVENT_COLLECTOR.lower()):
-            rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>"
+            rn_desc += (
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>"
+            )
         elif from_version and _type not in SIEM_ONLY_ENTITIES:
             pack_marketplaces = self.get_pack_metadata().get(
                 "marketplaces", [MarketplaceVersions.XSOAR.value]
@@ -1089,7 +1201,9 @@ class UpdateRN:
                 not pack_marketplaces
                 or MarketplaceVersions.XSOAR.value in pack_marketplaces
             ):
-                rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
+                rn_desc += (
+                    f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
+                )
         rn_desc += "\n"
         return rn_desc
 
@@ -1153,7 +1267,7 @@ class UpdateRN:
                 docker_image=docker_image,
                 path=path,
                 name=name,
-                changed_content_object=changed_content_object
+                changed_content_object=changed_content_object,
             )
             if _header_by_type and _header_by_type in current_rn_without_docker_images:
                 if self.does_content_item_header_exist_in_rns(
@@ -1280,7 +1394,8 @@ class UpdateRN:
         self.existing_rn_changed = True
         return updated_rn
 
-def get_content_item_details(path, file_type) -> Tuple[str,str]:
+
+def get_content_item_details(path, file_type) -> Tuple[str, str]:
     """Gets the file details.
 
     :param
@@ -1294,31 +1409,41 @@ def get_content_item_details(path, file_type) -> Tuple[str,str]:
         logger.info(
             f'<yellow>Cannot get file description: "{path}" file does not exist</yellow>'
         )
-        return ("","")
+        return ("", "")
 
-    if path.endswith(".yml") and (issubclass(TYPE_CONVERSION_BY_FileType[file_type],YAMLContentObject) or isinstance(file_type, YAMLContentUnifiedObject)):
+    if path.endswith(".yml") and (
+        issubclass(TYPE_CONVERSION_BY_FileType[file_type], YAMLContentObject)
+        or isinstance(file_type, YAMLContentUnifiedObject)
+    ):
         file = get_yaml(path)
-    elif path.endswith(".json") and issubclass(TYPE_CONVERSION_BY_FileType[file_type],JSONContentObject):
+    elif path.endswith(".json") and issubclass(
+        TYPE_CONVERSION_BY_FileType[file_type], JSONContentObject
+    ):
         file = get_json(path)
     else:
         return ("%%UPDATE_CONTENT_ITEM_NAME%%", "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%")
 
-    description = ''
+    description = ""
     if file_type == FileType.XSIAM_DASHBOARD:
-        dashboards_data = file.get('dashboards_data', [])
-        description = dashboards_data[0].get('description') if dashboards_data else ""
-    description = description or file.get("description", "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%")
+        dashboards_data = file.get("dashboards_data", [])
+        description = dashboards_data[0].get("description") if dashboards_data else ""
+    description = description or file.get(
+        "description", "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%"
+    )
 
     name = ""
     if file_type == FileType.TRIGGER:
-        name = file.get('trigger_name')
+        name = file.get("trigger_name")
     elif file_type == FileType.XSIAM_DASHBOARD:
-        dashboards_data = file.get('dashboards_data', [])
-        name = dashboards_data[0].get('name') if dashboards_data else ""
+        dashboards_data = file.get("dashboards_data", [])
+        name = dashboards_data[0].get("name") if dashboards_data else ""
     elif file.get("display"):
         name = file.get("display")
-    return (name or file.get("name", "%%UPDATE_CONTENT_ITEM_NAME%%."),
-            (description if description.endswith(".") else f"{description}."))
+    return (
+        name or file.get("name", "%%UPDATE_CONTENT_ITEM_NAME%%."),
+        (description if description.endswith(".") else f"{description}."),
+    )
+
 
 def update_api_modules_dependents_rn(
     pre_release: bool,

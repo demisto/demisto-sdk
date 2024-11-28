@@ -16,16 +16,19 @@ from demisto_sdk.commands.common.clients import (
     get_client_from_server_type,
 )
 
+
 # Any additional imports your tests require
 
 def util_load_json(path):
     with open(path, encoding="utf-8") as f:
         return json.loads(f.read())
 
+
 @pytest.fixture
 def client_conf(request):
     # Manually parse command-line arguments
-    return get_client_conf_from_pytest_request(request)
+    return get_client_conf_from_pytest_request()
+
 
 @pytest.fixture
 def api_client(client_conf):
@@ -36,6 +39,7 @@ def api_client(client_conf):
         client_obj = get_client_from_server_type()
     yield client_obj
 
+
 class TestExample:
     @classmethod
     def setup_class(self):
@@ -44,7 +48,7 @@ class TestExample:
         self.data = "test"
 
     @pytest.fixture
-    def setup_method(self, client_conf = None):
+    def setup_method(self, client_conf=None):
         if client_conf:
             self.client = get_client_from_server_type(client_conf)
         else:

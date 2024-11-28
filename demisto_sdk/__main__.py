@@ -3855,17 +3855,19 @@ main.add_command(typer_click_object2, "generate-modeling-rules")
 
 # ====================== playbook-flow test command group ====================== #
 playbook_flow_app = typer.Typer(
-    name="playbook-flow-test",
+    name="playbook-flow",
     hidden=True,
     no_args_is_help=True,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
-playbook_flow_app.command("test", no_args_is_help=True)(
-    run_playbook_flow_test.run_flow_test
-)
 
-typer_click_object = typer.main.get_command(playbook_flow_app)
-main.add_command(typer_click_object, "playbook-flow-test")
+playbook_flow_app.command("test", no_args_is_help=True)(
+    run_playbook_flow_test.test_playbook_flow_test
+)
+playbook_flow_app.command("generate_template_flow", no_args_is_help=True)(run_playbook_flow_test.test_playbook_flow_test)
+
+
+main.add_command(typer.main.get_command(playbook_flow_app), "playbook-flow")
 
 
 # ====================== graph command group ====================== #

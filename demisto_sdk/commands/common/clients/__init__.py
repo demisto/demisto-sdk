@@ -247,14 +247,13 @@ def parse_str_to_dict(input_str):
     """
     return dict(pair.split("=") for pair in input_str.split(",") if "=" in pair)
 
-def get_client_conf_from_pytest_request(request):
+def get_client_conf_from_pytest_request():
     # Manually parse command-line argument
-    for arg in request.config.invocation_params.args:
-        if isinstance(arg, str) and arg.startswith("--client_conf="):
-            client_conf = arg.replace("--client_conf=", '')
-            return parse_str_to_dict(client_conf)
-    # If a client data was not provided, we proceed to use default.
+    client_conf = os.getenv("CLIENT_CONF")
+    if client_conf:
+        return parse_str_to_dict(client_conf)
     return None
+
 
 
 

@@ -449,16 +449,17 @@ def get_deprecated_rn(changed_object: Union[Integration, Script, Playbook]):
     """Generates a release note for deprecated content items.
 
     Args:
-        old_yml (dict): The YAML representation of the content item before updates.
-        new_yml (dict): The YAML representation of the content item after updates.
-        file_type (str): The type of the content item.
+        changed_object (Union[Integration, Script, Playbook]): The content object being checked for deprecation status.
 
     Returns:
         str: A formatted release note indicating the deprecation status of the content item.
+             Returns an empty string if the content item is not deprecated or if no changes to the deprecation status are detected.
     """
     if (
         changed_object.old_base_content_object
-        and isinstance(changed_object.old_base_content_object, Union[Integration, Script, Playbook])
+        and isinstance(
+                changed_object.old_base_content_object, (Integration, Script, Playbook)
+            )
         and not changed_object.old_base_content_object.deprecated
         and changed_object.deprecated
     ):
@@ -642,17 +643,27 @@ class UpdateRN:
 
     def get_docker_image_if_changed(
         self, content_item_object: Optional["BaseContent"], packfile
-    ):
+    ) -> Optional[str]:
+        """
+        Checks if the Docker image of a content item has changed.
+
+        Args:
+            content_item_object (Optional[BaseContent]): The content item being checked, which can be an `Integration` or `Script`.
+            packfile (str): The path to the file being checked.
+
+        Returns:
+            Optional[str]: The updated Docker image if it has changed, otherwise `None`.
+        """
         if (
             content_item_object
-            and packfile not in self.added_files
+            and isinstance(content_item_object, (Integration, Script))
             and "yml" in packfile
+            and packfile not in self.added_files
+            and (old_base_content_object := content_item_object.old_base_content_object)
+            and isinstance(old_base_content_object, (Integration, Script))
+            and content_item_object.docker_image != old_base_content_object.docker_image
         ):
-            if (
-                content_item_object.docker_image
-                != content_item_object.old_base_content_object.docker_image
-            ):
-                return content_item_object.docker_image
+            return content_item_object.docker_image
         return None
 
     def create_pack_rn(

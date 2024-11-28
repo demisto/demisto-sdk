@@ -1179,7 +1179,7 @@ class TestGenerateIntegrationDoc:
         assert "#### Command example" in actual_doc
         assert "#### Context Example" in actual_doc
         assert (
-            actual_doc[1074]
+            actual_doc[1071]
             == "| allowed_input_type_param | Enum Found as the last part of Change.allowedInput[].update hypermedia URL.supported values include:change-management-ack,lets-encrypt-challenges-completed,post-verification-warnings-ack,pre-verification-warnings-ack. Possible values are: change-management-ack, lets-encrypt-challenges-completed, post-verification-warnings-ack, pre-verification-warnings-ack. Default is post-verification-warnings-ack. | Optional | "
         )
 
@@ -1828,21 +1828,6 @@ TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS: List[
     (
         [],
         {
-            "displaypassword": "specialPassword",
-            "additionalinfo": "Enter your password",
-            "required": False,
-        },
-        [
-            {
-                "Description": "Enter your password",
-                "Parameter": "specialPassword",
-                "Required": False,
-            }
-        ],
-    ),
-    (
-        [],
-        {
             "display": "username",
             "additionalinfo": "Username",
             "required": True,
@@ -2440,14 +2425,14 @@ class TestIntegrationDocUpdate:
         generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
         actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
-        assert actual[62] == "| Debug logging enabled |  | False |"
+        assert actual[61] == "| Debug logging enabled |  | False |"
         assert (
-            actual[807]
+            actual[806]
             == "| limit | Maximum number of records to return. Default is 100. | Optional | "
         )
-        assert actual[808] == "| new_arg | New argument for testing. | Optional | "
-        assert actual[815] == "| Splunk.Test | String | Test output for Splunk | "
-        assert actual[1082:1103] == [
+        assert actual[807] == "| new_arg | New argument for testing. | Optional | "
+        assert actual[814] == "| Splunk.Test | String | Test output for Splunk | "
+        assert actual[1081:1102] == [
             "### splunk-test-cmd",
             "",
             "***",

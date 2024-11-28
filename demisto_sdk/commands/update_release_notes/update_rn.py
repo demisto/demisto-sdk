@@ -60,6 +60,7 @@ from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import (
     Argument,
     Command,
@@ -306,7 +307,7 @@ def rn_for_added_or_updated_content(
             old_key_name, new_content, old_content, type, parent_name
         )
         rn += generate_required_rn(old_key_name, new_content, old_content, type)
-        if isinstance(new_content, Command):
+        if isinstance(new_content, Command) and isinstance(old_content, Command):
             rn += compare_content_item_changes(
                 old_content.args,
                 new_content.args,
@@ -456,7 +457,9 @@ def get_deprecated_rn(changed_object: Union[Integration, Script, Playbook]):
         str: A formatted release note indicating the deprecation status of the content item.
     """
     if (
-        not changed_object.old_base_content_object.deprecated
+        changed_object.old_base_content_object
+        and isinstance(changed_object.old_base_content_object, Union[Integration, Script, Playbook])
+        and not changed_object.old_base_content_object.deprecated
         and changed_object.deprecated
     ):
         rn_from_description = get_deprecated_comment_from_desc(
@@ -620,7 +623,7 @@ class UpdateRN:
                     content_item_object.name_for_rn(),
                     content_item_object.details_for_rn(),
                 )
-                if content_item_object
+                if content_item_object and isinstance(content_item_object, ContentItem)
                 else (get_content_item_details(packfile, file_type))
             )
             changed_files[(file_name, file_type)] = {

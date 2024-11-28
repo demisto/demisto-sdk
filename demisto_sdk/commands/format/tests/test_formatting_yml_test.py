@@ -782,22 +782,23 @@ class TestFormatting:
         shutil.copyfile(source, target)
         with pytest.raises(typer.Exit) as e:
             format_manager(input=target, clear_cache=True, assume_answer=True)
-            with open(target) as f:
-                yaml_content = yaml.load(f)
-                params = yaml_content["configuration"]
-                for counter, param in enumerate(params):
-                    if "defaultvalue" in param and param["name"] != "feed":
-                        params[counter].pop("defaultvalue")
-                    if "hidden" in param:
-                        param.pop("hidden")
-                for param_details in FEED_REQUIRED_PARAMS:
-                    param = {"name": param_details.get("name")}
-                    param.update(param_details.get("must_equal", dict()))
-                    param.update(param_details.get("must_contain", dict()))
-                    assert param in params
-            Path(target).unlink()
-            os.rmdir(path)
         assert e.value.exit_code == answer
+
+        with open(target) as f:
+            yaml_content = yaml.load(f)
+            params = yaml_content["configuration"]
+            for counter, param in enumerate(params):
+                if "defaultvalue" in param and param["name"] != "feed":
+                    params[counter].pop("defaultvalue")
+                if "hidden" in param:
+                    param.pop("hidden")
+            for param_details in FEED_REQUIRED_PARAMS:
+                param = {"name": param_details.get("name")}
+                param.update(param_details.get("must_equal", dict()))
+                param.update(param_details.get("must_contain", dict()))
+                assert param in params
+        Path(target).unlink()
+        os.rmdir(path)
 
     def test_set_feed_params_in_config_with_default_value(self):
         """

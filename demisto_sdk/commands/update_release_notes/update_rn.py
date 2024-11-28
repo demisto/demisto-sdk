@@ -1143,7 +1143,11 @@ class UpdateRN:
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
-                type = RN_HEADER_BY_FILE_TYPE.get(_type, _type.value).rstrip("s").lower() if _type else ""
+                type = (
+                    RN_HEADER_BY_FILE_TYPE.get(_type, _type.value).rstrip("s").lower()
+                    if _type
+                    else ""
+                )
                 rn_desc += NEW_RN_TEMPLATE.format(
                     type=type,
                     name=name,

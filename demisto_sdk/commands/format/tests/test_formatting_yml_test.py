@@ -546,10 +546,10 @@ class TestFormatting:
         shutil.copyfile(source, target)
         with pytest.raises(typer.Exit) as e:
             format_manager(input=target, output=target)
-            Path(target).unlink()
-            os.rmdir(path)
-
         assert e.value.exit_code == 0
+        Path(target).unlink()
+        os.rmdir(path)
+
 
     @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_remove_unnecessary_keys_from_playbook(self, source_path):
@@ -735,17 +735,17 @@ class TestFormatting:
         monkeypatch.setattr("builtins.input", lambda _: "N")
         with pytest.raises(typer.Exit) as e:
             format_manager(input=target, assume_answer=True)
-            with open(target) as f:
-                yaml_content = yaml.load(f)
-            params = yaml_content["configuration"]
-            for param in params:
-                if "defaultvalue" in param and param["name"] != "feed":
-                    param.pop("defaultvalue")
-            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
-                assert param in yaml_content["configuration"]
-            Path(target).unlink()
-            os.rmdir(path)
         assert e.value.exit_code == 0
+        with open(target) as f:
+            yaml_content = yaml.load(f)
+        params = yaml_content["configuration"]
+        for param in params:
+            if "defaultvalue" in param and param["name"] != "feed":
+                param.pop("defaultvalue")
+        for param in INCIDENT_FETCH_REQUIRED_PARAMS:
+            assert param in yaml_content["configuration"]
+        Path(target).unlink()
+        os.rmdir(path)
 
     FORMAT_FILES_FEED = [
         (FEED_INTEGRATION_VALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),

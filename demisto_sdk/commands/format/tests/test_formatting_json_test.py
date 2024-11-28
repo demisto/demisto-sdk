@@ -175,10 +175,10 @@ class TestFormattingJson:
         shutil.copyfile(source, target)
         with pytest.raises(typer.Exit) as e:
             format_manager(input=target, output=target, use_graph=False)
-            shutil.rmtree(target, ignore_errors=True)
-            shutil.rmtree(path, ignore_errors=True)
-
         assert e.value.exit_code == 0
+        shutil.rmtree(target, ignore_errors=True)
+        shutil.rmtree(path, ignore_errors=True)
+
 
     @pytest.mark.parametrize(
         "source, target, path, answer", FORMAT_FILES_OLD_FROMVERSION
@@ -200,10 +200,10 @@ class TestFormattingJson:
         monkeypatch.setattr("builtins.input", lambda: "N")
         with pytest.raises(typer.Exit) as e:
             format_manager(input=target, output=target, use_graph=False)
-            shutil.rmtree(target, ignore_errors=True)
-            shutil.rmtree(path, ignore_errors=True)
-
         assert e.value.exit_code == 0
+        shutil.rmtree(target, ignore_errors=True)
+        shutil.rmtree(path, ignore_errors=True)
+
 
     @pytest.mark.parametrize("invalid_output", [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):

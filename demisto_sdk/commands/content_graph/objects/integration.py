@@ -48,11 +48,11 @@ class Parameter(BaseModel):
     fromlicense: Optional[str] = None
     deprecated: Optional[bool] = None
 
-    def details_for_rn(self):
-        return self.additionalinfo
+    def details_for_rn(self) -> str:
+        return self.additionalinfo or ""
 
-    def name_for_rn(self):
-        return self.display
+    def name_for_rn(self) -> str:
+        return self.display or ""
 
 
 class IntegrationOutput(Output):
@@ -103,8 +103,8 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
         remove_nulls_from_dictionary(command)
         return command
 
-    def details_for_rn(self):
-        return self.description
+    def details_for_rn(self) -> str:
+        return self.description or ""
 
     def name_for_rn(self):
         return self.name

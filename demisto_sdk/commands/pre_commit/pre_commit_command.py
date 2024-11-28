@@ -694,4 +694,7 @@ def preprocess_files(
         for file in files_to_run
     }
     # filter out files that are not in the content git repo (e.g in .gitignore)
-    return relative_paths & all_git_files
+    logger.debug(f'preprocess_files {relative_paths=} | {all_git_files=}')
+    res = relative_paths & all_git_files
+    logger.debug(f'preprocess_files {res=}')
+    return res

@@ -1,13 +1,13 @@
+## openapi-codegen
+### Overview
 It is possible to generate a Cortex XSOAR integration package (YAML and Python files) with a dedicated tool in the Cortex XSOAR (demisto) SDK.
 The integration will be usable right away after generation.
 
-### Requirements
+**Requirements**
 * OpenAPI (Swagger) specification file (v2.0 is recommended) in JSON format.
 * Cortex XSOAR (demisto) SDK
 
-### Command instructions
-
-#### Arguments
+### Options
 
 * **'-h', '--help'**
 

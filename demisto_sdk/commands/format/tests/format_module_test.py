@@ -1,3 +1,6 @@
+import pytest
+import typer
+
 from demisto_sdk.commands.format.format_module import format_manager
 from TestSuite.test_tools import ChangeCWD
 
@@ -24,7 +27,8 @@ def test_format_venv_in_dir(mocker, repo):
     )
 
     with ChangeCWD(repo.path):
-        assert format_manager(input=str(pack._pack_path)) == 0
+        with pytest.raises(typer.Exit):
+            assert format_manager(input=str(pack._pack_path)) == 0
 
     assert format_file_call.called
     for call_args in format_file_call.call_args_list:

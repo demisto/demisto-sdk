@@ -17,3 +17,10 @@ class Configuration:
         self.envs_dirs_base = str(
             Path(self.sdk_env_dir) / "lint" / "resources" / "pipfile_python"
         )
+
+
+class DemistoSDK:
+    """Core SDK class."""
+
+    def __init__(self):
+        self.configuration = Configuration()

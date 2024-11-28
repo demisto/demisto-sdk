@@ -1,4 +1,6 @@
 ## split
+
+### Overview
 Splits downloaded scripts, integrations and generic module files into multiple files.
 Integrations and scripts are split into the package format.
 Generic modules have their dashboards split into separate files and modify the module to the content repository standard.
@@ -6,7 +8,7 @@ Generic modules have their dashboards split into separate files and modify the m
 Files are stored in the content repository in a directory format, which enables performing extensive code validations and maintaining a more stable code base.
 For more details [see](https://xsoar.pan.dev/docs/integrations/package-dir).
 
-**Arguments**:
+### Options
 * **-i, --input**
 The yml/json file to extract from.
 * **-o, --output**

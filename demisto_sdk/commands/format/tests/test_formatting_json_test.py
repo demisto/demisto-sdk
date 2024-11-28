@@ -198,18 +198,17 @@ class TestFormattingJson:
         shutil.copyfile(source, target)
 
         monkeypatch.setattr("builtins.input", lambda: "N")
-        with pytest.raises(typer.Exit):
-            res = format_manager(input=target, output=target, use_graph=False)
+        with pytest.raises(typer.Exit) as e:
+            format_manager(input=target, output=target, use_graph=False)
             shutil.rmtree(target, ignore_errors=True)
             shutil.rmtree(path, ignore_errors=True)
 
-            assert res is answer
+        assert e.value.exit_code == 0
 
     @pytest.mark.parametrize("invalid_output", [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):
         try:
-            res_invalid = format_manager(input=invalid_output, output=invalid_output)
-            assert res_invalid
+            format_manager(input=invalid_output, output=invalid_output)
         except Exception as e:
             assert (
                 str(e)

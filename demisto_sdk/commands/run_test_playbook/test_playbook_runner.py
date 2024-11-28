@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import demisto_client
+import pytest
 import typer
 from demisto_client.demisto_api.rest import ApiException
 
@@ -152,9 +153,11 @@ class TestPlaybookRunner:
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
         if self.should_wait:
-            status_code = self.run_and_check_tpb_status(
-                test_playbook_id, work_plan_link, incident_id
-            )
+            with pytest.raises(typer.Exit) as e:
+                self.run_and_check_tpb_status(
+                    test_playbook_id, work_plan_link, incident_id
+                )
+            assert e.value.exit_code == 0
 
         else:
             logger.info(f"To see results please go to : {work_plan_link}")

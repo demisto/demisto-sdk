@@ -544,12 +544,12 @@ class TestFormatting:
         user_input.side_effect = user_responses
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        with pytest.raises(typer.Exit):
-            res = format_manager(input=target, output=target)
+        with pytest.raises(typer.Exit) as e:
+            format_manager(input=target, output=target)
             Path(target).unlink()
             os.rmdir(path)
 
-            assert res is answer
+        assert e.value.exit_code == 0
 
     @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_remove_unnecessary_keys_from_playbook(self, source_path):
@@ -694,19 +694,17 @@ class TestFormatting:
             SOURCE_FORMAT_INTEGRATION_VALID,
             DESTINATION_FORMAT_INTEGRATION,
             INTEGRATION_PATH,
-            0,
         ),
         (
             SOURCE_FORMAT_INTEGRATION_INVALID,
             DESTINATION_FORMAT_INTEGRATION,
             INTEGRATION_PATH,
-            0,
         ),
     ]
 
-    @pytest.mark.parametrize("source, target, path, answer", FORMAT_FILES_FETCH)
+    @pytest.mark.parametrize("source, target, path", FORMAT_FILES_FETCH)
     def test_set_fetch_params_in_config(
-        self, mocker, source, target, path, answer, monkeypatch
+        self, mocker, source, target, path, monkeypatch
     ):
         """
         Given
@@ -735,8 +733,8 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
-        with pytest.raises(typer.Exit):
-            res = format_manager(input=target, assume_answer=True)
+        with pytest.raises(typer.Exit) as e:
+            format_manager(input=target, assume_answer=True)
             with open(target) as f:
                 yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
@@ -747,7 +745,7 @@ class TestFormatting:
                 assert param in yaml_content["configuration"]
             Path(target).unlink()
             os.rmdir(path)
-            assert res is answer
+        assert e.value.exit_code == 0
 
     FORMAT_FILES_FEED = [
         (FEED_INTEGRATION_VALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),

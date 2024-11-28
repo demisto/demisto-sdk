@@ -1,36 +1,31 @@
 ## generate-outputs
-Generate outputs for an integration.
-Previously `json-to-outputs` and `generate-context` combined.
+### Overview
+Generates outputs for an integration.
+This command generates context paths automatically from an example file directly into an integration YAML file.
+Also supports converting JSON format to Cortex XSOAR entry context YAML format.
 
-**Use-Cases**
-This command is used to generate context paths automatically from an example file directly into an integration yml file.
-Also supports converting JSON format to demisto entry context yaml format.
-
-**Arguments**:
+### Options
 * *-c, --command*
-  Command name (e.g. xdr-get-incidents)
+  לCommand name (e.g. xdr-get-incidents)
 * *-j, --json*
   A JSON file path. If not specified then script will wait for user input in the terminal.
 * *-p, --prefix*
-  Output prefix like Jira.Ticket, VirusTotal.IP
+  Output prefix like Jira.Ticket, VirusTotal.IP. the base path for the outputs that the script generates.
 * *-o, --output*
-  Output file path, if not specified then will print to stdout
-* *-v, --verbose*
-  Verbose output - mainly for debugging purposes
-* *-int, --interactive*
-  If passed, then for each output field will ask user interactively to enter the description. By default is interactive mode is disabled
+  Output file path, if not specified then will print to stdout.
+* *--interactive*
+  If passed, then for each output field will ask user interactively to enter the description. By default, the interactive mode is disabled.
 * *-d, --descriptions*
-  A JSON or a path to a JSON file, mapping field names to their descriptions.
+  A JSON or a path to a JSON file, mapping field names to their descriptions. If not specified, the script prompt the user to input the JSON content.
 * **-i, --input**
-  Path of the yml file (ouputs are inserted here in-palce) - used for context from examples.
+  Path of the yml file (outputs are inserted here in-place) - used for context from examples.
 * **-e, --examples**
   Integrations: path for file containing command examples. Each command should be in a separate line.
+  Scripts: the script example surrounded by quotes. For example: -e '!ConvertFile entry_id=<entry_id>'
 * **--insecure**
   Skip certificate validation.
-* **-v, --verbose**
-  Verbose output - mainly for debugging purposes.
 * **--ai**
-  AI description generation - \*Experimnetal\* a new way to use GPT-like transformers to generate descriptions from context paths.
+  **Experimental** - Help generate context descriptions via AI transformers (must have a valid AI21 key at ai21.com).
 
 **Notes**
 * The output of the command will be writen in the input file (in-place).

@@ -328,9 +328,10 @@ class PreCommitRunner:
         PreCommitRunner.prepare_hooks(pre_commit_context)
 
         if pre_commit_context.all_files:
-            pre_commit_context.precommit_template["exclude"] += (
-                f"|{join_files(exclude_files or set())}"
-            )
+            if exclude_files:
+                pre_commit_context.precommit_template["exclude"] += (
+                    f"|{join_files(exclude_files)}"
+                )
         else:
             pre_commit_context.precommit_template["files"] = join_files(
                 pre_commit_context.files_to_run

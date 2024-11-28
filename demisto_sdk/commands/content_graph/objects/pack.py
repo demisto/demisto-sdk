@@ -592,5 +592,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @cached_property
     def release_note(self) -> RNRelatedFile:
         return RNRelatedFile(
-            self.path, git_sha=self.git_sha, latest_rn=self.latest_rn_version
+            self.path,
+            git_sha=self.git_sha,
+            prev_ver=self.old_base_content_object.git_sha
+            if self.old_base_content_object
+            else None,
+            latest_rn=self.latest_rn_version,
         )

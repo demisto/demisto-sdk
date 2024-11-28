@@ -1,12 +1,11 @@
 
 ## coverage-analyze
-Print and analyze coverage reports.
 
-**Use-Cases**:
+### Overview
 Generating and printing the coverage reports.
 
-**Arguments**:
-* **-i COVERAGE_PATH, --input COVERAGE_PATH**
+### Options
+* **-i --input**
 The .coverage file to analyze.
 * **--default-min-coverage**
 Default minimum coverage (for new files). The default value is 70.

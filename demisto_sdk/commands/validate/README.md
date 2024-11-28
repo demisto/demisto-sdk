@@ -1,16 +1,13 @@
-This file contains information about our new validate flow. For more information about the old validate flow, refer to [old_validate_readme](demisto_sdk/commands/validate/old_validate_readme.md).
-
 ## Validate
 
-Makes sure your content repository files are in order and have a valid file scheme.
+### Overview
 
-**Use Cases**
-This command is used to make sure that the content repo files are valid and are able to be processed by the platform.
-This is used in our validation process both locally and in gitlab.
+This command ensures that the content repository files are valid and are able to be processed by the platform.
+This is used in our validation process both locally and in Gitlab.
 
-**Arguments**:
+### Options
 * **-g, --use-git**
-Validate changes using git - this will check the current branch's changes against origin/master.
+Validate changes using Git - this will check the current branch's changes against origin/master.
 If the **--post-commit** flag is supplied: validation will run only on the current branch's changed files that have been committed.
 If the **--post-commit** flag is not supplied: validation will run on all changed files in the current branch, both committed and not committed.
 * **-a, --validate-all**
@@ -30,7 +27,7 @@ The JSON file path to which to output the command results.
 * **--category-to-run**
 Run specific validations by stating the category they're listed under in the config file.
 * **-f, --fix**
-Whether to autofix failing validations with an available auto fix or not.
+Whether to auto fix failing validations with an available auto.
 * **--config-path**
 Path for a config file to run. If not given - will run the default path at: [demisto_sdk/commands/validate/default_config.toml](default_config.toml)
 * **--ignore-support-level**
@@ -43,30 +40,8 @@ Whether to skip the new validate flow or not. Alternatively, you can configure t
 A comma separated list of validations to run stated the error codes.
 * **--ignore**
 An error code to not run. To ignore more than one error, repeat this option (e.g. `--ignore AA123 --ignore BC321`)
-**Examples**:
 
-`demisto-sdk validate --prev-ver SHA1-HASH`
-This will validate only changed files from the branch given (SHA1).
-
-`demisto-sdk validate --post-commit`
-This indicates that the command runs post commit.
-
-`demisto-sdk validate -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml`
-This will validate the file Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml only.
-
-`demisto-sdk validate -a`
-This will validate all files under the `Packs` directory.
-
-`demisto-sdk validate -i Packs/HelloWorld`
-This will validate all files under the content pack `HelloWorld`.
-
-`demisto-sdk validate --run-old-validate --skip-new-validate -a`
-This will validate all files in the repo using the old validate method.
-
-`demisto-sdk validate --config-path {config_file_path} -a`
-This will validate all files in the repo using the settings configured in the config file in the given path.
-
-### Error Codes and Ignoring Them
+### Validation Error Codes
 Each error found by validate has an error code attached to it. The code can be found in brackets preceding the error itself.  
 For example: `path/to/file: [IN103] - The type field of the proxy parameter should be 8`
 In addition, each pack has a `.pack-ignore` file. In order to ignore a certain validation for a given file, the error-code needs to be listed in the **ignorable_errors** section in the config-file (see the [Config file section](#config-file)), and the user needs to mention the file name (only the name and extension, without the whole path), and the error code to ignore.
@@ -74,7 +49,7 @@ For example: This .pack-ignore will not fail ipinfo_v2.yml on the validations wi
 [file:ipinfo_v2.yml]
 ignore=BA108,BA109
 
-### Config file
+### Validation Config file
 You can define a config file to suit your business needs. If no file is defined, the  [default config file](default_config.toml) will be used.
 The default configuration covers basic validations, which prevents unsuccessful uploads of the validated content to Cortex XSOAR.
 #### How to define a configuration file
@@ -106,3 +81,26 @@ select = ["BA100", "BA101", "BA102"]
 ignore = ["BA102"]
 ```
 Validate will run all the validations with error codes "BA100", "BA101", "BA102" except for BA102 in case of community supported files.
+
+### Examples:
+
+`demisto-sdk validate --prev-ver SHA1-HASH`
+Validates only changed files from the branch (for SHA1 hash files).
+
+`demisto-sdk validate --post-commit`
+Runs a post commit.
+
+`demisto-sdk validate -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml`
+validates only the Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml file.
+
+`demisto-sdk validate -a`
+Validates all files under the `Packs` directory.
+
+`demisto-sdk validate -i Packs/HelloWorld`
+Validates all files under the `HelloWorld` content pack.
+
+`demisto-sdk validate --run-old-validate --skip-new-validate -a`
+This will validate all files in the repo using the old validate method.
+
+`demisto-sdk validate --config-path {config_file_path} -a`
+TValidates all files in the repository using the settings configured in the config file in the given path.

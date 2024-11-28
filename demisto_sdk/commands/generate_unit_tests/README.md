@@ -1,25 +1,18 @@
 ## generate-unit-tests
-Generate unit tests for an integration.
-To use this command, install demisto-sdk with `pip install demisto-sdk[generate-unit-tests]`.
+### Overview
+This command generates unit tests automatically from an integration's Python code.
+It also supports generating unit tests for specific commands.
+Note that this command is not intended to fully replace manual work on unit tests but is intended to make it easier to write them.
 
-**Use-Cases**
-This command is used to generate unit tests automatically from an integration python code.
-Also supports generating unit tests for specific commands.
-**Important**: this command is not intended to fully replace the manual work on unit tests but to ease the initial effort in writing them.
+>NOTE: The generate-unit-test command only works if demisto-sdk is installed with pip install demisto-sdk [generate-unit-tests].
 
-**Arguments**:
+### Options
 * *-i, --input_path*
   Path of the integration python file. (Mandatory)
 * *-c, --commands*
   Specific commands name to generate unit test for (e.g. xdr-get-incidents).
 * *-o, --output_dir*
-  Directory to store the command output (generated test file) in (default is the input integration directory).
-* *-clt, --console_log_threshold*
-  Minimum logging threshold for the console logger.  [default: INFO]
-* *-flt --file_log_threshold*
-  Minimum logging threshold for the file logger. [default: DEBUG]
-* *-lp, --log_file_path*
-  Path to the log file. Default: ./demisto_sdk_debug.log. [default: ./demisto_sdk_debug.log]
+  Directory to store the command output - the generated test file in (default is the input integration directory).
 * *-e, --examples*
   One of the following:
   - A path for a file containing Integration command examples. Each command example should be in a separate line.
@@ -28,8 +21,8 @@ Also supports generating unit tests for specific commands.
 * *-d, --use_demisto*
   If passed, the XSOAR instance configured in the `DEMISTO_BASE_URL` and `DEMISTO_API_KEY` environment variables will run the Integration commands and generate outputs which will be used as mock outputs. **If this flag is not passed, you will need to create the mocks manually, at the outputs directory, with the name of the command.**
 * *--insecure*
-  Skip certificate validation when authorizing XSOAR.
-* *-a, --append* Append the generated unit tests to an existing file (only if already exists).
+  Skip certificate validation.
+* *-a, --append* Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT.
 
 
 **Notes**

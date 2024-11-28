@@ -31,6 +31,10 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
     "CI_PROJECT_ID", "1061"
 )  # Default value is the ID of the content repo on GitLab
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+SDK_OFFLINE_ERROR_MESSAGE = (
+    "<red>An internet connection is required for this command. If connected to the "
+    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.</red>"
+)
 
 DEFAULT_DOCKER_REGISTRY_URL = "docker.io"
 DOCKER_REGISTRY_URL = os.getenv(
@@ -1331,6 +1335,13 @@ CONTENT_RELEASE_TAG_REGEX = r"^\d{2}\.\d{1,2}\.\d"
 RELEASE_NOTES_REGEX = (
     re.escape(UNRELEASE_HEADER)
     + r"([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}"
+)
+CONTENT_TYPE_SECTION_REGEX = re.compile(
+    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
+)
+CONTENT_ITEM_SECTION_REGEX = re.compile(
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$",
+    re.M,
 )
 
 # pack contributors template

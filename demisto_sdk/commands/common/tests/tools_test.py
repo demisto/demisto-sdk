@@ -190,6 +190,39 @@ class TestGenericFunctions:
     def test_get_file(self, file_path, func):
         assert func(file_path)
 
+    def test_get_file_failure_is_not_raised(self, mocker):
+        """
+        Given:
+            - Wrongly formatted yml file.
+        When:
+            - Getting the file using get_file with raise_on_error=False
+        Then:
+            - Assert no error is raised.
+        """
+        mocker.patch.object(Path, "exists", return_value=True)
+        bad_yml_data = 'name: "some"\ndescription: "bla bla"nah\n'
+        mocker.patch.object(
+            Path, "read_bytes", return_value=bad_yml_data.encode("utf-8")
+        )
+
+        def raise_loguru_exp(log_line):
+            if "<file>" in log_line:
+                raise Exception(
+                    'Tag "<file>" does not correspond to any known color directive.'
+                )
+
+        # Mock problematic logger behaviour since it does not reproduce on Github actions.
+        # Since Github actions do not allow colors, the exception is usually raised locally only.
+        # To verify, you can delete this line and run the test locally and compare with the Github action.
+        mocker.patch(
+            "demisto_sdk.commands.common.tools.logger.error",
+            side_effect=raise_loguru_exp,
+        )
+        try:
+            get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)
+        except Exception as e:
+            assert False, f"Function get_file raised an error: {e}"
+
     @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, _):
         """
@@ -747,6 +780,7 @@ class TestGetFilesInDir:
         files = [
             f"{project_dir}/__init__.py",
             f"{project_dir}/downloader.py",
+            f"{project_dir}/download_setup.py",
             f"{project_dir}/README.md",
         ]
         assert sorted(get_files_in_dir(project_dir, ["py", "md"], False)) == sorted(

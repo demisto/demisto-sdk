@@ -145,7 +145,6 @@ from demisto_sdk.commands.common.string_to_bool import (
     # See the comment in string_to_bool's implementation
     string_to_bool,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
 DEMISTO_SDK_REPO = "demisto/demisto-sdk"
 if TYPE_CHECKING:

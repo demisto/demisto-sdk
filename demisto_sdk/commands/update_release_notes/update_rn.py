@@ -458,8 +458,8 @@ def get_deprecated_rn(changed_object: Union[Integration, Script, Playbook]):
     if (
         changed_object.old_base_content_object
         and isinstance(
-                changed_object.old_base_content_object, (Integration, Script, Playbook)
-            )
+            changed_object.old_base_content_object, (Integration, Script, Playbook)
+        )
         and not changed_object.old_base_content_object.deprecated
         and changed_object.deprecated
     ):

@@ -125,18 +125,16 @@ class TestFormattingJson:
             SOURCE_FORMAT_INDICATORTYPE_COPY,
             DESTINATION_FORMAT_INDICATORTYPE_COPY,
             INDICATORTYPE_PATH,
-            0,
         ),
-        (SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, LAYOUT_PATH, 0),
+        (SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, LAYOUT_PATH),
         (
             SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY,
             DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY,
             LAYOUTS_CONTAINER_PATH,
-            0,
         ),
-        (SOURCE_FORMAT_MAPPER, DESTINATION_FORMAT_MAPPER, MAPPER_PATH, 0),
-        (SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER, CLASSIFIER_PATH, 0),
-        (SOURCE_FORMAT_WIDGET, DESTINATION_FORMAT_WIDGET, WIDGET_PATH, 0),
+        (SOURCE_FORMAT_MAPPER, DESTINATION_FORMAT_MAPPER, MAPPER_PATH),
+        (SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER, CLASSIFIER_PATH),
+        (SOURCE_FORMAT_WIDGET, DESTINATION_FORMAT_WIDGET, WIDGET_PATH),
     ]
     FORMAT_FILES_OLD_FROMVERSION = [
         (
@@ -171,16 +169,16 @@ class TestFormattingJson:
         ),
     ]
 
-    @pytest.mark.parametrize("source, target, path, answer", FORMAT_FILES)
-    def test_format_file(self, source, target, path, answer):
+    @pytest.mark.parametrize("source, target, path", FORMAT_FILES)
+    def test_format_file(self, source, target, path):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        with pytest.raises(typer.Exit):
-            res = format_manager(input=target, output=target, use_graph=False)
+        with pytest.raises(typer.Exit) as e:
+            format_manager(input=target, output=target, use_graph=False)
             shutil.rmtree(target, ignore_errors=True)
             shutil.rmtree(path, ignore_errors=True)
 
-            assert res is answer
+        assert e.value.exit_code == 0
 
     @pytest.mark.parametrize(
         "source, target, path, answer", FORMAT_FILES_OLD_FROMVERSION

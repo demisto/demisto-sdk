@@ -95,11 +95,13 @@ class PreCommitRunner:
             else:
                 # this is used to handle the mode property correctly even for non-custom hooks which do not require
                 # special preparation
-                hook = PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
+                hook = Hook(
                     **hooks.pop(hook_id), context=pre_commit_context
                 )
                 hook.parallel = False
-                hook.prepare_hook()
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = hook.prepare_hook()
+
+
 
             logger.debug(f"Prepared hook {hook_id} successfully")
 

@@ -130,16 +130,25 @@ class PreCommitRunner:
         Returns:
             int: Return code - 0 if the hook passed, 1 if it failed.
         """
+
+        import signal
+        import sys
+
+        def handle_signal(signum, frame):
+            print(f"Received signal {signum}, shutting down gracefully...")
+            sys.exit(0)
+
+        signal.signal(signal.SIGTERM, handle_signal)
+        signal.signal(signal.SIGINT, handle_signal)
+
         logger.debug(f"Running hook {hook_id}")
         os.makedirs(Path('/tmp/pre-commit'), exist_ok=True)
-        log_file_path = Path('/tmp/pre-commit') / f"pre_commit_hook-{hook_id}.log"
 
         command = [
             sys.executable,
             "-m",
             "pre_commit",
             "run",
-            "-a",
             hook_id,
         ]
 

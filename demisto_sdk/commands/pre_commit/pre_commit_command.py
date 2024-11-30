@@ -112,40 +112,64 @@ class PreCommitRunner:
             SystemHook(**hooks[hook_id], context=pre_commit_context).prepare_hook()
             logger.debug(f"Prepared system hook {hook_id} successfully")
 
+
     @staticmethod
     def run_hook(
-        hook_id: str,
-        precommit_env: dict,
-        verbose: bool = False,
-        stdout: Optional[int] = subprocess.PIPE,
+            hook_id: str,
+            precommit_env: dict,
+            verbose: bool = False,
+            stdout: Optional[int] = subprocess.PIPE,
     ) -> int:
-        """This function runs the pre-commit process and waits until finished.
-        We run this function in multithread.
+        """Runs a pre-commit hook and writes output to console and log file in real-time.
 
         Args:
-            hook_id (str): The hook ID to run
-            precommit_env (dict): The pre-commit environment variables
-            verbose (bool, optional): Whether print verbose output. Defaults to False.
+            hook_id (str): The hook ID to run.
+            precommit_env (dict): The pre-commit environment variables.
+            verbose (bool, optional): Whether to print verbose output. Defaults to False.
             stdout (Optional[int], optional): The way to handle stdout. Defaults to subprocess.PIPE.
 
         Returns:
-            int: return code - 0 if hook passed, 1 if failed
+            int: Return code - 0 if the hook passed, 1 if it failed.
         """
         logger.debug(f"Running hook {hook_id}")
-        process = PreCommitRunner._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH,
-            precommit_env,
-            verbose,
-            stdout,
-            command=["run", "-a", hook_id],
-        )
+        log_file_path = PRECOMMIT_CONFIG_MAIN_PATH.parent / "pre_commit_hooks.log"
 
-        if process.stdout:
-            logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
-        if process.stderr:
-            logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
-        return process.returncode
+        # Open the log file in append mode
+        with log_file_path.open("a") as log_file:
+            # Start the pre-commit process
+            process = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    "pre_commit",
+                    "run",
+                    "-a",
+                    hook_id,
+                ],
+                env=precommit_env,
+                cwd=CONTENT_PATH,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+            )
 
+            # Stream output in real-time
+            for line in iter(process.stdout.readline, ""):
+                print(line, end="")  # Print each line to the console
+                log_file.write(line)  # Write each line to the log file
+                log_file.flush()  # Ensure immediate write to the file
+
+            # Wait for process to finish and close stdout
+            process.stdout.close()
+            return_code = process.wait()
+
+            # Log completion based on return code
+            if return_code != 0:
+                logger.error(f"Hook {hook_id} failed with return code {return_code}")
+            else:
+                logger.info(f"Hook {hook_id} completed successfully.")
+
+        return return_code
     @staticmethod
     def _run_pre_commit_process(
         path: Path,
@@ -169,48 +193,27 @@ class PreCommitRunner:
         if command is None:
             command = ["run", "-a"]
 
-        try:
-            result = subprocess.run(
-                list(
-                    filter(
-                        None,
-                        [
-                            sys.executable,
-                            "-m",
-                            "pre_commit",
-                            *command,
-                            "-c",
-                            str(path),
-                            "-v" if verbose and "run" in command else "",
-                        ],
-                    )
-                ),
-                env=precommit_env,
-                cwd=CONTENT_PATH,
-                stdout=stdout,
-                stderr=stdout,
-                universal_newlines=True,
-            )
-
-            # Check if terminated by a signal
-            if result.returncode >= 128:
-                signal_num = result.returncode - 128
-                if signal_num == 9:
-                    print("Process was killed with SIGKILL (9)")
-                elif signal_num == 15:
-                    print("Process was terminated with SIGTERM (15)")
-                else:
-                    print(f"Process was terminated with signal {signal_num}")
-            return result
-        except subprocess.CalledProcessError as e:
-            print(f"Command failed with return code {e.returncode}")
-            return None
-        except FileNotFoundError as e:
-            print(f"Command failed: {e}")
-            return None
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            return None
+        return subprocess.run(
+            list(
+                filter(
+                    None,
+                    [
+                        sys.executable,
+                        "-m",
+                        "pre_commit",
+                        *command,
+                        "-c",
+                        str(path),
+                        "-v" if verbose and "run" in command else "",
+                    ],
+                )
+            ),
+            env=precommit_env,
+            cwd=CONTENT_PATH,
+            stdout=stdout,
+            stderr=stdout,
+            universal_newlines=True,
+        )
 
     @staticmethod
     def run(

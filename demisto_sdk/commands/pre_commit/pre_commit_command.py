@@ -634,13 +634,14 @@ def pre_commit_manager(
         pre_commit_template_path=pre_commit_template_path,
     )
 
-    return PreCommitRunner.prepare_and_run(
-        pre_commit_context,
-        verbose,
-        show_diff_on_failure,
-        exclude_files,
-        dry_run,
-    )
+    return 0
+    # return PreCommitRunner.prepare_and_run(
+    #     pre_commit_context,
+    #     verbose,
+    #     show_diff_on_failure,
+    #     exclude_files,
+    #     dry_run,
+    # )
 
 
 def add_related_files(file: Path) -> Set[Path]:

@@ -149,6 +149,7 @@ class PreCommitRunner:
             "-m",
             "pre_commit",
             "run",
+            "--verbose",
             hook_id,
         ]
 

@@ -112,13 +112,11 @@ class PreCommitRunner:
             SystemHook(**hooks[hook_id], context=pre_commit_context).prepare_hook()
             logger.debug(f"Prepared system hook {hook_id} successfully")
 
-
     @staticmethod
     def run_hook(
             hook_id: str,
             precommit_env: dict,
             verbose: bool = False,
-            stdout: Optional[int] = subprocess.PIPE,
     ) -> int:
         """Runs a pre-commit hook and writes output to console and log file in real-time.
 
@@ -126,50 +124,57 @@ class PreCommitRunner:
             hook_id (str): The hook ID to run.
             precommit_env (dict): The pre-commit environment variables.
             verbose (bool, optional): Whether to print verbose output. Defaults to False.
-            stdout (Optional[int], optional): The way to handle stdout. Defaults to subprocess.PIPE.
 
         Returns:
             int: Return code - 0 if the hook passed, 1 if it failed.
         """
         logger.debug(f"Running hook {hook_id}")
-        log_file_path = PRECOMMIT_CONFIG_MAIN_PATH.parent / "pre_commit_hooks.log"
+        log_file_path = Path('/tmp/pre-commit') / f"pre_commit_hook-{hook_id}.log"
 
-        # Open the log file in append mode
-        with log_file_path.open("a") as log_file:
-            # Start the pre-commit process
-            process = subprocess.Popen(
-                [
-                    sys.executable,
-                    "-m",
-                    "pre_commit",
-                    "run",
-                    "-a",
-                    hook_id,
-                ],
-                env=precommit_env,
-                cwd=CONTENT_PATH,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-            )
+        command = [
+            sys.executable,
+            "-m",
+            "pre_commit",
+            "run",
+            "-a",
+            hook_id,
+        ]
 
-            # Stream output in real-time
-            for line in iter(process.stdout.readline, ""):
-                print(line, end="")  # Print each line to the console
-                log_file.write(line)  # Write each line to the log file
-                log_file.flush()  # Ensure immediate write to the file
+        try:
+            # Open log file for appending
+            with log_file_path.open("a") as log_file:
+                # Start the process
+                process = subprocess.Popen(
+                    command,
+                    env=precommit_env,
+                    cwd=CONTENT_PATH,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                )
 
-            # Wait for process to finish and close stdout
-            process.stdout.close()
-            return_code = process.wait()
+                # Read and process output line by line
+                for line in iter(process.stdout.readline, ""):
+                    print(line, end="")  # Print to console in real-time
+                    log_file.write(line)  # Write to the log file
+                    log_file.flush()  # Ensure immediate write to disk
 
-            # Log completion based on return code
-            if return_code != 0:
-                logger.error(f"Hook {hook_id} failed with return code {return_code}")
-            else:
-                logger.info(f"Hook {hook_id} completed successfully.")
+                # Wait for the process to complete
+                process.stdout.close()
+                return_code = process.wait()
 
-        return return_code
+                # Log the result
+                if return_code != 0:
+                    logger.error(f"Hook {hook_id} failed with return code {return_code}")
+                else:
+                    logger.info(f"Hook {hook_id} completed successfully.")
+
+                return return_code
+
+        except Exception as e:
+            logger.error(f"Error running hook {hook_id}: {e}")
+            return 1
+
     @staticmethod
     def _run_pre_commit_process(
         path: Path,

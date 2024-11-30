@@ -168,27 +168,49 @@ class PreCommitRunner:
         """
         if command is None:
             command = ["run", "-a"]
-        return subprocess.run(
-            list(
-                filter(
-                    None,
-                    [
-                        sys.executable,
-                        "-m",
-                        "pre_commit",
-                        *command,
-                        "-c",
-                        str(path),
-                        "-v" if verbose and "run" in command else "",
-                    ],
-                )
-            ),
-            env=precommit_env,
-            cwd=CONTENT_PATH,
-            stdout=stdout,
-            stderr=stdout,
-            universal_newlines=True,
-        )
+
+        try:
+            result = subprocess.run(
+                list(
+                    filter(
+                        None,
+                        [
+                            sys.executable,
+                            "-m",
+                            "pre_commit",
+                            *command,
+                            "-c",
+                            str(path),
+                            "-v" if verbose and "run" in command else "",
+                        ],
+                    )
+                ),
+                env=precommit_env,
+                cwd="CONTENT_PATH",
+                stdout=stdout,
+                stderr=stdout,
+                universal_newlines=True,
+            )
+
+            # Check if terminated by a signal
+            if result.returncode >= 128:
+                signal_num = result.returncode - 128
+                if signal_num == 9:
+                    print("Process was killed with SIGKILL (9)")
+                elif signal_num == 15:
+                    print("Process was terminated with SIGTERM (15)")
+                else:
+                    print(f"Process was terminated with signal {signal_num}")
+            return result
+        except subprocess.CalledProcessError as e:
+            print(f"Command failed with return code {e.returncode}")
+            return None
+        except FileNotFoundError as e:
+            print(f"Command failed: {e}")
+            return None
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return None
 
     @staticmethod
     def run(

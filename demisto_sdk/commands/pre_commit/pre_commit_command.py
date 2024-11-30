@@ -282,7 +282,6 @@ class PreCommitRunner:
                             hook_id,
                             precommit_env=precommit_env,
                             verbose=verbose,
-                            stdout=None,
                         )
                         for hook_id in hook_ids
                     ]

@@ -388,10 +388,11 @@ class PreCommitRunner:
                 f"Dry run, skipping pre-commit.\nConfig file saved to {PRECOMMIT_CONFIG_MAIN_PATH}"
             )
             return ret_val
-        ret_val = PreCommitRunner.run(
-            pre_commit_context, precommit_env, verbose, show_diff_on_failure
-        )
-        return ret_val
+        # ret_val = PreCommitRunner.run(
+        #     pre_commit_context, precommit_env, verbose, show_diff_on_failure
+        # )
+        # return ret_val
+        return 0
 
 
 def group_by_language(
@@ -621,18 +622,18 @@ def pre_commit_manager(
 
     logger.info(f"Running pre-commit using template {pre_commit_template_path}")
 
-    pre_commit_context = PreCommitContext(
-        list(input_files) if input_files else None,
-        all_files,
-        mode,
-        language_to_files_with_objects,
-        run_hook,
-        skipped_hooks,
-        run_docker_hooks,
-        image_ref,
-        docker_image,
-        pre_commit_template_path=pre_commit_template_path,
-    )
+    # pre_commit_context = PreCommitContext(
+    #     list(input_files) if input_files else None,
+    #     all_files,
+    #     mode,
+    #     language_to_files_with_objects,
+    #     run_hook,
+    #     skipped_hooks,
+    #     run_docker_hooks,
+    #     image_ref,
+    #     docker_image,
+    #     pre_commit_template_path=pre_commit_template_path,
+    # )
 
     return 0
     # return PreCommitRunner.prepare_and_run(

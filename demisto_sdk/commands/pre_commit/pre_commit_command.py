@@ -129,6 +129,7 @@ class PreCommitRunner:
             int: Return code - 0 if the hook passed, 1 if it failed.
         """
         logger.debug(f"Running hook {hook_id}")
+        os.makedirs(Path('/tmp/pre-commit'), exist_ok=True)
         log_file_path = Path('/tmp/pre-commit') / f"pre_commit_hook-{hook_id}.log"
 
         command = [

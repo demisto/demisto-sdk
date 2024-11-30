@@ -186,7 +186,7 @@ class PreCommitRunner:
                     )
                 ),
                 env=precommit_env,
-                cwd="CONTENT_PATH",
+                cwd=CONTENT_PATH,
                 stdout=stdout,
                 stderr=stdout,
                 universal_newlines=True,

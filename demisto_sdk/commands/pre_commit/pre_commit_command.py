@@ -95,9 +95,11 @@ class PreCommitRunner:
             else:
                 # this is used to handle the mode property correctly even for non-custom hooks which do not require
                 # special preparation
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
+                hook = PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
                     **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+                )
+                hook.parallel = False
+                hook.prepare_hook()
 
             logger.debug(f"Prepared hook {hook_id} successfully")
 
@@ -143,34 +145,33 @@ class PreCommitRunner:
 
         try:
             # Open log file for appending
-            with log_file_path.open("a") as log_file:
-                # Start the process
-                process = subprocess.Popen(
-                    command,
-                    env=precommit_env,
-                    cwd=CONTENT_PATH,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    universal_newlines=True,
-                )
+            # Start the process
+            process = subprocess.Popen(
+                command,
+                env=precommit_env,
+                cwd=CONTENT_PATH,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+            )
 
-                # Read and process output line by line
-                for line in iter(process.stdout.readline, ""):
-                    print(line, end="")  # Print to console in real-time
-                    log_file.write(line)  # Write to the log file
-                    log_file.flush()  # Ensure immediate write to disk
+            # # Read and process output line by line
+            # for line in iter(process.stdout.readline, ""):
+            #     print(line, end="")  # Print to console in real-time
+            #     log_file.write(line)  # Write to the log file
+            #     log_file.flush()  # Ensure immediate write to disk
 
-                # Wait for the process to complete
-                process.stdout.close()
-                return_code = process.wait()
+            # Wait for the process to complete
+            process.stdout.close()
+            return_code = process.wait()
 
-                # Log the result
-                if return_code != 0:
-                    logger.error(f"Hook {hook_id} failed with return code {return_code}")
-                else:
-                    logger.info(f"Hook {hook_id} completed successfully.")
+            # Log the result
+            if return_code != 0:
+                logger.error(f"Hook {hook_id} failed with return code {return_code}")
+            else:
+                logger.info(f"Hook {hook_id} completed successfully.")
 
-                return return_code
+            return return_code
 
         except Exception as e:
             logger.error(f"Error running hook {hook_id}: {e}")

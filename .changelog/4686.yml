@@ -1,0 +1,4 @@
+changes:
+- description: Fixed the demisto-sdk-nightly run-end-to-end-tests-xsoar step.
+  type: internal
+pr_number: 4686

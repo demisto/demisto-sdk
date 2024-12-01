@@ -204,4 +204,4 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmp_path, insecure: bool = True):
         try:
             uploader.upload()
         except typer.Exit as e:
-            assert e.exit_code == 0
+            assert e

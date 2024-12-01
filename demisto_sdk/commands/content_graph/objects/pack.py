@@ -76,7 +76,7 @@ if TYPE_CHECKING:
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
-
+MINIMAL_SUPPORTED_CUSTOM_UPLOAD_VERSION = Version("8.9.0")
 
 def upload_zip(
     path: Path,
@@ -98,18 +98,23 @@ def upload_zip(
             f"Uploading packs to XSOAR versions earlier than {MINIMAL_UPLOAD_SUPPORTED_VERSION} is no longer supported."
             "Use older versions of the Demisto-SDK for that (<=1.13.0)"
         )
-    server_kwargs = {"skip_verify": "true"}
+    if target_demisto_version >= MINIMAL_SUPPORTED_CUSTOM_UPLOAD_VERSION:
+        response = client.upload_custom_packs(
+            file=str(path)
+        )
+    else:
+        server_kwargs = {"skip_verify": "true"}
 
-    if (
-        skip_validations
-        and target_demisto_version >= MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION
-    ):
-        server_kwargs["skip_validation"] = "true"
+        if (
+            skip_validations
+            and target_demisto_version >= MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION
+        ):
+            server_kwargs["skip_validation"] = "true"
 
-    response = client.upload_content_packs(
-        file=str(path),
-        **server_kwargs,
-    )
+        response = client.upload_content_packs(
+            file=str(path),
+            **server_kwargs,
+        )
     if response is None:  # uploaded successfully
         return True
 

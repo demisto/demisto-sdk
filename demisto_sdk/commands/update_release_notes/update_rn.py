@@ -85,6 +85,7 @@ DEPRECATED_ARGUMENT = (
 )
 ARGUMENT_BC = "- Breaking Changes: Updated the **{command_name}** to not use the `{argument_name}` argument.\n"
 DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
+GENERAL_UPDATE_RN = "Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%."
 
 
 def get_deprecated_comment_from_desc(description: str) -> str:
@@ -371,7 +372,7 @@ def generate_deprecated_content_item_rn(
 
 
 def generate_rn_for_updated_content_items(
-    changed_content_object: Union[Integration, Script, Playbook], text
+    changed_content_object: Union[Integration, Script, Playbook]
 ):
     """Generates a release note description for updated content items.
 
@@ -390,7 +391,6 @@ def generate_rn_for_updated_content_items(
             rn_desc += deprecate_rn
         else:
             rn_desc += generate_rn_for_content_item_updates(changed_content_object)
-            rn_desc += '- %%UPDATE_RN%%\n'
     return rn_desc
 
 
@@ -1132,15 +1132,15 @@ class UpdateRN:
 
         if self.is_force:
             rn_desc = f"## {content_name}\n\n"
-            rn_desc += '- %%UPDATE_RN%%"\n'
+            rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
         else:
-            if is_new_file:
-                rn_desc = f"##### New: {content_name}\n\n"
-                type = (
+            type = (
                     RN_HEADER_BY_FILE_TYPE.get(_type, _type.value).rstrip("s").lower()
                     if _type
                     else ""
                 )
+            if is_new_file:
+                rn_desc = f"##### New: {content_name}\n\n"
                 rn_desc += NEW_RN_TEMPLATE.format(
                     type=type,
                     name=name,
@@ -1157,10 +1157,13 @@ class UpdateRN:
                     rn_desc += "- Documentation and metadata improvements.\n"
                 elif changed_content_object:
                     rn_desc += generate_rn_for_updated_content_items(
-                        changed_content_object, text
+                        changed_content_object
                     )
-        if text:
-            rn_desc += f'-{text}\n'
+                rn_desc += f'{text or GENERAL_UPDATE_RN.format(
+                    name=name or "%%UPDATE_CONTENT_ITEM_NAME%%",
+                    type=type or "%%UPDATE_CONTENT_ITEM_TYPE%%"
+                )
+                }'
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n\n"

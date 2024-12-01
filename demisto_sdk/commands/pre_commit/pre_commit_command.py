@@ -395,517 +395,144 @@ class PreCommitRunner:
         return 0
 
 
-def group_integrations_and_infra(files: Set[Path]) -> Tuple[defaultdict, List[Path]]:
-    integrations_scripts_mapping = defaultdict(set)
-    infra_files = []
-    for file in files:
-        if file.is_dir():
-            continue
-        if is_integration_or_script(file):
-            process_integration_file(file, integrations_scripts_mapping)
-        else:
-            infra_files.append(file)
-    return integrations_scripts_mapping, infra_files
 
-
-def is_integration_or_script(file: Path) -> bool:
-    return (
-        set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}
-        and file.parts[0] == PACKS_FOLDER
-    )
-
-
-def process_integration_file(file: Path, mapping: defaultdict) -> None:
-    find_path_index = next(
-        (i + 1 for i, part in enumerate(file.parts) if part in {INTEGRATIONS_DIR, SCRIPTS_DIR}),
-        None,
-    )
-    if not find_path_index:
-        raise Exception(f"Could not find Integrations/Scripts path for {file}")
-    code_file_path = CONTENT_PATH / Path(*file.parts[:find_path_index + 1])
-    if code_file_path.is_dir():
-        mapping[code_file_path].add(file)
-
-
-def parse_integrations_scripts(mapping: defaultdict) -> Set[IntegrationScript]:
-    logger.debug("Pre-Commit: Starting to parse integrations/scripts")
-    integrations_scripts = set()
-    for paths_chunk in more_itertools.chunked_even(mapping.keys(), INTEGRATIONS_BATCH):
-        with multiprocessing.Pool(processes=cpu_count()) as pool:
-            content_items = pool.map(BaseContent.from_path, paths_chunk)
-            integrations_scripts.update(
-                item for item in content_items if isinstance(item, IntegrationScript)
-            )
-    logger.debug("Pre-Commit: Finished parsing integrations/scripts")
-    return integrations_scripts
-
-
-def handle_api_modules(
-    integrations_scripts: Set[IntegrationScript], mapping: defaultdict
-) -> Tuple[Set[Path], List[IntegrationScript]]:
-    exclude_scripts = set()
-    api_modules = [
-        script for script in integrations_scripts
-        if script.in_pack and script.in_pack.object_id == API_MODULES_PACK
-    ]
-    if api_modules:
-        handle_api_modules_dependencies(api_modules, mapping, integrations_scripts)
-    exclude_deprecated_scripts(integrations_scripts, exclude_scripts)
-    return exclude_scripts, api_modules
-
-
-def handle_api_modules_dependencies(
-    api_modules: List[IntegrationScript], mapping: defaultdict, scripts: Set[IntegrationScript]
-) -> None:
-    logger.debug("Pre-Commit: Handling API Modules")
-    with ContentGraphInterface() as graph:
-        update_content_graph(graph)
-        api_modules = graph.search(object_id=[module.object_id for module in api_modules])
-    for module in api_modules:
-        for user in module.imported_by:
-            scripts.add(user)
-            add_related_files_to_mapping(module, user, mapping)
-    logger.debug("Pre-Commit: Finished handling API Modules")
-
-
-def add_related_files_to_mapping(module, user, mapping):
-    mapping[user.path.parent].update(
-        add_related_files(module.path.relative_to(CONTENT_PATH))
-        | add_related_files(user.path.relative_to(CONTENT_PATH))
-    )
-
-
-def exclude_deprecated_scripts(
-    scripts: Set[IntegrationScript], exclude_scripts: Set[Path]
-) -> None:
-    for script in scripts:
-        if script.deprecated:
-            exclude_scripts.add(
-                script.path.parent.relative_to(CONTENT_PATH) if not script.is_unified else
-                script.path.relative_to(CONTENT_PATH)
-            )
-
-
-def group_files_by_language(
-    scripts: Set[IntegrationScript], mapping: defaultdict, excluded: Set[Path]
-) -> Dict[str, Set]:
-    language_to_files = defaultdict(set)
-    for script in scripts:
-        if script.in_pack and script.in_pack.object_id == API_MODULES_PACK:
-            continue
-        language = determine_language(script)
-        language_to_files[language].update(get_files_for_script(script, mapping))
-    return language_to_files
-
-
-def determine_language(script: IntegrationScript) -> str:
-    return (
-        f"{Version(script.python_version).major}.{Version(script.python_version).minor}"
-        if script.python_version else script.type
-    )
-
-
-def get_files_for_script(script: IntegrationScript, mapping: defaultdict) -> Set[Tuple[Path, IntegrationScript]]:
-    return {
-        (path, script) for path in mapping[script.path.parent]
-    }.union(
-        {(script.path.relative_to(CONTENT_PATH), script)}
-    )
-
-
-def add_infra_files_to_language_group(infra_files: List[Path], language_to_files: Dict[str, Set]) -> None:
-    if infra_files:
-        language_to_files[DEFAULT_PYTHON_VERSION].update(
-            [(infra, None) for infra in infra_files]
-        )
-
-
-def log_excluded_scripts(excluded: Set[Path]) -> None:
-    if excluded:
-        logger.info(f"Skipping deprecated integrations/scripts: {join_files(excluded, ', ')}")
-
-
-def parse_files(files: Set[Path]) -> Tuple[Dict[Path, Set[Path]], List[Path]]:
-    """Parses the given files, separating integration/script files and infrastructure files.
+def group_by_language(
+    files: Set[Path],
+) -> Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
+    """This function groups the files to run pre-commit on by the python version.
 
     Args:
-        files (Set[Path]): Set of file paths to process.
+        files (Set[Path]): files to run pre-commit on.
+
+    Raises:
+        Exception: If invalid files were given.
 
     Returns:
-        Tuple[Dict[Path, Set[Path]], List[Path]]:
-            - A mapping from code file paths to their corresponding file paths.
-            - A list of infrastructure files.
+        Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
+        The files grouped by their python version, and a set of excluded paths,
+        The excluded files (due to deprecation).
     """
-    logger.debug("Parsing files to separate integration/script files and infrastructure files.")
     integrations_scripts_mapping = defaultdict(set)
     infra_files = []
+    api_modules = []
     for file in files:
         if file.is_dir():
-            logger.debug(f"Skipping directory: {file}")
             continue
         if (
             set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}
-            and file.parts[0] == PACKS_FOLDER
+            and file.parts[0] == PACKS_FOLDER  # this is relative path so it works
         ):
             find_path_index = (
                 i + 1
                 for i, part in enumerate(file.parts)
                 if part in {INTEGRATIONS_DIR, SCRIPTS_DIR}
             )
-            try:
-                index = next(find_path_index)
-            except StopIteration:
-                logger.error(f"Could not find Integrations/Scripts path for {file}")
+            if not find_path_index:
                 raise Exception(f"Could not find Integrations/Scripts path for {file}")
             code_file_path = CONTENT_PATH / Path(
-                *file.parts[: index + 1]
+                *file.parts[: next(find_path_index) + 1]
             )
             if not code_file_path.is_dir():
-                logger.debug(f"Code file path is not a directory: {code_file_path}")
                 continue
             integrations_scripts_mapping[code_file_path].add(file)
-            logger.debug(f"Added file to integrations_scripts_mapping: {file}")
         else:
             infra_files.append(file)
-            logger.debug(f"Added file to infra_files: {file}")
-    logger.debug("Finished parsing files.")
-    return integrations_scripts_mapping, infra_files
 
-def get_integration_scripts(integrations_scripts_mapping: Dict[Path, Set[Path]]) -> Set[IntegrationScript]:
-    """Parses IntegrationScript objects from the given code file paths.
-
-    Args:
-        integrations_scripts_mapping (Dict[Path, Set[Path]]): Mapping of code file paths to file paths.
-
-    Returns:
-        Set[IntegrationScript]: Set of IntegrationScript objects parsed from the code file paths.
-    """
-    integrations_scripts = set()
-    total_paths = len(integrations_scripts_mapping)
-    logger.debug(f"Starting to parse {total_paths} integrations and scripts.")
-    for batch in more_itertools.chunked_even(
+    language_to_files: Dict[str, Set] = defaultdict(set)
+    integrations_scripts: Set[IntegrationScript] = set()
+    logger.debug("Pre-Commit: Starting to parse all integrations and scripts")
+    for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
-        logger.debug(f"Processing batch of {len(batch)} integration/script paths.")
         with multiprocessing.Pool(processes=cpu_count()) as pool:
-            content_items = pool.map(BaseContent.from_path, batch)
+            content_items = pool.map(BaseContent.from_path, integration_script_paths)
             for content_item in content_items:
-                if content_item and isinstance(content_item, IntegrationScript):
-                    integrations_scripts.add(content_item)
-                    logger.debug(f"Added IntegrationScript: {content_item.object_id}")
-                else:
-                    logger.debug("Skipped non-IntegrationScript content item.")
-    logger.debug(f"Finished parsing integrations and scripts. Total parsed: {len(integrations_scripts)}")
-    return integrations_scripts
-
-def collect_api_modules(integrations_scripts: Set[IntegrationScript]) -> List[IntegrationScript]:
-    """Collects API modules from the given integrations_scripts.
-
-    Args:
-        integrations_scripts (Set[IntegrationScript]): Set of IntegrationScript objects.
-
-    Returns:
-        List[IntegrationScript]: List of API module IntegrationScripts.
-    """
-    api_modules = []
-    logger.debug("Collecting API modules from integrations_scripts.")
-    for integration_script in integrations_scripts:
-        if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
-            api_modules.append(integration_script)
-            logger.debug(f"Collected API module: {integration_script.object_id}")
-    logger.debug(f"Total API modules collected: {len(api_modules)}")
-    return api_modules
-
-def handle_api_modules(
-    api_modules: List[IntegrationScript],
-    integrations_scripts_mapping: Dict[Path, Set[Path]],
-    integrations_scripts: Set[IntegrationScript]
-) -> None:
-    """Handles API modules by adding them to integrations_scripts and updating the mapping.
-
-    Args:
-        api_modules (List[IntegrationScript]): List of API module IntegrationScripts.
-        integrations_scripts_mapping (Dict[Path, Set[Path]]): Mapping of code file paths to file paths.
-        integrations_scripts (Set[IntegrationScript]): Set of IntegrationScript objects.
-    """
-    if api_modules:
-        logger.debug("Starting to handle API Modules.")
-        with ContentGraphInterface() as graph:
-            logger.debug("Updating content graph.")
-            update_content_graph(graph)
-            api_module_scripts: List[Script] = graph.search(
-                object_id=[api_module.object_id for api_module in api_modules]
-            )
-        logger.debug(f"Found {len(api_module_scripts)} API module scripts in the graph.")
-        for api_module in api_module_scripts:
-            assert isinstance(api_module, Script)
-            logger.debug(f"Processing API module script: {api_module.object_id}")
-            for imported_by in api_module.imported_by:
-                logger.debug(f"API module {api_module.object_id} is imported by {imported_by.object_id}")
-                integrations_scripts.add(imported_by)
-                integrations_scripts_mapping[imported_by.path.parent].update(
-                    add_related_files(
-                        api_module.path
-                        if not api_module.path.is_absolute()
-                        else api_module.path.relative_to(CONTENT_PATH)
-                    )
-                    | add_related_files(
-                        imported_by.path
-                        if not imported_by.path.is_absolute()
-                        else imported_by.path.relative_to(CONTENT_PATH)
-                    )
-                )
-        logger.debug("Finished handling API Modules.")
-
-def process_integration_scripts(
-    integrations_scripts: Set[IntegrationScript],
-    integrations_scripts_mapping: Dict[Path, Set[Path]]
-) -> Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
-    """Processes integration scripts, grouping them by language and handling exclusions.
-
-    Args:
-        integrations_scripts (Set[IntegrationScript]): Set of IntegrationScript objects.
-        integrations_scripts_mapping (Dict[Path, Set[Path]]): Mapping of code file paths to file paths.
-
-    Returns:
-        Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
-            - The files grouped by their python version.
-            - A set of excluded paths.
-    """
-    language_to_files: Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]] = defaultdict(set)
+                if not content_item or not isinstance(content_item, IntegrationScript):
+                    continue
+                # content-item is a script/integration
+                integrations_scripts.add(content_item)
+    logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
     exclude_integration_script = set()
-    logger.debug("Processing integration scripts to group by language and handle exclusions.")
-    for integration_script in integrations_scripts:
-        if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
-            logger.debug(f"Skipping API module integration script: {integration_script.object_id}")
-            continue
-        if integration_script.deprecated:
-            logger.debug(f"Excluding deprecated integration/script: {integration_script.object_id}")
-            if integration_script.is_unified:
-                exclude_integration_script.add(
-                    integration_script.path.relative_to(CONTENT_PATH)
-                )
-            else:
-                exclude_integration_script.add(
-                    integration_script.path.parent.relative_to(CONTENT_PATH)
-                )
-            continue
-        code_file_path = integration_script.path.parent
-        if python_version := integration_script.python_version:
-            version = Version(python_version)
-            language = f"{version.major}.{version.minor}"
-            logger.debug(f"Integration script {integration_script.object_id} uses Python {language}")
-        else:
-            language = integration_script.type
-            logger.debug(f"Integration script {integration_script.object_id} type is {language}")
-        language_to_files[language].update(
-            {
-                (path, integration_script)
-                for path in integrations_scripts_mapping[code_file_path]
-            },
-            {
-                (
-                    integration_script.path.relative_to(CONTENT_PATH)
-                    if integration_script.path.is_absolute()
-                    else integration_script.path,
-                    integration_script,
-                )
-            },
-        )
-        logger.debug(f"Added integration script {integration_script.object_id} to language group {language}")
-    logger.debug(f"Finished processing integration scripts. Languages found: {list(language_to_files.keys())}")
-    return language_to_files, exclude_integration_script
+    # for integration_script in integrations_scripts:
+    #     if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
+    #         # add api modules to the api_modules list, we will handle them later
+    #         api_modules.append(integration_script)
+    #         continue
+    #
+    # if api_modules:
+    #     logger.debug("Pre-Commit: Starting to handle API Modules")
+    #     with ContentGraphInterface() as graph:
+    #         update_content_graph(graph)
+    #         api_modules: List[Script] = graph.search(  # type: ignore[no-redef]
+    #             object_id=[api_module.object_id for api_module in api_modules]
+    #         )
+    #     for api_module in api_modules:
+    #         assert isinstance(api_module, Script)
+    #         for imported_by in api_module.imported_by:
+    #             # we need to add the api module for each integration that uses it, so it will execute the api module check
+    #             integrations_scripts.add(imported_by)
+    #             integrations_scripts_mapping[imported_by.path.parent].update(
+    #                 add_related_files(
+    #                     api_module.path
+    #                     if not api_module.path.is_absolute()
+    #                     else api_module.path.relative_to(CONTENT_PATH)
+    #                 )
+    #                 | add_related_files(
+    #                     imported_by.path
+    #                     if not imported_by.path.is_absolute()
+    #                     else imported_by.path.relative_to(CONTENT_PATH)
+    #                 )
+    #             )
+    #     logger.debug("Pre-Commit: Finished handling API Modules")
+    # for integration_script in integrations_scripts:
+    #     if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
+    #         # we dont need to lint them individually, they will be run with the integrations that uses them
+    #         continue
+    #     if integration_script.deprecated:
+    #         # we exclude deprecate integrations and scripts from pre-commit.
+    #         # the reason we maintain this set is for performance when running with --all-files. It is much faster to exclude.
+    #         if integration_script.is_unified:
+    #             exclude_integration_script.add(
+    #                 integration_script.path.relative_to(CONTENT_PATH)
+    #             )
+    #         else:
+    #             exclude_integration_script.add(
+    #                 integration_script.path.parent.relative_to(CONTENT_PATH)
+    #             )
+    #         continue
+    #
+    #     code_file_path = integration_script.path.parent
+    #     if python_version := integration_script.python_version:
+    #         version = Version(python_version)
+    #         language = f"{version.major}.{version.minor}"
+    #     else:
+    #         language = integration_script.type
+    #     language_to_files[language].update(
+    #         {
+    #             (path, integration_script)
+    #             for path in integrations_scripts_mapping[code_file_path]
+    #         },
+    #         {
+    #             (
+    #                 integration_script.path.relative_to(CONTENT_PATH)
+    #                 if integration_script.path.is_absolute()
+    #                 else integration_script.path,
+    #                 integration_script,
+    #             )
+    #         },
+    #     )
+    #
+    # if infra_files:
+    #     language_to_files[DEFAULT_PYTHON_VERSION].update(
+    #         [(infra, None) for infra in infra_files]
+    #     )
 
-def group_by_language(
-    files: Set[Path],
-) -> Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
-    """Groups the files to run pre-commit on by their Python version.
-
-    Args:
-        files (Set[Path]): Files to run pre-commit on.
-
-    Raises:
-        Exception: If invalid files are given.
-
-    Returns:
-        Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
-            - The files grouped by their Python version.
-            - A set of excluded paths due to deprecation.
-    """
-    logger.info("Starting group_by_language function.")
-    # Step 1: Parse files into mappings and infra files
-    integrations_scripts_mapping, infra_files = parse_files(files)
-
-    # Step 2: Get IntegrationScript objects
-    integrations_scripts = get_integration_scripts(integrations_scripts_mapping)
-
-    # Step 3: Collect API modules and remove them from the main set
-    api_modules = collect_api_modules(integrations_scripts)
-    integrations_scripts -= set(api_modules)
-    logger.debug(f"Collected {len(api_modules)} API modules.")
-
-    # Step 4: Handle API modules, which may update the integrations_scripts and mappings
-    handle_api_modules(api_modules, integrations_scripts_mapping, integrations_scripts)
-
-    # Step 5: Process integration scripts, excluding deprecated ones and grouping by language
-    language_to_files, exclude_integration_script = process_integration_scripts(
-        integrations_scripts, integrations_scripts_mapping
-    )
-
-    # Step 6: Add infrastructure files to the default Python version group
-    if infra_files:
-        logger.debug(f"Adding {len(infra_files)} infrastructure files to default Python version group.")
-        language_to_files[DEFAULT_PYTHON_VERSION].update(
-            [(infra, None) for infra in infra_files]
-        )
-
-    # Step 7: Log excluded files due to deprecation
     if exclude_integration_script:
         logger.info(
             f"Skipping deprecated integrations or scripts: {join_files(exclude_integration_script, ', ')}"
         )
-
-    logger.info("Finished group_by_language function.")
-    # Return the final grouped files and any excluded files
     return language_to_files, exclude_integration_script
 
-# def group_by_language(
-#     files: Set[Path],
-# ) -> Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
-#     """This function groups the files to run pre-commit on by the python version.
-#
-#     Args:
-#         files (Set[Path]): files to run pre-commit on.
-#
-#     Raises:
-#         Exception: If invalid files were given.
-#
-#     Returns:
-#         Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
-#         The files grouped by their python version, and a set of excluded paths,
-#         The excluded files (due to deprecation).
-#     """
-#     integrations_scripts_mapping = defaultdict(set)
-#     infra_files = []
-#     api_modules = []
-#     for file in files:
-#         if file.is_dir():
-#             continue
-#         if (
-#             set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}
-#             and file.parts[0] == PACKS_FOLDER  # this is relative path so it works
-#         ):
-#             find_path_index = (
-#                 i + 1
-#                 for i, part in enumerate(file.parts)
-#                 if part in {INTEGRATIONS_DIR, SCRIPTS_DIR}
-#             )
-#             if not find_path_index:
-#                 raise Exception(f"Could not find Integrations/Scripts path for {file}")
-#             code_file_path = CONTENT_PATH / Path(
-#                 *file.parts[: next(find_path_index) + 1]
-#             )
-#             if not code_file_path.is_dir():
-#                 continue
-#             integrations_scripts_mapping[code_file_path].add(file)
-#         else:
-#             infra_files.append(file)
-#
-#     language_to_files: Dict[str, Set] = defaultdict(set)
-#     integrations_scripts: Set[IntegrationScript] = set()
-#     logger.debug("Pre-Commit: Starting to parse all integrations and scripts")
-#     for integration_script_paths in more_itertools.chunked_even(
-#         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
-#     ):
-#         with multiprocessing.Pool(processes=cpu_count()) as pool:
-#             content_items = pool.map(BaseContent.from_path, integration_script_paths)
-#             for content_item in content_items:
-#                 if not content_item or not isinstance(content_item, IntegrationScript):
-#                     continue
-#                 # content-item is a script/integration
-#                 integrations_scripts.add(content_item)
-#     logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
-#     exclude_integration_script = set()
-#     for integration_script in integrations_scripts:
-#         if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
-#             # add api modules to the api_modules list, we will handle them later
-#             api_modules.append(integration_script)
-#             continue
-#
-#     if api_modules:
-#         logger.debug("Pre-Commit: Starting to handle API Modules")
-#         with ContentGraphInterface() as graph:
-#             update_content_graph(graph)
-#             api_modules: List[Script] = graph.search(  # type: ignore[no-redef]
-#                 object_id=[api_module.object_id for api_module in api_modules]
-#             )
-#         for api_module in api_modules:
-#             assert isinstance(api_module, Script)
-#             for imported_by in api_module.imported_by:
-#                 # we need to add the api module for each integration that uses it, so it will execute the api module check
-#                 integrations_scripts.add(imported_by)
-#                 integrations_scripts_mapping[imported_by.path.parent].update(
-#                     add_related_files(
-#                         api_module.path
-#                         if not api_module.path.is_absolute()
-#                         else api_module.path.relative_to(CONTENT_PATH)
-#                     )
-#                     | add_related_files(
-#                         imported_by.path
-#                         if not imported_by.path.is_absolute()
-#                         else imported_by.path.relative_to(CONTENT_PATH)
-#                     )
-#                 )
-#         logger.debug("Pre-Commit: Finished handling API Modules")
-#     for integration_script in integrations_scripts:
-#         if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
-#             # we dont need to lint them individually, they will be run with the integrations that uses them
-#             continue
-#         if integration_script.deprecated:
-#             # we exclude deprecate integrations and scripts from pre-commit.
-#             # the reason we maintain this set is for performance when running with --all-files. It is much faster to exclude.
-#             if integration_script.is_unified:
-#                 exclude_integration_script.add(
-#                     integration_script.path.relative_to(CONTENT_PATH)
-#                 )
-#             else:
-#                 exclude_integration_script.add(
-#                     integration_script.path.parent.relative_to(CONTENT_PATH)
-#                 )
-#             continue
-#
-#         code_file_path = integration_script.path.parent
-#         if python_version := integration_script.python_version:
-#             version = Version(python_version)
-#             language = f"{version.major}.{version.minor}"
-#         else:
-#             language = integration_script.type
-#         language_to_files[language].update(
-#             {
-#                 (path, integration_script)
-#                 for path in integrations_scripts_mapping[code_file_path]
-#             },
-#             {
-#                 (
-#                     integration_script.path.relative_to(CONTENT_PATH)
-#                     if integration_script.path.is_absolute()
-#                     else integration_script.path,
-#                     integration_script,
-#                 )
-#             },
-#         )
-#
-#     if infra_files:
-#         language_to_files[DEFAULT_PYTHON_VERSION].update(
-#             [(infra, None) for infra in infra_files]
-#         )
-#
-#     if exclude_integration_script:
-#         logger.info(
-#             f"Skipping deprecated integrations or scripts: {join_files(exclude_integration_script, ', ')}"
-#         )
-#     return language_to_files, exclude_integration_script
-#
 
 def pre_commit_manager(
     input_files: Optional[Iterable[Path]] = None,

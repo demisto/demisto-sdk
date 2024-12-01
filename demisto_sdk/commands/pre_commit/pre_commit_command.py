@@ -592,11 +592,11 @@ def pre_commit_manager(
         all_files=all_files,
         prev_version=prev_version,
     )
-    # if not files_to_run:
-    #     logger.info("No files were changed, skipping pre-commit.")
-    #     return 0
+    if not files_to_run:
+        logger.info("No files were changed, skipping pre-commit.")
+        return 0
     #
-    # language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
+    language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
     # if not language_to_files_with_objects:
     #     logger.info("No files to run pre-commit on, skipping pre-commit.")
     #     return 0

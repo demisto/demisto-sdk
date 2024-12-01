@@ -592,37 +592,37 @@ def pre_commit_manager(
         all_files=all_files,
         prev_version=prev_version,
     )
-    if not files_to_run:
-        logger.info("No files were changed, skipping pre-commit.")
-        return 0
-
-    language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
-    if not language_to_files_with_objects:
-        logger.info("No files to run pre-commit on, skipping pre-commit.")
-        return 0
-
-    skipped_hooks: set = SKIPPED_HOOKS
-    skipped_hooks.update(set(skip_hooks or ()))
-    if validate and "validate" in skipped_hooks:
-        skipped_hooks.remove("validate")
-    if format and "format" in skipped_hooks:
-        skipped_hooks.remove("format")
-    if secrets and "secrets" in skipped_hooks:
-        skipped_hooks.remove("secrets")
-
-    if not pre_commit_template_path:
-        if PRECOMMIT_TEMPLATE_PATH.exists():
-            pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
-        else:
-            pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
-            
-    if pre_commit_template_path and not pre_commit_template_path.exists():
-        logger.error(
-            f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
-        )
-        return 1
-
-    logger.info(f"Running pre-commit using template {pre_commit_template_path}")
+    # if not files_to_run:
+    #     logger.info("No files were changed, skipping pre-commit.")
+    #     return 0
+    #
+    # language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
+    # if not language_to_files_with_objects:
+    #     logger.info("No files to run pre-commit on, skipping pre-commit.")
+    #     return 0
+    #
+    # skipped_hooks: set = SKIPPED_HOOKS
+    # skipped_hooks.update(set(skip_hooks or ()))
+    # if validate and "validate" in skipped_hooks:
+    #     skipped_hooks.remove("validate")
+    # if format and "format" in skipped_hooks:
+    #     skipped_hooks.remove("format")
+    # if secrets and "secrets" in skipped_hooks:
+    #     skipped_hooks.remove("secrets")
+    #
+    # if not pre_commit_template_path:
+    #     if PRECOMMIT_TEMPLATE_PATH.exists():
+    #         pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
+    #     else:
+    #         pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
+    #
+    # if pre_commit_template_path and not pre_commit_template_path.exists():
+    #     logger.error(
+    #         f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
+    #     )
+    #     return 1
+    #
+    # logger.info(f"Running pre-commit using template {pre_commit_template_path}")
 
     # pre_commit_context = PreCommitContext(
     #     list(input_files) if input_files else None,

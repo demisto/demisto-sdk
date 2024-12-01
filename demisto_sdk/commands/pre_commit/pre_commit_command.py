@@ -576,6 +576,7 @@ def pre_commit_manager(
     Returns:
         int: Return code of pre-commit.
     """
+    logger.debug(f'pre_commit_manager pre-commit 1')
     # We have imports to this module, however it does not exists in the repo.
     (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
@@ -614,6 +615,7 @@ def pre_commit_manager(
             pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
         else:
             pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
+            
     if pre_commit_template_path and not pre_commit_template_path.exists():
         logger.error(
             f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"

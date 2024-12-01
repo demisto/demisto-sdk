@@ -42,7 +42,9 @@ def zip_packs(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
+    """
+    Creates a zip file that can be uploaded to Cortex XSOAR via the Upload pack button in the Cortex XSOAR Marketplace or directly with the -u flag in this command.
+    """
     from demisto_sdk.commands.upload.uploader import Uploader
     from demisto_sdk.commands.zip_packs.packs_zipper import (
         EX_FAIL,

@@ -1,12 +1,17 @@
-# `generate-modeling-rules`
+## generate-modeling-rules
 
-**Usage**:
+### Overview
+This command parses the raw events and the one data model to extract the field types.
+The command will prepare a draft of the .yml, .json, and .xif file with the basic type conversion needed.
+Now supports:
+- to_string
+- to_number
+- create_array
+- json_extract_array
+- json_extract_scalar
+- coalesce
 
-```console
-$ generate-modeling-rules [OPTIONS]
-```
-
-**Options**:
+### Options
 
 * `-m, --mapping PATH`: The path to a csv or tsv file containing the mapping for the modeling rules.  [required]
 * `-re, --raw_event PATH`: The path to a raw event from the API call in a JSON format.  [required]
@@ -36,16 +41,3 @@ will be specified by event.time.UTC in the mapping file.
 ***Coalesce***
 To specify 2 fields that map to the same xdm one data model rule uses `|`.
 For example, under the `Raw Event Path` column, with ipv4 and ip mapped to the same xdm field `ipv4 | ip`.
-
-
-**Command capabilities**
-
-This command parses the raw events and the one data model to extract the field types.
-The command will prepare a draft of the .yml, .json, and .xif file with the basic type conversion needed.
-Now supports:
-- to_string
-- to_number
-- create_array
-- json_extract_array
-- json_extract_scalar
-- coalesce

@@ -114,7 +114,11 @@ def generate_docs(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    """Generate documentation for integration, playbook, or script from a YAML file."""
+    """Generates a `README` file for your integration, script or playbook. Used to create documentation files for Cortex XSOAR.
+
+    This command creates a new README.md file in the same directory as the entity on which it ran, unless otherwise specified using the -o flag.
+    To generate command examples, set up the required environment variables prior to running this command in order to establish a connection between the Demisto SDK and the server, as well as create a file containing command examples to be run for the documentation.
+    >Note: This command is not supported in Cortex XSIAM."""
     try:
         update_command_args_from_config_file("generate-docs", ctx.params)
         input_path_str: str = ctx.params.get("input", "")

@@ -67,8 +67,9 @@ def generate_outputs(
     ),
 ):
     """
-    Auto-generates YAML for a command from the JSON result of the relevant API call.
-    You can also supply examples files to generate the context description directly in the YAML from those examples.
+    Generates outputs for an integration.
+    This command generates context paths automatically from an example file directly into an integration YAML file.
+    Also supports converting JSON format to Cortex XSOAR entry context YAML format.
     """
     # Gather arguments into kwargs dictionary to pass to the function
     kwargs = {

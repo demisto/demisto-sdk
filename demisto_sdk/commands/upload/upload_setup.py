@@ -100,7 +100,7 @@ def upload(
     and `DEMISTO_API_KEY` environment variable should contain a valid Cortex XSOAR/XSIAM API Key.
 
     **Notes for Cortex XSIAM or Cortex XSOAR 8.x:**
-    - Cortex XSIAM Base URL should be retrieved from XSIAM instance -> Settings -> Configurations -> API Keys -> `Copy URL` button on the top rigth corner, and not the browser URL.
+    - Cortex XSIAM Base URL should be retrieved from XSIAM instance -> Settings -> Configurations -> API Keys -> `Copy URL` button in the top right corner, and not the browser URL.
     - API key should be of a `standard` security level, and have the `Instance Administrator` role.
     - To use the command the `XSIAM_AUTH_ID` environment variable should also be set.
 

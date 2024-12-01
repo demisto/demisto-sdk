@@ -58,7 +58,10 @@ def setup_env_command(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    """Set up the integration environments."""
+    """
+    The setup-env command creates a content environment and integration/script environment.
+    The command will configure VSCode and XSOAR/XSIAM instances for development and testing.
+    """
 
     if ide.lower() == "auto-detect":
         if (Path("CONTENT_PATH") / ".vscode").exists():

@@ -1,12 +1,14 @@
 ## Upload
 
+### Overview
+
 **Upload a content entity to Cortex XSOAR/XSIAM.**
 
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Cortex XSOAR/XSIAM instance URL,
 and `DEMISTO_API_KEY` environment variable should contain a valid Cortex XSOAR/XSIAM API Key.
 
 **Notes for Cortex XSIAM or Cortex XSOAR 8.x:**
-- Cortex XSIAM Base URL should be retrieved from XSIAM instance -> Settings -> Configurations -> API Keys -> `Copy URL` button on the top rigth corner, and not the browser URL.
+- Cortex XSIAM Base URL should be retrieved from XSIAM instance -> Settings -> Configurations -> API Keys -> `Copy URL` button in the top right corner, and not the browser URL.
 - API key should be of a `standard` security level, and have the `Instance Administrator` role.
 - To use the command the `XSIAM_AUTH_ID` environment variable should also be set.
 
@@ -27,27 +29,7 @@ In order to set Demisto SDK to work with Cortex XSOAR instance, you need to dele
 unset XSIAM_AUTH_ID
 ```
 
-### Supported content entities for upload:
-You can upload these content entities to a remote instance.
-- Integrations
-- Playbooks
-- Scripts
-- Widgets
-- Dashboards
-- Incident Types
-- Incident Fields
-- Indicator Fields
-- Layouts
-- Layouts Container
-- Classifiers
-- Packs
-- Zipped packs
-- Reports
-
-#### Limitation
-Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
-
-### Arguments
+### Options
 * **-i, --input**
 
     The path of file or a directory to upload. The following are supported:
@@ -101,6 +83,26 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 * **--reattach**
 
     Reattach the detached files in the XSOAR instance for the CI/CD Flow. If you set the --input-config-file flag, any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder will be re-attached.
+
+### Supported content entities for upload:
+You can upload these content entities to a remote instance.
+- Integrations
+- Playbooks
+- Scripts
+- Widgets
+- Dashboards
+- Incident Types
+- Incident Fields
+- Indicator Fields
+- Layouts
+- Layouts Container
+- Classifiers
+- Packs
+- Zipped packs
+- Reports
+
+#### Limitation
+Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 ### Examples
 ```

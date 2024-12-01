@@ -179,7 +179,6 @@ class TestFormattingJson:
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
-
     @pytest.mark.parametrize(
         "source, target, path, answer", FORMAT_FILES_OLD_FROMVERSION
     )
@@ -203,7 +202,6 @@ class TestFormattingJson:
         assert e.value.exit_code == 0
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
-
 
     @pytest.mark.parametrize("invalid_output", [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):

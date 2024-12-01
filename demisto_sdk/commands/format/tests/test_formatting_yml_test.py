@@ -550,7 +550,6 @@ class TestFormatting:
         Path(target).unlink()
         os.rmdir(path)
 
-
     @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_remove_unnecessary_keys_from_playbook(self, source_path):
         """
